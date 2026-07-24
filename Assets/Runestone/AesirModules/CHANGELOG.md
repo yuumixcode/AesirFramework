@@ -23,6 +23,12 @@
 - Scene 模块（SceneLoader、SceneReference）
 - 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
 
+## [0.4.2] - 2026-07-24
+
+### Changed
+
+- 版本号与 Aesir Architecture / Aesir Inspector 同步更新至 `0.4.2`，本包本版本无功能性变更
+
 ## [0.4.0] - 2026-07-24
 
 ### Changed（Manager of Managers 模式，合并为 UIManager）

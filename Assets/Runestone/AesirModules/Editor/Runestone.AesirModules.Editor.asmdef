@@ -1,0 +1,19 @@
+{
+  "name": "Runestone.AesirModules.Editor",
+  "rootNamespace": "Runestone.AesirModules.Editor",
+  "references": [
+    "Runestone.AesirModules",
+    "Runestone.AesirArchitecture"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
