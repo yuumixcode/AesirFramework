@@ -17,9 +17,9 @@
 
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
-| **Aesir Architecture** | 渐进式 MVP / MVC 架构框架（能力接口组合、命令模式、事件总线、PlayerLoop） | `cn.runestone.aesir.architecture` | `0.4.0` |
-| **Aesir Modules** | 极简 UI 框架（Manager of Managers、四层 Canvas、面板生命周期、可替换资源加载器） | `cn.runestone.aesir.modules` | `0.4.0` |
-| **Aesir Inspector** | 编辑器扩展库（双语 Inspector、安全编辑器工具、脚本文档生成器、Summary 同步工具） | `cn.runestone.aesir.inspector` | `0.4.0` |
+| **Aesir Architecture** | 渐进式 MVP / MVC 架构框架（能力接口组合、命令模式、事件总线、PlayerLoop） | `cn.runestone.aesir.architecture` | `0.4.2` |
+| **Aesir Modules** | 极简 UI 框架（Manager of Managers、四层 Canvas、面板生命周期、可替换资源加载器） | `cn.runestone.aesir.modules` | `0.4.2` |
+| **Aesir Inspector** | 编辑器扩展库（双语 Inspector、安全编辑器工具、脚本文档生成器、Summary 同步工具） | `cn.runestone.aesir.inspector` | `0.4.2` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
 
@@ -103,7 +103,7 @@ public class CounterContext : AbstractContext<CounterContext>
 }
 ```
 
-完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`README.en.md`](./Assets/Runestone/AesirArchitecture/README.en.md)（English）。
+完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md)（English）。
 
 ### Aesir Modules — 一个 `Open<T>()` 打开面板
 
@@ -113,13 +113,13 @@ UIManager.Open<MainMenuPanel>();
 UIManager.Open<ConfirmDialogPanel>(new ConfirmData { message = "确定？" });
 ```
 
-完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`README.en.md`](./Assets/Runestone/AesirModules/README.en.md)（English）。
+完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirModules/Documentation~/README_EN.md)（English）。
 
 ### Aesir Inspector — 右键即可同步 XML Summary
 
 在 Project 窗口选中脚本 → 右键 → `Aesir → Summary Tool` → 选择 Sync / Replace / Remove。
 
-完整指南见 [`Assets/Runestone/AesirInspector/README.md`](./Assets/Runestone/AesirInspector/README.md)（中文）/ [`Documentation~/en/README.md`](./Assets/Runestone/AesirInspector/Documentation~/en/README.md)（English）。
+完整指南见 [`Assets/Runestone/AesirInspector/README.md`](./Assets/Runestone/AesirInspector/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirInspector/Documentation~/README_EN.md)（English）。
 
 ---
 
@@ -139,11 +139,11 @@ Unity-Aesir-Packages/                       # 你现在看到的仓库
 ├── CODELY.md                              # 架构详细文档
 └── Assets/Runestone/
     ├── AesirArchitecture/                 # 不依赖其他 Aesir 子包
-    │   ├── Runtime/  Editor/  Tests/  Samples~/
-    │   ├── README.md  README.en.md  CHANGELOG.md  LICENSE.md  package.json
+    │   ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
+    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
     ├── AesirModules/                      # 依赖 Architecture + Inspector
-    │   ├── Runtime/  Editor/
-    │   ├── README.md  README.en.md  CHANGELOG.md  LICENSE.md  package.json
+    │   ├── Runtime/  Editor/  Documentation~/
+    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
     └── AesirInspector/                    # 不依赖其他 Aesir 子包
         ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
         ├── README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE.md  package.json
