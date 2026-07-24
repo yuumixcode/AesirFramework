@@ -3,14 +3,14 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供极简 UI 框架，采用 Unity "Manager of Managers" 模式，按 Engine / Component 两层组织。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
-[![English](https://img.shields.io/badge/README-English-blue.svg)](./README.en.md)
+[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
 
 > 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**同时依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/Unity-Aesir-Packages)**（`>= 0.4.0`）
-> - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)**（`>= 0.4.0`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/Unity-Aesir-Packages)**（`>= 0.4.2`）
+> - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)**（`>= 0.4.2`）
 
 ## 模块
 
@@ -21,8 +21,8 @@ Aesir Architecture (RAA) 的功能模块包。当前提供极简 UI 框架，采
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.4.0（必需）
-- **Aesir Inspector** `cn.runestone.aesir.inspector` >= 0.4.0（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.4.2（必需）
+- **Aesir Inspector** `cn.runestone.aesir.inspector` >= 0.4.2（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。
 
 ## 安装
