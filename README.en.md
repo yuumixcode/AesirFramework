@@ -17,9 +17,9 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVP / MVC framework (capability composition, command pattern, event bus, PlayerLoop) | `cn.runestone.aesir.architecture` | `0.4.0` |
-| **Aesir Modules** | Lightweight UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, pluggable asset loader) | `cn.runestone.aesir.modules` | `0.4.0` |
-| **Aesir Inspector** | Editor extension library (bilingual Inspector, safe editor utilities, script doc generator, Summary sync tool) | `cn.runestone.aesir.inspector` | `0.4.0` |
+| **Aesir Architecture** | Progressive MVP / MVC framework (capability composition, command pattern, event bus, PlayerLoop) | `cn.runestone.aesir.architecture` | `0.4.2` |
+| **Aesir Modules** | Lightweight UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, pluggable asset loader) | `cn.runestone.aesir.modules` | `0.4.2` |
+| **Aesir Inspector** | Editor extension library (bilingual Inspector, safe editor utilities, script doc generator, Summary sync tool) | `cn.runestone.aesir.inspector` | `0.4.2` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -103,7 +103,7 @@ public class CounterContext : AbstractContext<CounterContext>
 }
 ```
 
-Full guide: [`Assets/Runestone/AesirArchitecture/README.en.md`](./Assets/Runestone/AesirArchitecture/README.en.md) (English) / [`README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文).
+Full guide: [`Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文).
 
 ### Aesir Modules — Open a Panel with `Open<T>()`
 
@@ -113,13 +113,13 @@ UIManager.Open<MainMenuPanel>();
 UIManager.Open<ConfirmDialogPanel>(new ConfirmData { message = "Confirm?" });
 ```
 
-Full guide: [`Assets/Runestone/AesirModules/README.en.md`](./Assets/Runestone/AesirModules/README.en.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
+Full guide: [`Assets/Runestone/AesirModules/Documentation~/README_EN.md`](./Assets/Runestone/AesirModules/Documentation~/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
 
 ### Aesir Inspector — Right-Click to Sync XML Summary
 
 Select a script in the Project window → right-click → `Aesir → Summary Tool` → choose Sync / Replace / Remove.
 
-Full guide: [`Assets/Runestone/AesirInspector/Documentation~/en/README.md`](./Assets/Runestone/AesirInspector/Documentation~/en/README.md) (English) / [`Assets/Runestone/AesirInspector/README.md`](./Assets/Runestone/AesirInspector/README.md) (中文).
+Full guide: [`Assets/Runestone/AesirInspector/Documentation~/README_EN.md`](./Assets/Runestone/AesirInspector/Documentation~/README_EN.md) (English) / [`Assets/Runestone/AesirInspector/README.md`](./Assets/Runestone/AesirInspector/README.md) (中文).
 
 ---
 
@@ -139,11 +139,11 @@ Unity-Aesir-Packages/                       # this repo
 ├── CODELY.md                              # detailed architecture docs
 └── Assets/Runestone/
     ├── AesirArchitecture/                 # does NOT depend on other Aesir packages
-    │   ├── Runtime/  Editor/  Tests/  Samples~/
-    │   ├── README.md  README.en.md  CHANGELOG.md  LICENSE.md  package.json
+    │   ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
+    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
     ├── AesirModules/                      # depends on Architecture + Inspector
-    │   ├── Runtime/  Editor/
-    │   ├── README.md  README.en.md  CHANGELOG.md  LICENSE.md  package.json
+    │   ├── Runtime/  Editor/  Documentation~/
+    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
     └── AesirInspector/                    # does NOT depend on other Aesir packages
         ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
         ├── README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE.md  package.json
