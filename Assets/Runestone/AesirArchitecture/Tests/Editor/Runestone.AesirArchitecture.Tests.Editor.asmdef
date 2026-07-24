@@ -1,0 +1,24 @@
+{
+  "name": "Runestone.AesirArchitecture.Tests.Editor",
+  "rootNamespace": "Runestone.AesirArchitecture.Tests.Editor",
+  "references": [
+    "Runestone.AesirArchitecture.Editor",
+    "Runestone.AesirArchitecture",
+    "UnityEngine.TestRunner"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowAnyCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
