@@ -3,10 +3,10 @@
 > 面向团结引擎 / Unity 的渐进式 MVP 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
-[![English](https://img.shields.io/badge/README-English-blue.svg)](./README.en.md)
+[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
 
 > 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
 >
@@ -20,7 +20,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 ### 核心特性
 
-- **PlayerLoop 原生生命周期** — 通过 `AesirArchitectureLifeCycle` 将自定义子系统注入 Unity PlayerLoop，提供 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour
+- **PlayerLoop 原生生命周期** — 通过 `AesirArchitecturePlayerLoop` 将自定义子系统注入 Unity PlayerLoop，提供 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour
 - **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand`、`ICanAddListener` 等能力标记接口组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`，按需暴露能力
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
@@ -41,7 +41,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 | 架构根 | 泛型单例 `Architecture<T>` | 泛型静态单例 `AbstractContext<T>` + `GenericLocator` 全局定位 |
 | 可观察属性 | `BindableProperty<T>` | `ObservableValue<T>` + `IReadOnlyObservableValue<out T>` 协变只读 |
 | 事件通信 | 纯 C# TypeEvent | 纯 C# MiniEventBus + 委托（不使用 `event` 关键字） |
-| 日志 | `Debug.Log` | `AesirArchitectureLog` 条件编译统一日志 |
+| 日志 | `Debug.Log` | `AesirArchitectureDebug` 条件编译统一日志 |
 | 静态状态 | 无 Domain Reset 保障 | `[RuntimeInitializeOnLoadMethod]` 显式重置 |
 | 表现层 | 无明确抽象 | `IView` 表现层接口 + `IController` / `IPresenter` 双模式 |
 
@@ -219,46 +219,46 @@ this.InvokeEvent<GameStartedEvent>();
 cn.runestone.aesir.architecture/
 ├── package.json
 ├── README.md                       # 本文件（中文）
-├── README.en.md                    # English version
+├── Documentation~/README_EN.md     # English version
 ├── CHANGELOG.md
 ├── LICENSE.md
-├── .gitignore
+├── Third Party Notices.md
 ├── Runtime/
 │   ├── Runestone.AesirArchitecture.asmdef
 │   ├── Engine/                    # 纯 C# + 使用 UnityEngine API（不依赖 MonoBehaviour）
 │   │   ├── Common/
-│   │   │   ├── AesirArchitectureLog.cs         # 统一日志
-│   │   │   ├── AesirArchitecturePlayerLoop.cs  # PlayerLoop 注入
-│   │   │   ├── AssemblyInfo.cs                 # InternalsVisibleTo 声明
-│   │   │   └── ResetStaticsAssistant.cs        # 静态变量重置助手
-│   │   ├── Core/
-│   │   │   ├── Context/           # IContext, AbstractContext<T>
-│   │   │   ├── Modules/           # IModel, IService, IView, IController, IPresenter + Abstract 基类
-│   │   │   │   ├── Interfaces/    # 模块接口
-│   │   │   │   └── Abstracts/     # AbstractSubmodule, AbstractModel, AbstractService
-│   │   │   └── Capabilities/      # Capabilities.cs (ICan* 接口) + CapabilityExtensions.cs (扩展方法)
-│   │   ├── Event/                 # MiniEventBus, MiniEvent<T>, AutoRemoveListenerHandle
-│   │   ├── Observable/           # ObservableValue<T>, IReadOnlyObservableValue<T>
-│   │   ├── Locator/              # GenericLocator<T>, IGenericLocator<T>
-│   │   └── Utilities/            # PlayerLoopUtility
-│   ├── Component/                # MonoBehaviour 组件（依赖 MonoBehaviour）
+│   │   │   ├── AesirArchitectureDebug.cs         # 统一日志
+│   │   │   ├── AesirArchitecturePlayerLoop.cs    # PlayerLoop 注入
+│   │   │   ├── AssemblyInfo.cs                   # InternalsVisibleTo 声明
+│   │   │   └── ResetStaticsAssistant.cs          # 静态变量重置助手
+│   │   ├── Context/               # IContext, AbstractContext<T>
+│   │   ├── Modules/               # IModel, IService, IView, IController, IPresenter + Abstract 基类
+│   │   │   ├── Interfaces/        # 模块接口
+│   │   │   └── Abstracts/         # AbstractSubmodule, AbstractModel, AbstractService, AbstractCommand, AbstractQuery
+│   │   ├── Capabilities/          # Capabilities.cs (ICan* 接口) + CapabilityExtensions.cs (扩展方法)
+│   │   ├── Event/                 # MiniEventBus, MiniEvent<T>, AutoRemoveListenerHandle, RemoveListenerExtensions
+│   │   ├── Observable/            # ObservableValue<T>, IObservableValue<T>, IReadOnlyObservableValue<T>
+│   │   ├── Locator/               # GenericLocator<T>, IGenericLocator<T>
+│   │   └── Utilities/             # PlayerLoopUtility
+│   ├── Component/                 # MonoBehaviour 组件（依赖 MonoBehaviour）
 │   │   ├── Common/
-│   │   │   ├── AesirArchitecture.cs       # 框架 MonoBehaviour 单例入口
-│   │   │   └── AesirMonoBehaviour.cs      # Odin 自动适配基类
-│   │   ├── Core/
-│   │   │   ├── AesirView.cs              # Odin 适配 View 基类
-│   │   │   ├── MonoView.cs               # 纯 MonoBehaviour View 基类
-│   │   │   └── AesirViewController.cs    # View + Controller 双角色基类
-│   │   ├── Event/
-│   │   │   ├── RemoveListenerTrigger.cs  # 自动移除监听触发器基类
-│   │   │   ├── RemoveListenerOnDestroyTrigger.cs
-│   │   │   ├── RemoveListenerOnDisableTrigger.cs
-│   │   │   ├── RemoveListenerOnSceneUnloadedTrigger.cs
-│   │   │   └── RemoveListenerExtensions.cs
-│   │   └── ScriptableObject/
-│   │       └── AesirScriptableObject.cs  # Odin 自动适配 SO 基类
-│   └── OdinIntergration/         # 独立程序集（依赖 Odin Inspector）
-│       └── Runestone.AesirArchitecture.OdinIntegration.asmdef
+│   │   │   ├── AesirArchitecture.cs           # 框架 MonoBehaviour 单例入口
+│   │   │   ├── AesirMonoBehaviour.cs         # Odin 自动适配基类
+│   │   │   └── AesirScriptableObject.cs      # Odin 自动适配 SO 基类
+│   │   ├── View/
+│   │   │   ├── AesirView.cs                  # Odin 适配 View 基类
+│   │   │   └── MonoView.cs                   # 纯 MonoBehaviour View 基类
+│   │   ├── ViewController/
+│   │   │   ├── AesirViewController.cs         # View + Controller 双角色基类（Odin 适配）
+│   │   │   └── MonoViewController.cs          # View + Controller 双角色基类（纯 MonoBehaviour）
+│   │   └── Event/
+│   │       ├── RemoveListenerTrigger.cs              # 自动移除监听触发器基类
+│   │       ├── RemoveListenerOnDestroyTrigger.cs
+│   │       ├── RemoveListenerOnDisableTrigger.cs
+│   │       └── RemoveListenerOnSceneUnloadedTrigger.cs
+│   └── OdinIntergration/          # 独立程序集（依赖 Odin Inspector）
+│       ├── Runestone.AesirArchitecture.OdinIntegration.asmdef
+│       └── DescriptionSO.cs
 ├── Editor/
 │   ├── Runestone.AesirArchitecture.Editor.asmdef
 │   ├── Common/
@@ -266,23 +266,21 @@ cn.runestone.aesir.architecture/
 │   ├── Utilities/
 │   │   └── ScriptingSymbolUtility.cs
 │   └── OdinIntegration/          # Odin Inspector 集成（可选）
-│       └── Runestone.AesirArchitecture.Editor.OdinIntegration.asmdef
+│       ├── Runestone.AesirArchitecture.Editor.OdinIntegration.asmdef
+│       └── AttributeProcessors/
+│           ├── AesirArchitectureAttributeProcessor.cs
+│           └── ObservableValueAttributeProcessor.cs
 ├── Tests/
 │   ├── Runtime/
 │   │   └── Runestone.AesirArchitecture.Tests.asmdef
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
-│   ├── Counter-MVC/             # MVC 模式计数器 Demo
-│   ├── Counter-MVP/             # MVP 模式计数器 Demo
-│   ├── ObservableValue/         # ObservableValue Inspector 演示（Odin Inspector）
-│   └── MiniEvent/               # MiniEvent 使用案例
-└── Documentation~/
-    ├── aesir-architecture.md    # 主手册
-    ├── Books/                   # 参考电子书
-    ├── FAQ/                     # 常见问题
-    ├── Manuals/                 # 模块手册
-    └── Rules/                   # 代码规范
+│   ├── Counter-MVC/               # MVC 模式计数器 Demo
+│   ├── UI Counter-MVP/            # MVP 模式计数器 Demo
+│   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
+│   └── MiniEvent/                 # MiniEvent 使用案例
+└── Third Party Notices.md          # 第三方许可声明
 ```
 
 ## 设计原则
