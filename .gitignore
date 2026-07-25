@@ -120,3 +120,6 @@ InitTestScene*.unity*
 
 # 团结引擎 Codely Bridge 配置文件（本地工具，不随仓库分发）
 .com-unity-codely.json
+
+# Codely CLI 剪贴板临时图片（用户输入时使用，不上传远端）
+.codely/clipboard/
