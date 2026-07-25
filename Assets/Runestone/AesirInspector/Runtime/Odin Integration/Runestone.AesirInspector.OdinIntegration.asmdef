@@ -1,0 +1,18 @@
+{
+  "name": "Runestone.AesirInspector.OdinIntegration",
+  "rootNamespace": "Runestone.AesirInspector.OdinIntegration",
+  "references": [
+    "Runestone.AesirInspector"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "ODIN_INSPECTOR"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
