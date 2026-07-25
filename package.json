@@ -3,7 +3,7 @@
   "displayName": "Aesir Modules",
   "version": "0.4.2",
   "unity": "2022.3",
-  "description": "Aesir 功能模块包。当前包含极简 UI 框架：以 MonoBehaviour 单例 UIManager 为核心（Manager of Managers 模式），按 Engine / Component 两层组织，提供四层 Canvas 层级管理、完整面板生命周期与可替换的资源加载器。",
+  "description": "Aesir 功能模块包。轻量级 UI 框架：Manager-of-Managers 单例模式，四层 Canvas 层级管理、完整面板生命周期与可替换资源加载器，可选集成 Odin Inspector。",
   "keywords": [
     "ui",
     "modules",
