@@ -1,13 +1,13 @@
 # Unity-Aesir-Packages · Aesir 系列 Unity 包集合
 
-> 面向 [团结引擎](https://www.tuanjieengine.com/) / Unity 的渐进式架构框架 + UI 框架 + 编辑器工具集。三个子包可分别通过 Git URL 直接安装，按需选用。
+> 面向团结引擎 / Unity 的渐进式架构框架 + UI 框架 + 编辑器工具集。三个子包可分别通过 Git URL 直接安装，按需选用。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
-[![Tuanjie](https://img.shields.io/badge/Tuanjie-2022.3%2B-blueviolet.svg)](https://www.tuanjieengine.com/)
+[![Tuanjie](https://img.shields.io/badge/Tuanjie-2022.3%2B-blueviolet.svg)](#)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
-[![English](https://img.shields.io/badge/README-English-blue.svg)](./README.en.md)
+[![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
 ---
 
@@ -60,13 +60,15 @@
 
 ### 方式 1：通过 UPM Git URL 安装（推荐）
 
-在 Unity Package Manager 窗口点击左上角 `+` → `Add package from git URL...`，填入：
+在 Unity Package Manager 窗口点击左上角 `+` → `Add package from git URL...`，填入对应子包的 Git URL：
 
-```
-https://github.com/yuumixcode/Unity-Aesir-Packages.git
-```
+| 子包 | Git URL |
+|---|---|
+| Aesir Architecture | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture` |
+| Aesir Modules | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules` |
+| Aesir Inspector | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector` |
 
-按需安装——UPM 会自动识别你要用哪个子包（通过 `package.json` 的 `name` 字段）。
+按需安装——只添加你需要的子包。
 
 **只安装 Aesir Modules 时**，UPM 会自动解析依赖并拉取 Aesir Architecture + Aesir Inspector（因为 `package.json` 的 `dependencies` 字段里声明了）。
 
@@ -77,9 +79,9 @@ https://github.com/yuumixcode/Unity-Aesir-Packages.git
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/Unity-Aesir-Packages.git",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git",
-    "cn.runestone.aesir.inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules",
+    "cn.runestone.aesir.inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector"
   }
 }
 ```
@@ -130,7 +132,7 @@ UIManager.Open<ConfirmDialogPanel>(new ConfirmData { message = "确定？" });
 ```
 Unity-Aesir-Packages/                       # 你现在看到的仓库
 ├── README.md                              # 本文件（中文）
-├── README.en.md                           # English version
+├── README_EN.md                           # English version
 ├── LICENSE                                # MIT
 ├── CHANGELOG.md                           # 仓库级别变更日志（聚合三个子包）
 ├── CONTRIBUTING.md                        # 贡献指南
@@ -210,4 +212,3 @@ Copyright (c) 2026 Yuumix
 ## 🔗 链接
 
 > - **作者主页**: [yuumixcode](https://github.com/yuumixcode)
-> - **团结引擎**: [tuanjieengine.com](https://www.tuanjieengine.com/)

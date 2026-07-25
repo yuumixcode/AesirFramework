@@ -52,7 +52,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 在 Unity Package Manager 中通过 Git URL 安装：
 
 ```
-https://github.com/yuumixcode/Unity-Aesir-Packages.git
+https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture
 ```
 
 UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone.aesir.architecture`）。

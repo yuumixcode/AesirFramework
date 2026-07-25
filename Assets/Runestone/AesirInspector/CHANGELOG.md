@@ -4,7 +4,7 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，本项目遵循[语义化版本](https://semver.org/lang/zh-CN/)规范。
 
-[English](Documentation~/en/CHANGELOG.md)
+[English](Documentation~/CHANGELOG_EN.md)
 
 ---
 
@@ -13,6 +13,18 @@
 ### Changed
 
 - **README 顶部 monorepo 块重写**：从双语段对照改为单语版本，明确说明 Aesir Inspector **不依赖**其他 Aesir 子包（独立可装）。英文版保留在 `Documentation~/en/README.md`（结构不变）。
+
+## [0.4.2] - 2026-07-24
+
+### Changed
+
+- 版本号与 Aesir Architecture / Aesir Modules 同步更新至 `0.4.2`，本包本版本无功能性变更
+
+## [0.4.1] - 2026-07-24
+
+### Changed
+
+- **Samples 版本文件夹**：`Assets/Samples/Aesir Inspector/0.4.0-pre.1/` → `0.4.0/`，与 `package.json` 版本对齐
 
 ## [0.4.0] - 2026-07-24
 
