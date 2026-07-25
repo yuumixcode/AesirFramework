@@ -31,7 +31,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供极简 UI 框架，采
 
 ```
 Packages/manifest.json -> dependencies:
-"cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git"
+"cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules"
 ```
 
 UPM 会自动解析 `package.json` 的 `dependencies` 字段，拉取 Aesir Architecture + Aesir Inspector。

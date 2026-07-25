@@ -3,7 +3,7 @@
   "displayName": "Aesir Architecture",
   "version": "0.4.2",
   "unity": "2022.3",
-  "description": "面向团结引擎 / Unity 的渐进式 MVP 架构框架。以能力接口组合为核心，命令模式驱动写操作，MiniEventBus 类型事件总线通信，PlayerLoop 原生生命周期管理，纯 C# 架构根与 MonoBehaviour 适配层分离。提供 MVC / MVP 双模式表现层，运行时错误日志保障，GenericLocator 泛型定位器，AbstractSubmodule 统一子模块生命周期，支持 Domain Reload 安全，融合 Odin Inspector，实现团结引擎 / Unity 可配置的架构。",
+  "description": "面向团结引擎 / Unity 的渐进式 MVP/MVC 架构框架。能力接口组合、命令/查询模式（CQRS）、类型化事件总线、PlayerLoop 原生生命周期、纯 C# 架构根与 MonoBehaviour 适配层分离，可选集成 Odin Inspector。",
   "keywords": [
     "architecture",
     "mvc",

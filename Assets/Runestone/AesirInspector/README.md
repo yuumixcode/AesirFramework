@@ -1,7 +1,7 @@
 # Aesir Inspector
 
-[English](Documentation~/en/README.md) | [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](CHANGELOG.md)
+[English](Documentation~/README_EN.md) | [![license](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
+[![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](CHANGELOG.md)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装说明)
 
 > 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
@@ -30,7 +30,7 @@
 2. 点击左上角的 `+` 按钮，选择 `Add package from git URL...`。
 3. 输入以下地址：
    ```
-   https://github.com/yuumixcode/Unity-Aesir-Packages.git
+   https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector
    ```
 
 ### 通过 manifest.json 安装
@@ -40,7 +40,7 @@
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir-inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git"
+    "cn.runestone.aesir-inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector"
   }
 }
 ```

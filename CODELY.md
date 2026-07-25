@@ -459,11 +459,13 @@ Unity -batchmode -quit -projectPath . \
 
 ### Feedback
 - [2026-07-24 15:43:36] Aesir Inspector 与 Aesir Architecture/Modules 使用不同编码规范。Inspector：禁止 XML 注释（用 [Summary] 特性替代）、自文档化代码、禁止对 UnityEngine.Object 派生类使用 ?. /??、事件命名无 On 前缀。Architecture/Modules：中文 XML 文档注释、显式接口实现。编辑代码时需确认所在包以应用正确风格。
-- [2026-07-24 22:03:03] 项目英文文档命名规范：根目录文档使用 `.en.md` 后缀（如 `README.en.md`、`CODE_OF_CONDUCT.en.md`、`CONTRIBUTING.en.md`）；各子包的英文 README 统一放在 `Documentation~/README_EN.md`。**Why:** 子包英文 README 归入 Documentation~ 文件夹（UPM 隐藏目录），使用 `README_EN.md` 命名。**How to apply:** 根目录英文文档用 `.en.md`，子包英文 README 用 `Documentation~/README_EN.md`。
+- [2026-07-25 10:56:53] 项目英文文档命名规范：根目录英文文档统一使用 `_EN.md` 后缀（如 `README_EN.md`）；`CODE_OF_CONDUCT.en.md` 和 `CONTRIBUTING.en.md` 暂保留 `.en.md` 后缀；各子包的英文 README 统一放在 `Documentation~/README_EN.md`。**Why:** 统一命名风格，README 从 `.en.md` 改为 `_EN.md` 与子包一致。**How to apply:** 根目录 README 英文版用 `README_EN.md`，子包英文 README 用 `Documentation~/README_EN.md`。
+
 - [2026-07-25 00:55:49] Git Commit 消息使用中文编写。**Why:** 用户偏好中文交流，项目代码注释和文档均使用中文。**How to apply:** 所有 git commit message 使用中文撰写，包括 subject 和 body。
 
 ### Project
 - [2026-07-24 21:08:41] AttributeOverviewPro 子资产重构计划：将 ~194 个独立 .asset 文件（70 PanelSO + 123 ExampleSO + 1 DatabaseSO）合并为 1 个数据库 .asset 文件，所有 PanelSO/ExampleSO 作为 DatabaseSO 的子资产（AddObjectToAsset）。**Why:** 用户导入 Aesir Inspector 后自动生成资产数量膨胀。**How to apply:** 实现时仅需修改 5 个文件（DatabaseSO、AttributeExampleSO、OdinAttributeExampleSO、AbstractAttributePanelSO、AesirInspectorPaths），Data/Panel/Example 类定义不变。
+- [2026-07-25 10:43:31] Monorepo 安装方式：三个子包通过各自的 `?path=` 参数从同一 Git 仓库安装，例如 `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture`。**Why:** monorepo 中三个子包在同一仓库的不同子目录，直接用仓库根 URL 无法正确识别单个包。**How to apply:** README 中的 Git URL 始终带 `?path=Assets/Runestone/{包名}` 参数；Aesir Modules 会自动拉取 Architecture + Inspector 依赖。
 
 ### Reference
 - [2026-07-24 21:08:41] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。

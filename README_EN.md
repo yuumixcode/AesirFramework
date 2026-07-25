@@ -1,10 +1,10 @@
 # Unity-Aesir-Packages · Aesir Series Unity Packages
 
-> A progressive architecture framework, UI framework, and editor toolkit collection for **Tuanjie Engine** / **Unity**. Each sub-package can be installed separately via Git URL and used on demand.
+> A progressive architecture framework, UI framework, and editor toolkit collection for Tuanjie Engine / Unity. Each sub-package can be installed separately via Git URL and used on demand.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
-[![Tuanjie](https://img.shields.io/badge/Tuanjie-2022.3%2B-blueviolet.svg)](https://www.tuanjieengine.com/)
+[![Tuanjie](https://img.shields.io/badge/Tuanjie-2022.3%2B-blueviolet.svg)](#)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
@@ -60,13 +60,15 @@
 
 ### Option 1: Via UPM Git URL (Recommended)
 
-In the Unity Package Manager window, click `+` in the top-left → `Add package from git URL...` and paste:
+In the Unity Package Manager window, click `+` in the top-left → `Add package from git URL...` and paste the corresponding sub-package URL:
 
-```
-https://github.com/yuumixcode/Unity-Aesir-Packages.git
-```
+| Sub-Package | Git URL |
+|---|---|
+| Aesir Architecture | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture` |
+| Aesir Modules | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules` |
+| Aesir Inspector | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector` |
 
-Install only what you need — UPM identifies which sub-package to use via the `name` field in `package.json`.
+Install only what you need.
 
 **When installing only Aesir Modules**, UPM will automatically resolve the dependencies and pull Aesir Architecture + Aesir Inspector (declared in `package.json`'s `dependencies` field).
 
@@ -77,9 +79,9 @@ Add the following to your project's `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/Unity-Aesir-Packages.git",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git",
-    "cn.runestone.aesir.inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules",
+    "cn.runestone.aesir.inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector"
   }
 }
 ```
@@ -130,7 +132,7 @@ Full guide: [`Assets/Runestone/AesirInspector/Documentation~/README_EN.md`](./As
 ```
 Unity-Aesir-Packages/                       # this repo
 ├── README.md                              # 中文
-├── README.en.md                           # this file
+├── README_EN.md                           # this file
 ├── LICENSE                                # MIT
 ├── CHANGELOG.md                           # repo-level changelog (aggregates all three)
 ├── CONTRIBUTING.md                        # contributing guide
@@ -210,4 +212,3 @@ See root [`LICENSE`](./LICENSE) and per-package `LICENSE.md` for details.
 ## 🔗 Links
 
 > - **Author homepage**: [yuumixcode](https://github.com/yuumixcode)
-> - **Tuanjie Engine**: [tuanjieengine.com](https://www.tuanjieengine.com/)
