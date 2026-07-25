@@ -25,6 +25,7 @@ namespace Runestone.AesirArchitecture
         {
             removeListener.RemoveListenerWhenGameObjectOnDisable(mono.gameObject);
         }
+
         /// <summary>
         /// 当指定的 GameObject 被销毁时自动移除监听
         /// </summary>
