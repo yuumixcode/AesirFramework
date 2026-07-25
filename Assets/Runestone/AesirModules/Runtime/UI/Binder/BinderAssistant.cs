@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using Runestone.AesirArchitecture;
 using Sirenix.OdinInspector;
-
+using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Callbacks;
 #endif
-
-using UnityEngine;
 
 namespace Runestone.AesirModules
 {

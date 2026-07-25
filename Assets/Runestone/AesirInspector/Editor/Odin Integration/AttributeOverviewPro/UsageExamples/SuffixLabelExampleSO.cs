@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 
+#pragma warning disable CS0414 // 字段已被赋值，但它的值从未被使用
 namespace Runestone.AesirInspector.OdinIntegration.Editor
 {
     [AesirExample]
@@ -14,14 +15,14 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         public float progress;
 
         [Title("Member Reference ($)")]
-        [SuffixLabel("$DynamicLabel")]
+        [SuffixLabel("$_dynamicLabel")]
         public string dynamicProperty;
 
         [Title("Expression (@)")]
         [SuffixLabel("@\"Current Length: \" + (dynamicProperty == null ? 0 : dynamicProperty.Length)")]
         public string expressionProperty;
 
-        readonly string DynamicLabel = "Dynamic Suffix";
+        readonly string _dynamicLabel = "Dynamic Suffix";
 
         public override void AesirInspectorReset()
         {

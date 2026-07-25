@@ -25,7 +25,7 @@ namespace Runestone.AesirArchitecture
             {
                 throw new InvalidOperationException(
                     $"{AesirArchitectureDebug.ErrorTag} [{self.GetType().Name}] 尝试获取 Model [{typeof(T).Name}]，" +
-                    $"但该 Model 尚未初始化。这通常表示注册顺序错误或存在循环依赖——" +
+                    "但该 Model 尚未初始化。这通常表示注册顺序错误或存在循环依赖——" +
                     $"被依赖的 Model 应先注册。请检查 Configure() 中 RegisterModel<{typeof(T).Name}>() 的调用顺序。");
             }
 
@@ -50,7 +50,7 @@ namespace Runestone.AesirArchitecture
             {
                 throw new InvalidOperationException(
                     $"{AesirArchitectureDebug.ErrorTag} [{self.GetType().Name}] 尝试获取 Service [{typeof(T).Name}]，" +
-                    $"但该 Service 尚未初始化。这通常表示注册顺序错误或存在循环依赖——" +
+                    "但该 Service 尚未初始化。这通常表示注册顺序错误或存在循环依赖——" +
                     $"被依赖的 Service 应先注册。请检查 Configure() 中 RegisterService<{typeof(T).Name}>() 的调用顺序。");
             }
 
@@ -121,6 +121,5 @@ namespace Runestone.AesirArchitecture
             query.SetContext(self.Context);
             return query.Execute();
         }
-
     }
 }
