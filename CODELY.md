@@ -465,9 +465,11 @@ Unity -batchmode -quit -projectPath . \
 - [2026-07-25 00:55:49] Git Commit 消息使用中文编写。**Why:** 用户偏好中文交流，项目代码注释和文档均使用中文。**How to apply:** 所有 git commit message 使用中文撰写，包括 subject 和 body。
 
 ### Project
-- [2026-07-24 21:08:41] AttributeOverviewPro 子资产重构计划：将 ~194 个独立 .asset 文件（70 PanelSO + 123 ExampleSO + 1 DatabaseSO）合并为 1 个数据库 .asset 文件，所有 PanelSO/ExampleSO 作为 DatabaseSO 的子资产（AddObjectToAsset）。**Why:** 用户导入 Aesir Inspector 后自动生成资产数量膨胀。**How to apply:** 实现时仅需修改 5 个文件（DatabaseSO、AttributeExampleSO、OdinAttributeExampleSO、AbstractAttributePanelSO、AesirInspectorPaths），Data/Panel/Example 类定义不变。
+- [2026-07-25 17:09:26] AttributeOverviewPro 子资产重构已完成并合并到 main（2026-07-25）：~194 个独立 .asset 文件合并为 3 个文件 — AttributeOverviewDatabase.asset（DatabaseSO + 70 PanelSO 子资产）、UnityExamples.asset（Unity 原生序列化 ExampleSO）、OdinExamples.asset（Odin 序列化 ExampleSO）。按序列化方式分离存储。初始化超时 bug 已修复（批量创建跳过逐次 SaveAssets）。
+
 - [2026-07-25 10:43:31] Monorepo 安装方式：三个子包通过各自的 `?path=` 参数从同一 Git 仓库安装，例如 `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture`。**Why:** monorepo 中三个子包在同一仓库的不同子目录，直接用仓库根 URL 无法正确识别单个包。**How to apply:** README 中的 Git URL 始终带 `?path=Assets/Runestone/{包名}` 参数；Aesir Modules 会自动拉取 Architecture + Inspector 依赖。
 - [2026-07-25 14:01:20] 包依赖关系更新（2026-07-25）：Aesir Modules 仅依赖 Aesir Architecture（移除了 Inspector 依赖）；Aesir Inspector 强依赖 Odin Inspector（从可选改为必需）；Aesir Architecture 保持独立。**Why:** 简化依赖链，Modules 不再间接依赖 Inspector/Odin；Inspector 本质上需要 Odin 才能工作。**How to apply:** Modules 的 package.json 仅声明 architecture 依赖；Inspector 的 README 和 package.json 标注 Odin 为强依赖；根目录 README 依赖图和安装说明已同步更新。
 
 ### Reference
 - [2026-07-24 21:08:41] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
+- [2026-07-25 17:09:26] sync-samples 技能位于 .codely-cli/skills/sync-samples/ — 自动扫描 Assets/Runestone/*/package.json 中的 samples 数组，将 Assets/Samples/<包名>/<版本>/<displayName>/ 同步到对应包的 Samples~/<path> 文件夹。支持 --dry-run 预览。触发词："同步 Samples"、"sync samples"。
