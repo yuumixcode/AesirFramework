@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 
+#pragma warning disable CS0414 // 字段已被赋值，但它的值从未被使用
 namespace Runestone.AesirInspector.OdinIntegration.Editor
 {
     [AesirExample]
@@ -17,7 +18,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         [PropertyTooltip("@\"Current Time: \" + DateTime.Now.ToString()")]
         public int expressionTooltip;
 
-        string TooltipText = "This is a tooltip from a member variable.";
+        string _tooltipText = "This is a tooltip from a member variable.";
 
         public override void AesirInspectorReset()
         {
