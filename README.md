@@ -13,7 +13,7 @@
 
 ## ✨ 三个子包，独立可装
 
-> **关键点：所有子包都通过同一 Git 仓库发布。** Aesir Architecture 和 Aesir Inspector **互相独立**；Aesir Modules **同时依赖** Architecture 和 Inspector。
+> **关键点：所有子包都通过同一 Git 仓库发布。** Aesir Architecture 和 Aesir Inspector **互相独立**；Aesir Modules **依赖** Architecture。Aesir Inspector **强依赖 [Odin Inspector](https://odininspector.com/)**。
 
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
@@ -28,22 +28,16 @@
 ## 🧩 依赖关系
 
 ```
-            ┌──────────────────────────────────────┐
-            │      Aesir Inspector（独立工具集）      │
-            │  双语 UI / 文档生成器 / Summary 工具     │
-            └──────────────┬───────────────────────┘
-                           │ 依赖
-                           ▼
-┌──────────────────────┐    │    ┌──────────────────────────┐
-│  Aesir Architecture  │◄───┴───►│  Aesir Inspector（独立）   │
-│  MVP/MVC 基础框架     │   互相独立 │  编辑器扩展              │
+┌──────────────────────┐         ┌──────────────────────────┐
+│  Aesir Architecture  │         │  Aesir Inspector          │
+│  MVP/MVC 基础框架     │  互相独立 │  编辑器扩展（强依赖 Odin）  │
 │  能力接口 / 命令 / 事件 │         └──────────────────────────┘
 └──────────────────────┘
             ▲
             │ 依赖
             │
 ┌──────────────────────┐
-│   Aesir Modules      │ ─── 依赖 Architecture + Inspector
+│   Aesir Modules      │ ─── 依赖 Architecture
 │   UI 框架             │
 └──────────────────────┘
 ```
@@ -51,8 +45,8 @@
 **关键约束**：
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Inspector** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 同时依赖 `cn.runestone.aesir.architecture` 和 `cn.runestone.aesir.inspector`
+- **Aesir Inspector** — 不依赖任何 Aesir 子包，可独立安装；**强依赖 Odin Inspector**
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`
 
 ---
 
@@ -70,7 +64,7 @@
 
 按需安装——只添加你需要的子包。
 
-**只安装 Aesir Modules 时**，UPM 会自动解析依赖并拉取 Aesir Architecture + Aesir Inspector（因为 `package.json` 的 `dependencies` 字段里声明了）。
+**只安装 Aesir Modules 时**，UPM 会自动解析依赖并拉取 Aesir Architecture（因为 `package.json` 的 `dependencies` 字段里声明了）。
 
 ### 方式 2：通过 `manifest.json` 编辑安装
 
@@ -86,7 +80,7 @@
 }
 ```
 
-只添加你需要的子包——三个包互相独立（除 Aesir Modules 自动依赖其他两个外）。
+只添加你需要的子包——三个包互相独立（除 Aesir Modules 自动依赖 Architecture 外）。Aesir Inspector 需额外安装 Odin Inspector。
 
 ---
 
@@ -143,10 +137,10 @@ Unity-Aesir-Packages/                       # 你现在看到的仓库
     ├── AesirArchitecture/                 # 不依赖其他 Aesir 子包
     │   ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
     │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    ├── AesirModules/                      # 依赖 Architecture + Inspector
+    ├── AesirModules/                      # 依赖 Architecture
     │   ├── Runtime/  Editor/  Documentation~/
     │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    └── AesirInspector/                    # 不依赖其他 Aesir 子包
+    └── AesirInspector/                    # 不依赖其他 Aesir 子包；强依赖 Odin Inspector
         ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
         ├── README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE.md  package.json
 ```
@@ -157,7 +151,7 @@ Unity-Aesir-Packages/                       # 你现在看到的仓库
 
 > - **Unity / Tuanjie**: 2022.3.62f3c1（或等价 LTS 版本）
 > - **渲染管线**: URP 14.0.12
-> - **依赖（可选）**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — Aesir Architecture / Modules / Inspector 都通过 `#if ODIN_INSPECTOR` 条件编译，未安装时自动跳过 Odin 相关功能
+> - **依赖**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — Aesir Inspector **强依赖** Odin Inspector；Aesir Architecture / Modules 通过 `#if ODIN_INSPECTOR` 条件编译可选集成
 
 首次打开项目时，Unity 会自动从 `Packages/manifest.json` 解析依赖。
 
