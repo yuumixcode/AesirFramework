@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c0341a29044a70a61b16c39f64fc84, type: 3}
+  m_Name: HideIfExample
+  m_EditorClassIdentifier: 
+  someObject: {fileID: 0}
+  someEnum: 0
+  isToggled: 0
+  hideIfInfo: {x: 0, y: 0}
+  hideIfError: {x: 0, y: 0}
+  hideIfWarning: {x: 0, y: 0}
+  hideIfToggled: 0
+  hideWhenIsNotNull: {x: 0, y: 0, z: 0}
+  hideWithMethod: 0
+  hideWithExpression: 0
