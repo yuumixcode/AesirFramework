@@ -1,0 +1,23 @@
+{
+  "name": "Runestone.AesirInspector.Samples.PluginConfig.Editor",
+  "rootNamespace": "",
+  "references": [
+    "Runestone.AesirInspector",
+    "Runestone.AesirInspector.Editor",
+    "Runestone.AesirInspector.OdinIntegration",
+    "Runestone.AesirInspector.Samples.PluginConfig"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "ODIN_INSPECTOR"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -34,12 +34,15 @@
 # Jetbrains Rider personal-layer settings
 *.DotSettings.user
 
-# Sirenix Odin Inspector (third-party, licensed)
+# Sirenix Odin Inspector（第三方插件，独立授权，不分发）
 /[Aa]ssets/Plugins/Sirenix/
 /[Aa]ssets/Plugins/Sirenix.meta
 
 # Visual Studio cache directory
 .vs/
+
+# JetBrains IDE 缓存目录
+.idea/
 
 # Gradle cache directory
 .gradle/
@@ -109,7 +112,7 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
-# Tuanjie AI Codely CLI (local tooling, not distributable)
+# 团结引擎 AI Codely CLI（本地工具，不随仓库分发）
 .codely-cli/auto-saves/
 .codely-cli/extensions/codely-unity-lsp-server/
 .codely-cli/extensions/TJGenerators/
