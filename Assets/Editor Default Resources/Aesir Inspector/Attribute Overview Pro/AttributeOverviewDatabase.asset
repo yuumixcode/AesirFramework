@@ -1,5 +1,1090 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9214615555698216304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8f4d0e7c742462988338343b7a78284, type: 3}
+  m_Name: SuffixLabelAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -3001966934221357483, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-9041181857931204284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0090027e5d6e4a99b625b63685059849, type: 3}
+  m_Name: PropertyRangeAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 3612568064482192114, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-8597507272763091166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31c075713ea240ca9b956bf13acea1e9, type: 3}
+  m_Name: ListDrawerSettingsAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -2111674769060886042, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-8122411850379149842
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23b34bf2cfb0476e8845632654a6a9af, type: 3}
+  m_Name: InlineButtonAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -7056762987282277431, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-7669518584804423720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55064b676eaa40a0a9d93c566d25727f, type: 3}
+  m_Name: RequiredAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -8027129117259627147, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-7602177844984477706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d281b3ab22764856ad0aaa2375a4c9f, type: 3}
+  m_Name: HideIfGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -5666365703994333290, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-7518953712204935484
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f329bf772f340a299f08cbe46a74fc2, type: 3}
+  m_Name: ReadOnlyAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -5457062586104237687, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-6413971373319334784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e324b4d895f54c458606e9a747e82c7d, type: 3}
+  m_Name: RequiredInAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 4936312968649073355, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-6115211564192207690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f6ab47a5d7b44b8faf21b581da28eb8b, type: 3}
+  m_Name: SearchableAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 3430120958734663277, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-5790770481477132658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c72c659be79d48339179a1f9d0c83661, type: 3}
+  m_Name: EnumToggleButtonsAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 3767852348351743243, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-4946024452321623425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98974f0691bd4dfab326c149cc72afe9, type: 3}
+  m_Name: FolderPathAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -2205543016301684078, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-4774001981902325240
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85d6fddfcaff4f759753e90dc2b9c12e, type: 3}
+  m_Name: ValidateInputAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -846740405585854032, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-4346284199333583708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 981d8a44c9ee40bc987c1f8f544ad22a, type: 3}
+  m_Name: GUIColorAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -7854082222091131582, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-4295737612179477066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 252c96d1b7e54b248f64f9ee10133f73, type: 3}
+  m_Name: PropertySpaceAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 938597960815852580, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-3859918781601808460
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 184fa38f1c4548aeab8de4a9912db465, type: 3}
+  m_Name: LabelTextAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -6774304635404560325, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-3823758350863351244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc119cfb609b4711a3b9db7c74d5934b, type: 3}
+  m_Name: HideInEditorModeAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 8258307899493985976, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-3775182972232971773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ada6d1d3ef2640e7aebada961c92b590, type: 3}
+  m_Name: SceneObjectsOnlyAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -7734678013392882214, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-3696817346288635450
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7524adc0ff694be482b31ac5b418f769, type: 3}
+  m_Name: DisableInAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -8917167370224900577, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-3238379948117886546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2087aa0fbdab427aa31af50b6ecc6b80, type: 3}
+  m_Name: DelayedPropertyAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 915861971714587938, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-2713950758817254435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d83dfa758a3445c5bb8efeb80c747c48, type: 3}
+  m_Name: InlineEditorAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 4721052268850720128, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-2614848092706816212
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2114a46ffca46cc8dfb4ee7348fcd3b, type: 3}
+  m_Name: OnValueChangedAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 0}
+--- !u!114 &-2135422437241652147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 414a4f46e13b34185835841f1406793b, type: 3}
+  m_Name: AssetListAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -5232803546184758977, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-1886986171125320542
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2575060398ce421688cc4940f9cf9a62, type: 3}
+  m_Name: DisableInEditorModeAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -443793131426748585, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-1266343118206565356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d2ecbfc93e5246dd90b5d6ab980f7bd5, type: 3}
+  m_Name: TableListAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 9053271708291835207, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-893190358059892303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80cd987d940714dc39cbb172a89ac976, type: 3}
+  m_Name: OnInspectorInitAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -6881574649509439272, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-680416021039278435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7cabb7b566440459b9367dd7db4bff1, type: 3}
+  m_Name: ShowInAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -1814133929099067322, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-306330005371262254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9b351fea7f334e798c995656f4a3ded, type: 3}
+  m_Name: CustomValueDrawerPanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 3299072960604150184, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-281151651584876921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a75e2e34eed4e7eab951be095742bf0, type: 3}
+  m_Name: PropertyOrderAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -164692291343156797, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-260461397143451739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6430b138bde5426b836682e1bf991e49, type: 3}
+  m_Name: ShowInInspectorAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 5106734597665661748, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-54154501713197067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85facb413b814f27ba96de1d14f8cbec, type: 3}
+  m_Name: ValueDropdownAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 5233605328496548272, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &-2356994686417517
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1de42beaeab469a8fd8863705ec93bd, type: 3}
+  m_Name: CustomValueDrawerAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 3299072960604150184, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15,18 +1100,85 @@ MonoBehaviour:
   serializationData:
     SerializedFormat: 2
     SerializedBytes: 
-    ReferencedUnityObjects: []
+    ReferencedUnityObjects:
+    - {fileID: -2614848092706816212}
+    - {fileID: 8253111094344020712}
+    - {fileID: -9214615555698216304}
+    - {fileID: -306330005371262254}
+    - {fileID: -4346284199333583708}
+    - {fileID: 4814834804531271076}
+    - {fileID: -3859918781601808460}
+    - {fileID: 4178381390280764024}
+    - {fileID: 4465856170552254810}
+    - {fileID: 7866296691807889248}
+    - {fileID: 122708928355934364}
+    - {fileID: -7518953712204935484}
+    - {fileID: -3238379948117886546}
+    - {fileID: 1879498478599170910}
+    - {fileID: 2563467290065392054}
+    - {fileID: -260461397143451739}
+    - {fileID: 867342515150874446}
+    - {fileID: -8122411850379149842}
+    - {fileID: 5846433827973660039}
+    - {fileID: -8597507272763091166}
+    - {fileID: -6115211564192207690}
+    - {fileID: -1266343118206565356}
+    - {fileID: 1690475256512566743}
+    - {fileID: 238562887603831518}
+    - {fileID: 5881412243845264959}
+    - {fileID: 5934189002744748375}
+    - {fileID: 963936618490947486}
+    - {fileID: 3933833057917350546}
+    - {fileID: 7485246938989109945}
+    - {fileID: 4910081076669043935}
+    - {fileID: -3823758350863351244}
+    - {fileID: 3786763375529772181}
+    - {fileID: 6927591334446389786}
+    - {fileID: -680416021039278435}
+    - {fileID: 2641509909677838281}
+    - {fileID: 7465446830932661713}
+    - {fileID: 810539197522512631}
+    - {fileID: 8019335000970131467}
+    - {fileID: -7602177844984477706}
+    - {fileID: 266145573696785998}
+    - {fileID: 5431187726591271014}
+    - {fileID: -1886986171125320542}
+    - {fileID: 4434146708167719117}
+    - {fileID: -3696817346288635450}
+    - {fileID: 6301285844313258887}
+    - {fileID: 1084402590683297915}
+    - {fileID: 9016099090932331871}
+    - {fileID: -9041181857931204284}
+    - {fileID: 5041561510605597911}
+    - {fileID: 2460698020208867067}
+    - {fileID: -2135422437241652147}
+    - {fileID: -5790770481477132658}
+    - {fileID: -4774001981902325240}
+    - {fileID: -7669518584804423720}
+    - {fileID: -6413971373319334784}
+    - {fileID: -3775182972232971773}
+    - {fileID: -54154501713197067}
+    - {fileID: 366158220515077278}
+    - {fileID: 6255811248289253920}
+    - {fileID: 321284678563497954}
+    - {fileID: -4295737612179477066}
+    - {fileID: -281151651584876921}
+    - {fileID: 7599220916876094876}
+    - {fileID: -2713950758817254435}
+    - {fileID: -4946024452321623425}
+    - {fileID: -2356994686417517}
+    - {fileID: 40127167187868189}
+    - {fileID: 4443776944467666825}
+    - {fileID: -893190358059892303}
+    - {fileID: 5098355387066631393}
     SerializedBytesString: 
     Prefab: {fileID: 0}
     PrefabModificationsReferencedUnityObjects: []
     PrefabModifications: []
     SerializationNodes:
     - Name: AttributePanelArrayMap
-      Entry: 6
-      Data: 
-    - Name: AttributePanelMap
       Entry: 7
-      Data: 0|System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO,
+      Data: 0|System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
         Runestone.AesirInspector.OdinIntegration.Editor]], mscorlib
     - Name: comparer
       Entry: 7
@@ -37,6 +1189,449 @@ MonoBehaviour:
       Data: 
     - Name: 
       Entry: 12
+      Data: 12
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials
+    - Name: $v
+      Entry: 7
+      Data: 2|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 17
+    - Name: 
+      Entry: 10
+      Data: 0
+    - Name: 
+      Entry: 10
+      Data: 1
+    - Name: 
+      Entry: 10
+      Data: 2
+    - Name: 
+      Entry: 10
+      Data: 3
+    - Name: 
+      Entry: 10
+      Data: 4
+    - Name: 
+      Entry: 10
+      Data: 5
+    - Name: 
+      Entry: 10
+      Data: 6
+    - Name: 
+      Entry: 10
+      Data: 7
+    - Name: 
+      Entry: 10
+      Data: 8
+    - Name: 
+      Entry: 10
+      Data: 9
+    - Name: 
+      Entry: 10
+      Data: 10
+    - Name: 
+      Entry: 10
+      Data: 11
+    - Name: 
+      Entry: 10
+      Data: 12
+    - Name: 
+      Entry: 10
+      Data: 13
+    - Name: 
+      Entry: 10
+      Data: 14
+    - Name: 
+      Entry: 10
+      Data: 15
+    - Name: 
+      Entry: 10
+      Data: 16
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Buttons
+    - Name: $v
+      Entry: 7
+      Data: 3|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 2
+    - Name: 
+      Entry: 10
+      Data: 17
+    - Name: 
+      Entry: 10
+      Data: 18
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Collections
+    - Name: $v
+      Entry: 7
+      Data: 4|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 4
+    - Name: 
+      Entry: 10
+      Data: 19
+    - Name: 
+      Entry: 10
+      Data: 20
+    - Name: 
+      Entry: 10
+      Data: 21
+    - Name: 
+      Entry: 10
+      Data: 22
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups
+    - Name: $v
+      Entry: 7
+      Data: 5|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 7
+    - Name: 
+      Entry: 10
+      Data: 23
+    - Name: 
+      Entry: 10
+      Data: 24
+    - Name: 
+      Entry: 10
+      Data: 25
+    - Name: 
+      Entry: 10
+      Data: 26
+    - Name: 
+      Entry: 10
+      Data: 27
+    - Name: 
+      Entry: 10
+      Data: 28
+    - Name: 
+      Entry: 10
+      Data: 29
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals
+    - Name: $v
+      Entry: 7
+      Data: 6|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 15
+    - Name: 
+      Entry: 10
+      Data: 30
+    - Name: 
+      Entry: 10
+      Data: 31
+    - Name: 
+      Entry: 10
+      Data: 32
+    - Name: 
+      Entry: 10
+      Data: 33
+    - Name: 
+      Entry: 10
+      Data: 34
+    - Name: 
+      Entry: 10
+      Data: 35
+    - Name: 
+      Entry: 10
+      Data: 36
+    - Name: 
+      Entry: 10
+      Data: 37
+    - Name: 
+      Entry: 10
+      Data: 38
+    - Name: 
+      Entry: 10
+      Data: 39
+    - Name: 
+      Entry: 10
+      Data: 40
+    - Name: 
+      Entry: 10
+      Data: 41
+    - Name: 
+      Entry: 10
+      Data: 42
+    - Name: 
+      Entry: 10
+      Data: 43
+    - Name: 
+      Entry: 10
+      Data: 44
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Numbers
+    - Name: $v
+      Entry: 7
+      Data: 7|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 5
+    - Name: 
+      Entry: 10
+      Data: 45
+    - Name: 
+      Entry: 10
+      Data: 46
+    - Name: 
+      Entry: 10
+      Data: 47
+    - Name: 
+      Entry: 10
+      Data: 48
+    - Name: 
+      Entry: 10
+      Data: 49
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: TypeSpecifics
+    - Name: $v
+      Entry: 7
+      Data: 8|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 2
+    - Name: 
+      Entry: 10
+      Data: 50
+    - Name: 
+      Entry: 10
+      Data: 51
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Validation
+    - Name: $v
+      Entry: 7
+      Data: 9|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 4
+    - Name: 
+      Entry: 10
+      Data: 52
+    - Name: 
+      Entry: 10
+      Data: 53
+    - Name: 
+      Entry: 10
+      Data: 54
+    - Name: 
+      Entry: 10
+      Data: 55
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc
+    - Name: $v
+      Entry: 7
+      Data: 10|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 12
+    - Name: 
+      Entry: 10
+      Data: 56
+    - Name: 
+      Entry: 10
+      Data: 57
+    - Name: 
+      Entry: 10
+      Data: 58
+    - Name: 
+      Entry: 10
+      Data: 59
+    - Name: 
+      Entry: 10
+      Data: 60
+    - Name: 
+      Entry: 10
+      Data: 61
+    - Name: 
+      Entry: 10
+      Data: 62
+    - Name: 
+      Entry: 10
+      Data: 63
+    - Name: 
+      Entry: 10
+      Data: 64
+    - Name: 
+      Entry: 10
+      Data: 65
+    - Name: 
+      Entry: 10
+      Data: 66
+    - Name: 
+      Entry: 10
+      Data: 67
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Meta
+    - Name: $v
+      Entry: 7
+      Data: 11|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
+      Data: 2
+    - Name: 
+      Entry: 10
+      Data: 68
+    - Name: 
+      Entry: 10
+      Data: 69
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Unity
+    - Name: $v
+      Entry: 7
+      Data: 12|Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO[],
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 12
       Data: 0
     - Name: 
       Entry: 13
@@ -44,3 +1639,2245 @@ MonoBehaviour:
     - Name: 
       Entry: 8
       Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Debug
+    - Name: $v
+      Entry: 9
+      Data: 12
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: AttributePanelMap
+      Entry: 7
+      Data: 13|System.Collections.Generic.Dictionary`2[[System.String, mscorlib],[Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO,
+        Runestone.AesirInspector.OdinIntegration.Editor]], mscorlib
+    - Name: comparer
+      Entry: 9
+      Data: 1
+    - Name: 
+      Entry: 12
+      Data: 70
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/OnValueChanged
+    - Name: $v
+      Entry: 10
+      Data: 0
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/DetailedInfoBox
+    - Name: $v
+      Entry: 10
+      Data: 1
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/SuffixLabel
+    - Name: $v
+      Entry: 10
+      Data: 2
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/Custom Value Drawer
+    - Name: $v
+      Entry: 10
+      Data: 3
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/GUIColor
+    - Name: $v
+      Entry: 10
+      Data: 4
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/InlineProperty
+    - Name: $v
+      Entry: 10
+      Data: 5
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/LabelText
+    - Name: $v
+      Entry: 10
+      Data: 6
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/PropertyTooltip
+    - Name: $v
+      Entry: 10
+      Data: 7
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/Title
+    - Name: $v
+      Entry: 10
+      Data: 8
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/HideLabel
+    - Name: $v
+      Entry: 10
+      Data: 9
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/LabelWidth
+    - Name: $v
+      Entry: 10
+      Data: 10
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/ReadOnly
+    - Name: $v
+      Entry: 10
+      Data: 11
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/DelayedProperty
+    - Name: $v
+      Entry: 10
+      Data: 12
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/InfoBox
+    - Name: $v
+      Entry: 10
+      Data: 13
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/AssetsOnly
+    - Name: $v
+      Entry: 10
+      Data: 14
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/Show In Inspector
+    - Name: $v
+      Entry: 10
+      Data: 15
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Essentials/DisplayAsString
+    - Name: $v
+      Entry: 10
+      Data: 16
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Buttons/InlineButton
+    - Name: $v
+      Entry: 10
+      Data: 17
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Buttons/Button
+    - Name: $v
+      Entry: 10
+      Data: 18
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Collections/ListDrawerSettings
+    - Name: $v
+      Entry: 10
+      Data: 19
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Collections/Searchable
+    - Name: $v
+      Entry: 10
+      Data: 20
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Collections/TableList
+    - Name: $v
+      Entry: 10
+      Data: 21
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Collections/DictionaryDrawerSettings
+    - Name: $v
+      Entry: 10
+      Data: 22
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups/BoxGroup
+    - Name: $v
+      Entry: 10
+      Data: 23
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups/ToggleGroup
+    - Name: $v
+      Entry: 10
+      Data: 24
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups/FoldoutGroup
+    - Name: $v
+      Entry: 10
+      Data: 25
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups/TitleGroup
+    - Name: $v
+      Entry: 10
+      Data: 26
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups/VerticalGroup
+    - Name: $v
+      Entry: 10
+      Data: 27
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups/TabGroup
+    - Name: $v
+      Entry: 10
+      Data: 28
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Groups/HorizontalGroup
+    - Name: $v
+      Entry: 10
+      Data: 29
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/HideInEditorMode
+    - Name: $v
+      Entry: 10
+      Data: 30
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/ShowIf
+    - Name: $v
+      Entry: 10
+      Data: 31
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/ShowIfGroup
+    - Name: $v
+      Entry: 10
+      Data: 32
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/ShowIn
+    - Name: $v
+      Entry: 10
+      Data: 33
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/HideIf
+    - Name: $v
+      Entry: 10
+      Data: 34
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/HideInPlayMode
+    - Name: $v
+      Entry: 10
+      Data: 35
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/HideIn
+    - Name: $v
+      Entry: 10
+      Data: 36
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/EnableIn
+    - Name: $v
+      Entry: 10
+      Data: 37
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/HideIfGroup
+    - Name: $v
+      Entry: 10
+      Data: 38
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/DisableInPlayMode
+    - Name: $v
+      Entry: 10
+      Data: 39
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/DisableIf
+    - Name: $v
+      Entry: 10
+      Data: 40
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/DisableInEditorMode
+    - Name: $v
+      Entry: 10
+      Data: 41
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/HideInInlineEditors
+    - Name: $v
+      Entry: 10
+      Data: 42
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/DisableIn
+    - Name: $v
+      Entry: 10
+      Data: 43
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Conditionals/EnableIf
+    - Name: $v
+      Entry: 10
+      Data: 44
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Numbers/Progress Bar
+    - Name: $v
+      Entry: 10
+      Data: 45
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Numbers/Min Value
+    - Name: $v
+      Entry: 10
+      Data: 46
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Numbers/Property Range
+    - Name: $v
+      Entry: 10
+      Data: 47
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Numbers/Max Value
+    - Name: $v
+      Entry: 10
+      Data: 48
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Numbers/Min Max Slider
+    - Name: $v
+      Entry: 10
+      Data: 49
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: TypeSpecifics/AssetList
+    - Name: $v
+      Entry: 10
+      Data: 50
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: TypeSpecifics/EnumToggleButtons
+    - Name: $v
+      Entry: 10
+      Data: 51
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Validation/ValidateInput
+    - Name: $v
+      Entry: 10
+      Data: 52
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Validation/Required
+    - Name: $v
+      Entry: 10
+      Data: 53
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Validation/RequiredIn
+    - Name: $v
+      Entry: 10
+      Data: 54
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Validation/SceneObjectsOnly
+    - Name: $v
+      Entry: 10
+      Data: 55
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/ValueDropdown
+    - Name: $v
+      Entry: 10
+      Data: 56
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/On State Update
+    - Name: $v
+      Entry: 10
+      Data: 57
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/Indent
+    - Name: $v
+      Entry: 10
+      Data: 58
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/FilePath
+    - Name: $v
+      Entry: 10
+      Data: 59
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/PropertySpace
+    - Name: $v
+      Entry: 10
+      Data: 60
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/PropertyOrder
+    - Name: $v
+      Entry: 10
+      Data: 61
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/On Inspector GUI
+    - Name: $v
+      Entry: 10
+      Data: 62
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/InlineEditor
+    - Name: $v
+      Entry: 10
+      Data: 63
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/FolderPath
+    - Name: $v
+      Entry: 10
+      Data: 64
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/Custom Value Drawer
+    - Name: $v
+      Entry: 10
+      Data: 65
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/EnableGUI
+    - Name: $v
+      Entry: 10
+      Data: 66
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Misc/Type Filter
+    - Name: $v
+      Entry: 10
+      Data: 67
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Meta/OnInspectorInit
+    - Name: $v
+      Entry: 10
+      Data: 68
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 
+    - Name: $k
+      Entry: 1
+      Data: Meta/OnInspectorDispose
+    - Name: $v
+      Entry: 10
+      Data: 69
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
+      Data: 
+--- !u!114 &40127167187868189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 559a2264f02b4c31aca76657b52d4d78, type: 3}
+  m_Name: EnableGUIAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 1819459976472287835, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &122708928355934364
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 028a08a3c4d04691802b6a079682751e, type: 3}
+  m_Name: LabelWidthAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -5803309559142120015, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &238562887603831518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b98f2d9473fd43cf99be55884ff7c324, type: 3}
+  m_Name: BoxGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -2611812159173851466, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &266145573696785998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af12f204e38e4bd2b7b268664d7d5279, type: 3}
+  m_Name: DisableInPlayModeAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -2613711128026257994, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &321284678563497954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfceab8f69c34fb6b40cac1b501f0e32, type: 3}
+  m_Name: FilePathAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -1335465610941647802, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &366158220515077278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9929ec1eff0e43918068e030fd85da61, type: 3}
+  m_Name: OnStateUpdateAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -7228660521998353105, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &810539197522512631
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c02bfeae51024d5fb49c0da6c048f7f5, type: 3}
+  m_Name: HideInAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -1261521995916502283, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &867342515150874446
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66e10b2947fa4b1cb3a23d226921d46f, type: 3}
+  m_Name: DisplayAsStringAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 6396050304918070762, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &963936618490947486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5aa535429d8e4ea2881046f6e83ef0a, type: 3}
+  m_Name: TitleGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -7605178916954132575, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &1084402590683297915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2348ce47504948e0bc21b37e38e0a355, type: 3}
+  m_Name: ProgressBarAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 178287396640304251, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &1690475256512566743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0fde4814965d41709c8dd0a46d239b81, type: 3}
+  m_Name: DictionaryDrawerSettingsAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 4041424498776896706, guid: e29b195b1ab24403c846aea6f3e0cfc4, type: 2}
+--- !u!114 &1879498478599170910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54871a452d12432ab2413a3029501dfb, type: 3}
+  m_Name: InfoBoxAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 5705247999430542723, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &2460698020208867067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20c19ecb668348babfa7e24ccd81a1f3, type: 3}
+  m_Name: MinMaxSliderAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -3815309359178268641, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &2563467290065392054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed9317bfbf78542a2a98c26a14356ae7, type: 3}
+  m_Name: AssetsOnlyAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -3678163780112307247, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &2641509909677838281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36aa8808077b4dcc93bf91b9ff86826a, type: 3}
+  m_Name: HideIfAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -4371926724603207518, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &3786763375529772181
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75531aaa148a42268de12f65975027d6, type: 3}
+  m_Name: ShowIfAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -3038904994427242397, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &3933833057917350546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899036f6c3424ccabceb6dac281aa5da, type: 3}
+  m_Name: VerticalGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -8929926328784096805, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &4178381390280764024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 487fc2342c1f44b89f307b1700735030, type: 3}
+  m_Name: PropertyTooltipAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 2042957570471118300, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &4434146708167719117
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da8170b7b369426fb2c946342828cc59, type: 3}
+  m_Name: HideInInlineEditorsAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -8863015294822676272, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &4443776944467666825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24bc20fc26fe4c1082c89ed4c5bb17f6, type: 3}
+  m_Name: TypeFilterAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -4554354497030333561, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &4465856170552254810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e7039bdea0540c6ac23dfca00109d52, type: 3}
+  m_Name: TitleAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 407848053516983816, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &4814834804531271076
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa10614f1f474dfd89ac7dcbd8d72898, type: 3}
+  m_Name: InlinePropertyAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -8552020356630573804, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &4910081076669043935
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8c63b51d69142bebc45ad6dc2ef29fd, type: 3}
+  m_Name: HorizontalGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 6366592748695609897, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &5041561510605597911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10b46cb366184ec6ab1d8d727af1f2ab, type: 3}
+  m_Name: MaxValueAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 6322974403686072508, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &5098355387066631393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 970d57dc81baf40fabce304100241216, type: 3}
+  m_Name: OnInspectorDisposeAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 627075067868178690, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &5431187726591271014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bdd2ff3c44f4482970b447470b6da52, type: 3}
+  m_Name: DisableIfAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 7195578303697952473, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &5846433827973660039
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 856a40cc4fed4d0f807f2edaf164d0de, type: 3}
+  m_Name: ButtonAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -3421322543231174989, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &5881412243845264959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36460ca45f6ac4824a446da3fcf8dec5, type: 3}
+  m_Name: ToggleGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 3038304490327919890, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &5934189002744748375
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77b7d6031f1f4bfaace675dee6d3d1bd, type: 3}
+  m_Name: FoldoutGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 1214491093810751912, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &6255811248289253920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91be5515840448038cc8e2937bd1ed15, type: 3}
+  m_Name: IndentAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 8912328349211857262, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &6301285844313258887
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d20ecbef58b74c2ea233bad5bf3194ce, type: 3}
+  m_Name: EnableIfAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 4075997180989101582, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &6927591334446389786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d43ff4b4f40b3407ea4ba0c88a42afeb, type: 3}
+  m_Name: ShowIfGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 5074103230472889677, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &7465446830932661713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 871f80bcd9d9478794edd46bdd3e91e4, type: 3}
+  m_Name: HideInPlayModeAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -6402081291642609716, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &7485246938989109945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 723475372f4f4ff18949ca9771401cb3, type: 3}
+  m_Name: TabGroupAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -3902102860321878362, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &7599220916876094876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e40c69e19c7642d1a8c3da94ea3ce2e7, type: 3}
+  m_Name: OnInspectorGUIAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 6242465662739330983, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &7866296691807889248
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8cfdfb3fd75403ebfbfd76899606583, type: 3}
+  m_Name: HideLabelAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -6292787803030577507, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &8019335000970131467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62cbc5a7c6344e29882f30995f61c2e6, type: 3}
+  m_Name: EnableInAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -1430854643459373821, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &8253111094344020712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5e1e123fd784b0dbc4b8c30ba632589, type: 3}
+  m_Name: DetailInfoBoxAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: -184497693045217608, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
+--- !u!114 &9016099090932331871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 112d8b2e3d6c4c219058d2e49d195a2a, type: 3}
+  m_Name: MinValueAttributePanelSO
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  bilingualHeaderControl:
+    headerName:
+      fontSize: 30
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+    headerIntroduction:
+      fontSize: 14
+      alignment: 0
+      enableRichText: 1
+      format: 
+      overflow: 0
+  currentSelectedExample: {fileID: 3849813584282796050, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}

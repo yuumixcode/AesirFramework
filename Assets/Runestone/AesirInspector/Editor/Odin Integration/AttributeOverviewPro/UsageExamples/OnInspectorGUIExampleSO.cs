@@ -15,7 +15,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         public string FieldWithLabel;
 
         [Title("Parameter: Action (After Field)")]
-        [OnInspectorGUI("DrawButtonAfter", true)]
+        [OnInspectorGUI("DrawButtonAfter")]
         public int FieldWithButton;
 
         void DrawLabelBefore()

@@ -25,8 +25,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             }
 
             var contentRect =
-                AbstractAttributePanelSO.BeginDrawContainerWithTitle(_resolvedStringParameterLabel,
-                    out _);
+                AbstractAttributePanelSO.BeginDrawContainerWithTitle(_resolvedStringParameterLabel, out _);
 
             SirenixEditorGUI.BeginVerticalList();
             foreach (var resolvedString in _resolvedStringParameters)

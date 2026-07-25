@@ -1,0 +1,1421 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8929926328784096805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f080d1bbf74b4dfd9de768ec6a9471b3, type: 3}
+  m_Name: VerticalGroupExampleSO
+  m_EditorClassIdentifier: 
+  left1: 0
+  left2: 0
+  right1: 0
+  right2: 0
+  padded1: 0
+  padded2: 0
+--- !u!114 &-8917167370224900577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a1b96f8ab9154dca9aa418f94539673, type: 3}
+  m_Name: DisableInExampleSO
+  m_EditorClassIdentifier: 
+  defaultDisabled: {fileID: 0}
+  disableInPrefab: {fileID: 0}
+  disableInSceneInstance: {fileID: 0}
+  disableInNonPrefab: {fileID: 0}
+--- !u!114 &-8863015294822676272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7075aaa620f24f129cc429532716641, type: 3}
+  m_Name: HideInInlineEditorsExampleSO
+  m_EditorClassIdentifier: 
+  hiddenInlineEditor: {fileID: 0}
+  shownInlineEditor: {fileID: 0}
+--- !u!114 &-8552020356630573804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4a27ff6076b484c8de0d7063e7ac6e2, type: 3}
+  m_Name: InlinePropertyExampleSO
+  m_EditorClassIdentifier: 
+  position:
+    x: 0
+    y: 0
+  data:
+    name: 
+    id: 0
+--- !u!114 &-8412389829711584722
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 038222f8957a46fd8fa434c2bce38419, type: 3}
+  m_Name: InfoBoxExampleWithVisibleIfSO
+  m_EditorClassIdentifier: 
+  toggleInfoBox: 0
+  referenceExample: 0
+  expressionExample: 0
+--- !u!114 &-8027129117259627147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 031a3680051044af937748a9c12c6ae1, type: 3}
+  m_Name: RequiredExampleSO
+  m_EditorClassIdentifier: 
+  defaultRequired: {fileID: 0}
+  infoRequired: {fileID: 0}
+  warningRequired: {fileID: 0}
+  errorRequired: {fileID: 0}
+--- !u!114 &-7854082222091131582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d15e8d57e884d4d93ca44157a6efff5, type: 3}
+  m_Name: GUIColorExampleSO
+  m_EditorClassIdentifier: 
+  rgbaExample: 0
+  hexExample: 0
+  colorNameExample: 0
+--- !u!114 &-7734678013392882214
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22305fd7bb6e472c95076649e173b02e, type: 3}
+  m_Name: SceneObjectsOnlyExampleSO
+  m_EditorClassIdentifier: 
+  onlySceneObjects: []
+  someSceneObject: {fileID: 0}
+  someMeshRenderer: {fileID: 0}
+--- !u!114 &-7605178916954132575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fc88c8929e0941929b930e36a53b9f3, type: 3}
+  m_Name: TitleGroupExampleSO
+  m_EditorClassIdentifier: 
+  noParamsField: 0
+  withSubtitle: 0
+  centered: 0
+  split: 0
+  noHorizontalLine: 0
+  notBold: 0
+  indented: 0
+  nestedIndented: 0
+  order5: 0
+  order2: 0
+--- !u!114 &-7233890060997921687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2368caf0eae654e558d91ebb127f0cdf, type: 3}
+  m_Name: AssetListExampleWithCustomFilterMethodSO
+  m_EditorClassIdentifier: 
+  rigidbodyPrefabs: []
+--- !u!114 &-7228660521998353105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 38a8746ce44946adaf627be4b701252a, type: 3}
+  m_Name: OnStateUpdateExampleSO
+  m_EditorClassIdentifier: 
+  ToggleField: 0
+  VisibleIfToggled: 
+  DisabledIfZero: 0
+--- !u!114 &-7056762987282277431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d7244acd2544665bc711de1b5a7de33, type: 3}
+  m_Name: InlineButtonExampleSO
+  m_EditorClassIdentifier: 
+  inlineButton: 0
+  multiButtons: 0
+  iconButton: 0
+  showButton: 0
+  conditionalButton: 0
+  coloredButton: 0
+--- !u!114 &-6881574649509439272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: db56366ae5c8044178bfad36947f8140, type: 3}
+  m_Name: OnInspectorInitExampleSO
+  m_EditorClassIdentifier: 
+  initializedField: 0
+  methodNameField: 
+  fieldSetByExpression: 
+--- !u!114 &-6774304635404560325
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a395623826d54860b217ea15794c6953, type: 3}
+  m_Name: LabelTextExampleSO
+  m_EditorClassIdentifier: 
+  customLabel: 1
+  labelFromMember: The label above is dynamic
+  dynamicLabel: Dynamic Label Text
+  expressionLabel: 
+  nicifiedField: 10
+  iconLabel: 100
+--- !u!114 &-6402081291642609716
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ac67f79ceebd43c6a0caa609d88a992, type: 3}
+  m_Name: HideInPlayModeExampleSO
+  m_EditorClassIdentifier: 
+  gameObject: {fileID: 0}
+  material: {fileID: 0}
+  someValue: 0
+--- !u!114 &-6292787803030577507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 507f662f49674b83974c78b18636b6e8, type: 3}
+  m_Name: HideLabelExampleSO
+  m_EditorClassIdentifier: 
+  normalProperty: 0
+  hiddenLabelProperty: 0
+  a: 0
+  b: 0
+--- !u!114 &-5803309559142120015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f674ca3888741ff836b091175749dd9, type: 3}
+  m_Name: LabelWidthExampleSO
+  m_EditorClassIdentifier: 
+  defaultWidth: 0
+  thinLabel: 0
+  wideLabel: 0
+  proportionalLabel: 0
+--- !u!114 &-5666365703994333290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96805b5032773434ebcd71f79d490653, type: 3}
+  m_Name: HideIfGroupExampleSO
+  m_EditorClassIdentifier: 
+  toggle: 0
+  messageType: 0
+  a: 0
+  b: 0
+  fieldName: 
+  gameObject: {fileID: 0}
+--- !u!114 &-5548217450763983945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 938e155241984edf94bb22935df1c4e7, type: 3}
+  m_Name: TitleExampleWithTitleSO
+  m_EditorClassIdentifier: 
+  dynamicTitle: Title from Field
+  referenceExample: 0
+  expressionExample: 0
+--- !u!114 &-5457062586104237687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23ce77edf6c449d2a9a8aad83bb90905, type: 3}
+  m_Name: ReadOnlyExampleSO
+  m_EditorClassIdentifier: 
+  readOnlyField: This field is read-only in the inspector
+  readOnlyList: 010000000200000003000000
+--- !u!114 &-5299383621308984616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11238c3c0dbe646ca9ccfb4a0cafa685, type: 3}
+  m_Name: TitleGroupExampleWithSubtitleSO
+  m_EditorClassIdentifier: 
+  subtitleField: Subtitle from Field
+  referenceExample: 0
+  expressionExample: 0
+--- !u!114 &-5232803546184758977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aca3828012d6d43de9a06932bab28a34, type: 3}
+  m_Name: AssetListExampleSO
+  m_EditorClassIdentifier: 
+  singleObject: {fileID: 0}
+  assetList: []
+  autoPopulatedWhenInspected: []
+  gameObjectsWithTag: []
+  gameObjectsWithLayerNames: []
+  gameObjectsWithNamePrefix: []
+--- !u!114 &-4554354497030333561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a753ce07bb04edf8f15b8923124704f, type: 3}
+  m_Name: TypeFilterExampleSO
+  m_EditorClassIdentifier: 
+--- !u!114 &-4371926724603207518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c0341a29044a70a61b16c39f64fc84, type: 3}
+  m_Name: HideIfExampleSO
+  m_EditorClassIdentifier: 
+  someObject: {fileID: 0}
+  someEnum: 0
+  isToggled: 0
+  hideIfInfo: {x: 0, y: 0}
+  hideIfError: {x: 0, y: 0}
+  hideIfWarning: {x: 0, y: 0}
+  hideIfToggled: 0
+  hideWhenIsNotNull: {x: 0, y: 0, z: 0}
+  hideWithMethod: 0
+  hideWithExpression: 0
+--- !u!114 &-3902102860321878362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ccbea1801834531ad4d83fd59c7eeab, type: 3}
+  m_Name: TabGroupExampleSO
+  m_EditorClassIdentifier: 
+  a: 0
+  b: 0
+  c: 0
+  d: 0
+  playerName: 
+  inventorySize: 0
+  shortTab: 0
+  tallTab: '
+
+
+
+
+    Tall Content'
+--- !u!114 &-3815309359178268641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d24c0acc3e4c4ab7a5ccdbde0170c159, type: 3}
+  m_Name: MinMaxSliderExampleSO
+  m_EditorClassIdentifier: 
+  Vector2Range: {x: 0, y: 0}
+  Vector2IntRange: {x: 0, y: 0}
+  DynamicMin: 0
+  DynamicMax: 10
+  DynamicRange: {x: 0, y: 0}
+--- !u!114 &-3678163780112307247
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f24cc1eb0790413aa827c25144f3093, type: 3}
+  m_Name: AssetsOnlyExampleSO
+  m_EditorClassIdentifier: 
+  somePrefab: {fileID: 0}
+  materialAsset: {fileID: 0}
+  someMeshRendererOnPrefab: {fileID: 0}
+  prefabs: []
+--- !u!114 &-3421322543231174989
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6d51ec17eec48c1859ef3e793a9c3df, type: 3}
+  m_Name: ButtonExampleSO
+  m_EditorClassIdentifier: 
+  dynamicButtonName: Click Me!
+--- !u!114 &-3276318762323592951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14c8360c826d24fd5ae85611ab098c28, type: 3}
+  m_Name: TitleGroupExampleWithGroupNameSO
+  m_EditorClassIdentifier: 
+  groupNameField: Dynamic Group
+  referenceExample: 0
+  expressionExample: 0
+--- !u!114 &-3038904994427242397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 977e99bb12aa46c3adf9a833d6631049, type: 3}
+  m_Name: ShowIfExampleSO
+  m_EditorClassIdentifier: 
+  showFields: 0
+  messageType: 0
+  visibleWhenToggled: 0
+  visibleWhenWarning: 0
+  visibleWithExpression: 0
+--- !u!114 &-3001966934221357483
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b95833635a444c087fae017e8547630, type: 3}
+  m_Name: SuffixLabelExampleSO
+  m_EditorClassIdentifier: 
+  distance: 0
+  progress: 0
+  dynamicProperty: 
+  expressionProperty: 
+--- !u!114 &-2613711128026257994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ac45fbf88b68473b8bd18eabe2aa15a, type: 3}
+  m_Name: DisableInPlayModeExampleSO
+  m_EditorClassIdentifier: 
+  gameObject: {fileID: 0}
+  material: {fileID: 0}
+  someValue: 0
+--- !u!114 &-2611812159173851466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85f53f81bfa64637ae2260192f9ae5e6, type: 3}
+  m_Name: BoxGroupExampleSO
+  m_EditorClassIdentifier: 
+  a: 0
+  b: 0
+  c: 0
+  d: 0
+  e: 0
+--- !u!114 &-2205543016301684078
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01e52bdcbb6a4c50a73e8fb452351ba1, type: 3}
+  m_Name: FolderPathExampleSO
+  m_EditorClassIdentifier: 
+  path: 
+  absolutePath: 
+  relativePath: 
+  existingPath: 
+--- !u!114 &-2111674769060886042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d7fb9458e7f4b9f96a362408b51399b, type: 3}
+  m_Name: ListDrawerSettingsExampleSO
+  m_EditorClassIdentifier: 
+  readOnlyList: 010000000200000003000000
+  pagedList: 0100000002000000030000000400000005000000060000000700000008000000090000000a000000
+  namedElements:
+  - name: First
+    value: 0
+  - name: Second
+    value: 0
+  restrictedList: 010000000200000003000000
+  coloredList: 010000000200000003000000
+--- !u!114 &-1814133929099067322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aaf0a5384a213447d9f81e6025db2531, type: 3}
+  m_Name: ShowInExampleSO
+  m_EditorClassIdentifier: 
+  defaultPrefab: {fileID: 0}
+  showInPrefab: {fileID: 0}
+  showInSceneInstance: {fileID: 0}
+  showInNonPrefab: {fileID: 0}
+--- !u!114 &-1430854643459373821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c337f31d60d9545f38eb487e3cca7a9c, type: 3}
+  m_Name: EnableInExampleSO
+  m_EditorClassIdentifier: 
+  defaultEnabled: {fileID: 0}
+  enableInPrefab: {fileID: 0}
+  enableInSceneInstance: {fileID: 0}
+  enableInNonPrefab: {fileID: 0}
+--- !u!114 &-1335465610941647802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e00e0d649e8413983fd38cd1422dea2, type: 3}
+  m_Name: FilePathExampleSO
+  m_EditorClassIdentifier: 
+  path: 
+  scriptPath: 
+  absolutePath: 
+  relativePath: 
+  existingPath: 
+  noExtensionPath: 
+--- !u!114 &-1261521995916502283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a17813c331f854d57b1890127fcc8d48, type: 3}
+  m_Name: HideInExampleSO
+  m_EditorClassIdentifier: 
+  defaultPrefab: {fileID: 0}
+  hideInPrefab: {fileID: 0}
+  hideInSceneInstance: {fileID: 0}
+  hideInNonPrefab: {fileID: 0}
+--- !u!114 &-937772658731751093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddd37f4b6191040469bcc6bc126edb93, type: 3}
+  m_Name: GUIColorExampleWithColorSO
+  m_EditorClassIdentifier: 
+  useRed: 0
+  attributeExpressionExample: 
+  color: {r: 0, g: 1, b: 0, a: 1}
+  fieldNameExample: 
+  methodNameExample: 
+  propertyNameExample: 
+  dynamicColorExample: 0
+--- !u!114 &-846740405585854032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4367777e106b4e8e905f4db86a7b8b73, type: 3}
+  m_Name: ValidateInputExampleSO
+  m_EditorClassIdentifier: 
+  notEmptyString: Hello
+  greaterThanZero: 10
+  dynamicMessageValue: 5
+--- !u!114 &-443793131426748585
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: afcc066d881304c1382f839c33912265, type: 3}
+  m_Name: DisableInEditorModeExampleSO
+  m_EditorClassIdentifier: 
+  gameObject: {fileID: 0}
+  material: {fileID: 0}
+  someValue: 0
+--- !u!114 &-184497693045217608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a69584404aa249a6b4f2b261674a64e2, type: 3}
+  m_Name: DetailInfoBoxBilingualExampleSO
+  m_EditorClassIdentifier: 
+  bilingualExample: 0
+  dynamicExample: 0
+  dynamicDetailsChinese: "\u6765\u81EA\u5B57\u6BB5\u7684\u4E2D\u6587\u8BE6\u7EC6\u5185\u5BB9"
+  dynamicDetailsEnglish: Detailed content from field
+--- !u!114 &-164692291343156797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e83f13cc2d174f3a85ca5059dc85172f, type: 3}
+  m_Name: PropertyOrderExampleSO
+  m_EditorClassIdentifier: 
+  second: I am drawn second (Order = 1)
+  first: I am drawn first, even though I'm defined later in code (Order = -1)
+  third: I am drawn last (Order = 10)
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: UnityExamples
+  m_EditorClassIdentifier: UnityEngine.CoreModule:UnityEngine:ScriptableObject
+--- !u!114 &178287396640304251
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a489a021fe14ec5bc97f20e7e84c016, type: 3}
+  m_Name: ProgressBarExampleSO
+  m_EditorClassIdentifier: 
+  BasicProgressBar: 50
+  ColoredProgressBar: 0.5
+  HealthBar: 80
+  MaxHealth: 100
+  LargeProgressBar: 0
+--- !u!114 &407848053516983816
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bd8eb6109994b008a8a30343fd8d45c, type: 3}
+  m_Name: TitleExampleSO
+  m_EditorClassIdentifier: 
+  defaultTitle: 0
+  subtitleTitle: 0
+  centeredTitle: 0
+  rightTitle: 0
+  splitTitle: 0
+  noLineTitle: 0
+  notBoldTitle: 0
+--- !u!114 &627075067868178690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc41dbf231404498593c891dfec12338, type: 3}
+  m_Name: OnInspectorDisposeExampleSO
+  m_EditorClassIdentifier: 
+  disposedField: 0
+  expressionField: 
+--- !u!114 &915861971714587938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cef3f2eba1054a2ebd4beb676f75baca, type: 3}
+  m_Name: DelayedPropertyExampleSO
+  m_EditorClassIdentifier: 
+  delayedInt: 0
+  normalInt: 0
+--- !u!114 &938597960815852580
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 983773fab3e249b48636765ee286bad8, type: 3}
+  m_Name: PropertySpaceExampleSO
+  m_EditorClassIdentifier: 
+  spaceBefore: 0
+  spaceBeforeAndAfter: 0
+  noSpace: 0
+--- !u!114 &1214491093810751912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba9aa90cf5b143d18ec334b74d4f248f, type: 3}
+  m_Name: FoldoutGroupExampleSO
+  m_EditorClassIdentifier: 
+  a: 0
+  b: 0
+  c: 0
+  d: 0
+  e: 0
+--- !u!114 &1819459976472287835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d8b5c8b72ddb488e8d01fb639a3642c, type: 3}
+  m_Name: EnableGUIExampleSO
+  m_EditorClassIdentifier: 
+  normalField: Normal editable field
+  readOnlyField: Read-only field (grayed out)
+  enabledReadOnlyField: Can receive focus despite being read-only
+--- !u!114 &2042957570471118300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd9fe11187b54aa58bbea93e7afa4f5e, type: 3}
+  m_Name: PropertyTooltipExampleSO
+  m_EditorClassIdentifier: 
+  simpleTooltip: 0
+  referencedTooltip: 0
+  expressionTooltip: 0
+--- !u!114 &2825963221653925105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92ba1bbccfcd24edc97ce9fde3b21f3f, type: 3}
+  m_Name: ShowIfGroupExampleWithConditionSO
+  m_EditorClassIdentifier: 
+  showGroup: 1
+  fieldNameExample: 
+  propertyNameExample: 
+  methodNameExample: 
+  attributeExpressionExample: 
+--- !u!114 &3038304490327919890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f0eb41a97e4a4d32b3bcaf4c5adcfab, type: 3}
+  m_Name: ToggleGroupExampleSO
+  m_EditorClassIdentifier: 
+  Toggle1: 0
+  field1: 0
+  field2: 0
+  Toggle2: 0
+  field3: 0
+  Toggle3: 0
+  field4: 0
+  Toggle4: 0
+  field5: 0
+  Toggle5: 0
+  field6: 0
+--- !u!114 &3299072960604150184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68144e557ec7341dabecb64acfe25d55, type: 3}
+  m_Name: CustomValueDrawerExampleSO
+  m_EditorClassIdentifier: 
+  min: 0
+  max: 10
+  customSlider: 5
+  customColor: {r: 1, g: 0, b: 0, a: 1}
+--- !u!114 &3430120958734663277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ecd6781576b04dc6b00db842ff69ba14, type: 3}
+  m_Name: SearchableExampleSO
+  m_EditorClassIdentifier: 
+  items:
+  - name: Apple
+    value: 10
+    tags:
+    - Fruit
+    - Red
+  - name: Banana
+    value: 20
+    tags:
+    - Fruit
+    - Yellow
+  - name: Carrot
+    value: 5
+    tags:
+    - Vegetable
+    - Orange
+  nonRecursiveItems:
+  - name: Apple
+    value: 10
+    tags:
+    - Fruit
+    - Red
+  - name: Banana
+    value: 20
+    tags:
+    - Fruit
+    - Yellow
+  exactMatchItems:
+  - name: Apple
+    value: 10
+    tags: []
+  - name: Banana
+    value: 20
+    tags: []
+--- !u!114 &3612568064482192114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36bb87d47eeb4cddbc5d5cf988d30a63, type: 3}
+  m_Name: PropertyRangeExampleSO
+  m_EditorClassIdentifier: 
+  StaticRange: 50
+  DynamicRange: 5
+  Min: 0
+  Max: 10
+--- !u!114 &3767852348351743243
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7712c89b69fa4f14bd3ebcc6a66ea36c, type: 3}
+  m_Name: EnumToggleButtonsExampleSO
+  m_EditorClassIdentifier: 
+  someEnumField: 0
+  wideEnumField: 0
+  bitmaskEnumField: 0
+  enumWithIcons: 0
+--- !u!114 &3849813584282796050
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28ecb81f50854cbf8abf1962303f5940, type: 3}
+  m_Name: MinValueExampleSO
+  m_EditorClassIdentifier: 
+  MinimumZero: 0
+  DynamicMinimum: 0
+  DynamicMin: 10
+--- !u!114 &4059043478590404633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66afd6c8aed4a430989b2f24d46e3458, type: 3}
+  m_Name: HideIfGroupExampleWithGroupNameSO
+  m_EditorClassIdentifier: 
+  toggle: 0
+  groupName: DynamicGroup
+  content: 
+  value: 0
+--- !u!114 &4075997180989101582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b431ac03b6174e5e9866273f62c58d46, type: 3}
+  m_Name: EnableIfExampleSO
+  m_EditorClassIdentifier: 
+  isToggled: 0
+  someEnum: 0
+  enabledWhenToggled: 0
+  enabledWhenInfo: Only editable when someEnum is Info
+  enabledWhenError: Only editable when someEnum is Error
+  enabledWithExpression: Complex condition with expression
+--- !u!114 &4721052268850720128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 713b81b790a94d2ea537ed6c8cdb56e4, type: 3}
+  m_Name: InlineEditorExampleSO
+  m_EditorClassIdentifier: 
+  material: {fileID: 0}
+  fullEditor: {fileID: 0}
+  guiAndHeader: {fileID: 0}
+  mesh: {fileID: 0}
+  foldoutMode: {fileID: 0}
+  hiddenMode: {fileID: 0}
+--- !u!114 &4936312968649073355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b3347be58c443979a1d06e9e732b645, type: 3}
+  m_Name: RequiredInExampleSO
+  m_EditorClassIdentifier: 
+  info: RequiredIn attribute is specific to prefabs. It will only show validation
+    errors when the object is a certain kind of prefab (e.g., Asset, Instance in
+    Scene, etc.).
+  requiredInPrefabAsset: {fileID: 0}
+  requiredInPrefabInstance: {fileID: 0}
+--- !u!114 &5074103230472889677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b56045d3f647d4205b30ba55507fd1cf, type: 3}
+  m_Name: ShowIfGroupExampleSO
+  m_EditorClassIdentifier: 
+  toggle: 0
+  messageType: 0
+  a: 0
+  b: 0
+  fieldName: 
+  gameObject: {fileID: 0}
+--- !u!114 &5106734597665661748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3799641841924473a28579dea7632bc5, type: 3}
+  m_Name: ShowInInspectorExampleSO
+  m_EditorClassIdentifier: 
+--- !u!114 &5233605328496548272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7ed760035534548b028b0d91a2f2298, type: 3}
+  m_Name: ValueDropdownExampleSO
+  m_EditorClassIdentifier: 
+  someSize: 0
+  friendlySize: 0
+  intTreeView: 0100000006000000
+  uniqueSceneObjects: []
+  appendedSize: 0
+--- !u!114 &5705247999430542723
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a07f31c87409468494f13ab762ca1199, type: 3}
+  m_Name: InfoBoxExampleSO
+  m_EditorClassIdentifier: 
+  defaultInfoBox: 0
+  warningInfoBox: 0
+  errorInfoBox: 0
+  noIconInfoBox: 0
+  guiAlwaysEnabled: 0
+  customIcon: 0
+--- !u!114 &6242465662739330983
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea86471c539748f78ec4ec9970b00284, type: 3}
+  m_Name: OnInspectorGUIExampleSO
+  m_EditorClassIdentifier: 
+  FieldWithLabel: 
+  FieldWithButton: 0
+--- !u!114 &6322974403686072508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 326d5ac72dfd4c368a8bd8fdae1e691a, type: 3}
+  m_Name: MaxValueExampleSO
+  m_EditorClassIdentifier: 
+  MaximumHundred: 0
+  DynamicMaximum: 0
+  DynamicMax: 50
+--- !u!114 &6366592748695609897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c11a82c9dac4aad9cb9ed7476293213, type: 3}
+  m_Name: HorizontalGroupExampleSO
+  m_EditorClassIdentifier: 
+  a: 0
+  b: 0
+  c: 0
+  left: 0
+  right: 0
+  gap1: 0
+  gap2: 0
+  fixedWidth: 0
+  flexibleWidth: 0
+--- !u!114 &6396050304918070762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 293d543edaeb44f8bf63e8ac6f38d7a8, type: 3}
+  m_Name: DisplayAsStringExampleSO
+  m_EditorClassIdentifier: 
+  label: This is a string displayed as a label
+  largeLabel: Large font text
+  richTextLabel: <color=red>Red</color> <color=green>Green</color> <b>Bold</b>
+  centerLabel: Center aligned text
+  longLabel: This is a very very very very very very very long text
+--- !u!114 &6624831506188341421
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbc0771d8cc0f460393494dd3dc21d93, type: 3}
+  m_Name: HideIfGroupExampleWithConditionSO
+  m_EditorClassIdentifier: 
+  hideGroup: 1
+  fieldNameExample: 
+  propertyNameExample: 
+  methodNameExample: 
+  attributeExpressionExample: 
+--- !u!114 &7195578303697952473
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf150e627f08439ea5e6d5bb6b902a90, type: 3}
+  m_Name: DisableIfExampleSO
+  m_EditorClassIdentifier: 
+  isToggled: 0
+  someEnum: 0
+  disabledWhenToggled: 0
+  disabledWhenInfo: Disabled when someEnum is Info
+  disabledWhenError: Disabled when someEnum is Error
+  disabledWithExpression: Complex condition with expression
+--- !u!114 &7670892112323697568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e53bf44ca934980b181c828b02ac6bf, type: 3}
+  m_Name: TitleExampleWithSubtitleSO
+  m_EditorClassIdentifier: 
+  dynamicSubtitle: Subtitle from Field
+  referenceExample: 0
+  expressionExample: 0
+--- !u!114 &8086005080430997322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59e0315b920b4fbc93b4f358aa2ca9f8, type: 3}
+  m_Name: RequiredExampleWithErrorMessageSO
+  m_EditorClassIdentifier: 
+  customError: My custom error message from field
+  referenceExample: 
+  expressionExample: 
+--- !u!114 &8258307899493985976
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef94dafa19b84b95bdaa3969a99cd2ed, type: 3}
+  m_Name: HideInEditorModeExampleSO
+  m_EditorClassIdentifier: 
+  hiddenInEditor: 
+--- !u!114 &8325825348175337494
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22cebfe48da83401985b8cfabc886db9, type: 3}
+  m_Name: ShowIfGroupExampleWithGroupNameSO
+  m_EditorClassIdentifier: 
+  toggle: 0
+  groupName: DynamicGroup
+  content: 
+  value: 0
+--- !u!114 &8427498609133545061
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2ab0d77801df4e0a841e363a4683f90, type: 3}
+  m_Name: ToggleGroupExampleWithToggleGroupTitleSO
+  m_EditorClassIdentifier: 
+  toggleTitleField: Dynamic Toggle Title
+  Toggle1: 0
+  referenceExample: 0
+  Toggle2: 0
+  expressionExample: 0
+--- !u!114 &8467640699656777024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b23c1a8a4494f12a9778bd18260858a, type: 3}
+  m_Name: InfoBoxExampleWithMessageSO
+  m_EditorClassIdentifier: 
+  messageField: Dynamic message from field
+  referenceExample: 0
+  expressionExample: 0
+--- !u!114 &8871067506722220320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0567cbd1f7e49411593f029d2836c081, type: 3}
+  m_Name: OnInspectorDisposeExampleWithActionSO
+  m_EditorClassIdentifier: 
+  disposeMethodName: CustomDisposeMethod
+  memberReferenceExample: 
+  expressionExample: 
+--- !u!114 &8912328349211857262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d6229399d2649cdaa88b7118c1e2b1c, type: 3}
+  m_Name: IndentExampleSO
+  m_EditorClassIdentifier: 
+  A: 0
+  B: 0
+  C: 0
+  D: 0
+  G: 0
+--- !u!114 &8984605836236425500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75331e8e0b5bc4a06ac99d9c74212e4a, type: 3}
+  m_Name: OnInspectorInitExampleWithActionSO
+  m_EditorClassIdentifier: 
+  initMethodName: CustomInitMethod
+  memberReferenceExample: 
+  expressionExample: 
+--- !u!114 &9053271708291835207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 894dd81d1d354c75b963d728338b49fa, type: 3}
+  m_Name: TableListExampleSO
+  m_EditorClassIdentifier: 
+  items:
+  - ID: 1
+    Icon: {fileID: 0}
+    Name: Apple
+    Price: 1.2
+  - ID: 2
+    Icon: {fileID: 0}
+    Name: Banana
+    Price: 0.8
+  - ID: 3
+    Icon: {fileID: 0}
+    Name: Orange
+    Price: 1.5
+  scrollableItems: []
+  simpleTable:
+  - ID: 1
+    Icon: {fileID: 0}
+    Name: Item A
+    Price: 0
+  - ID: 2
+    Icon: {fileID: 0}
+    Name: Item B
+    Price: 0

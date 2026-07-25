@@ -120,11 +120,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     if (row == 0)
                     {
                         tableRowHeight[0] = (int)Mathf.Max(
-                            AbstractAttributePanelSO.GetCachedTextHeight(
-                                _attributeParameterReturnTypeLabel, width,
-                                _attributeParameterTextHeightCache),
-                            AbstractAttributePanelSO.GetCachedTextHeight(
-                                _attributeParameterParamNameLabel, width, _attributeParameterTextHeightCache),
+                            AbstractAttributePanelSO.GetCachedTextHeight(_attributeParameterReturnTypeLabel,
+                                width, _attributeParameterTextHeightCache),
+                            AbstractAttributePanelSO.GetCachedTextHeight(_attributeParameterParamNameLabel,
+                                width, _attributeParameterTextHeightCache),
                             AbstractAttributePanelSO.GetCachedTextHeight(
                                 _attributeParameterParamDescriptionLabel, width,
                                 _attributeParameterTextHeightCache));

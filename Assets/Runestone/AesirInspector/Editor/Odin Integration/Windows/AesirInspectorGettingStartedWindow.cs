@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Runestone.AesirInspector.Editor;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
@@ -17,11 +16,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     [InitializeOnLoad]
     public class AesirInspectorGettingStartedWindow : OdinEditorWindow
     {
-        static AesirInspectorGettingStartedWindow()
-        {
-            // 首次导入时不再自动打开 Getting Started 窗口
-            // 用户可通过菜单 Tools > Aesir > Inspector > Getting Started 手动打开
-        }
         static readonly BilingualData SloganData = new BilingualData(
             "基于 Odin Inspector 的双语 Inspector 扩展，优化编辑器开发体验",
             "Bilingual Inspector extension based on Odin Inspector, optimizing editor development workflow.");
@@ -31,21 +25,54 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         [PropertyOrder(-90)]
         public HorizontalSeparateControl separate1;
 
+        [PropertyOrder(-30)]
+        public HorizontalSeparateControl separate2;
+
+        [PropertyOrder(-10)]
+        [TableList(HideToolbar = true, AlwaysExpanded = true, IsReadOnly = true)]
+        public SummaryDetailGroup[] features;
+
+        GUIStyle _sectionTitleStyle;
+
+        GUIStyle _sloganStyle;
+
+        static AesirInspectorGettingStartedWindow()
+        {
+            // 首次导入时不再自动打开 Getting Started 窗口
+            // 用户可通过菜单 Tools > Aesir > Inspector > Getting Started 手动打开
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            WindowPadding = new Vector4(10f, 10f, 10f, 10f);
+            AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
+            AesirInspectorLanguageSettingsSO.LanguageChanged += Repaint;
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
+        }
+
         [PropertyOrder(-60)]
         [OnInspectorGUI]
         void DrawInitButton()
         {
             if (AesirInspectorProjectSettingsSO.Instance.IsInitialized)
             {
-                EditorGUILayout.HelpBox(AesirInspectorLanguageSettingsSO.CurrentIsEnglish
-                    ? "Aesir Inspector has been initialized."
-                    : "Aesir Inspector 已完成初始化。", MessageType.Info);
+                EditorGUILayout.HelpBox(
+                    AesirInspectorLanguageSettingsSO.CurrentIsEnglish
+                        ? "Aesir Inspector has been initialized."
+                        : "Aesir Inspector 已完成初始化。", MessageType.Info);
                 return;
             }
 
-            if (GUILayout.Button(AesirInspectorLanguageSettingsSO.CurrentIsEnglish
-                    ? "Initialize Aesir Inspector"
-                    : "初始化 Aesir Inspector (生成 100+ 案例资产)", GUILayout.Height(40)))
+            if (GUILayout.Button(
+                    AesirInspectorLanguageSettingsSO.CurrentIsEnglish
+                        ? "Initialize Aesir Inspector"
+                        : "初始化 Aesir Inspector (生成 100+ 案例资产)", GUILayout.Height(40)))
             {
                 InitAesirInspector();
             }
@@ -77,31 +104,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
             }
-        }
-
-        [PropertyOrder(-30)]
-        public HorizontalSeparateControl separate2;
-
-        [PropertyOrder(-10)]
-        [TableList(HideToolbar = true, AlwaysExpanded = true, IsReadOnly = true)]
-        public SummaryDetailGroup[] features;
-
-        GUIStyle _sectionTitleStyle;
-
-        GUIStyle _sloganStyle;
-
-        protected override void OnEnable()
-        {
-            base.OnEnable();
-            WindowPadding = new Vector4(10f, 10f, 10f, 10f);
-            AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
-            AesirInspectorLanguageSettingsSO.LanguageChanged += Repaint;
-        }
-
-        protected override void OnDisable()
-        {
-            base.OnDisable();
-            AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
         }
 
         [OnInspectorInit]

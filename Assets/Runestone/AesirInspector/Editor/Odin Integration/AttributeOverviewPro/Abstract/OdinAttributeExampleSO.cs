@@ -4,17 +4,16 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 {
     /// <summary>
     /// Odin 序列化的特性案例 SO 泛型抽象基类，提供单例模式。
+    /// 子资产持久化在 AttributeOverviewDatabaseSO 中。
     /// </summary>
-    [Summary("Odin 序列化的特性案例 SO 泛型抽象基类，提供单例模式")]
     public abstract class OdinAttributeExampleSO<T> : SerializedScriptableObject, IAesirInspectorReset
         where T : OdinAttributeExampleSO<T>
     {
         static T _asset;
 
         /// <summary>
-        /// 获取单例实例，若不存在则自动创建。
+        /// 获取单例实例，若不存在则作为数据库子资产自动创建。
         /// </summary>
-        [Summary("获取单例实例，若不存在则自动创建")]
         public static T Instance
         {
             get
@@ -24,8 +23,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     return _asset;
                 }
 
-                _asset = ScriptableObjectSafeEditorUtility.GetSingletonAssetAndDeleteOther<T>(
-                    AesirInspectorPaths.AttributeExamplesPath);
+                _asset = AttributeOverviewDatabaseSO.GetOrCreateExampleSubAsset<T>();
                 return _asset;
             }
         }
@@ -33,7 +31,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         /// <summary>
         /// 重置案例数据到初始状态。
         /// </summary>
-        [Summary("重置案例数据到初始状态")]
         public abstract void AesirInspectorReset();
     }
 }

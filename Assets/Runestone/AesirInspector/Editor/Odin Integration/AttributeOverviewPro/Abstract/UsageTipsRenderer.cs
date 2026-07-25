@@ -32,8 +32,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
             Rect headerToolBarRect;
             var contentRect =
-                AbstractAttributePanelSO.BeginDrawContainerWithTitle(_usageTipsLabel,
-                    out headerToolBarRect);
+                AbstractAttributePanelSO.BeginDrawContainerWithTitle(_usageTipsLabel, out headerToolBarRect);
             _usageTipsTable.DrawTable();
             ResizeUsageTipsTable();
             AbstractAttributePanelSO.EndDrawContainerWithTitle(contentRect);
@@ -98,8 +97,8 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     else
                     {
                         tableRowHeight[row] =
-                            (int)AbstractAttributePanelSO.GetCachedTextHeight(_usageTips[row - 1],
-                                width, _usageTipsTextHeightCache);
+                            (int)AbstractAttributePanelSO.GetCachedTextHeight(_usageTips[row - 1], width,
+                                _usageTipsTextHeightCache);
                     }
                 }
 

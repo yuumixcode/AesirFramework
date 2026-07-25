@@ -22,6 +22,7 @@
 // SOFTWARE.
 // ----------------------------------------------------------------------------
 
+using UnityEditor;
 using UnityEngine;
 
 namespace Runestone.AesirInspector
@@ -34,7 +35,7 @@ namespace Runestone.AesirInspector
     {
         [SerializeField]
         [Summary("是否已完成初始化")]
-        private bool isInitialized = false;
+        bool isInitialized;
 
         public bool IsInitialized
         {
@@ -43,8 +44,8 @@ namespace Runestone.AesirInspector
             {
                 isInitialized = value;
 #if UNITY_EDITOR
-                UnityEditor.EditorUtility.SetDirty(this);
-                UnityEditor.AssetDatabase.SaveAssets();
+                EditorUtility.SetDirty(this);
+                AssetDatabase.SaveAssets();
 #endif
             }
         }
