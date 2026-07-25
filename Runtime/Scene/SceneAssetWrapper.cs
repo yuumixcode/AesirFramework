@@ -48,9 +48,7 @@ namespace Runestone.AesirModules
             get
             {
                 var path = ScenePath;
-                return string.IsNullOrEmpty(path)
-                    ? string.Empty
-                    : Path.GetFileNameWithoutExtension(path);
+                return string.IsNullOrEmpty(path) ? string.Empty : Path.GetFileNameWithoutExtension(path);
             }
         }
 
