@@ -46,7 +46,8 @@ namespace Runestone.AesirInspector
         /// 开源许可证链接
         /// </summary>
         [Summary("开源许可证链接")]
-        public const string LicenseUrl = "https://github.com/yuumixcode/Unity-Aesir-Packages/blob/main/LICENSE.md";
+        public const string LicenseUrl =
+            "https://github.com/yuumixcode/Unity-Aesir-Packages/blob/main/LICENSE.md";
 
         /// <summary>
         /// 更新日志链接

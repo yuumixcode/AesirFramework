@@ -26,10 +26,11 @@ MonoBehaviour:
       format: 
       overflow: 0
   assemblyFilter:
-    rid: -2
+    rid: 244422007273816064
   menuItemInfos: []
   references:
     version: 2
     RefIds:
-    - rid: -2
-      type: {class: , ns: , asm: }
+    - rid: 244422007273816064
+      type: {class: FilterOutAesirInspectorAssembly, ns: Runestone.AesirInspector.OdinIntegration.Editor, asm: Runestone.AesirInspector.OdinIntegration.Editor}
+      data: 

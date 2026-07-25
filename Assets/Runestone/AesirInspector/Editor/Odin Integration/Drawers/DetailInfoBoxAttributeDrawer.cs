@@ -39,19 +39,21 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     [Summary("带有详细信息的双语信息框特性的 Drawer，根据当前编辑器语言渲染对应语言的信息文本、详细内容与图标样式")]
     public class DetailInfoBoxAttributeDrawer : OdinAttributeDrawer<DetailInfoBoxAttribute>
     {
-        bool _drawMessageBox;
-        ValueResolver<string> _messageResolver;
         ValueResolver<string> _detailsResolver;
+        bool _drawMessageBox;
+        LocalPersistentContext<bool> _isExpanded;
+        ValueResolver<string> _messageResolver;
         MessageType _messageType;
         ValueResolver<bool> _visibleIfResolver;
-        LocalPersistentContext<bool> _isExpanded;
 
         protected override void Initialize()
         {
             _visibleIfResolver = ValueResolver.Get(Property, Attribute.VisibleIf, true);
-            _messageResolver = ValueResolver.GetForString(Property, Attribute.BilingualData.GetCurrentOrFallback());
-            _detailsResolver = ValueResolver.GetForString(Property, Attribute.DetailsBilingualData.GetCurrentOrFallback());
-            
+            _messageResolver =
+                ValueResolver.GetForString(Property, Attribute.BilingualData.GetCurrentOrFallback());
+            _detailsResolver =
+                ValueResolver.GetForString(Property, Attribute.DetailsBilingualData.GetCurrentOrFallback());
+
             _isExpanded = Property.Context.GetPersistent(this, "isExpanded", false);
             _drawMessageBox = _visibleIfResolver.GetValue();
 
@@ -77,8 +79,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         void ReloadResolver()
         {
-            _messageResolver = ValueResolver.GetForString(Property, Attribute.BilingualData.GetCurrentOrFallback());
-            _detailsResolver = ValueResolver.GetForString(Property, Attribute.DetailsBilingualData.GetCurrentOrFallback());
+            _messageResolver =
+                ValueResolver.GetForString(Property, Attribute.BilingualData.GetCurrentOrFallback());
+            _detailsResolver =
+                ValueResolver.GetForString(Property, Attribute.DetailsBilingualData.GetCurrentOrFallback());
         }
 
         protected override void DrawPropertyLayout(GUIContent label)
@@ -97,7 +101,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     GlobalConfig<GeneralDrawerConfig>.Instance.MessageBoxFontSize);
                 flag = false;
             }
-            
+
             if (_detailsResolver.HasError)
             {
                 SirenixEditorGUI.MessageBox(_detailsResolver.ErrorMessage, MessageType.Error,
@@ -122,7 +126,9 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     var message = _messageResolver.GetValue();
                     var details = _detailsResolver.GetValue();
 
-                    _isExpanded.Value = SirenixEditorGUI.DetailedMessageBox(message, details, _messageType, _isExpanded.Value);
+                    _isExpanded.Value =
+                        SirenixEditorGUI.DetailedMessageBox(message, details, _messageType,
+                            _isExpanded.Value);
                 }
 
                 if (Attribute.GUIAlwaysEnabled)

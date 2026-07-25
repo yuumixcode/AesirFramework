@@ -41,7 +41,8 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         /// DetailedInfoBox 特性文档链接。
         /// </summary>
         [Summary("DetailedInfoBox 特性文档链接")]
-        public const string DetailedInfoBoxUrl = "https://odininspector.com/attributes/detailed-info-box-attribute";
+        public const string DetailedInfoBoxUrl =
+            "https://odininspector.com/attributes/detailed-info-box-attribute";
 
         /// <summary>
         /// Required 特性文档链接。

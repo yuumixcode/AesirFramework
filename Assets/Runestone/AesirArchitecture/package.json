@@ -28,7 +28,7 @@
     {
       "displayName": "UI Counter-MVP",
       "description": "MVP 模式计数器示例。设计一个全局的 Context 上下文对象，Presenter 作为 Model 与 View 之间的中介，View 持有 Presenter 类型的模块，具体操作逻辑由 Presenter 完成，通过 Presenter 操作 Model 以及修改 View 的样式。",
-      "path": "Samples~/UI Counter-MVP"
+      "path": "Samples~/Counter-MVP"
     },
     {
       "displayName": "ObservableValue (Dependency Odin Inspector)",

@@ -10,7 +10,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     /// <summary>
     /// 特性面板 SO 泛型单例基类，继承自 SerializedScriptableObject。
     /// </summary>
-    [Summary("特性面板 SO 泛型单例基类，继承自 SerializedScriptableObject")]
     public abstract class AttributeOverviewPanelSO<T> : SerializedScriptableObject, IAesirInspectorReset
         where T : AttributeOverviewPanelSO<T>
     {
@@ -19,7 +18,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         /// <summary>
         /// 获取单例实例，若不存在则自动创建。
         /// </summary>
-        [Summary("获取单例实例，若不存在则自动创建")]
         public static T Instance
         {
             get
@@ -38,14 +36,12 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         /// <summary>
         /// 重置面板状态。
         /// </summary>
-        [Summary("重置面板状态")]
         public abstract void AesirInspectorReset();
     }
 
     /// <summary>
     /// 特性介绍面板抽象基类，负责渲染顶部控件、使用提示、参数表、案例预览与代码预览。
     /// </summary>
-    [Summary("特性介绍面板抽象基类，负责渲染顶部控件、使用提示、参数表、案例预览与代码预览")]
     public abstract class AbstractAttributePanelSO : AttributeOverviewPanelSO<AbstractAttributePanelSO>
     {
         const float AfterSpace = 20f;
@@ -81,7 +77,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         /// <summary>
         /// 顶部说明控件引用。
         /// </summary>
-        [Summary("顶部说明控件引用")]
         public BilingualHeaderControl BilingualHeaderControl => bilingualHeaderControl;
 
         void OnDestroy()
@@ -91,13 +86,14 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         [OnInspectorInit]
         [PropertyOrder(-1000)]
-        [Summary("初始化面板，子类中调用 SetData 完成数据绑定")]
+        /// <summary>
+        /// 初始化面板，子类中调用 SetData 完成数据绑定。
+        /// </summary>
         public abstract void Initialize();
 
         /// <summary>
         /// 重置面板至初始状态。
         /// </summary>
-        [Summary("重置面板至初始状态")]
         public override void AesirInspectorReset()
         {
             _usageTipsRenderer?.Reset();
@@ -123,9 +119,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         #region Performance Cache
 
-        internal static float GetCachedTextHeight(string text,
-            float width,
-            Dictionary<string, float> cache)
+        internal static float GetCachedTextHeight(string text, float width, Dictionary<string, float> cache)
         {
             var key = text + "_" + width;
             if (cache.TryGetValue(key, out var height))
@@ -151,8 +145,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         void UpdateExampleCode()
         {
             _currentExampleSourceCode =
-                AttributeOverviewEditorUtility.GetExampleSourceCodeWithoutNamespace(
-                    MarkExampleAttribute);
+                AttributeOverviewEditorUtility.GetExampleSourceCodeWithoutNamespace(MarkExampleAttribute);
             _codePreviewRenderer?.SetData(_currentExampleSourceCode);
             _codePreviewRenderer?.Reset();
         }

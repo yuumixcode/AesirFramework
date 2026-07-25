@@ -26,7 +26,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         public int inventorySize;
 
         [Title("Parameter: UseAdaptiveHeight")]
-        [TabGroup("Height", "Short", false)]
+        [TabGroup("Height", "Short")]
         public int shortTab;
 
         [TabGroup("Height", "Tall")]

@@ -100,9 +100,7 @@ namespace Runestone.AesirInspector
 
         #region Internal
 
-        static void AddTypesFromAssembly(Type[] assemblyTypes,
-            Type interfaceType,
-            ICollection<Type> results)
+        static void AddTypesFromAssembly(Type[] assemblyTypes, Type interfaceType, ICollection<Type> results)
         {
             if (assemblyTypes == null)
             {

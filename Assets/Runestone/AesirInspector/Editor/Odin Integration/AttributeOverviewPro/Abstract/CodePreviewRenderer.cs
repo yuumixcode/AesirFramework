@@ -66,7 +66,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             var showSwitchButtonRect = headerToolBarRect.AlignLeft(140f).AddXMin(1f);
             var viewFullCodeTexture =
-                SdfIcons.CreateTransparentIconTexture(SdfIconType.Fullscreen, Color.white,20,20, 0);
+                SdfIcons.CreateTransparentIconTexture(SdfIconType.Fullscreen, Color.white, 20, 20, 0);
             var viewShortenCodeTexture =
                 SdfIcons.CreateTransparentIconTexture(SdfIconType.FullscreenExit, Color.white, 20, 20, 0);
 

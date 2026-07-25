@@ -55,7 +55,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         public override AttributeExamplePreviewItem[] ExamplePreviewItems { get; set; } =
         {
             new AttributeExamplePreviewItem().InitializeUnitySerializedExample("Bilingual Usage",
-                DetailInfoBoxBilingualExampleSO.Instance),
+                DetailInfoBoxBilingualExampleSO.Instance)
         };
     }
 }

@@ -25,9 +25,11 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         public override ParameterValue[] AttributeParameters { get; set; } =
         {
             new ParameterValue("PrefabKind", "Kind",
-                new BilingualData("指定该属性必须存在的预制体类型。", "Specifies the prefab kinds where this property must be present.")),
+                new BilingualData("指定该属性必须存在的预制体类型。",
+                    "Specifies the prefab kinds where this property must be present.")),
             new ParameterValue(typeof(string).FullName, "ErrorMessage",
-                new BilingualData("当验证失败时显示的自定义错误消息。", "Custom error message to display when validation fails."))
+                new BilingualData("当验证失败时显示的自定义错误消息。",
+                    "Custom error message to display when validation fails."))
         };
 
         public override ResolvedStringParameterValue[] ResolvedStringParameters { get; set; } = { };

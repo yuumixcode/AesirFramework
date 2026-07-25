@@ -27,7 +27,8 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         [Summary("Aesir Toolkit Core 的卡片")]
         public static ExtensionPackageCard AesirToolkitCore = new ExtensionPackageCard(
-            "com.runestone.aesir-toolkit", "Aesir Toolkit 核心，基于 Odin Inspector 的编辑器扩展基础设施，提供双语 Inspector、工具基类等。",
+            "com.runestone.aesir-toolkit",
+            "Aesir Toolkit 核心，基于 Odin Inspector 的编辑器扩展基础设施，提供双语 Inspector、工具基类等。",
             "https://github.com/yuumixcode/AesirToolkit", "Runestone Yuumix",
             "https://github.com/yuumixcode/AesirToolkit.git?path=/Assets/Runestone/AesirToolkit/Core#main");
 
