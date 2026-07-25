@@ -8,9 +8,8 @@ Aesir Architecture (RAA) 的功能模块包。当前提供极简 UI 框架，采
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
 
-> 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**同时依赖**：
+> 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**依赖**：
 > - **[Aesir Architecture](https://github.com/yuumixcode/Unity-Aesir-Packages)**（`>= 0.4.2`）
-> - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)**（`>= 0.4.2`）
 
 ## 模块
 
@@ -22,7 +21,6 @@ Aesir Architecture (RAA) 的功能模块包。当前提供极简 UI 框架，采
 ## 依赖
 
 - **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.4.2（必需）
-- **Aesir Inspector** `cn.runestone.aesir.inspector` >= 0.4.2（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。
 
 ## 安装
@@ -34,7 +32,7 @@ Packages/manifest.json -> dependencies:
 "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules"
 ```
 
-UPM 会自动解析 `package.json` 的 `dependencies` 字段，拉取 Aesir Architecture + Aesir Inspector。
+UPM 会自动解析 `package.json` 的 `dependencies` 字段，拉取 Aesir Architecture。
 
 ## UI 模块
 

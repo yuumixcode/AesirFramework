@@ -6,13 +6,13 @@
 
 > 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
 >
+> ⚠️ **强依赖 [Odin Inspector](https://odininspector.com/)**：本包需要 Odin Inspector 才能正常编译和运行。请确保项目中已安装 Odin Inspector 3.3.x+。
+>
 > 关联包：
 > - **[Aesir Architecture](https://github.com/yuumixcode/Unity-Aesir-Packages)**（独立）
-> - **[Aesir Modules](https://github.com/yuumixcode/Unity-Aesir-Packages)**（依赖 Architecture + Inspector）
+> - **[Aesir Modules](https://github.com/yuumixcode/Unity-Aesir-Packages)**（依赖 Architecture）
 
-`Aesir Inspector` 是一个 Unity 编辑器扩展库，旨在提供双语 Inspector UI、安全编辑器工具集、脚本文档生成器等功能。**可选集成 Odin Inspector** 以获得增强的 Inspector 渲染和样式优化。
-
-> **💡 关于 Odin Inspector 的依赖**：Odin Inspector 是本项目的**可选依赖**。核心功能（Summary 工具、安全编辑器工具、文档生成器运行时等）不依赖 Odin，可在无 Odin 环境下正常编译和运行。安装 Odin Inspector 后会自动添加 `ODIN_INSPECTOR` 编译符号，启用 OdinIntegration 增强程序集，提供双语特性装饰器、Attribute Drawer、Processor 等增强功能。
+`Aesir Inspector` 是一个 Unity 编辑器扩展库，旨在提供双语 Inspector UI、安全编辑器工具集、脚本文档生成器等功能。基于 Odin Inspector 提供增强的 Inspector 渲染和样式优化。
 
 ## 适用人群
 

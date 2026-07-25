@@ -116,6 +116,7 @@ InitTestScene*.unity*
 .codely-cli/auto-saves/
 .codely-cli/extensions/codely-unity-lsp-server/
 .codely-cli/extensions/TJGenerators/
+.codely-cli/settings.json
 
 # 团结引擎 Codely Bridge 配置文件（本地工具，不随仓库分发）
 .com-unity-codely.json

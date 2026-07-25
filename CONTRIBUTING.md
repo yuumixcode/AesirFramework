@@ -93,8 +93,8 @@ Unity -batchmode -quit -projectPath . -nographics -logFile /dev/null
 ```
 Assets/Runestone/
 ├── AesirArchitecture/      # Aesir Architecture 包源（不依赖其他 Aesir 子包）
-├── AesirModules/           # Aesir Modules 包源（依赖 Architecture + Inspector）
-└── AesirInspector/         # Aesir Inspector 包源（不依赖其他 Aesir 子包）
+├── AesirModules/           # Aesir Modules 包源（依赖 Architecture）
+└── AesirInspector/         # Aesir Inspector 包源（不依赖其他 Aesir 子包；强依赖 Odin Inspector）
 ```
 
 详细目录与程序集结构见 [`AGENTS.md`](./AGENTS.md) / [`CODELY.md`](./CODELY.md)。
@@ -284,7 +284,7 @@ Unity -batchmode -quit -projectPath . -nographics -logFile /dev/null
 Assets/Runestone/
 ├── AesirArchitecture/      # Aesir Architecture source
 ├── AesirModules/           # Aesir Modules source (depends on Architecture)
-└── AesirInspector/         # Aesir Inspector source (independent)
+└── AesirInspector/         # Aesir Inspector source (independent; requires Odin Inspector)
 ```
 
 See [`AGENTS.md`](./AGENTS.md) / [`CODELY.md`](./CODELY.md) for detailed layout.

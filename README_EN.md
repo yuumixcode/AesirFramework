@@ -13,7 +13,7 @@
 
 ## ✨ Three Sub-Packages, Independently Installable
 
-> **Key point: all sub-packages are published from the same Git repository.** Aesir Architecture and Aesir Inspector are **independent of each other**; Aesir Modules **depends on both** Architecture and Inspector.
+> **Key point: all sub-packages are published from the same Git repository.** Aesir Architecture and Aesir Inspector are **independent of each other**; Aesir Modules **depends on** Architecture. Aesir Inspector **requires [Odin Inspector](https://odininspector.com/)**.
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
@@ -28,22 +28,16 @@
 ## 🧩 Dependency Graph
 
 ```
-            ┌──────────────────────────────────────┐
-            │   Aesir Inspector（standalone）        │
-            │   Bilingual UI / Doc Generator / …     │
-            └──────────────┬───────────────────────┘
-                           │ depends on
-                           ▼
-┌──────────────────────┐    │    ┌──────────────────────────┐
-│  Aesir Architecture  │◄───┴───►│  Aesir Inspector          │
-│  MVP/MVC foundation  │   independent │  editor extensions     │
+┌──────────────────────┐         ┌──────────────────────────┐
+│  Aesir Architecture  │         │  Aesir Inspector          │
+│  MVP/MVC foundation  │ independent │  editor extensions (requires Odin) │
 │  capabilities / etc. │         └──────────────────────────┘
 └──────────────────────┘
             ▲
             │ depends on
             │
 ┌──────────────────────┐
-│   Aesir Modules      │ ─── depends on Architecture + Inspector
+│   Aesir Modules      │ ─── depends on Architecture
 │   UI framework       │
 └──────────────────────┘
 ```
@@ -51,8 +45,8 @@
 **Key constraints**:
 
 - **Aesir Architecture** — does NOT depend on any Aesir sub-package; can be installed standalone
-- **Aesir Inspector** — does NOT depend on any Aesir sub-package; can be installed standalone
-- **Aesir Modules** — depends on BOTH `cn.runestone.aesir.architecture` AND `cn.runestone.aesir.inspector`
+- **Aesir Inspector** — does NOT depend on any Aesir sub-package; can be installed standalone; **requires Odin Inspector**
+- **Aesir Modules** — depends on `cn.runestone.aesir.architecture`
 
 ---
 
@@ -70,7 +64,7 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 
 Install only what you need.
 
-**When installing only Aesir Modules**, UPM will automatically resolve the dependencies and pull Aesir Architecture + Aesir Inspector (declared in `package.json`'s `dependencies` field).
+**When installing only Aesir Modules**, UPM will automatically resolve the dependencies and pull Aesir Architecture (declared in `package.json`'s `dependencies` field).
 
 ### Option 2: Via `manifest.json`
 
@@ -86,7 +80,7 @@ Add the following to your project's `Packages/manifest.json`:
 }
 ```
 
-Add only the sub-packages you need — they are independent of each other (except Aesir Modules auto-depends on the other two).
+Add only the sub-packages you need — they are independent of each other (except Aesir Modules auto-depends on Architecture). Aesir Inspector requires Odin Inspector to be installed separately.
 
 ---
 
@@ -143,10 +137,10 @@ Unity-Aesir-Packages/                       # this repo
     ├── AesirArchitecture/                 # does NOT depend on other Aesir packages
     │   ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
     │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    ├── AesirModules/                      # depends on Architecture + Inspector
+    ├── AesirModules/                      # depends on Architecture
     │   ├── Runtime/  Editor/  Documentation~/
     │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    └── AesirInspector/                    # does NOT depend on other Aesir packages
+    └── AesirInspector/                    # does NOT depend on other Aesir packages; requires Odin Inspector
         ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
         ├── README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE.md  package.json
 ```
@@ -157,7 +151,7 @@ Unity-Aesir-Packages/                       # this repo
 
 > - **Unity / Tuanjie**: 2022.3.62f3c1 (or equivalent LTS)
 > - **Render Pipeline**: URP 14.0.12
-> - **Optional Dependency**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — Aesir Architecture / Modules / Inspector all use `#if ODIN_INSPECTOR` conditional compilation; Odin features are skipped automatically when not installed.
+> - **Dependency**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — Aesir Inspector **requires** Odin Inspector; Aesir Architecture / Modules use `#if ODIN_INSPECTOR` conditional compilation for optional integration
 
 On first open, Unity resolves dependencies from `Packages/manifest.json` automatically.
 

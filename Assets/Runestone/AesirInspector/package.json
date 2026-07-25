@@ -3,7 +3,7 @@
   "displayName": "Aesir Inspector",
   "version": "0.4.2",
   "unity": "2022.3",
-  "description": "Aesir 编辑器扩展库。双语 Inspector 特性、脚本文档生成器、XML Summary 同步工具、安全编辑器工具集与扩展包管理器，通过 OdinBridge 桥接模式可选集成 Odin Inspector。",
+  "description": "Aesir 编辑器扩展库。双语 Inspector 特性、脚本文档生成器、XML Summary 同步工具、安全编辑器工具集与扩展包管理器，强依赖 Odin Inspector。",
   "keywords": [
     "Odin",
     "Inspector",

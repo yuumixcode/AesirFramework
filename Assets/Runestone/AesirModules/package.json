@@ -3,7 +3,7 @@
   "displayName": "Aesir Modules",
   "version": "0.4.2",
   "unity": "2022.3",
-  "description": "Aesir 功能模块包。轻量级 UI 框架：Manager-of-Managers 单例模式，四层 Canvas 层级管理、完整面板生命周期与可替换资源加载器，可选集成 Odin Inspector。",
+  "description": "Aesir 功能模块包。轻量级 UI 框架：Manager-of-Managers 单例模式，四层 Canvas 层级管理、完整面板生命周期与可替换资源加载器。",
   "keywords": [
     "ui",
     "modules",
@@ -19,7 +19,6 @@
   "license": "MIT",
   "dependencies": {
     "com.unity.test-framework": "1.1.33",
-    "cn.runestone.aesir.architecture": "0.4.2",
-    "cn.runestone.aesir.inspector": "0.4.2"
+    "cn.runestone.aesir.architecture": "0.4.2"
   }
 }
