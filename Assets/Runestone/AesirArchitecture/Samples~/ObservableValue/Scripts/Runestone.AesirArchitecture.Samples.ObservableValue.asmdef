@@ -1,0 +1,18 @@
+{
+  "name": "Runestone.AesirArchitecture.Samples.ObservableValue",
+  "rootNamespace": "Runestone.AesirArchitecture.Samples",
+  "references": [
+    "Runestone.AesirArchitecture"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "ODIN_INSPECTOR"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
