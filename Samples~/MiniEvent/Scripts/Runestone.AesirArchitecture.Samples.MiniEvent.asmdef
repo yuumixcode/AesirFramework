@@ -1,0 +1,16 @@
+{
+  "name": "Runestone.AesirArchitecture.Samples.MiniEvent",
+  "rootNamespace": "Runestone.AesirArchitecture.Samples",
+  "references": [
+    "Runestone.AesirArchitecture"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
