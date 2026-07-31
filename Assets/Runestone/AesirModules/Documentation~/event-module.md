@@ -1,43 +1,22 @@
 # 事件模块（Event Module）
 
-> 版本：V1（MVP 最小闭环）  
-> 状态：已实现
+> ⚠️ **实验性模块**：尚未在实际项目中验证，API 可能调整。
 
 ## 概述
 
-事件模块提供基于反射绑定的事件系统，实现业务模块间的发布-订阅解耦。订阅者通过 `[AesirListener]` 特性标记方法，发布者通过 `AesirEventArgs.Invoke()` 触发事件，`EventModule` 单例负责事件分发。
+事件模块提供基于双轨订阅的事件系统，实现业务模块间的发布-订阅解耦。
 
-> **注意**：`AesirEventArgs` 是事件参数载体（类似 `EventArgs`），本身不持有监听者。订阅管理由 `EventModule` 的 `BindingRegistry` 负责。这与 `MiniEvent`（自身持有 `Action` 列表的自包含事件）在设计定位上不同。
+- **Attribute 订阅**：`[AesirListener]` 特性标记方法，`AddListener(obj)` 反射扫描注册
+- **Script 订阅**：`AddListener<T>(obj, callback)` 动态注册 Lambda 委托，返回 `AutoRemoveListenerHandle`
+- 两种订阅共存于独立注册表，分发时合并并按 5 档优先级排序执行
 
-### 设计目标
-
-- **解耦**：发布者和订阅者不直接引用，通过事件参数类型松耦合
-- **静态订阅**：`[AesirListener]` 特性标记即订阅，无需手写注册代码
-- **Unity 原生 API 风格**：`AddListener` / `RemoveListener` / `InvokeEvent` 贴合 Unity 习惯
-- **安全**：异常不冒泡，已销毁订阅者自动跳过
-
-### V1 范围
-
-| 能力 | V1 | V2+ |
-|------|----|-----|
-| 静态绑定 `[AesirListener]` | ✅ | — |
-| 发布 `Invoke` / `InvokeEvent` | ✅ | — |
-| 退订 `RemoveListener` | ✅ | — |
-| 2 档优先级（High/Medium） | ✅ 占位 | V2 扩 5 档 |
-| 5 阶段分阶段分发 | ❌ | V2 |
-| 链式 API（Shared/Unique/Seal） | ❌ | V2 |
-| StopPropagation 取消传播 | ❌ | V2 |
-| 动态订阅 `Listen<T>` | ❌ | V2 |
-| PublishDelayed 延迟发布 | ❌ | V2 |
-| 过滤器 `ISubscriberFilter` | ❌ | V3 |
-| 系统事件 | ❌ | V4 |
-| ScriptableObject 包装 | ❌ | V5 |
+> **注意**：`AesirEventArgs` 是事件参数载体（类似 `EventArgs`），本身不持有监听者。订阅管理由 `EventModule` 的双注册表负责。这与 `MiniEvent`（自身持有 `Action` 列表的自包含事件）在设计定位上不同。
 
 ## 核心类型
 
 ### AesirEventArgs
 
-事件参数抽象基类。所有自定义事件参数继承此类，作为数据载体在 `EventModule` 中传递。
+事件参数抽象基类。
 
 ```csharp
 [Serializable]
@@ -60,61 +39,64 @@ public abstract class AesirEventArgs : ICloneable
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 public class AesirListenerAttribute : Attribute
 {
-    public Type EventID { get; set; }                       // 显式事件类型（可选）
-    public SubscriberPriority Priority { get; set; } = High; // 优先级
+    public Type EventType { get; set; }                       // 显式事件类型（可选）
+    public SubscriberPriority Priority { get; set; } = High;  // 优先级
 
     public AesirListenerAttribute();
-    public AesirListenerAttribute(Type eventID);
+    public AesirListenerAttribute(Type eventType);
+    public AesirListenerAttribute(SubscriberPriority priority);
+    public AesirListenerAttribute(Type eventType, SubscriberPriority priority);
 }
 ```
 
-**规则**：
-- `EventID` 为 null 时，从方法第一个参数推断事件参数类型
-- 零参数方法必须显式指定 `EventID`
-- 同一方法可标多个 `[AesirListener]` 监听多个事件类型
-- 方法可为 public 或 private
-
 ### EventModule
 
-MonoBehaviour 单例，作为 `AesirModules` 子物体懒加载创建。
+MonoBehaviour 单例，直接继承 `AesirMonoBehaviour`，作为 `AesirModules` 子物体懒加载创建。
 
 ```csharp
-// 静态 API
-public static bool IsInitialized { get; }
-public static EventModule Instance { get; }
-
+// Attribute 订阅
 public static void AddListener(object subscriber);
 public static void RemoveListener(object subscriber);
-public static void InvokeEvent<TEventArgs>(object sender, TEventArgs eventArgs) where TEventArgs : AesirEventArgs;
+
+// Script 订阅（返回 AutoRemoveListenerHandle）
+public static AutoRemoveListenerHandle AddListener<TEventArgs>(object subscriber, Action<TEventArgs> callback);
+public static AutoRemoveListenerHandle AddListener<TEventArgs>(object subscriber, Action<TEventArgs> callback, SubscriberPriority priority);
+
+// 事件触发
+public static void InvokeEvent<TEventArgs>(object sender, TEventArgs eventArgs);
+
+// 单例
+public static EventModule Instance { get; }
 ```
 
-### AbstractAttributeBound\<TAttribute\>
+### BindingInfo
 
-泛型反射绑定基类。`EventModule` 继承此类，通过反射扫描订阅者上标有 `TAttribute` 的方法。
+绑定信息基类，Attribute 与 Script 订阅的共同部分：
 
-**核心成员**：
-- `BindingRegistry` — `Dictionary<string, List<BindingInfo>>`，以事件类型 AssemblyQualifiedName 为键
-- `Bind(object)` — 反射扫描并注册
-- `Unbind(object)` — 移除订阅者的所有绑定
-- `BindingInfo`（嵌套抽象类）— 描述方法与事件类型的绑定关系
+```csharp
+public abstract class BindingInfo
+{
+    public string BindingKey { get; protected set; }
+    public object Subscriber { get; protected set; }
+    public SubscriberPriority Priority { get; protected set; }
+    public abstract void Invoke(object[] args = null);
+}
+```
+
+- **StaticBindingInfo** — 持有 `MethodInfo` + 表达式树编译委托。注册时通过 `Expression.Lambda.Compile()` 将反射方法编译为 `Action<object, object[]>` 委托，分发时零反射调用
+- **DynamicBindingInfo\<TEventArgs\>** — 持有 `Action<TEventArgs>` 直接委托，无需表达式树
 
 ### SubscriberPriority
 
 ```csharp
 public enum SubscriberPriority
 {
-    High,    // 静态订阅默认
-    Medium   // 动态订阅默认（V1 占位）
+    First,   // 前 — 比所有默认档位更早
+    High,    // Attribute 订阅默认值
+    Medium,  // Script 订阅默认值
+    Low,     // 后 — 比所有默认档位更晚
+    Last     // 最后 — 收尾/清理
 }
-```
-
-### AesirEventUtility
-
-```csharp
-public static bool IsObjectUnityNull(object obj);
-public static string GetEventBindingKey(AesirEventArgs eventArgs);
-public static string GetEventBindingKey<TEventArgs>() where TEventArgs : AesirEventArgs;
-public static string GetEventName<TEventArgs>() where TEventArgs : AesirEventArgs;
 ```
 
 ## 使用方式
@@ -131,7 +113,7 @@ public class OnPlayerScored : AesirEventArgs
 }
 ```
 
-### 2. 订阅事件
+### 2. Attribute 订阅
 
 ```csharp
 using UnityEngine;
@@ -150,7 +132,26 @@ public class ScoreUI : MonoBehaviour
 }
 ```
 
-### 3. 发布事件
+### 3. Script 订阅
+
+```csharp
+using UnityEngine;
+using Runestone.AesirModules;
+using Runestone.AesirArchitecture;
+
+public class ScoreController : MonoBehaviour
+{
+    AutoRemoveListenerHandle _handle;
+
+    void OnEnable() =>
+        _handle = EventModule.AddListener<OnPlayerScored>(this, e =>
+            Debug.Log($"Score: {e.points}"));
+
+    void OnDisable() => _handle.Dispose();
+}
+```
+
+### 4. 发布事件
 
 ```csharp
 // 链式调用
@@ -160,69 +161,45 @@ new OnPlayerScored { points = 10, playerName = "Player1" }.Invoke(this);
 EventModule.InvokeEvent(this, new OnPlayerScored { points = 10 });
 ```
 
-### 4. 零参数方法
+### 5. 指定优先级
 
 ```csharp
-[AesirListener(typeof(OnKeyPressed))]
-private void OnKeyPressed()
-{
-    Debug.Log("按键被按下");
-}
-```
+// Attribute — 构造函数指定
+[AesirListener(SubscriberPriority.First)]
+private void OnPlayerScored(OnPlayerScored e) { ... }
 
-### 5. 多事件监听
-
-```csharp
-[AesirListener]  // 监听 OnPlayerScored（从参数推断）
-[AesirListener(typeof(OnGameStart))]  // 监听 OnGameStart（零参数）
-private void OnEvent(AesirEventArgs e)
-{
-    Debug.Log($"收到事件：{e.GetType().Name}");
-}
+// Script — 参数指定
+EventModule.AddListener<OnPlayerScored>(this, e => { ... }, SubscriberPriority.Last);
 ```
 
 ## 架构设计
 
-### 单例管理
+### 双注册表
 
-`EventModule` 作为 `AesirModules` 的子物体存在：
-
-```
-[Aesir Modules] (DontDestroyOnLoad)
-  └─ EventModule (子物体)
-```
-
-- 首次调用 `EventModule.AddListener()` 时，通过 `AesirModules.GetOrAddChild<EventModule>()` 懒加载创建
-- `InvokeEvent` 检查 `IsInitialized`，未初始化时 LogError（不自动创建）
-- `RemoveListener` 在未初始化时安全跳过
-
-### 事件分发流程
+两种订阅分别存储于独立注册表，分发时合并：
 
 ```
-发布者 new MyEventArgs().Invoke(this)
-  → EventModule.InvokeEvent(sender, eventArgs)
-    1. 校验 sender 非 null
-    2. 写入 Sender (eventArgs.SetSender)
-    3. 查找 BindingRegistry[事件参数类型]
-    4. 遍历订阅者：
-       - 跳过已销毁的订阅者（Unity null 检测）
-       - 调用 binding.Invoke(new[] { eventArgs })
-       - try/catch 异常不冒泡，LogError 后继续
+AttributeBindings (Dictionary<string, List<BindingInfo>>)
+  └─ StaticBindingInfo (MethodInfo + 表达式树委托)
+
+DynamicBindings (Dictionary<string, List<BindingInfo>>)
+  └─ DynamicBindingInfo<T> (Action<T> 委托)
+
+RaiseEvent:
+  1. 从两个注册表取订阅者列表
+  2. 合并（仅在两个注册表都有数据时才创建新 List）
+  3. 按优先级排序（count > 1 才排序）
+  4. 依次调用（复用 object[] 参数数组）
 ```
 
-### BindingKey 规则
+### 表达式树优化
 
-使用事件参数类型的 `AssemblyQualifiedName` 作为键，保证跨程序集稳定：
+`StaticBindingInfo` 在注册时（`Bind` / `OnEnable`，冷路径）通过 `Expression.Lambda.Compile()` 将 `MethodInfo` 编译为 `Action<object, object[]>` 委托。之后每次分发（热路径）直接委托调用，比 `MethodInfo.Invoke` 快 20-40 倍。
 
-```
-OnKeyPressed → "Runestone.AesirModules.OnKeyPressed, Runestone.AesirModules"
-```
+### 退订
 
-### 异常处理
-
-- 订阅者方法抛出异常时，`TargetInvocationException` 被捕获并解包
-- 异常只 LogError，不中断其他订阅者的调用
-- 已销毁的 Unity 对象订阅者被自动跳过（V4 将添加清理和警告）
+- `RemoveListener(obj)` — 移除该对象的全部绑定（含 Attribute + Script）
+- `AutoRemoveListenerHandle.Dispose()` — 仅移除单条 Script 绑定（重复调用安全）
 
 ## 目录结构
 
@@ -231,25 +208,18 @@ Runtime/Events/
 ├── AesirEventArgs.cs              # 事件参数基类
 ├── AesirListenerAttribute.cs      # 订阅者特性
 ├── AesirEventUtility.cs           # 静态工具
-├── AbstractAttributeBound.cs       # 反射绑定基类
-├── EventModule.cs                  # 事件模块单例
-└── SubscriberPriority.cs           # 优先级枚举
+├── BindingInfo.cs                 # 绑定信息基类 + StaticBindingInfo + DynamicBindingInfo<T>
+├── Component/
+│   └── EventModule.cs             # 事件模块单例
+└── SubscriberPriority.cs          # 优先级枚举（5 档）
 
 Samples~/Events/01_KeyPress/
-├── OnKeyPressed.cs                 # 示例事件参数
-├── EventEmitter.cs                 # 按键发布者
-├── KeyPressSubscriber.cs           # 静态订阅者
+├── OnKeyPressed.cs                # 示例事件参数
+├── EventEmitter.cs                # 按键发布者
+├── KeyPressSubscriber.cs          # 静态订阅者
 └── Runestone.AesirModules.Samples.Events.KeyPress.asmdef
 ```
 
-## 后续版本规划
+## 后续规划
 
-| 版本 | 核心能力 |
-|------|---------|
-| V2 | 5 档 Priority、链式 API（Shared/Unique/Seal）、StopPropagation、动态订阅 Listen\<T\>、PublishDelayed、5 阶段分阶段分发 |
-| V3 | ISubscriberFilter 过滤器、6 个内置过滤器、DefaultChannel |
-| V4 | 4 个 SystemEvent 元事件、EnsureSingleInstance、性能监控、死引用清理 |
-| V5 | GameEventSO + SubclassSelector + UnityEvent 桥接 |
-| V6 | PublishOnPlayback Animator 集成 |
-| V7 | 编辑器工具链（Log/Monitor/Tester/Detail/Actors） |
-| V8 | Welcome 引导 + 文档系统 + Hierarchy 菜单 |
+见 [Docs/EventModule/Feature-Roadmap.md](../../../../../Docs/EventModule/Feature-Roadmap.md)。
