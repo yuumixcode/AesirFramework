@@ -98,42 +98,6 @@ namespace Runestone.AesirArchitecture
             _serviceLocator.Get<TService>();
 
         /// <summary>
-        /// 注册事件监听，返回可自动移除的监听句柄
-        /// </summary>
-        public AutoRemoveListenerHandle AddListener<TEvent>(Action<TEvent> listener)
-            where TEvent : IEventArgs => MiniEventBus<TEvent>.AddListener(listener);
-
-        /// <summary>
-        /// 注册无参事件监听，返回可自动移除的监听句柄
-        /// </summary>
-        public AutoRemoveListenerHandle AddListener<TEvent>(Action listener) where TEvent : IEventArgs =>
-            MiniEventBus<TEvent>.AddListener(listener);
-
-        /// <summary>
-        /// 移除事件监听
-        /// </summary>
-        public void RemoveListener<TEvent>(Action<TEvent> listener) where TEvent : IEventArgs =>
-            MiniEventBus<TEvent>.RemoveListener(listener);
-
-        /// <summary>
-        /// 移除无参事件监听
-        /// </summary>
-        public void RemoveListener<TEvent>(Action listener) where TEvent : IEventArgs =>
-            MiniEventBus<TEvent>.RemoveListener(listener);
-
-        /// <summary>
-        /// 发布事件
-        /// </summary>
-        public void InvokeEvent<TEvent>(TEvent args) where TEvent : IEventArgs =>
-            MiniEventBus<TEvent>.Invoke(args);
-
-        /// <summary>
-        /// 发布无参事件
-        /// </summary>
-        public void InvokeEvent<TEvent>() where TEvent : IEventArgs, new() =>
-            MiniEventBus<TEvent>.Invoke(new TEvent());
-
-        /// <summary>
         /// 释放资源。逆序销毁 Service 和 Model，清空容器。
         /// </summary>
         public virtual void Dispose()

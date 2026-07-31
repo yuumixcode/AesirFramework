@@ -21,11 +21,10 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 ### Core Features
 
 - **Native PlayerLoop lifecycle** — Inject custom subsystems into Unity's PlayerLoop via `AesirArchitecturePlayerLoop`, providing `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour
-- **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` / `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, `ICanAddListener`, etc.) — expose only what you need
+- **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` / `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, etc.) — expose only what you need
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
 - **`ObservableValue<T>` reactive property** — Model holds a writable instance; View subscribes via covariant `IReadOnlyObservableValue<out T>` for layer safety
-- **`MiniEventBus<TEvent>` typed event bus** — Register/publish by event type, with auto-remove listener handles and multiple lifecycle bindings (GameObject destroy, scene unload, etc.)
 - **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
 - **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, with global singleton support
@@ -40,7 +39,6 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 | Lifecycle | MonoBehaviour event callbacks | Native PlayerLoop injection (BeforeUpdate / AfterUpdate) |
 | Architecture root | Generic singleton `Architecture<T>` | Generic static singleton `AbstractContext<T>` + `GenericLocator` |
 | Observable property | `BindableProperty<T>` | `ObservableValue<T>` + covariant `IReadOnlyObservableValue<out T>` |
-| Event communication | Pure C# `TypeEvent` | Pure C# `MiniEventBus` + delegate (no `event` keyword) |
 | Logging | `Debug.Log` | `AesirArchitectureDebug` (conditional compilation, unified) |
 | Static state | No Domain Reset guarantee | `[RuntimeInitializeOnLoadMethod]` explicit reset |
 | Presentation layer | No clear abstraction | `IView` interface + `IController` / `IPresenter` dual modes |
@@ -145,27 +143,6 @@ public class AddScoreCommand : AbstractCommand
 this.ExecuteCommand<AddScoreCommand>();
 ```
 
-### 5. Use the Event Bus
-
-```csharp
-// Define event args
-public struct ScoreChangedEvent : IEventArgs
-{
-    public int NewScore;
-}
-
-// Add a listener
-this.AddListener<ScoreChangedEvent>(e => Debug.Log($"Score: {e.NewScore}"))
-    .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
-
-// Publish
-this.InvokeEvent(new ScoreChangedEvent { NewScore = 100 });
-
-// Publish a parameterless event (T must have a parameterless constructor)
-public struct GameStartedEvent : IEventArgs { }
-this.InvokeEvent<GameStartedEvent>();
-```
-
 ## Architecture Overview
 
 ```
@@ -173,10 +150,10 @@ this.InvokeEvent<GameStartedEvent>();
 │               AbstractContext<T>                 │
 │     (Generic static singleton + Domain Reset)    │
 │                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────┐ │
-│  │  Models  │  │ Services │  │ MiniEventBus  │ │
-│  │          │  │          │  │   (Global)    │ │
-│  └──────────┘  └──────────┘  └───────────────┘ │
+│  ┌──────────┐  ┌──────────┐                    │
+│  │  Models  │  │ Services │                    │
+│  │          │  │          │                    │
+│  └──────────┘  └──────────┘                    │
 │  ┌──────────────────────────────────────────────┐│
 │  │       GenericLocator<T> (type locator)       ││
 │  └──────────────────────────────────────────────┘│
@@ -205,13 +182,13 @@ this.InvokeEvent<GameStartedEvent>();
 
 ### Capability Matrix
 
-| Module | GetModel | GetService | ExecuteCommand | AddListener | InvokeEvent | Initialize | Dispose |
-|------|:--------:|:---------:|:--------------:|:---------:|:----------:|:----------:|:-------:|
-| **IModel** | ✓ | | | | ✓ | ✓ | ✓ |
-| **IService** | ✓ | ✓ | | ✓ | ✓ | ✓ | ✓ |
-| **IView** | ✓ | ✓ | | ✓ | ✓ | | |
-| **IController** | ✓ | ✓ | ✓ | | | | |
-| **IPresenter** | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| Module | GetModel | GetService | ExecuteCommand | Initialize | Dispose |
+|------|:--------:|:---------:|:--------------:|:----------:|:-------:|
+| **IModel** | ✓ | | | ✓ | ✓ |
+| **IService** | ✓ | ✓ | | ✓ | ✓ |
+| **IView** | ✓ | ✓ | | | |
+| **IController** | ✓ | ✓ | ✓ | | |
+| **IPresenter** | ✓ | ✓ | ✓ | | ✓ |
 
 ## Project Structure
 
@@ -236,7 +213,7 @@ cn.runestone.aesir.architecture/
 │   │   │   ├── Interfaces/        # Module interfaces
 │   │   │   └── Abstracts/         # AbstractSubmodule, AbstractModel, AbstractService, AbstractCommand, AbstractQuery
 │   │   ├── Capabilities/          # Capabilities.cs (ICan* interfaces) + CapabilityExtensions.cs
-│   │   ├── Event/                 # MiniEventBus, MiniEvent<T>, AutoRemoveListenerHandle, RemoveListenerExtensions
+│   │   ├── Event/                 # MiniEvent<T>, AutoRemoveListenerHandle, RemoveListenerExtensions
 │   │   ├── Observable/            # ObservableValue<T>, IObservableValue<T>, IReadOnlyObservableValue<T>
 │   │   ├── Locator/               # GenericLocator<T>, IGenericLocator<T>
 │   │   └── Utilities/             # PlayerLoopUtility
@@ -299,7 +276,6 @@ cn.runestone.aesir.architecture/
 - [x] Command pattern (sync)
 - [x] Query pattern (CQRS read)
 - [x] `ObservableValue` reactive property
-- [x] `MiniEventBus` typed event bus
 - [x] `GenericLocator` generic locator
 - [x] `AbstractSubmodule` unified submodule lifecycle
 - [x] Runtime error logging (replacing pre-flight validation)

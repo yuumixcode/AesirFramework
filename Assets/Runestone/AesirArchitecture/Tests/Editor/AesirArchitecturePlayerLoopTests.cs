@@ -36,7 +36,6 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var markerType = typeof(TestMarkerBeforeUpdate);
             var inserted = PlayerLoopUtility.InsertSystemBefore<Update>(
                 new PlayerLoopSystem { type = markerType });
-
             Assert.IsTrue(inserted);
             AssertIsBeforeInLoop(markerType, typeof(Update));
             AesirArchitectureDebug.LogTestInfo("InsertSystemBefore: 成功在 Update 之前插入了自定义系统");

@@ -54,16 +54,6 @@ namespace Runestone.AesirArchitecture
     public interface ICanGetService : IContextHolder { }
 
     /// <summary>
-    /// 发布事件的能力接口
-    /// </summary>
-    public interface ICanInvokeEvent : IContextHolder { }
-
-    /// <summary>
-    /// 注册事件监听的能力接口
-    /// </summary>
-    public interface ICanAddListener : IContextHolder { }
-
-    /// <summary>
     /// 执行命令的能力接口
     /// </summary>
     public interface ICanExecuteCommand : IContextHolder { }

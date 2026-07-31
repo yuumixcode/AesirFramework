@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Runestone.AesirArchitecture
 {
     /// <summary>
-    /// 模块上下文接口。提供模块注册、获取与事件操作。
+    /// 模块上下文接口。提供模块注册与获取。
     /// </summary>
     public interface IContext : IDisposable
     {
@@ -42,35 +42,5 @@ namespace Runestone.AesirArchitecture
         /// 获取所有已注册的 Service 列表
         /// </summary>
         IEnumerable<IService> GetAllServices();
-
-        /// <summary>
-        /// 注册事件监听，返回可自动移除的监听句柄
-        /// </summary>
-        AutoRemoveListenerHandle AddListener<T>(Action<T> listener) where T : IEventArgs;
-
-        /// <summary>
-        /// 注册无参事件监听，返回可自动移除的监听句柄
-        /// </summary>
-        AutoRemoveListenerHandle AddListener<T>(Action listener) where T : IEventArgs;
-
-        /// <summary>
-        /// 移除事件监听
-        /// </summary>
-        void RemoveListener<T>(Action<T> listener) where T : IEventArgs;
-
-        /// <summary>
-        /// 移除无参事件监听
-        /// </summary>
-        void RemoveListener<T>(Action listener) where T : IEventArgs;
-
-        /// <summary>
-        /// 发布事件
-        /// </summary>
-        void InvokeEvent<T>(T args) where T : IEventArgs;
-
-        /// <summary>
-        /// 发布无参事件
-        /// </summary>
-        void InvokeEvent<T>() where T : IEventArgs, new();
     }
 }
