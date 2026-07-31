@@ -21,11 +21,10 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 ### 核心特性
 
 - **PlayerLoop 原生生命周期** — 通过 `AesirArchitecturePlayerLoop` 将自定义子系统注入 Unity PlayerLoop，提供 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour
-- **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand`、`ICanAddListener` 等能力标记接口组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`，按需暴露能力
+- **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand` 等能力标记接口组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`，按需暴露能力
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
 - **ObservableValue 响应式属性** — Model 持有可写实例，View 通过 `IReadOnlyObservableValue<out T>` 协变只读访问，保障层级安全
-- **MiniEventBus 类型事件总线** — 按事件类型注册/发布，支持自动移除监听句柄与多种生命周期绑定（GameObject 销毁、场景卸载等）
 - **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换 Model 的调试模式
 - **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule` 基类，消除代码重复
 - **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，支持全局单例
@@ -40,7 +39,6 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 | 生命周期 | MonoBehaviour 事件回调 | PlayerLoop 原生注入（BeforeUpdate / AfterUpdate） |
 | 架构根 | 泛型单例 `Architecture<T>` | 泛型静态单例 `AbstractContext<T>` + `GenericLocator` 全局定位 |
 | 可观察属性 | `BindableProperty<T>` | `ObservableValue<T>` + `IReadOnlyObservableValue<out T>` 协变只读 |
-| 事件通信 | 纯 C# TypeEvent | 纯 C# MiniEventBus + 委托（不使用 `event` 关键字） |
 | 日志 | `Debug.Log` | `AesirArchitectureDebug` 条件编译统一日志 |
 | 静态状态 | 无 Domain Reset 保障 | `[RuntimeInitializeOnLoadMethod]` 显式重置 |
 | 表现层 | 无明确抽象 | `IView` 表现层接口 + `IController` / `IPresenter` 双模式 |
@@ -145,27 +143,6 @@ public class AddScoreCommand : AbstractCommand
 this.ExecuteCommand<AddScoreCommand>();
 ```
 
-### 5. 使用事件总线
-
-```csharp
-// 定义事件参数
-public struct ScoreChangedEvent : IEventArgs
-{
-    public int NewScore;
-}
-
-// 添加监听
-this.AddListener<ScoreChangedEvent>(e => Debug.Log($"Score: {e.NewScore}"))
-    .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
-
-// 发布
-this.InvokeEvent(new ScoreChangedEvent { NewScore = 100 });
-
-// 发布无参事件（T 必须有无参构造）
-public struct GameStartedEvent : IEventArgs { }
-this.InvokeEvent<GameStartedEvent>();
-```
-
 ## 架构总览
 
 ```
@@ -173,10 +150,10 @@ this.InvokeEvent<GameStartedEvent>();
 │               AbstractContext<T>                 │
 │     (泛型静态单例 + Domain Reset)                │
 │                                                  │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────┐ │
-│  │  Models  │  │ Services │  │ MiniEventBus  │ │
-│  │          │  │          │  │   (Global)    │ │
-│  └──────────┘  └──────────┘  └───────────────┘ │
+│  ┌──────────┐  ┌──────────┐                    │
+│  │  Models  │  │ Services │                    │
+│  │          │  │          │                    │
+│  └──────────┘  └──────────┘                    │
 │  ┌──────────────────────────────────────────────┐│
 │  │       GenericLocator<T> (类型定位器)         ││
 │  └──────────────────────────────────────────────┘│
@@ -205,13 +182,13 @@ this.InvokeEvent<GameStartedEvent>();
 
 ### 能力矩阵
 
-| 模块 | GetModel | GetService | ExecuteCommand | AddListener | InvokeEvent | Initialize | Dispose |
-|------|:--------:|:---------:|:--------------:|:---------:|:----------:|:----------:|:-------:|
-| **IModel** | ✓ | | | | ✓ | ✓ | ✓ |
-| **IService** | ✓ | ✓ | | ✓ | ✓ | ✓ | ✓ |
-| **IView** | ✓ | ✓ | | ✓ | ✓ | | |
-| **IController** | ✓ | ✓ | ✓ | | | | |
-| **IPresenter** | ✓ | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| 模块 | GetModel | GetService | ExecuteCommand | Initialize | Dispose |
+|------|:--------:|:---------:|:--------------:|:----------:|:-------:|
+| **IModel** | ✓ | | | ✓ | ✓ |
+| **IService** | ✓ | ✓ | | ✓ | ✓ |
+| **IView** | ✓ | ✓ | | | |
+| **IController** | ✓ | ✓ | ✓ | | |
+| **IPresenter** | ✓ | ✓ | ✓ | | ✓ |
 
 ## 项目结构
 
@@ -236,7 +213,7 @@ cn.runestone.aesir.architecture/
 │   │   │   ├── Interfaces/        # 模块接口
 │   │   │   └── Abstracts/         # AbstractSubmodule, AbstractModel, AbstractService, AbstractCommand, AbstractQuery
 │   │   ├── Capabilities/          # Capabilities.cs (ICan* 接口) + CapabilityExtensions.cs (扩展方法)
-│   │   ├── Event/                 # MiniEventBus, MiniEvent<T>, AutoRemoveListenerHandle, RemoveListenerExtensions
+│   │   ├── Event/                 # MiniEvent<T>, AutoRemoveListenerHandle, RemoveListenerExtensions
 │   │   ├── Observable/            # ObservableValue<T>, IObservableValue<T>, IReadOnlyObservableValue<T>
 │   │   ├── Locator/               # GenericLocator<T>, IGenericLocator<T>
 │   │   └── Utilities/             # PlayerLoopUtility
@@ -299,7 +276,6 @@ cn.runestone.aesir.architecture/
 - [x] 命令模式（同步）
 - [x] 查询模式（CQRS 读操作）
 - [x] ObservableValue 响应式属性
-- [x] MiniEventBus 类型事件总线
 - [x] GenericLocator 泛型定位器
 - [x] AbstractSubmodule 统一子模块生命周期
 - [x] 运行时错误日志（替代前置依赖校验）

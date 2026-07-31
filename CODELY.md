@@ -15,11 +15,8 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.4.2 | `Runestone.AesirArchitecture` | 渐进式 MVP/MVC 架构框架 — 能力接口组合、命令模式、查询模式、MiniEventBus、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-
-
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.4.2 | `Runestone.AesirArchitecture` | 渐进式 MVP/MVC 架构框架 — 能力接口组合、命令模式、查询模式、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
 | Aesir Modules | `cn.runestone.aesir.modules` | 0.4.2 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器） |
-
 | Aesir Inspector | `cn.runestone.aesir-inspector` | 0.4.2 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具、Odin Inspector 可选集成 |
 
 
@@ -34,7 +31,6 @@
 框架采用**能力接口组合**模式。每个角色（View、Controller、Presenter、Command、Query、Service、Model）通过组合细粒度能力接口来定义：
 
 - `ICanGetModel` / `ICanGetService` — 读取已注册模块
-- `ICanInvokeEvent` / `ICanAddListener` — 事件总线交互
 - `ICanExecuteCommand` / `ICanExecuteQuery` — 写/读分发
 - `ICanSetContext` / `IContextHolder` — 上下文绑定
 
@@ -43,16 +39,16 @@
 | 角色 | 接口 | 能力 | 说明 |
 |------|------|------|------|
 | **Model** | `IModel` → `AbstractModel` | GetModel, GetService | 数据层；仅通过 Command 写入 |
-| **Service** | `IService` → `AbstractService` | GetModel, GetService, Invoke, AddListener | 跨模块协调；不能执行 Command/Query |
-| **View** | `IView` | GetModel, GetService, AddListener, Invoke | 只读访问；不能执行 Command |
+| **Service** | `IService` → `AbstractService` | GetModel, GetService | 跨模块协调；不能执行 Command/Query |
+| **View** | `IView` | GetModel, GetService | 只读访问；不能执行 Command |
 | **Controller** | `IController` | GetModel, GetService, ExecuteCommand, ExecuteQuery | MVC 模式入口 |
-| **Presenter** | `IPresenter` | 全部 Controller + AddListener + Invoke + IDisposable | MVP 模式；中介 Model ↔ View |
+| **Presenter** | `IPresenter` | 全部 Controller + IDisposable | MVP 模式；中介 Model ↔ View |
 | **Command** | `ICommand` → `AbstractCommand` | Execute()，只写无返回值 | 修改 Model 状态 |
 | **Query** | `IQuery<TResult>` → `AbstractQuery` | Execute() → TResult，只读 | 返回数据，无副作用 |
 
 ### 上下文系统
 
-- `IContext` — 模块注册、获取与事件操作
+- `IContext` — 模块注册与获取
 - `AbstractContext<T>` — 纯 C# 单例实现（不依赖 MonoBehaviour）
   - `Configure()` 抽象方法 — 在此注册 Model 和 Service
   - `Interface` 静态属性 — 懒加载单例访问器
@@ -66,7 +62,6 @@
 - **`AesirScriptableObject`** — 架构感知 ScriptableObject 基类
 - **`ObservableValue<T>`** — 响应式属性；Model 持有可写实例，View 通过 `IReadOnlyObservableValue<T>` 订阅。支持 `SetValueSilently`、`AddListenerAndInvoke`
 - **`MiniEvent` / `MiniEvent<T>`** — 轻量级零分配事件系统；返回 `AutoRemoveListenerHandle` 自动清理
-- **`MiniEventBus<TEvent>`** — 静态类型化事件总线；事件需实现 `IEventArgs`
 - **`GenericLocator<T>`** — 类型键控的服务定位器
 
 ### Odin Inspector 集成
@@ -276,7 +271,7 @@ Assets/
 │   │   │       ├── Capabilities/     # 能力接口（ICanGetModel 等）
 │   │   │       ├── Common/          # PlayerLoop, Debug, ResetStatics, AssemblyInfo
 │   │   │       ├── Context/          # IContext, AbstractContext<T>
-│   │   │       ├── Event/           # MiniEvent, MiniEventBus, AutoRemoveListenerHandle
+│   │   │       ├── Event/           # MiniEvent, AutoRemoveListenerHandle
 │   │   │       ├── Locator/          # GenericLocator<T>
 │   │   │       ├── Modules/          # 抽象类（Model, Service, Command, Query）+ 接口
 │   │   │       ├── Observable/       # ObservableValue<T>, IObservableValue<T>
@@ -345,7 +340,7 @@ Assets/
 
 - **命名空间：** `Runestone.AesirArchitecture` / `Runestone.AesirModules`（Architecture 和 Modules）、`Runestone.AesirInspector`（Inspector）
 - **程序集名：** `Runestone.AesirArchitecture.*`、`Runestone.AesirModules.*`、`Runestone.AesirInspector.*`
-- **类名：** PascalCase（如 `AbstractContext`、`ObservableValue`、`MiniEventBus`）
+- **类名：** PascalCase（如 `AbstractContext`、`ObservableValue`、`MiniEvent`）
 - **接口：** `I` 前缀（如 `ICommand`、`IContext`、`IUIPanel`）
 - **抽象类：** `Abstract` 前缀（如 `AbstractModel`、`AbstractCommand`）
 - **MonoBehaviour 单例：** 静态 `Instance` 属性、`[DefaultExecutionOrder(-999)]`、`DontDestroyOnLoad`
@@ -463,12 +458,21 @@ Unity -batchmode -quit -projectPath . \
 - [2026-07-25 10:56:53] 项目英文文档命名规范：根目录英文文档统一使用 `_EN.md` 后缀（如 `README_EN.md`）；`CODE_OF_CONDUCT.en.md` 和 `CONTRIBUTING.en.md` 暂保留 `.en.md` 后缀；各子包的英文 README 统一放在 `Documentation~/README_EN.md`。**Why:** 统一命名风格，README 从 `.en.md` 改为 `_EN.md` 与子包一致。**How to apply:** 根目录 README 英文版用 `README_EN.md`，子包英文 README 用 `Documentation~/README_EN.md`。
 
 - [2026-07-25 00:55:49] Git Commit 消息使用中文编写。**Why:** 用户偏好中文交流，项目代码注释和文档均使用中文。**How to apply:** 所有 git commit message 使用中文撰写，包括 subject 和 body。
+- [2026-07-30 21:40:27] 用户倾向移除框架中不实用的抽象层，即使参考框架（如 QFramework）有对应功能。**Why:** QFramework 作者本人也优先使用 EasyEvent 而非框架内置的 AddListener，说明内置事件总线不如独立事件机制实用。**How to apply:** 评估框架功能时以实用性为首要标准，不盲目跟随参考框架的设计；独立轻量机制（MiniEvent、ObservableValue）优于框架内置事件总线。
+- [2026-07-31 11:29:26] [2026-07-31 18:52:00] 事件参数载体应命名为 EventArgs 而非 Event。**Why:** 用户指出 AesirEvent 不持有监听者，仅作为参数在 EventModule 的 Registry 中传递，本质是事件参数（EventArgs）而非自包含事件实例。对比 MiniEvent（自身持有 Action 列表，是真正的事件实例）。**How to apply:** 当类仅作为数据载体流经外部调度器时，命名为 XxxEventArgs；当类自身持有监听者列表并具备 Invoke 能力时，才命名为 XxxEvent。
+- [2026-07-31 15:48:49] 用户认可表达式树编译方案用于优化反射性能（StaticBindingInfo），要求在代码中添加详细注释说明"为什么性能好"和"有什么缺点"。**Why:** 表达式树方案虽常见但不易理解，注释帮助后续维护者判断是否需要调整。**How to apply:** 涉及表达式树/委托编译等非直觉的性能优化时，用 XML remarks 注释解释原理、量级对比和缺点。
 
 ### Project
 - [2026-07-25 17:09:26] AttributeOverviewPro 子资产重构已完成并合并到 main（2026-07-25）：~194 个独立 .asset 文件合并为 3 个文件 — AttributeOverviewDatabase.asset（DatabaseSO + 70 PanelSO 子资产）、UnityExamples.asset（Unity 原生序列化 ExampleSO）、OdinExamples.asset（Odin 序列化 ExampleSO）。按序列化方式分离存储。初始化超时 bug 已修复（批量创建跳过逐次 SaveAssets）。
 
 - [2026-07-25 10:43:31] Monorepo 安装方式：三个子包通过各自的 `?path=` 参数从同一 Git 仓库安装，例如 `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture`。**Why:** monorepo 中三个子包在同一仓库的不同子目录，直接用仓库根 URL 无法正确识别单个包。**How to apply:** README 中的 Git URL 始终带 `?path=Assets/Runestone/{包名}` 参数；Aesir Modules 会自动拉取 Architecture + Inspector 依赖。
 - [2026-07-25 14:01:20] 包依赖关系更新（2026-07-25）：Aesir Modules 仅依赖 Aesir Architecture（移除了 Inspector 依赖）；Aesir Inspector 强依赖 Odin Inspector（从可选改为必需）；Aesir Architecture 保持独立。**Why:** 简化依赖链，Modules 不再间接依赖 Inspector/Odin；Inspector 本质上需要 Odin 才能工作。**How to apply:** Modules 的 package.json 仅声明 architecture 依赖；Inspector 的 README 和 package.json 标注 Odin 为强依赖；根目录 README 依赖图和安装说明已同步更新。
+- [2026-07-30 21:40:27] 移除 Context 事件总线系统（2026-07-30）：从 Aesir Architecture 移除了 MiniEventBus&lt;TEvent&gt;、IEventArgs、ICanAddListener、ICanInvokeEvent，以及 IContext/AbstractContext 中的 AddListener/RemoveListener/InvokeEvent 方法和 CapabilityExtensions 中对应的扩展方法。保留 MiniEvent/MiniEvent&lt;T&gt; 和 ObservableValue&lt;T&gt; 作为独立事件机制。**Why:** 用户认为 Context 的 AddListener 不实用，QFramework 作者本人也优先使用 EasyEvent。**How to apply:** 角色接口（ICommand、IModel、IService、IView、IPresenter）不再继承 ICanInvokeEvent/ICanAddListener；事件通信应使用 MiniEvent 或 ObservableValue。
+- [2026-07-31 15:48:38] Event Module V2 已实现并编译通过（2026-07-31，简化版+性能优化）。当前状态：已移除 AbstractAttributeBound&lt;T&gt; 基类，EventModule 直接继承 AesirMonoBehaviour。双注册表分离（AttributeBindings + DynamicBindings，均为 public Dictionary）。BindingInfo 基类仅含 BindingKey/Subscriber/Priority + 抽象 Invoke()；StaticBindingInfo 持有 MethodInfo + 表达式树编译委托（Expression.Lambda.Compile，冷路径编译/热路径零反射，附详细 XML remarks 注释）；DynamicBindingInfo&lt;T&gt; 持有 Action&lt;T&gt; 直接委托。Script 订阅返回 AutoRemoveListenerHandle（与 MiniEvent 一致）。已移除 InvokeDelayed、IsInitialized、取消传播/密封/共享等机制。性能优化：object[] 循环外复用、count<=1 跳过 Sort、GetMethods 替代 GetMembers、缓存 MethodInfo。SubscriberPriority 枚举值为 First/High/Medium/Low/Last。设计文档位于 Docs/EventModule/（含 Feature-Roadmap.md 待完成功能清单）。**Why:** 参考商业插件 Game Event Hub，但以实用性为标准裁剪。**How to apply:** V2 运行时代码已完成；下一步创建 V2 Sample 验证脚本；后续功能见 Feature-Roadmap.md。
+
+
+
+
 
 ### Reference
 - [2026-07-24 21:08:41] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
