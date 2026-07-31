@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 
-namespace Runestone.AesirArchitecture
+namespace Runestone.AesirModules
 {
     public static class AesirModulesDebug
     {
@@ -10,6 +10,7 @@ namespace Runestone.AesirArchitecture
         public const string SceneModuleTag = "[SceneModule]";
         public const string ObjectBinderTag = "[ObjectBinder]";
         public const string AesirModulesTag = "[AesirModules]";
+        public const string EventModuleTag = "[EventModule]";
 
         static string GetColoredTag(Tags tagCategory, string tag)
         {
