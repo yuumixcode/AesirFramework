@@ -3,7 +3,7 @@
   "displayName": "Aesir Modules",
   "version": "0.4.2",
   "unity": "2022.3",
-  "description": "Aesir 功能模块包。轻量级 UI 框架：Manager-of-Managers 单例模式，四层 Canvas 层级管理、完整面板生命周期与可替换资源加载器。",
+  "description": "Aesir 功能模块包。UI 框架（Manager-of-Managers 单例模式、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（反射绑定、特性标记静态订阅、发布-订阅解耦）。",
   "keywords": [
     "ui",
     "modules",
@@ -20,5 +20,12 @@
   "dependencies": {
     "com.unity.test-framework": "1.1.33",
     "cn.runestone.aesir.architecture": "0.4.2"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Event Module - Key Press",
+      "description": "事件模块 V1 基本发布-订阅示例：按键发布事件、[AesirListener] 静态订阅。",
+      "path": "Samples~/Events/01_KeyPress"
+    }
+  ]
 }
