@@ -58,32 +58,6 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 通过上下文事件总线注册事件监听，返回可自动移除的监听句柄
-        /// </summary>
-        public static AutoRemoveListenerHandle AddListener<T>(this ICanAddListener self, Action<T> onEvent)
-            where T : IEventArgs =>
-            self.Context.AddListener(onEvent);
-
-        /// <summary>
-        /// 通过上下文事件总线移除事件监听
-        /// </summary>
-        public static void RemoveListener<T>(this ICanAddListener self, Action<T> onEvent)
-            where T : IEventArgs =>
-            self.Context.RemoveListener(onEvent);
-
-        /// <summary>
-        /// 通过上下文事件总线发布事件
-        /// </summary>
-        public static void InvokeEvent<T>(this ICanInvokeEvent self, T e) where T : IEventArgs =>
-            self.Context.InvokeEvent(e);
-
-        /// <summary>
-        /// 通过上下文事件总线发布无参事件
-        /// </summary>
-        public static void InvokeEvent<T>(this ICanInvokeEvent self) where T : IEventArgs, new() =>
-            self.Context.InvokeEvent<T>();
-
-        /// <summary>
         /// 执行带参命令
         /// </summary>
         public static void ExecuteCommand<T>(this ICanExecuteCommand self, T command) where T : ICommand

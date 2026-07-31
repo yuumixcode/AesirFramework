@@ -38,6 +38,13 @@ namespace Runestone.AesirArchitecture
         {
             _eventListeners?.Invoke();
         }
+
+        /// <summary>
+        /// 获取当前所有已注册的委托列表
+        /// </summary>
+        /// <returns>委托数组；无监听者时返回空数组</returns>
+        public Delegate[] GetListeners() =>
+            _eventListeners?.GetInvocationList() ?? Array.Empty<Delegate>();
     }
 
     /// <summary>
@@ -77,5 +84,12 @@ namespace Runestone.AesirArchitecture
         {
             _eventListeners?.Invoke(t);
         }
+
+        /// <summary>
+        /// 获取当前所有已注册的委托列表
+        /// </summary>
+        /// <returns>委托数组；无监听者时返回空数组</returns>
+        public Delegate[] GetListeners() =>
+            _eventListeners?.GetInvocationList() ?? Array.Empty<Delegate>();
     }
 }
