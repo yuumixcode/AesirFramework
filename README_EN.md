@@ -17,8 +17,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVP / MVC framework (capability composition, command pattern, event bus, PlayerLoop) | `cn.runestone.aesir.architecture` | `0.4.2` |
-| **Aesir Modules** | Lightweight UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, pluggable asset loader) | `cn.runestone.aesir.modules` | `0.4.2` |
+| **Aesir Architecture** | Progressive MVP / MVC framework (capability composition, command pattern, PlayerLoop) | `cn.runestone.aesir.architecture` | `0.4.2` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + ⚠️ Experimental Event Module | `cn.runestone.aesir.modules` | `0.4.2` |
 | **Aesir Inspector** | Editor extension library (bilingual Inspector, safe editor utilities, script doc generator, Summary sync tool) | `cn.runestone.aesir.inspector` | `0.4.2` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).

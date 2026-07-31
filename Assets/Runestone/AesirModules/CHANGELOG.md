@@ -9,28 +9,20 @@
 
 ### Added
 
-- **事件模块（Event Module）V1**：新增基于反射绑定的事件系统，实现发布-订阅最小闭环
-  - `AesirEventArgs` 抽象基类 — 事件参数载体（类似 EventArgs），所有自定义事件参数继承此类，支持 `SetSender` / `Invoke` / `Clone`
-  - `[AesirListener]` 特性 — 标记方法监听指定事件参数类型，支持零参数方法和多事件监听
-  - `EventModule` 单例 — 作为 `AesirModules` 子物体懒加载创建，提供 `AddListener` / `RemoveListener` / `InvokeEvent` 静态 API
-  - `AbstractAttributeBound<TAttribute>` — 泛型反射绑定基类，扫描特性标记的方法并注册到 `BindingRegistry`
-  - `SubscriberPriority` — 优先级枚举（V1 仅 High/Medium 两档，V2 扩展为 5 档）
-  - `AesirEventUtility` — 静态工具方法（Unity 假 null 检测、绑定键获取、事件名获取）
+- **事件模块（Event Module）**：⚠️ 实验性模块，尚未在实际项目中验证
+  - 双轨订阅：Attribute 订阅（`[AesirListener]` 特性）+ Script 订阅（`AddListener<T>` 动态 Lambda）
+  - 5 档优先级排序分发（First/High/Medium/Low/Last）
+  - `AutoRemoveListenerHandle` 退订句柄（与 `MiniEvent` 模式一致）
+  - 表达式树编译优化：`StaticBindingInfo` 在注册时将 `MethodInfo` 编译为委托，热路径零反射
+  - 双注册表分离（`AttributeBindings` + `DynamicBindings`）
+  - `AesirEventArgs` 基类 + `AesirListenerAttribute` 特性 + `AesirEventUtility` 工具
   - 示例 `Samples~/Events/01_KeyPress/` — 按键发布-订阅演示
-  - 文档 `Documentation~/event-module.md` — 事件模块完整文档
+  - 文档 `Documentation~/event-module.md`
 
 ### Changed
 
-- **依赖关系明确**：从依赖 Aesir Architecture 升级为**同时依赖** Aesir Architecture + Aesir Inspector
-  - `package.json` 的 `dependencies` 字段新增 `"cn.runestone.aesir.inspector": "0.4.0"`
-  - `cn.runestone.aesir.architecture` 由 `0.3.2` → `0.4.0`
-  - README 顶部 monorepo 块重写，明确依赖关系
-- **package.json 描述更新**：反映事件模块的新增
-- **README 更新**：新增事件模块章节（核心类型表、快速开始、API 速查、目录结构）
-
-### Added (之前)
-
-- **英文 README**：新增 `README.en.md`（之前只有中文）
+- **package.json**：更新描述反映事件模块，新增 `samples` 数组声明
+- **README**：新增事件模块章节（核心类型表、快速开始、API 速查、目录结构）
 
 ### 规划中
 
