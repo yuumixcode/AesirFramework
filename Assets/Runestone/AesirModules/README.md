@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Aesir Architecture (RAA) 的功能模块包。当前提供极简 UI 框架，采用 Unity "Manager of Managers" 模式，按 Engine / Component 两层组织。
+Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）和事件模块（反射绑定 + 特性标记静态订阅）。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](./CHANGELOG.md)
@@ -16,6 +16,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供极简 UI 框架，采
 | 模块 | 状态 | 说明 |
 |------|------|------|
 | UI | 已实现 | UIManager 单例；四层 Canvas + 面板生命周期 |
+| Event | 已实现 (V1) | EventModule 单例；反射绑定 + [AesirListener] 静态订阅 + 发布-订阅 |
 | Scene | 规划中 | 场景加载、SceneReference |
 
 ## 依赖
@@ -108,6 +109,95 @@ Editor/
 ```
 
 详细文档见 [Documentation~/ui-module-manual.md](Documentation~/ui-module-manual.md)。
+
+## 事件模块
+
+基于反射绑定的事件系统，通过 `[AesirListener]` 特性标记方法实现静态订阅，`EventModule` 单例负责事件分发。V1 实现最小闭环：发布-订阅-接收。
+
+### 核心类型
+
+| 类型 | 说明 |
+|------|------|
+| `AesirEventArgs` | 事件参数抽象基类。所有自定义事件参数继承此类，作为数据载体在 EventModule 中传递 |
+| `AesirListenerAttribute` | 方法特性，标记该方法监听指定事件参数类型 |
+| `EventModule` | MonoBehaviour 单例，管理订阅注册表与事件分发 |
+| `AbstractAttributeBound<T>` | 反射绑定基类，扫描特性标记的方法并注册 |
+| `SubscriberPriority` | 订阅优先级枚举（V1 仅 High/Medium 两档） |
+| `AesirEventUtility` | 事件模块静态工具方法 |
+
+### 快速开始
+
+1. 定义事件参数：
+
+```csharp
+using Runestone.AesirModules;
+
+public class OnPlayerScored : AesirEventArgs
+{
+    public int points;
+    public string playerName;
+}
+```
+
+2. 订阅事件：
+
+```csharp
+using UnityEngine;
+using Runestone.AesirModules;
+
+public class ScoreUI : MonoBehaviour
+{
+    void OnEnable()  => EventModule.AddListener(this);
+    void OnDisable() => EventModule.RemoveListener(this);
+
+    [AesirListener]
+    private void OnPlayerScored(OnPlayerScored e)
+    {
+        Debug.Log($"[ScoreUI] {e.playerName} scored {e.points}");
+    }
+}
+```
+
+3. 发布事件：
+
+```csharp
+new OnPlayerScored { points = 10, playerName = "Player1" }.Invoke(this);
+```
+
+### API 速查
+
+```csharp
+// 订阅 / 退订
+EventModule.AddListener(this);    // OnEnable 中调用
+EventModule.RemoveListener(this); // OnDisable 中调用
+
+// 发布
+new MyEventArgs().Invoke(this);              // 链式调用
+EventModule.InvokeEvent(sender, eventArgs);   // 直接调用
+
+// 零参数方法订阅（需显式指定事件参数类型）
+[AesirListener(typeof(OnKeyPressed))]
+private void OnKeyPressed() { ... }
+
+// 多事件监听（同一方法标多个特性）
+[AesirListener]
+[AesirListener(typeof(OtherEventArgs))]
+private void OnEvent(AesirEventArgs e) { ... }
+```
+
+### 目录结构
+
+```
+Runtime/Events/
+├── AesirEventArgs.cs              # 事件参数基类
+├── AesirListenerAttribute.cs      # 订阅者特性
+├── AesirEventUtility.cs           # 静态工具
+├── AbstractAttributeBound.cs       # 反射绑定基类
+├── EventModule.cs                  # 事件模块单例
+└── SubscriberPriority.cs           # 优先级枚举
+```
+
+详细文档见 [Documentation~/event-module.md](Documentation~/event-module.md)。
 
 ## 许可证
 
