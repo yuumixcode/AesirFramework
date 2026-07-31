@@ -1,0 +1,17 @@
+{
+    "name": "Runestone.AesirModules.Samples.Events.KeyPress",
+    "rootNamespace": "Runestone.AesirModules.Samples.Events",
+    "references": [
+        "Runestone.AesirModules",
+        "Runestone.AesirArchitecture"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
