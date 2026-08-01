@@ -453,7 +453,8 @@ Unity -batchmode -quit -projectPath . \
 
 
 ### Feedback
-- [2026-07-25 14:45:31] Aesir Inspector 与 Aesir Architecture/Modules 使用不同编码规范。Inspector（2026-07-25 更新）：已放弃 [Summary] 特性，改用 XML 文档注释（/// <summary>）；保持自文档化代码、禁止对 UnityEngine.Object 派生类使用 ?. /??、事件命名无 On 前缀。Architecture/Modules：中文 XML 文档注释、显式接口实现。编辑代码时需确认所在包以应用正确风格。
+- [2026-07-31 17:30:59] Aesir Inspector 与 Aesir Architecture/Modules 使用不同编码规范。Inspector（2026-07-31 更新）：[Summary] 特性装饰已从全部源码中移除（252 文件，897 处），SummaryAttribute 类仍保留但仅用于 ScriptDocGenerator 的 MemberData 反射；改用 XML 文档注释（/// <summary>）；OdinAutoTooltip（提取自 JakePineOdinTools）自动从 XML 生成 Inspector Tooltip。MIT LICENSE 头部已从所有 .cs 文件移除，仅在 CodeStyle/AesirInspectorCodeStyle.cs 保留一份。保持自文档化代码、禁止对 UnityEngine.Object 派生类使用 ?. /??、事件命名无 On 前缀。Architecture/Modules：中文 XML 文档注释、显式接口实现。编辑代码时需确认所在包以应用正确风格。
+
 
 - [2026-07-25 10:56:53] 项目英文文档命名规范：根目录英文文档统一使用 `_EN.md` 后缀（如 `README_EN.md`）；`CODE_OF_CONDUCT.en.md` 和 `CONTRIBUTING.en.md` 暂保留 `.en.md` 后缀；各子包的英文 README 统一放在 `Documentation~/README_EN.md`。**Why:** 统一命名风格，README 从 `.en.md` 改为 `_EN.md` 与子包一致。**How to apply:** 根目录 README 英文版用 `README_EN.md`，子包英文 README 用 `Documentation~/README_EN.md`。
 
