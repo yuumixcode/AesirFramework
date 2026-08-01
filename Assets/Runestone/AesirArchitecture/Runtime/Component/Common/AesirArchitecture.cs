@@ -31,17 +31,19 @@ namespace Runestone.AesirArchitecture
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
+                return;
             }
-            else
-            {
-                _instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
+
+            _instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         void OnDestroy()
         {
-            _instance = null;
+            if (_instance == this)
+            {
+                _instance = null;
+            }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

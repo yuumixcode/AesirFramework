@@ -132,7 +132,6 @@ GameObject:
   m_Component:
   - component: {fileID: 377623616}
   - component: {fileID: 377623617}
-  - component: {fileID: 377623618}
   m_Layer: 0
   m_Name: MiniEventSample
   m_TagString: Untagged
@@ -167,63 +166,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35859e2729eab42c394c198f64185aba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &377623618
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 377623614}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68742fb742f9b4d6b9039948b8756a50, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  serializationData:
-    SerializedFormat: 2
-    SerializedBytes: 
-    ReferencedUnityObjects: []
-    SerializedBytesString: 
-    Prefab: {fileID: 0}
-    PrefabModificationsReferencedUnityObjects: []
-    PrefabModifications: []
-    SerializationNodes:
-    - Name: AttributeBindings
-      Entry: 7
-      Data: 0|UnityEngine.Rendering.SerializedDictionary`2[[System.String, mscorlib],[System.Collections.Generic.List`1[[Runestone.AesirModules.BindingInfo,
-        Runestone.AesirModules]], mscorlib]], Unity.RenderPipelines.Core.Runtime
-    - Name: comparer
-      Entry: 7
-      Data: 1|System.Collections.Generic.GenericEqualityComparer`1[[System.String,
-        mscorlib]], mscorlib
-    - Name: 
-      Entry: 8
-      Data: 
-    - Name: 
-      Entry: 12
-      Data: 0
-    - Name: 
-      Entry: 13
-      Data: 
-    - Name: 
-      Entry: 8
-      Data: 
-    - Name: DynamicBindings
-      Entry: 7
-      Data: 2|UnityEngine.Rendering.SerializedDictionary`2[[System.String, mscorlib],[System.Collections.Generic.List`1[[Runestone.AesirModules.BindingInfo,
-        Runestone.AesirModules]], mscorlib]], Unity.RenderPipelines.Core.Runtime
-    - Name: comparer
-      Entry: 9
-      Data: 1
-    - Name: 
-      Entry: 12
-      Data: 0
-    - Name: 
-      Entry: 13
-      Data: 
-    - Name: 
-      Entry: 8
-      Data: 
 --- !u!1 &443448927
 GameObject:
   m_ObjectHideFlags: 0
