@@ -5,7 +5,6 @@ namespace Runestone.AesirArchitecture
     /// <summary>
     /// 自动移除监听调用器基类。维护监听句柄列表，子类在特定生命周期事件中调用 <see cref="RemoveAllListeners" /> 批量移除。
     /// </summary>
-    [DisallowMultipleComponent]
     public abstract class RemoveListenerTrigger : AesirMonoBehaviour
     {
         readonly RemoveListenerHandleCollection _handles = new RemoveListenerHandleCollection();
