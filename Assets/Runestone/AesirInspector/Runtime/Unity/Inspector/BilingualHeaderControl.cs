@@ -16,9 +16,9 @@ namespace Runestone.AesirInspector
         [SerializeField]
         public BilingualDisplayAsStringControl headerIntroduction;
 
-        readonly string _chineseIntroduction;
-        readonly string _englishIntroduction;
-        string _targetUrl;
+        [SerializeField] string _chineseIntroduction;
+        [SerializeField] string _englishIntroduction;
+        [SerializeField] string _targetUrl;
 
         public BilingualHeaderControl(string chineseName,
             string englishName = null,

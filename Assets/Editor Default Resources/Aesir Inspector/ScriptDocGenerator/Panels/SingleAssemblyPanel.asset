@@ -34,12 +34,21 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
+      ChineseDisplay: "\u5355\u7A0B\u5E8F\u96C6\u6A21\u5F0F"
+      EnglishDisplay: Single Assembly Mode
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
+      ChineseDisplay: "\u9009\u62E9\u4E00\u4E2A\u7A0B\u5E8F\u96C6\uFF0C\u5206\u6790\u5176\u4E2D\u6240\u6709\u516C\u5171\u7C7B\u578B\u5E76\u751F\u6210\u6587\u6863\u3002"
+      EnglishDisplay: Select a single assembly to analyze all public types and generate
+        documents.
+    _chineseIntroduction: "\u9009\u62E9\u4E00\u4E2A\u7A0B\u5E8F\u96C6\uFF0C\u5206\u6790\u5176\u4E2D\u6240\u6709\u516C\u5171\u7C7B\u578B\u5E76\u751F\u6210\u6587\u6863\u3002"
+    _englishIntroduction: Select a single assembly to analyze all public types and
+      generate documents.
+    _targetUrl: https://github.com/yuumixcode/Unity-Aesir-Packages.git
   docFolderPath: Assets/Editor Default Resources/Aesir Inspector/Documents
   docGeneratorSettings: {fileID: 11400000, guid: a87f902898b8c49b1bc2d7a155909197, type: 2}
   targetAssemblyFullName: 
