@@ -1,27 +1,3 @@
-// ----------------------------------------------------------------------------
-// MIT License
-// 
-// Copyright (c) 2026 Runestone - Yuumix
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// ----------------------------------------------------------------------------
-
 using System.Text;
 using UnityEngine;
 
@@ -30,13 +6,11 @@ namespace Runestone.AesirInspector
     /// <summary>
     /// 层级工具类，提供 Transform 层级路径相关的操作方法
     /// </summary>
-    [Summary("层级工具类，提供 Transform 层级路径相关的操作方法")]
     public static class HierarchyUtility
     {
         /// <summary>
         /// 获取物体在层级中的完整路径
         /// </summary>
-        [Summary("获取物体在层级中的完整路径")]
         public static string GetFullPath(Transform transform)
         {
             if (transform == null)
@@ -58,7 +32,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取子物体相对于父物体的路径
         /// </summary>
-        [Summary("获取子物体相对于父物体的路径")]
         public static string GetRelativePath(Transform parent, Transform child)
         {
             if (parent == null || child == null)
@@ -91,7 +64,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取子物体相对于父物体的路径（基于路径字符串）
         /// </summary>
-        [Summary("获取子物体相对于父物体的路径（基于路径字符串）")]
         public static string GetRelativePath(string parentPath, string childPath)
         {
             if (string.IsNullOrEmpty(parentPath))
@@ -117,7 +89,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 递归查找深层子物体
         /// </summary>
-        [Summary("递归查找深层子物体")]
         public static Transform FindDeepChild(Transform parent, string name)
         {
             foreach (Transform child in parent)

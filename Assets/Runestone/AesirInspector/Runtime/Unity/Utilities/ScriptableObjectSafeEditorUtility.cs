@@ -1,27 +1,3 @@
-// ----------------------------------------------------------------------------
-// MIT License
-// 
-// Copyright (c) 2026 Runestone - Yuumix
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// ----------------------------------------------------------------------------
-
 using System.Linq;
 using UnityEngine;
 #if UNITY_EDITOR
@@ -33,14 +9,12 @@ namespace Runestone.AesirInspector
     /// <summary>
     /// ScriptableObject 的编辑器安全工具类，不需要编写宏定义。仅编辑器阶段有效，打包后运行时调用，返回 null 或者其他默认值。
     /// </summary>
-    [Summary("ScriptableObject 的编辑器安全工具类，不需要编写宏定义。仅编辑器阶段有效，打包后运行时调用，返回 null 或者其他默认值。")]
     public static class ScriptableObjectSafeEditorUtility
     {
         /// <summary>
         /// 获取对应类型的 SO 资源单例的相对路径。若存在多个则保留第一个并删除其余；若不存在则在指定路径自动创建。
         /// 打包后此方法将失效，返回 string.Empty。
         /// </summary>
-        [Summary("获取对应类型的 SO 资源单例的相对路径。若存在多个则保留第一个并删除其余；若不存在则在指定路径自动创建。打包后此方法将失效，返回 string.Empty。")]
         public static string GetSingletonAssetPathAndDeleteOther<T>(string relativeFolderPath = "")
             where T : ScriptableObject
         {
@@ -55,7 +29,6 @@ namespace Runestone.AesirInspector
         /// 获取对应类型的 SO 资源单例。若存在多个则保留第一个并删除其余；若不存在则在指定路径自动创建。
         /// 打包后此方法将失效，返回 null。
         /// </summary>
-        [Summary("获取对应类型的 SO 资源单例。若存在多个则保留第一个并删除其余；若不存在则在指定路径自动创建。打包后此方法将失效，返回 null。")]
         public static T GetSingletonAssetAndDeleteOther<T>(string relativeFolderPath = "")
             where T : ScriptableObject
         {
@@ -71,8 +44,6 @@ namespace Runestone.AesirInspector
         /// 如果资源不存在则自动创建并保存到指定路径，同时将资源注册到 EditorBuildSettings 中。
         /// 打包后此方法将失效，返回 null。
         /// </summary>
-        [Summary(
-            "根据配置名称获取或创建编辑器 ScriptableObject 资源。如果资源不存在则自动创建并保存到指定路径，同时将资源注册到 EditorBuildSettings 中。打包后此方法将失效，返回 null。")]
         public static T GetOrCreateEditorScriptableObject<T>(string configName,
             string folderPath,
             string assetName) where T : ScriptableObject

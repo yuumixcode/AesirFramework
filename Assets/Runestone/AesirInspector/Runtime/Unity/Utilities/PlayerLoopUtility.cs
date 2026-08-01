@@ -1,27 +1,3 @@
-// ----------------------------------------------------------------------------
-// MIT License
-// 
-// Copyright (c) 2026 Runestone - Yuumix
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// ----------------------------------------------------------------------------
-
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,13 +9,11 @@ namespace Runestone.AesirInspector
     /// <summary>
     /// 玩家循环工具类，提供自定义 Unity PlayerLoop 的相关方法
     /// </summary>
-    [Summary("玩家循环工具类，提供自定义 Unity PlayerLoop 的相关方法")]
     public static class PlayerLoopUtility
     {
         /// <summary>
         /// 从指定的循环系统中移除特定的系统
         /// </summary>
-        [Summary("从指定的循环系统中移除特定的系统")]
         public static void RemoveSystem<T>(ref PlayerLoopSystem loop, PlayerLoopSystem systemToRemove)
         {
             if (loop.subSystemList == null || loop.subSystemList.Length == 0)
@@ -64,7 +38,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 在指定的循环系统中插入特定的系统
         /// </summary>
-        [Summary("在指定的循环系统中插入特定的系统")]
         public static bool InsertSystem<T>(ref PlayerLoopSystem loop,
             PlayerLoopSystem systemToInsert,
             int index)
@@ -88,7 +61,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 打印当前的 PlayerLoop 结构到控制台
         /// </summary>
-        [Summary("打印当前的 PlayerLoop 结构到控制台")]
         public static void PrintPlayerLoop(PlayerLoopSystem loop)
         {
             var sb = new StringBuilder();
@@ -104,7 +76,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取一个新的自定义 PlayerLoopSystem 实例
         /// </summary>
-        [Summary("获取一个新的自定义 PlayerLoopSystem 实例")]
         public static PlayerLoopSystem GetNewCustomPlayerLoopSystem(Type target,
             PlayerLoopSystem.UpdateFunction update = null,
             IntPtr loopCondition = default,

@@ -6,20 +6,17 @@ namespace Runestone.AesirInspector.Editor
     /// <summary>
     /// XML 注释部分和代码块的组合。
     /// </summary>
-    [Summary("XML 注释部分和代码块的组合")]
     [Serializable]
     public class XmlCodePart
     {
         /// <summary>
         /// 注释部分的源代码，以 /// 开头。
         /// </summary>
-        [Summary("注释部分的源代码，以 /// 开头")]
         public string xml;
 
         /// <summary>
         /// 不以注释开头的代码块，除了注释对应的成员外，可能包含多个成员。
         /// </summary>
-        [Summary("不以注释开头的代码块，除了注释对应的成员外，可能包含多个成员")]
         public string code;
 
         public XmlCodePart(string xml, string code)
@@ -31,7 +28,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// code 开头的连续预处理指令行（如 #if、#elif、#else），确保添加 [Summary] 时位于条件编译块内部。
         /// </summary>
-        [Summary("code 开头的连续预处理指令行，确保添加 [Summary] 时位于条件编译块内部")]
         public string LeadingPreprocessorLines
         {
             get
@@ -55,7 +51,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// code 去掉开头预处理指令行后的内容。
         /// </summary>
-        [Summary("code 去掉开头预处理指令行后的内容")]
         public string CodeAfterLeadingPreprocessor
         {
             get
@@ -68,7 +63,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 从 xml 中提取 Summary 的内容。
         /// </summary>
-        [Summary("从 xml 中提取 Summary 的内容")]
         public string SummaryValue
         {
             get
@@ -97,7 +91,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 获取 SummaryAttribute 的代码文本。
         /// </summary>
-        [Summary("获取 SummaryAttribute 的代码文本")]
         public string SummaryAttributeText
         {
             get
@@ -116,7 +109,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 删除了 summary 标签部分的 xml。
         /// </summary>
-        [Summary("删除了 summary 标签部分的 xml")]
         public string RemovedSummaryXml
         {
             get
@@ -136,7 +128,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 删除了第一个 [Summary()] 部分的代码块（不含开头预处理指令行）。
         /// </summary>
-        [Summary("删除了第一个 [Summary()] 部分的代码块")]
         public string RemovedFirstSummaryAttributeCode
         {
             get
@@ -158,7 +149,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 删除了所有 [Summary()] 部分的代码块（不含开头预处理指令行）。
         /// </summary>
-        [Summary("删除了所有 [Summary()] 部分的代码块")]
         public string RemoveAllSummaryAttributeCode
         {
             get
@@ -176,7 +166,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 获取删除了 SummaryAttribute 的代码。
         /// </summary>
-        [Summary("获取删除了 SummaryAttribute 的代码")]
         public string GetReplaceAllOutput() =>
             xml + LeadingPreprocessorLines + RemoveAllSummaryAttributeCode;
 
@@ -189,7 +178,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 获取替换了 summary 标签的代码。
         /// </summary>
-        [Summary("获取替换了 summary 标签的代码")]
         public string GetReplaceOutput() =>
             RemovedSummaryXml + LeadingPreprocessorLines + SummaryAttributeText +
             RemovedFirstSummaryAttributeCode;

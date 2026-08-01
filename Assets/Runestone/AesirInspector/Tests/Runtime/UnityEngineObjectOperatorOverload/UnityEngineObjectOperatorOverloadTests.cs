@@ -1,27 +1,3 @@
-// ----------------------------------------------------------------------------
-// MIT License
-// 
-// Copyright (c) 2026 Runestone - Yuumix
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// ----------------------------------------------------------------------------
-
 using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
@@ -33,13 +9,11 @@ namespace Runestone.AesirInspector.Tests
     /// <summary>
     /// 关于 UnityEngine.Object 运算符重载的测试
     /// </summary>
-    [Summary("关于 UnityEngine.Object 运算符重载的测试")]
     public class UnityEngineObjectOperatorOverloadTests
     {
         /// <summary>
         /// 测试直接继承 UnityEngine.Object 的自定义类 TempObject 是否具有 native C++ counterpart object
         /// </summary>
-        [Summary("测试直接继承 UnityEngine.Object 的自定义类 TempObject 是否具有 native C++ counterpart object")]
         [UnityTest]
         public IEnumerator UnityEngineObject_NewDirectInheritedObjectNoHaveNativeCounterpartObject()
         {
@@ -58,7 +32,6 @@ namespace Runestone.AesirInspector.Tests
         /// <summary>
         /// 测试销毁 MonoBehaviour 后，C# 引用是否被置空
         /// </summary>
-        [Summary("测试销毁 MonoBehaviour 后，C# 引用是否被置空")]
         [UnityTest]
         public IEnumerator UnityEngineObject_DestroyMonoBehaviourNoSetNull()
         {
@@ -87,7 +60,6 @@ namespace Runestone.AesirInspector.Tests
         /// <summary>
         /// 用于测试的继承了 Object 的类
         /// </summary>
-        [Summary("用于测试的继承了 Object 的类")]
         class TempObject : Object
         {
             public TempObject(int id) => ID = id;
