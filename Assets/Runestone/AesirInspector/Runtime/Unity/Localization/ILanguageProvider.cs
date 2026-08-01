@@ -3,7 +3,6 @@ namespace Runestone.AesirInspector
     /// <summary>
     /// 语言提供者接口，用于解耦本地化数据与具体设置实现。
     /// </summary>
-    [Summary("语言提供者接口")]
     public interface ILanguageProvider
     {
         /// <summary>

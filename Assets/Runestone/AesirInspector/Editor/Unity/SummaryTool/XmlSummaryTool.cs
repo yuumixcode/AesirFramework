@@ -9,7 +9,6 @@ namespace Runestone.AesirInspector.Editor
     /// <summary>
     /// C# 脚本的 XML 中的 Summary 注释的处理器。
     /// </summary>
-    [Summary("C# 脚本的 XML 中的 Summary 注释的处理器")]
     [Serializable]
     public class XmlSummaryTool
     {
@@ -23,31 +22,26 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 原始源代码内容。
         /// </summary>
-        [Summary("原始源代码内容")]
         public string sourceScriptText;
 
         /// <summary>
         /// 源代码按行分割后的列表。
         /// </summary>
-        [Summary("源代码按行分割后的列表")]
         public List<string> sourceScriptLines;
 
         /// <summary>
         /// 第一个 XML 文档注释之前的所有代码行。
         /// </summary>
-        [Summary("第一个 XML 文档注释之前的所有代码行")]
         public List<string> headerLines;
 
         /// <summary>
         /// 第一个 XML 文档注释的行号索引，从这一行开始处理 XML 文档注释。
         /// </summary>
-        [Summary("第一个 XML 文档注释的行号索引，从这一行开始处理 XML 文档注释")]
         public int firstXmlCommentLineIndex = -1;
 
         /// <summary>
         /// XML 文档注释与代码块的组合列表，代码块是可能包含多个成员的。
         /// </summary>
-        [Summary("XML 文档注释与代码块的组合列表，代码块是可能包含多个成员的")]
         public List<XmlCodePart> xmlCodeParts = new List<XmlCodePart>();
 
         public XmlSummaryTool(string sourceScript)
@@ -59,13 +53,11 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 获取第一个 XML 文档注释之前的所有代码行组成的字符串。
         /// </summary>
-        [Summary("获取第一个 XML 文档注释之前的所有代码行组成的字符串")]
         public string HeaderScript => string.Join("\n", headerLines);
 
         /// <summary>
         /// 解析源脚本，将其分解为头部部分和 XML 文档注释与代码块的组合列表。
         /// </summary>
-        [Summary("解析源脚本，将其分解为头部部分和 XML 文档注释与代码块的组合列表")]
         public XmlSummaryTool ParseSourceScript()
         {
             ExtractHeaderLines();
@@ -76,7 +68,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 获取处理后的完整脚本内容。
         /// </summary>
-        [Summary("获取处理后的完整脚本内容")]
         public string GetProcessedSourceScript(ProcessMode processMode)
         {
             var processedScript = GetProcessedHeaderScript() + "\n";
@@ -128,7 +119,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 提取第一个 XML 文档注释之前的所有代码行，并标记第一个 XML 文档注释的行号索引。
         /// </summary>
-        [Summary("提取第一个 XML 文档注释之前的所有代码行，并标记第一个 XML 文档注释的行号索引")]
         void ExtractHeaderLines()
         {
             headerLines = new List<string>();
@@ -150,7 +140,6 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 生成 XML 文档注释和代码块组合的列表。
         /// </summary>
-        [Summary("生成 XML 文档注释和代码块组合的列表")]
         void CreateXmlCodeParts()
         {
             if (firstXmlCommentLineIndex == -1)

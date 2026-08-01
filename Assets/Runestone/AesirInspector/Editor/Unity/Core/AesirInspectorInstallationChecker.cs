@@ -10,32 +10,27 @@ namespace Runestone.AesirInspector.Editor
     /// <summary>
     /// Aesir Inspector 的安装方式枚举。
     /// </summary>
-    [Summary("Aesir Inspector 的安装方式枚举。")]
     public enum AesirInstallMode
     {
         /// <summary>
         /// 检测结果未知（检测过程中发生了异常）。
         /// </summary>
-        [Summary("检测结果未知（检测过程中发生了异常）。")]
         Unknown = 0,
 
         /// <summary>
         /// 通过 Unity Package Manager (UPM) 安装，文件位于 Packages/ 目录。
         /// </summary>
-        [Summary("通过 Unity Package Manager (UPM) 安装，文件位于 Packages/ 目录。")]
         Upm = 1,
 
         /// <summary>
         /// 通过 Asset Store 导入或手动放置，文件位于 Assets/ 目录（含 Git 子模块方式）。
         /// </summary>
-        [Summary("通过 Asset Store 导入或手动放置，文件位于 Assets/ 目录（含 Git 子模块方式）。")]
         AssetFolder = 2
     }
 
     /// <summary>
     /// 在编辑器加载时检测 Aesir Inspector 的安装方式，并将结果缓存为公开静态属性。
     /// </summary>
-    [Summary("在编辑器加载时检测 Aesir Inspector 的安装方式，并将结果缓存为公开静态属性。")]
     [InitializeOnLoad]
     public static class AesirInspectorInstallationChecker
     {
@@ -44,25 +39,21 @@ namespace Runestone.AesirInspector.Editor
         /// <summary>
         /// 当前的安装方式。
         /// </summary>
-        [Summary("当前的安装方式。")]
         public static AesirInstallMode InstallMode { get; private set; } = AesirInstallMode.Unknown;
 
         /// <summary>
         /// UPM 安装时的具体来源（Registry、Git、LocalPath 等）；非 UPM 时为 PackageSource.Unknown。
         /// </summary>
-        [Summary("UPM 安装时的具体来源；非 UPM 时为 PackageSource.Unknown。")]
         public static PackageSource UpmPackageSource { get; private set; } = PackageSource.Unknown;
 
         /// <summary>
         /// 是否通过 UPM 安装（文件位于 Packages/ 目录）。
         /// </summary>
-        [Summary("是否通过 UPM 安装（文件位于 Packages/ 目录）。")]
         public static bool IsUpm => InstallMode == AesirInstallMode.Upm;
 
         /// <summary>
         /// 是否安装在 Assets/ 目录中（Asset Store 导入或 Git 子模块）。
         /// </summary>
-        [Summary("是否安装在 Assets/ 目录中（Asset Store 导入或 Git 子模块）。")]
         public static bool IsAssetFolder => InstallMode == AesirInstallMode.AssetFolder;
 
         #region Internal
