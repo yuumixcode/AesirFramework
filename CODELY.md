@@ -15,14 +15,14 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.4.2 | `Runestone.AesirArchitecture` | 渐进式 MVP/MVC 架构框架 — 能力接口组合、命令模式、查询模式、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.4.2 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器） |
-| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.4.2 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具、Odin Inspector 可选集成 |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.5.0 | `Runestone.AesirArchitecture` | 渐进式 MVP/MVC 架构框架 — 能力接口组合、命令模式、查询模式、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.5.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器） |
+| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.5.0 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具、Odin Inspector 可选集成 |
 
 
 ---
 
-## Aesir Architecture（0.4.2）
+## Aesir Architecture（0.5.0）
 
 
 
@@ -78,7 +78,7 @@
 
 ---
 
-## Aesir Modules（0.4.2）
+## Aesir Modules（0.5.0）
 
 
 ### UI 框架
@@ -103,7 +103,7 @@
 
 ---
 
-## Aesir Inspector（0.4.2）
+## Aesir Inspector（0.5.0）
 
 
 ### 核心功能
@@ -199,7 +199,7 @@ Architecture 和 Modules 的示例有各自的 asmdef（如 `Runestone.AesirArch
 | 场景 | 路径 | 用途 |
 |------|------|------|
 | SampleScene | `Assets/Scenes/SampleScene.unity` | 默认 Unity 示例场景 |
-| SampleForCounterMvp | `Assets/Samples/Aesir Architecture/0.4.2/UI Counter-MVP/Scene/SampleForCounterMvp.unity` | MVP 计数器示例 — 包含增加/减少/重置按钮的 Canvas |
+| SampleForCounterMvp | `Assets/Samples/Aesir Architecture/0.5.0/UI Counter-MVP/Scene/SampleForCounterMvp.unity` | MVP 计数器示例 — 包含增加/减少/重置按钮的 Canvas |
 
 
 ### 当前场景层级（SampleForCounterMvp）
@@ -219,7 +219,7 @@ EventSystem
 
 ## 示例
 
-### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.4.2/`）
+### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.5.0/`）
 
 
 1. **Counter-MVC** — MVC 模式：Context → Controller → Command → Model → View 事件通知
@@ -324,7 +324,7 @@ Assets/
 │           ├── development.md
 │           └── en/                  # 英文文档（README, CHANGELOG）
 ├── Samples/                          # 导入的 Architecture 示例
-│   └── Aesir Architecture/0.4.2/
+│   └── Aesir Architecture/0.5.0/
 
 ├── Scenes/                           # 示例场景
 ├── Settings/                         # URP 资源（Renderer2D, UniversalRP）、场景模板
@@ -386,7 +386,7 @@ Assets/
 ### 编辑器
 
 1. 在 Unity 2022.3.62f3c1（或团结引擎等效版本）中打开项目
-2. 打开 `Assets/Samples/Aesir Architecture/0.4.2/UI Counter-MVP/Scene/SampleForCounterMvp.unity`
+2. 打开 `Assets/Samples/Aesir Architecture/0.5.0/UI Counter-MVP/Scene/SampleForCounterMvp.unity`
 
 3. 按 **Play** 运行 MVP 计数器示例
 
@@ -443,7 +443,7 @@ Unity -batchmode -quit -projectPath . \
 - 无 Addressables 配置（UI 默认使用 `ResourcesUILoader`；`IUIAssetLoader` 接口已预留 Addressables 支持）
 - URP 设置位于 `Assets/Settings/UniversalRP.asset` 和 `Renderer2D.asset`
 - Aesir Inspector `Third Party Notices.md` 包含占位内容（Semver/MyComponent）— 需更新
-- Aesir Inspector 版本为 `0.4.2`
+- Aesir Inspector 版本为 `0.5.0`
 
 
 ## Codely Structured Memories

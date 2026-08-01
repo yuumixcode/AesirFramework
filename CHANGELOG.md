@@ -19,9 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.4.2** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.4.2** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.4.2** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.5.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.5.0** |
+| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.5.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
 > *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
@@ -33,31 +33,53 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased] / 未发布
+## [0.5.0] - 2026-08-01
 
-### Changed
+---
 
-- **依赖关系明确 / Dependency clarified**：
-  - **Aesir Architecture** — 明确不依赖任何 Aesir 子包（独立可装）
-  - **Aesir Inspector** — 明确不依赖任何 Aesir 子包（独立可装）
-  - **Aesir Modules** — 明确**同时依赖** Aesir Architecture + Aesir Inspector（`package.json` 的 `dependencies` 字段同步更新）
-- **README 拆中英文 / README split by language**：
-  - 根目录新增 `README.en.md`（英文版）
-  - Aesir Architecture 新增 `README.en.md`
-  - Aesir Modules 新增 `README.en.md`
-  - Aesir Inspector 英文版保留在 `Documentation~/en/README.md`（已存在，未变动）
-  - 拆完后中英文不再交叉在同一文档中
-- **Aesir Modules 依赖升级**：`cn.runestone.aesir.architecture` 由 `0.3.2` → `0.4.0`
+### [architecture] Aesir Architecture
 
-### Added
+#### Fixed
 
-- 三个子包 README 顶部 monorepo 引用块重写，明确各包的依赖关系
+- **单例竞争修复**：`AesirArchitecture` 重复实例 `Destroy` 后提前 `return`，避免继续执行赋值和 `DontDestroyOnLoad`；`OnDestroy` 仅在 `_instance == this` 时清空，避免销毁非自身实例时误清
+- **RemoveListenerTrigger**：移除 `[DisallowMultipleComponent]` 限制
 
-### 规划中 / Planned
+---
 
-**Aesir Architecture**:
-- ScriptableObject 可视化配置层
-- SO EventChannel 事件通道
+### [modules] Aesir Modules
+
+#### Changed
+
+- 目录重命名：`Odin Integration` → `OdinIntegration`（与 Inspector 保持一致）
+- 版本号与 Aesir Architecture / Aesir Inspector 同步更新至 `0.5.0`
+
+---
+
+### [inspector] Aesir Inspector
+
+#### Added
+
+- **Odin 自动 Tooltip (OdinAutoTooltip)** ⚡：从源代码 XML `/// <summary>` 注释自动生成 Inspector Tooltip 的 Odin 属性处理器。提取自 [JakePineOdinTools](https://github.com/JakePineGames/JakePineOdinTools)（MIT, © 2026 Jake Pine）。已有 Tooltip 时读取现有值并追加新内容后动态替换原特性
+- **ScriptDocGenerator 源码 Summary 解析**：`MemberData` 添加 `SummaryResolver` 委托，Editor 程序集加载时注入源码解析实现，从 `.cs` 文件的 XML `/// <summary>` 注释中读取成员摘要
+- **ScriptDocGenerator OdinMenuEditorWindow 重构**：窗口从 `OdinEditorWindow` 重写为 `OdinMenuEditorWindow`，左侧菜单 4 种工作模式（单脚本、多脚本、单程序集、多程序集），每种模式独立面板 SO
+- **共享源码解析工具**：`OdinSourceFileHelper`（源文件定位与成员声明提取）和 `SourceSummaryParser`（XML summary 解析），消除 `SourceSummaryInitializer` 与 `OdinAutoTooltipAttributeProcessor` 之间的重复代码
+
+#### Changed
+
+- 目录重命名：`Odin Integration` → `OdinIntegration`
+- **Third Party Notices 更新**：替换占位内容，添加 JakePineOdinTools 第三方组件记录
+- **Summary 工具标注为推荐替代**：README 中标注推荐新代码使用 OdinAutoTooltip
+
+#### Removed
+
+- **移除 `[Summary]` 特性装饰**：252 个文件中 897 处 `[Summary("...")]` 装饰已全部移除。`SummaryAttribute` 类保留作为 ScriptDocGenerator 的回退兼容
+- **移除 MIT LICENSE 头部**：所有 `.cs` 文件的 LICENSE 头部已移除，仅在 `CodeStyle/AesirInspectorCodeStyle.cs` 保留一份
+
+#### Fixed
+
+- 修复 `ScriptDocGeneratorController.GenerateMultipleTypeDocs` 中 `generatorSettings` 被当作 bool 的 bug
+
+---
 - Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
 - 运行时集合（RuntimeSet）
 

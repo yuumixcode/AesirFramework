@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.5.0] - 2026-08-01
+
+### Changed
+
+- 目录重命名：`Odin Integration` → `OdinIntegration`（与 Inspector 保持一致）
+- 版本号与 Aesir Architecture / Aesir Inspector 同步更新至 `0.5.0`，本包本版本无功能性变更
+
 ## [Unreleased]
 
 ### Added

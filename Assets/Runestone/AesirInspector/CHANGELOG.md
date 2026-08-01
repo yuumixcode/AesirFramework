@@ -8,11 +8,30 @@
 
 ---
 
-## [Unreleased]
+## [0.5.0] - 2026-08-01
+
+### Added
+
+- **Odin 自动 Tooltip (OdinAutoTooltip)** ⚡：从源代码 XML `/// <summary>` 注释自动生成 Inspector Tooltip 的 Odin 属性处理器。提取自 [JakePineOdinTools](https://github.com/JakePineGames/JakePineOdinTools)（MIT, © 2026 Jake Pine）。已有 Tooltip 时读取现有值并追加新内容后动态替换原特性
+- **ScriptDocGenerator 源码 Summary 解析**：`MemberData` 添加 `SummaryResolver` 委托，Editor 程序集加载时注入源码解析实现，从 `.cs` 文件的 XML `/// <summary>` 注释中读取成员摘要
+- **ScriptDocGenerator OdinMenuEditorWindow 重构**：窗口从 `OdinEditorWindow` 重写为 `OdinMenuEditorWindow`，左侧菜单 4 种工作模式（单脚本、多脚本、单程序集、多程序集），每种模式独立面板 SO
+- **共享源码解析工具**：`OdinSourceFileHelper`（源文件定位与成员声明提取）和 `SourceSummaryParser`（XML summary 解析），消除 `SourceSummaryInitializer` 与 `OdinAutoTooltipAttributeProcessor` 之间的重复代码
 
 ### Changed
 
-- **README 顶部 monorepo 块重写**：从双语段对照改为单语版本，明确说明 Aesir Inspector **不依赖**其他 Aesir 子包（独立可装）。英文版保留在 `Documentation~/en/README.md`（结构不变）。
+- 目录重命名：`Odin Integration` → `OdinIntegration`
+- **README 顶部 monorepo 块重写**：从双语段对照改为单语版本，明确说明 Aesir Inspector **不依赖**其他 Aesir 子包（独立可装）
+- **Third Party Notices 更新**：替换占位内容，添加 JakePineOdinTools 第三方组件记录
+- **Summary 工具标注为推荐替代**：README 中标注推荐新代码使用 OdinAutoTooltip
+
+### Removed
+
+- **移除 `[Summary]` 特性装饰**：252 个文件中 897 处 `[Summary("...")]` 装饰已全部移除。`SummaryAttribute` 类保留作为 ScriptDocGenerator 的回退兼容
+- **移除 MIT LICENSE 头部**：所有 `.cs` 文件的 LICENSE 头部已移除，仅在 `CodeStyle/AesirInspectorCodeStyle.cs` 保留一份
+
+### Fixed
+
+- 修复 `ScriptDocGeneratorController.GenerateMultipleTypeDocs` 中 `generatorSettings` 被当作 bool 的 bug
 
 ## [0.4.2] - 2026-07-24
 
