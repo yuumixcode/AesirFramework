@@ -1,27 +1,3 @@
-// ----------------------------------------------------------------------------
-// MIT License
-// 
-// Copyright (c) 2026 Runestone - Yuumix
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-// ----------------------------------------------------------------------------
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -34,13 +10,11 @@ namespace Runestone.AesirInspector
     /// <summary>
     /// 反射工具类，提供程序集、命名空间及成员的反射操作方法
     /// </summary>
-    [Summary("反射工具类，提供程序集、命名空间及成员的反射操作方法")]
     public static class ReflectionUtility
     {
         /// <summary>
         /// 获取名称中包含指定字符串的所有程序集
         /// </summary>
-        [Summary("获取名称中包含指定字符串的所有程序集")]
         public static Assembly[] GetAssembliesOfNameContainString(string partOfAssemblyName)
         {
             try
@@ -58,7 +32,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取指定程序集中的所有命名空间
         /// </summary>
-        [Summary("获取指定程序集中的所有命名空间")]
         public static List<string> GetNamespacesInAssembly(Assembly assembly)
         {
             var types = assembly.GetTypes();
@@ -69,7 +42,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取成员的值（支持字段和属性）。
         /// </summary>
-        [Summary("获取成员的值（支持字段和属性）。")]
         public static object GetMemberValue(MemberInfo member, object obj)
         {
             if ((object)(member as FieldInfo) != null)
@@ -85,7 +57,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取成员的返回类型（支持字段、属性、方法和事件）。
         /// </summary>
-        [Summary("获取成员的返回类型（支持字段、属性、方法和事件）。")]
         public static Type GetReturnType(MemberInfo memberInfo)
         {
             var fieldInfo = memberInfo as FieldInfo;
@@ -113,7 +84,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 判断成员是否为静态成员。
         /// </summary>
-        [Summary("判断成员是否为静态成员。")]
         public static bool IsStatic(MemberInfo member)
         {
             var fieldInfo = member as FieldInfo;
@@ -156,14 +126,12 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取成员上的指定类型特性。
         /// </summary>
-        [Summary("获取成员上的指定类型特性。")]
         public static IEnumerable<T> GetAttributes<T>(ICustomAttributeProvider member) where T : Attribute =>
             GetAttributes<T>(member, false);
 
         /// <summary>
         /// 获取成员上的指定类型特性。
         /// </summary>
-        [Summary("获取成员上的指定类型特性。")]
         public static IEnumerable<T> GetAttributes<T>(ICustomAttributeProvider member, bool inherit)
             where T : Attribute
         {
@@ -180,7 +148,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 判断方法是否为扩展方法。
         /// </summary>
-        [Summary("判断方法是否为扩展方法。")]
         public static bool IsExtensionMethod(MethodBase method)
         {
             var declaringType = method.DeclaringType;
@@ -191,7 +158,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取类型的所有基类和接口。
         /// </summary>
-        [Summary("获取类型的所有基类和接口。")]
         public static IEnumerable<Type> GetBaseTypes(Type type, bool includeSelf = false)
         {
             var first = GetBaseClasses(type, includeSelf).Concat(type.GetInterfaces());
@@ -209,7 +175,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 获取类型的所有基类。
         /// </summary>
-        [Summary("获取类型的所有基类。")]
         public static IEnumerable<Type> GetBaseClasses(Type type, bool includeSelf = false)
         {
             if (type?.BaseType != null)

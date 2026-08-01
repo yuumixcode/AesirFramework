@@ -7,7 +7,6 @@ namespace Runestone.AesirInspector.Editor
     /// <summary>
     /// 右键快捷处理 Summary 特性。
     /// </summary>
-    [Summary("右键快捷处理 Summary 特性")]
     public static class SummaryToolMenuItems
     {
         [MenuItem(AesirInspectorMenuItems.ProcessSummarySync, false,

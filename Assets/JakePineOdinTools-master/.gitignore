@@ -1,0 +1,44 @@
+# JakePineOdinTools
+# Intended as a standalone repo copied into Assets/Plugins/ (or similar).
+
+# ── Unity generated (local test project or nested under a game repo) ──────────
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+sysinfo.txt
+
+# ── Unity .meta — regenerated on import; avoids GUID clashes across projects ──
+*.meta
+
+# ── IDE / editor ──────────────────────────────────────────────────────────────
+.vs/
+.idea/
+.vscode/
+*.sln
+*.csproj
+*.unityproj
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.opendb
+*.VC.db
+.consulo/
+ExportedObj/
+
+# ── OS junk ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Local release builds ──────────────────────────────────────────────────────
+*.unitypackage
+*.apk
+*.aab
+*.app

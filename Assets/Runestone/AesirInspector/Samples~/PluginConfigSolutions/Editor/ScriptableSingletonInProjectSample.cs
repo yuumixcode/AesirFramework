@@ -6,7 +6,6 @@ using FilePathAttribute = UnityEditor.FilePathAttribute;
 
 namespace Runestone.AesirInspector.Samples.PluginConfig.Editor
 {
-    [Summary("ScriptableSingleton 的示例，资源文件路径枚举值为 ProjectFolder。")]
     [FilePath(ProjectFilePath + "/PluginConfigSolutions/ScriptableSingletonInProjectSample.asset",
         FilePathAttribute.Location.ProjectFolder)]
     public class ScriptableSingletonInProjectSample : ScriptableSingleton<ScriptableSingletonInProjectSample>
@@ -16,7 +15,6 @@ namespace Runestone.AesirInspector.Samples.PluginConfig.Editor
         string _configName = "Project Config";
 
         [BilingualTitle("可配置数据", "Configurable Data")]
-        [Summary("自定义 String 类型配置")]
         [ShowInInspector]
         public string ConfigName
         {
@@ -49,7 +47,6 @@ namespace Runestone.AesirInspector.Samples.PluginConfig.Editor
 
         public string AbsoluteFolderPath => Path.GetDirectoryName(AbsoluteFilePath);
 
-        [Summary("重置配置")]
         [BilingualButton("重置配置", "Reset Config")]
         public void ResetConfig()
         {
@@ -58,7 +55,6 @@ namespace Runestone.AesirInspector.Samples.PluginConfig.Editor
         }
 
         [BilingualTitle("调试", "Debug")]
-        [Summary("打开资产所在文件夹")]
         [BilingualButton("打开资产所在文件夹", "Open Asset Folder")]
         [PropertyOrder(100)]
         public void OpenFolder()
