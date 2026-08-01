@@ -8,7 +8,6 @@ namespace Runestone.AesirInspector
     /// 双语顶部说明控件，用于模块的简单介绍。
     /// </summary>
     [Serializable]
-    [Summary("双语顶部说明控件，用于模块的简单介绍")]
     public class BilingualHeaderControl
     {
         [SerializeField]
@@ -47,14 +46,12 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 是否隐藏标题介绍
         /// </summary>
-        [Summary("是否隐藏标题介绍")]
         public bool HideHeaderIntroduction => string.IsNullOrWhiteSpace(_chineseIntroduction) &&
                                               string.IsNullOrWhiteSpace(_englishIntroduction);
 
         /// <summary>
         /// 打开相关文档链接
         /// </summary>
-        [Summary("打开相关文档链接")]
         public void OpenUrl()
         {
             var validatedUrl = UrlUtility.ValidateAndNormalizeUrl(_targetUrl, AesirInspectorWebLinks.GitUrl);
@@ -63,7 +60,6 @@ namespace Runestone.AesirInspector
 
         public void PlaceholderMethod1() { }
 
-        [Summary("切换当前语言")]
         [Conditional("UNITY_EDITOR")]
         public void SwitchLanguage()
         {

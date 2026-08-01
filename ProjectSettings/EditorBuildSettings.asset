@@ -9,6 +9,8 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   m_configObjects:
+    MultipleAssembliesPanel: {fileID: 11400000, guid: 6909491763e66485a99a0c2ad065b740, type: 2}
+    MultipleScriptsPanel: {fileID: 11400000, guid: 4503e25190b1b42c292bdffa8b0c18fd, type: 2}
     RunLab.AesirInspector.AesirInspectorLanguageSettingsSO: {fileID: 11400000, guid: 0a7e0a904b06540b2802ce9f1230debe, type: 2}
     RunLab.AesirInspector.AesirInspectorProjectSettingsSO: {fileID: 11400000, guid: a2b5959f8ec604e2f8a08cb1fa52829e, type: 2}
     Runestone.AesirInspector.AesirInspectorLanguageSettingsSO: {fileID: 11400000, guid: 0a7e0a904b06540b2802ce9f1230debe, type: 2}
@@ -19,3 +21,5 @@ EditorBuildSettings:
     Runestone.AesirInspector.OdinIntegration.Editor.OdinSyntaxHighlighterPanelSO: {fileID: 11400000, guid: 610641040289b44eba2e1cab589f16ad, type: 2}
     Runestone.AesirInspector.OdinIntegration.Editor.ScriptDocGeneratorSO: {fileID: 11400000, guid: 3883d652888c4413ba34caf95f454d50, type: 2}
     Runestone.AesirInspector.Samples.PluginConfig.PluginConfigRuntimeOnEditorSample: {fileID: 11400000, guid: 29f47dde1e1924e3e8233c9b58024632, type: 2}
+    SingleAssemblyPanel: {fileID: 11400000, guid: f7623011804024dc68b94b27a12a0b4a, type: 2}
+    SingleScriptPanel: {fileID: 11400000, guid: 9d8a7891a1e024c67b2e6e2b3fa5fa4e, type: 2}

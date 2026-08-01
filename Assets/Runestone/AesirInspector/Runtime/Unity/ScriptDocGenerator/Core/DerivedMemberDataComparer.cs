@@ -6,7 +6,6 @@ namespace Runestone.AesirInspector
     /// <summary>
     /// IDerivedMemberData 比较类
     /// </summary>
-    [Summary("IDerivedMemberData 比较类")]
     public class DerivedMemberDataComparer : IComparer<IDerivedMemberData>
     {
         #region IComparer<IDerivedMemberData> Members
@@ -14,7 +13,6 @@ namespace Runestone.AesirInspector
         /// <summary>
         /// 比较两个继承 IDerivedMemberData 的数据类的实例，用于排序
         /// </summary>
-        [Summary("比较两个继承 IDerivedMemberData 的数据类的实例，用于排序")]
         public int Compare(IDerivedMemberData x, IDerivedMemberData y)
         {
             if (ReferenceEquals(x, y))

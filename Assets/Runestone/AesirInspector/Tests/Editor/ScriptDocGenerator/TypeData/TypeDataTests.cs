@@ -7,7 +7,6 @@ namespace Runestone.AesirInspector.Editor.Tests
 {
     public interface ITestInterface { }
 
-    [Summary("支持解析特性")]
     [ReferenceLinkURL("https://learn.microsoft.com/en-us/dotnet/api/system.object?view=net-9.0")]
     public class TestClassWithAttribute { }
 
