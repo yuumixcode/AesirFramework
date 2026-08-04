@@ -1,0 +1,13 @@
+pack:
+  name: Pack
+  agent:
+    type: Unity::VM::Volc
+    image: cds-ops/win10-vs2017-300g:stable
+    flavor: amd.16C32G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'c:\tools\upm-ci.exe')"
+    - c:\tools\upm-ci.exe package pack
+  artifacts:
+    Pack-Artifacts:
+      paths:
+        - upm-ci~/**

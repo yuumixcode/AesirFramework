@@ -1,0 +1,54 @@
+#!/usr/bin/env sh
+# Pre-commit hook: validate .meta GUIDs before allowing commit.
+#
+# Setup (run once per clone, works on both macOS and Windows):
+#   git config core.hooksPath .githooks
+#
+# This script runs under Git's bundled MINGW sh on Windows
+# and native sh on macOS/Linux — no bash dependency required.
+set -eu
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# Always print a start log so users can confirm hook execution.
+echo "Pre-commit: hook started."
+
+# Only validate staged .meta files (not every file in the tree).
+# This makes the hook fast and avoids flagging untracked files.
+STAGED_META=$(git diff --cached --name-only --diff-filter=ACM -- '*.meta' || true)
+
+if [ -z "$STAGED_META" ]; then
+  # Print a skip log instead of silent exit for better observability.
+  echo "Pre-commit: no staged .meta files, skip GUID validation."
+  exit 0
+fi
+
+err=0
+for f in $STAGED_META; do
+  # Read the guid line from the staged blob, not the working tree
+  guid=$(git show ":$f" 2>/dev/null | awk '/^guid:/ { gsub(/\r/, "", $2); print $2 }')
+  if [ -z "$guid" ]; then
+    continue
+  fi
+  # Valid Unity GUID: exactly 32 lowercase hex characters
+  case "$guid" in
+    [a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9][a-f0-9])
+      ;;  # valid
+    *)
+      echo "INVALID GUID in $f: $guid"
+      err=1
+      ;;
+  esac
+done
+
+if [ "$err" -ne 0 ]; then
+  echo ""
+  echo "ERROR: One or more .meta files have invalid GUIDs."
+  echo "Valid GUIDs must be exactly 32 lowercase hex characters [a-f0-9]."
+  echo "Run this command to fix and auto-stage invalid GUIDs:"
+  echo "  ./scripts/fix-meta-guids.sh"
+  echo "Then run git commit again."
+  exit 1
+fi
+
+echo "Pre-commit: all staged .meta GUIDs valid."
+exit 0
