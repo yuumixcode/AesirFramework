@@ -21,14 +21,14 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         static object _lastSelection;
 
         AesirInspectorLanguageSettingsSO _aesirInspectorLanguageSettingsSO;
-        AesirInspectorLoggerSettings _aesirInspectorLoggerSettings;
+        AesirInspectorDebugSettings _aesirInspectorDebugSettings;
         OdinMenuStyle _menuStyle;
 
         protected override void OnEnable()
         {
             base.OnEnable();
             _aesirInspectorLanguageSettingsSO = AesirInspectorLanguageSettingsSO.Instance;
-            _aesirInspectorLoggerSettings = AesirInspectorLoggerSettings.Instance;
+            _aesirInspectorDebugSettings = AesirInspectorDebugSettings.Instance;
             MenuWidth = 220f;
             WindowPadding = new Vector4(10f, 10f, 10f, 10f);
             _menuStyle = new OdinMenuStyle
@@ -77,7 +77,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             var tree = new OdinMenuTree(false, _menuStyle)
             {
                 { InspectorLanguageSettingsMenuName, _aesirInspectorLanguageSettingsSO },
-                { InspectorLoggerSettingsMenuName, _aesirInspectorLoggerSettings }
+                { InspectorLoggerSettingsMenuName, _aesirInspectorDebugSettings }
             };
 
             tree.Config.DrawSearchToolbar = true;

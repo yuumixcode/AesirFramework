@@ -25,14 +25,56 @@ MonoBehaviour:
       Entry: 6
       Data: 
     - Name: typeDataList
-      Entry: 6
+      Entry: 7
+      Data: 0|System.Collections.Generic.List`1[[Runestone.AesirInspector.ITypeData,
+        Runestone.AesirInspector]], mscorlib
+    - Name: 
+      Entry: 12
+      Data: 2
+    - Name: 
+      Entry: 7
+      Data: 1|Runestone.AesirInspector.TypeData, Runestone.AesirInspector
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 2|Runestone.AesirInspector.TypeData, Runestone.AesirInspector
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 13
+      Data: 
+    - Name: 
+      Entry: 8
       Data: 
     - Name: temporaryTypes
       Entry: 7
-      Data: 0|System.Collections.Generic.List`1[[System.Type, mscorlib]], mscorlib
+      Data: 3|System.Collections.Generic.List`1[[System.Type, mscorlib]], mscorlib
     - Name: 
       Entry: 12
-      Data: 0
+      Data: 2
+    - Name: 
+      Entry: 7
+      Data: 4|System.RuntimeType, mscorlib
+    - Name: 
+      Entry: 1
+      Data: Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributeData,
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 8
+      Data: 
+    - Name: 
+      Entry: 7
+      Data: 5|System.RuntimeType, mscorlib
+    - Name: 
+      Entry: 1
+      Data: Runestone.AesirInspector.OdinIntegration.Editor.AbstractAttributePanelSO,
+        Runestone.AesirInspector.OdinIntegration.Editor
+    - Name: 
+      Entry: 8
+      Data: 
     - Name: 
       Entry: 13
       Data: 
@@ -46,25 +88,16 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "\u591A\u811A\u672C\u6A21\u5F0F"
-      EnglishDisplay: Multiple Scripts Mode
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "\u901A\u8FC7 TypesCacheSO \u8D44\u6E90\u6216\u4E34\u65F6 Type
-        \u5217\u8868\u6279\u91CF\u751F\u6210\u6587\u6863\u3002"
-      EnglishDisplay: Generate documents in batch via TypesCacheSO asset or temporary
-        Type list.
-    _chineseIntroduction: "\u901A\u8FC7 TypesCacheSO \u8D44\u6E90\u6216\u4E34\u65F6
-      Type \u5217\u8868\u6279\u91CF\u751F\u6210\u6587\u6863\u3002"
-    _englishIntroduction: Generate documents in batch via TypesCacheSO asset or temporary
-      Type list.
-    _targetUrl: https://github.com/yuumixcode/Unity-Aesir-Packages.git
   docFolderPath: Assets/Editor Default Resources/Aesir Inspector/Documents
   docGeneratorSettings: {fileID: 11400000, guid: a87f902898b8c49b1bc2d7a155909197, type: 2}
   typesCache: {fileID: 0}
-  selectedMonoScriptArray: []
+  selectedMonoScriptArray:
+  - {fileID: 11500000, guid: 338bfde6ece6045de86737d55bc57548, type: 3}
+  - {fileID: 11500000, guid: 9932a963f0e5c44e89c19e34ae02ab60, type: 3}
   typesCacheSOFolderPath: Assets/Editor Default Resources/Aesir Inspector/ScriptDocGenerator/TypeCache

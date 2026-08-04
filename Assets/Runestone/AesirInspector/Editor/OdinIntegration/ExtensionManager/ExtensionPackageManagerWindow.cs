@@ -36,7 +36,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             window.minSize = new Vector2(720f, 520f);
             window.Show();
             _ = window.UpdatePackageInstallationStates();
-            AesirInspectorLogger.Info("打开 Extension Package Manager 窗口，检测预设包的安装状态。");
+            AesirInspectorDebug.Info("打开 Extension Package Manager 窗口，检测预设包的安装状态。");
         }
 
         #region Event Functions
@@ -134,7 +134,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             }
             catch (Exception e)
             {
-                AesirInspectorLogger.Error($"处理包注册变更回调时发生异常：{e}");
+                AesirInspectorDebug.Error($"处理包注册变更回调时发生异常：{e}");
             }
         }
 

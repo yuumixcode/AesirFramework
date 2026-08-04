@@ -23,7 +23,7 @@ namespace Runestone.AesirInspector
         {
             if (string.IsNullOrWhiteSpace(fullRelativePath) || string.IsNullOrWhiteSpace(endWithString))
             {
-                AesirInspectorLogger.Error("路径或目标字符串不能为空！");
+                AesirInspectorDebug.Error("路径或目标字符串不能为空！");
                 subPath = string.Empty;
                 return false;
             }
@@ -31,7 +31,7 @@ namespace Runestone.AesirInspector
             fullRelativePath = ToUnityPath(fullRelativePath);
             if (!fullRelativePath.StartsWith("Assets"))
             {
-                AesirInspectorLogger.Error("完整路径不是以 Assets 开头的，需要使用相对路径。");
+                AesirInspectorDebug.Error("完整路径不是以 Assets 开头的，需要使用相对路径。");
                 subPath = string.Empty;
                 return false;
             }
@@ -40,7 +40,7 @@ namespace Runestone.AesirInspector
             var finalIndex = Array.LastIndexOf(splits, endWithString);
             if (finalIndex == -1)
             {
-                AesirInspectorLogger.Error($"完整路径中没有找到能够以 {endWithString} 为结尾的子路径。");
+                AesirInspectorDebug.Error($"完整路径中没有找到能够以 {endWithString} 为结尾的子路径。");
                 subPath = string.Empty;
                 return false;
             }

@@ -20,7 +20,7 @@ namespace Runestone.AesirInspector
 #if UNITY_EDITOR
             if (!relativePath.StartsWith("Assets"))
             {
-                AesirInspectorLogger.Error("相对路径必须以 Assets 开头");
+                AesirInspectorDebug.Error("相对路径必须以 Assets 开头");
                 return;
             }
 

@@ -5,21 +5,22 @@ using System.Text;
 namespace Runestone.AesirInspector.OdinIntegration.Editor
 {
     /// <summary>
-    /// 中文 API 文档生成设置
+    /// 默认中文 API 文档生成设置
     /// </summary>
-    public class CnScriptingAPISettingsSO : DocGeneratorSettingsSO
+    public class DefaultScriptingAPISettingsSO : DocGeneratorSettingsSO
     {
         const string GeneratorSettingsPath = AesirInspectorPaths.EditorDefaultResourcesPath +
                                              "/ScriptDocGenerator/GeneratorSettings";
 
         static readonly string ConfigName =
-            OdinBridgeLocator.Bridge.GetFriendlyFullName(typeof(CnScriptingAPISettingsSO));
+            OdinBridgeLocator.Bridge.GetFriendlyFullName(typeof(DefaultScriptingAPISettingsSO));
 
-        public static CnScriptingAPISettingsSO Instance =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<CnScriptingAPISettingsSO>(
-                ConfigName, GeneratorSettingsPath, "CnScriptingAPI");
+        public static DefaultScriptingAPISettingsSO Instance =>
+            ScriptableObjectSafeEditorUtility
+                .GetOrCreateEditorScriptableObject<DefaultScriptingAPISettingsSO>(ConfigName,
+                    GeneratorSettingsPath, "DefaultCnScriptingAPI");
 
-        public override string GetGeneratedDoc(ITypeData data)
+        public override string GetGeneratedDocumentation(ITypeData data)
         {
             var sb = new StringBuilder();
             sb.Append(CreateIntroductionContent(data));

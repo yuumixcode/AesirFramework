@@ -22,7 +22,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         /// <summary>
         /// 通过 TypeData 实例对象，生成文档内容。注意：不要在此方法中添加增量生成标识符
         /// </summary>
-        public abstract string GetGeneratedDoc(ITypeData data);
+        public abstract string GetGeneratedDocumentation(ITypeData data);
 
         #region Serialized Fields
 

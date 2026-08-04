@@ -69,8 +69,8 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             }
 
             typeDataList = typesCache
-                ? ScriptDocGeneratorController.AnalyzeMultipleTypes(typesCache)
-                : ScriptDocGeneratorController.AnalyzeMultipleTypes(temporaryTypes);
+                ? ScriptDocGeneratorUtility.AnalyzeMultipleTypes(typesCache)
+                : ScriptDocGeneratorUtility.AnalyzeMultipleTypes(temporaryTypes);
 
             OnAnalysisComplete();
         }

@@ -17,7 +17,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             var loadedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
             var allAssemblies = loadedAssemblies.Where(assembly =>
                 assemblyFilter == null || !assemblyFilter.ShouldFilterOut(assembly)).ToList();
-            AesirInspectorLogger.Info($"收集 {allAssemblies.Count} 个程序集中的 MenuItem");
+            AesirInspectorDebug.Info($"收集 {allAssemblies.Count} 个程序集中的 MenuItem");
             foreach (var assembly in allAssemblies)
             {
                 ProcessAssembly(assembly, menuItems);
@@ -28,7 +28,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                 var pathComparison = string.Compare(a.MenuPath, b.MenuPath, StringComparison.Ordinal);
                 return pathComparison != 0 ? pathComparison : a.Priority.CompareTo(b.Priority);
             });
-            AesirInspectorLogger.Info($"一共发现 {menuItems.Count} 个 MenuItem");
+            AesirInspectorDebug.Info($"一共发现 {menuItems.Count} 个 MenuItem");
             return menuItems;
         }
 

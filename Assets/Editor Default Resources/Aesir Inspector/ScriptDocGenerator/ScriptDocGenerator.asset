@@ -56,7 +56,7 @@ MonoBehaviour:
       format: 
       overflow: 0
   docFolderPath: Assets/Editor Default Resources/Aesir Inspector/Documents
-  docGeneratorSettings: {fileID: 11400000, guid: a87f902898b8c49b1bc2d7a155909197, type: 2}
+  docGeneratorSettings: {fileID: 11400000, guid: dd62054529f8f445fa097512208a0a22, type: 2}
   typeSource: 0
   selectedMonoScript: {fileID: 0}
   typesCache: {fileID: 0}

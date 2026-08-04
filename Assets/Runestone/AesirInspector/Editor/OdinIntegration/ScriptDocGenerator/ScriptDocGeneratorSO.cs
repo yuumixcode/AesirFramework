@@ -183,7 +183,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             var chineseTitle = "文档生成器设置";
             var englishTitle = "Doc Generator Setting";
-            if (docGeneratorSettings && docGeneratorSettings.GetType() == typeof(CnScriptingAPISettingsSO))
+            if (docGeneratorSettings && docGeneratorSettings.GetType() == typeof(DefaultScriptingAPISettingsSO))
             {
                 chineseTitle += " - [当前选择: 中文 API Markdown 文档]";
                 englishTitle += " - [Current Selection: Chinese API Markdown Document]";
@@ -297,7 +297,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                         return;
                     }
 
-                    _typeData = ScriptDocGeneratorController.AnalyzeSingleType(_targetType);
+                    _typeData = ScriptDocGeneratorUtility.AnalyzeSingleType(_targetType);
                     break;
                 case TypeSource.MultipleTypes:
                     if (!typesCache && _temporaryTypes.Count <= 0)
@@ -307,8 +307,8 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     }
 
                     _typeDataList = typesCache
-                        ? ScriptDocGeneratorController.AnalyzeMultipleTypes(typesCache)
-                        : ScriptDocGeneratorController.AnalyzeMultipleTypes(_temporaryTypes);
+                        ? ScriptDocGeneratorUtility.AnalyzeMultipleTypes(typesCache)
+                        : ScriptDocGeneratorUtility.AnalyzeMultipleTypes(_temporaryTypes);
 
                     break;
                 case TypeSource.SingleAssembly:
@@ -319,7 +319,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     }
 
                     _typeDataList =
-                        ScriptDocGeneratorController.AnalyzeSingleAssembly(targetAssemblyFullName);
+                        ScriptDocGeneratorUtility.AnalyzeSingleAssembly(targetAssemblyFullName);
                     break;
             }
 
@@ -343,12 +343,12 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             switch (typeSource)
             {
                 case TypeSource.SingleType:
-                    ScriptDocGeneratorController.GenerateSingleTypeDoc(_typeData, docGeneratorSettings,
+                    ScriptDocGeneratorUtility.GenerateSingleTypeDoc(_typeData, docGeneratorSettings,
                         docFolderPath);
                     break;
                 case TypeSource.MultipleTypes:
                 case TypeSource.SingleAssembly:
-                    ScriptDocGeneratorController.GenerateMultipleTypeDocs(_typeDataList, docGeneratorSettings,
+                    ScriptDocGeneratorUtility.GenerateMultipleTypeDocs(_typeDataList, docGeneratorSettings,
                         docFolderPath);
                     break;
             }
@@ -524,7 +524,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         void ResetDocGeneratorSettingSO()
         {
-            docGeneratorSettings = CnScriptingAPISettingsSO.Instance;
+            docGeneratorSettings = DefaultScriptingAPISettingsSO.Instance;
         }
 
         void ResetSingleType()

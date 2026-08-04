@@ -113,7 +113,7 @@ namespace Runestone.AesirInspector.Editor
                 var assetPath = AssetDatabase.GenerateUniqueAssetPath($"{objAssetPath}/{defaultName}.asset");
                 AssetDatabase.CreateAsset(ScriptableObject.CreateInstance(scriptClass), assetPath);
                 AssetDatabase.SaveAssets();
-                AesirInspectorLogger.Info($"生成一个 SO 资源，路径为: {assetPath}");
+                AesirInspectorDebug.Info($"生成一个 SO 资源，路径为: {assetPath}");
             }
 
             AssetDatabase.Refresh();
