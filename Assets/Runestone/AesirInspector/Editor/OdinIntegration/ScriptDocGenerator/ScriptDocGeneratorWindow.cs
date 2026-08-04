@@ -15,14 +15,11 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     {
         const string WindowName = "Script Doc Generator";
 
-        static readonly BilingualData SingleScriptMenuName =
-            new BilingualData("单脚本", "Single Script");
+        static readonly BilingualData SingleScriptMenuName = new BilingualData("单脚本", "Single Script");
 
-        static readonly BilingualData MultipleScriptsMenuName =
-            new BilingualData("多脚本", "Multiple Scripts");
+        static readonly BilingualData MultipleScriptsMenuName = new BilingualData("多脚本", "Multiple Scripts");
 
-        static readonly BilingualData SingleAssemblyMenuName =
-            new BilingualData("单程序集", "Single Assembly");
+        static readonly BilingualData SingleAssemblyMenuName = new BilingualData("单程序集", "Single Assembly");
 
         static readonly BilingualData MultipleAssembliesMenuName =
             new BilingualData("多程序集", "Multiple Assemblies");
@@ -39,30 +36,16 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         static object _lastSelection;
 
-        static SingleScriptPanelSO GetSingleScriptPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<SingleScriptPanelSO>(
-                "SingleScriptPanel", PanelsPath, "SingleScriptPanel");
 
-        static MultipleScriptsPanelSO GetMultipleScriptsPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<MultipleScriptsPanelSO>(
-                "MultipleScriptsPanel", PanelsPath, "MultipleScriptsPanel");
-
-        static SingleAssemblyPanelSO GetSingleAssemblyPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<SingleAssemblyPanelSO>(
-                "SingleAssemblyPanel", PanelsPath, "SingleAssemblyPanel");
-
-        static MultipleAssembliesPanelSO GetMultipleAssembliesPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<MultipleAssembliesPanelSO>(
-                "MultipleAssembliesPanel", PanelsPath, "MultipleAssembliesPanel");
 
         protected override void OnEnable()
         {
             base.OnEnable();
 
-            _singleScriptPanel = GetSingleScriptPanel();
-            _multipleScriptsPanel = GetMultipleScriptsPanel();
-            _singleAssemblyPanel = GetSingleAssemblyPanel();
-            _multipleAssembliesPanel = GetMultipleAssembliesPanel();
+            _singleScriptPanel = ScriptDocGeneratorUtility.GetSingleScriptPanel();
+            _multipleScriptsPanel = ScriptDocGeneratorUtility.GetMultipleScriptsPanel();
+            _singleAssemblyPanel = ScriptDocGeneratorUtility.GetSingleAssemblyPanel();
+            _multipleAssembliesPanel = ScriptDocGeneratorUtility.GetMultipleAssembliesPanel();
 
             MenuWidth = 230f;
             WindowPadding = new Vector4(10f, 10f, 10f, 10f);
@@ -101,10 +84,17 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             _lastSelection = null;
         }
 
+
+
+
+
         [MenuItem(AesirInspectorMenuItems.ScriptDocGenerator, false,
             AesirInspectorMenuItems.ScriptDocGeneratorOrder)]
         public static void OpenWindow()
         {
+            if (!ScriptDocGeneratorUtility.EnsureInitialized())
+                return;
+
             var window = GetWindow<ScriptDocGeneratorWindow>();
             window.titleContent = new GUIContent(WindowName);
             window.position = GUIHelper.GetEditorWindowRect().AlignCenter(1000, 800);
@@ -132,7 +122,11 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             TrySelectMenuItemWithObject(_lastSelection);
         }
 
-        new void ShowToast(ToastPosition position, SdfIconType icon, string message, Color color, float duration)
+        new void ShowToast(ToastPosition position,
+            SdfIconType icon,
+            string message,
+            Color color,
+            float duration)
         {
             ShowNotification(new GUIContent(message), duration);
         }

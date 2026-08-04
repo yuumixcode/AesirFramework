@@ -7,7 +7,7 @@ namespace Runestone.AesirInspector
     /// <summary>
     /// Aesir Inspector 日志工具。编译后自动剔除，Console 双击可跳转到调用方。
     /// </summary>
-    public static class AesirInspectorLogger
+    public static class AesirInspectorDebug
     {
         /// <summary>
         /// 输出信息日志，前缀 <c>[Aesir Inspector]</c> 显示为绿色。
@@ -15,7 +15,7 @@ namespace Runestone.AesirInspector
         [Conditional("UNITY_EDITOR")]
         public static void Info(string message)
         {
-            if (!AesirInspectorLoggerSettings.IsInfoEnabled)
+            if (!AesirInspectorDebugSettings.IsInfoEnabled)
             {
                 return;
             }
@@ -29,7 +29,7 @@ namespace Runestone.AesirInspector
         [Conditional("UNITY_EDITOR")]
         public static void Warning(string message)
         {
-            if (!AesirInspectorLoggerSettings.IsWarningEnabled)
+            if (!AesirInspectorDebugSettings.IsWarningEnabled)
             {
                 return;
             }
@@ -53,7 +53,7 @@ namespace Runestone.AesirInspector
         [Conditional("UNITY_EDITOR")]
         public static void Info(string prefix, string message)
         {
-            if (!AesirInspectorLoggerSettings.IsInfoEnabled)
+            if (!AesirInspectorDebugSettings.IsInfoEnabled)
             {
                 return;
             }
@@ -67,7 +67,7 @@ namespace Runestone.AesirInspector
         [Conditional("UNITY_EDITOR")]
         public static void Warning(string prefix, string message)
         {
-            if (!AesirInspectorLoggerSettings.IsWarningEnabled)
+            if (!AesirInspectorDebugSettings.IsWarningEnabled)
             {
                 return;
             }

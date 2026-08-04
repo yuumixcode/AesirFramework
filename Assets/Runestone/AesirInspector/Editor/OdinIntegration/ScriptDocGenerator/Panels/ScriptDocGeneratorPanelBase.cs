@@ -66,7 +66,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             bilingualHeaderControl = CreateHeaderControl();
             if (docGeneratorSettings == null)
-                docGeneratorSettings = CnScriptingAPISettingsSO.Instance;
+                docGeneratorSettings = DefaultScriptingAPISettingsSO.Instance;
             if (string.IsNullOrEmpty(docFolderPath))
                 docFolderPath = DefaultDocFolderPath;
         }
@@ -108,7 +108,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         protected void GenerateSingle(ITypeData data)
         {
-            ScriptDocGeneratorController.GenerateSingleTypeDoc(data, docGeneratorSettings, docFolderPath);
+            ScriptDocGeneratorUtility.GenerateSingleTypeDoc(data, docGeneratorSettings, docFolderPath);
             _hasFinishedAnalyze = false;
         }
 
@@ -121,7 +121,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                 PathSafeEditorUtility.EnsureDirectoryExists(docFolderPath);
             }
 
-            ScriptDocGeneratorController.GenerateMultipleTypeDocs(dataList, docGeneratorSettings, docFolderPath);
+            ScriptDocGeneratorUtility.GenerateMultipleTypeDocs(dataList, docGeneratorSettings, docFolderPath);
             _hasFinishedAnalyze = false;
         }
 
@@ -129,7 +129,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             var chineseTitle = "文档生成器设置";
             var englishTitle = "Doc Generator Setting";
-            if (docGeneratorSettings && docGeneratorSettings.GetType() == typeof(CnScriptingAPISettingsSO))
+            if (docGeneratorSettings && docGeneratorSettings.GetType() == typeof(DefaultScriptingAPISettingsSO))
             {
                 chineseTitle += " - [当前选择: 中文 API Markdown 文档]";
                 englishTitle += " - [Current Selection: Chinese API Markdown Document]";
@@ -145,7 +145,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         protected void ResetDocGeneratorSettingSO()
         {
-            docGeneratorSettings = CnScriptingAPISettingsSO.Instance;
+            docGeneratorSettings = DefaultScriptingAPISettingsSO.Instance;
         }
 
         public abstract void AesirInspectorReset();

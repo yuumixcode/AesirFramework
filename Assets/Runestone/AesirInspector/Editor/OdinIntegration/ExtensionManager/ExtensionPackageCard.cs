@@ -131,12 +131,12 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             await PackageManagerEditorUtility.ListPackagesAsyncOffline();
             if (PackageManagerEditorUtility.IsPackageInstalled(packageName))
             {
-                AesirInspectorLogger.Info("Package 已安装");
+                AesirInspectorDebug.Info("Package 已安装");
                 State = PackageState.Installed;
             }
             else
             {
-                AesirInspectorLogger.Info("Package 未安装");
+                AesirInspectorDebug.Info("Package 未安装");
                 State = PackageState.NotInstalled;
             }
         }
@@ -149,7 +149,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         [DisableIf(nameof(PackageManagerIsBusy))]
         void Install()
         {
-            AesirInspectorLogger.Info($"尝试安装 {packageName}");
+            AesirInspectorDebug.Info($"尝试安装 {packageName}");
             PackageManagerEditorUtility.InstallPackageAsyncFromCard(this);
         }
 

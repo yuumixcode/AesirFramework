@@ -51,7 +51,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                 return;
             }
 
-            typeData = ScriptDocGeneratorController.AnalyzeSingleType(targetType);
+            typeData = ScriptDocGeneratorUtility.AnalyzeSingleType(targetType);
             OnAnalysisComplete();
         }
 

@@ -28,7 +28,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
             foreach (var package in _currentPackageCollection)
             {
-                AesirInspectorLogger.Info($"找到 Package: {package.name} @ {package.version}");
+                AesirInspectorDebug.Info($"找到 Package: {package.name} @ {package.version}");
             }
         }
 
@@ -68,10 +68,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             switch (_removeRequest.Status)
             {
                 case StatusCode.Success:
-                    AesirInspectorLogger.Info($"成功移除包：{packageName}");
+                    AesirInspectorDebug.Info($"成功移除包：{packageName}");
                     break;
                 case StatusCode.Failure:
-                    AesirInspectorLogger.Error($"移除包失败：{_removeRequest.Error.message}");
+                    AesirInspectorDebug.Error($"移除包失败：{_removeRequest.Error.message}");
                     OnPackagesChanged?.Invoke();
                     break;
             }
@@ -88,7 +88,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             }
             else
             {
-                AesirInspectorLogger.Error("无效的 Git URL，安装已取消");
+                AesirInspectorDebug.Error("无效的 Git URL，安装已取消");
             }
         }
 
@@ -109,12 +109,12 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
             if (_listRequest.Status == StatusCode.Success)
             {
-                AesirInspectorLogger.Info("成功获取当前项目的包列表！");
+                AesirInspectorDebug.Info("成功获取当前项目的包列表！");
                 _currentPackageCollection = _listRequest.Result;
             }
             else
             {
-                AesirInspectorLogger.Error($"获取包列表失败！{_listRequest.Error.message}");
+                AesirInspectorDebug.Error($"获取包列表失败！{_listRequest.Error.message}");
             }
 
             _listRequest = null;
@@ -132,10 +132,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             switch (_addRequest.Status)
             {
                 case StatusCode.Success:
-                    AesirInspectorLogger.Info($"成功安装包：{_addRequest.Result.displayName}");
+                    AesirInspectorDebug.Info($"成功安装包：{_addRequest.Result.displayName}");
                     break;
                 case StatusCode.Failure:
-                    AesirInspectorLogger.Error($"安装包失败：{_addRequest.Error.message}");
+                    AesirInspectorDebug.Error($"安装包失败：{_addRequest.Error.message}");
                     OnPackagesChanged?.Invoke();
                     break;
             }

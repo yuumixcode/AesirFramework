@@ -17,6 +17,7 @@ EditorBuildSettings:
     Runestone.AesirInspector.AesirInspectorLoggerSettings: {fileID: 11400000, guid: ec16c6b7e545341ac87a6ebb39384db4, type: 2}
     Runestone.AesirInspector.AesirInspectorProjectSettingsSO: {fileID: 11400000, guid: a2b5959f8ec604e2f8a08cb1fa52829e, type: 2}
     Runestone.AesirInspector.OdinIntegration.Editor.CnScriptingAPISettingsSO: {fileID: 11400000, guid: a87f902898b8c49b1bc2d7a155909197, type: 2}
+    Runestone.AesirInspector.OdinIntegration.Editor.DefaultScriptingAPISettingsSO: {fileID: 11400000, guid: dd62054529f8f445fa097512208a0a22, type: 2}
     Runestone.AesirInspector.OdinIntegration.Editor.MenuItemViewerSO: {fileID: 11400000, guid: 661ae61f203394ae68b31333d1e41152, type: 2}
     Runestone.AesirInspector.OdinIntegration.Editor.OdinSyntaxHighlighterPanelSO: {fileID: 11400000, guid: 610641040289b44eba2e1cab589f16ad, type: 2}
     Runestone.AesirInspector.OdinIntegration.Editor.ScriptDocGeneratorSO: {fileID: 11400000, guid: 3883d652888c4413ba34caf95f454d50, type: 2}

@@ -13,14 +13,13 @@
       }
     },
     "cn.tuanjie.codely.bridge": {
-      "version": "1.0.74",
+      "version": "file:../.codely.packages/cn.tuanjie.codely.bridge@1.0.75-exp.1",
       "depth": 0,
-      "source": "registry",
+      "source": "local",
       "dependencies": {
         "com.unity.ext.nunit": "1.0.6",
         "com.unity.ugui": "1.0.0"
-      },
-      "url": "https://packages.unity.cn"
+      }
     },
     "com.unity.2d.animation": {
       "version": "9.2.0",

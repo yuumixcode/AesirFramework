@@ -6,7 +6,7 @@ namespace Runestone.AesirInspector
     /// Aesir Inspector 日志配置，存放在 Preferences 目录下。
     /// 控制普通日志和警告日志的显示开关，错误日志始终输出。
     /// </summary>
-    public class AesirInspectorLoggerSettings : AesirInspectorSettings<AesirInspectorLoggerSettings>
+    public class AesirInspectorDebugSettings : AesirInspectorSettings<AesirInspectorDebugSettings>
     {
         [SerializeField]
         bool enableInfoLog;

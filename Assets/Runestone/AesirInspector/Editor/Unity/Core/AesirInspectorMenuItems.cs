@@ -132,48 +132,7 @@ namespace Runestone.AesirInspector.Editor
 
         #region Assets Context Menu
 
-        /// <summary>
-        /// 将选中脚本添加到 Target Type 的菜单路径。
-        /// </summary>
-        public const string AddScriptToTargetType = AssetsScriptDocGeneratorRoot + "/Add To Target Type";
-
-        /// <summary>
-        /// Add To Target Type 菜单项优先级。
-        /// </summary>
-        public const int AddScriptToTargetTypeOrder = -50;
-
-        /// <summary>
-        /// 将选中脚本添加到 Target Type 并打开窗口的菜单路径。
-        /// </summary>
-        public const string AddScriptToTargetTypeAndOpenWindow =
-            AssetsScriptDocGeneratorRoot + "/Add To Target Type And Open Window";
-
-        /// <summary>
-        /// Add To Target Type And Open Window 菜单项优先级。
-        /// </summary>
-        public const int AddScriptToTargetTypeAndOpenWindowOrder = -48;
-
-        /// <summary>
-        /// 将选中脚本添加到 Temporary Types 的菜单路径。
-        /// </summary>
-        public const string AddScriptsToTemporaryTypes =
-            AssetsScriptDocGeneratorRoot + "/Add To Temporary Types";
-
-        /// <summary>
-        /// Add To Temporary Types 菜单项优先级。
-        /// </summary>
-        public const int AddScriptsToTemporaryTypesOrder = -43;
-
-        /// <summary>
-        /// 将选中脚本添加到 Temporary Types 并打开窗口的菜单路径。
-        /// </summary>
-        public const string AddScriptsToTemporaryTypesAndOpenWindow =
-            AssetsScriptDocGeneratorRoot + "/Add To Temporary Types And Open Window";
-
-        /// <summary>
-        /// Add To Temporary Types And Open Window 菜单项优先级。
-        /// </summary>
-        public const int AddScriptsToTemporaryTypesAndOpenWindowOrder = -40;
+     
 
         /// <summary>
         /// 同步 XML Summary 注释到 SummaryAttribute 的菜单路径。

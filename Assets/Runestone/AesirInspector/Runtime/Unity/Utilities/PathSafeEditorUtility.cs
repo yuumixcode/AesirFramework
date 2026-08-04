@@ -26,6 +26,7 @@ namespace Runestone.AesirInspector
             var fullPath = PathUtility.ToUnityPath(relativePath.Trim());
             if (!Directory.Exists(fullPath))
             {
+                // Directory 默认递归创建
                 Directory.CreateDirectory(fullPath);
                 AssetDatabase.Refresh();
             }

@@ -13,8 +13,32 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     /// <summary>
     /// 脚本文档生成器逻辑控制类，负责处理文档生成的核心逻辑
     /// </summary>
-    public static class ScriptDocGeneratorController
+    public static class ScriptDocGeneratorUtility
     {
+        /// <summary>
+        /// 检查 Script Doc Generator 是否已初始化。未初始化时提示用户。
+        /// </summary>
+        /// <returns>true 表示已初始化（或用户刚确认初始化）；false 表示用户取消了初始化。</returns>
+        public static bool EnsureInitialized()
+        {
+            if (AesirInspectorModuleAssetMarkerSO.IsScriptDocGeneratorAssetsInitialized())
+            {
+                return true;
+            }
+
+            var confirmed = EditorUtility.DisplayDialog("Script Doc Generator 提示窗口",
+                "未发现 Script Doc Generator 的标识资产，认定 Script Doc Generator 模块的资产尚未生成。\n" +
+                "是否立即生成 Script Doc Generator 模块的所有资产？", "立刻生成", "取消");
+
+            if (!confirmed)
+            {
+                return false;
+            }
+
+            InitializeAssets();
+            return true;
+        }
+
         const string IdentifierCn = "## Additional Notes";
         const string NoneAssembly = "None Assembly";
         const string GithubRepository = "https://github.com/yuumixcode/Unity-Aesir-Packages";
@@ -26,6 +50,37 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                                                               ") 辅助生成。");
 
         static readonly IAnalysisDataFactory AnalysisDataFactory = new DefaultAnalysisDataFactory();
+
+        public static SingleAssemblyPanelSO GetSingleAssemblyPanel() =>
+            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<SingleAssemblyPanelSO>(
+                "SingleAssemblyPanel", ScriptDocGeneratorPaths.PanelsPath, "SingleAssemblyPanel");
+
+        public static MultipleAssembliesPanelSO GetMultipleAssembliesPanel() =>
+            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<MultipleAssembliesPanelSO>(
+                "MultipleAssembliesPanel", ScriptDocGeneratorPaths.PanelsPath, "MultipleAssembliesPanel");
+
+        public static void InitializeAssets()
+        {
+            _ = ScriptDocGeneratorSO.Instance;
+            _ = GetSingleScriptPanel();
+            _ = GetMultipleScriptsPanel();
+            _ = GetSingleAssemblyPanel();
+            _ = GetMultipleAssembliesPanel();
+            _ = DefaultScriptingAPISettingsSO.Instance;
+
+            AesirInspectorModuleAssetMarkerSO.CreateScriptDocGeneratorMarkerAsset();
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+        }
+
+        public static SingleScriptPanelSO GetSingleScriptPanel() =>
+            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<SingleScriptPanelSO>(
+                "SingleScriptPanel", ScriptDocGeneratorPaths.PanelsPath, "SingleScriptPanel");
+
+        public static MultipleScriptsPanelSO GetMultipleScriptsPanel() =>
+            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<MultipleScriptsPanelSO>(
+                "MultipleScriptsPanel", ScriptDocGeneratorPaths.PanelsPath, "MultipleScriptsPanel");
 
         public static ITypeData AnalyzeSingleType(Type targetType)
         {
@@ -102,8 +157,8 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             {
                 var assembly = Assembly.Load(assemblyFullName);
                 var types = assembly.GetTypes()
-                    .Where(t => t.GetCustomAttribute<CompilerGeneratedAttribute>() == null)
-                    .Select(type => AnalysisDataFactory.CreateTypeData(type, AnalysisDataFactory));
+                    .Where(t => t.GetCustomAttribute<CompilerGeneratedAttribute>() == null).Select(type =>
+                        AnalysisDataFactory.CreateTypeData(type, AnalysisDataFactory));
                 result.AddRange(types);
             }
 
@@ -270,7 +325,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             out string markdownText,
             out string filePathWithExtensions)
         {
-            markdownText = generatorSettings.GetGeneratedDoc(typeData);
+            markdownText = generatorSettings.GetGeneratedDocumentation(typeData);
 
             if (generatorSettings.generateIdentifier)
             {

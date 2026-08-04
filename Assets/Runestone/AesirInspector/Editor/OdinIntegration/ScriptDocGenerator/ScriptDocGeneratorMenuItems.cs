@@ -10,91 +10,145 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         static MonoScript[] SelectionMonoScripts => Selection
             .GetFiltered(typeof(MonoScript), SelectionMode.Assets).Cast<MonoScript>().ToArray();
 
-        static readonly string PanelsPath =
-            AesirInspectorPaths.EditorDefaultResourcesPath + "/ScriptDocGenerator/Panels";
-
-        static SingleScriptPanelSO GetSingleScriptPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<SingleScriptPanelSO>(
-                "SingleScriptPanel", PanelsPath, "SingleScriptPanel");
-
-        static MultipleScriptsPanelSO GetMultipleScriptsPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<MultipleScriptsPanelSO>(
-                "MultipleScriptsPanel", PanelsPath, "MultipleScriptsPanel");
-
-        [MenuItem(AesirInspectorMenuItems.AddScriptToTargetType, false,
-            AesirInspectorMenuItems.AddScriptToTargetTypeOrder)]
+        [MenuItem(AddScriptToTargetTypeMenuName, false, AddScriptToTargetTypeMenuNameOrder)]
         public static void AddScriptToTargetType()
         {
             var monoScript = SelectionMonoScripts.First();
             var targetType = monoScript.GetClass();
-            var panel = GetSingleScriptPanel();
+            var panel = ScriptDocGeneratorUtility.GetSingleScriptPanel();
             panel.TargetType = targetType;
             Debug.Log("设置 Script Doc Generator 的 Target Type 为：" + targetType.FullName);
         }
 
-        [MenuItem(AesirInspectorMenuItems.AddScriptToTargetTypeAndOpenWindow, false,
-            AesirInspectorMenuItems.AddScriptToTargetTypeAndOpenWindowOrder)]
+        [MenuItem(AddScriptToTargetTypeAndOpenWindowMenuName, false,
+            AddScriptToTargetTypeAndOpenWindowMenuNameOrder)]
         public static void AddScriptToTargetTypeAndOpenWindow()
         {
+            if (!ScriptDocGeneratorUtility.EnsureInitialized())
+            {
+                return;
+            }
+
             AddScriptToTargetType();
             ScriptDocGeneratorWindow.OpenWindow();
         }
 
-        [MenuItem(AesirInspectorMenuItems.AddScriptsToTemporaryTypes, false,
-            AesirInspectorMenuItems.AddScriptsToTemporaryTypesOrder)]
+        [MenuItem(AddScriptsToTemporaryTypesMenuName, false, AddScriptsToTemporaryTypesMenuNameOrder)]
         public static void AddScriptsToTargetTypes()
         {
             var monoScripts = SelectionMonoScripts.ToList();
             var types = monoScripts.Select(x => x.GetClass()).ToList();
-            var panel = GetMultipleScriptsPanel();
+            var panel = ScriptDocGeneratorUtility.GetMultipleScriptsPanel();
             var temporaryTypes = panel.TemporaryTypes;
             temporaryTypes.AddRange(types);
             panel.TemporaryTypes = temporaryTypes.Distinct().ToList();
             foreach (var type in types)
+            {
                 Debug.Log("添加到 Script Doc Generator 的 Temporary Types：" + type.FullName);
+            }
         }
 
-        [MenuItem(AesirInspectorMenuItems.AddScriptsToTemporaryTypesAndOpenWindow, false,
-            AesirInspectorMenuItems.AddScriptsToTemporaryTypesAndOpenWindowOrder)]
+        [MenuItem(AddScriptsToTemporaryTypesAndOpenWindowMenuName, false,
+            AddScriptsToTemporaryTypesAndOpenWindowMenuNameOrder)]
         public static void AddScriptsToTemporaryTypesAndOpenWindow()
         {
+            if (!ScriptDocGeneratorUtility.EnsureInitialized())
+            {
+                return;
+            }
+
             AddScriptsToTargetTypes();
             ScriptDocGeneratorWindow.OpenWindow();
         }
 
-        [MenuItem(AesirInspectorMenuItems.AddScriptToTargetType, true)]
+        [MenuItem(AddScriptToTargetTypeMenuName, true)]
         public static bool AddScriptToTargetTypeValidate()
         {
             var length = SelectionMonoScripts.Length;
             if (length != 1)
+            {
                 return false;
+            }
 
             var monoScript = SelectionMonoScripts[0];
             return monoScript.GetClass() != null;
         }
 
-        [MenuItem(AesirInspectorMenuItems.AddScriptToTargetTypeAndOpenWindow, true)]
+        [MenuItem(AddScriptToTargetTypeAndOpenWindowMenuName, true)]
         public static bool AddScriptToTargetTypeAndOpenWindowValidate() =>
             AddScriptToTargetTypeValidate();
 
-        [MenuItem(AesirInspectorMenuItems.AddScriptsToTemporaryTypes, true)]
+        [MenuItem(AddScriptsToTemporaryTypesMenuName, true)]
         public static bool AddScriptsToTargetTypesValidate()
         {
             var length = SelectionMonoScripts.Length;
             if (length < 1)
+            {
                 return false;
+            }
 
             foreach (var monoScript in SelectionMonoScripts)
             {
                 if (monoScript.GetClass() == null)
+                {
                     return false;
+                }
             }
 
             return true;
         }
 
-        [MenuItem(AesirInspectorMenuItems.AddScriptsToTemporaryTypesAndOpenWindow, true)]
+        [MenuItem(AddScriptsToTemporaryTypesAndOpenWindowMenuName, true)]
         public static bool AddScriptsToTemporaryTypesAndOpenWindowValidate() =>
             AddScriptsToTargetTypesValidate();
+
+
+        #region 菜单项定义
+
+        /// <summary>
+        /// 将选中脚本添加到 Target Type 的菜单路径。
+        /// </summary>
+        const string AddScriptToTargetTypeMenuName =
+            AesirInspectorMenuItems.AssetsScriptDocGeneratorRoot + "/Add To Target Type";
+
+        /// <summary>
+        /// Add To Target Type 菜单项优先级。
+        /// </summary>
+        const int AddScriptToTargetTypeMenuNameOrder = -50;
+
+        /// <summary>
+        /// 将选中脚本添加到 Target Type 并打开窗口的菜单路径。
+        /// </summary>
+        const string AddScriptToTargetTypeAndOpenWindowMenuName =
+            AesirInspectorMenuItems.AssetsScriptDocGeneratorRoot + "/Add To Target Type And Open Window";
+
+        /// <summary>
+        /// Add To Target Type And Open Window 菜单项优先级。
+        /// </summary>
+        const int AddScriptToTargetTypeAndOpenWindowMenuNameOrder = -48;
+
+        /// <summary>
+        /// 将选中脚本添加到 Temporary Types 的菜单路径。
+        /// </summary>
+        const string AddScriptsToTemporaryTypesMenuName =
+            AesirInspectorMenuItems.AssetsScriptDocGeneratorRoot + "/Add To Temporary Types";
+
+        /// <summary>
+        /// Add To Temporary Types 菜单项优先级。
+        /// </summary>
+        const int AddScriptsToTemporaryTypesMenuNameOrder = -43;
+
+        /// <summary>
+        /// 将选中脚本添加到 Temporary Types 并打开窗口的菜单路径。
+        /// </summary>
+        const string AddScriptsToTemporaryTypesAndOpenWindowMenuName =
+            AesirInspectorMenuItems.AssetsScriptDocGeneratorRoot + "/Add To Temporary Types And Open Window";
+
+        /// <summary>
+        /// Add To Temporary Types And Open Window 菜单项优先级。
+        /// </summary>
+        const int AddScriptsToTemporaryTypesAndOpenWindowMenuNameOrder = -40;
+
+        #endregion
     }
 }

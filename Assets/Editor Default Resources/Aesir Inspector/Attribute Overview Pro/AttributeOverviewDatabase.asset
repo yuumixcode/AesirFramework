@@ -28,21 +28,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: SuffixLabel
-      EnglishDisplay: SuffixLabel
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "SuffixLabel \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u8F93\u5165\u6846\u7684\u672B\u5C3E\u6DFB\u52A0\u4E00\u4E2A\u540E\u7F00\u6807\u7B7E\u3002"
-      EnglishDisplay: The SuffixLabel attribute adds a label to the end of a property's
-        input field.
-    _chineseIntroduction: "SuffixLabel \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u8F93\u5165\u6846\u7684\u672B\u5C3E\u6DFB\u52A0\u4E00\u4E2A\u540E\u7F00\u6807\u7B7E\u3002"
-    _englishIntroduction: The SuffixLabel attribute adds a label to the end of a
-      property's input field.
-    _targetUrl: https://odininspector.com/attributes/suffix-label-attribute
   currentSelectedExample: {fileID: -3001966934221357483, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-9041181857931204284
 MonoBehaviour:
@@ -72,24 +63,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Property Range
-      EnglishDisplay: "\u5C5E\u6027\u8303\u56F4"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "PropertyRange \u7279\u6027\u4E0E Unity \u7684 Range \u7279\u6027\u7C7B\u4F3C\uFF0C\u4F46\u5B83\u652F\u6301\u4F7F\u7528
-        $ \u7B26\u53F7\u6765\u5F15\u7528\u6210\u5458\u4F5C\u4E3A\u52A8\u6001\u8303\u56F4\u3002"
-      EnglishDisplay: The PropertyRange attribute is similar to Unity's Range attribute,
-        but it supports using the $ symbol to reference members for a dynamic range.
-    _chineseIntroduction: "PropertyRange \u7279\u6027\u4E0E Unity \u7684 Range \u7279\u6027\u7C7B\u4F3C\uFF0C\u4F46\u5B83\u652F\u6301\u4F7F\u7528
-      $ \u7B26\u53F7\u6765\u5F15\u7528\u6210\u5458\u4F5C\u4E3A\u52A8\u6001\u8303\u56F4\u3002"
-    _englishIntroduction: The PropertyRange attribute is similar to Unity's Range
-      attribute, but it supports using the $ symbol to reference members for a dynamic
-      range.
-    _targetUrl: https://odininspector.com/attributes/property-range-attribute
   currentSelectedExample: {fileID: 3612568064482192114, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-8597507272763091166
 MonoBehaviour:
@@ -119,23 +98,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ListDrawerSettings
-      EnglishDisplay: ListDrawerSettings
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ListDrawerSettings \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u5217\u8868\u6216\u6570\u7EC4\u5728
-        Inspector \u4E2D\u7684\u7ED8\u5236\u65B9\u5F0F\u3002"
-      EnglishDisplay: The ListDrawerSettings attribute is used to customize how lists
-        or arrays are drawn in the Inspector.
-    _chineseIntroduction: "ListDrawerSettings \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u5217\u8868\u6216\u6570\u7EC4\u5728
-      Inspector \u4E2D\u7684\u7ED8\u5236\u65B9\u5F0F\u3002"
-    _englishIntroduction: The ListDrawerSettings attribute is used to customize how
-      lists or arrays are drawn in the Inspector.
-    _targetUrl: https://odininspector.com/attributes/list-drawer-settings-attribute
   currentSelectedExample: {fileID: -2111674769060886042, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-8122411850379149842
 MonoBehaviour:
@@ -165,21 +133,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: InlineButton
-      EnglishDisplay: InlineButton
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "InlineButton \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u503C\u7684\u53F3\u4FA7\u7ED8\u5236\u4E00\u4E2A\u6309\u94AE\u3002"
-      EnglishDisplay: The InlineButton attribute draws a button to the right of the
-        property value.
-    _chineseIntroduction: "InlineButton \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u503C\u7684\u53F3\u4FA7\u7ED8\u5236\u4E00\u4E2A\u6309\u94AE\u3002"
-    _englishIntroduction: The InlineButton attribute draws a button to the right
-      of the property value.
-    _targetUrl: https://odininspector.com/attributes/inline-button-attribute
   currentSelectedExample: {fileID: -7056762987282277431, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-7669518584804423720
 MonoBehaviour:
@@ -209,21 +168,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Required
-      EnglishDisplay: Required
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "Required \u7279\u6027\u7528\u4E8E\u6807\u8BB0\u5173\u952E\u5B57\u6BB5\uFF0C\u5982\u679C\u5B57\u6BB5\u4E3A\u7A7A\uFF0C\u5C06\u5728\u68C0\u67E5\u5668\u4E2D\u663E\u793A\u9519\u8BEF\u6D88\u606F\u3002"
-      EnglishDisplay: The Required attribute is used to mark critical fields. If
-        a field is empty, an error message will be displayed in the inspector.
-    _chineseIntroduction: "Required \u7279\u6027\u7528\u4E8E\u6807\u8BB0\u5173\u952E\u5B57\u6BB5\uFF0C\u5982\u679C\u5B57\u6BB5\u4E3A\u7A7A\uFF0C\u5C06\u5728\u68C0\u67E5\u5668\u4E2D\u663E\u793A\u9519\u8BEF\u6D88\u606F\u3002"
-    _englishIntroduction: The Required attribute is used to mark critical fields.
-      If a field is empty, an error message will be displayed in the inspector.
-    _targetUrl: https://odininspector.com/attributes/required-attribute
   currentSelectedExample: {fileID: -8027129117259627147, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-7602177844984477706
 MonoBehaviour:
@@ -253,23 +203,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HideIfGroup
-      EnglishDisplay: HideIfGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HideIfGroup \u7279\u6027\u7528\u4E8E\u5B9A\u4E49\u4E00\u4E2A\u7EC4\uFF0C\u8BE5\u7EC4\u6839\u636E\u6761\u4EF6\u52A8\u6001\u9690\u85CF\u6216\u663E\u793A\u3002\u7EC4\u8DEF\u5F84\u53EF\u4EE5\u4F5C\u4E3A\u6761\u4EF6\u3002"
-      EnglishDisplay: The HideIfGroup attribute is used to define a group that is
-        dynamically hidden or shown based on a condition. The group path can serve
-        as the condition.
-    _chineseIntroduction: "HideIfGroup \u7279\u6027\u7528\u4E8E\u5B9A\u4E49\u4E00\u4E2A\u7EC4\uFF0C\u8BE5\u7EC4\u6839\u636E\u6761\u4EF6\u52A8\u6001\u9690\u85CF\u6216\u663E\u793A\u3002\u7EC4\u8DEF\u5F84\u53EF\u4EE5\u4F5C\u4E3A\u6761\u4EF6\u3002"
-    _englishIntroduction: The HideIfGroup attribute is used to define a group that
-      is dynamically hidden or shown based on a condition. The group path can serve
-      as the condition.
-    _targetUrl: https://odininspector.com/attributes/hide-if-group-attribute
   currentSelectedExample: {fileID: -5666365703994333290, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-7518953712204935484
 MonoBehaviour:
@@ -299,21 +238,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ReadOnly
-      EnglishDisplay: ReadOnly
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ReadOnly \u7279\u6027\u4F7F\u5C5E\u6027\u5728\u68C0\u67E5\u5668\u9762\u677F\u4E2D\u663E\u793A\u4E3A\u53EA\u8BFB\u72B6\u6001\u3002"
-      EnglishDisplay: The ReadOnly attribute makes a property appear as read-only
-        in the inspector panel.
-    _chineseIntroduction: "ReadOnly \u7279\u6027\u4F7F\u5C5E\u6027\u5728\u68C0\u67E5\u5668\u9762\u677F\u4E2D\u663E\u793A\u4E3A\u53EA\u8BFB\u72B6\u6001\u3002"
-    _englishIntroduction: The ReadOnly attribute makes a property appear as read-only
-      in the inspector panel.
-    _targetUrl: https://odininspector.com/attributes/read-only-attribute
   currentSelectedExample: {fileID: -5457062586104237687, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-6413971373319334784
 MonoBehaviour:
@@ -343,23 +273,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: RequiredIn
-      EnglishDisplay: RequiredIn
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "RequiredIn \u662F Required \u7279\u6027\u7684\u53D8\u4F53\uFF0C\u4E13\u95E8\u7528\u4E8E\u9884\u5236\u4F53\uFF08Prefab\uFF09\u5BF9\u8C61\u3002\u5B83\u5141\u8BB8\u4F60\u6307\u5B9A\u5C5E\u6027\u5728\u7279\u5B9A\u7684\u9884\u5236\u4F53\u7C7B\u578B\u4E2D\u4E0D\u80FD\u4E3A\u7A7A\u3002"
-      EnglishDisplay: RequiredIn is a variant of the Required attribute specifically
-        for Prefab objects. It allows you to specify that a property must not be
-        null in certain prefab kinds.
-    _chineseIntroduction: "RequiredIn \u662F Required \u7279\u6027\u7684\u53D8\u4F53\uFF0C\u4E13\u95E8\u7528\u4E8E\u9884\u5236\u4F53\uFF08Prefab\uFF09\u5BF9\u8C61\u3002\u5B83\u5141\u8BB8\u4F60\u6307\u5B9A\u5C5E\u6027\u5728\u7279\u5B9A\u7684\u9884\u5236\u4F53\u7C7B\u578B\u4E2D\u4E0D\u80FD\u4E3A\u7A7A\u3002"
-    _englishIntroduction: RequiredIn is a variant of the Required attribute specifically
-      for Prefab objects. It allows you to specify that a property must not be null
-      in certain prefab kinds.
-    _targetUrl: https://odininspector.com/attributes/required-in-attribute
   currentSelectedExample: {fileID: 4936312968649073355, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-6115211564192207690
 MonoBehaviour:
@@ -389,21 +308,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Searchable
-      EnglishDisplay: Searchable
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "Searchable \u7279\u6027\u4E3A\u5217\u8868\u3001\u6570\u7EC4\u6216\u7C7B\u6DFB\u52A0\u4E00\u4E2A\u641C\u7D22\u6846\uFF0C\u65B9\u4FBF\u5FEB\u901F\u7B5B\u9009\u5185\u5BB9\u3002"
-      EnglishDisplay: The Searchable attribute adds a search field to a list, array,
-        or class, allowing for quick content filtering.
-    _chineseIntroduction: "Searchable \u7279\u6027\u4E3A\u5217\u8868\u3001\u6570\u7EC4\u6216\u7C7B\u6DFB\u52A0\u4E00\u4E2A\u641C\u7D22\u6846\uFF0C\u65B9\u4FBF\u5FEB\u901F\u7B5B\u9009\u5185\u5BB9\u3002"
-    _englishIntroduction: The Searchable attribute adds a search field to a list,
-      array, or class, allowing for quick content filtering.
-    _targetUrl: https://odininspector.com/attributes/searchable-attribute
   currentSelectedExample: {fileID: 3430120958734663277, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-5790770481477132658
 MonoBehaviour:
@@ -433,21 +343,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: EnumToggleButtons
-      EnglishDisplay: EnumToggleButtons
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "EnumToggleButtons \u7279\u6027\u5C06\u679A\u4E3E\u7ED8\u5236\u4E3A\u4E00\u6392\u6309\u94AE\uFF0C\u63D0\u4F9B\u66F4\u76F4\u89C2\u7684\u4EA4\u4E92\u4F53\u9A8C\u3002"
-      EnglishDisplay: The EnumToggleButtons attribute draws an enum as a set of horizontal
-        toggle buttons, providing a more intuitive interaction.
-    _chineseIntroduction: "EnumToggleButtons \u7279\u6027\u5C06\u679A\u4E3E\u7ED8\u5236\u4E3A\u4E00\u6392\u6309\u94AE\uFF0C\u63D0\u4F9B\u66F4\u76F4\u89C2\u7684\u4EA4\u4E92\u4F53\u9A8C\u3002"
-    _englishIntroduction: The EnumToggleButtons attribute draws an enum as a set
-      of horizontal toggle buttons, providing a more intuitive interaction.
-    _targetUrl: https://odininspector.com/attributes/enum-toggle-buttons-attribute
   currentSelectedExample: {fileID: 3767852348351743243, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-4946024452321623425
 MonoBehaviour:
@@ -477,21 +378,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: FolderPath
-      EnglishDisplay: FolderPath
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "FolderPath \u7279\u6027\u5728\u5B57\u7B26\u4E32\u5C5E\u6027\u4E0A\u7ED8\u5236\u4E00\u4E2A\u6587\u4EF6\u5939\u9009\u62E9\u5668\uFF0C\u65B9\u4FBF\u7528\u6237\u9009\u62E9\u6587\u4EF6\u5939\u8DEF\u5F84\u3002"
-      EnglishDisplay: The FolderPath attribute draws a folder picker for string properties,
-        making it easy for users to select folder paths.
-    _chineseIntroduction: "FolderPath \u7279\u6027\u5728\u5B57\u7B26\u4E32\u5C5E\u6027\u4E0A\u7ED8\u5236\u4E00\u4E2A\u6587\u4EF6\u5939\u9009\u62E9\u5668\uFF0C\u65B9\u4FBF\u7528\u6237\u9009\u62E9\u6587\u4EF6\u5939\u8DEF\u5F84\u3002"
-    _englishIntroduction: The FolderPath attribute draws a folder picker for string
-      properties, making it easy for users to select folder paths.
-    _targetUrl: https://odininspector.com/attributes/folder-path-attribute
   currentSelectedExample: {fileID: -2205543016301684078, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-4774001981902325240
 MonoBehaviour:
@@ -521,22 +413,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ValidateInput
-      EnglishDisplay: ValidateInput
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ValidateInput \u7279\u6027\u7528\u4E8E\u5728\u68C0\u67E5\u5668\u4E2D\u5BF9\u5C5E\u6027\u503C\u8FDB\u884C\u81EA\u5B9A\u4E49\u9A8C\u8BC1\uFF0C\u5E76\u5728\u9A8C\u8BC1\u5931\u8D25\u65F6\u663E\u793A\u6D88\u606F\u3002"
-      EnglishDisplay: The ValidateInput attribute is used to perform custom validation
-        on property values in the inspector and display a message when validation
-        fails.
-    _chineseIntroduction: "ValidateInput \u7279\u6027\u7528\u4E8E\u5728\u68C0\u67E5\u5668\u4E2D\u5BF9\u5C5E\u6027\u503C\u8FDB\u884C\u81EA\u5B9A\u4E49\u9A8C\u8BC1\uFF0C\u5E76\u5728\u9A8C\u8BC1\u5931\u8D25\u65F6\u663E\u793A\u6D88\u606F\u3002"
-    _englishIntroduction: The ValidateInput attribute is used to perform custom validation
-      on property values in the inspector and display a message when validation fails.
-    _targetUrl: https://odininspector.com/attributes/validate-input-attribute
   currentSelectedExample: {fileID: -846740405585854032, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-4346284199333583708
 MonoBehaviour:
@@ -566,21 +448,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: GUIColor
-      EnglishDisplay: GUIColor
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "GUIColor \u7279\u6027\u7528\u4E8E\u6539\u53D8 GUI \u5143\u7D20\u7684\u989C\u8272\u3002\u5B83\u53EF\u4EE5\u7528\u4E8E\u7A81\u51FA\u7279\u6B8A\u7684\u3001\u91CD\u8981\u7684\u5B57\u6BB5\u3002"
-      EnglishDisplay: GUIColor is used to change the color of GUI elements. It can
-        be used to highlight special or important fields.
-    _chineseIntroduction: "GUIColor \u7279\u6027\u7528\u4E8E\u6539\u53D8 GUI \u5143\u7D20\u7684\u989C\u8272\u3002\u5B83\u53EF\u4EE5\u7528\u4E8E\u7A81\u51FA\u7279\u6B8A\u7684\u3001\u91CD\u8981\u7684\u5B57\u6BB5\u3002"
-    _englishIntroduction: GUIColor is used to change the color of GUI elements. It
-      can be used to highlight special or important fields.
-    _targetUrl: https://odininspector.com/attributes/gui-color-attribute
   currentSelectedExample: {fileID: -7854082222091131582, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-4295737612179477066
 MonoBehaviour:
@@ -610,21 +483,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: PropertySpace
-      EnglishDisplay: PropertySpace
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "PropertySpace \u7279\u6027\u7528\u4E8E\u5728\u68C0\u67E5\u5668\u4E2D\u5C5E\u6027\u7684\u524D\u540E\u6DFB\u52A0\u95F4\u8DDD\uFF08\u50CF\u7D20\u4E3A\u5355\u4F4D\uFF09\u3002"
-      EnglishDisplay: The PropertySpace attribute is used to add spacing (in pixels)
-        before and after a property in the inspector.
-    _chineseIntroduction: "PropertySpace \u7279\u6027\u7528\u4E8E\u5728\u68C0\u67E5\u5668\u4E2D\u5C5E\u6027\u7684\u524D\u540E\u6DFB\u52A0\u95F4\u8DDD\uFF08\u50CF\u7D20\u4E3A\u5355\u4F4D\uFF09\u3002"
-    _englishIntroduction: The PropertySpace attribute is used to add spacing (in
-      pixels) before and after a property in the inspector.
-    _targetUrl: https://odininspector.com/attributes/property-space-attribute
   currentSelectedExample: {fileID: 938597960815852580, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-3859918781601808460
 MonoBehaviour:
@@ -654,21 +518,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: LabelText
-      EnglishDisplay: LabelText
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "LabelText \u7279\u6027\u7528\u4E8E\u66F4\u6539\u5C5E\u6027\u5728\u68C0\u67E5\u5668\u4E2D\u663E\u793A\u7684\u6807\u7B7E\u540D\u79F0\u3002"
-      EnglishDisplay: The LabelText attribute is used to change the label name of
-        a property displayed in the inspector.
-    _chineseIntroduction: "LabelText \u7279\u6027\u7528\u4E8E\u66F4\u6539\u5C5E\u6027\u5728\u68C0\u67E5\u5668\u4E2D\u663E\u793A\u7684\u6807\u7B7E\u540D\u79F0\u3002"
-    _englishIntroduction: The LabelText attribute is used to change the label name
-      of a property displayed in the inspector.
-    _targetUrl: https://odininspector.com/attributes/label-text-attribute
   currentSelectedExample: {fileID: -6774304635404560325, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-3823758350863351244
 MonoBehaviour:
@@ -698,23 +553,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HideInEditorMode
-      EnglishDisplay: HideInEditorMode
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HideInEditorMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728 Editor
-        \u6A21\u5F0F\u4E0B\u9690\u85CF\u3002"
-      EnglishDisplay: The HideInEditorMode attribute hides a property while in Editor
-        mode.
-    _chineseIntroduction: "HideInEditorMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728
-      Editor \u6A21\u5F0F\u4E0B\u9690\u85CF\u3002"
-    _englishIntroduction: The HideInEditorMode attribute hides a property while in
-      Editor mode.
-    _targetUrl: https://odininspector.com/attributes/hide-in-editor-mode-attribute
   currentSelectedExample: {fileID: 8258307899493985976, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-3775182972232971773
 MonoBehaviour:
@@ -744,25 +588,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: SceneObjectsOnly
-      EnglishDisplay: SceneObjectsOnly
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "SceneObjectsOnly \u7279\u6027\u7528\u4E8E\u9650\u5236\u5BF9\u8C61\u5F15\u7528\u4EC5\u80FD\u9009\u62E9\u573A\u666F\u4E2D\u7684\u5BF9\u8C61\uFF0C\u800C\u4E0D\u80FD\u9009\u62E9\u9879\u76EE\u8D44\u6E90\uFF08Prefab
-        \u7B49\uFF09\u3002"
-      EnglishDisplay: The SceneObjectsOnly attribute restricts object references
-        to only allow scene objects, preventing the selection of project assets like
-        prefabs.
-    _chineseIntroduction: "SceneObjectsOnly \u7279\u6027\u7528\u4E8E\u9650\u5236\u5BF9\u8C61\u5F15\u7528\u4EC5\u80FD\u9009\u62E9\u573A\u666F\u4E2D\u7684\u5BF9\u8C61\uFF0C\u800C\u4E0D\u80FD\u9009\u62E9\u9879\u76EE\u8D44\u6E90\uFF08Prefab
-      \u7B49\uFF09\u3002"
-    _englishIntroduction: The SceneObjectsOnly attribute restricts object references
-      to only allow scene objects, preventing the selection of project assets like
-      prefabs.
-    _targetUrl: https://odininspector.com/attributes/scene-objects-only-attribute
   currentSelectedExample: {fileID: -7734678013392882214, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-3696817346288635450
 MonoBehaviour:
@@ -792,21 +623,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DisableIn
-      EnglishDisplay: DisableIn
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DisableIn \u7279\u6027\u7528\u4E8E\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u7981\u7528\u5C5E\u6027\u3002"
-      EnglishDisplay: The DisableIn attribute is used to disable a property in a
-        specified editor mode.
-    _chineseIntroduction: "DisableIn \u7279\u6027\u7528\u4E8E\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u7981\u7528\u5C5E\u6027\u3002"
-    _englishIntroduction: The DisableIn attribute is used to disable a property in
-      a specified editor mode.
-    _targetUrl: https://odininspector.com/attributes/disable-in-attribute
   currentSelectedExample: {fileID: -8917167370224900577, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-3238379948117886546
 MonoBehaviour:
@@ -836,21 +658,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DelayedProperty
-      EnglishDisplay: DelayedProperty
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DelayedProperty \u7279\u6027\u5EF6\u8FDF\u5C5E\u6027\u503C\u7684\u66F4\u65B0\uFF0C\u76F4\u5230\u7528\u6237\u6309\u4E0B\u56DE\u8F66\u952E\u6216\u8F93\u5165\u6846\u5931\u53BB\u7126\u70B9\u3002"
-      EnglishDisplay: The DelayedProperty attribute delays the update of a property
-        value until the user presses enter or the input field loses focus.
-    _chineseIntroduction: "DelayedProperty \u7279\u6027\u5EF6\u8FDF\u5C5E\u6027\u503C\u7684\u66F4\u65B0\uFF0C\u76F4\u5230\u7528\u6237\u6309\u4E0B\u56DE\u8F66\u952E\u6216\u8F93\u5165\u6846\u5931\u53BB\u7126\u70B9\u3002"
-    _englishIntroduction: The DelayedProperty attribute delays the update of a property
-      value until the user presses enter or the input field loses focus.
-    _targetUrl: https://odininspector.com/attributes/delayed-attribute
   currentSelectedExample: {fileID: 915861971714587938, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-2713950758817254435
 MonoBehaviour:
@@ -880,21 +693,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: InlineEditor
-      EnglishDisplay: InlineEditor
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "InlineEditor \u7279\u6027\u7528\u4E8E\u5728\u5F53\u524D\u5C5E\u6027\u4E0B\u65B9\u76F4\u63A5\u5D4C\u5165\u53E6\u4E00\u4E2A\u5BF9\u8C61\u7684\u7F16\u8F91\u5668\u9762\u677F\u3002"
-      EnglishDisplay: The InlineEditor attribute is used to embed the editor of another
-        object directly below the property.
-    _chineseIntroduction: "InlineEditor \u7279\u6027\u7528\u4E8E\u5728\u5F53\u524D\u5C5E\u6027\u4E0B\u65B9\u76F4\u63A5\u5D4C\u5165\u53E6\u4E00\u4E2A\u5BF9\u8C61\u7684\u7F16\u8F91\u5668\u9762\u677F\u3002"
-    _englishIntroduction: The InlineEditor attribute is used to embed the editor
-      of another object directly below the property.
-    _targetUrl: https://odininspector.com/attributes/inline-editor-attribute
   currentSelectedExample: {fileID: 4721052268850720128, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-2614848092706816212
 MonoBehaviour:
@@ -924,23 +728,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: OnValueChanged
-      EnglishDisplay: OnValueChanged
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "OnValueChanged \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u503C\u5728
-        Inspector \u9762\u677F\u4E2D\u88AB\u4FEE\u6539\u65F6\u89E6\u53D1\u4E00\u4E2A\u65B9\u6CD5\u3002"
-      EnglishDisplay: The OnValueChanged attribute is used to trigger a method whenever
-        a property value is changed in the Inspector.
-    _chineseIntroduction: "OnValueChanged \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u503C\u5728
-      Inspector \u9762\u677F\u4E2D\u88AB\u4FEE\u6539\u65F6\u89E6\u53D1\u4E00\u4E2A\u65B9\u6CD5\u3002"
-    _englishIntroduction: The OnValueChanged attribute is used to trigger a method
-      whenever a property value is changed in the Inspector.
-    _targetUrl: https://odininspector.com/attributes/on-value-changed-attribute
   currentSelectedExample: {fileID: -8374215027922022994, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-2135422437241652147
 MonoBehaviour:
@@ -970,27 +763,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: AssetList
-      EnglishDisplay: AssetList
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "AssetList \u7279\u6027\u53EF\u4EE5\u7528\u4E8E\u7EE7\u627F\u81EA
-        UnityEngine.Object \u7C7B\u578B\u7684\u5355\u4E2A\u5143\u7D20\u4EE5\u53CA\u7531\u6B64\u7C7B\u5143\u7D20\u7EC4\u6210\u7684\u5217\u8868\u3001\u6570\u7EC4\uFF0C\u5B83\u4F7F\u7528\u7B26\u5408\u6307\u5B9A\u7B5B\u9009\u6761\u4EF6\u7684\u6240\u6709\u53EF\u80FD\u8D44\u6E90\u7684\u5217\u8868\u6765\u4EE3\u66FF\u9ED8\u8BA4\u7684\u5217\u8868\u62BD\u5C49\u3002\u4F7F\u7528\u6B64\u529F\u80FD\uFF0C\u4F60\u53EF\u4EE5\u4ECE\u5217\u8868\u6216\u6570\u7EC4\u4E2D\u8FC7\u6EE4\u3001\u5305\u542B\u6216\u6392\u9664\u8D44\u6E90\uFF0C\u800C\u65E0\u9700\u67E5\u770B\u9879\u76EE\u7A97\u53E3\u3002"
-      EnglishDisplay: AssetList is used on lists and arrays and single elements of
-        unity types, and replaces the default list drawer with a list of all possible
-        assets with the specified filter. Use this to both filter and include or
-        exclude assets from a list or an array, without navigating the project window.
-    _chineseIntroduction: "AssetList \u7279\u6027\u53EF\u4EE5\u7528\u4E8E\u7EE7\u627F\u81EA
-      UnityEngine.Object \u7C7B\u578B\u7684\u5355\u4E2A\u5143\u7D20\u4EE5\u53CA\u7531\u6B64\u7C7B\u5143\u7D20\u7EC4\u6210\u7684\u5217\u8868\u3001\u6570\u7EC4\uFF0C\u5B83\u4F7F\u7528\u7B26\u5408\u6307\u5B9A\u7B5B\u9009\u6761\u4EF6\u7684\u6240\u6709\u53EF\u80FD\u8D44\u6E90\u7684\u5217\u8868\u6765\u4EE3\u66FF\u9ED8\u8BA4\u7684\u5217\u8868\u62BD\u5C49\u3002\u4F7F\u7528\u6B64\u529F\u80FD\uFF0C\u4F60\u53EF\u4EE5\u4ECE\u5217\u8868\u6216\u6570\u7EC4\u4E2D\u8FC7\u6EE4\u3001\u5305\u542B\u6216\u6392\u9664\u8D44\u6E90\uFF0C\u800C\u65E0\u9700\u67E5\u770B\u9879\u76EE\u7A97\u53E3\u3002"
-    _englishIntroduction: AssetList is used on lists and arrays and single elements
-      of unity types, and replaces the default list drawer with a list of all possible
-      assets with the specified filter. Use this to both filter and include or exclude
-      assets from a list or an array, without navigating the project window.
-    _targetUrl: https://odininspector.com/attributes/asset-list-attribute
   currentSelectedExample: {fileID: -5232803546184758977, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-1886986171125320542
 MonoBehaviour:
@@ -1020,23 +798,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DisableInEditorMode
-      EnglishDisplay: DisableInEditorMode
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DisableInEditorMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728 Editor
-        \u6A21\u5F0F\u4E0B\u7981\u7528\u3002"
-      EnglishDisplay: The DisableInEditorMode attribute disables a property while
-        in Editor mode.
-    _chineseIntroduction: "DisableInEditorMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728
-      Editor \u6A21\u5F0F\u4E0B\u7981\u7528\u3002"
-    _englishIntroduction: The DisableInEditorMode attribute disables a property while
-      in Editor mode.
-    _targetUrl: https://odininspector.com/attributes/disable-in-editor-mode-attribute
   currentSelectedExample: {fileID: -443793131426748585, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-1266343118206565356
 MonoBehaviour:
@@ -1066,21 +833,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: TableList
-      EnglishDisplay: TableList
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "TableList \u7279\u6027\u5C06\u5217\u8868\u6216\u6570\u7EC4\u7ED8\u5236\u4E3A\u4E00\u4E2A\u8868\u683C\uFF0C\u6BCF\u4E2A\u5143\u7D20\u7684\u5B57\u6BB5\u5BF9\u5E94\u8868\u683C\u7684\u5217\u3002"
-      EnglishDisplay: The TableList attribute draws a list or array as a table, where
-        each field of the element corresponds to a column.
-    _chineseIntroduction: "TableList \u7279\u6027\u5C06\u5217\u8868\u6216\u6570\u7EC4\u7ED8\u5236\u4E3A\u4E00\u4E2A\u8868\u683C\uFF0C\u6BCF\u4E2A\u5143\u7D20\u7684\u5B57\u6BB5\u5BF9\u5E94\u8868\u683C\u7684\u5217\u3002"
-    _englishIntroduction: The TableList attribute draws a list or array as a table,
-      where each field of the element corresponds to a column.
-    _targetUrl: https://odininspector.com/attributes/table-list-attribute
   currentSelectedExample: {fileID: 9053271708291835207, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-893190358059892303
 MonoBehaviour:
@@ -1110,23 +868,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: OnInspectorInit
-      EnglishDisplay: OnInspectorInit
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "OnInspectorInit \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u5373\u5C06\u5728
-        Inspector \u4E2D\u9996\u6B21\u7ED8\u5236\u4E4B\u524D\u6267\u884C\u521D\u59CB\u5316\u4EE3\u7801\u3002"
-      EnglishDisplay: The OnInspectorInit attribute is used to execute initialization
-        code just before a property is drawn in the Inspector for the first time.
-    _chineseIntroduction: "OnInspectorInit \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u5373\u5C06\u5728
-      Inspector \u4E2D\u9996\u6B21\u7ED8\u5236\u4E4B\u524D\u6267\u884C\u521D\u59CB\u5316\u4EE3\u7801\u3002"
-    _englishIntroduction: The OnInspectorInit attribute is used to execute initialization
-      code just before a property is drawn in the Inspector for the first time.
-    _targetUrl: https://odininspector.com/attributes/on-inspector-init-attribute
   currentSelectedExample: {fileID: -6881574649509439272, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-680416021039278435
 MonoBehaviour:
@@ -1156,21 +903,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ShowIn
-      EnglishDisplay: ShowIn
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ShowIn \u7279\u6027\u7528\u4E8E\u4EC5\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u663E\u793A\u5C5E\u6027\u3002"
-      EnglishDisplay: The ShowIn attribute is used to display a property only in
-        a specified editor mode.
-    _chineseIntroduction: "ShowIn \u7279\u6027\u7528\u4E8E\u4EC5\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u663E\u793A\u5C5E\u6027\u3002"
-    _englishIntroduction: The ShowIn attribute is used to display a property only
-      in a specified editor mode.
-    _targetUrl: https://odininspector.com/attributes/show-in-attribute
   currentSelectedExample: {fileID: -1814133929099067322, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-306330005371262254
 MonoBehaviour:
@@ -1200,29 +938,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Custom Value Drawer
-      EnglishDisplay: Custom Value Drawer
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "\u4F7F\u7528 CustomValueDrawer \u7279\u6027\uFF0C\u4EE3\u66FF\u58F0\u660E\u4E00\u4E2A
-        Attribute\uFF0C\u540C\u65F6\u58F0\u660E\u4E00\u4E2A\u5BF9\u5E94 Drawer \u7C7B\u7684\u6D41\u7A0B\u3002CustomValueDrawer
-        \u652F\u6301\u64A4\u9500\uFF0C\u91CD\u505A\uFF0C\u591A\u9009\u3002"
-      EnglishDisplay: Instead of making a new attribute, and a new drawer, for a
-        one-time thing, you can with this attribute, make a method that acts as a
-        custom property drawer. These drawers will out of the box have support for
-        undo/redo and multi-selection.
-    _chineseIntroduction: "\u4F7F\u7528 CustomValueDrawer \u7279\u6027\uFF0C\u4EE3\u66FF\u58F0\u660E\u4E00\u4E2A
-      Attribute\uFF0C\u540C\u65F6\u58F0\u660E\u4E00\u4E2A\u5BF9\u5E94 Drawer \u7C7B\u7684\u6D41\u7A0B\u3002CustomValueDrawer
-      \u652F\u6301\u64A4\u9500\uFF0C\u91CD\u505A\uFF0C\u591A\u9009\u3002"
-    _englishIntroduction: Instead of making a new attribute, and a new drawer, for
-      a one-time thing, you can with this attribute, make a method that acts as a
-      custom property drawer. These drawers will out of the box have support for
-      undo/redo and multi-selection.
-    _targetUrl: https://odininspector.com/attributes/custom-value-drawer-attribute
   currentSelectedExample: {fileID: 3299072960604150184, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-281151651584876921
 MonoBehaviour:
@@ -1252,21 +973,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: PropertyOrder
-      EnglishDisplay: PropertyOrder
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "PropertyOrder \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u68C0\u67E5\u5668\u4E2D\u5C5E\u6027\u548C\u65B9\u6CD5\u7684\u7ED8\u5236\u987A\u5E8F\u3002"
-      EnglishDisplay: The PropertyOrder attribute is used to customize the drawing
-        order of properties and methods in the inspector.
-    _chineseIntroduction: "PropertyOrder \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u68C0\u67E5\u5668\u4E2D\u5C5E\u6027\u548C\u65B9\u6CD5\u7684\u7ED8\u5236\u987A\u5E8F\u3002"
-    _englishIntroduction: The PropertyOrder attribute is used to customize the drawing
-      order of properties and methods in the inspector.
-    _targetUrl: https://odininspector.com/attributes/property-order-attribute
   currentSelectedExample: {fileID: -164692291343156797, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-260461397143451739
 MonoBehaviour:
@@ -1296,24 +1008,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Show In Inspector
-      EnglishDisplay: "\u5728\u68C0\u67E5\u5668\u4E2D\u663E\u793A"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ShowInInspector \u7279\u6027\u7528\u4E8E\u5728 Inspector \u4E2D\u663E\u793A\u975E\u5E8F\u5217\u5316\u7684\u6210\u5458\uFF0C\u5982\u79C1\u6709\u5B57\u6BB5\u3001\u5C5E\u6027\u6216\u65B9\u6CD5\u8FD4\u56DE\u503C\u3002"
-      EnglishDisplay: The ShowInInspector attribute is used to display non-serialized
-        members in the inspector, such as private fields, properties, or method return
-        values.
-    _chineseIntroduction: "ShowInInspector \u7279\u6027\u7528\u4E8E\u5728 Inspector
-      \u4E2D\u663E\u793A\u975E\u5E8F\u5217\u5316\u7684\u6210\u5458\uFF0C\u5982\u79C1\u6709\u5B57\u6BB5\u3001\u5C5E\u6027\u6216\u65B9\u6CD5\u8FD4\u56DE\u503C\u3002"
-    _englishIntroduction: The ShowInInspector attribute is used to display non-serialized
-      members in the inspector, such as private fields, properties, or method return
-      values.
-    _targetUrl: https://odininspector.com/attributes/show-in-inspector-attribute
   currentSelectedExample: {fileID: 5106734597665661748, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-54154501713197067
 MonoBehaviour:
@@ -1343,21 +1043,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ValueDropdown
-      EnglishDisplay: ValueDropdown
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ValueDropdown \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u4E0A\u63D0\u4F9B\u4E00\u4E2A\u81EA\u5B9A\u4E49\u7684\u4E0B\u62C9\u9009\u62E9\u5217\u8868\u3002"
-      EnglishDisplay: The ValueDropdown attribute provides a custom dropdown list
-        for selecting values for a property.
-    _chineseIntroduction: "ValueDropdown \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u4E0A\u63D0\u4F9B\u4E00\u4E2A\u81EA\u5B9A\u4E49\u7684\u4E0B\u62C9\u9009\u62E9\u5217\u8868\u3002"
-    _englishIntroduction: The ValueDropdown attribute provides a custom dropdown
-      list for selecting values for a property.
-    _targetUrl: https://odininspector.com/attributes/value-dropdown-attribute
   currentSelectedExample: {fileID: 5233605328496548272, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &-2356994686417517
 MonoBehaviour:
@@ -1387,29 +1078,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Custom Value Drawer
-      EnglishDisplay: Custom Value Drawer
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "\u4F7F\u7528 CustomValueDrawer \u7279\u6027\uFF0C\u4EE3\u66FF\u58F0\u660E\u4E00\u4E2A
-        Attribute\uFF0C\u540C\u65F6\u58F0\u660E\u4E00\u4E2A\u5BF9\u5E94 Drawer \u7C7B\u7684\u6D41\u7A0B\u3002CustomValueDrawer
-        \u652F\u6301\u64A4\u9500\uFF0C\u91CD\u505A\uFF0C\u591A\u9009\u3002"
-      EnglishDisplay: Instead of making a new attribute, and a new drawer, for a
-        one-time thing, you can with this attribute, make a method that acts as a
-        custom property drawer. These drawers will out of the box have support for
-        undo/redo and multi-selection.
-    _chineseIntroduction: "\u4F7F\u7528 CustomValueDrawer \u7279\u6027\uFF0C\u4EE3\u66FF\u58F0\u660E\u4E00\u4E2A
-      Attribute\uFF0C\u540C\u65F6\u58F0\u660E\u4E00\u4E2A\u5BF9\u5E94 Drawer \u7C7B\u7684\u6D41\u7A0B\u3002CustomValueDrawer
-      \u652F\u6301\u64A4\u9500\uFF0C\u91CD\u505A\uFF0C\u591A\u9009\u3002"
-    _englishIntroduction: Instead of making a new attribute, and a new drawer, for
-      a one-time thing, you can with this attribute, make a method that acts as a
-      custom property drawer. These drawers will out of the box have support for
-      undo/redo and multi-selection.
-    _targetUrl: https://odininspector.com/attributes/custom-value-drawer-attribute
   currentSelectedExample: {fileID: 3299072960604150184, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &11400000
 MonoBehaviour:
@@ -2870,19 +2544,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: EnableGUI
-      EnglishDisplay: EnableGUI
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "\u5F3A\u5236\u542F\u7528 property\uFF0C\u4F7F\u5176\u6B63\u5E38\u663E\u793A\u3002"
-      EnglishDisplay: Forces a property to be enabled so it displays normally.
-    _chineseIntroduction: "\u5F3A\u5236\u542F\u7528 property\uFF0C\u4F7F\u5176\u6B63\u5E38\u663E\u793A\u3002"
-    _englishIntroduction: Forces a property to be enabled so it displays normally.
-    _targetUrl: https://odininspector.com/attributes/enable-gui-attribute
   currentSelectedExample: {fileID: 1819459976472287835, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &122708928355934364
 MonoBehaviour:
@@ -2912,21 +2579,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: LabelWidth
-      EnglishDisplay: LabelWidth
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "LabelWidth \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u5C5E\u6027\u6807\u7B7E\u7684\u5BBD\u5EA6\u3002"
-      EnglishDisplay: The LabelWidth attribute is used to customize the width of
-        property labels.
-    _chineseIntroduction: "LabelWidth \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u5C5E\u6027\u6807\u7B7E\u7684\u5BBD\u5EA6\u3002"
-    _englishIntroduction: The LabelWidth attribute is used to customize the width
-      of property labels.
-    _targetUrl: https://odininspector.com/attributes/label-width-attribute
   currentSelectedExample: {fileID: -5803309559142120015, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &238562887603831518
 MonoBehaviour:
@@ -2956,21 +2614,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: BoxGroup
-      EnglishDisplay: BoxGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "BoxGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u5305\u88F9\u5728\u4E00\u4E2A\u5E26\u6709\u8FB9\u6846\u548C\u53EF\u9009\u6807\u9898\u7684\u76D2\u5B50\u4E2D\u3002"
-      EnglishDisplay: The BoxGroup attribute is used to group multiple properties
-        inside a box with a border and an optional title.
-    _chineseIntroduction: "BoxGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u5305\u88F9\u5728\u4E00\u4E2A\u5E26\u6709\u8FB9\u6846\u548C\u53EF\u9009\u6807\u9898\u7684\u76D2\u5B50\u4E2D\u3002"
-    _englishIntroduction: The BoxGroup attribute is used to group multiple properties
-      inside a box with a border and an optional title.
-    _targetUrl: https://odininspector.com/attributes/box-group-attribute
   currentSelectedExample: {fileID: -2611812159173851466, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &266145573696785998
 MonoBehaviour:
@@ -3000,23 +2649,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DisableInPlayMode
-      EnglishDisplay: DisableInPlayMode
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DisableInPlayMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728 Play
-        \u6A21\u5F0F\u4E0B\u7981\u7528\u3002"
-      EnglishDisplay: The DisableInPlayMode attribute disables a property while in
-        Play mode.
-    _chineseIntroduction: "DisableInPlayMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728
-      Play \u6A21\u5F0F\u4E0B\u7981\u7528\u3002"
-    _englishIntroduction: The DisableInPlayMode attribute disables a property while
-      in Play mode.
-    _targetUrl: https://odininspector.com/attributes/disable-in-play-mode-attribute
   currentSelectedExample: {fileID: -2613711128026257994, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &321284678563497954
 MonoBehaviour:
@@ -3046,21 +2684,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: FilePath
-      EnglishDisplay: FilePath
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "FilePath \u7279\u6027\u5728\u5B57\u7B26\u4E32\u5C5E\u6027\u4E0A\u7ED8\u5236\u4E00\u4E2A\u6587\u4EF6\u9009\u62E9\u5668\uFF0C\u65B9\u4FBF\u7528\u6237\u9009\u62E9\u6587\u4EF6\u8DEF\u5F84\u3002"
-      EnglishDisplay: The FilePath attribute draws a file picker for string properties,
-        making it easy for users to select file paths.
-    _chineseIntroduction: "FilePath \u7279\u6027\u5728\u5B57\u7B26\u4E32\u5C5E\u6027\u4E0A\u7ED8\u5236\u4E00\u4E2A\u6587\u4EF6\u9009\u62E9\u5668\uFF0C\u65B9\u4FBF\u7528\u6237\u9009\u62E9\u6587\u4EF6\u8DEF\u5F84\u3002"
-    _englishIntroduction: The FilePath attribute draws a file picker for string properties,
-      making it easy for users to select file paths.
-    _targetUrl: https://odininspector.com/attributes/file-path-attribute
   currentSelectedExample: {fileID: -1335465610941647802, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &366158220515077278
 MonoBehaviour:
@@ -3090,23 +2719,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: On State Update
-      EnglishDisplay: "\u5728\u72B6\u6001\u66F4\u65B0\u65F6"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "OnStateUpdate \u7279\u6027\u5141\u8BB8\u4F60\u5728\u5C5E\u6027\u7684\u72B6\u6001\uFF08\u5982\u53EF\u89C1\u6027\u3001\u662F\u5426\u7981\u7528\u7B49\uFF09\u66F4\u65B0\u65F6\u6267\u884C\u4EE3\u7801\u3002\u5B83\u5728\u5C5E\u6027\u88AB\u7ED8\u5236\u4E4B\u524D\u6267\u884C\u3002"
-      EnglishDisplay: The OnStateUpdate attribute allows you to execute code whenever
-        the state of a property (like visibility, whether it's disabled, etc.) is
-        updated. it runs before the property is drawn.
-    _chineseIntroduction: "OnStateUpdate \u7279\u6027\u5141\u8BB8\u4F60\u5728\u5C5E\u6027\u7684\u72B6\u6001\uFF08\u5982\u53EF\u89C1\u6027\u3001\u662F\u5426\u7981\u7528\u7B49\uFF09\u66F4\u65B0\u65F6\u6267\u884C\u4EE3\u7801\u3002\u5B83\u5728\u5C5E\u6027\u88AB\u7ED8\u5236\u4E4B\u524D\u6267\u884C\u3002"
-    _englishIntroduction: The OnStateUpdate attribute allows you to execute code
-      whenever the state of a property (like visibility, whether it's disabled, etc.)
-      is updated. it runs before the property is drawn.
-    _targetUrl: https://odininspector.com/attributes/on-state-update-attribute
   currentSelectedExample: {fileID: -7228660521998353105, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &810539197522512631
 MonoBehaviour:
@@ -3136,21 +2754,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HideIn
-      EnglishDisplay: HideIn
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HideIn \u7279\u6027\u7528\u4E8E\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u9690\u85CF\u5C5E\u6027\u3002"
-      EnglishDisplay: The HideIn attribute is used to hide a property in a specified
-        editor mode.
-    _chineseIntroduction: "HideIn \u7279\u6027\u7528\u4E8E\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u9690\u85CF\u5C5E\u6027\u3002"
-    _englishIntroduction: The HideIn attribute is used to hide a property in a specified
-      editor mode.
-    _targetUrl: https://odininspector.com/attributes/hide-in-attribute
   currentSelectedExample: {fileID: -1261521995916502283, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &867342515150874446
 MonoBehaviour:
@@ -3180,21 +2789,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DisplayAsString
-      EnglishDisplay: DisplayAsString
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DisplayAsString \u7279\u6027\u5C06\u5C5E\u6027\u503C\u7ED8\u5236\u4E3A\u7B80\u5355\u7684\u6587\u672C\u6807\u7B7E\uFF0C\u800C\u4E0D\u662F\u53EF\u7F16\u8F91\u7684\u8F93\u5165\u6846\u3002"
-      EnglishDisplay: The DisplayAsString attribute draws the property value as a
-        simple text label instead of an editable input field.
-    _chineseIntroduction: "DisplayAsString \u7279\u6027\u5C06\u5C5E\u6027\u503C\u7ED8\u5236\u4E3A\u7B80\u5355\u7684\u6587\u672C\u6807\u7B7E\uFF0C\u800C\u4E0D\u662F\u53EF\u7F16\u8F91\u7684\u8F93\u5165\u6846\u3002"
-    _englishIntroduction: The DisplayAsString attribute draws the property value
-      as a simple text label instead of an editable input field.
-    _targetUrl: https://odininspector.com/attributes/display-as-string-attribute
   currentSelectedExample: {fileID: 6396050304918070762, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &963936618490947486
 MonoBehaviour:
@@ -3224,21 +2824,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: TitleGroup
-      EnglishDisplay: TitleGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "TitleGroup \u7279\u6027\u7528\u4E8E\u521B\u5EFA\u4E00\u4E2A\u5E26\u6807\u9898\u7684\u7EC4\uFF0C\u53EF\u4EE5\u5C06\u591A\u4E2A\u5C5E\u6027\u7EC4\u7EC7\u5728\u540C\u4E00\u4E2A\u6807\u9898\u4E0B\u3002"
-      EnglishDisplay: The TitleGroup attribute is used to create a titled group that
-        organizes multiple properties under a single title header.
-    _chineseIntroduction: "TitleGroup \u7279\u6027\u7528\u4E8E\u521B\u5EFA\u4E00\u4E2A\u5E26\u6807\u9898\u7684\u7EC4\uFF0C\u53EF\u4EE5\u5C06\u591A\u4E2A\u5C5E\u6027\u7EC4\u7EC7\u5728\u540C\u4E00\u4E2A\u6807\u9898\u4E0B\u3002"
-    _englishIntroduction: The TitleGroup attribute is used to create a titled group
-      that organizes multiple properties under a single title header.
-    _targetUrl: https://odininspector.com/attributes/title-group-attribute
   currentSelectedExample: {fileID: -7605178916954132575, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &1084402590683297915
 MonoBehaviour:
@@ -3268,21 +2859,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Progress Bar
-      EnglishDisplay: "\u8FDB\u5EA6\u6761"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ProgressBar \u7279\u6027\u5728 Inspector \u4E2D\u7ED8\u5236\u4E00\u4E2A\u8FDB\u5EA6\u6761\u3002\u5B83\u53EF\u4EE5\u7528\u4E8E\u663E\u793A\u6570\u5B57\u5C5E\u6027\u7684\u5F53\u524D\u8FDB\u5EA6\u3002"
-      EnglishDisplay: The ProgressBar attribute draws a progress bar in the inspector.
-        It can be used to visualize the progress of a numeric property.
-    _chineseIntroduction: "ProgressBar \u7279\u6027\u5728 Inspector \u4E2D\u7ED8\u5236\u4E00\u4E2A\u8FDB\u5EA6\u6761\u3002\u5B83\u53EF\u4EE5\u7528\u4E8E\u663E\u793A\u6570\u5B57\u5C5E\u6027\u7684\u5F53\u524D\u8FDB\u5EA6\u3002"
-    _englishIntroduction: The ProgressBar attribute draws a progress bar in the inspector.
-      It can be used to visualize the progress of a numeric property.
-    _targetUrl: https://odininspector.com/attributes/progress-bar-attribute
   currentSelectedExample: {fileID: 178287396640304251, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &1690475256512566743
 MonoBehaviour:
@@ -3312,23 +2894,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DictionaryDrawerSettings
-      EnglishDisplay: DictionaryDrawerSettings
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DictionaryDrawerSettings \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u5B57\u5178\uFF08Dictionary\uFF09\u5728
-        Inspector \u4E2D\u7684\u7ED8\u5236\u65B9\u5F0F\u3002"
-      EnglishDisplay: The DictionaryDrawerSettings attribute is used to customize
-        how dictionaries are drawn in the Inspector.
-    _chineseIntroduction: "DictionaryDrawerSettings \u7279\u6027\u7528\u4E8E\u81EA\u5B9A\u4E49\u5B57\u5178\uFF08Dictionary\uFF09\u5728
-      Inspector \u4E2D\u7684\u7ED8\u5236\u65B9\u5F0F\u3002"
-    _englishIntroduction: The DictionaryDrawerSettings attribute is used to customize
-      how dictionaries are drawn in the Inspector.
-    _targetUrl: https://odininspector.com/attributes/dictionary-drawer-settings-attribute
   currentSelectedExample: {fileID: 4041424498776896706, guid: e29b195b1ab24403c846aea6f3e0cfc4, type: 2}
 --- !u!114 &1879498478599170910
 MonoBehaviour:
@@ -3358,21 +2929,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: InfoBox
-      EnglishDisplay: InfoBox
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "InfoBox \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u4E0A\u65B9\u7ED8\u5236\u4E00\u4E2A\u6D88\u606F\u6846\uFF0C\u7528\u4E8E\u63D0\u4F9B\u63D0\u793A\u3001\u8B66\u544A\u6216\u9519\u8BEF\u4FE1\u606F\u3002"
-      EnglishDisplay: The InfoBox attribute is used to draw a message box above a
-        property to provide tips, warnings, or error information.
-    _chineseIntroduction: "InfoBox \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u4E0A\u65B9\u7ED8\u5236\u4E00\u4E2A\u6D88\u606F\u6846\uFF0C\u7528\u4E8E\u63D0\u4F9B\u63D0\u793A\u3001\u8B66\u544A\u6216\u9519\u8BEF\u4FE1\u606F\u3002"
-    _englishIntroduction: The InfoBox attribute is used to draw a message box above
-      a property to provide tips, warnings, or error information.
-    _targetUrl: https://odininspector.com/attributes/info-box-attribute
   currentSelectedExample: {fileID: 5705247999430542723, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &2460698020208867067
 MonoBehaviour:
@@ -3402,21 +2964,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Min Max Slider
-      EnglishDisplay: "\u6700\u5C0F\u6700\u5927\u6ED1\u52A8\u6761"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "MinMaxSlider \u7279\u6027\u4E3A Vector2, Vector2Int \u4EE5\u53CA\u76F8\u5173\u7684\u6570\u5B57\u5BF9\u63D0\u4F9B\u4E86\u4E00\u4E2A\u6ED1\u52A8\u6761\uFF0C\u7528\u4E8E\u9009\u62E9\u4E00\u4E2A\u8303\u56F4\u3002"
-      EnglishDisplay: The MinMaxSlider attribute provides a slider for Vector2, Vector2Int
-        and other numeric pairs to select a range.
-    _chineseIntroduction: "MinMaxSlider \u7279\u6027\u4E3A Vector2, Vector2Int \u4EE5\u53CA\u76F8\u5173\u7684\u6570\u5B57\u5BF9\u63D0\u4F9B\u4E86\u4E00\u4E2A\u6ED1\u52A8\u6761\uFF0C\u7528\u4E8E\u9009\u62E9\u4E00\u4E2A\u8303\u56F4\u3002"
-    _englishIntroduction: The MinMaxSlider attribute provides a slider for Vector2,
-      Vector2Int and other numeric pairs to select a range.
-    _targetUrl: https://odininspector.com/attributes/min-max-slider-attribute
   currentSelectedExample: {fileID: -3815309359178268641, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &2563467290065392054
 MonoBehaviour:
@@ -3446,29 +2999,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: AssetsOnly
-      EnglishDisplay: AssetsOnly
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "AssetsOnly \u7528\u4E8E UnityEngine.Object \u7C7B\u578B\uFF0C\u5E76\u5C06
-        Property \u9650\u5236\u4E3A\u9879\u76EE Asset\uFF0C\u800C\u4E0D\u662F\u573A\u666F\u5BF9\u8C61\u3002\n\u5F53\u60A8\u60F3\u8981\u786E\u4FDD\u5BF9\u8C61\u6765\u81EA\u9879\u76EE\u800C\u4E0D\u662F\u573A\u666F\u65F6\uFF0C\u8BF7\u4F7F\u7528\u6B64\u9879\u3002"
-      EnglishDisplay: 'AssetsOnly is used on object properties, and restricts the
-        property to project assets, and not scene objects.
-
-        Use this when
-        you want to ensure an object is from the project, and not from the scene.'
-    _chineseIntroduction: "AssetsOnly \u7528\u4E8E UnityEngine.Object \u7C7B\u578B\uFF0C\u5E76\u5C06
-      Property \u9650\u5236\u4E3A\u9879\u76EE Asset\uFF0C\u800C\u4E0D\u662F\u573A\u666F\u5BF9\u8C61\u3002\n\u5F53\u60A8\u60F3\u8981\u786E\u4FDD\u5BF9\u8C61\u6765\u81EA\u9879\u76EE\u800C\u4E0D\u662F\u573A\u666F\u65F6\uFF0C\u8BF7\u4F7F\u7528\u6B64\u9879\u3002"
-    _englishIntroduction: 'AssetsOnly is used on object properties, and restricts
-      the property to project assets, and not scene objects.
-
-      Use this when
-      you want to ensure an object is from the project, and not from the scene.'
-    _targetUrl: https://odininspector.com/attributes/assets-only-attribute
   currentSelectedExample: {fileID: -3678163780112307247, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &2641509909677838281
 MonoBehaviour:
@@ -3498,21 +3034,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HideIf
-      EnglishDisplay: HideIf
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HideIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u52A8\u6001\u9690\u85CF\u5C5E\u6027\u3002"
-      EnglishDisplay: The HideIf attribute is used to dynamically hide properties
-        based on a condition.
-    _chineseIntroduction: "HideIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u52A8\u6001\u9690\u85CF\u5C5E\u6027\u3002"
-    _englishIntroduction: The HideIf attribute is used to dynamically hide properties
-      based on a condition.
-    _targetUrl: https://odininspector.com/attributes/hide-if-attribute
   currentSelectedExample: {fileID: -4371926724603207518, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &3786763375529772181
 MonoBehaviour:
@@ -3542,21 +3069,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ShowIf
-      EnglishDisplay: ShowIf
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ShowIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u52A8\u6001\u663E\u793A\u6216\u9690\u85CF\u5C5E\u6027\u3002"
-      EnglishDisplay: The ShowIf attribute is used to dynamically show or hide properties
-        based on a condition.
-    _chineseIntroduction: "ShowIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u52A8\u6001\u663E\u793A\u6216\u9690\u85CF\u5C5E\u6027\u3002"
-    _englishIntroduction: The ShowIf attribute is used to dynamically show or hide
-      properties based on a condition.
-    _targetUrl: https://odininspector.com/attributes/show-if-attribute
   currentSelectedExample: {fileID: -3038904994427242397, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &3933833057917350546
 MonoBehaviour:
@@ -3586,21 +3104,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: VerticalGroup
-      EnglishDisplay: VerticalGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "VerticalGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u5782\u76F4\u6392\u5217\u5728\u4E00\u4E2A\u7EC4\u4E2D\u3002"
-      EnglishDisplay: The VerticalGroup attribute is used to group multiple properties
-        vertically.
-    _chineseIntroduction: "VerticalGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u5782\u76F4\u6392\u5217\u5728\u4E00\u4E2A\u7EC4\u4E2D\u3002"
-    _englishIntroduction: The VerticalGroup attribute is used to group multiple properties
-      vertically.
-    _targetUrl: https://odininspector.com/attributes/vertical-group-attribute
   currentSelectedExample: {fileID: -8929926328784096805, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &4178381390280764024
 MonoBehaviour:
@@ -3630,21 +3139,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: PropertyTooltip
-      EnglishDisplay: PropertyTooltip
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "PropertyTooltip \u7279\u6027\u7528\u4E8E\u4E3A\u5C5E\u6027\u6DFB\u52A0\u63D0\u793A\u4FE1\u606F\uFF0C\u5F53\u9F20\u6807\u60AC\u505C\u5728\u5C5E\u6027\u6807\u7B7E\u4E0A\u65F6\u663E\u793A\u3002"
-      EnglishDisplay: The PropertyTooltip attribute adds a tooltip to a property,
-        shown when the mouse hovers over the property label.
-    _chineseIntroduction: "PropertyTooltip \u7279\u6027\u7528\u4E8E\u4E3A\u5C5E\u6027\u6DFB\u52A0\u63D0\u793A\u4FE1\u606F\uFF0C\u5F53\u9F20\u6807\u60AC\u505C\u5728\u5C5E\u6027\u6807\u7B7E\u4E0A\u65F6\u663E\u793A\u3002"
-    _englishIntroduction: The PropertyTooltip attribute adds a tooltip to a property,
-      shown when the mouse hovers over the property label.
-    _targetUrl: https://odininspector.com/attributes/property-tooltip-attribute
   currentSelectedExample: {fileID: 2042957570471118300, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &4434146708167719117
 MonoBehaviour:
@@ -3674,23 +3174,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HideInInlineEditors
-      EnglishDisplay: HideInInlineEditors
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HideInInlineEditors \u7279\u6027\u4F7F\u5C5E\u6027\u5728 InlineEditor
-        \u4E2D\u9690\u85CF\u3002"
-      EnglishDisplay: The HideInInlineEditors attribute hides a property when displayed
-        within an InlineEditor.
-    _chineseIntroduction: "HideInInlineEditors \u7279\u6027\u4F7F\u5C5E\u6027\u5728
-      InlineEditor \u4E2D\u9690\u85CF\u3002"
-    _englishIntroduction: The HideInInlineEditors attribute hides a property when
-      displayed within an InlineEditor.
-    _targetUrl: https://odininspector.com/attributes/hide-in-play-mode-attribute
   currentSelectedExample: {fileID: -8863015294822676272, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &4443776944467666825
 MonoBehaviour:
@@ -3720,23 +3209,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Type Filter
-      EnglishDisplay: "\u7C7B\u578B\u8FC7\u6EE4\u5668"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "TypeFilter \u7279\u6027\u4E3A\u5C5E\u6027\u63D0\u4F9B\u4E86\u4E00\u4E2A\u4E0B\u62C9\u5217\u8868\uFF0C\u7528\u4E8E\u9009\u62E9\u5E76\u5B9E\u4F8B\u5316\u4E0D\u540C\u7684\u7C7B\u578B\u3002\u8FD9\u5728\u5904\u7406\u591A\u6001\u6027\u65F6\u975E\u5E38\u6709\u7528\u3002"
-      EnglishDisplay: The TypeFilter attribute provides a dropdown for a property
-        to select and instantiate different types. This is very useful when dealing
-        with polymorphism.
-    _chineseIntroduction: "TypeFilter \u7279\u6027\u4E3A\u5C5E\u6027\u63D0\u4F9B\u4E86\u4E00\u4E2A\u4E0B\u62C9\u5217\u8868\uFF0C\u7528\u4E8E\u9009\u62E9\u5E76\u5B9E\u4F8B\u5316\u4E0D\u540C\u7684\u7C7B\u578B\u3002\u8FD9\u5728\u5904\u7406\u591A\u6001\u6027\u65F6\u975E\u5E38\u6709\u7528\u3002"
-    _englishIntroduction: The TypeFilter attribute provides a dropdown for a property
-      to select and instantiate different types. This is very useful when dealing
-      with polymorphism.
-    _targetUrl: https://odininspector.com/attributes/type-filter-attribute
   currentSelectedExample: {fileID: -4554354497030333561, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &4465856170552254810
 MonoBehaviour:
@@ -3766,23 +3244,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Title
-      EnglishDisplay: Title
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "Title \u7279\u6027\u7528\u4E8E\u4E3A\u4EFB\u610F\u5C5E\u6027\u6DFB\u52A0\u6807\u9898\uFF0C\u7C7B\u4F3C\u4E8E
-        Unity \u7684 Header \u7279\u6027\uFF0C\u4F46\u529F\u80FD\u66F4\u5F3A\u5927\u3002"
-      EnglishDisplay: The Title attribute is used to add a title to any property,
-        similar to Unity's Header attribute but with more powerful features.
-    _chineseIntroduction: "Title \u7279\u6027\u7528\u4E8E\u4E3A\u4EFB\u610F\u5C5E\u6027\u6DFB\u52A0\u6807\u9898\uFF0C\u7C7B\u4F3C\u4E8E
-      Unity \u7684 Header \u7279\u6027\uFF0C\u4F46\u529F\u80FD\u66F4\u5F3A\u5927\u3002"
-    _englishIntroduction: The Title attribute is used to add a title to any property,
-      similar to Unity's Header attribute but with more powerful features.
-    _targetUrl: https://odininspector.com/attributes/title-attribute
   currentSelectedExample: {fileID: 407848053516983816, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &4814834804531271076
 MonoBehaviour:
@@ -3812,23 +3279,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: InlineProperty
-      EnglishDisplay: InlineProperty
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "InlineProperty \u7279\u6027\u7528\u4E8E\u5C06\u7C7B\u6216\u7ED3\u6784\u4F53\u7684\u5185\u5BB9\u76F4\u63A5\u663E\u793A\u5728\u5176\u7236\u7EA7\u5C5E\u6027\u7684\u540C\u4E00\u884C\uFF08\u6216\u7D27\u51D1\u5730\u663E\u793A\uFF09\uFF0C\u800C\u4E0D\u662F\u663E\u793A\u4E3A\u6298\u53E0\u7EC4\u3002"
-      EnglishDisplay: The InlineProperty attribute is used to display the content
-        of a class or struct inline with its parent property, instead of as a foldout
-        group.
-    _chineseIntroduction: "InlineProperty \u7279\u6027\u7528\u4E8E\u5C06\u7C7B\u6216\u7ED3\u6784\u4F53\u7684\u5185\u5BB9\u76F4\u63A5\u663E\u793A\u5728\u5176\u7236\u7EA7\u5C5E\u6027\u7684\u540C\u4E00\u884C\uFF08\u6216\u7D27\u51D1\u5730\u663E\u793A\uFF09\uFF0C\u800C\u4E0D\u662F\u663E\u793A\u4E3A\u6298\u53E0\u7EC4\u3002"
-    _englishIntroduction: The InlineProperty attribute is used to display the content
-      of a class or struct inline with its parent property, instead of as a foldout
-      group.
-    _targetUrl: https://odininspector.com/attributes/inline-property-attribute
   currentSelectedExample: {fileID: -8552020356630573804, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &4910081076669043935
 MonoBehaviour:
@@ -3858,21 +3314,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HorizontalGroup
-      EnglishDisplay: HorizontalGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HorizontalGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u6C34\u5E73\u6392\u5217\u5728\u540C\u4E00\u884C\u4E2D\u3002"
-      EnglishDisplay: The HorizontalGroup attribute is used to group multiple properties
-        horizontally in a single row.
-    _chineseIntroduction: "HorizontalGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u6C34\u5E73\u6392\u5217\u5728\u540C\u4E00\u884C\u4E2D\u3002"
-    _englishIntroduction: The HorizontalGroup attribute is used to group multiple
-      properties horizontally in a single row.
-    _targetUrl: https://odininspector.com/attributes/horizontal-group-attribute
   currentSelectedExample: {fileID: 6366592748695609897, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &5041561510605597911
 MonoBehaviour:
@@ -3902,23 +3349,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Max Value
-      EnglishDisplay: "\u6700\u5927\u503C"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "MaxValue \u7279\u6027\u4E3A\u6570\u5B57\u5C5E\u6027\u8BBE\u7F6E\u4E00\u4E2A\u6700\u5927\u503C\u3002\u5982\u679C\u503C\u5927\u4E8E\u8BE5\u503C\uFF0C\u5B83\u5C06\u88AB\u9650\u5236\u5728\u8BE5\u503C\u3002"
-      EnglishDisplay: The MaxValue attribute sets a maximum value for a numeric property.
-        If the value becomes greater than the specified maximum, it will be clamped
-        to it.
-    _chineseIntroduction: "MaxValue \u7279\u6027\u4E3A\u6570\u5B57\u5C5E\u6027\u8BBE\u7F6E\u4E00\u4E2A\u6700\u5927\u503C\u3002\u5982\u679C\u503C\u5927\u4E8E\u8BE5\u503C\uFF0C\u5B83\u5C06\u88AB\u9650\u5236\u5728\u8BE5\u503C\u3002"
-    _englishIntroduction: The MaxValue attribute sets a maximum value for a numeric
-      property. If the value becomes greater than the specified maximum, it will
-      be clamped to it.
-    _targetUrl: https://odininspector.com/attributes/max-value-attribute
   currentSelectedExample: {fileID: 6322974403686072508, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &5098355387066631393
 MonoBehaviour:
@@ -3948,23 +3384,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: OnInspectorDispose
-      EnglishDisplay: OnInspectorDispose
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "OnInspectorDispose \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u5373\u5C06\u4ECE
-        Inspector \u4E2D\u79FB\u9664\u6216\u91CA\u653E\u65F6\u6267\u884C\u6E05\u7406\u4EE3\u7801\u3002"
-      EnglishDisplay: The OnInspectorDispose attribute is used to execute cleanup
-        code when a property is about to be removed or disposed from the Inspector.
-    _chineseIntroduction: "OnInspectorDispose \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u5373\u5C06\u4ECE
-      Inspector \u4E2D\u79FB\u9664\u6216\u91CA\u653E\u65F6\u6267\u884C\u6E05\u7406\u4EE3\u7801\u3002"
-    _englishIntroduction: The OnInspectorDispose attribute is used to execute cleanup
-      code when a property is about to be removed or disposed from the Inspector.
-    _targetUrl: https://odininspector.com/attributes/on-inspector-dispose-attribute
   currentSelectedExample: {fileID: 627075067868178690, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &5431187726591271014
 MonoBehaviour:
@@ -3994,21 +3419,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DisableIf
-      EnglishDisplay: DisableIf
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DisableIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u63A7\u5236\u5C5E\u6027\u662F\u5426\u5728\u68C0\u67E5\u5668\u4E2D\u7981\u7528\u3002"
-      EnglishDisplay: The DisableIf attribute is used to control whether a property
-        is disabled in the inspector based on a condition.
-    _chineseIntroduction: "DisableIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u63A7\u5236\u5C5E\u6027\u662F\u5426\u5728\u68C0\u67E5\u5668\u4E2D\u7981\u7528\u3002"
-    _englishIntroduction: The DisableIf attribute is used to control whether a property
-      is disabled in the inspector based on a condition.
-    _targetUrl: https://odininspector.com/attributes/disable-if-attribute
   currentSelectedExample: {fileID: 7195578303697952473, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &5846433827973660039
 MonoBehaviour:
@@ -4038,21 +3454,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Button
-      EnglishDisplay: Button
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "Button \u7279\u6027\u7528\u4E8E\u5C06\u65B9\u6CD5\u76F4\u63A5\u7ED8\u5236\u6210\u4E00\u4E2A\u68C0\u67E5\u5668\u4E2D\u7684\u6309\u94AE\u3002\u70B9\u51FB\u6309\u94AE\u5C06\u8C03\u7528\u8BE5\u65B9\u6CD5\u3002"
-      EnglishDisplay: The Button attribute is used to directly draw a method as a
-        button in the inspector. Clicking the button will call the method.
-    _chineseIntroduction: "Button \u7279\u6027\u7528\u4E8E\u5C06\u65B9\u6CD5\u76F4\u63A5\u7ED8\u5236\u6210\u4E00\u4E2A\u68C0\u67E5\u5668\u4E2D\u7684\u6309\u94AE\u3002\u70B9\u51FB\u6309\u94AE\u5C06\u8C03\u7528\u8BE5\u65B9\u6CD5\u3002"
-    _englishIntroduction: The Button attribute is used to directly draw a method
-      as a button in the inspector. Clicking the button will call the method.
-    _targetUrl: https://odininspector.com/attributes/button-attribute
   currentSelectedExample: {fileID: -3421322543231174989, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &5881412243845264959
 MonoBehaviour:
@@ -4082,23 +3489,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ToggleGroup
-      EnglishDisplay: ToggleGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ToggleGroup \u7279\u6027\u7528\u4E8E\u4E3A Toggle \u7C7B\u578B\u5C5E\u6027\u521B\u5EFA\u4E00\u4E2A\u53EF\u6298\u53E0\u7684\u7EC4\uFF0C\u5207\u6362\u5F00\u5173\u65F6\u5C06\u5C55\u5F00\u6216\u6298\u53E0\u7EC4\u5185\u5BB9\u3002"
-      EnglishDisplay: The ToggleGroup attribute is used to create a collapsible group
-        for toggle-type properties, expanding or collapsing content when the toggle
-        is switched.
-    _chineseIntroduction: "ToggleGroup \u7279\u6027\u7528\u4E8E\u4E3A Toggle \u7C7B\u578B\u5C5E\u6027\u521B\u5EFA\u4E00\u4E2A\u53EF\u6298\u53E0\u7684\u7EC4\uFF0C\u5207\u6362\u5F00\u5173\u65F6\u5C06\u5C55\u5F00\u6216\u6298\u53E0\u7EC4\u5185\u5BB9\u3002"
-    _englishIntroduction: The ToggleGroup attribute is used to create a collapsible
-      group for toggle-type properties, expanding or collapsing content when the
-      toggle is switched.
-    _targetUrl: https://odininspector.com/attributes/toggle-group-attribute
   currentSelectedExample: {fileID: 3038304490327919890, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &5934189002744748375
 MonoBehaviour:
@@ -4128,21 +3524,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: FoldoutGroup
-      EnglishDisplay: FoldoutGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "FoldoutGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u7EC4\u7EC7\u5728\u4E00\u4E2A\u53EF\u6298\u53E0\u7684\u7EC4\u4E2D\u3002"
-      EnglishDisplay: The FoldoutGroup attribute is used to group multiple properties
-        inside a collapsible foldout.
-    _chineseIntroduction: "FoldoutGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u7EC4\u7EC7\u5728\u4E00\u4E2A\u53EF\u6298\u53E0\u7684\u7EC4\u4E2D\u3002"
-    _englishIntroduction: The FoldoutGroup attribute is used to group multiple properties
-      inside a collapsible foldout.
-    _targetUrl: https://odininspector.com/attributes/foldout-group-attribute
   currentSelectedExample: {fileID: 1214491093810751912, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &6255811248289253920
 MonoBehaviour:
@@ -4172,21 +3559,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Indent
-      EnglishDisplay: "\u7F29\u8FDB"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "Indent \u7279\u6027\u5141\u8BB8\u5728 Inspector \u4E2D\u5BF9\u5C5E\u6027\u8FDB\u884C\u7F29\u8FDB\u3002\u4F60\u53EF\u4EE5\u6307\u5B9A\u7F29\u8FDB\u7684\u5C42\u7EA7\u3002"
-      EnglishDisplay: The Indent attribute allows for indenting properties in the
-        inspector. You can specify the level of indentation.
-    _chineseIntroduction: "Indent \u7279\u6027\u5141\u8BB8\u5728 Inspector \u4E2D\u5BF9\u5C5E\u6027\u8FDB\u884C\u7F29\u8FDB\u3002\u4F60\u53EF\u4EE5\u6307\u5B9A\u7F29\u8FDB\u7684\u5C42\u7EA7\u3002"
-    _englishIntroduction: The Indent attribute allows for indenting properties in
-      the inspector. You can specify the level of indentation.
-    _targetUrl: https://odininspector.com/attributes/indent-attribute
   currentSelectedExample: {fileID: 8912328349211857262, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &6301285844313258887
 MonoBehaviour:
@@ -4216,21 +3594,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: EnableIf
-      EnglishDisplay: EnableIf
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "EnableIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u63A7\u5236\u5C5E\u6027\u662F\u5426\u5728\u68C0\u67E5\u5668\u4E2D\u542F\u7528\uFF08\u53EF\u7F16\u8F91\uFF09\u3002"
-      EnglishDisplay: The EnableIf attribute is used to control whether a property
-        is enabled (editable) in the inspector based on a condition.
-    _chineseIntroduction: "EnableIf \u7279\u6027\u7528\u4E8E\u6839\u636E\u6761\u4EF6\u63A7\u5236\u5C5E\u6027\u662F\u5426\u5728\u68C0\u67E5\u5668\u4E2D\u542F\u7528\uFF08\u53EF\u7F16\u8F91\uFF09\u3002"
-    _englishIntroduction: The EnableIf attribute is used to control whether a property
-      is enabled (editable) in the inspector based on a condition.
-    _targetUrl: https://odininspector.com/attributes/enable-if-attribute
   currentSelectedExample: {fileID: 4075997180989101582, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &6927591334446389786
 MonoBehaviour:
@@ -4260,23 +3629,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: ShowIfGroup
-      EnglishDisplay: ShowIfGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "ShowIfGroup \u7279\u6027\u7528\u4E8E\u5B9A\u4E49\u4E00\u4E2A\u7EC4\uFF0C\u8BE5\u7EC4\u6839\u636E\u6761\u4EF6\u52A8\u6001\u663E\u793A\u6216\u9690\u85CF\u3002\u7EC4\u8DEF\u5F84\u53EF\u4EE5\u4F5C\u4E3A\u6761\u4EF6\u3002"
-      EnglishDisplay: The ShowIfGroup attribute is used to define a group that is
-        dynamically shown or hidden based on a condition. The group path can serve
-        as the condition.
-    _chineseIntroduction: "ShowIfGroup \u7279\u6027\u7528\u4E8E\u5B9A\u4E49\u4E00\u4E2A\u7EC4\uFF0C\u8BE5\u7EC4\u6839\u636E\u6761\u4EF6\u52A8\u6001\u663E\u793A\u6216\u9690\u85CF\u3002\u7EC4\u8DEF\u5F84\u53EF\u4EE5\u4F5C\u4E3A\u6761\u4EF6\u3002"
-    _englishIntroduction: The ShowIfGroup attribute is used to define a group that
-      is dynamically shown or hidden based on a condition. The group path can serve
-      as the condition.
-    _targetUrl: https://odininspector.com/attributes/show-if-group-attribute
   currentSelectedExample: {fileID: 5074103230472889677, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &7465446830932661713
 MonoBehaviour:
@@ -4306,22 +3664,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HideInPlayMode
-      EnglishDisplay: HideInPlayMode
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HideInPlayMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728 Play \u6A21\u5F0F\u4E0B\u9690\u85CF\u3002"
-      EnglishDisplay: The HideInPlayMode attribute hides a property while in Play
-        mode.
-    _chineseIntroduction: "HideInPlayMode \u7279\u6027\u4F7F\u5C5E\u6027\u5728 Play
-      \u6A21\u5F0F\u4E0B\u9690\u85CF\u3002"
-    _englishIntroduction: The HideInPlayMode attribute hides a property while in
-      Play mode.
-    _targetUrl: https://odininspector.com/attributes/hide-in-play-mode-attribute
   currentSelectedExample: {fileID: -6402081291642609716, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &7485246938989109945
 MonoBehaviour:
@@ -4351,21 +3699,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: TabGroup
-      EnglishDisplay: TabGroup
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "TabGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u7EC4\u7EC7\u5728\u4E0D\u540C\u7684\u9875\u7B7E\uFF08Tabs\uFF09\u4E2D\u3002"
-      EnglishDisplay: The TabGroup attribute is used to organize multiple properties
-        into different tabs.
-    _chineseIntroduction: "TabGroup \u7279\u6027\u7528\u4E8E\u5C06\u591A\u4E2A\u5C5E\u6027\u7EC4\u7EC7\u5728\u4E0D\u540C\u7684\u9875\u7B7E\uFF08Tabs\uFF09\u4E2D\u3002"
-    _englishIntroduction: The TabGroup attribute is used to organize multiple properties
-      into different tabs.
-    _targetUrl: https://odininspector.com/attributes/tab-group-attribute
   currentSelectedExample: {fileID: -3902102860321878362, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &7599220916876094876
 MonoBehaviour:
@@ -4395,23 +3734,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: On Inspector GUI
-      EnglishDisplay: "\u5728\u68C0\u67E5\u5668 GUI \u65F6"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "OnInspectorGUI \u7279\u6027\u5141\u8BB8\u4F60\u5728 Inspector
-        \u4E2D\u6267\u884C\u81EA\u5B9A\u4E49\u7684 GUI \u4EE3\u7801\u3002\u4F60\u53EF\u4EE5\u5C06\u5176\u5E94\u7528\u4E8E\u5B57\u6BB5\u3001\u5C5E\u6027\u6216\u65B9\u6CD5\u3002"
-      EnglishDisplay: The OnInspectorGUI attribute allows you to execute custom GUI
-        code in the inspector. You can apply it to fields, properties, or methods.
-    _chineseIntroduction: "OnInspectorGUI \u7279\u6027\u5141\u8BB8\u4F60\u5728 Inspector
-      \u4E2D\u6267\u884C\u81EA\u5B9A\u4E49\u7684 GUI \u4EE3\u7801\u3002\u4F60\u53EF\u4EE5\u5C06\u5176\u5E94\u7528\u4E8E\u5B57\u6BB5\u3001\u5C5E\u6027\u6216\u65B9\u6CD5\u3002"
-    _englishIntroduction: The OnInspectorGUI attribute allows you to execute custom
-      GUI code in the inspector. You can apply it to fields, properties, or methods.
-    _targetUrl: https://odininspector.com/attributes/on-inspector-gui-attribute
   currentSelectedExample: {fileID: 6242465662739330983, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &7866296691807889248
 MonoBehaviour:
@@ -4441,23 +3769,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: HideLabel
-      EnglishDisplay: HideLabel
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "HideLabel \u7279\u6027\u7528\u4E8E\u9690\u85CF\u5C5E\u6027\u5728
-        Inspector \u4E2D\u9ED8\u8BA4\u663E\u793A\u7684\u6807\u7B7E\uFF08Label\uFF09\u3002"
-      EnglishDisplay: The HideLabel attribute is used to hide the default label of
-        a property in the Inspector.
-    _chineseIntroduction: "HideLabel \u7279\u6027\u7528\u4E8E\u9690\u85CF\u5C5E\u6027\u5728
-      Inspector \u4E2D\u9ED8\u8BA4\u663E\u793A\u7684\u6807\u7B7E\uFF08Label\uFF09\u3002"
-    _englishIntroduction: The HideLabel attribute is used to hide the default label
-      of a property in the Inspector.
-    _targetUrl: https://odininspector.com/attributes/hide-label-attribute
   currentSelectedExample: {fileID: -6292787803030577507, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &8019335000970131467
 MonoBehaviour:
@@ -4487,21 +3804,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: EnableIn
-      EnglishDisplay: EnableIn
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "EnableIn \u7279\u6027\u7528\u4E8E\u4EC5\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u542F\u7528\u5C5E\u6027\u3002"
-      EnglishDisplay: The EnableIn attribute is used to enable a property only in
-        a specified editor mode.
-    _chineseIntroduction: "EnableIn \u7279\u6027\u7528\u4E8E\u4EC5\u5728\u6307\u5B9A\u7F16\u8F91\u5668\u6A21\u5F0F\u4E0B\u542F\u7528\u5C5E\u6027\u3002"
-    _englishIntroduction: The EnableIn attribute is used to enable a property only
-      in a specified editor mode.
-    _targetUrl: https://odininspector.com/attributes/enable-in-attribute
   currentSelectedExample: {fileID: -1430854643459373821, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &8253111094344020712
 MonoBehaviour:
@@ -4531,21 +3839,12 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: DetailedInfoBox
-      EnglishDisplay: DetailedInfoBox
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "DetailedInfoBox \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u4E0A\u65B9\u7ED8\u5236\u4E00\u4E2A\u5E26\u6709\u8BE6\u7EC6\u4FE1\u606F\u7684\u53EF\u6298\u53E0\u6D88\u606F\u6846\u3002"
-      EnglishDisplay: The DetailedInfoBox attribute is used to draw a collapsible
-        message box with detailed information above a property.
-    _chineseIntroduction: "DetailedInfoBox \u7279\u6027\u7528\u4E8E\u5728\u5C5E\u6027\u4E0A\u65B9\u7ED8\u5236\u4E00\u4E2A\u5E26\u6709\u8BE6\u7EC6\u4FE1\u606F\u7684\u53EF\u6298\u53E0\u6D88\u606F\u6846\u3002"
-    _englishIntroduction: The DetailedInfoBox attribute is used to draw a collapsible
-      message box with detailed information above a property.
-    _targetUrl: https://odininspector.com/attributes/detailed-info-box-attribute
   currentSelectedExample: {fileID: -184497693045217608, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}
 --- !u!114 &9016099090932331871
 MonoBehaviour:
@@ -4575,21 +3874,10 @@ MonoBehaviour:
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: Min Value
-      EnglishDisplay: "\u6700\u5C0F\u503C"
     headerIntroduction:
       fontSize: 14
       alignment: 0
       enableRichText: 1
       format: 
       overflow: 0
-      ChineseDisplay: "MinValue \u7279\u6027\u4E3A\u6570\u5B57\u5C5E\u6027\u8BBE\u7F6E\u4E00\u4E2A\u6700\u5C0F\u503C\u3002\u5982\u679C\u503C\u5C0F\u4E8E\u8BE5\u503C\uFF0C\u5B83\u5C06\u88AB\u9650\u5236\u5728\u8BE5\u503C\u3002"
-      EnglishDisplay: The MinValue attribute sets a minimum value for a numeric property.
-        If the value becomes less than the specified minimum, it will be clamped
-        to it.
-    _chineseIntroduction: "MinValue \u7279\u6027\u4E3A\u6570\u5B57\u5C5E\u6027\u8BBE\u7F6E\u4E00\u4E2A\u6700\u5C0F\u503C\u3002\u5982\u679C\u503C\u5C0F\u4E8E\u8BE5\u503C\uFF0C\u5B83\u5C06\u88AB\u9650\u5236\u5728\u8BE5\u503C\u3002"
-    _englishIntroduction: The MinValue attribute sets a minimum value for a numeric
-      property. If the value becomes less than the specified minimum, it will be
-      clamped to it.
-    _targetUrl: https://odininspector.com/attributes/min-value-attribute
   currentSelectedExample: {fileID: 3849813584282796050, guid: 4bbf8e6cd224d407bb94cef0d2c8a380, type: 2}

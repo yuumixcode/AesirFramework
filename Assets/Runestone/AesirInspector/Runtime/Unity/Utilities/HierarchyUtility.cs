@@ -54,7 +54,7 @@ namespace Runestone.AesirInspector
 
             if (current != parent)
             {
-                AesirInspectorLogger.Warning($"{child.name} 不是 {parent.name} 的子物体");
+                AesirInspectorDebug.Warning($"{child.name} 不是 {parent.name} 的子物体");
                 return null;
             }
 
@@ -68,7 +68,7 @@ namespace Runestone.AesirInspector
         {
             if (string.IsNullOrEmpty(parentPath))
             {
-                AesirInspectorLogger.Error("父物体路径为空");
+                AesirInspectorDebug.Error("父物体路径为空");
                 return "ParentPath == null";
             }
 
@@ -79,7 +79,7 @@ namespace Runestone.AesirInspector
 
             if (!childPath.StartsWith(parentPath + "/"))
             {
-                AesirInspectorLogger.Error("路径错误，并不是子物体");
+                AesirInspectorDebug.Error("路径错误，并不是子物体");
                 return null;
             }
 

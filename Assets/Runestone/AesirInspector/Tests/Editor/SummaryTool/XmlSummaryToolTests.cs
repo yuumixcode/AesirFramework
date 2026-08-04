@@ -122,6 +122,35 @@ namespace Runestone.AesirInspector.Editor.Tests
 }
 ";
 
+        const string SingleLineSummaryCode = @"using System;
+
+namespace Runestone.AesirInspector.Editor.Tests
+{
+    /// <summary>单行 summary 测试</summary>
+    [Serializable]
+    public class TestSingleLineSummary { }
+}
+";
+
+        const string MixedSingleMultiLineCode = @"using System;
+using Runestone.AesirInspector;
+
+namespace Runestone.AesirInspector.Editor.Tests
+{
+    /// <summary>类级别单行</summary>
+    public class TestMixed
+    {
+        /// <summary>
+        /// 多行 summary
+        /// </summary>
+        public void MultiLineMethod() { }
+
+        /// <summary>单行方法</summary>
+        public void SingleLineMethod() { }
+    }
+}
+";
+
         static void ProcessAndAssert(string source, XmlSummaryTool.ProcessMode mode, string expected)
         {
             var result = new XmlSummaryTool(source).ParseSourceScript().GetProcessedSourceScript(mode);
@@ -418,6 +447,88 @@ namespace Runestone.AesirInspector.Editor.Tests
 #if UNITY_EDITOR
         public void EditorMethod() { }
 #endif
+    }
+}
+");
+        }
+
+        [Test]
+        public void SingleLineSummary_SyncAddsAttribute()
+        {
+            ProcessAndAssert(SingleLineSummaryCode, XmlSummaryTool.ProcessMode.SyncSummary,
+                @"using Runestone.AesirInspector;
+using System;
+
+namespace Runestone.AesirInspector.Editor.Tests
+{
+    /// <summary>单行 summary 测试</summary>
+    [Summary(""单行 summary 测试"")]
+    [Serializable]
+    public class TestSingleLineSummary { }
+}
+");
+        }
+
+        [Test]
+        public void SingleLineSummary_ReplaceReplacesTagWithAttribute()
+        {
+            ProcessAndAssert(SingleLineSummaryCode, XmlSummaryTool.ProcessMode.ReplaceSummary,
+                @"using Runestone.AesirInspector;
+using System;
+
+namespace Runestone.AesirInspector.Editor.Tests
+{
+    [Summary(""单行 summary 测试"")]
+    [Serializable]
+    public class TestSingleLineSummary { }
+}
+");
+        }
+
+        [Test]
+        public void MixedSingleMultiLine_SyncAddsAttributes()
+        {
+            ProcessAndAssert(MixedSingleMultiLineCode, XmlSummaryTool.ProcessMode.SyncSummary,
+                @"using System;
+using Runestone.AesirInspector;
+
+namespace Runestone.AesirInspector.Editor.Tests
+{
+    /// <summary>类级别单行</summary>
+    [Summary(""类级别单行"")]
+    public class TestMixed
+    {
+        /// <summary>
+        /// 多行 summary
+        /// </summary>
+        [Summary(""多行 summary"")]
+        public void MultiLineMethod() { }
+
+        /// <summary>单行方法</summary>
+        [Summary(""单行方法"")]
+        public void SingleLineMethod() { }
+    }
+}
+");
+        }
+
+        [Test]
+        public void MixedSingleMultiLine_ReplaceReplacesTagsWithAttributes()
+        {
+            ProcessAndAssert(MixedSingleMultiLineCode, XmlSummaryTool.ProcessMode.ReplaceSummary,
+                @"using System;
+using Runestone.AesirInspector;
+
+namespace Runestone.AesirInspector.Editor.Tests
+{
+    [Summary(""类级别单行"")]
+    public class TestMixed
+    {
+        [Summary(""多行 summary"")]
+        public void MultiLineMethod() { }
+
+        [Summary(""单行方法"")]
+        public void SingleLineMethod() { }
     }
 }
 ");

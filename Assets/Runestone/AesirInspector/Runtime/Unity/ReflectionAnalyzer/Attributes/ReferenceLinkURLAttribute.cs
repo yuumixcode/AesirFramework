@@ -2,7 +2,7 @@ using System;
 
 namespace Runestone.AesirInspector
 {
-    [Obsolete]
+
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Enum | AttributeTargets.Struct,
         AllowMultiple = true, Inherited = false)]
     public class ReferenceLinkURLAttribute : Attribute
