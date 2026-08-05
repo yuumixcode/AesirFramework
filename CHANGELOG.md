@@ -19,9 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.5.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.5.0** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.5.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.6.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.6.0** |
+| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.6.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
 > *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
@@ -30,6 +30,79 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Inspector** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 同时依赖 Aesir Architecture + Aesir Inspector / depends on BOTH Aesir Architecture AND Aesir Inspector
+
+---
+
+## [0.6.0] - 2026-08-05
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Added
+
+- **MonoLifecycleProxy 生命周期代理** — 全局单例组件，将 Unity 原生生命周期回调和自定义 PlayerLoop 阶段统一为可订阅的 MiniEvent
+- **ICustomXXX 生命周期接口** — 8 个接口，实现后通过 `RegisterAuto()` 自动注册到匹配事件
+- **MonoLifecycleProxyExtensions 扩展方法** — 支持 MonoBehaviour / GameObject / object 的 `AddListener` / `RemoveListener` / `RegisterLifecycle` 扩展方法
+- **全包 XML 文档注释增强** — 69 个 .cs 文件补充完整详细的 XML 文档注释
+
+#### Changed
+
+- **MonoLifecycleEvent 移除低实用性事件** — 移除 Awake / OnEnable / OnDisable / OnDestroy，新增 OnApplicationFocus / OnApplicationPause
+- **Samples 目录版本对齐** — `Assets/Samples/Aesir Architecture/0.5.0/` → `0.6.0/`
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- 版本号与 Aesir Architecture / Aesir Inspector 同步更新至 `0.6.0`，本包本版本无功能性变更
+
+---
+
+### [inspector] Aesir Inspector
+
+#### Added
+
+- **源代码文件查找与内容缓存**：新增 `SourceFileEntry` 数据容器，支持缓存避免重复读取
+- **块注释内的假 XML 注释过滤**：逐行跟踪 `/* */` 块注释状态，块注释内的 `///` 不被误判
+- **跨程序集同名类型区分**：summary 缓存键加入程序集名前缀
+- **重载方法 summary 区分**：方法 summary 键附加参数类型列表，支持多行声明参数跨行
+- **嵌套类型和泛型类型 summary 解析**：不再错误返回外层类的 summary
+- **文件名与类型名不匹配时的源文件查找**：通过全局内容扫描找到源文件
+- **多程序集批量分析模式**：`TypeSource` 枚举新增 `MultipleAssemblies` 模式
+- **反射解析器迁移至 Runtime/Unity**：使 `[Summary]` 和 `[ReferenceLinkURL]` 特性不再依赖 `ODIN_INSPECTOR` 程序集约束
+- **源码解析单元测试**：新增 38 个测试（SourceParsingTests 34 + OverloadPrefixTests 4），总计 107 个测试全部通过
+
+#### Changed
+
+- **移除 OdinBridge 桥接层**：改为 `#if ODIN_INSPECTOR` 条件编译直接使用 `Sirenix.Utilities` API
+- **模块整合**：将 `ReflectionAnalyzer`、`SummaryTool`、`OdinSourceFileHelper` 整合到 `ScriptDocGenerator` 模块下
+- **回归单面板设计**：从 4 个独立 Panel SO 回归为单个 `ScriptDocGeneratorSO` + `TypeSource` 枚举切换模式
+- **OdinSourceFileHelper 精简**：移除花括号跟踪、类型体定位等复杂逻辑
+- **Summary 解析优先级**：优先检查 `[Summary]` 特性，无则回退到源代码 XML 注释解析
+
+#### Removed
+
+- **OdinAutoTooltip 自动 Tooltip 功能**
+- **OdinBridge 桥接模式**（4 个文件）
+- **多 Panel 设计**（5 个文件）
+
+#### Fixed
+
+- **块注释内的 XML 注释被误解析**：修复后块注释内的 `///` 行被正确忽略
+- **泛型类型的 summary 无法解析**：修复后泛型类型的 summary 可正常解析
+- **Type 自身的 summary 无法解析**：修复后类型自身的 summary 可正常解析
+- **嵌套类型的 summary 返回外层类的注释**：修复后嵌套类型返回各自的 summary
+- **多行属性声明的成员名提取失败**：修复后可正确提取成员名
+- **泛型方法和表达式体泛型方法的成员名提取错误**：修复后可正确提取方法名
+- **重载方法的 summary 互相覆盖**：修复后每个重载方法通过参数类型列表区分
+- **重载方法的 `[Overload]` 前缀重复追加**：修复后每个重载方法只追加一次
+- **`ReferenceLinkURL` 特性在文档中显示不全**：修复后完整显示特性及其参数
+- **文件名与类型名不匹配时源文件无法找到**：修复后通过全局内容扫描找到源文件
+- **`null` 关键字被误提取为成员名**：修复后不再被提取
+- **多行方法声明参数跨行时参数类型提取失败**：修复后通过跨行收集声明文本直到括号匹配
 
 ---
 

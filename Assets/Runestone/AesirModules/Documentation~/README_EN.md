@@ -3,14 +3,14 @@
 Functional module package for Aesir Architecture (RAA). Currently provides a minimal UI framework using Unity's "Manager of Managers" pattern, organized into Engine / Component two layers.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.6.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
 
 > 📦 **This package is part of the [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo.** This package **depends on BOTH**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/Unity-Aesir-Packages)** (`>= 0.5.0`)
-> - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)** (`>= 0.5.0`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/Unity-Aesir-Packages)** (`>= 0.6.0`)
+> - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)** (`>= 0.6.0`)
 
 ## Modules
 
@@ -21,8 +21,8 @@ Functional module package for Aesir Architecture (RAA). Currently provides a min
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.5.0 (required)
-- **Aesir Inspector** `cn.runestone.aesir.inspector` >= 0.5.0 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.6.0 (required)
+- **Aesir Inspector** `cn.runestone.aesir.inspector` >= 0.6.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed.
 
 ## Installation
