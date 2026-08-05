@@ -119,7 +119,6 @@
 | 7 | **OdinBridge** | 无 | `IOdinBridge` 接口隔离 Odin 依赖，无 Odin 时 `DefaultOdinBridge` 回退，有 Odin 时 `OdinInspectorBridge` 增强 |
 | 8 | **Safe Editor Utilities** | 无 | 12+ 安全编辑器工具类（`ScriptableObjectSafeEditorUtility`、`PathUtility`、`HierarchyUtility`、`ReflectionUtility` 等），构建时自动剔除 |
 | 9 | **Custom Attributes** | 无 | `[Summary]` 特性，等同于 XML `<summary>`，运行时可通过 `GetSummary()` 获取 |
-| 10 | **Code Style** | 无 | 内置代码风格指南 `Runtime/Unity/CodeStyle/AESIR_INSPECTOR_CODE_STYLE.cs` |
 
 ### OdinBridge 架构
 
@@ -295,7 +294,7 @@ Assets/
 │       │   │   ├── OdinBridge/      # IOdinBridge, DefaultOdinBridge, OdinBridgeLocator
 │       │   │   ├── ScriptDocGenerator/ # 文档生成器运行时数据模型
 │       │   │   ├── Utilities/       # 12+ 安全编辑器工具类
-│       │   │   └── CodeStyle/       # 代码风格指南
+│       │   │   └── (已移除，统一到 Scripts/CodeStyle/)
 │       │   └── Odin Integration/     # Odin 运行时（ODIN_INSPECTOR）
 │       │       ├── Attributes/      # 双语特性（BilingualTitle, BilingualButton 等）
 │       │       └── OdinCodeHighlighter.cs
@@ -350,6 +349,8 @@ Assets/
 
 ### 代码风格
 
+> 统一代码风格指南位于 `Scripts/CodeStyle/AesirCodeStyle.cs`，涵盖三包通用的命名、字段、属性、事件、枚举、空检查等规范。以下为各包特有的补充规范。
+
 #### Aesir Architecture 和 Modules
 
 - XML 文档注释使用中文（摘要、参数说明、备注）
@@ -370,7 +371,7 @@ Assets/
 - **Odin 依赖代码**必须放在 `Odin Integration/` 子目录
 - **核心程序集不允许**直接引用 Odin API — 通过 `IOdinBridge` 桥接
 - **Processor**：`internal sealed`，与目标类同文件定义
-- **免除注释规范的模块**：`CodeStyle/`、`AttributeOverviewPro/Data/`、`AttributeOverviewPro/AttributePanels/`、`AttributeOverviewPro/UsageExamples/`
+- **免除注释规范的模块**：`AttributeOverviewPro/Data/`、`AttributeOverviewPro/AttributePanels/`、`AttributeOverviewPro/UsageExamples/`
 
 ### 目录组织
 
@@ -453,7 +454,8 @@ Unity -batchmode -quit -projectPath . \
 
 
 ### Feedback
-- [2026-07-31 17:30:59] Aesir Inspector 与 Aesir Architecture/Modules 使用不同编码规范。Inspector（2026-07-31 更新）：[Summary] 特性装饰已从全部源码中移除（252 文件，897 处），SummaryAttribute 类仍保留但仅用于 ScriptDocGenerator 的 MemberData 反射；改用 XML 文档注释（/// <summary>）；OdinAutoTooltip（提取自 JakePineOdinTools）自动从 XML 生成 Inspector Tooltip。MIT LICENSE 头部已从所有 .cs 文件移除，仅在 CodeStyle/AesirInspectorCodeStyle.cs 保留一份。保持自文档化代码、禁止对 UnityEngine.Object 派生类使用 ?. /??、事件命名无 On 前缀。Architecture/Modules：中文 XML 文档注释、显式接口实现。编辑代码时需确认所在包以应用正确风格。
+- [2026-08-05 17:20:07] Aesir Inspector 与 Aesir Architecture/Modules 使用不同编码规范。Inspector（2026-07-31 更新）：[Summary] 特性装饰已从全部源码中移除（252 文件，897 处），SummaryAttribute 类仍保留但仅用于 ScriptDocGenerator 的 MemberData 反射；改用 XML 文档注释（/// <summary>）；OdinAutoTooltip（提取自 JakePineOdinTools）自动从 XML 生成 Inspector Tooltip。MIT LICENSE 头部已从所有 .cs 文件移除。原 AesirInspectorCodeStyle.cs 已删除，统一代码风格指南移至 Scripts/CodeStyle/AesirCodeStyle.cs（项目根目录，不参与编译）。保持自文档化代码、禁止对 UnityEngine.Object 派生类使用 ?. /??、事件命名无 On 前缀。Architecture/Modules：中文 XML 文档注释、显式接口实现。编辑代码时需确认所在包以应用正确风格。
+
 
 
 - [2026-07-25 10:56:53] 项目英文文档命名规范：根目录英文文档统一使用 `_EN.md` 后缀（如 `README_EN.md`）；`CODE_OF_CONDUCT.en.md` 和 `CONTRIBUTING.en.md` 暂保留 `.en.md` 后缀；各子包的英文 README 统一放在 `Documentation~/README_EN.md`。**Why:** 统一命名风格，README 从 `.en.md` 改为 `_EN.md` 与子包一致。**How to apply:** 根目录 README 英文版用 `README_EN.md`，子包英文 README 用 `Documentation~/README_EN.md`。
