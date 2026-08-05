@@ -13,8 +13,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         const string GeneratorSettingsPath = AesirInspectorPaths.EditorDefaultResourcesPath +
                                              "/ScriptDocGenerator/GeneratorSettings";
 
-        static readonly string ConfigName =
-            typeof(DefaultScriptingAPISettingsSO).GetNiceFullName();
+        static readonly string ConfigName = typeof(DefaultScriptingAPISettingsSO).GetNiceFullName();
 
         public static DefaultScriptingAPISettingsSO Instance =>
             ScriptableObjectSafeEditorUtility

@@ -74,6 +74,9 @@ namespace Runestone.AesirArchitecture
             return sb.ToString();
         }
 
+        /// <summary>
+        /// 递归地在子系统中查找目标类型，找到后在其前方插入新子系统。
+        /// </summary>
         static bool InsertBeforeInternal(ref PlayerLoopSystem system,
             Type targetType,
             PlayerLoopSystem newSystem)
@@ -104,6 +107,9 @@ namespace Runestone.AesirArchitecture
             return false;
         }
 
+        /// <summary>
+        /// 递归地在子系统中查找目标类型，找到后在其后方插入新子系统。
+        /// </summary>
         static bool InsertAfterInternal(ref PlayerLoopSystem system,
             Type targetType,
             PlayerLoopSystem newSystem)
@@ -135,6 +141,9 @@ namespace Runestone.AesirArchitecture
             return false;
         }
 
+        /// <summary>
+        /// 递归地遍历子系统树，判断是否存在与目标类型匹配的子系统。
+        /// </summary>
         static bool ContainsSystemInternal(ref PlayerLoopSystem system, Type targetType)
         {
             if (system.type == targetType)
@@ -158,6 +167,9 @@ namespace Runestone.AesirArchitecture
             return false;
         }
 
+        /// <summary>
+        /// 递归地遍历子系统树，按缩进层级将每个子系统的类型名称追加到字符串构建器中。
+        /// </summary>
         static void AppendPlayerLoopSystemDescription(PlayerLoopSystem system, int depth, StringBuilder sb)
         {
             if (system.type != null)

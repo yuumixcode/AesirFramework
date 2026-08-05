@@ -63,3 +63,4 @@ MonoBehaviour:
   selectedMonoScriptArray: []
   typesCacheSOFolderPath: Assets/Editor Default Resources/Aesir Inspector/ScriptDocGenerator/TypeCache
   targetAssemblyFullName: 
+  selectedAssemblyFullNames: []
