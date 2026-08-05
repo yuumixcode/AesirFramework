@@ -44,7 +44,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         protected override void OnEnable()
         {
             base.OnEnable();
-            bilingualHeaderControl = new BilingualHeaderControl("扩展包管理器", "Extension Package Manager",
+            bilingualHeaderControl = new BilingualHeaderControl("扩展包管理器 [待修复中]", "Extension Package Manager [WIP]",
                 "快捷安装推荐的 Aesir 系列和其他常用开源 Unity Packages，基于 Git URL 方式",
                 "Install recommended Aesir series and open-source Unity Packages quickly, Based On Git URL.");
             WindowPadding = new Vector4(10f, 10f, 10f, 10f);

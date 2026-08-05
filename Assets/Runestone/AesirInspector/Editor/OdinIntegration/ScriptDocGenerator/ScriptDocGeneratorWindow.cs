@@ -9,84 +9,35 @@ using UnityEngine;
 namespace Runestone.AesirInspector.OdinIntegration.Editor
 {
     /// <summary>
-    /// 脚本文档生成器窗口，以 OdinMenuEditorWindow 布局展示四种工作模式。
+    /// 脚本文档生成器窗口，直接展示 ScriptDocGeneratorSO 单面板。
     /// </summary>
-    public class ScriptDocGeneratorWindow : OdinMenuEditorWindow
+    public class ScriptDocGeneratorWindow : OdinEditorWindow
     {
         const string WindowName = "Script Doc Generator";
 
-        static readonly BilingualData SingleScriptMenuName = new BilingualData("单脚本", "Single Script");
+        ScriptDocGeneratorSO _so;
 
-        static readonly BilingualData MultipleScriptsMenuName = new BilingualData("多脚本", "Multiple Scripts");
-
-        static readonly BilingualData SingleAssemblyMenuName = new BilingualData("单程序集", "Single Assembly");
-
-        static readonly BilingualData MultipleAssembliesMenuName =
-            new BilingualData("多程序集", "Multiple Assemblies");
-
-        SingleScriptPanelSO _singleScriptPanel;
-        MultipleScriptsPanelSO _multipleScriptsPanel;
-        SingleAssemblyPanelSO _singleAssemblyPanel;
-        MultipleAssembliesPanelSO _multipleAssembliesPanel;
-
-        static readonly string PanelsPath =
-            AesirInspectorPaths.EditorDefaultResourcesPath + "/ScriptDocGenerator/Panels";
-
-        OdinMenuStyle _menuStyle;
-
-        static object _lastSelection;
-
-
+        PropertyTree _soTree;
 
         protected override void OnEnable()
         {
             base.OnEnable();
 
-            _singleScriptPanel = ScriptDocGeneratorUtility.GetSingleScriptPanel();
-            _multipleScriptsPanel = ScriptDocGeneratorUtility.GetMultipleScriptsPanel();
-            _singleAssemblyPanel = ScriptDocGeneratorUtility.GetSingleAssemblyPanel();
-            _multipleAssembliesPanel = ScriptDocGeneratorUtility.GetMultipleAssembliesPanel();
+            _so = ScriptDocGeneratorSO.Instance;
 
-            MenuWidth = 230f;
-            WindowPadding = new Vector4(10f, 10f, 10f, 10f);
+            ScriptDocGeneratorSO.ToastRequested -= ShowToast;
+            ScriptDocGeneratorSO.ToastRequested += ShowToast;
 
-            _menuStyle = new OdinMenuStyle
-            {
-                Height = 30,
-                Offset = 16.00f,
-                IndentAmount = 15.00f,
-                IconSize = 16.00f,
-                IconOffset = 0.00f,
-                NotSelectedIconAlpha = 0.85f,
-                IconPadding = 3.00f,
-                TriangleSize = 17.00f,
-                TrianglePadding = 8.00f,
-                AlignTriangleLeft = false,
-                Borders = true,
-                BorderPadding = 13.00f,
-                BorderAlpha = 0.50f,
-                SelectedColorDarkSkin = new Color(0.243f, 0.373f, 0.588f, 1.000f),
-                SelectedColorLightSkin = new Color(0.243f, 0.490f, 0.900f, 1.000f)
-            };
-
-            ScriptDocGeneratorPanelBase.ToastRequested -= ShowToast;
-            ScriptDocGeneratorPanelBase.ToastRequested += ShowToast;
-
-            AesirInspectorLanguageSettingsSO.LanguageChanged -= CustomRebuild;
-            AesirInspectorLanguageSettingsSO.LanguageChanged += CustomRebuild;
+            AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
+            AesirInspectorLanguageSettingsSO.LanguageChanged += Repaint;
         }
 
         protected override void OnDisable()
         {
             base.OnDisable();
-            ScriptDocGeneratorPanelBase.ToastRequested -= ShowToast;
-            AesirInspectorLanguageSettingsSO.LanguageChanged -= CustomRebuild;
-            _lastSelection = null;
+            ScriptDocGeneratorSO.ToastRequested -= ShowToast;
+            AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
         }
-
-
-
-
 
         [MenuItem(AesirInspectorMenuItems.ScriptDocGenerator, false,
             AesirInspectorMenuItems.ScriptDocGeneratorOrder)]
@@ -101,25 +52,16 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             window.Show();
         }
 
-        protected override OdinMenuTree BuildMenuTree()
+        protected override void DrawEditor(int index)
         {
-            var tree = new OdinMenuTree(false, _menuStyle)
+            if (_so == null)
             {
-                { SingleScriptMenuName, _singleScriptPanel },
-                { MultipleScriptsMenuName, _multipleScriptsPanel },
-                { SingleAssemblyMenuName, _singleAssemblyPanel },
-                { MultipleAssembliesMenuName, _multipleAssembliesPanel }
-            };
-            tree.Config.DrawSearchToolbar = false;
-            tree.EnumerateTree().SortMenuItemsByName();
-            return tree;
-        }
+                _so = ScriptDocGeneratorSO.Instance;
+                if (_so == null) return;
+            }
 
-        void CustomRebuild()
-        {
-            _lastSelection = MenuTree.Selection.SelectedValue;
-            ForceMenuTreeRebuild();
-            TrySelectMenuItemWithObject(_lastSelection);
+            _soTree ??= PropertyTree.Create(_so);
+            _soTree.Draw(false);
         }
 
         new void ShowToast(ToastPosition position,

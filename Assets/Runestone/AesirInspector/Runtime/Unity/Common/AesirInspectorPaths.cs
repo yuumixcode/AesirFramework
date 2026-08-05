@@ -48,6 +48,5 @@ namespace Runestone.AesirInspector
         /// MiniTools 资源的存放路径
         /// </summary>
         public const string MiniToolsAssetsFolderPath = EditorDefaultResourcesPath + "/MiniTools";
-
     }
 }

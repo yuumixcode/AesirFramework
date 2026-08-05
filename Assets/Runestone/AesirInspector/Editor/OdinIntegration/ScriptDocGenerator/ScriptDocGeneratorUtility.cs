@@ -51,21 +51,9 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         static readonly IAnalysisDataFactory AnalysisDataFactory = new DefaultAnalysisDataFactory();
 
-        public static SingleAssemblyPanelSO GetSingleAssemblyPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<SingleAssemblyPanelSO>(
-                "SingleAssemblyPanel", ScriptDocGeneratorPaths.PanelsPath, "SingleAssemblyPanel");
-
-        public static MultipleAssembliesPanelSO GetMultipleAssembliesPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<MultipleAssembliesPanelSO>(
-                "MultipleAssembliesPanel", ScriptDocGeneratorPaths.PanelsPath, "MultipleAssembliesPanel");
-
         public static void InitializeAssets()
         {
             _ = ScriptDocGeneratorSO.Instance;
-            _ = GetSingleScriptPanel();
-            _ = GetMultipleScriptsPanel();
-            _ = GetSingleAssemblyPanel();
-            _ = GetMultipleAssembliesPanel();
             _ = DefaultScriptingAPISettingsSO.Instance;
 
             AesirInspectorModuleAssetMarkerSO.CreateScriptDocGeneratorMarkerAsset();
@@ -73,14 +61,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
-
-        public static SingleScriptPanelSO GetSingleScriptPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<SingleScriptPanelSO>(
-                "SingleScriptPanel", ScriptDocGeneratorPaths.PanelsPath, "SingleScriptPanel");
-
-        public static MultipleScriptsPanelSO GetMultipleScriptsPanel() =>
-            ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<MultipleScriptsPanelSO>(
-                "MultipleScriptsPanel", ScriptDocGeneratorPaths.PanelsPath, "MultipleScriptsPanel");
 
         public static ITypeData AnalyzeSingleType(Type targetType)
         {

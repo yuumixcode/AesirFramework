@@ -26,7 +26,7 @@
 // Odin Inspector 规范 (Odin Inspector Integration):
 // 特别注意：本文的 Odin Inspector 规范只针对 Aesir Inspector 插件。
 // 1. 优先使用 Odin Attribute 来构建 UI，而非编写原始的 Editor 代码。优先选择使用 OdinAttributeProcessor 的方式去动态添加特性。
-// 2. Odin 桥接方法请直接使用 OdinBridgeLocator.Bridge；反射工具方法请使用 ReflectionUtility。
+// 2. 类型名称格式化请直接使用 Sirenix.Utilities 扩展方法（type.GetNiceName() 等）；反射工具方法请使用 ReflectionUtility。
 // ----------------------------------------------------------------------------
 
 using System;
@@ -46,9 +46,9 @@ namespace Runestone.AesirInspector
     public enum AttackModes
     {
         None = 0,
-        Melee = 1 << 0, // 1
-        Ranged = 1 << 1, // 2
-        Special = 1 << 2, // 4
+        Melee = 1 << 0,                   // 1
+        Ranged = 1 << 1,                  // 2
+        Special = 1 << 2,                 // 4
         MeleeAndSpecial = Melee | Special // 5 (1 | 4)
     }
 

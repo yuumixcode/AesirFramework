@@ -21,7 +21,7 @@ namespace Runestone.AesirInspector
                 }
 
                 var type = typeof(T);
-                var configName = OdinBridgeLocator.Bridge.GetFriendlyFullName(type);
+                var configName = type.FullName;
                 var assetName = type.Name;
 
                 _instance = ScriptableObjectSafeEditorUtility.GetOrCreateEditorScriptableObject<T>(configName,

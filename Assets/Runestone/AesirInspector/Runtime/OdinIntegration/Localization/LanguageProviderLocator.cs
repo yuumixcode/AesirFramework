@@ -1,7 +1,7 @@
 namespace Runestone.AesirInspector
 {
     /// <summary>
-    /// 语言定位器，类似于 OdinBridgeLocator。用于解耦 BilingualData 对具体实现的依赖。
+    /// 语言定位器。用于解耦 BilingualData 对具体实现的依赖。
     /// </summary>
     public static class LanguageProviderLocator
     {

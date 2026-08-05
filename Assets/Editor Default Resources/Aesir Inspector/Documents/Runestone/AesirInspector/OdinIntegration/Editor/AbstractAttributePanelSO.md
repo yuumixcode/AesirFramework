@@ -8,9 +8,13 @@
 
 ``` csharp
 public abstract class AbstractAttributePanelSO : Runestone.AesirInspector.OdinIntegration.Editor.AttributeOverviewPanelSO<AbstractAttributePanelSO>, 
-Runestone.AesirInspector.IAesirInspectorReset, 
-UnityEngine.ISerializationCallbackReceiver
+UnityEngine.ISerializationCallbackReceiver, 
+Runestone.AesirInspector.IAesirInspectorReset
 ```
+
+### 注释
+
+- 特性介绍面板抽象基类，负责渲染顶部控件、使用提示、参数表、案例预览与代码预览。
 
 ## 方法
 
@@ -62,7 +66,7 @@ UnityEngine.ISerializationCallbackReceiver
 | 属性签名 | 注释 |
 | :--- | :--- |
 | `public BilingualHeaderControl BilingualHeaderControl { get; }` | 顶部说明控件引用。 |
-| `public ScriptableObject CurrentSelectedExample { get; set; }` |  |
+| `public ScriptableObject CurrentSelectedExample { get; set; }` | 当前选中的示例对象。 |
 
 ### 继承的属性
 
