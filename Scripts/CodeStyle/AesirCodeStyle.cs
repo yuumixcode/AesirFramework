@@ -44,6 +44,10 @@ namespace Runestone.CodeStyle
 
     public sealed class FieldOrderExample : MonoBehaviour, IDamageable<float>
     {
+        // #region 分段：允许自由使用，无最低代码量要求
+
+        #region 字段
+
         // 顺序：const → static → static readonly → [SerializeField] → private
 
         public const int MaxCount = 100;
@@ -66,9 +70,9 @@ namespace Runestone.CodeStyle
 
         public FieldOrderExample() => _instanceId = GetHashCode();
 
-        // =========================================================================
-        // 属性风格
-        // =========================================================================
+        #endregion
+
+        #region 属性
 
         // 优先级：表达式体 → 私有 Setter → 完整属性
 
@@ -82,9 +86,9 @@ namespace Runestone.CodeStyle
             set => _maxHealth = value;
         }
 
-        // =========================================================================
-        // 方法命名
-        // =========================================================================
+        #endregion
+
+        #region 方法
 
         // Internal_ 前缀：仅当私有/受保护/内部方法与公开方法重名时使用
         public void SetMaxHealth(int newMaxValue) => Internal_SetMaxHealth(newMaxValue);
@@ -96,9 +100,9 @@ namespace Runestone.CodeStyle
             _maxHealth -= (int)damageTaken;
         }
 
-        // =========================================================================
-        // 事件命名
-        // =========================================================================
+        #endregion
+
+        #region 事件
 
         // 事件声明：无 On 前缀（DoorOpened，而非 OnDoorOpened）
         public event Action DoorOpened;
@@ -130,9 +134,9 @@ namespace Runestone.CodeStyle
             }
         }
 
-        // =========================================================================
-        // Unity 对象空检查
-        // =========================================================================
+        #endregion
+
+        #region 空检查
 
         void NullCheckExample()
         {
@@ -146,9 +150,9 @@ namespace Runestone.CodeStyle
             }
         }
 
-        // =========================================================================
-        // 枚举
-        // =========================================================================
+        #endregion
+
+        #region 枚举
 
         /// <summary>
         /// 普通枚举：显式赋值，必须包含 None = 0
@@ -174,9 +178,9 @@ namespace Runestone.CodeStyle
             MeleeAndSpecial = Melee | Special
         }
 
-        // =========================================================================
-        // 条件编译
-        // =========================================================================
+        #endregion
+
+        #region 条件编译
 
 #if UNITY_EDITOR
         // 编辑器专用代码使用 #if UNITY_EDITOR 条件编译
@@ -185,6 +189,8 @@ namespace Runestone.CodeStyle
             _maxHealth = 100;
         }
 #endif
+
+        #endregion
     }
 
     // =========================================================================
