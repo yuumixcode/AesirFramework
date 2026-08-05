@@ -188,17 +188,27 @@ namespace Runestone.AesirModules
         static SceneModule _instance;
 
         /// <summary>
-        /// 全局单例入口。首次访问时自动创建为 AesirModules 的子物体。
+        /// 全局单例入口。
+        /// 优先在已加载场景中查找预放置的实例；未找到时在 <see cref="AesirModules" />（DDOL）下创建子物体。
         /// </summary>
         public static SceneModule Instance
         {
             get
             {
-                if (_instance == null)
+                if (_instance != null)
                 {
-                    _instance = AesirModules.GetOrAddChild<SceneModule>();
+                    return _instance;
                 }
 
+                // 尝试在已加载的场景中查找预放置的实例
+                _instance = FindFirstObjectByType<SceneModule>();
+                if (_instance != null)
+                {
+                    return _instance;
+                }
+
+                // 未找到预放置实例 → 在 AesirModules 下创建（跟随父级 DDOL）
+                _instance = AesirModules.GetOrAddChild<SceneModule>();
                 return _instance;
             }
         }

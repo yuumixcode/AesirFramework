@@ -57,7 +57,7 @@
 
 ### 关键运行时类
 
-- **`AesirArchitecture`** — MonoBehaviour 单例（`[DefaultExecutionOrder(-999)]`），通过 `RuntimeInitializeOnLoadMethod(BeforeSceneLoad)` 引导启动，`DontDestroyOnLoad`
+- **`AesirArchitecture`** — MonoBehaviour 单例（`[DefaultExecutionOrder(-999)]`），支持场景预放置（不 DDOL）和运行时创建（DDOL）两种模式
 - **`AesirMonoBehaviour`** — 架构感知 MonoBehaviour 基类
 - **`AesirScriptableObject`** — 架构感知 ScriptableObject 基类
 - **`ObservableValue<T>`** — 响应式属性；Model 持有可写实例，View 通过 `IReadOnlyObservableValue<T>` 订阅。支持 `SetValueSilently`、`AddListenerAndInvoke`
@@ -343,7 +343,7 @@ Assets/
 - **类名：** PascalCase（如 `AbstractContext`、`ObservableValue`、`MiniEvent`）
 - **接口：** `I` 前缀（如 `ICommand`、`IContext`、`IUIPanel`）
 - **抽象类：** `Abstract` 前缀（如 `AbstractModel`、`AbstractCommand`）
-- **MonoBehaviour 单例：** 静态 `Instance` 属性、`[DefaultExecutionOrder(-999)]`、`DontDestroyOnLoad`
+- **MonoBehaviour 单例：** 静态 `Instance` 属性、`[DefaultExecutionOrder(-999)]`、支持场景预放置（不 DDOL）和运行时创建（DDOL）
 - **包 ID：** 反向域名（`cn.runestone.aesir.*`、`cn.runestone.aesir-inspector`）
 - **私有字段：** `_camelCase`（非序列化）、`camelCase`（带 `[SerializeField]` 序列化）
 - **常量/静态只读：** PascalCase
@@ -356,7 +356,7 @@ Assets/
 - 代码标识符使用英文
 - 数据类标记 `[Serializable]`（`AbstractModel`、`ObservableValue<T>`、`AbstractSubmodule`）
 - 显式接口实现上下文注入（`IContextHolder.Context`、`ICanSetContext.SetContext`）
-- 静态 `Bootstrap()` 方法使用 `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]` 自动初始化
+- 单例 `Instance` getter 优先 `FindFirstObjectByType` 搜索场景中预放置的实例，未找到时运行时创建
 - `ResetStaticsAssistant.Register()` 保障 Domain Reload 安全
 
 #### Aesir Inspector（不同规范）
@@ -472,11 +472,7 @@ Unity -batchmode -quit -projectPath . \
 - [2026-07-30 21:40:27] 移除 Context 事件总线系统（2026-07-30）：从 Aesir Architecture 移除了 MiniEventBus&lt;TEvent&gt;、IEventArgs、ICanAddListener、ICanInvokeEvent，以及 IContext/AbstractContext 中的 AddListener/RemoveListener/InvokeEvent 方法和 CapabilityExtensions 中对应的扩展方法。保留 MiniEvent/MiniEvent&lt;T&gt; 和 ObservableValue&lt;T&gt; 作为独立事件机制。**Why:** 用户认为 Context 的 AddListener 不实用，QFramework 作者本人也优先使用 EasyEvent。**How to apply:** 角色接口（ICommand、IModel、IService、IView、IPresenter）不再继承 ICanInvokeEvent/ICanAddListener；事件通信应使用 MiniEvent 或 ObservableValue。
 - [2026-07-31 15:48:38] Event Module V2 已实现并编译通过（2026-07-31，简化版+性能优化）。当前状态：已移除 AbstractAttributeBound&lt;T&gt; 基类，EventModule 直接继承 AesirMonoBehaviour。双注册表分离（AttributeBindings + DynamicBindings，均为 public Dictionary）。BindingInfo 基类仅含 BindingKey/Subscriber/Priority + 抽象 Invoke()；StaticBindingInfo 持有 MethodInfo + 表达式树编译委托（Expression.Lambda.Compile，冷路径编译/热路径零反射，附详细 XML remarks 注释）；DynamicBindingInfo&lt;T&gt; 持有 Action&lt;T&gt; 直接委托。Script 订阅返回 AutoRemoveListenerHandle（与 MiniEvent 一致）。已移除 InvokeDelayed、IsInitialized、取消传播/密封/共享等机制。性能优化：object[] 循环外复用、count<=1 跳过 Sort、GetMethods 替代 GetMembers、缓存 MethodInfo。SubscriberPriority 枚举值为 First/High/Medium/Low/Last。设计文档位于 Docs/EventModule/（含 Feature-Roadmap.md 待完成功能清单）。**Why:** 参考商业插件 Game Event Hub，但以实用性为标准裁剪。**How to apply:** V2 运行时代码已完成；下一步创建 V2 Sample 验证脚本；后续功能见 Feature-Roadmap.md。
 - [2026-08-05 11:29:12] ScriptDocGenerator 模块重构完成（2026-08-04 至 2026-08-05，多轮迭代，已提交 commit e48edf7）：①移除 OdinBridge 桥接层，类型名称格式化改用 `#if ODIN_INSPECTOR` + `Sirenix.Utilities` 直接调用。②ReflectionAnalyzer 全部文件迁移到 Runtime/Unity/ScriptDocGenerator/（Attributes/AnalysisData/Core），SummaryTool 迁移到 Editor/OdinIntegration/ScriptDocGenerator/。③移除 OdinAutoTooltipAttributeProcessor。④重写 Summary 解析：优先 [Summary] 特性 → 源代码 XML 解析（块注释状态跟踪 + 全限定键）。⑤OdinSourceFileHelper 精简为 FindSourceFiles + ExtractMemberName + SourceFileEntry 缓存。⑥移除多 Panel 设计，回归单 ScriptDocGeneratorSO + TypeSource 枚举（新增 MultipleAssemblies 模式）+ OdinEditorWindow。⑦修复 13 个 bug：/// 前缀未移除、类型检测过滤过严、null 关键字缺失、ReferenceLinkURLAttribute 未格式化、泛型类型 FullName 反引号未去掉、Type 自身 summary 键重复追加成员名、表达式体泛型方法误匹配约束类型名、嵌套类型查询用错 DeclaringType、嵌套类型 + 分隔符未处理、重载方法 [Overload] 前缀重复追加、文件名与类型名不匹配时源文件无法找到、多行方法声明参数跨行时参数类型提取失败。⑧键格式：AssemblyName.Namespace.TypeName[.MemberName(ParamTypes)]——程序集名前缀避免跨程序集冲突，方法参数类型列表区分重载（含跨行声明 CollectFullDeclaration），嵌套类型去掉 OuterType+ 前缀。⑨新增 SourceParsingTests.cs（34 个测试）+ OverloadPrefixTests.cs（4 个测试），总计 107 个测试全部通过。⑩重构变更记录文档位于 Docs/ScriptDocGenerator-Refactor-Changelog.md。⑪反射解析器（19 个 Runtime 文件）从 Runtime/OdinIntegration 迁移到 Runtime/Unity，使 [Summary] 和 [ReferenceLinkURL] 特性不再依赖 ODIN_INSPECTOR 程序集约束。**Why:** Odin 已是强依赖，OdinBridge 降级模式是伪需求；整合模块减少跨层碎片化；多 Panel 设计过度碎片化；反射解析器不依赖 Odin 应放 Unity 层。**How to apply:** 类型名称格式化直接用 Sirenix API + #if；ScriptDocGenerator 反射解析器在 Runtime/Unity 层，编辑器在 Editor/OdinIntegration 层；单 SO + TypeSource 枚举切换模式；方法 summary 键带参数类型列表。
-
-
-
-
-
+- [2026-08-05 17:05:40] 单例模式重构（2026-08-05）：AesirArchitecture 和 AesirModules 的所有 MonoBehaviour 单例从无条件 DDOL 改为"预放置优先"模式。根单例（AesirArchitecture、AesirModules、UIRoot）使用 `static bool _createdByRuntime` 标志 + `FindFirstObjectByType` 场景搜索 + 条件 DDOL；子单例（MonoLifecycleProxy、RemoveListenerOnSceneUnloadedTrigger、EventModule、SceneModule、UIModule）在 Instance getter 中添加 `FindFirstObjectByType` 场景搜索，未找到才在父级下创建。同时移除了 AesirArchitecture 和 AesirModules 的 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)] Bootstrap()` 方法，因为它会在场景加载前创建 DDOL 实例，导致预放置实例 Awake 时发现 _instance 已存在而自毁。**Why:** 项目组负责人不想用 DontDestroyOnLoad（认为是黑盒），要搞多场景叠加加载；预放置实例应留在场景中随场景生命周期销毁。**How to apply:** 预放置单例在场景中即可，Instance 会自动发现；未预放置时运行时创建 + DDOL 保持向后兼容。CODELY.md 中"AesirArchitecture 通过 RuntimeInitializeOnLoadMethod 引导启动"的描述已过时。
 
 ### Reference
 - [2026-07-24 21:08:41] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。

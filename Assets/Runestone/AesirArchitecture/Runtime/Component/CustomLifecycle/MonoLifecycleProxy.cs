@@ -67,13 +67,20 @@ namespace Runestone.AesirArchitecture
         /// 获取全局唯一的 MonoLifecycleProxy 实例。
         /// </summary>
         /// <remarks>
-        /// 采用懒创建模式：首次访问时通过 <see cref="AesirArchitecture.GetOrAddComponent{T}"/>
-        /// 将本组件挂载到 [Aesir Architecture] GameObject 上，复用架构宿主对象。
+        /// 优先在已加载场景中查找预放置的实例；未找到时通过 <see cref="AesirArchitecture.GetOrAddComponent{T}"/>
+        /// 挂载到 [Aesir Architecture] GameObject 上，复用架构宿主对象。
         /// </remarks>
         public static MonoLifecycleProxy Instance
         {
             get
             {
+                if (_instance != null)
+                {
+                    return _instance;
+                }
+
+                // 尝试在已加载的场景中查找预放置的实例
+                _instance = FindFirstObjectByType<MonoLifecycleProxy>();
                 if (_instance != null)
                 {
                     return _instance;
