@@ -16,6 +16,7 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 执行查询并返回结果
         /// </summary>
+        /// <returns>查询结果，类型为 <typeparamref name="TResult" />。</returns>
         TResult Execute();
     }
 }
