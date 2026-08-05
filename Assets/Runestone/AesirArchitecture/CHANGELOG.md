@@ -5,6 +5,20 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.6.0] - 2026-08-05
+
+### Added
+
+- **MonoLifecycleProxy 生命周期代理** — 全局单例组件，挂载在 [Aesir Architecture] GameObject 上，将 Unity 原生生命周期回调（Start / FixedUpdate / Update / LateUpdate / OnApplicationFocus / OnApplicationPause）和自定义 PlayerLoop 阶段（BeforeUpdate / AfterUpdate）统一为可订阅的 MiniEvent。支持 Order + InsertionIndex 稳定排序，物体销毁时自动从代理取消订阅
+- **ICustomXXX 生命周期接口** — 8 个接口（ICustomStart / ICustomFixedUpdate / ICustomBeforeUpdate / ICustomUpdate / ICustomLateUpdate / ICustomAfterUpdate / ICustomOnApplicationFocus / ICustomOnApplicationPause），实现后通过 `RegisterAuto()` 自动注册到匹配事件
+- **MonoLifecycleProxyExtensions 扩展方法** — MonoBehaviour / GameObject / object 的 `AddListener` / `RemoveListener` / `RegisterLifecycle` 扩展方法，支持纯 C# 类快捷注册
+- **全包 XML 文档注释增强** — 69 个 .cs 文件补充完整详细的 XML 文档注释，覆盖 `<remarks>` / `<param>` / `<typeparam>` / `<returns>` / `<exception>` / `<seealso>` 标签
+
+### Changed
+
+- **MonoLifecycleEvent 移除低实用性事件** — 移除 Awake / OnEnable / OnDisable / OnDestroy（代理是 DontDestroyOnLoad 单例，这四个回调无法被外部有效订阅），新增 OnApplicationFocus / OnApplicationPause（焦点和暂停是高频需求）
+- **Samples 目录版本对齐** — `Assets/Samples/Aesir Architecture/0.5.0/` → `0.6.0/`
+
 ## [0.5.0] - 2026-08-01
 
 ### Fixed
@@ -13,10 +27,6 @@
 - **RemoveListenerTrigger**：移除 `[DisallowMultipleComponent]` 限制
 
 ## [Unreleased]
-
-### Changed
-
-- **README 拆中英文**：新增 `README.en.md`（英文版），`README.md` 改为纯中文（移除段对照）
 
 ### 规划中
 

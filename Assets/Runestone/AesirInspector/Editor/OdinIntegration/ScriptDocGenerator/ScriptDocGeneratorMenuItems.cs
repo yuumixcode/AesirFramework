@@ -15,7 +15,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             var monoScript = SelectionMonoScripts.First();
             var targetType = monoScript.GetClass();
-            ScriptDocGeneratorSO.Instance.TargetType = targetType;
+            ScriptDocGeneratorPanelSO.Instance.TargetType = targetType;
             Debug.Log("设置 Script Doc Generator 的 Target Type 为：" + targetType.FullName);
         }
 
@@ -37,7 +37,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             var monoScripts = SelectionMonoScripts.ToList();
             var types = monoScripts.Select(x => x.GetClass()).ToList();
-            var so = ScriptDocGeneratorSO.Instance;
+            var so = ScriptDocGeneratorPanelSO.Instance;
             var temporaryTypes = so.TemporaryTypes;
             temporaryTypes.AddRange(types);
             so.TemporaryTypes = temporaryTypes.Distinct().ToList();
@@ -100,7 +100,6 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         [MenuItem(AddScriptsToTemporaryTypesAndOpenWindowMenuName, true)]
         public static bool AddScriptsToTemporaryTypesAndOpenWindowValidate() =>
             AddScriptsToTargetTypesValidate();
-
 
         #region 菜单项定义
 

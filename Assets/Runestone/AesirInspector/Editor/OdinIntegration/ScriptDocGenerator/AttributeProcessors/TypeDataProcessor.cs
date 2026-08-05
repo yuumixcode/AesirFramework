@@ -12,7 +12,12 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             MemberInfo member,
             List<Attribute> attributes)
         {
-            if (member.MemberType == MemberTypes.Field || member.MemberType == MemberTypes.Property)
+            if (member.DeclaringType != typeof(TypeData) || member.ReflectedType != typeof(TypeData))
+            {
+                return;
+            }
+
+            if (member.MemberType == MemberTypes.Property)
             {
                 attributes.Add(new ShowInInspectorAttribute());
             }

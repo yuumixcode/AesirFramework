@@ -15,6 +15,18 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     /// </summary>
     public static class ScriptDocGeneratorUtility
     {
+        const string IdentifierCn = "## Additional Notes";
+        const string NoneAssembly = "None Assembly";
+        const string GithubRepository = "https://github.com/yuumixcode/Unity-Aesir-Packages";
+
+        static readonly StringBuilder UserIdentifierDescriptionParagraph = new StringBuilder()
+            .AppendLine(IdentifierCn).AppendLine().AppendLine("> 首个 `" + IdentifierCn +
+                                                              "` 是增量生成文档标识符，请勿修改标题级别和内容！" +
+                                                              "本文档由 [`Aesir Inspector`](" + GithubRepository +
+                                                              ") 辅助生成。");
+
+        static readonly IAnalysisDataFactory AnalysisDataFactory = new DefaultAnalysisDataFactory();
+
         /// <summary>
         /// 检查 Script Doc Generator 是否已初始化。未初始化时提示用户。
         /// </summary>
@@ -39,21 +51,9 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             return true;
         }
 
-        const string IdentifierCn = "## Additional Notes";
-        const string NoneAssembly = "None Assembly";
-        const string GithubRepository = "https://github.com/yuumixcode/Unity-Aesir-Packages";
-
-        static readonly StringBuilder UserIdentifierDescriptionParagraph = new StringBuilder()
-            .AppendLine(IdentifierCn).AppendLine().AppendLine("> 首个 `" + IdentifierCn +
-                                                              "` 是增量生成文档标识符，请勿修改标题级别和内容！" +
-                                                              "本文档由 [`Aesir Inspector`](" + GithubRepository +
-                                                              ") 辅助生成。");
-
-        static readonly IAnalysisDataFactory AnalysisDataFactory = new DefaultAnalysisDataFactory();
-
         public static void InitializeAssets()
         {
-            _ = ScriptDocGeneratorSO.Instance;
+            _ = ScriptDocGeneratorPanelSO.Instance;
             _ = DefaultScriptingAPISettingsSO.Instance;
 
             AesirInspectorModuleAssetMarkerSO.CreateScriptDocGeneratorMarkerAsset();

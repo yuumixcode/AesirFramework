@@ -15,7 +15,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     {
         const string WindowName = "Script Doc Generator";
 
-        ScriptDocGeneratorSO _so;
+        ScriptDocGeneratorPanelSO _panelSO;
 
         PropertyTree _soTree;
 
@@ -23,10 +23,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             base.OnEnable();
 
-            _so = ScriptDocGeneratorSO.Instance;
+            _panelSO = ScriptDocGeneratorPanelSO.Instance;
 
-            ScriptDocGeneratorSO.ToastRequested -= ShowToast;
-            ScriptDocGeneratorSO.ToastRequested += ShowToast;
+            ScriptDocGeneratorPanelSO.ToastRequested -= ShowToast;
+            ScriptDocGeneratorPanelSO.ToastRequested += ShowToast;
 
             AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
             AesirInspectorLanguageSettingsSO.LanguageChanged += Repaint;
@@ -35,7 +35,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         protected override void OnDisable()
         {
             base.OnDisable();
-            ScriptDocGeneratorSO.ToastRequested -= ShowToast;
+            ScriptDocGeneratorPanelSO.ToastRequested -= ShowToast;
             AesirInspectorLanguageSettingsSO.LanguageChanged -= Repaint;
         }
 
@@ -44,7 +44,9 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         public static void OpenWindow()
         {
             if (!ScriptDocGeneratorUtility.EnsureInitialized())
+            {
                 return;
+            }
 
             var window = GetWindow<ScriptDocGeneratorWindow>();
             window.titleContent = new GUIContent(WindowName);
@@ -54,13 +56,16 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
 
         protected override void DrawEditor(int index)
         {
-            if (_so == null)
+            if (_panelSO == null)
             {
-                _so = ScriptDocGeneratorSO.Instance;
-                if (_so == null) return;
+                _panelSO = ScriptDocGeneratorPanelSO.Instance;
+                if (_panelSO == null)
+                {
+                    return;
+                }
             }
 
-            _soTree ??= PropertyTree.Create(_so);
+            _soTree ??= PropertyTree.Create(_panelSO);
             _soTree.Draw(false);
         }
 
