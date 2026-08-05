@@ -15,17 +15,6 @@ namespace Runestone.AesirArchitecture
     /// <seealso cref="MonoLifecycleEvent"/>
 
     /// <summary>
-    /// 自定义 Start 生命周期。对应 <see cref="MonoLifecycleEvent.Start"/>。
-    /// </summary>
-    public interface ICustomStart
-    {
-        /// <summary>
-        /// 在 Start 阶段执行的自定义逻辑
-        /// </summary>
-        void OnCustomStart();
-    }
-
-    /// <summary>
     /// 自定义 FixedUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.FixedUpdate"/>。
     /// </summary>
     public interface ICustomFixedUpdate
@@ -100,5 +89,16 @@ namespace Runestone.AesirArchitecture
         /// 在应用被系统暂停或恢复时执行的自定义逻辑
         /// </summary>
         void OnCustomApplicationPause();
+    }
+
+    /// <summary>
+    /// 自定义 OnApplicationQuit 生命周期。对应 <see cref="MonoLifecycleEvent.OnApplicationQuit"/>。
+    /// </summary>
+    public interface ICustomOnApplicationQuit
+    {
+        /// <summary>
+        /// 在应用退出时执行的自定义逻辑
+        /// </summary>
+        void OnCustomApplicationQuit();
     }
 }

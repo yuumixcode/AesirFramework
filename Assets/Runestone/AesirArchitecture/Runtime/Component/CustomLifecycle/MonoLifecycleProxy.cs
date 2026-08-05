@@ -36,7 +36,7 @@ namespace Runestone.AesirArchitecture
     /// </para>
     /// </remarks>
     /// <seealso cref="MonoLifecycleEvent"/>
-    /// <seealso cref="ICustomStart"/>
+    /// <seealso cref="ICustomFixedUpdate"/>
     /// <seealso cref="MiniEvent"/>
     /// <seealso cref="AesirArchitecturePlayerLoop"/>
     [DisallowMultipleComponent]
@@ -184,11 +184,6 @@ namespace Runestone.AesirArchitecture
 
             var handles = new List<AutoRemoveListenerHandle>();
 
-            if (obj is ICustomStart s)
-            {
-                handles.Add(AddListener(MonoLifecycleEvent.Start, s.OnCustomStart));
-            }
-
             if (obj is ICustomFixedUpdate fu)
             {
                 handles.Add(AddListener(MonoLifecycleEvent.FixedUpdate, fu.OnCustomFixedUpdate));
@@ -222,6 +217,11 @@ namespace Runestone.AesirArchitecture
             if (obj is ICustomOnApplicationPause ap)
             {
                 handles.Add(AddListener(MonoLifecycleEvent.OnApplicationPause, ap.OnCustomApplicationPause));
+            }
+
+            if (obj is ICustomOnApplicationQuit aq)
+            {
+                handles.Add(AddListener(MonoLifecycleEvent.OnApplicationQuit, aq.OnCustomApplicationQuit));
             }
 
             return new AutoRemoveListenerHandle(() =>
@@ -262,11 +262,6 @@ namespace Runestone.AesirArchitecture
             RegisterToPlayerLoop();
         }
 
-        void Start()
-        {
-            InvokeEvent(MonoLifecycleEvent.Start);
-        }
-
         void FixedUpdate()
         {
             InvokeEvent(MonoLifecycleEvent.FixedUpdate);
@@ -290,6 +285,11 @@ namespace Runestone.AesirArchitecture
         void OnApplicationPause(bool pauseStatus)
         {
             InvokeEvent(MonoLifecycleEvent.OnApplicationPause);
+        }
+
+        void OnApplicationQuit()
+        {
+            InvokeEvent(MonoLifecycleEvent.OnApplicationQuit);
         }
 
         void OnDestroy()
