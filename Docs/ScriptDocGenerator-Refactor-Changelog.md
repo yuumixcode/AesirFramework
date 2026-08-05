@@ -17,6 +17,7 @@
 - **多程序集批量分析模式**：`ScriptDocGeneratorSO.TypeSource` 枚举新增 `MultipleAssemblies` 模式，支持同时分析多个程序集的所有类型
 - **源码解析单元测试**：新增 33 个测试覆盖块注释、全限定键、命名空间、单行/多行 summary、多文件合并、多行属性声明、泛型方法、表达式体泛型方法、重载方法、嵌套类型等场景
 - **重载前缀单元测试**：新增 4 个测试覆盖 2/3/4 个重载方法和非重载方法的 `[Overload]` 前缀验证
+- **多行方法声明测试**：新增 1 个测试验证参数跨行声明时重载方法的 summary 正确区分
 
 ## Changed
 
@@ -26,6 +27,8 @@
 - **OdinSourceFileHelper 精简**：移除花括号跟踪、类型体定位、字符串净化等复杂逻辑，仅保留源文件查找与成员名提取
 - **Summary 解析优先级**：优先检查 `[Summary]` 特性，有则直接返回；无则回退到源代码 XML `/// <summary>` 注释解析
 - **测试程序集依赖更新**：新增 OdinIntegration 程序集引用和 `ODIN_INSPECTOR` 定义约束
+- **反射解析器迁移至 Runtime/Unity**：将反射解析器（19 个 Runtime 文件）从 `Runtime/OdinIntegration` 迁移到 `Runtime/Unity`，使 `[Summary]` 和 `[ReferenceLinkURL]` 特性不再依赖 `ODIN_INSPECTOR` 程序集约束
+- **Editor 端目录重组**：源码解析工具重组到 `SourceFileTool/` 子目录，Summary 工具重组到 `SummaryAttributeTool/` 子目录
 
 ## Removed
 
@@ -47,6 +50,7 @@
 - **`ReferenceLinkURL` 特性在文档中显示不全**：`[ReferenceLinkURL("https://...")]` 特性在生成的文档中仅显示为 `[ReferenceLinkURL]`（不含 URL 参数）。修复后完整显示特性及其参数
 - **文件名与类型名不匹配时源文件无法找到**：当一个 `.cs` 文件中定义了多个类型且文件名不与任何类型名匹配时（如 `Capabilities.cs` 中定义 7 个接口），所有类型的 summary 均为空。修复后通过全局内容扫描找到源文件，所有类型的 summary 可正常解析
 - **`null` 关键字被误提取为成员名**：源代码中的 `return null;` 语句，`null` 被误提取为成员名。修复后 `null` 被加入关键字过滤集合，不再被提取
+- **多行方法声明参数跨行时参数类型提取失败**：当方法声明的 `(` 和 `)` 不在同一行（参数跨多行）时，参数类型列表无法提取，导致重载方法的 summary 键缺少参数后缀。修复后通过跨行收集声明文本（`CollectFullDeclaration`）直到括号匹配，再提取参数类型
 
 ## 统计
 
@@ -55,6 +59,6 @@
 | 删除文件 | 9 个（OdinBridge 4 + Panel 5） |
 | 迁移文件 | 21 个（ReflectionAnalyzer 18 + SummaryTool 3） |
 | 新增文件 | 3 个（SourceFileEntry、SourceParsingTests、OverloadPrefixTests） |
-| 修复问题 | 12 个 |
-| 新增测试 | 37 个（SourceParsingTests 33 + OverloadPrefixTests 4） |
-| 总测试数 | 106 个全部通过 |
+| 修复问题 | 13 个 |
+| 新增测试 | 38 个（SourceParsingTests 34 + OverloadPrefixTests 4） |
+| 总测试数 | 107 个全部通过 |
