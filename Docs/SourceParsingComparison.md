@@ -246,6 +246,28 @@ File.ReadAllText ──→ sourceScriptText
 | 不处理多行逐字字符串 `@"..."` | 跨行逐字字符串中的 `{` 同样会干扰 |
 | 成员名提取依赖正则 | 对于非常规的声明格式（如使用 `global::` 前缀），可能提取失败 |
 | 源文件必须可找到 | 编译型类型（DLL 中的类型）无法解析源文件，返回 null（已缓存 null） |
+| **文件名与类型名不匹配时无法找到源文件** | 见下文 5.1.1 节 |
+
+#### 5.1.1 文件名与类型名不匹配（已通过全局内容扫描解决）
+
+**场景**：一个 `.cs` 文件中定义了多个类型，且文件名不与其中任何一个类型名匹配。
+
+**示例**：`Capabilities.cs` 中定义了 `IContextHolder`、`ICanSetContext`、`ICanGetModel` 等 7 个接口，但文件名是 `Capabilities`。
+
+**原因**：`AssetDatabase.FindAssets("TypeName t:MonoScript")` 按**资产名**（即文件名）搜索。搜索 `ICanExecuteCommand` 不会返回 `Capabilities.cs`，因为资产名是 `Capabilities` 而非 `ICanExecuteCommand`。
+
+**四级查找策略**：
+
+| 阶段 | 行为 | 对此场景的结果 |
+|------|------|--------------|
+| Stage 1 — 精确文件名 + `GetClass()` | `FindAssets("ICanExecuteCommand")` 不返回 `Capabilities.cs` | 失败 |
+| Stage 2 — `GetClass()` 验证 | 同上，`guids` 为空 | 失败 |
+| Stage 3 — 内容正则（在 guids 结果中搜索） | 同上，`guids` 为空 | 失败 |
+| Stage 4 — **全局内容扫描** | 扫描所有 `.cs` 文件内容，正则匹配 `interface ICanExecuteCommand` | **成功** |
+
+**Stage 4 实现**：当 Stage 1-3 全部失败（`guids` 为空）时，遍历 `AssetDatabase.FindAssets("t:MonoScript")` 返回的所有脚本，读取 `.cs` 文件内容，用正则 `\b(class|struct|enum|interface)\s+(\w+)` 匹配类型名。
+
+**性能影响**：首次触发 Stage 4 时需扫描项目中所有 `.cs` 文件内容。后续查询命中 `Type → SourceFileEntry[]` 缓存后为 O(1)。
 
 ### 5.2 XmlSummaryTool
 

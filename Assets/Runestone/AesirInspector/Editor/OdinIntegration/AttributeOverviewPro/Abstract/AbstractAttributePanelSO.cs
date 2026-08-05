@@ -84,11 +84,11 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             AesirInspectorLanguageSettingsSO.LanguageChanged -= OnLanguageChanged;
         }
 
-        [OnInspectorInit]
-        [PropertyOrder(-1000)]
         /// <summary>
         /// 初始化面板，子类中调用 SetData 完成数据绑定。
         /// </summary>
+        [OnInspectorInit]
+        [PropertyOrder(-1000)]
         public abstract void Initialize();
 
         /// <summary>

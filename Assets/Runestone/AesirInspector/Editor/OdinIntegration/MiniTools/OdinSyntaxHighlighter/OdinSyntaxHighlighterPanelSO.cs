@@ -1,4 +1,5 @@
 using Sirenix.OdinInspector;
+using Sirenix.Utilities;
 using UnityEngine;
 
 namespace Runestone.AesirInspector.OdinIntegration.Editor
@@ -12,7 +13,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         /// EditorBuildSettings 存储引用的 Key
         /// </summary>
         static readonly string ConfigName =
-            OdinBridgeLocator.Bridge.GetFriendlyFullName(typeof(OdinSyntaxHighlighterPanelSO));
+            typeof(OdinSyntaxHighlighterPanelSO).GetNiceFullName();
 
         [PropertyOrder(-100)]
         public BilingualHeaderControl bilingualHeader;

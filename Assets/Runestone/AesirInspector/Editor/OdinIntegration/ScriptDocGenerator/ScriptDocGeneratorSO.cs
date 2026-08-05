@@ -6,6 +6,7 @@ using System.Reflection;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Serialization;
+using Sirenix.Utilities;
 using Sirenix.Utilities.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -21,7 +22,8 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             SingleType,
             MultipleTypes,
-            SingleAssembly
+            SingleAssembly,
+            MultipleAssemblies
         }
 
         const string ScriptDocGeneratorRootPath =
@@ -35,7 +37,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         const string NoneAssembly = "None Assembly";
 
         static readonly string ConfigName =
-            OdinBridgeLocator.Bridge.GetFriendlyFullName(typeof(ScriptDocGeneratorSO));
+            typeof(ScriptDocGeneratorSO).GetNiceFullName();
 
         static ValueDropdownList<string> _currentDomainAssemblies;
         bool _hasFinishedAnalyze;
@@ -85,6 +87,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         [SerializeField]
         string targetAssemblyFullName;
 
+        [PropertyOrder(35)]
+        [SerializeField]
+        List<string> selectedAssemblyFullNames = new List<string>();
+
         [PropertyOrder(90)]
         [OdinSerialize]
         ITypeData _typeData;
@@ -118,6 +124,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         bool IsSingleType => typeSource == TypeSource.SingleType;
         bool IsMultipleType => typeSource == TypeSource.MultipleTypes;
         bool IsSingleAssembly => typeSource == TypeSource.SingleAssembly;
+        bool IsMultipleAssemblies => typeSource == TypeSource.MultipleAssemblies;
 
         bool ShowSaveFolderPath => IsMultipleType && _isCustomizingSaveConfig && !typesCache;
         bool CanShowTemporaryTypes => IsMultipleType && !typesCache;
@@ -126,9 +133,11 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                                                               (IsMultipleType && _typeDataList is
                                                                   { Count: > 0 }) ||
                                                               (IsSingleAssembly && _typeDataList is
+                                                                  { Count: > 0 }) ||
+                                                              (IsMultipleAssemblies && _typeDataList is
                                                                   { Count: > 0 }));
 
-        bool IsNeedTypeAnalysisDataList => IsMultipleType || IsSingleAssembly;
+        bool IsNeedTypeAnalysisDataList => IsMultipleType || IsSingleAssembly || IsMultipleAssemblies;
 
         void OnEnable()
         {
@@ -153,6 +162,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
             ResetTypesCacheSOFolderPath();
             ResetIsCustomizingSaveConfig();
             ResetSingleAssemblyFullName();
+            ResetSelectedAssemblyFullNames();
             ResetHasFinishedAnalyzed();
             ResetTypeAnalysisData();
         }
@@ -209,6 +219,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                 case TypeSource.SingleAssembly:
                     chineseText += " - [当前选择: 单程序集模式]";
                     englishText += " - [Current Selection: Single Assembly Mode]";
+                    break;
+                case TypeSource.MultipleAssemblies:
+                    chineseText += " - [当前选择: 多程序集模式]";
+                    englishText += " - [Current Selection: Multiple Assemblies Mode]";
                     break;
             }
 
@@ -321,6 +335,24 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     _typeDataList =
                         ScriptDocGeneratorUtility.AnalyzeSingleAssembly(targetAssemblyFullName);
                     break;
+                case TypeSource.MultipleAssemblies:
+                    if (selectedAssemblyFullNames is not { Count: > 0 })
+                    {
+                        Debug.LogError("请选择至少一个目标程序集");
+                        return;
+                    }
+
+                    selectedAssemblyFullNames.RemoveAll(string.IsNullOrEmpty);
+                    selectedAssemblyFullNames.RemoveAll(name => name == NoneAssembly);
+                    if (selectedAssemblyFullNames.Count == 0)
+                    {
+                        Debug.LogError("请选择有效的目标程序集，不能为 " + NoneAssembly);
+                        return;
+                    }
+
+                    _typeDataList =
+                        ScriptDocGeneratorUtility.AnalyzeMultipleAssemblies(selectedAssemblyFullNames);
+                    break;
             }
 
             _hasFinishedAnalyze = true;
@@ -348,6 +380,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                     break;
                 case TypeSource.MultipleTypes:
                 case TypeSource.SingleAssembly:
+                case TypeSource.MultipleAssemblies:
                     ScriptDocGeneratorUtility.GenerateMultipleTypeDocs(_typeDataList, docGeneratorSettings,
                         docFolderPath);
                     break;
@@ -496,6 +529,22 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                         nameof(ResetSingleAssemblyFullName)));
                 }
 
+                if (member.Name == nameof(selectedAssemblyFullNames))
+                {
+                    attributes.Add(new ShowIfAttribute(nameof(IsMultipleAssemblies)));
+                    attributes.Add(new BilingualTitleAttribute("目标程序集配置", "Multiple Assemblies Config"));
+                    attributes.Add(new ValueDropdownAttribute(nameof(GetAssemblyNameToFullName)));
+                    attributes.Add(new ListDrawerSettingsAttribute
+                    {
+                        NumberOfItemsPerPage = 5
+                    });
+                    attributes.Add(new HideLabelAttribute());
+                    attributes.Add(new InlineButtonAttribute(nameof(ResetSelectedAssemblyFullNames),
+                        SdfIconType.ArrowClockwise, ""));
+                    attributes.Add(new CustomContextMenuAttribute("Reset To Default",
+                        nameof(ResetSelectedAssemblyFullNames)));
+                }
+
                 if (member.Name == nameof(_typeData))
                 {
                     attributes.Add(new TitleGroupAttribute("$" + nameof(_typeAnalysisResultLabel)));
@@ -565,6 +614,11 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         void ResetSingleAssemblyFullName()
         {
             targetAssemblyFullName = string.Empty;
+        }
+
+        void ResetSelectedAssemblyFullNames()
+        {
+            selectedAssemblyFullNames = new List<string>();
         }
 
         void ResetHasFinishedAnalyzed()

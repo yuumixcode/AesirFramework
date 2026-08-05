@@ -15,8 +15,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             var monoScript = SelectionMonoScripts.First();
             var targetType = monoScript.GetClass();
-            var panel = ScriptDocGeneratorUtility.GetSingleScriptPanel();
-            panel.TargetType = targetType;
+            ScriptDocGeneratorSO.Instance.TargetType = targetType;
             Debug.Log("设置 Script Doc Generator 的 Target Type 为：" + targetType.FullName);
         }
 
@@ -38,10 +37,10 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
         {
             var monoScripts = SelectionMonoScripts.ToList();
             var types = monoScripts.Select(x => x.GetClass()).ToList();
-            var panel = ScriptDocGeneratorUtility.GetMultipleScriptsPanel();
-            var temporaryTypes = panel.TemporaryTypes;
+            var so = ScriptDocGeneratorSO.Instance;
+            var temporaryTypes = so.TemporaryTypes;
             temporaryTypes.AddRange(types);
-            panel.TemporaryTypes = temporaryTypes.Distinct().ToList();
+            so.TemporaryTypes = temporaryTypes.Distinct().ToList();
             foreach (var type in types)
             {
                 Debug.Log("添加到 Script Doc Generator 的 Temporary Types：" + type.FullName);

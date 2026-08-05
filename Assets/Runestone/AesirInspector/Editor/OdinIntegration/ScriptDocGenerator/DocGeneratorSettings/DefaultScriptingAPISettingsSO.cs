@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Sirenix.Utilities;
 
 namespace Runestone.AesirInspector.OdinIntegration.Editor
 {
@@ -13,7 +14,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
                                              "/ScriptDocGenerator/GeneratorSettings";
 
         static readonly string ConfigName =
-            OdinBridgeLocator.Bridge.GetFriendlyFullName(typeof(DefaultScriptingAPISettingsSO));
+            typeof(DefaultScriptingAPISettingsSO).GetNiceFullName();
 
         public static DefaultScriptingAPISettingsSO Instance =>
             ScriptableObjectSafeEditorUtility

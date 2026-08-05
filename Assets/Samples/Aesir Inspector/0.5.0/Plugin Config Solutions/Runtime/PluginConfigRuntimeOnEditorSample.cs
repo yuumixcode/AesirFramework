@@ -1,4 +1,5 @@
 using Runestone.AesirInspector.OdinIntegration;
+using Sirenix.Utilities;
 using UnityEngine;
 #if UNITY_EDITOR
 #endif
@@ -14,7 +15,7 @@ namespace Runestone.AesirInspector.Samples.PluginConfig
         public string runtimeName = "Runtime Name";
 
         static string ConfigName =>
-            OdinBridgeLocator.Bridge.GetFriendlyFullName(typeof(PluginConfigRuntimeOnEditorSample));
+            typeof(PluginConfigRuntimeOnEditorSample).GetNiceFullName();
 
         public static PluginConfigRuntimeOnEditorSample Instance
         {

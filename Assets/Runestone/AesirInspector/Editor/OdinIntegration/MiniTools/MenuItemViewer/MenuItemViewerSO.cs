@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
+using Sirenix.Utilities;
 using UnityEngine;
 
 namespace Runestone.AesirInspector.OdinIntegration.Editor
@@ -10,7 +11,7 @@ namespace Runestone.AesirInspector.OdinIntegration.Editor
     public class MenuItemViewerSO : ScriptableObject, IAesirInspectorReset
     {
         static readonly string ConfigName =
-            OdinBridgeLocator.Bridge.GetFriendlyFullName(typeof(MenuItemViewerSO));
+            typeof(MenuItemViewerSO).GetNiceFullName();
 
         public static BilingualData ToolMenuPath = new BilingualData("菜单项检查器", "MenuItemViewer");
 
