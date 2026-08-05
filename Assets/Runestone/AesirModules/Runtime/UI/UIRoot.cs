@@ -30,6 +30,12 @@ namespace Runestone.AesirModules
 
         static UIRoot _instance;
 
+        /// <summary>
+        /// 标记当前实例是否由 <see cref="Instance" /> getter 在运行时创建。
+        /// 预放置在场景中的实例此标记为 false，不调用 <see cref="UnityEngine.Object.DontDestroyOnLoad" />。
+        /// </summary>
+        static bool _createdByRuntime;
+
         static readonly Dictionary<UILayer, int> LayerSortOrders = new Dictionary<UILayer, int>
         {
             { UILayer.Background, 100 },
@@ -47,12 +53,26 @@ namespace Runestone.AesirModules
         {
             get
             {
-                if (_instance == null)
+                if (_instance != null)
                 {
-                    var go = new GameObject("[UIRoot]");
-                    _instance = go.AddComponent<UIRoot>();
+                    return _instance;
                 }
 
+                // 尝试在已加载的场景中查找预放置的实例
+                _instance = FindFirstObjectByType<UIRoot>();
+                if (_instance != null)
+                {
+                    return _instance;
+                }
+
+                // 未找到预放置实例 → 运行时创建，标记后由 Awake 决定是否 DDOL
+                _createdByRuntime = true;
+                var go = new GameObject("[UIRoot]");
+                // AddComponent 在主线程同步执行，Awake 会在 AddComponent 返回前完成，
+                // 此时 _createdByRuntime 已被 Awake 消费完毕，可以安全重置。
+                // 重置后标志不会残留，避免影响后续 Awake（如 Enter Play Mode 触发的 Domain Reload）。
+                _instance = go.AddComponent<UIRoot>();
+                _createdByRuntime = false;
                 return _instance;
             }
         }
@@ -68,9 +88,23 @@ namespace Runestone.AesirModules
             }
 
             _instance = this;
-            DontDestroyOnLoad(gameObject);
+
+            // 仅运行时创建的实例使用 DontDestroyOnLoad；场景中预放置的实例保留在场景中
+            if (_createdByRuntime)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
+
             UIModule.Instance.RegisterUIRoot(this);
             Initialize();
+        }
+
+        void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                _instance = null;
+            }
         }
 
         void Initialize()
