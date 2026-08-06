@@ -10,7 +10,7 @@ namespace Runestone.AesirArchitecture
     /// 游戏级生命周期阶段，对应 PlayerLoop 子系统插入点
     /// </summary>
     /// <remarks>
-    /// 各阶段对应的 PlayerLoop 插入位置：
+    /// 各阶段对应的 PlayerLoop 插入位置（按执行顺序）：
     /// <list type="bullet">
     /// <item><see cref="BeforeUpdate"/>：通过 <c>PlayerLoopUtility.InsertSystemBefore&lt;Update&gt;</c> 注入到
     /// <c>PlayerLoop.Update</c> 子系统之前，确保架构逻辑在每帧 Update 阶段开始前执行。</item>
@@ -18,17 +18,17 @@ namespace Runestone.AesirArchitecture
     /// <c>PlayerLoop.PostLateUpdate</c> 子系统之后，确保架构逻辑在每帧所有更新完成后执行，可读取当前帧的最终状态。</item>
     /// </list>
     /// </remarks>
-    public enum AesirArchitectureLifeCyclePhase
+    public enum AesirArchitectureLifecyclePhase
     {
         /// <summary>
         /// 逻辑帧开始：在 PlayerLoop.Update 之前执行，架构优先运算
         /// </summary>
-        BeforeUpdate = 1,
+        BeforeUpdate = 0,
 
         /// <summary>
         /// 逻辑帧结束：在 PlayerLoop.PostLateUpdate 之后执行，读取当前帧所有状态
         /// </summary>
-        AfterUpdate = 2
+        AfterUpdate = 1
     }
 
     /// <summary>
@@ -50,8 +50,8 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     public static class AesirArchitecturePlayerLoop
     {
-        static readonly Dictionary<AesirArchitectureLifeCyclePhase, List<HookEntry>> Hooks =
-            new Dictionary<AesirArchitectureLifeCyclePhase, List<HookEntry>>();
+        static readonly Dictionary<AesirArchitectureLifecyclePhase, List<HookEntry>> Hooks =
+            new Dictionary<AesirArchitectureLifecyclePhase, List<HookEntry>>();
 
         static readonly List<Action> DelayedCommands = new List<Action>();
         static bool _invoking;
@@ -65,7 +65,7 @@ namespace Runestone.AesirArchitecture
         static void Initialize()
         {
             Reset();
-            // 两个注入点各自独立检查，避免一个缺失导致另一个也跳过
+            // 三个注入点各自独立检查，避免一个缺失导致另一个也跳过
             if (!PlayerLoopUtility.ContainsSystem<AesirArchitectureScriptRunBeforeUpdate>())
             {
                 PlayerLoopUtility.InsertSystemBefore<Update>(new PlayerLoopSystem
@@ -94,7 +94,7 @@ namespace Runestone.AesirArchitecture
         /// <param name="phase">目标生命周期阶段，决定回调在哪一帧阶段执行</param>
         /// <param name="callback">每帧执行的回调委托，必须为非空委托实例</param>
         /// <param name="order">执行优先级，值越小越先执行；同 order 时按注册顺序执行</param>
-        public static void Register(AesirArchitectureLifeCyclePhase phase, Action callback, int order = 0)
+        public static void Register(AesirArchitectureLifecyclePhase phase, Action callback, int order = 0)
         {
             if (callback == null)
             {
@@ -123,7 +123,7 @@ namespace Runestone.AesirArchitecture
         /// 若在回调遍历期间调用此方法，注销操作不会立即执行，而是被缓存到延迟命令列表中，
         /// 待当前阶段所有回调遍历结束后才统一执行，以避免遍历期间修改集合导致异常。
         /// </remarks>
-        public static void Unregister(AesirArchitectureLifeCyclePhase phase, Action callback)
+        public static void Unregister(AesirArchitectureLifecyclePhase phase, Action callback)
         {
             if (_invoking)
             {
@@ -153,20 +153,20 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 获取指定阶段的已注册回调数量
         /// </summary>
-        public static int GetHookCount(AesirArchitectureLifeCyclePhase phase) =>
+        public static int GetHookCount(AesirArchitectureLifecyclePhase phase) =>
             Hooks.TryGetValue(phase, out var list) ? list.Count : 0;
 
         /// <summary>
         /// BeforeUpdate 阶段的 PlayerLoop 回调入口，供测试直接触发
         /// </summary>
-        internal static void OnBeforeUpdate() => InvokeHooks(AesirArchitectureLifeCyclePhase.BeforeUpdate);
+        internal static void OnBeforeUpdate() => InvokeHooks(AesirArchitectureLifecyclePhase.BeforeUpdate);
 
         /// <summary>
         /// AfterUpdate 阶段的 PlayerLoop 回调入口，供测试直接触发
         /// </summary>
-        internal static void OnAfterUpdate() => InvokeHooks(AesirArchitectureLifeCyclePhase.AfterUpdate);
+        internal static void OnAfterUpdate() => InvokeHooks(AesirArchitectureLifecyclePhase.AfterUpdate);
 
-        static void AddHook(AesirArchitectureLifeCyclePhase phase, Action callback, int order)
+        static void AddHook(AesirArchitectureLifecyclePhase phase, Action callback, int order)
         {
             if (!Hooks.TryGetValue(phase, out var list))
             {
@@ -179,7 +179,7 @@ namespace Runestone.AesirArchitecture
             _sortDirty = true;
         }
 
-        static void RemoveHook(AesirArchitectureLifeCyclePhase phase, Action callback)
+        static void RemoveHook(AesirArchitectureLifecyclePhase phase, Action callback)
         {
             if (!Hooks.TryGetValue(phase, out var list))
             {
@@ -225,7 +225,7 @@ namespace Runestone.AesirArchitecture
             _sortDirty = false;
         }
 
-        static void InvokeHooks(AesirArchitectureLifeCyclePhase phase)
+        static void InvokeHooks(AesirArchitectureLifecyclePhase phase)
         {
             if (!Hooks.TryGetValue(phase, out var list) || list.Count == 0)
             {
