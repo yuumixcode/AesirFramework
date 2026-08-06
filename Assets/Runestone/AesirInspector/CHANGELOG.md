@@ -8,6 +8,12 @@
 
 ---
 
+## [0.8.0] - 2026-08-06
+
+### Changed
+
+- 版本号与 Aesir Architecture / Aesir Modules 同步更新至 `0.8.0`，本包本版本无功能性变更
+
 ## [0.7.0] - 2026-08-05
 
 ### Changed

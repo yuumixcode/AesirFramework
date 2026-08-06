@@ -19,9 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.7.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.7.0** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.7.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.8.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.8.0** |
+| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.8.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
 > *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
@@ -30,6 +30,45 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Inspector** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 同时依赖 Aesir Architecture + Aesir Inspector / depends on BOTH Aesir Architecture AND Aesir Inspector
+
+---
+
+## [0.8.0] - 2026-08-06
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Fixed
+
+- **MonoLifecycleProxy 排序 Bug 修复** — `InvokeEvent` 原先排序 `_sortedListeners` 后仍调用 `MiniEvent.Invoke()`（按注册顺序），导致 `order` 参数无效。改为直接遍历 `_sortedListeners` 按排序结果调用回调。移除 `MiniEvent` 死代码（`_events` 字典、`GetOrCreateEvent` 方法）
+
+#### Removed
+
+- **移除 `BeforeFixedUpdate` 事件** — 该事件通过 PlayerLoop 每帧触发，但 `FixedUpdate` 并非每帧执行，语义误导且无实际使用。涉及删除 `MonoLifecycleEvent.BeforeFixedUpdate` 枚举值、`AesirArchitectureLifecyclePhase.BeforeFixedUpdate` 枚举值、PlayerLoop 注入逻辑、`ICustomBeforeFixedUpdate` 接口、`MonoLifecycleProxy` 中对应的注册/注销分支
+
+#### Changed
+
+- **`AesirArchitectureLifeCyclePhase` → `AesirArchitectureLifecyclePhase`** — 统一拼写为 Lifecycle（一个单词）
+- **`FindFirstObjectByType` → `FindAnyObjectByType`** — 后者不依赖 InstanceID 排序，在 Unity 6 中向前兼容
+- **`ClearAllListeners` 不再注销 PlayerLoop** — PlayerLoop 注销移至 `OnDestroy`，避免测试间 PlayerLoop 注册丢失
+- **新增 `MonoLifecycleProxyTests`** — PlayMode 测试覆盖订阅、排序、稳定排序、句柄取消订阅、监听者数量、全帧级事件顺序
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- **`FindFirstObjectByType` → `FindAnyObjectByType`** — 所有 MonoBehaviour 单例（`AesirModules`、`UIRoot`、`UIModule`、`EventModule`、`SceneModule`）的 `Instance` getter 改用 `FindAnyObjectByType`，后者不依赖 InstanceID 排序，在 Unity 6 中向前兼容
+
+---
+
+### [inspector] Aesir Inspector
+
+#### Changed
+
+- 版本号与 Aesir Architecture / Aesir Modules 同步更新至 `0.8.0`，本包本版本无功能性变更
 
 ---
 
