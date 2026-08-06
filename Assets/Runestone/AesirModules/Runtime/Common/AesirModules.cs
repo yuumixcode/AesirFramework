@@ -43,7 +43,8 @@ namespace Runestone.AesirModules
                 }
 
                 // 尝试在已加载的场景中查找预放置的实例
-                _instance = FindFirstObjectByType<AesirModules>();
+                // 使用 FindAnyObjectByType 而非 FindFirstObjectByType，后者因依赖 InstanceID 排序在 Unity 6 中已废弃
+                _instance = FindAnyObjectByType<AesirModules>();
                 if (_instance != null)
                 {
                     return _instance;

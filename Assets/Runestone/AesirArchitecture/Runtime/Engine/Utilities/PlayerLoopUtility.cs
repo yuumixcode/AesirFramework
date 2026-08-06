@@ -7,7 +7,7 @@ namespace Runestone.AesirArchitecture
     /// <summary>
     /// PlayerLoop 操作的静态工具类，提供子系统的插入、查询与描述功能。
     /// <para>
-    /// 供框架内部和外部用户扩展 PlayerLoop，不局限于 <see cref="AesirArchitectureLifeCyclePhase" /> 预定义阶段。
+    /// 供框架内部和外部用户扩展 PlayerLoop，不局限于 <see cref="AesirArchitectureLifecyclePhase" /> 预定义阶段。
     /// </para>
     /// </summary>
     public static class PlayerLoopUtility
