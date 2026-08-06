@@ -18,7 +18,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// </remarks>
     /// <seealso cref="AesirArchitecturePlayerLoop"/>
     /// <seealso cref="PlayerLoopUtility"/>
-    /// <seealso cref="AesirArchitectureLifeCyclePhase"/>
+    /// <seealso cref="AesirArchitectureLifecyclePhase"/>
     public class AesirArchitecturePlayerLoopTests
     {
         PlayerLoopSystem _originalLoop;
@@ -170,29 +170,29 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitectureLifeCyclePhase.BeforeUpdate"/> 和 <see cref="AesirArchitectureLifeCyclePhase.AfterUpdate"/> 两个阶段的注册互不干扰。
+        /// 验证 <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate"/> 和 <see cref="AesirArchitectureLifecyclePhase.AfterUpdate"/> 两个阶段的注册互不干扰。
         /// <para>预期：两个阶段各自计数为 1，注册到一阶段的回调不出现在另一阶段。</para>
         /// </summary>
         /// <remarks>
-        /// 框架使用 <c>Dictionary&lt;AesirArchitectureLifeCyclePhase, List&lt;HookEntry&gt;&gt;</c> 按阶段隔离回调。
+        /// 框架使用 <c>Dictionary&lt;AesirArchitectureLifecyclePhase, List&lt;HookEntry&gt;&gt;</c> 按阶段隔离回调。
         /// 如果阶段隔离失败（如键冲突或共享列表），注册到 BeforeUpdate 的回调可能在 AfterUpdate 阶段也被执行，
         /// 导致同一逻辑被重复调用或在不正确的帧阶段执行。
         /// </remarks>
         /// <seealso cref="AesirArchitecturePlayerLoop.Register"/>
         /// <seealso cref="AesirArchitecturePlayerLoop.GetHookCount"/>
-        /// <seealso cref="AesirArchitectureLifeCyclePhase"/>
+        /// <seealso cref="AesirArchitectureLifecyclePhase"/>
         [Test]
         public void Register_BeforeAndAfterUpdate_AreDistinct()
         {
             AesirArchitecturePlayerLoop.Reset();
 
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.BeforeUpdate, () => { });
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.AfterUpdate, () => { });
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, () => { });
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.AfterUpdate, () => { });
 
             Assert.AreEqual(1,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifeCyclePhase.BeforeUpdate));
+                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate));
             Assert.AreEqual(1,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifeCyclePhase.AfterUpdate));
+                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.AfterUpdate));
             AesirArchitectureDebug.LogTestInfo("Register(BeforeUpdate/AfterUpdate): 两个阶段注册互不干扰，各自计数为 1");
         }
 
@@ -210,14 +210,14 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void Clear_RemovesAllRegisteredHooks()
         {
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.BeforeUpdate, () => { });
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, () => { });
             Assert.AreEqual(1,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifeCyclePhase.BeforeUpdate));
+                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate));
 
             AesirArchitecturePlayerLoop.Reset();
 
             Assert.AreEqual(0,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifeCyclePhase.BeforeUpdate));
+                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate));
             AesirArchitectureDebug.LogTestInfo("Clear: 成功清除之前注册的所有回调");
         }
 
@@ -238,15 +238,15 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void Register_SameOrder_ExecutesInRegistrationOrder()
         {
             var executionOrder = new List<int>();
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.BeforeUpdate,
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(1));
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.BeforeUpdate,
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(2));
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.BeforeUpdate,
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(3), -1);
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.BeforeUpdate,
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(4), 1);
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifeCyclePhase.BeforeUpdate,
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(5));
 
             // 直接调用 internal 方法（通过 InternalsVisibleTo），替代反射
