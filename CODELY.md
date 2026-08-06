@@ -15,14 +15,14 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.5.0 | `Runestone.AesirArchitecture` | 渐进式 MVP/MVC 架构框架 — 能力接口组合、命令模式、查询模式、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.5.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器） |
-| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.5.0 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具、Odin Inspector 可选集成 |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.8.0 | `Runestone.AesirArchitecture` | 渐进式 MVP/MVC 架构框架 — 能力接口组合、命令模式、查询模式、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.8.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器） |
+| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.8.0 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具、Odin Inspector 可选集成 |
 
 
 ---
 
-## Aesir Architecture（0.5.0）
+## Aesir Architecture（0.8.0）
 
 
 
@@ -78,7 +78,7 @@
 
 ---
 
-## Aesir Modules（0.5.0）
+## Aesir Modules（0.8.0）
 
 
 ### UI 框架
@@ -103,7 +103,7 @@
 
 ---
 
-## Aesir Inspector（0.5.0）
+## Aesir Inspector（0.8.0）
 
 
 ### 核心功能
@@ -198,7 +198,7 @@ Architecture 和 Modules 的示例有各自的 asmdef（如 `Runestone.AesirArch
 | 场景 | 路径 | 用途 |
 |------|------|------|
 | SampleScene | `Assets/Scenes/SampleScene.unity` | 默认 Unity 示例场景 |
-| SampleForCounterMvp | `Assets/Samples/Aesir Architecture/0.5.0/UI Counter-MVP/Scene/SampleForCounterMvp.unity` | MVP 计数器示例 — 包含增加/减少/重置按钮的 Canvas |
+| SampleForCounterMvp | `Assets/Samples/Aesir Architecture/0.8.0/UI Counter-MVP/Scene/SampleForCounterMvp.unity` | MVP 计数器示例 — 包含增加/减少/重置按钮的 Canvas |
 
 
 ### 当前场景层级（SampleForCounterMvp）
@@ -218,7 +218,7 @@ EventSystem
 
 ## 示例
 
-### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.5.0/`）
+### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.8.0/`）
 
 
 1. **Counter-MVC** — MVC 模式：Context → Controller → Command → Model → View 事件通知
@@ -323,7 +323,7 @@ Assets/
 │           ├── development.md
 │           └── en/                  # 英文文档（README, CHANGELOG）
 ├── Samples/                          # 导入的 Architecture 示例
-│   └── Aesir Architecture/0.5.0/
+│   └── Aesir Architecture/0.8.0/
 
 ├── Scenes/                           # 示例场景
 ├── Settings/                         # URP 资源（Renderer2D, UniversalRP）、场景模板
@@ -388,7 +388,7 @@ Assets/
 ### 编辑器
 
 1. 在 Unity 2022.3.62f3c1（或团结引擎等效版本）中打开项目
-2. 打开 `Assets/Samples/Aesir Architecture/0.5.0/UI Counter-MVP/Scene/SampleForCounterMvp.unity`
+2. 打开 `Assets/Samples/Aesir Architecture/0.8.0/UI Counter-MVP/Scene/SampleForCounterMvp.unity`
 
 3. 按 **Play** 运行 MVP 计数器示例
 
@@ -445,7 +445,7 @@ Unity -batchmode -quit -projectPath . \
 - 无 Addressables 配置（UI 默认使用 `ResourcesUILoader`；`IUIAssetLoader` 接口已预留 Addressables 支持）
 - URP 设置位于 `Assets/Settings/UniversalRP.asset` 和 `Renderer2D.asset`
 - Aesir Inspector `Third Party Notices.md` 包含占位内容（Semver/MyComponent）— 需更新
-- Aesir Inspector 版本为 `0.5.0`
+- Aesir Inspector 版本为 `0.8.0`
 
 
 ## Codely Structured Memories
@@ -469,6 +469,7 @@ Unity -batchmode -quit -projectPath . \
 - [2026-08-05 17:28:17] 允许自由使用 #region 分段，无最低代码量要求。**Why:** 用户明确要求不限制 region 的行数门槛。**How to apply:** 代码中可按逻辑分区自由使用 #region/#endregion，即使分区很短也允许。
 - [2026-08-05 17:49:28] 使用 Unity API 时优先选择 Unity 6 兼容且未废弃的版本。**Why:** `FindFirstObjectByType` 在 Unity 6（2025 年底）已被标记 Obsolete，因依赖 InstanceID 排序，未来 InstanceID 将被 EntityId 替代；`FindAnyObjectByType` 不依赖排序，性能更好且向前兼容。**How to apply:** 单例场景搜索用 `FindAnyObjectByType<T>()` 而非 `FindFirstObjectByType<T>()`；引入新 API 时先确认其在 Unity 6 中的废弃状态。
 - [2026-08-05 18:05:58] 代码标识符中使用 Lifecycle（一个单词）而非 LifeCycle（两个单词）。**Why:** 用户明确指出"生命周期单词以 Lifecycle 为正确"，并要求全量替换 LifeCycle → Lifecycle（含枚举名 AesirArchitectureLifeCyclePhase → AesirArchitectureLifecyclePhase）。**How to apply:** 新建涉及"生命周期"的类型/方法/字段时，统一使用 Lifecycle 拼写，不要写成 LifeCycle。
+- [2026-08-06 09:43:18] 移除不实用的生命周期事件时，优先保留语义清晰、执行频率可预期的事件。**Why:** BeforeFixedUpdate 通过 PlayerLoop 每帧触发，但 FixedUpdate 并非每帧执行，导致语义误导（名字暗示"在 FixedUpdate 之前"但实际每帧都跑）。**How to apply:** 评估自定义生命周期事件时，确保事件名与实际触发频率一致；若框架提供 PlayerLoopUtility 供用户自行扩展，则不需要预置低实用性的事件阶段。
 
 ### Project
 - [2026-07-25 17:09:26] AttributeOverviewPro 子资产重构已完成并合并到 main（2026-07-25）：~194 个独立 .asset 文件合并为 3 个文件 — AttributeOverviewDatabase.asset（DatabaseSO + 70 PanelSO 子资产）、UnityExamples.asset（Unity 原生序列化 ExampleSO）、OdinExamples.asset（Odin 序列化 ExampleSO）。按序列化方式分离存储。初始化超时 bug 已修复（批量创建跳过逐次 SaveAssets）。
@@ -478,8 +479,8 @@ Unity -batchmode -quit -projectPath . \
 - [2026-07-30 21:40:27] 移除 Context 事件总线系统（2026-07-30）：从 Aesir Architecture 移除了 MiniEventBus&lt;TEvent&gt;、IEventArgs、ICanAddListener、ICanInvokeEvent，以及 IContext/AbstractContext 中的 AddListener/RemoveListener/InvokeEvent 方法和 CapabilityExtensions 中对应的扩展方法。保留 MiniEvent/MiniEvent&lt;T&gt; 和 ObservableValue&lt;T&gt; 作为独立事件机制。**Why:** 用户认为 Context 的 AddListener 不实用，QFramework 作者本人也优先使用 EasyEvent。**How to apply:** 角色接口（ICommand、IModel、IService、IView、IPresenter）不再继承 ICanInvokeEvent/ICanAddListener；事件通信应使用 MiniEvent 或 ObservableValue。
 - [2026-07-31 15:48:38] Event Module V2 已实现并编译通过（2026-07-31，简化版+性能优化）。当前状态：已移除 AbstractAttributeBound&lt;T&gt; 基类，EventModule 直接继承 AesirMonoBehaviour。双注册表分离（AttributeBindings + DynamicBindings，均为 public Dictionary）。BindingInfo 基类仅含 BindingKey/Subscriber/Priority + 抽象 Invoke()；StaticBindingInfo 持有 MethodInfo + 表达式树编译委托（Expression.Lambda.Compile，冷路径编译/热路径零反射，附详细 XML remarks 注释）；DynamicBindingInfo&lt;T&gt; 持有 Action&lt;T&gt; 直接委托。Script 订阅返回 AutoRemoveListenerHandle（与 MiniEvent 一致）。已移除 InvokeDelayed、IsInitialized、取消传播/密封/共享等机制。性能优化：object[] 循环外复用、count<=1 跳过 Sort、GetMethods 替代 GetMembers、缓存 MethodInfo。SubscriberPriority 枚举值为 First/High/Medium/Low/Last。设计文档位于 Docs/EventModule/（含 Feature-Roadmap.md 待完成功能清单）。**Why:** 参考商业插件 Game Event Hub，但以实用性为标准裁剪。**How to apply:** V2 运行时代码已完成；下一步创建 V2 Sample 验证脚本；后续功能见 Feature-Roadmap.md。
 - [2026-08-05 11:29:12] ScriptDocGenerator 模块重构完成（2026-08-04 至 2026-08-05，多轮迭代，已提交 commit e48edf7）：①移除 OdinBridge 桥接层，类型名称格式化改用 `#if ODIN_INSPECTOR` + `Sirenix.Utilities` 直接调用。②ReflectionAnalyzer 全部文件迁移到 Runtime/Unity/ScriptDocGenerator/（Attributes/AnalysisData/Core），SummaryTool 迁移到 Editor/OdinIntegration/ScriptDocGenerator/。③移除 OdinAutoTooltipAttributeProcessor。④重写 Summary 解析：优先 [Summary] 特性 → 源代码 XML 解析（块注释状态跟踪 + 全限定键）。⑤OdinSourceFileHelper 精简为 FindSourceFiles + ExtractMemberName + SourceFileEntry 缓存。⑥移除多 Panel 设计，回归单 ScriptDocGeneratorSO + TypeSource 枚举（新增 MultipleAssemblies 模式）+ OdinEditorWindow。⑦修复 13 个 bug：/// 前缀未移除、类型检测过滤过严、null 关键字缺失、ReferenceLinkURLAttribute 未格式化、泛型类型 FullName 反引号未去掉、Type 自身 summary 键重复追加成员名、表达式体泛型方法误匹配约束类型名、嵌套类型查询用错 DeclaringType、嵌套类型 + 分隔符未处理、重载方法 [Overload] 前缀重复追加、文件名与类型名不匹配时源文件无法找到、多行方法声明参数跨行时参数类型提取失败。⑧键格式：AssemblyName.Namespace.TypeName[.MemberName(ParamTypes)]——程序集名前缀避免跨程序集冲突，方法参数类型列表区分重载（含跨行声明 CollectFullDeclaration），嵌套类型去掉 OuterType+ 前缀。⑨新增 SourceParsingTests.cs（34 个测试）+ OverloadPrefixTests.cs（4 个测试），总计 107 个测试全部通过。⑩重构变更记录文档位于 Docs/ScriptDocGenerator-Refactor-Changelog.md。⑪反射解析器（19 个 Runtime 文件）从 Runtime/OdinIntegration 迁移到 Runtime/Unity，使 [Summary] 和 [ReferenceLinkURL] 特性不再依赖 ODIN_INSPECTOR 程序集约束。**Why:** Odin 已是强依赖，OdinBridge 降级模式是伪需求；整合模块减少跨层碎片化；多 Panel 设计过度碎片化；反射解析器不依赖 Odin 应放 Unity 层。**How to apply:** 类型名称格式化直接用 Sirenix API + #if；ScriptDocGenerator 反射解析器在 Runtime/Unity 层，编辑器在 Editor/OdinIntegration 层；单 SO + TypeSource 枚举切换模式；方法 summary 键带参数类型列表。
-- [2026-08-05 17:28:47] 单例模式重构（2026-08-05）：AesirArchitecture 和 AesirModules 的所有 MonoBehaviour 单例从无条件 DDOL 改为"预放置优先"模式。根单例（AesirArchitecture、AesirModules、UIRoot）使用 `static bool _createdByRuntime` 标志 + `FindAnyObjectByType` 场景搜索 + 条件 DDOL；子单例（MonoLifecycleProxy、RemoveListenerOnSceneUnloadedTrigger、EventModule、SceneModule、UIModule）在 Instance getter 中添加 `FindAnyObjectByType` 场景搜索，未找到才在父级下创建。同时移除了 AesirArchitecture 和 AesirModules 的 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)] Bootstrap()` 方法，因为它会在场景加载前创建 DDOL 实例，导致预放置实例 Awake 时发现 _instance 已存在而自毁。**Why:** 项目组负责人不想用 DontDestroyOnLoad（认为是黑盒），要搞多场景叠加加载；预放置实例应留在场景中随场景生命周期销毁。**How to apply:** 预放置单例在场景中即可，Instance 会自动发现；未预放置时运行时创建 + DDOL 保持向后兼容。CODELY.md 中"AesirArchitecture 通过 RuntimeInitializeOnLoadMethod 引导启动"的描述已过时。
-
+- [2026-08-06 09:43:30] 单例模式重构（2026-08-05）：AesirArchitecture 和 AesirModules 的所有 MonoBehaviour 单例从无条件 DDOL 改为"预放置优先"模式。根单例（AesirArchitecture、AesirModules、UIRoot）使用 `static bool _createdByRuntime` 标志 + `FindAnyObjectByType` 场景搜索 + 条件 DDOL；子单例（MonoLifecycleProxy、RemoveListenerOnSceneUnloadedTrigger、EventModule、SceneModule、UIModule）在 Instance getter 中添加 `FindAnyObjectByType` 场景搜索，未找到才在父级下创建。同时移除了 AesirArchitecture 和 AesirModules 的 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)] Bootstrap()` 方法，因为它会在场景加载前创建 DDOL 实例，导致预放置实例 Awake 时发现 _instance 已存在而自毁。**Why:** 项目组负责人不想用 DontDestroyOnLoad（认为是黑盒），要搞多场景叠加加载；预放置实例应留在场景中随场景生命周期销毁。**How to apply:** 预放置单例在场景中即可，Instance 会自动发现；未预放置时运行时创建 + DDOL 保持向后兼容。
+- [2026-08-06 09:43:36] MonoLifecycleProxy 排序 Bug 修复 + BeforeFixedUpdate 移除（2026-08-06，版本 0.8.0）：①排序 Bug — InvokeEvent 排序 _sortedListeners 后仍调用 MiniEvent.Invoke()（按注册顺序），改为直接遍历 _sortedListeners 按排序结果调用回调。移除 MiniEvent 死代码（_events 字典、GetOrCreateEvent）。②移除 BeforeFixedUpdate 事件 — 该事件通过 PlayerLoop 每帧触发但 FixedUpdate 并非每帧执行，语义误导且无实际使用。涉及删除 MonoLifecycleEvent 枚举值、AesirArchitectureLifecyclePhase 枚举值、PlayerLoop 注入逻辑、ICustomBeforeFixedUpdate 接口、MonoLifecycleProxy 注册分支。③ClearAllListeners 不再注销 PlayerLoop（移至 OnDestroy）。④新增 MonoLifecycleProxyTests — PlayMode 测试覆盖排序、稳定排序、句柄取消订阅、全帧级事件顺序。⑤AesirArchitectureLifeCyclePhase → AesirArchitectureLifecyclePhase 拼写统一。⑥FindFirstObjectByType → FindAnyObjectByType。**How to apply:** 版本已升至 0.8.0；MonoLifecycleEvent 枚举从 FixedUpdate=0 开始编号；AllFrameEvents 测试用 30 帧轮询 + 连续块匹配验证事件顺序（WaitForFixedUpdate 在 execute_csharp_script 协程运行器中不可靠）。
 
 ### Reference
 - [2026-07-24 21:08:41] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
