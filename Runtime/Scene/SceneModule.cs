@@ -55,7 +55,7 @@ namespace Runestone.AesirModules
         /// </summary>
         public IReadOnlyList<string> AddedScenePaths => _addedScenePaths;
 
-        #region *** 可调用的公共方法 ***
+        #region 公共方法
 
         /// <summary>
         /// 获取当前所有加载进度 (0-1) 的平均值
