@@ -53,7 +53,7 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// UI 专用相机。正交、depth=1、cullingMask=0。
+        /// UI 专用相机。正交、depth=1、cullingMask=含 UI 层 (5) 和 TransparentFX 层 (1)。
         /// </summary>
         public Camera UICamera => _uiRoot?.UICamera;
 
@@ -127,7 +127,27 @@ namespace Runestone.AesirModules
             ShowPanel(typeof(T), payload, path) as T;
 
         /// <summary>
+        /// 打开面板（泛型 + 强类型 payload）。payload 以泛型参数传递，调用侧获得编译期类型约束；
+        /// 面板内部仍经 <see cref="IUIPanel.Show(object)" /> 接收后按需转换。
+        /// </summary>
+        /// <typeparam name="TPanel">面板类型。</typeparam>
+        /// <typeparam name="TPayload">payload 类型。</typeparam>
+        /// <param name="payload">传递给 OnShow 的强类型数据。</param>
+        /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
+        /// <returns>面板实例，失败返回 null。</returns>
+        public TPanel ShowPanel<TPanel, TPayload>(TPayload payload, string path = null)
+            where TPanel : MonoBehaviour, IUIPanel =>
+            ShowPanel(typeof(TPanel), payload, path) as TPanel;
+
+        /// <summary>
         /// 打开面板。已存在则置顶并重新 Show；不存在则实例化并驱动生命周期。
+        /// <para>
+        /// 新面板以停用状态实例化，按 挂层 → <see cref="IUIPanel.Initialize" /> → <see cref="IUIPanel.Show" /> 顺序驱动，
+        /// Awake/OnEnable 推迟到 Show 内部激活时才触发，保证 OnEnable 可安全访问 OnInit 之后才有值的引用。
+        /// </para>
+        /// <para>
+        /// 面板注册以实例的实际类型为键；以基类类型 Show 后，需以实际类型（或面板内 <see cref="AesirBasePanel.HideSelf" />）关闭。
+        /// </para>
         /// </summary>
         /// <param name="panelType">面板类型。</param>
         /// <param name="payload">传递给 OnShow 的数据。</param>
@@ -149,12 +169,13 @@ namespace Runestone.AesirModules
                     return null;
                 }
 
-                var panelGo = Instantiate(prefab);
+                var panelGo = InstantiateInactive(prefab);
                 uiPanel = panelGo.GetComponent<IUIPanel>();
                 if (uiPanel == null)
                 {
                     AesirModulesDebug.LogError(panelGo, AesirModulesDebug.UIModuleTag,
                         "预制体[" + prefab.name + "]没有挂载实现了 IUIPanel 的组件");
+                    Destroy(panelGo);
                     return null;
                 }
 
@@ -167,12 +188,14 @@ namespace Runestone.AesirModules
 
                 uiPanel.Initialize();
                 uiPanel.Show(payload);
-                _uiPanelDict[panelType] = uiPanel;
-                _activatedPanelDict[panelType] = uiPanel;
+                var panelKey = uiPanel.GetType();
+                _uiPanelDict[panelKey] = uiPanel;
+                _activatedPanelDict[panelKey] = uiPanel;
                 return uiPanel;
             }
 
-            if (_activatedPanelDict.TryGetValue(panelType, out var activatedPanel))
+            var key = uiPanel.GetType();
+            if (_activatedPanelDict.TryGetValue(key, out var activatedPanel) && activatedPanel == uiPanel)
             {
                 var root = _uiRoot.GetLayerRoot(activatedPanel.Layer);
                 if (root != null && ((MonoBehaviour)activatedPanel).transform.parent != root)
@@ -185,7 +208,7 @@ namespace Runestone.AesirModules
                 return activatedPanel;
             }
 
-            if (_deactivatedPanelDict.TryGetValue(panelType, out var deactivatedPanel))
+            if (_deactivatedPanelDict.TryGetValue(key, out var deactivatedPanel) && deactivatedPanel == uiPanel)
             {
                 var root = _uiRoot.GetLayerRoot(deactivatedPanel.Layer);
                 if (root != null && ((MonoBehaviour)deactivatedPanel).transform.parent != root)
@@ -195,11 +218,13 @@ namespace Runestone.AesirModules
 
                 ((MonoBehaviour)deactivatedPanel).transform.SetAsLastSibling();
                 deactivatedPanel.Show(payload);
-                _deactivatedPanelDict.Remove(panelType);
-                _activatedPanelDict[panelType] = deactivatedPanel;
+                _deactivatedPanelDict.Remove(key);
+                _activatedPanelDict[key] = deactivatedPanel;
                 return deactivatedPanel;
             }
 
+            AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                $"面板 {key.Name} 存在于实例注册表，但既不在激活表也不在停用表，内部状态异常，无法显示");
             return null;
         }
 
@@ -211,28 +236,33 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 关闭面板。按 <see cref="IUIPanel.DestroyOnHide" /> 决定销毁或隐藏。
+        /// <para>状态字典以面板实例的实际类型为键，与 <see cref="ShowPanel(Type, object, string)" /> 的注册键保持一致。</para>
         /// </summary>
         /// <param name="panelType">面板类型。</param>
         public void HidePanel(Type panelType)
         {
             EnsureReady();
-            if (panelType == null || !_uiPanelDict.ContainsKey(panelType))
+            if (panelType == null || !_uiPanelDict.TryGetValue(panelType, out var panel))
             {
                 return;
             }
 
-            if (_activatedPanelDict.Remove(panelType, out var panel))
+            var panelKey = panel.GetType();
+            if (!_activatedPanelDict.TryGetValue(panelKey, out var activated) || activated != panel)
             {
-                if (panel.DestroyOnHide)
-                {
-                    _uiPanelDict.Remove(panelType);
-                    panel.DestroyPanel();
-                }
-                else
-                {
-                    panel.Hide();
-                    _deactivatedPanelDict[panelType] = panel;
-                }
+                return;
+            }
+
+            _activatedPanelDict.Remove(panelKey);
+            if (panel.DestroyOnHide)
+            {
+                _uiPanelDict.Remove(panelKey);
+                panel.DestroyPanel();
+            }
+            else
+            {
+                panel.Hide();
+                _deactivatedPanelDict[panelKey] = panel;
             }
         }
 
@@ -268,6 +298,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 预热面板。预实例化并隐藏面板，后续 <see cref="ShowPanel(Type, object, string)" /> 直接复用，
         /// 避免首次打开时的实例化卡顿。
+        /// <para>面板以停用状态实例化，预热期不触发 Awake/OnEnable，待首次 Show 时再激活。</para>
         /// </summary>
         /// <param name="panelType">面板类型。</param>
         /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
@@ -291,12 +322,13 @@ namespace Runestone.AesirModules
                 return false;
             }
 
-            var panelGo = Instantiate(prefab);
+            var panelGo = InstantiateInactive(prefab);
             var uiPanel = panelGo.GetComponent<IUIPanel>();
             if (uiPanel == null)
             {
                 AesirModulesDebug.LogError(panelGo, AesirModulesDebug.UIModuleTag,
                     "预制体[" + prefab.name + "]没有挂载实现了 IUIPanel 的组件");
+                Destroy(panelGo);
                 return false;
             }
 
@@ -308,9 +340,9 @@ namespace Runestone.AesirModules
             }
 
             uiPanel.Initialize();
-            panelGo.SetActive(false);
-            _uiPanelDict[panelType] = uiPanel;
-            _deactivatedPanelDict[panelType] = uiPanel;
+            var panelKey = uiPanel.GetType();
+            _uiPanelDict[panelKey] = uiPanel;
+            _deactivatedPanelDict[panelKey] = uiPanel;
             return true;
         }
 
@@ -347,6 +379,18 @@ namespace Runestone.AesirModules
             Instance.ShowPanel<T>(payload, path);
 
         /// <summary>
+        /// 静态快捷：打开面板（强类型 payload 版本，同 <see cref="ShowPanel{TPanel, TPayload}(TPayload, string)" />）。
+        /// </summary>
+        /// <typeparam name="TPanel">面板类型。</typeparam>
+        /// <typeparam name="TPayload">payload 类型。</typeparam>
+        /// <param name="payload">传递给 OnShow 的强类型数据。</param>
+        /// <param name="path">资源路径，用于加载预制体。使用 UIAssetLoader 加载。</param>
+        /// <returns>面板实例，失败返回 null。</returns>
+        public static TPanel Show<TPanel, TPayload>(TPayload payload, string path = null)
+            where TPanel : MonoBehaviour, IUIPanel =>
+            Instance.ShowPanel<TPanel, TPayload>(payload, path);
+
+        /// <summary>
         /// 静态快捷：关闭面板。
         /// </summary>
         /// <typeparam name="T">面板类型，须继承 <see cref="AesirBasePanel" />。</typeparam>
@@ -368,6 +412,57 @@ namespace Runestone.AesirModules
             Instance.PrewarmPanel<T>(path);
 
         // ---------------- 内部辅助 ----------------
+
+        /// <summary>
+        /// 面板实例被销毁时反向清理注册表（由 <see cref="AesirBasePanel.OnDestroy" /> 调用）。
+        /// 静态入口避免面板销毁阶段（如场景卸载）触发 <see cref="Instance" /> 的懒创建副作用。
+        /// </summary>
+        internal static void RemovePanelRecord(IUIPanel panel)
+        {
+            if (_instance == null)
+            {
+                return;
+            }
+
+            var panelKey = panel.GetType();
+            if (_instance._uiPanelDict.TryGetValue(panelKey, out var recorded) && recorded == panel)
+            {
+                _instance._uiPanelDict.Remove(panelKey);
+            }
+
+            if (_instance._activatedPanelDict.TryGetValue(panelKey, out var activated) && activated == panel)
+            {
+                _instance._activatedPanelDict.Remove(panelKey);
+            }
+
+            if (_instance._deactivatedPanelDict.TryGetValue(panelKey, out var deactivated) && deactivated == panel)
+            {
+                _instance._deactivatedPanelDict.Remove(panelKey);
+            }
+        }
+
+        /// <summary>
+        /// 以停用状态实例化面板预制体：克隆前临时停用源预制体，克隆后立即恢复。
+        /// 克隆体创建时不触发 Awake/OnEnable，保证生命周期严格为
+        /// 挂层 → <see cref="IUIPanel.Initialize" /> → <see cref="IUIPanel.Show" />，
+        /// Awake/OnEnable 推迟到 Show 内部激活时才触发。
+        /// </summary>
+        GameObject InstantiateInactive(GameObject prefab)
+        {
+            var wasActive = prefab.activeSelf;
+            if (wasActive)
+            {
+                prefab.SetActive(false);
+            }
+
+            var clone = Instantiate(prefab);
+            if (wasActive)
+            {
+                prefab.SetActive(true);
+            }
+
+            return clone;
+        }
 
         void EnsureReady()
         {

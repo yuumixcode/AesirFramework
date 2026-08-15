@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace Runestone.AesirModules
 {
     /// <summary>
-    /// UI Canvas 配置资产。创建路径：Create → Aesir Modules → UI Canvas Config。
+    /// UI Canvas 配置资产。创建路径：Assets → Create → Aesir Modules → UI → Default UICanvasConfig。
     /// </summary>
     public class UICanvasConfigSO : AesirScriptableObject
     {
