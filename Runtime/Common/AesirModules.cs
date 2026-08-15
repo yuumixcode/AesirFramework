@@ -22,10 +22,10 @@ namespace Runestone.AesirModules
         static AesirModules _instance;
 
         /// <summary>
-        /// 标记当前实例是否由 <see cref="Instance" /> getter 在运行时创建。
-        /// 预放置在场景中的实例此标记为 false，不调用 <see cref="UnityEngine.Object.DontDestroyOnLoad" />。
+        /// 一次性临时标记：通知下一次 <see cref="Awake" /> 调用需要执行 <see cref="UnityEngine.Object.DontDestroyOnLoad" />。
+        /// 由 <see cref="Instance" /> getter 在创建实例前置为 true，Awake 消费后立即重置为 false。
         /// </summary>
-        static bool _createdByRuntime;
+        static bool _pendingDontDestroyOnLoad;
 
         /// <summary>
         /// 获取全局唯一的架构管理器实例
@@ -51,13 +51,13 @@ namespace Runestone.AesirModules
                 }
 
                 // 未找到预放置实例 → 运行时创建，标记后由 Awake 决定是否 DDOL
-                _createdByRuntime = true;
+                _pendingDontDestroyOnLoad = true;
                 var go = new GameObject("[Aesir Modules]");
                 // AddComponent 在主线程同步执行，Awake 会在 AddComponent 返回前完成，
-                // 此时 _createdByRuntime 已被 Awake 消费完毕，可以安全重置。
+                // 此时 _pendingDontDestroyOnLoad 已被 Awake 消费完毕，可以安全重置。
                 // 重置后标志不会残留，避免影响后续 Awake（如 Enter Play Mode 触发的 Domain Reload）。
                 _instance = go.AddComponent<AesirModules>();
-                _createdByRuntime = false;
+                _pendingDontDestroyOnLoad = false;
 
                 return _instance;
             }
@@ -73,8 +73,8 @@ namespace Runestone.AesirModules
 
             _instance = this;
 
-            // 仅运行时创建的实例使用 DontDestroyOnLoad；场景中预放置的实例保留在场景中
-            if (_createdByRuntime)
+            // 仅需要跨场景持久化的实例使用 DontDestroyOnLoad；场景中预放置的实例保留在场景中
+            if (_pendingDontDestroyOnLoad)
             {
                 DontDestroyOnLoad(gameObject);
             }

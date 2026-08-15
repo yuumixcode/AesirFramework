@@ -1,5 +1,5 @@
 {
-  "name": "Runestone.AesirModules.Editor.OdinIntegration",
+  "name": "Runestone.AesirModules.Editor.OdinInspector",
   "rootNamespace": "Runestone.AesirModules.Editor",
   "references": [
     "Runestone.AesirModules",
