@@ -3,7 +3,7 @@
   "rootNamespace": "",
   "references": [
     "Runestone.AesirInspector",
-    "Runestone.AesirInspector.OdinIntegration"
+    "Runestone.AesirInspector.OdinInspector"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

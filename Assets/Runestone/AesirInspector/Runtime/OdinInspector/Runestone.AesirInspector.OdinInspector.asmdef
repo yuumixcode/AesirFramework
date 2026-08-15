@@ -1,6 +1,6 @@
 {
-  "name": "Runestone.AesirInspector.OdinIntegration",
-  "rootNamespace": "Runestone.AesirInspector.OdinIntegration",
+  "name": "Runestone.AesirInspector.OdinInspector",
+  "rootNamespace": "Runestone.AesirInspector.OdinInspector",
   "references": [
     "Runestone.AesirInspector"
   ],

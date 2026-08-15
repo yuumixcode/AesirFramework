@@ -1,10 +1,10 @@
 {
-  "name": "Runestone.AesirInspector.OdinIntegration.Editor",
-  "rootNamespace": "Runestone.AesirInspector.OdinIntegration.Editor",
+  "name": "Runestone.AesirInspector.Editor.OdinInspector",
+  "rootNamespace": "Runestone.AesirInspector.Editor.OdinInspector",
   "references": [
     "Runestone.AesirInspector",
     "Runestone.AesirInspector.Editor",
-    "Runestone.AesirInspector.OdinIntegration"
+    "Runestone.AesirInspector.OdinInspector"
   ],
   "includePlatforms": [
     "Editor"

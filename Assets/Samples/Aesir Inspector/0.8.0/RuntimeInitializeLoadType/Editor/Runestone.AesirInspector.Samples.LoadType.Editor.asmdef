@@ -4,7 +4,7 @@
   "references": [
     "Runestone.AesirInspector",
     "Runestone.AesirInspector.Editor",
-    "Runestone.AesirInspector.OdinIntegration"
+    "Runestone.AesirInspector.OdinInspector"
   ],
   "includePlatforms": [
     "Editor"

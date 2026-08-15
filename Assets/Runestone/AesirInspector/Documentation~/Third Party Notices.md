@@ -6,8 +6,10 @@ License Type: "MIT"
 
 [SemVer License](https://github.com/myusername/semver/blob/master/License.txt)
 
-Component Name: MyComponent
+Component Name: JakePineOdinTools
 
-License Type: "MyLicense"
+License Type: "MIT"
 
-[MyComponent License](https://www.mycompany.com/licenses/License.txt)
+Copyright (c) 2026 Jake Pine
+
+[JakePineOdinTools License](https://github.com/JakePineGames/JakePineOdinTools/blob/master/LICENSE.txt)

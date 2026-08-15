@@ -4,8 +4,8 @@
     "references": [
         "Runestone.AesirInspector",
         "Runestone.AesirInspector.Editor",
-        "Runestone.AesirInspector.OdinIntegration",
-        "Runestone.AesirInspector.OdinIntegration.Editor",
+        "Runestone.AesirInspector.OdinInspector",
+        "Runestone.AesirInspector.Editor.OdinInspector",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
