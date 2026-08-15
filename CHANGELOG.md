@@ -5,6 +5,36 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.9.0] - 2026-08-15
+
+### Changed
+
+- **MVC 优先定位** — package.json description 从"渐进式 MVP/MVC 架构框架"改为"渐进式 MVC 架构框架"；README/README_EN 概述与特性列表同步调整，`IController`（MVC）为推荐入口，`IPresenter`（MVP）为可选严格模式
+- **目录重构：Core / Modules / Common 三层分离** — Runtime/ 下从 `Component/` + `Engine/` 两级扁平结构改为三层：`Core/`（含 `Component/` 与 `Engine/`，核心 Context 上下文与 MVC/MVP 架构）、`Modules/`（5 个辅助模块：`Event/`、`CustomLifecycle/`、`Locator/`、`Observable/`、`Utilities/`）、`Common/`（框架基础设施：`AesirArchitecture`、`AesirMonoBehaviour`、`AesirArchitectureDebug`、`AssemblyInfo`、`ResetStaticsAssistant`）
+- **极简化：事件系统统一原生 C# 语义** — `MiniEvent.Invoke` / `MiniEvent<T>.Invoke` 恢复直接多播调用（零分配，恢复核心卖点）；移除 `MonoLifecycleProxy.InvokeEvent` 与 `AesirArchitecturePlayerLoop.InvokeHooks` 的逐回调 try-catch。监听回调不应抛异常为框架约定（fail-fast），异常直接向上传播由 Unity 记日志
+- **极简化：初始化失败不做回滚** — `AbstractContext<T>.Interface` 改为 `Initialize()` 成功后才写入静态字段 `_instance`，失败不缓存、根因异常每次抛出；`Initialize` 移除快照跟踪与逆序回滚 Dispose（初始化失败属启动期编程错误，半成品模块随实例交由 GC 回收）。Configure 及模块初始化中禁止重入 `Interface`（约定）
+- **极简化：移除 PlayerLoop 周期性自愈轮询** — 删除 `MonoLifecycleProxy` 每 120 帧的注入检测；保留 `AesirArchitecturePlayerLoop.EnsureInjected()` 公开 API 与 `Register` 注册时的自动检测。第三方 SDK 覆盖 PlayerLoop 后需手动调用一次 `EnsureInjected()`
+- **静态变量重置职责拆分** — 非泛型单例（`MonoLifecycleProxy`、`RemoveListenerOnSceneUnloadedTrigger`）改为类内直接声明 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 重置方法，不再经中心助手注册；`ResetStaticsAssistant` 收窄为仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过（不执行也不报错，Unity 2022.3 实测），无法在自身内部声明重置入口，`AbstractContext<T>` 维持经助手注册 `_instance = null` 回调的原有方式
+- **`IContext.GetModel` / `GetService` 未注册校验** — 未注册时抛出含类型名与修复提示的 `InvalidOperationException`，不再返回 null（消除 NRE 延迟爆发与报错点/根因分离）；`CapabilityExtensions.GetModel/GetService` 的 null 分支随之移除，仅保留 `Initialized` 校验
+- **package.json description 修正** — "类型化事件总线"改为"轻量事件（MiniEvent）与响应式属性（ObservableValue）"，与实际能力对齐（事件总线已于 0.3.2 后移除）
+- **Odin 程序集重命名** — `OdinIntegration` → `OdinInspector`（三包统一）：Runtime `Runestone.AesirArchitecture.OdinInspector`、Editor `Runestone.AesirArchitecture.Editor.OdinInspector`；同步目录、asmdef 引用与 `InternalsVisibleTo`
+- **场景卸载分桶改 `Scene.handle`** — `RemoveListenerOnSceneUnloadedTrigger` 从按场景名分桶改为按 `Scene.handle`（int）分桶，消除同名场景误清；新增 `RemoveListenerExtensions` 的 `(Scene)` / `(MonoBehaviour)` 显式归桶重载
+- **预放置实例风险 Warning InfoBox** — `AesirArchitecture`、`MonoLifecycleProxy`、`RemoveListenerOnSceneUnloadedTrigger` 三个组件通过 Odin AttributeProcessor 注入 Warning 级 InfoBox，提示预放置宿主的生命周期约束
+- **PlayerLoop 注入自愈** — 新增 `AesirArchitecturePlayerLoop.EnsureInjected()` 公开 API（`ContainsSystem` 检测 + 仅补插缺失注入点）；`Register` 注册回调时自动检测
+- **Context 初始化失败不缓存半成品** — `Interface` getter 初始化失败时不缓存单例，根因异常每次访问重复抛出
+
+### Removed
+
+- **`ModelReplaced` / `ServiceReplaced` 替换通知事件** — 运行时替换 Model/Service 属测试/调试用途，不应徒增框架事件面；测试环节自行处理订阅迁移。`RegisterModel`/`RegisterService` 覆盖注册仍会 Dispose 旧实例
+- **`GenericLocator<T>.Global`** — 全局定位器单例属性，全仓库无调用方，按极简原则移除（连带 `Dispose` 中的全局引用清除逻辑与 `IGenericLocator<T>` remarks 中的相关描述）
+- **`GenericLocator<T>.GetRegistry()`** — 泄漏底层字典引用的封装漏洞，全仓库无调用方，删除（同步删除 `IGenericLocator<T>` 接口声明）
+
+### Added
+
+- **`GenericLocatorTests` / `ObservableValueTests`** — EditMode 单测覆盖 Locator 注册/覆盖/键语义/注销/清空与 ObservableValue 值比较/静默设置/立即触发/强制刷新/引用相等；`MiniEventTests` 重写为原生事件语义（含 fail-fast 锁定测试）与句柄行为
+- **`RuntimeInitializeOnLoadMethod 指南`** — `Docs/Unity-RuntimeInitializeOnLoadMethod-指南.md`，记录各时机语义、Domain Reload 静态重置实践与泛型类 RIOLM 陷阱
+- **`极简分析与改进计划`** — `Docs/AesirArchitecture-极简分析与改进计划.md`，裁决表与实施记录
+
 ## [0.8.0] - 2026-08-06
 
 ### Fixed

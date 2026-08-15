@@ -1,9 +1,9 @@
 # Aesir Architecture
 
-> 面向团结引擎 / Unity 的渐进式 MVP 架构框架，以 Unity 原生特性为一等公民。
+> 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
@@ -16,10 +16,11 @@
 
 ## 概述
 
-AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的架构框架。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的 MVP / MVC 分层。
+AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的架构框架。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的 MVC / MVP 分层。框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
 ### 核心特性
 
+- **MVC 优先架构** — `IController` + `ICommand` 命令模式 + `IQuery<TResult>` 查询模式（CQRS），Controller 作为 MVC 的核心入口直接修改 Model；`IPresenter`（MVP）作为可选的严格 Model-View 隔离模式
 - **PlayerLoop 原生生命周期** — 通过 `AesirArchitecturePlayerLoop` 将自定义子系统注入 Unity PlayerLoop，提供 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour
 - **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand` 等能力标记接口组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`，按需暴露能力
 - **命令模式** — `ICommand` 负责写操作，同步执行
@@ -30,7 +31,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 - **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，支持全局单例
 - **Domain Reload 安全** — 静态变量通过 `[RuntimeInitializeOnLoadMethod]` 显式重置，反复进出 Play Mode 无残留
 - **纯 C# 核心 + MonoBehaviour 适配** — 框架核心为纯 C# 对象，Engine 层不依赖任何 Component 层类型，`AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` 作为 MonoBehaviour 适配层
-- **MVC + MVP 双模式** — `IController` 适合快速开发，`IPresenter` 提供更严格的 Model-View 隔离
+- **MVC + MVP 双模式** — `IController`（MVC，推荐）适合快速开发，`IPresenter`（MVP，可选）提供更严格的 Model-View 隔离
 
 ### 与 QFramework 的差异
 
@@ -202,39 +203,31 @@ cn.runestone.aesir.architecture/
 ├── Third Party Notices.md
 ├── Runtime/
 │   ├── Runestone.AesirArchitecture.asmdef
-│   ├── Engine/                    # 纯 C# + 使用 UnityEngine API（不依赖 MonoBehaviour）
-│   │   ├── Common/
-│   │   │   ├── AesirArchitectureDebug.cs         # 统一日志
-│   │   │   ├── AesirArchitecturePlayerLoop.cs    # PlayerLoop 注入
-│   │   │   ├── AssemblyInfo.cs                   # InternalsVisibleTo 声明
-│   │   │   └── ResetStaticsAssistant.cs          # 静态变量重置助手
-│   │   ├── Context/               # IContext, AbstractContext<T>
-│   │   ├── Modules/               # IModel, IService, IView, IController, IPresenter + Abstract 基类
-│   │   │   ├── Interfaces/        # 模块接口
-│   │   │   └── Abstracts/         # AbstractSubmodule, AbstractModel, AbstractService, AbstractCommand, AbstractQuery
-│   │   ├── Capabilities/          # Capabilities.cs (ICan* 接口) + CapabilityExtensions.cs (扩展方法)
-│   │   ├── Event/                 # MiniEvent<T>, AutoRemoveListenerHandle, RemoveListenerExtensions
-│   │   ├── Observable/            # ObservableValue<T>, IObservableValue<T>, IReadOnlyObservableValue<T>
-│   │   ├── Locator/               # GenericLocator<T>, IGenericLocator<T>
-│   │   └── Utilities/             # PlayerLoopUtility
-│   ├── Component/                 # MonoBehaviour 组件（依赖 MonoBehaviour）
-│   │   ├── Common/
-│   │   │   ├── AesirArchitecture.cs           # 框架 MonoBehaviour 单例入口
-│   │   │   ├── AesirMonoBehaviour.cs         # Odin 自动适配基类
-│   │   │   └── AesirScriptableObject.cs      # Odin 自动适配 SO 基类
-│   │   ├── View/
-│   │   │   ├── AesirView.cs                  # Odin 适配 View 基类
-│   │   │   └── MonoView.cs                   # 纯 MonoBehaviour View 基类
-│   │   ├── ViewController/
-│   │   │   ├── AesirViewController.cs         # View + Controller 双角色基类（Odin 适配）
-│   │   │   └── MonoViewController.cs          # View + Controller 双角色基类（纯 MonoBehaviour）
-│   │   └── Event/
-│   │       ├── RemoveListenerTrigger.cs              # 自动移除监听触发器基类
-│   │       ├── RemoveListenerOnDestroyTrigger.cs
-│   │       ├── RemoveListenerOnDisableTrigger.cs
-│   │       └── RemoveListenerOnSceneUnloadedTrigger.cs
-│   └── OdinIntergration/          # 独立程序集（依赖 Odin Inspector）
-│       ├── Runestone.AesirArchitecture.OdinIntegration.asmdef
+│   ├── Core/                      # 核心：Context 上下文 + MVC/MVP 架构
+│   │   ├── Component/             # MonoBehaviour 适配层
+│   │   │   ├── View/              # AesirView, MonoView
+│   │   │   └── ViewController/    # AesirViewController, MonoViewController
+│   │   └── Engine/                # 纯 C# 核心（不依赖 MonoBehaviour）
+│   │       ├── Capabilities/      # ICan* 能力接口 + CapabilityExtensions 扩展方法
+│   │       ├── Context/           # IContext, AbstractContext<T>
+│   │       └── Modules/           # IModel, IService, IView, IController, IPresenter + Abstract 基类
+│   │           ├── Interfaces/
+│   │           └── Abstracts/
+│   ├── Modules/                   # 辅助模块
+│   │   ├── Event/                 # MiniEvent 零分配事件 + 自动移除监听触发器
+│   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
+│   │   ├── Locator/               # GenericLocator 泛型定位器
+│   │   ├── Observable/            # ObservableValue 响应式属性
+│   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
+│   ├── Common/                    # 框架基础设施
+│   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
+│   │   ├── AesirMonoBehaviour.cs  # Odin 自动适配基类
+│   │   ├── AesirScriptableObject.cs
+│   │   ├── AesirArchitectureDebug.cs
+│   │   ├── AssemblyInfo.cs
+│   │   └── ResetStaticsAssistant.cs
+│   └── OdinInspector/            # 独立程序集（依赖 Odin Inspector）
+│       ├── Runestone.AesirArchitecture.OdinInspector.asmdef
 │       └── DescriptionSO.cs
 ├── Editor/
 │   ├── Runestone.AesirArchitecture.Editor.asmdef
@@ -242,10 +235,12 @@ cn.runestone.aesir.architecture/
 │   │   └── EnsureAesirArchitectureDefine.cs  # 编译符号管理
 │   ├── Utilities/
 │   │   └── ScriptingSymbolUtility.cs
-│   └── OdinIntegration/          # Odin Inspector 集成（可选）
-│       ├── Runestone.AesirArchitecture.Editor.OdinIntegration.asmdef
+│   └── OdinInspector/            # Odin Inspector 集成（可选）
+│       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef
 │       └── AttributeProcessors/
 │           ├── AesirArchitectureAttributeProcessor.cs
+│           ├── MonoLifecycleProxyAttributeProcessor.cs
+│           ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
 │           └── ObservableValueAttributeProcessor.cs
 ├── Tests/
 │   ├── Runtime/
@@ -253,12 +248,34 @@ cn.runestone.aesir.architecture/
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
-│   ├── Counter-MVC/               # MVC 模式计数器 Demo
+│   ├── Counter-MVC/               # MVC 模式计数器 Demo（推荐）
 │   ├── UI Counter-MVP/            # MVP 模式计数器 Demo
 │   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
 │   └── MiniEvent/                 # MiniEvent 使用案例
 └── Third Party Notices.md          # 第三方许可声明
 ```
+
+## 设计边界
+
+> 框架保持极简：低概率问题、或因不推荐编写方式造成的问题，用本节约定在项目前期直接杜绝，而非依赖运行时防御性代码兜底。
+
+### 不做的事
+
+- **事件总线 / EventChannel** — 跨模块通信使用互相 GetModel + ObservableValue 订阅，或直接引用 MiniEvent
+- **Context 多实例** — `AbstractContext<T>` 为 CRTP 泛型单例，每个具体上下文类型全局仅一份；多存档、多房间等场景请在业务层建模
+- **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
+- **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
+- **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
+
+### 编写约定（违反时 fail-fast 报错，框架不做兜底）
+
+| 约定 | 违反后果 |
+|------|---------|
+| 监听回调不应抛异常 | 异常直接向上传播并中断同事件后续回调（原生 C# 事件语义），由 Unity 记日志 |
+| `Configure()` 及各模块初始化中禁止访问 `Interface` | 会因单例尚未发布而递归创建第二个上下文实例 |
+| `Register` 与 `Get` 必须使用相同类型参数 | 按键精确匹配，用实现类查询接口键注册的实例返回 null / 抛未注册异常 |
+| 运行时替换 Model/Service 仅用于测试调试 | 旧实例被 Dispose，其上的订阅不会迁移，已订阅的 View 需自行重新订阅 |
+| 第三方 SDK 修改 PlayerLoop 后手动调用一次 `AesirArchitecturePlayerLoop.EnsureInjected()` | BeforeUpdate / AfterUpdate 钩子静默失效（`Register` 注册回调时会自动检测补插） |
 
 ## 设计原则
 
@@ -271,7 +288,7 @@ cn.runestone.aesir.architecture/
 
 ## 路线图
 
-- [x] 核心 MVP / MVC 分层
+- [x] 核心 MVC / MVP 分层（MVC 优先）
 - [x] PlayerLoop 原生生命周期注入
 - [x] 命令模式（同步）
 - [x] 查询模式（CQRS 读操作）
