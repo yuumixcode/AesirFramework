@@ -21,6 +21,18 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// <seealso cref="AesirArchitectureLifecyclePhase"/>
     public class AesirArchitecturePlayerLoopTests
     {
+        /// <summary>
+        /// 框架注入的 BeforeUpdate 子系统类型名。与 <c>AesirArchitecturePlayerLoop</c> 内部私有嵌套结构体同名，
+        /// 测试无法直接引用私有类型，故以名称匹配。若内部类型重命名，此常量需同步更新。
+        /// </summary>
+        const string BeforeUpdateSystemName = "AesirArchitectureScriptRunBeforeUpdate";
+
+        /// <summary>
+        /// 框架注入的 AfterUpdate 子系统类型名。与 <c>AesirArchitecturePlayerLoop</c> 内部私有嵌套结构体同名，
+        /// 测试无法直接引用私有类型，故以名称匹配。若内部类型重命名，此常量需同步更新。
+        /// </summary>
+        const string AfterUpdateSystemName = "AesirArchitectureScriptRunAfterUpdate";
+
         PlayerLoopSystem _originalLoop;
 
         /// <summary>
@@ -256,6 +268,112 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var expected = new[] { 3, 1, 2, 5, 4 };
             CollectionAssert.AreEqual(expected, executionOrder);
             AesirArchitectureDebug.LogTestInfo("Register(同order): 同 order 按注册顺序执行，不同 order 按升序排列");
+        }
+
+        /// <summary>
+        /// 验证 <see cref="AesirArchitecturePlayerLoop.EnsureInjected"/> 在注入点被第三方覆盖后能重新补插缺失的子系统。
+        /// <para>预期：注入成功后被模拟覆盖抹掉，调用 <c>EnsureInjected</c> 后两个子系统恢复存在。</para>
+        /// </summary>
+        /// <remarks>
+        /// 第三方 SDK 若使用其缓存的 PlayerLoop 副本调用 <c>PlayerLoop.SetPlayerLoop</c>，会连同框架注入的子系统一起抹掉，
+        /// 导致 BeforeUpdate / AfterUpdate 钩子静默失效。<c>EnsureInjected</c> 是框架的自愈入口：
+        /// 通过 <c>ContainsSystem</c> 检测后仅补插缺失的子系统，且已存在时不重复插入（幂等）。
+        /// <para>
+        /// 测试通过根级过滤掉框架两个子系统来模拟第三方覆盖——框架的注入锚点（<c>Update</c> / <c>PostLateUpdate</c>）
+        /// 均位于 PlayerLoop 根层级，注入点也在根层级。
+        /// </para>
+        /// </remarks>
+        /// <seealso cref="AesirArchitecturePlayerLoop.EnsureInjected"/>
+        [Test]
+        public void EnsureInjected_AfterThirdPartyWipe_ReinjectsMissingSystems()
+        {
+            AesirArchitecturePlayerLoop.EnsureInjected();
+
+            var loop = PlayerLoop.GetCurrentPlayerLoop();
+            Assert.IsTrue(LoopContainsNamed(ref loop, BeforeUpdateSystemName), "注入后应包含 BeforeUpdate 子系统");
+            Assert.IsTrue(LoopContainsNamed(ref loop, AfterUpdateSystemName), "注入后应包含 AfterUpdate 子系统");
+
+            WipeAesirSystems();
+
+            loop = PlayerLoop.GetCurrentPlayerLoop();
+            Assert.IsFalse(LoopContainsNamed(ref loop, BeforeUpdateSystemName), "模拟覆盖后 BeforeUpdate 子系统应缺失");
+            Assert.IsFalse(LoopContainsNamed(ref loop, AfterUpdateSystemName), "模拟覆盖后 AfterUpdate 子系统应缺失");
+
+            AesirArchitecturePlayerLoop.EnsureInjected();
+
+            loop = PlayerLoop.GetCurrentPlayerLoop();
+            Assert.IsTrue(LoopContainsNamed(ref loop, BeforeUpdateSystemName), "自愈后应重新包含 BeforeUpdate 子系统");
+            Assert.IsTrue(LoopContainsNamed(ref loop, AfterUpdateSystemName), "自愈后应重新包含 AfterUpdate 子系统");
+            AesirArchitectureDebug.LogTestInfo("EnsureInjected(覆盖自愈): 第三方覆盖后成功补插缺失的注入点");
+        }
+
+        /// <summary>
+        /// 验证 <see cref="AesirArchitecturePlayerLoop.Register"/> 在注入点被第三方覆盖后触发自愈补插。
+        /// <para>预期：覆盖后调用 <c>Register</c>，两个注入点均恢复存在。</para>
+        /// </summary>
+        /// <remarks>
+        /// <c>Register</c> 内部调用 <see cref="AesirArchitecturePlayerLoop.EnsureInjected"/>（注册即自愈），
+        /// 覆盖"覆盖发生后、周期性检测到来之前"的时间窗口内新注册回调的场景。
+        /// </remarks>
+        /// <seealso cref="AesirArchitecturePlayerLoop.Register"/>
+        [Test]
+        public void Register_AfterThirdPartyWipe_HealsInjection()
+        {
+            AesirArchitecturePlayerLoop.EnsureInjected();
+            WipeAesirSystems();
+
+            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, () => { });
+
+            var loop = PlayerLoop.GetCurrentPlayerLoop();
+            Assert.IsTrue(LoopContainsNamed(ref loop, BeforeUpdateSystemName),
+                "Register 应触发自愈补插 BeforeUpdate 子系统");
+            Assert.IsTrue(LoopContainsNamed(ref loop, AfterUpdateSystemName),
+                "Register 应触发自愈补插 AfterUpdate 子系统");
+            AesirArchitectureDebug.LogTestInfo("Register(覆盖自愈): 注册回调时成功补插缺失的注入点");
+        }
+
+        /// <summary>
+        /// 模拟第三方 SDK 覆盖：从当前 PlayerLoop 根层级过滤掉框架注入的两个子系统后写回
+        /// </summary>
+        /// <remarks>
+        /// 等价于第三方用"不含框架子系统的缓存副本"调用 <c>PlayerLoop.SetPlayerLoop</c>。
+        /// 框架注入点位于根层级（插在根级 <c>Update</c> 之前、根级 <c>PostLateUpdate</c> 之后），根级过滤即可完整移除。
+        /// </remarks>
+        static void WipeAesirSystems()
+        {
+            var wiped = PlayerLoop.GetCurrentPlayerLoop();
+            wiped.subSystemList = Array.FindAll(wiped.subSystemList,
+                s => s.type?.Name != BeforeUpdateSystemName && s.type?.Name != AfterUpdateSystemName);
+            PlayerLoop.SetPlayerLoop(wiped);
+        }
+
+        /// <summary>
+        /// 递归遍历 PlayerLoop 子系统树，按类型名判断是否存在指定子系统
+        /// </summary>
+        /// <remarks>
+        /// 框架注入的子系统类型为私有嵌套结构体，测试无法直接引用，故以 <c>type.Name</c> 字符串匹配。
+        /// </remarks>
+        static bool LoopContainsNamed(ref PlayerLoopSystem system, string typeName)
+        {
+            if (system.type?.Name == typeName)
+            {
+                return true;
+            }
+
+            if (system.subSystemList == null)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < system.subSystemList.Length; i++)
+            {
+                if (LoopContainsNamed(ref system.subSystemList[i], typeName))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

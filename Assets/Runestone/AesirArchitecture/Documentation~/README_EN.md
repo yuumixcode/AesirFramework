@@ -3,7 +3,7 @@
 > A progressive MVP/MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.9.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -16,10 +16,11 @@
 
 ## Overview
 
-AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVP / MVC layering for small to medium-large projects.
+AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVC / MVP layering for small to medium-large projects. The framework is **MVC-first**: `IController` is the recommended entry point for rapid development; `IPresenter` (MVP) is an optional pattern for stricter Model-View separation.
 
 ### Core Features
 
+- **MVC-first architecture** — `IController` + `ICommand` command pattern + `IQuery<TResult>` query pattern (CQRS); Controller is the primary MVC entry point that directly modifies Model. `IPresenter` (MVP) is an optional pattern for stricter Model-View separation
 - **Native PlayerLoop lifecycle** — Inject custom subsystems into Unity's PlayerLoop via `AesirArchitecturePlayerLoop`, providing `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour
 - **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` / `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, etc.) — expose only what you need
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
@@ -30,7 +31,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, with global singleton support
 - **Domain Reload safety** — Static variables explicitly reset via `[RuntimeInitializeOnLoadMethod]`; no residue across Play Mode entry/exit
 - **Pure C# core + MonoBehaviour adapter** — Framework core is pure C#; the Engine layer does NOT depend on any Component layer type. `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` serve as MonoBehaviour adapters
-- **MVC + MVP dual modes** — `IController` for fast development, `IPresenter` for stricter Model-View separation
+- **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional) for stricter Model-View separation
 
 ### Comparison with QFramework
 
@@ -202,39 +203,31 @@ cn.runestone.aesir.architecture/
 ├── Third Party Notices.md
 ├── Runtime/
 │   ├── Runestone.AesirArchitecture.asmdef
-│   ├── Engine/                    # Pure C# + UnityEngine API (no MonoBehaviour dependency)
-│   │   ├── Common/
-│   │   │   ├── AesirArchitectureDebug.cs         # Unified logging
-│   │   │   ├── AesirArchitecturePlayerLoop.cs    # PlayerLoop injection
-│   │   │   ├── AssemblyInfo.cs                   # InternalsVisibleTo declarations
-│   │   │   └── ResetStaticsAssistant.cs          # Static variable reset helper
-│   │   ├── Context/               # IContext, AbstractContext<T>
-│   │   ├── Modules/               # IModel, IService, IView, IController, IPresenter + Abstract bases
-│   │   │   ├── Interfaces/        # Module interfaces
-│   │   │   └── Abstracts/         # AbstractSubmodule, AbstractModel, AbstractService, AbstractCommand, AbstractQuery
-│   │   ├── Capabilities/          # Capabilities.cs (ICan* interfaces) + CapabilityExtensions.cs
-│   │   ├── Event/                 # MiniEvent<T>, AutoRemoveListenerHandle, RemoveListenerExtensions
-│   │   ├── Observable/            # ObservableValue<T>, IObservableValue<T>, IReadOnlyObservableValue<T>
-│   │   ├── Locator/               # GenericLocator<T>, IGenericLocator<T>
-│   │   └── Utilities/             # PlayerLoopUtility
-│   ├── Component/                 # MonoBehaviour components (depend on MonoBehaviour)
-│   │   ├── Common/
-│   │   │   ├── AesirArchitecture.cs           # Framework MonoBehaviour singleton entry
-│   │   │   ├── AesirMonoBehaviour.cs          # Odin-adapted base class
-│   │   │   └── AesirScriptableObject.cs      # Odin-adapted SO base
-│   │   ├── View/
-│   │   │   ├── AesirView.cs                  # Odin-adapted View base
-│   │   │   └── MonoView.cs                   # Pure MonoBehaviour View base
-│   │   ├── ViewController/
-│   │   │   ├── AesirViewController.cs         # View + Controller dual-role base (Odin-adapted)
-│   │   │   └── MonoViewController.cs          # View + Controller dual-role base (pure MonoBehaviour)
-│   │   └── Event/
-│   │       ├── RemoveListenerTrigger.cs              # Auto-remove listener trigger base
-│   │       ├── RemoveListenerOnDestroyTrigger.cs
-│   │       ├── RemoveListenerOnDisableTrigger.cs
-│   │       └── RemoveListenerOnSceneUnloadedTrigger.cs
-│   └── OdinIntergration/          # Independent assembly (depends on Odin Inspector)
-│       ├── Runestone.AesirArchitecture.OdinIntegration.asmdef
+│   ├── Core/                      # Core: Context + MVC/MVP architecture
+│   │   ├── Component/             # MonoBehaviour adapter layer
+│   │   │   ├── View/              # AesirView, MonoView
+│   │   │   └── ViewController/    # AesirViewController, MonoViewController
+│   │   └── Engine/                # Pure C# core (no MonoBehaviour dependency)
+│   │       ├── Capabilities/      # ICan* interfaces + CapabilityExtensions
+│   │       ├── Context/           # IContext, AbstractContext<T>
+│   │       └── Modules/          # IModel, IService, IView, IController, IPresenter + Abstract bases
+│   │           ├── Interfaces/
+│   │           └── Abstracts/
+│   ├── Modules/                   # Helper modules
+│   │   ├── Event/                 # MiniEvent zero-alloc events + auto-remove triggers
+│   │   ├── CustomLifecycle/       # MonoLifecycleProxy lifecycle proxy
+│   │   ├── Locator/               # GenericLocator type-keyed locator
+│   │   ├── Observable/            # ObservableValue reactive property
+│   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
+│   ├── Common/                    # Framework infrastructure
+│   │   ├── AesirArchitecture.cs   # Framework MonoBehaviour singleton entry
+│   │   ├── AesirMonoBehaviour.cs  # Odin-adapted base class
+│   │   ├── AesirScriptableObject.cs
+│   │   ├── AesirArchitectureDebug.cs
+│   │   ├── AssemblyInfo.cs
+│   │   └── ResetStaticsAssistant.cs
+│   └── OdinInspector/            # Independent assembly (depends on Odin Inspector)
+│       ├── Runestone.AesirArchitecture.OdinInspector.asmdef
 │       └── DescriptionSO.cs
 ├── Editor/
 │   ├── Runestone.AesirArchitecture.Editor.asmdef
@@ -242,10 +235,12 @@ cn.runestone.aesir.architecture/
 │   │   └── EnsureAesirArchitectureDefine.cs  # Compile symbol management
 │   ├── Utilities/
 │   │   └── ScriptingSymbolUtility.cs
-│   └── OdinIntegration/          # Odin Inspector integration (optional)
-│       ├── Runestone.AesirArchitecture.Editor.OdinIntegration.asmdef
+│   └── OdinInspector/            # Odin Inspector integration (optional)
+│       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef
 │       └── AttributeProcessors/
 │           ├── AesirArchitectureAttributeProcessor.cs
+│           ├── MonoLifecycleProxyAttributeProcessor.cs
+│           ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
 │           └── ObservableValueAttributeProcessor.cs
 ├── Tests/
 │   ├── Runtime/
@@ -253,12 +248,34 @@ cn.runestone.aesir.architecture/
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
-│   ├── Counter-MVC/               # MVC pattern counter demo
+│   ├── Counter-MVC/               # MVC pattern counter demo (recommended)
 │   ├── UI Counter-MVP/            # MVP pattern counter demo
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
 │   └── MiniEvent/                 # MiniEvent usage examples
 └── Third Party Notices.md          # Third-party license notices
 ```
+
+## Design Boundaries
+
+> The framework stays minimal: low-probability issues, or issues caused by discouraged coding patterns, are prevented up front by the conventions in this section — not by defensive runtime code.
+
+### Not Provided
+
+- **Event bus / EventChannel** — Cross-module communication uses GetModel + ObservableValue subscriptions, or direct MiniEvent references
+- **Multiple Context instances** — `AbstractContext<T>` is a CRTP generic singleton, one instance per concrete context type; model multi-save / multi-room scenarios at the business layer
+- **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
+- **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
+- **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
+
+### Coding Conventions (violations fail fast; the framework does not compensate)
+
+| Convention | Consequence of violation |
+|------|---------|
+| Listener callbacks must not throw | Exceptions propagate and interrupt subsequent callbacks of the same event (native C# event semantics); Unity logs the error |
+| Never access `Interface` inside `Configure()` or module initialization | A second context instance is created recursively (the singleton is not published yet) |
+| `Register` and `Get` must use the same type argument | Exact-key matching: querying an interface-keyed registration by implementation type returns null / throws not-registered |
+| Runtime Model/Service replacement is for testing/debugging only | The old instance is disposed, its subscriptions are not migrated; subscribed views must re-subscribe |
+| Call `AesirArchitecturePlayerLoop.EnsureInjected()` once after a third-party SDK rewrites the PlayerLoop | BeforeUpdate / AfterUpdate hooks silently stop firing (`Register` self-heals on callback registration) |
 
 ## Design Principles
 
@@ -271,7 +288,7 @@ cn.runestone.aesir.architecture/
 
 ## Roadmap
 
-- [x] Core MVP / MVC layering
+- [x] Core MVC / MVP layering (MVC-first)
 - [x] Native PlayerLoop lifecycle injection
 - [x] Command pattern (sync)
 - [x] Query pattern (CQRS read)

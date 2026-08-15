@@ -53,8 +53,8 @@ Play 模式测试：把 `-testPlatform` 换成 `playmode`。测试结果为 NUni
 - C#；类用 PascalCase，接口加 `I` 前缀，抽象类加 `Abstract` 前缀
 - MonoBehaviour 单例：静态 `Instance` + `[DefaultExecutionOrder(-999)]` + `DontDestroyOnLoad`
 - 通过 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` 自动启动
-- 静态单例用 `ResetStaticsAssistant.Register()` 保证 Domain Reload 安全
-- Runtime / Editor 代码用 asmdef 隔离；Odin 代码放独立 `*.OdinIntegration.asmdef`，由 `ODIN_INSPECTOR` 宏守护
+- Domain Reload 安全：非泛型静态单例在类内用 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 重置；泛型类（如 `AbstractContext<T>`）的 RIOLM 会被 Unity 静默跳过，必须经 `ResetStaticsAssistant.Register()` 注册重置回调
+- Runtime / Editor 代码用 asmdef 隔离；Odin 代码放独立 `*.OdinInspector.asmdef`，由 `ODIN_INSPECTOR` 宏守护
 - XML 文档注释用**中文**；标识符用**英文**
 
 ## 测试
