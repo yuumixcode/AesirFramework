@@ -107,7 +107,7 @@ Assets/Runestone/
 - 类用 PascalCase，接口加 `I` 前缀，抽象类加 `Abstract` 前缀
 - `MonoBehaviour` 单例：静态 `Instance` + `[DefaultExecutionOrder(-999)]` + `DontDestroyOnLoad`
 - 通过 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` 自动启动
-- 静态单例用 `ResetStaticsAssistant.Register()` 保证 Domain Reload 安全
+- Domain Reload 安全：非泛型静态单例在类内用 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 重置；泛型类（如 `AbstractContext<T>`）的 RIOLM 会被 Unity 静默跳过，必须经 `ResetStaticsAssistant.Register()` 注册重置回调
 - Runtime / Editor 代码用 asmdef 隔离
 - **XML 文档注释用中文；标识符用英文**
 
@@ -297,7 +297,7 @@ See [`AGENTS.md`](./AGENTS.md) / [`CODELY.md`](./CODELY.md) for detailed layout.
 - PascalCase for classes, `I` prefix for interfaces, `Abstract` prefix for abstracts
 - `MonoBehaviour` singletons: static `Instance` + `[DefaultExecutionOrder(-999)]` + `DontDestroyOnLoad`
 - `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` for auto-bootstrap
-- `ResetStaticsAssistant.Register()` for Domain Reload safety
+- Domain Reload safety: in-class `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` resets for non-generic static singletons; generic classes (e.g. `AbstractContext<T>`) whose RIOLM is silently ignored by Unity must register reset callbacks via `ResetStaticsAssistant.Register()`
 - Runtime / Editor isolation via asmdef
 - **XML doc comments in Chinese; identifiers in English**
 

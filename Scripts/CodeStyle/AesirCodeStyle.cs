@@ -208,7 +208,8 @@ namespace Runestone.CodeStyle
         /// <remarks>
         /// 数据类标记 <c>[Serializable]</c>。
         /// 显式接口实现上下文注入（<c>IContextHolder.Context</c>、<c>ICanSetContext.SetContext</c>）。
-        /// 使用 <c>ResetStaticsAssistant.Register()</c> 保障 Domain Reload 安全。
+        /// Domain Reload 安全：非泛型静态单例在类内用 <c>[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]</c> 重置；
+        /// 泛型类（如 AbstractContext&lt;T&gt;）的 RIOLM 会被 Unity 静默跳过，须通过 <c>ResetStaticsAssistant.Register()</c> 注册重置回调。
         /// </remarks>
         [Serializable]
         public class ArchitectureExample

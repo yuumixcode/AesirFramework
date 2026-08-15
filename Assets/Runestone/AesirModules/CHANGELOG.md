@@ -5,6 +5,25 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.9.0] - 2026-08-15
+
+### Changed
+
+- **Odin 程序集重命名** — `OdinIntegration` → `OdinInspector`（三包统一）；Editor 程序集 `Runestone.AesirModules.Editor.OdinInspector`，目录 `Editor/OdinIntegration/` → `Editor/OdinInspector/`；`AssemblyInfo.cs` 的 `InternalsVisibleTo` 同步更新
+- **依赖版本同步** — Architecture 依赖版本号更新至 `0.9.0`
+
+### Fixed
+
+- **UI 模块缺陷修复**（基于 Docs/AesirModules-UI模块-优化分析.md）：
+  - #5 InstantiateInactive 停用态实例化，时序：挂层→Initialize→Show 内激活
+  - #6 字典键归一化为 `uiPanel.GetType()`
+  - #7 AesirBasePanel.OnDestroy → UIModule.RemovePanelRecord 静态反清理
+  - #8 EventSystem 全场景 FindAnyObjectByType 检查
+  - #9 Build 统一走 EnsureCanvasConfig + ApplyCanvasConfig，默认 SO 静态缓存
+  - #10 GetLayerRoot 缺层 LogError + null
+  - #11 内部状态异常补 Error 日志
+  - #17 ShowPanel<TPanel,TPayload> / Show<TPanel,TPayload> 泛型重载
+
 ## [0.8.0] - 2026-08-06
 
 ### Changed

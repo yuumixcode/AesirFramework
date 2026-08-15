@@ -8,6 +8,17 @@
 
 ---
 
+## [0.9.0] - 2026-08-15
+
+### Changed
+
+- **Odin 程序集重命名** — `OdinIntegration` → `OdinInspector`（三包统一）：
+  - Runtime: `Runestone.AesirInspector.OdinIntegration` → `Runestone.AesirInspector.OdinInspector`
+  - Editor: `Runestone.AesirInspector.OdinIntegration.Editor` → `Runestone.AesirInspector.Editor.OdinInspector`
+  - 目录 `OdinIntegration/` → `OdinInspector/`（Runtime/Editor/Tests 三处）
+  - 6 个引用方 asmdef 同步更新（Tests + Samples~×3 + Assets Samples×3）
+- **文档同步** — aesir-inspector.md 程序集表、development.md 依赖图、README 中的 OdinIntegration 引用更新为 OdinInspector
+
 ## [0.8.0] - 2026-08-06
 
 ### Changed
