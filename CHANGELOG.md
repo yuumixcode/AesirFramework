@@ -19,9 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.8.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.8.0** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.8.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.9.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.9.0** |
+| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.9.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
 > *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
@@ -30,6 +30,46 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Inspector** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 同时依赖 Aesir Architecture + Aesir Inspector / depends on BOTH Aesir Architecture AND Aesir Inspector
+
+---
+
+## [0.9.0] - 2026-08-15
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Changed
+
+- **MVC 优先定位** — package.json/README 从「MVP/MVC」改为「MVC」，IController 为推荐入口，IPresenter 为可选严格模式
+- **目录重构** — Runtime/ 从 Component/ + Engine/ 两级扁平改为三层：Core/（Context + MVC/MVP 核心）、Modules/（Event/CustomLifecycle/Locator/Observable/Utilities 辅助模块）、Common/（框架基础设施）
+- **极简化** — MiniEvent 恢复零分配直调，撤销异常吞噬（统一原生 C# fail-fast 语义）；Interface 改为初始化成功后才赋值，失败不缓存、不做回滚；移除 120 帧自愈轮询（保留 EnsureInjected + Register 期检测）；移除 ModelReplaced/ServiceReplaced 替换通知；移除 GenericLocator.Global 与 GetRegistry()
+- **Odin 程序集重命名** — OdinIntegration → OdinInspector（三包统一）
+- **场景卸载分桶改 Scene.handle** — 消除同名场景误清；新增 RemoveListenerExtensions 显式归桶重载
+- **GetModel/GetService 未注册时抛 InvalidOperationException** — 不再返回 null
+- **静态变量重置职责拆分** — 非泛型单例类内 RIOLM，泛型经 ResetStaticsAssistant
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- **Odin 程序集重命名** — OdinIntegration → OdinInspector（三包统一）
+- **依赖版本同步** — Architecture 依赖版本号更新至 0.9.0
+
+#### Fixed
+
+- **UI 模块缺陷修复** — InstantiateInactive 停用态实例化、字典键归一化、AesirBasePanel.OnDestroy 静态反清理、EventSystem 全场景检查、Build 统一走 EnsureCanvasConfig、GetLayerRoot 缺层 LogError、内部状态异常补 Error 日志、ShowPanel/Show 泛型重载
+
+---
+
+### [inspector] Aesir Inspector
+
+#### Changed
+
+- **Odin 程序集重命名** — OdinIntegration → OdinInspector（三包统一）：Runtime/Editor/Tests 三处目录 + 6 个引用方 asmdef 同步更新
+- **文档同步** — aesir-inspector.md 程序集表、development.md 依赖图更新
 
 ---
 
