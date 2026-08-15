@@ -53,8 +53,8 @@ Aesir Inspector 是一个 Unity/Tuanjie 编辑器扩展库，提供双语 Inspec
 |--------|------|-----------|
 | Runestone.AesirInspector | 核心运行时 | 无 |
 | Runestone.AesirInspector.Editor | 核心编辑器 | 无 |
-| Runestone.AesirInspector.OdinIntegration | Odin 运行时 | 需要 |
-| Runestone.AesirInspector.OdinIntegration.Editor | Odin 编辑器 | 需要 |
+| Runestone.AesirInspector.OdinInspector | Odin 运行时 | 需要 |
+| Runestone.AesirInspector.Editor.OdinInspector | Odin 编辑器 | 需要 |
 
 ## 系统要求
 

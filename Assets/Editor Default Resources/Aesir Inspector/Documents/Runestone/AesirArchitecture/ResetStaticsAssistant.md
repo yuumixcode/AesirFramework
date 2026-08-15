@@ -12,7 +12,7 @@ public static class ResetStaticsAssistant
 
 ### 注释
 
-- 静态变量重置助手，用于运行时阶段自动重置静态变量，兼容 Disable Domain Reload。 关闭 Domain Reload 时静态回调列表不会重置，所以每次启动时均可调用重置方法。
+- 静态变量重置助手（仅泛型类使用）。用于运行时阶段自动重置泛型类中的静态变量，兼容 Disable Domain Reload。 关闭 Domain Reload 时静态回调列表不会重置，所以每次启动时均可调用重置方法。
 
 ## 方法
 
@@ -25,6 +25,7 @@ public static class ResetStaticsAssistant
 | `public virtual int GetHashCode()` |
 | `public virtual string ToString()` |
 | `public static void Register(Action callback)` |
+| `public static void ResetForTests()` |
 | `protected object MemberwiseClone()` |
 | `protected virtual void Finalize()` |
 
@@ -33,6 +34,7 @@ public static class ResetStaticsAssistant
 | 普通方法名称 | 注释 |
 | :--- | :--- | 
 | `public static void Register` | 注册静态变量重置回调，在 Domain Reload 时自动调用 |
+| `public static void ResetForTests` | 手动执行所有已注册的静态变量重置回调。仅供单元测试隔离静态单例状态使用。 |
 
 ### 继承的普通方法
 

@@ -24,8 +24,8 @@ graph TB
 graph LR
     RT[Runestone.AesirInspector] -->|"无依赖"| None[ ]
     ED[Runestone.AesirInspector.Editor] -->|引用| RT
-    OW[Runestone.AesirInspector.OdinIntegration] -->|引用| RT
-    OWE[...OdinIntegration.Editor] -->|引用| RT
+    OW[Runestone.AesirInspector.OdinInspector] -->|引用| RT
+    OWE[...Editor.OdinInspector] -->|引用| RT
     OWE -->|引用| ED
     OWE -->|引用| OW
     OW -.->|ODIN_INSPECTOR| Odin
