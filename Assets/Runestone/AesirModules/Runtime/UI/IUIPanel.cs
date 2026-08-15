@@ -11,7 +11,7 @@ namespace Runestone.AesirModules
         UILayer Layer { get; }
 
         /// <summary>
-        /// 关闭时是否销毁并回收实例。<c>false</c> 则仅隐藏，再次打开时复用。
+        /// 隐藏时是否销毁并回收实例。<c>false</c> 则仅隐藏，再次打开时复用。
         /// </summary>
         bool DestroyOnHide { get; }
 

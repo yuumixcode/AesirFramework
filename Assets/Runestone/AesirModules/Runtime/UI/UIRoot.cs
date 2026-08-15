@@ -1,6 +1,3 @@
-#if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem.UI;
-#endif
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -29,12 +26,21 @@ namespace Runestone.AesirModules
         internal const string UICanvasConfigFieldName = nameof(uiCanvasConfigSO);
 
         static UIRoot _instance;
+        static UICanvasConfigSO _defaultCanvasConfig;
 
         /// <summary>
-        /// 标记当前实例是否由 <see cref="Instance" /> getter 在运行时创建。
-        /// 预放置在场景中的实例此标记为 false，不调用 <see cref="UnityEngine.Object.DontDestroyOnLoad" />。
+        /// 自定义输入模块创建回调。
+        /// 由 Runestone.AesirModules.InputSystem 程序集在 InputSystem 启用时注册，
+        /// 使用 InputSystemUIInputModule 替代默认的 StandaloneInputModule。
+        /// 为 null 时使用 StandaloneInputModule。
         /// </summary>
-        static bool _createdByRuntime;
+        public static Action<GameObject> CreateInputModule { get; set; }
+
+        /// <summary>
+        /// 一次性临时标记：通知下一次 <see cref="Awake" /> 调用需要执行 <see cref="UnityEngine.Object.DontDestroyOnLoad" />。
+        /// 由 <see cref="Instance" /> getter 在创建实例前置为 true，Awake 消费后立即重置为 false。
+        /// </summary>
+        static bool _pendingDontDestroyOnLoad;
 
         static readonly Dictionary<UILayer, int> LayerSortOrders = new Dictionary<UILayer, int>
         {
@@ -67,13 +73,13 @@ namespace Runestone.AesirModules
                 }
 
                 // 未找到预放置实例 → 运行时创建，标记后由 Awake 决定是否 DDOL
-                _createdByRuntime = true;
+                _pendingDontDestroyOnLoad = true;
                 var go = new GameObject("[UIRoot]");
                 // AddComponent 在主线程同步执行，Awake 会在 AddComponent 返回前完成，
-                // 此时 _createdByRuntime 已被 Awake 消费完毕，可以安全重置。
+                // 此时 _pendingDontDestroyOnLoad 已被 Awake 消费完毕，可以安全重置。
                 // 重置后标志不会残留，避免影响后续 Awake（如 Enter Play Mode 触发的 Domain Reload）。
                 _instance = go.AddComponent<UIRoot>();
-                _createdByRuntime = false;
+                _pendingDontDestroyOnLoad = false;
                 return _instance;
             }
         }
@@ -90,8 +96,8 @@ namespace Runestone.AesirModules
 
             _instance = this;
 
-            // 仅运行时创建的实例使用 DontDestroyOnLoad；场景中预放置的实例保留在场景中
-            if (_createdByRuntime)
+            // 仅需要跨场景持久化的实例使用 DontDestroyOnLoad；场景中预放置的实例保留在场景中
+            if (_pendingDontDestroyOnLoad)
             {
                 DontDestroyOnLoad(gameObject);
             }
@@ -117,30 +123,30 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 构建 UI 层级结构。幂等调用，已存在的子物体不会重复创建。
+        /// 与运行时 <see cref="Initialize" /> 走同一套配置路径：
+        /// 优先应用 Inspector 已序列化的 <see cref="uiCanvasConfigSO" />，未设置时使用静态缓存的默认配置。
         /// </summary>
         public void Build()
         {
             EnsureUIComponents();
-            var defaultUICanvasConfigSO = ScriptableObject.CreateInstance<UICanvasConfigSO>();
-            foreach (UILayer layer in Enum.GetValues(typeof(UILayer)))
-            {
-                var canvas = _layerCanvases.GetValueOrDefault(layer);
-                if (canvas == null)
-                {
-                    continue;
-                }
-
-                defaultUICanvasConfigSO.ApplyToCanvas(canvas);
-                canvas.sortingOrder = LayerSortOrders[layer];
-            }
+            EnsureCanvasConfig();
+            ApplyCanvasConfig();
         }
 
         /// <summary>
-        /// 获取指定层级的根 Transform。
+        /// 获取指定层级的根 Transform。层 Canvas 缺失（子物体被删除或重命名）时记录错误并返回 null。
         /// </summary>
         public Transform GetLayerRoot(UILayer layer)
         {
             var canvas = _layerCanvases.GetValueOrDefault(layer);
+            if (canvas == null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"UIRoot 缺少 {layer} 层的 Canvas（子物体 {layer}Layer 缺失或被重命名），" +
+                    "面板将无法挂载到该层，请重建 UIRoot 层级");
+                return null;
+            }
+
             return canvas.transform;
         }
 
@@ -153,6 +159,22 @@ namespace Runestone.AesirModules
             CacheLayerCanvases();
         }
 
+        /// <summary>
+        /// 运行时默认配置（仅内存实例）。静态缓存避免编辑器下反复调用 <see cref="Build" /> 时重复 CreateInstance 造成泄漏。
+        /// </summary>
+        static UICanvasConfigSO DefaultCanvasConfig
+        {
+            get
+            {
+                if (_defaultCanvasConfig == null)
+                {
+                    _defaultCanvasConfig = UICanvasConfigSO.CreateDefault();
+                }
+
+                return _defaultCanvasConfig;
+            }
+        }
+
         void EnsureCanvasConfig()
         {
             if (uiCanvasConfigSO != null)
@@ -160,7 +182,7 @@ namespace Runestone.AesirModules
                 return;
             }
 
-            uiCanvasConfigSO = UICanvasConfigSO.CreateDefault();
+            uiCanvasConfigSO = DefaultCanvasConfig;
         }
 
         void ApplyCanvasConfig()
@@ -203,7 +225,8 @@ namespace Runestone.AesirModules
 
         void EnsureEventSystem()
         {
-            if (FindChild("EventSystem") != null)
+            // 全场景检查而非仅检查 UIRoot 自身子物体，避免宿主场景已有 EventSystem 时重复创建导致输入事件行为未定义
+            if (FindAnyObjectByType<EventSystem>() != null)
             {
                 return;
             }
@@ -211,11 +234,14 @@ namespace Runestone.AesirModules
             var esGo = new GameObject("EventSystem");
             esGo.transform.SetParent(transform, false);
             esGo.AddComponent<EventSystem>();
-#if ENABLE_INPUT_SYSTEM
-            esGo.AddComponent<InputSystemUIInputModule>();
-#else
-            esGo.AddComponent<StandaloneInputModule>();
-#endif
+            if (CreateInputModule != null)
+            {
+                CreateInputModule(esGo);
+            }
+            else
+            {
+                esGo.AddComponent<StandaloneInputModule>();
+            }
         }
 
         void EnsurePresetLayers()

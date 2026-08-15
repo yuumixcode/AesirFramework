@@ -8,7 +8,10 @@ using UnityEngine;
 namespace Runestone.AesirModules
 {
     /// <summary>
-    /// Binder 标签组件。标记需要自动绑定引用的子物体。
+    /// Binder 标签组件。挂载在需要自动绑定引用的子物体上，标记该物体可被 <see cref="BinderAssistant"/> 扫描并生成绑定信息。
+    /// <para>
+    /// 一个物体上可绑定多个不同类型的组件，通过 <see cref="ComponentNumber"/> 指定数量。
+    /// </para>
     /// </summary>
     [DisallowMultipleComponent]
     public class BinderTag : AesirMonoBehaviour
@@ -17,6 +20,9 @@ namespace Runestone.AesirModules
         [HideInInspector]
         int componentNumber;
 
+        /// <summary>
+        /// 当前物体上需要绑定的组件数量。<see cref="BinderAssistant"/> 据此为每个组件生成一条 <see cref="BinderInfo"/>。
+        /// </summary>
         [ShowInInspector]
         [LabelText("绑定组件数量: ")]
         [PropertyRange(1, "$MaxComponentNumber")]
@@ -26,6 +32,7 @@ namespace Runestone.AesirModules
             set => componentNumber = value;
         }
 
+        // 下拉范围上限：当前物体上可绑定的组件类型数量（含 GameObject 自身）
         double MaxComponentNumber => Types.Count();
 
         /// <summary>
@@ -39,7 +46,8 @@ namespace Runestone.AesirModules
         public string HierarchyPath => BinderHierarchyUtility.GetAbsolutePath(transform);
 
         /// <summary>
-        /// 当前物体上可绑定的组件类型集合（含 GameObject 自身）
+        /// 当前物体上可绑定的组件类型集合（含 GameObject 自身）。
+        /// 排除了 <see cref="BinderTag"/> 自身，避免将标记组件纳入绑定选项。
         /// </summary>
         public IEnumerable<Type> Types
         {

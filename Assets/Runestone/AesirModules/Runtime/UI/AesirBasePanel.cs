@@ -8,11 +8,14 @@ namespace Runestone.AesirModules
     /// </summary>
     public abstract class AesirBasePanel : AesirMonoBehaviour, IUIPanel
     {
+        internal const string LayerFieldName = nameof(layer);
+        internal const string DestroyOnHideFieldName = nameof(destroyOnHide);
+
         [Tooltip("面板所在的 UI 层级")]
         [SerializeField]
         UILayer layer = UILayer.Normal;
 
-        [Tooltip("关闭时是否销毁并回收实例（false 则隐藏复用）")]
+        [Tooltip("隐藏时是否销毁并回收实例（false 则隐藏复用）")]
         [SerializeField]
         bool destroyOnHide = true;
 
@@ -22,7 +25,7 @@ namespace Runestone.AesirModules
         public UILayer Layer => layer;
 
         /// <summary>
-        /// 关闭时是否销毁并回收实例。
+        /// 隐藏时是否销毁并回收实例。
         /// </summary>
         public bool DestroyOnHide => destroyOnHide;
 
@@ -56,6 +59,13 @@ namespace Runestone.AesirModules
             Destroy(gameObject);
         }
 
+        void OnDestroy()
+        {
+            // 实例被销毁（外部 Destroy / 场景卸载 / DestroyPanel）时反向通知 UIModule 清理注册表，
+            // 避免字典残留已销毁实例，导致后续 ShowPanel 命中无效条目
+            UIModule.RemovePanelRecord(this);
+        }
+
         /// <summary>
         /// 面板首次实例化后调用一次。子类可覆写进行一次性初始化。
         /// </summary>
@@ -68,7 +78,7 @@ namespace Runestone.AesirModules
         protected virtual void OnShow(object payload) => gameObject.SetActive(true);
 
         /// <summary>
-        /// 面板被隐藏时调用（不销毁实例）。子类可覆写清理显示状态。
+        /// 面板被隐藏时调用（默认不销毁实例）。子类可覆写清理显示状态。
         /// </summary>
         protected virtual void OnHide() => gameObject.SetActive(false);
 
