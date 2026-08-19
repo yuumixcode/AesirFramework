@@ -37,7 +37,7 @@
   - `Counter-MVP`（MVP-2 标准档）— Presenter 走 Command（修复后）
   - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读
 - **Model 暴露面分档** — 通常档（快捷/标准）直接暴露可写 `ObservableValue<T>`；严格档收窄为 `IReadOnlyObservableValue<T>` 只读接口 + 写方法
-- **Context Debugger** — UI Toolkit 纯代码版架构调试窗口（Tools → Aesir → Architecture → Context Debugger）：运行时浏览全部 Context / Model / Service，可直接编辑 ObservableValue（写回经 `Value` setter 触发通知链）
+- **Context Debugger** — Odin 版架构调试窗口（Tools → Aesir → Architecture → Context Debugger，需 Odin Inspector）：运行时浏览已初始化的 Context / Model / Service，可直观查看 Model 的值并经 Odin 序列化拖拽编辑 ObservableValue（通知链实时生效）
 - **`OrderingAndLifecycleTests`** — 新增 7 个 EditMode 测试（保序/逆序/近失识别/根单例静态重置），测试总数 34 → 41
 - **《事件机制决策表》《常见陷阱清单》** — `Documentation~/` 新增两份教学文档
 

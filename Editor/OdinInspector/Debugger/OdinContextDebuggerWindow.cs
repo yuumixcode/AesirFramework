@@ -9,26 +9,27 @@ using UnityEngine;
 namespace Runestone.AesirArchitecture.Editor.OdinIntegration
 {
     /// <summary>
-    /// Context 调试窗口 —— Odin 版（V2）。
+    /// Context 调试窗口 —— Odin 版（最终选定方案，2026-08-19 用户选型）。
     /// </summary>
     /// <remarks>
-    /// 三版试做之一：样式基准线（Inspector 富样式开箱即用）。
+    /// 三版试做的选定版本。<b>仅显示已初始化的 Context</b>——未初始化的不显示、不操作
+    /// （调试器定位：运行时观察已注册的架构实例，而非初始化入口）。
     /// <para><b>核心优势</b>：<see cref="PropertyTree"/> 直接绑定模块实例——Odin 序列化协议自动处理
     /// <see cref="ObservableValue{T}"/>（<see cref="ObservableValueAttributeProcessor{T}"/> 已生效：
-    /// InlineProperty 内联 + OnValueChanged 调 InvokeEvent）、非公有字段、多态列表。</para>
-    /// <para>菜单：Tools → Aesir → Architecture → Debugger (Odin)。</para>
+    /// InlineProperty 内联 + OnValueChanged 调 InvokeEvent），可直观看到 Model 的值并拖拽调试。</para>
+    /// <para>菜单：Tools → Aesir → Architecture → Context Debugger。</para>
     /// </remarks>
     public sealed class OdinContextDebuggerWindow : OdinEditorWindow
     {
-        [MenuItem("Tools/Aesir/Architecture/Debugger (Odin)")]
+        [MenuItem("Tools/Aesir/Architecture/Context Debugger")]
         static void Open()
         {
-            var window = GetWindow<OdinContextDebuggerWindow>("Context Debugger (Odin)");
+            var window = GetWindow<OdinContextDebuggerWindow>("Context Debugger");
             window.minSize = new Vector2(560, 320);
             window.Show();
         }
 
-        [EnumToggleButtons]
+        [ValueDropdown(nameof(GetInitializedContextNames))]
         [LabelText("Context")]
         [ShowInInspector]
         [PropertyOrder(-1)]
@@ -37,9 +38,8 @@ namespace Runestone.AesirArchitecture.Editor.OdinIntegration
 
         [ShowInInspector]
         [PropertyOrder(0)]
-        [LabelText(" ")]
         [HideLabel]
-        [InfoBox("请在上方选择 Context", InfoMessageType.Info, nameof(HasNoSelection))]
+        [InfoBox("请在上方选择一个已初始化的 Context", InfoMessageType.Info, nameof(HasNoSelection))]
         ContextRegistryScanner.Entry _selectedEntry;
 
         [ShowInInspector]
@@ -56,8 +56,7 @@ namespace Runestone.AesirArchitecture.Editor.OdinIntegration
         [ReadOnly]
         List<object> _services = new List<object>();
 
-        List<ContextRegistryScanner.Entry> _contexts = new List<ContextRegistryScanner.Entry>();
-        List<string> _contextNames = new List<string>();
+        List<ContextRegistryScanner.Entry> _initializedContexts = new List<ContextRegistryScanner.Entry>();
 
         bool HasNoSelection => _selectedEntry == null;
 
@@ -67,25 +66,35 @@ namespace Runestone.AesirArchitecture.Editor.OdinIntegration
             Refresh();
         }
 
-        void Refresh()
-        {
-            _contexts = ContextRegistryScanner.Scan();
-            _contextNames = _contexts.Select(c => c.DisplayName).ToList();
-        }
-
         [Button("刷新", ButtonSizes.Medium)]
         [PropertyOrder(-2)]
-        void RefreshButton()
+        void Refresh()
         {
-            Refresh();
-            OnContextSelectionChanged();
+            // 仅保留已初始化的 Context（未初始化不显示、不操作）
+            _initializedContexts = ContextRegistryScanner.Scan()
+                .Where(c => c.Initialized)
+                .ToList();
+
+            // 当前选中项若已不再初始化，清空选择
+            if (_selectedEntry != null && !_initializedContexts.Any(c => c.DisplayName == _selectedEntry.DisplayName))
+            {
+                _selectedEntry = null;
+                _selectedContextName = null;
+                _models.Clear();
+                _services.Clear();
+            }
+            else
+            {
+                OnContextSelectionChanged();
+            }
         }
 
-        IEnumerable<string> GetContextNames() => _contextNames;
+        IEnumerable<string> GetInitializedContextNames() =>
+            _initializedContexts.Select(c => c.DisplayName);
 
         void OnContextSelectionChanged()
         {
-            _selectedEntry = _contexts.FirstOrDefault(c => c.DisplayName == _selectedContextName);
+            _selectedEntry = _initializedContexts.FirstOrDefault(c => c.DisplayName == _selectedContextName);
             _models.Clear();
             _services.Clear();
 
@@ -97,22 +106,6 @@ namespace Runestone.AesirArchitecture.Editor.OdinIntegration
             _models.AddRange(_selectedEntry.Instance.GetAllModels());
             _services.AddRange(_selectedEntry.Instance.GetAllServices());
         }
-
-        [Button("初始化", ButtonSizes.Small)]
-        [PropertyOrder(-1)]
-        [ShowIf(nameof(ShowInitializeButton))]
-        void InitializeSelected()
-        {
-            if (_selectedEntry == null)
-            {
-                return;
-            }
-
-            ContextRegistryScanner.EnsureInitialized(_selectedEntry.ContextType);
-            OnContextSelectionChanged();
-        }
-
-        bool ShowInitializeButton => _selectedEntry != null && !_selectedEntry.Initialized;
     }
 }
 #endif
