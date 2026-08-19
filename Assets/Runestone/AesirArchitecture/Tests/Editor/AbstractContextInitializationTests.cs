@@ -9,7 +9,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <see cref="AbstractContext{T}.Interface" /> 的关键契约：初始化失败不得缓存单例——
+    /// <see cref="AbstractContext{T}.Instance" /> 的关键契约：初始化失败不得缓存单例——
     /// 否则后续所有访问都拿到 <c>Initialized == false</c> 的坏上下文，且根因异常只在首次访问抛出一次，
     /// 报错点与根因分离，排查体验极差。
     /// </para>
@@ -23,7 +23,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// </para>
     /// <para>纯 C# 逻辑，EditMode 即可运行，无需 PlayMode。</para>
     /// </remarks>
-    /// <seealso cref="AbstractContext{T}.Interface"/>
+    /// <seealso cref="AbstractContext{T}.Instance"/>
     /// <seealso cref="AbstractContext{T}.Initialize"/>
     public class AbstractContextInitializationTests
     {
@@ -54,9 +54,9 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void Interface_InitializeThrows_DoesNotCacheSingleton()
         {
-            Assert.Throws<InvalidOperationException>(() => _ = ThrowingModelContext.Interface,
+            Assert.Throws<InvalidOperationException>(() => _ = ThrowingModelContext.Instance,
                 "首次访问应抛出初始化的根因异常");
-            Assert.Throws<InvalidOperationException>(() => _ = ThrowingModelContext.Interface,
+            Assert.Throws<InvalidOperationException>(() => _ = ThrowingModelContext.Instance,
                 "第二次访问应再次抛出同一根因异常（未缓存半成品单例）");
 
             Assert.AreEqual(2, CountingModel.InitializeCount,
@@ -73,12 +73,12 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void Interface_InitializeSucceeds_CachesSingletonAndInitializesOnce()
         {
-            var first = HealthyContext.Interface;
+            var first = HealthyContext.Instance;
 
             Assert.NotNull(first);
             Assert.IsTrue(first.Initialized, "首次访问后上下文应为已初始化状态");
 
-            var second = HealthyContext.Interface;
+            var second = HealthyContext.Instance;
             Assert.AreSame(first, second, "重复访问应返回同一单例实例");
 
             Assert.AreEqual(1, HealthyContext.ConfigureCount, "Configure 只应执行 1 次");
@@ -98,7 +98,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void GetModel_NotRegistered_ThrowsInvalidOperationException()
         {
             var ex = Assert.Throws<InvalidOperationException>(
-                () => EmptyContext.Interface.GetModel<CountingModel>());
+                () => EmptyContext.Instance.GetModel<CountingModel>());
 
             StringAssert.Contains("CountingModel", ex.Message, "异常消息应包含目标类型名");
             StringAssert.Contains("RegisterModel", ex.Message, "异常消息应包含修复提示");
@@ -112,7 +112,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void GetService_NotRegistered_ThrowsInvalidOperationException()
         {
             var ex = Assert.Throws<InvalidOperationException>(
-                () => EmptyContext.Interface.GetService<CountingService>());
+                () => EmptyContext.Instance.GetService<CountingService>());
 
             StringAssert.Contains("CountingService", ex.Message, "异常消息应包含目标类型名");
             StringAssert.Contains("RegisterService", ex.Message, "异常消息应包含修复提示");
