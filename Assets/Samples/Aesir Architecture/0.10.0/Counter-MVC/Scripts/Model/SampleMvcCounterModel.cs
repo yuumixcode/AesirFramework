@@ -28,15 +28,23 @@ namespace Runestone.AesirArchitecture.Samples
         /// <remarks>
         /// 每次赋值 <c>Count.Value</c> 时，ObservableValue 会比较新旧值，
         /// 仅在值确实变化时才触发监听回调，避免无效刷新。
+        /// <para><c>[SerializeField]</c> 字段形式可被 Unity 原生与 Odin 序列化显示
+        ///（区别于旧版 auto-property——后者不被序列化，Context Debugger 无法观察）。</para>
         /// </remarks>
-        public ObservableValue<int> Count { get; set; } = new ObservableValue<int>(0);
+        [UnityEngine.SerializeField]
+        ObservableValue<int> _count = new ObservableValue<int>(0);
+
+        /// <summary>
+        /// 当前计数值（通常档可写暴露）。
+        /// </summary>
+        public ObservableValue<int> Count => _count;
 
         /// <summary>
         /// 计数 +1，通过 <see cref="Count"/> 的 setter 自动发布变更事件。
         /// </summary>
         public void Increase()
         {
-            Count.Value++;
+            _count.Value++;
         }
 
         /// <summary>
@@ -44,7 +52,7 @@ namespace Runestone.AesirArchitecture.Samples
         /// </summary>
         public void Decrease()
         {
-            Count.Value--;
+            _count.Value--;
         }
 
         /// <summary>
@@ -52,7 +60,7 @@ namespace Runestone.AesirArchitecture.Samples
         /// </summary>
         public void Reset()
         {
-            Count.Value = 0;
+            _count.Value = 0;
         }
 
         /// <summary>
