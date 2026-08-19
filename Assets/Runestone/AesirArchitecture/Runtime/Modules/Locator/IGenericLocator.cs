@@ -83,7 +83,13 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 按注册顺序获取所有已注册的实例。
         /// </summary>
-        /// <returns>所有已注册实例的 <see cref="IEnumerable{T}" /> 集合，不含类型键。</returns>
+        /// <returns>所有已注册实例的 <see cref="IEnumerable{T}" /> 集合，不含类型键，按注册顺序排列。</returns>
         IEnumerable<T> GetAll();
+
+        /// <summary>
+        /// 获取所有已注册键值对（仅供异常路径的近失识别使用）。
+        /// </summary>
+        /// <returns>已注册键与实例的 <see cref="KeyValuePair{TKey,TValue}" /> 集合。</returns>
+        IEnumerable<KeyValuePair<Type, T>> GetAllEntries();
     }
 }

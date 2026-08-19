@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Runestone.AesirArchitecture
 {
@@ -164,7 +165,8 @@ namespace Runestone.AesirArchitecture
 
             throw new InvalidOperationException(
                 $"{AesirArchitectureDebug.ErrorTag} [Context] 尝试获取 Model [{typeof(TModel).Name}]，" +
-                $"但该 Model 未在 Context 中注册，需要提前调用 RegisterModel<{typeof(TModel).Name}>() 注册到 Context 中。");
+                $"但该 Model 未在 Context 中注册，需要提前调用 RegisterModel<{typeof(TModel).Name}>() 注册到 Context 中。" +
+                BuildNearMissHint<TModel, IModel>(_modelLocator));
         }
 
         /// <summary>
@@ -182,7 +184,31 @@ namespace Runestone.AesirArchitecture
 
             throw new InvalidOperationException(
                 $"{AesirArchitectureDebug.ErrorTag} [Context] 尝试获取 Service [{typeof(TService).Name}]，" +
-                $"但该 Service 未在 Context 中注册，需要提前调用 RegisterService<{typeof(TService).Name}>() 注册到 Context 中。");
+                $"但该 Service 未在 Context 中注册，需要提前调用 RegisterService<{typeof(TService).Name}>() 注册到 Context 中。" +
+                BuildNearMissHint<TService, IService>(_serviceLocator));
+        }
+
+        /// <summary>
+        /// 近失识别：当查询类型未命中、但已注册实例中存在可赋值给查询类型的条目时，
+        /// 生成"Register 与 Get 必须使用相同类型参数"的提示。
+        /// </summary>
+        /// <remarks>
+        /// 仅在异常路径执行（未注册时），正常路径零开销。
+        /// 典型触发：按实现类注册、按接口查询（或反之）——键精确匹配失败但实例实际兼容。
+        /// </remarks>
+        static string BuildNearMissHint<TQuery, TBase>(GenericLocator<TBase> locator) where TQuery : class
+            where TBase : class
+        {
+            foreach (var entry in locator.GetAllEntries())
+            {
+                if (typeof(TQuery).IsInstanceOfType(entry.Value))
+                {
+                    return $" 检测到已注册实例（注册键 {entry.Key.Name}）可赋值给查询类型 {typeof(TQuery).Name}——" +
+                           "Register 与 Get 必须使用相同类型参数。";
+                }
+            }
+
+            return string.Empty;
         }
 
         /// <summary>
@@ -190,11 +216,13 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <remarks>
         /// 释放顺序与初始化顺序相反：先销毁所有 Service，再销毁所有 Model，最后清空两个容器。
+        /// 各容器内部亦按注册的逆序销毁（后注册的先销毁），与"按注册顺序初始化"严格镜像。
         /// <para>
         /// 先 Service 后 Model 的原因：Service 通常依赖 Model 完成自身逻辑，
         /// 在 Service 释放时仍可能需要读取 Model 状态，因此 Model 必须晚于 Service 销毁。
         /// </para>
         /// <para>若上下文尚未初始化，此方法直接返回不做任何操作。</para>
+        /// <para><c>Reverse()</c> 在关停路径产生一次枚举分配，属可接受的一次性开销。</para>
         /// </remarks>
         public virtual void Dispose()
         {
@@ -205,12 +233,12 @@ namespace Runestone.AesirArchitecture
 
             OnDispose();
 
-            foreach (var service in _serviceLocator.GetAll())
+            foreach (var service in _serviceLocator.GetAll().Reverse())
             {
                 service.Dispose();
             }
 
-            foreach (var model in _modelLocator.GetAll())
+            foreach (var model in _modelLocator.GetAll().Reverse())
             {
                 model.Dispose();
             }

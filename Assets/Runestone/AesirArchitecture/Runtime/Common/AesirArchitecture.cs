@@ -119,6 +119,22 @@ namespace Runestone.AesirArchitecture
             }
         }
 
+        /// <summary>
+        /// 重置静态字段。关闭 Domain Reload 时由 Unity 在子系统注册阶段自动调用，无需手动调用。
+        /// </summary>
+        /// <remarks>
+        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
+        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
+        /// <para>此前本类依赖 Unity fake-null 机制隐式救援（退出 Play 时对象销毁，<c>_instance != null</c> 自然变 false），
+        /// 属"碰巧正确"而非"按原则正确"——补显式重置使静态重置铁律在框架内无一处例外。</para>
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            _instance = null;
+            _pendingDontDestroyOnLoad = false;
+        }
+
         #endregion
     }
 }
