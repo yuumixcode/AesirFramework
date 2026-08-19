@@ -5,6 +5,51 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.10.0] - 2026-08-19
+
+### Breaking Changes
+
+- **`AbstractContext<T>.Interface` 更名 `Instance`，返回类型 `IContext` → `T`** — 消除与 C# 关键字 `interface` 的术语混淆；返回具体类型使 Context 子类自定义成员免强转（协变友好：管道场景自动向上转型）。迁移：全局替换 `.Interface` → `.Instance`；此前依赖 `((T)Interface)` 强转的代码可直接去掉强转
+
+### Fixed（框架运行时一致性）
+
+- **`AesirArchitecture` 根单例补类内静态重置** — 非泛型类按铁律类内声明 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]`，此前依赖 Unity fake-null 隐式救援（"碰巧正确"而非"按原则正确"）
+- **`GenericLocator<T>` 保序 + `AbstractContext.Dispose` 真逆序** — 增加插入序 `List<Type>`，`GetAll()` 按注册顺序枚举（不再依赖 `Dictionary` 枚举顺序这一无契约保证的实现细节）；`Dispose()` 各容器内部按注册逆序销毁（此前为正序，与自身注释"逆序"矛盾）
+- **未注册异常近失识别** — `GetModel<T>` / `GetService<T>` 未命中时，若已注册实例中存在可赋值给查询类型的条目，异常消息追加「Register 与 Get 必须使用相同类型参数」提示（典型触发：按实现类注册、按接口查询）
+- **`IModel` 注释纠错** — 能力列表去除误述的 `GetService`（接口实际未继承 `ICanGetService`）
+
+### Fixed（示例与框架承诺对齐）
+
+- **MVP 被动视图接口去 `IView`** — `ISampleMvpCounterView` 不再继承 `IView`（`IView` 自带 `GetModel` 能力，"被动视图不访问 Model"从接口层面不成立）
+- **MVP 事件化** — View 契约 `Action` 属性改为 `event`（公开 setter 允许外部替换/置空/Invoke 委托链，event 编译期限制只能 `+=`/`-=`）
+- **按钮监听精确配对** — 示例 `OnDisable` 的 `RemoveAllListeners()` 改为与 `OnEnable` 逐一对称的 `RemoveListener(...)`（一刀切会误清其他系统挂的监听）
+- **MVP 标准档写入改走 Command** — Presenter 直写 Model 改为 `ExecuteCommand`（与 MVC 标准档共享"表现层写入必经 Command"铁律）
+- **场景初始值同步** — MVC 订阅改 `AddListenerAndInvoke`（订阅即同步初始值）、MVP 经 `SyncInitialValue()` 主动推送，消除场景残留文本与 Model 初始值不一致
+- **`IModel` 能力注释** — 服务定位属性（`Model => this.GetModel<T>()`）补每帧路径警告
+
+### Added（渐进式示例家族）
+
+- **示例家族从 2 个扩为 6 个渐进档位**（MVC/MVP 各三档）：
+  - `Counter-Mvc-Quick`（MVC-1 快捷档）— `MonoViewController<T>` 直写直读，~5 文件最小闭环（第一课）
+  - `Counter-MVC`（MVC-2 标准档）— Command 写入 + 独立 Controller（第二课，修复后）
+  - `Counter-Mvc-Strict`（MVC-3 严格档）— 只读 Model + Command 写 + Query 读，View 零持有（进阶）
+  - `Counter-Mvp-Simple`（MVP-1 简单档）— Presenter 直写 Model
+  - `Counter-MVP`（MVP-2 标准档）— Presenter 走 Command（修复后）
+  - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读
+- **Model 暴露面分档** — 通常档（快捷/标准）直接暴露可写 `ObservableValue<T>`；严格档收窄为 `IReadOnlyObservableValue<T>` 只读接口 + 写方法
+- **Context Debugger** — UI Toolkit 纯代码版架构调试窗口（Tools → Aesir → Architecture → Context Debugger）：运行时浏览全部 Context / Model / Service，可直接编辑 ObservableValue（写回经 `Value` setter 触发通知链）
+- **`OrderingAndLifecycleTests`** — 新增 7 个 EditMode 测试（保序/逆序/近失识别/根单例静态重置），测试总数 34 → 41
+- **《事件机制决策表》《常见陷阱清单》** — `Documentation~/` 新增两份教学文档
+
+### Changed（文档）
+
+- **README 快速开始对齐真实示例** — `MonoView<T>` + 无参 Controller（此前 `AesirView` + 构造注入两张皮）；Model 示例改可写 `ObservableValue`（与通常档示例现实一致）
+- **写入约定三档口径** — 设计边界表新增「写入纪律档位」：快捷/简单档直写合法，标准档起表现层写入必经 Command，严格档只读 + 写方法，Service 可直写
+- **三档渐进路径** — 快速开始后新增三课路径说明（快捷 → 标准 → 严格）
+- **设计原则第 7/8 条** — 新增「Inspector 精简原则（AI 优先）」与「Odin 三条铁律」（核心闭环不依赖 Odin / 调试器等体验优化品可用 / 样式与逻辑分离）
+- **Odin 定位澄清** — README 安装节补「Odin 为可选增强，非运行前置」；清除全文中「Odin 可选」与「Odin 必需」的冲突表述
+- **英文 README 同步** — 快速开始代码逐字一致 + 设计边界/原则对齐
+
 ## [0.9.0] - 2026-08-15
 
 ### Changed

@@ -19,7 +19,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.9.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.10.0** |
 | Aesir Modules | `cn.runestone.aesir.modules` | **0.9.0** |
 | Aesir Inspector | `cn.runestone.aesir.inspector` | **0.9.0** |
 
@@ -32,6 +32,47 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Modules** — 同时依赖 Aesir Architecture + Aesir Inspector / depends on BOTH Aesir Architecture AND Aesir Inspector
 
 ---
+
+## [0.10.0] - 2026-08-19
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Breaking Changes
+
+- **`AbstractContext<T>.Interface` 更名 `Instance`，返回类型 `IContext` → `T`** — 消除与 C# 关键字混淆；Context 子类自定义成员免强转。迁移：全局替换 `.Interface` → `.Instance`
+
+#### Fixed（框架运行时一致性）
+
+- **`AesirArchitecture` 根单例补类内静态重置**（此前依赖 fake-null 隐式救援）
+- **`GenericLocator<T>` 保序 + `AbstractContext.Dispose` 真逆序**（此前 Dispose 正序遍历，与注释"逆序"矛盾）
+- **未注册异常近失识别**（实现类注册/接口查询时提示类型参数一致）
+- **`IModel` 注释纠错**（去除误述的 GetService 能力）
+
+#### Fixed（示例与框架承诺对齐）
+
+- **MVP 被动视图接口去 `IView`**（"View 不访问 Model"从接口层面落实）
+- **MVP 事件化**（`Action` 属性 → `event`，外部不可替换/置空/触发委托链）
+- **按钮监听精确配对**（`RemoveAllListeners` → 对称 `RemoveListener`）
+- **MVP 标准档写入改走 Command**（与 MVC 共享"表现层写入必经 Command"铁律）
+- **场景初始值同步**（`AddListenerAndInvoke` / `SyncInitialValue`）
+
+#### Added（渐进式示例家族）
+
+- **示例从 2 个扩为 6 个渐进档位**：`Counter-Mvc-Quick`（快捷）/ `Counter-MVC`（标准）/ `Counter-Mvc-Strict`（严格）/ `Counter-Mvp-Simple`（简单）/ `Counter-MVP`（标准）/ `Counter-Mvp-Strict`（严格）
+- **Model 暴露面分档**（通常档可写 ObservableValue / 严格档只读接口 + 写方法）
+- **Context Debugger**（UI Toolkit 纯代码版架构调试窗口，Tools → Aesir → Architecture → Context Debugger）
+- **7 个新增 EditMode 测试**（测试总数 34 → 41）
+- **《事件机制决策表》《常见陷阱清单》**（Documentation~/）
+
+#### Changed（文档）
+
+- **README 快速开始对齐真实示例**（MonoView + 无参 Controller；Model 可写 ObservableValue）
+- **写入约定三档口径**（设计边界表新增写入纪律档位）
+- **三档渐进路径**（快捷 → 标准 → 严格三课）
+- **设计原则第 7/8 条**（Inspector 精简原则 AI 优先 / Odin 三条铁律）
+- **英文 README 同步**
 
 ## [0.9.0] - 2026-08-15
 
