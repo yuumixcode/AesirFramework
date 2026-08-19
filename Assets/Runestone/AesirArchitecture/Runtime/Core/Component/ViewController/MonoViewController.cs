@@ -16,6 +16,6 @@ namespace Runestone.AesirArchitecture
     public abstract class MonoViewController<T> : MonoBehaviour, IView, IController
         where T : AbstractContext<T>, new()
     {
-        IContext IContextHolder.Context => AbstractContext<T>.Interface;
+        IContext IContextHolder.Context => AbstractContext<T>.Instance;
     }
 }

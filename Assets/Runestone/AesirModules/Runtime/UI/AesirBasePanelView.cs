@@ -34,10 +34,10 @@ namespace Runestone.AesirModules
         /// 获取面板关联的全局 Context 单例。
         /// <para>
         /// <see cref="AbstractContext{T}" /> 以单例方式持有自身实例，
-        /// <see cref="AbstractContext{T}.Interface" /> 返回其 <see cref="IContext" /> 接口形式，
+        /// <see cref="AbstractContext{T}.Instance" /> 返回其 <see cref="IContext" /> 接口形式，
         /// 供 View 层在不知道具体 Context 类型的情况下统一访问。
         /// </para>
         /// </summary>
-        IContext IContextHolder.Context => AbstractContext<T>.Interface;
+        IContext IContextHolder.Context => AbstractContext<T>.Instance;
     }
 }

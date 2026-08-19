@@ -6,17 +6,17 @@ namespace Runestone.AesirArchitecture
 {
     /// <summary>
     /// 上下文基类。纯 C# 实现，不依赖 MonoBehaviour。
-    /// <para>子类在 <see cref="Configure" /> 中注册 Model 和 Service，通过 <see cref="Interface" /> 获取全局单例。</para>
+    /// <para>子类在 <see cref="Configure" /> 中注册 Model 和 Service，通过 <see cref="Instance" /> 获取全局单例。</para>
     /// </summary>
     /// <remarks>
     /// <para>
     /// 本类采用泛型自引用模式（CRTP）：泛型约束 <c>where T : AbstractContext&lt;T&gt;, new()</c>
     /// 要求子类将自身作为类型参数传入，例如 <c>class MyContext : AbstractContext&lt;MyContext&gt;</c>。
-    /// 这样 <see cref="Interface" /> 静态属性就能在编译期确定具体类型并返回其单例，
+    /// 这样 <see cref="Instance" /> 静态属性就能在编译期确定具体类型并返回其单例，
     /// 避免了反射或运行时类型查找的开销。
     /// </para>
     /// <para>
-    /// <b>初始化流程</b>（由 <see cref="Interface" /> 首次访问触发）：
+    /// <b>初始化流程</b>（由 <see cref="Instance" /> 首次访问触发）：
     /// <list type="number">
     /// <item>创建子类实例 <c>new T()</c></item>
     /// <item>调用 <see cref="Initialize" /></item>
@@ -73,12 +73,14 @@ namespace Runestone.AesirArchitecture
         /// 应修复根因而非优雅降级。
         /// </para>
         /// <para>
-        /// <b>重入约定</b>：<see cref="Configure" /> 及各模块的初始化方法中禁止访问 <c>Interface</c>，
+        /// <b>重入约定</b>：<see cref="Configure" /> 及各模块的初始化方法中禁止访问 <c>Instance</c>，
         /// 否则会因单例尚未发布而递归创建第二个上下文实例。
         /// </para>
-        /// <para>该属性返回 <see cref="IContext" /> 接口类型，调用方可通过 <c>((T)Interface)</c> 访问子类特有成员。</para>
+        /// <para>该属性返回具体上下文类型 <typeparamref name="T" />（原名 <c>Interface</c>，0.10.0 起更名 <c>Instance</c>
+        /// 并返回具体类型，消除与 C# 关键字 <c>interface</c> 的术语混淆及子类成员强转成本）。
+        /// 访问 <see cref="IContext" /> 接口成员时 <typeparamref name="T" /> 自动向上转型，无需强转。</para>
         /// </remarks>
-        public static IContext Interface
+        public static T Instance
         {
             get
             {
@@ -265,7 +267,7 @@ namespace Runestone.AesirArchitecture
         /// <para>开发者需保证注册顺序满足依赖关系——被依赖的模块先注册。运行时通过 <c>GetModel</c> / <c>GetService</c> 获取未注册模块会抛出异常。</para>
         /// </summary>
         /// <remarks>
-        /// 此方法由 <see cref="Interface" /> 在首次访问时自动调用，通常不需要手动调用。
+        /// 此方法由 <see cref="Instance" /> 在首次访问时自动调用，通常不需要手动调用。
         /// <para>
         /// 执行步骤：
         /// <list type="number">
@@ -275,7 +277,7 @@ namespace Runestone.AesirArchitecture
         /// </list>
         /// </para>
         /// <para>若已初始化则直接返回，保证幂等性。初始化过程中抛出的异常直接向上传播，不做回滚——
-        /// 初始化失败属启动期编程错误，应修复根因（见 <see cref="Interface" /> 备注）。</para>
+        /// 初始化失败属启动期编程错误，应修复根因（见 <see cref="Instance" /> 备注）。</para>
         /// </remarks>
         public void Initialize()
         {

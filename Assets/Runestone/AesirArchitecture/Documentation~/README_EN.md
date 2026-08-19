@@ -12,7 +12,9 @@
 >
 > Related:
 > - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)** (standalone)
-> - **[Aesir Modules](https://github.com/yuumixcode/Unity-Aesir-Packages)** (depends on Architecture + Inspector)
+> - **[Aesir Modules](https://github.com/yuumixcode/Unity-Aesir-Packages)** (depends on Architecture)
+
+> **Odin Inspector is an optional enhancement** (Inspector presentation and debugging experience), not a runtime prerequisite — the core architecture loop (Context registration → initialization → Command/Query → ObservableValue notification) runs fully without Odin.
 
 ## Overview
 
@@ -25,7 +27,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` / `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, etc.) — expose only what you need
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
-- **`ObservableValue<T>` reactive property** — Model holds a writable instance; View subscribes via covariant `IReadOnlyObservableValue<out T>` for layer safety
+- **`ObservableValue<T>` reactive property** — Normal tier: Model exposes writable `ObservableValue<T>` directly (quick tier: presentation writes directly; standard tier: Command writes internally); strict tier: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods
 - **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
 - **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, with global singleton support
@@ -39,7 +41,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 |------|-----------|-------------------|
 | Lifecycle | MonoBehaviour event callbacks | Native PlayerLoop injection (BeforeUpdate / AfterUpdate) |
 | Architecture root | Generic singleton `Architecture<T>` | Generic static singleton `AbstractContext<T>` + `GenericLocator` |
-| Observable property | `BindableProperty<T>` | `ObservableValue<T>` + covariant `IReadOnlyObservableValue<out T>` |
+| Observable property | `BindableProperty<T>` | `ObservableValue<T>` (normal tier writable / strict tier `IReadOnlyObservableValue<out T>` read-only) |
 | Logging | `Debug.Log` | `AesirArchitectureDebug` (conditional compilation, unified) |
 | Static state | No Domain Reset guarantee | `[RuntimeInitializeOnLoadMethod]` explicit reset |
 | Presentation layer | No clear abstraction | `IView` interface + `IController` / `IPresenter` dual modes |
@@ -81,7 +83,7 @@ public class CounterContext : AbstractContext<CounterContext>
 ```csharp
 public interface ICounterModel : IModel
 {
-    IReadOnlyObservableValue<int> Count { get; }
+    ObservableValue<int> Count { get; }
     void Increase();
     void Decrease();
     void Reset();
@@ -89,35 +91,33 @@ public interface ICounterModel : IModel
 
 public sealed class CounterModel : AbstractModel, ICounterModel
 {
-    readonly ObservableValue<int> _count = new ObservableValue<int>(0);
+    // Normal tier: expose writable ObservableValue directly (standard tier: written by Command internally)
+    public ObservableValue<int> Count { get; set; } = new ObservableValue<int>(0);
 
-    public IReadOnlyObservableValue<int> Count => _count;
-
-    public void Increase() => _count.Value++;
-    public void Decrease() => _count.Value--;
-    public void Reset() => _count.Value = 0;
+    public void Increase() => Count.Value++;
+    public void Decrease() => Count.Value--;
+    public void Reset() => Count.Value = 0;
 
     protected override void OnInitialize() { }
 }
 ```
 
-### 3. Define a View (MVC pattern)
+### 3. Define a View (MVC standard tier)
 
 ```csharp
-public class UICounterMvcPanel : AesirView<CounterContext>
+public class UICounterMvcPanel : MonoView<CounterContext>
 {
     [SerializeField] Text countText;
     [SerializeField] Button increaseButton;
 
-    ICounterModel _model;
     ICounterController _ctrl;
 
     void Awake()
     {
-        _model = this.GetModel<ICounterModel>();
-        _model.Count.AddListener(UpdateCountText)
-                   .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
-        _ctrl = new CounterController(_model);
+        this.GetModel<ICounterModel>().Count
+            .AddListenerAndInvoke(UpdateCountText)
+            .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
+        _ctrl = new CounterController();
     }
 
     void OnEnable() => increaseButton.onClick.AddListener(_ctrl.Increase);
@@ -126,6 +126,12 @@ public class UICounterMvcPanel : AesirView<CounterContext>
     public void UpdateCountText(int count) => countText.text = count.ToString();
 }
 ```
+
+> **Three-tier progressive path**:
+> - **Lesson 1 (Quick tier, ~5 files)**: Context + Model + `MonoViewController<T>` panel (View doubles as Controller, direct read/write), see `Counter-Mvc-Quick` sample;
+> - **Lesson 2 (Standard tier, ~8 files)**: Extract `MonoView` + standalone Controller, writes go through Command, see `Counter-MVC` sample;
+> - **Lesson 3 (Strict tier, ~7 files)**: Read-only Model interface + write methods, reads go through Query, see `Counter-Mvc-Strict` sample.
+> MVP tiers (`Counter-Mvp-Simple` / `Counter-MVP` / `Counter-Mvp-Strict`) mirror the same structure.
 
 ### 4. Use a Command
 
@@ -169,8 +175,9 @@ this.ExecuteCommand<AddScoreCommand>();
      │             │             │
      ▼             ▼             ▼
 ┌──────────────────────────────────────┐
-│  AesirView<T> / MonoView<T>          │
-│  AesirViewController<T>              │
+│  MonoView<T> / MonoViewController<T>  │
+│  AesirView<T> / AesirViewController<T>│
+│  (Odin-enhanced; use Mono* without Odin)│
 │        (MonoBehaviour adapter layer)   │
 └──────────────────────────────────────┘
                    │
@@ -197,7 +204,10 @@ this.ExecuteCommand<AddScoreCommand>();
 cn.runestone.aesir.architecture/
 ├── package.json
 ├── README.md                       # Chinese
-├── Documentation~/README_EN.md     # This file
+├── Documentation~/
+│   ├── README_EN.md               # This file
+│   ├── 事件机制决策表.md            # Event mechanism decision table (Chinese)
+│   └── 常见陷阱清单.md              # Common pitfalls checklist (Chinese)
 ├── CHANGELOG.md
 ├── LICENSE.md
 ├── Third Party Notices.md
@@ -248,8 +258,12 @@ cn.runestone.aesir.architecture/
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
-│   ├── Counter-MVC/               # MVC pattern counter demo (recommended)
-│   ├── UI Counter-MVP/            # MVP pattern counter demo
+│   ├── Counter-Mvc-Quick/         # MVC-1 quick tier (MonoViewController direct read/write, lesson 1)
+│   ├── Counter-MVC/               # MVC-2 standard tier (Command writes + standalone Controller, lesson 2)
+│   ├── Counter-Mvc-Strict/        # MVC-3 strict tier (read-only Model + Command writes + Query reads)
+│   ├── Counter-Mvp-Simple/        # MVP-1 simple tier (Presenter writes Model directly)
+│   ├── Counter-MVP/               # MVP-2 standard tier (Presenter writes via Command)
+│   ├── Counter-Mvp-Strict/        # MVP-3 strict tier (Command writes + Query reads)
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
 │   └── MiniEvent/                 # MiniEvent usage examples
 └── Third Party Notices.md          # Third-party license notices
@@ -272,10 +286,11 @@ cn.runestone.aesir.architecture/
 | Convention | Consequence of violation |
 |------|---------|
 | Listener callbacks must not throw | Exceptions propagate and interrupt subsequent callbacks of the same event (native C# event semantics); Unity logs the error |
-| Never access `Interface` inside `Configure()` or module initialization | A second context instance is created recursively (the singleton is not published yet) |
-| `Register` and `Get` must use the same type argument | Exact-key matching: querying an interface-keyed registration by implementation type returns null / throws not-registered |
+| Never access `Instance` inside `Configure()` or module initialization | A second context instance is created recursively (the singleton is not published yet) |
+| `Register` and `Get` must use the same type argument | Exact-key matching: querying an interface-keyed registration by implementation type returns null / throws not-registered (with near-miss hint) |
 | Runtime Model/Service replacement is for testing/debugging only | The old instance is disposed, its subscriptions are not migrated; subscribed views must re-subscribe |
 | Call `AesirArchitecturePlayerLoop.EnsureInjected()` once after a third-party SDK rewrites the PlayerLoop | BeforeUpdate / AfterUpdate hooks silently stop firing (`Register` self-heals on callback registration) |
+| **Write-discipline tiers** | Quick/Simple tier: direct Model writes are legal; Standard tier onward: presentation-layer writes must go through Command; Strict tier: read-only Model + write methods; Services may write directly. Recommended: start from the Standard tier |
 
 ## Design Principles
 
@@ -285,6 +300,8 @@ cn.runestone.aesir.architecture/
 4. **Progressive** — Use lightly in small projects, scale up gradually for large projects; no forced full adoption
 5. **SO and pure code dual channels (planned)** — Each SO capability has a pure C# alternative
 6. **Tuanjie Engine first** — Tuanjie is a first-class citizen
+7. **Inspector austerity (AI-first)** — Odin enhances debuggability; core configuration lives in code and asset files (AI-readable, versionable); the Inspector is a debugging aid, not a configuration surface — non-essential content stays off the panel
+8. **Odin three iron rules** — The core architecture loop never depends on Odin (Context registration → initialization → Command/Query → ObservableValue notification runs fully without Odin); experience-optimizing tools (e.g. the Context Debugger) may use Odin; presentation and logic stay separate (ObservableValue is the canonical example: logic runs without Odin, Inspector presentation is enhanced by an Odin AttributeProcessor)
 
 ## Roadmap
 

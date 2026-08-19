@@ -21,11 +21,11 @@ namespace Runestone.AesirArchitecture
     /// <typeparam name="T">上下文类型，必须继承 <see cref="AbstractContext{T}" /> 并提供无参构造。</typeparam>
     /// <remarks>
     /// 通过显式接口实现 <see cref="IContextHolder.Context" /> 自动绑定到
-    /// <see cref="AbstractContext{T}.Interface" /> 单例，无需手动注入上下文。
+    /// <see cref="AbstractContext{T}.Instance" /> 单例，无需手动注入上下文。
     /// 此设计使 Presenter 与具体上下文类型解耦——只需声明泛型参数即可获得对应模块的全局上下文访问权。
     /// </remarks>
     public interface IPresenter<T> : IPresenter where T : AbstractContext<T>, new()
     {
-        IContext IContextHolder.Context => AbstractContext<T>.Interface;
+        IContext IContextHolder.Context => AbstractContext<T>.Instance;
     }
 }

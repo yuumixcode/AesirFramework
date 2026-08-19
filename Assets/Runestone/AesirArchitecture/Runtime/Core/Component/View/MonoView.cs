@@ -17,6 +17,6 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 获取当前泛型上下文的单例接口实例。
         /// </summary>
-        IContext IContextHolder.Context => AbstractContext<T>.Interface;
+        IContext IContextHolder.Context => AbstractContext<T>.Instance;
     }
 }
