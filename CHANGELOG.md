@@ -61,8 +61,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 #### Added（渐进式示例家族）
 
 - **示例从 2 个扩为 6 个渐进档位**：`Counter-Mvc-Quick`（快捷）/ `Counter-MVC`（标准）/ `Counter-Mvc-Strict`（严格）/ `Counter-Mvp-Simple`（简单）/ `Counter-MVP`（标准）/ `Counter-Mvp-Strict`（严格）
-- **Model 暴露面分档**（通常档可写 ObservableValue / 严格档只读接口 + 写方法）
-- **Context Debugger**（Odin 版架构调试窗口，Tools → Aesir → Architecture → Context Debugger，需 Odin Inspector）
+- **Model 暴露面分档**（通常档可写 ObservableValue / 严格档只读接口 + 写方法；全家族统一 `[SerializeField]` 字段 + 属性转发形式）
 - **7 个新增 EditMode 测试**（测试总数 34 → 41）
 - **《事件机制决策表》《常见陷阱清单》**（Documentation~/）
 
