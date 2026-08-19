@@ -34,6 +34,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 - **Domain Reload 安全** — 静态变量通过 `[RuntimeInitializeOnLoadMethod]` 显式重置，反复进出 Play Mode 无残留
 - **纯 C# 核心 + MonoBehaviour 适配** — 框架核心为纯 C# 对象，Engine 层不依赖任何 Component 层类型，`AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` 作为 MonoBehaviour 适配层
 - **MVC + MVP 双模式** — `IController`（MVC，推荐）适合快速开发，`IPresenter`（MVP，可选）提供更严格的 Model-View 隔离
+- **Context Debugger** — UI Toolkit 纯代码版架构调试窗口（Tools → Aesir → Architecture → Context Debugger），运行时浏览全部 Context / Model / Service 并可直接编辑 ObservableValue，通知链实时生效
 
 ### 与 QFramework 的差异
 
@@ -317,7 +318,8 @@ cn.runestone.aesir.architecture/
 - [x] Domain Reload 安全
 - [ ] ScriptableObject 可视化配置层
 - [ ] SO EventChannel 事件通道
-- [ ] Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
+- [x] Editor 工具链 — Context Debugger（UI Toolkit 纯代码版，Tools → Aesir → Architecture → Context Debugger）
+- [ ] Editor 工具链 — MVP 脚手架 / 模块可视化
 - [ ] 运行时集合（RuntimeSet）
 
 ## 许可证
