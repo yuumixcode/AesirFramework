@@ -3,28 +3,49 @@ using System;
 namespace Runestone.AesirArchitecture.Samples
 {
     /// <summary>
-    /// 计数器被动视图接口。Presenter 通过该接口驱动 View，View 不直接访问 Model。
+    /// MVP 示例 —— 计数器被动视图接口。
     /// </summary>
-    public interface ISampleMvpCounterView : IView
+    /// <remarks>
+    /// 在 MVP 模式中，View 被设计为"被动视图"（Passive View）：
+    /// 它不包含任何业务逻辑，不直接访问 Model，
+    /// 仅通过事件向 Presenter 报告用户输入，并暴露方法供 Presenter 驱动刷新。
+    /// 这种设计使 View 可被完全替换（如从 UGUI 切换到 UI Toolkit）而不影响 Presenter 和 Model。
+    /// <para><b>不继承 IView</b>：被动视图契约不携带任何 Context 能力（GetModel / GetService）。
+    /// Panel 类自身经 <c>MonoView&lt;T&gt;</c> 持有的 IView 能力不进入 Presenter 可见面——
+    /// 从接口层面保证"View 不访问 Model"的 MVP 边界。</para>
+    /// </remarks>
+    /// <seealso cref="Runestone.AesirArchitecture.IView"/>
+    /// <seealso cref="SampleMvpCounterMainPanel"/>
+    /// <seealso cref="SampleMvpCounterPresenter"/>
+    public interface ISampleMvpCounterView
     {
         /// <summary>
-        /// 点击“增加”时触发
+        /// 用户点击"增加"按钮时触发，由 Presenter 订阅处理。
         /// </summary>
-        Action IncreaseClicked { get; set; }
+        /// <remarks>
+        /// View 将用户输入转发为事件，由 Presenter 订阅并处理，
+        /// View 本身不关心点击后会发生什么。
+        /// </remarks>
+        event Action IncreaseClicked;
 
         /// <summary>
-        /// 点击“减少”时触发
+        /// 用户点击"减少"按钮时触发，由 Presenter 订阅处理。
         /// </summary>
-        Action DecreaseClicked { get; set; }
+        event Action DecreaseClicked;
 
         /// <summary>
-        /// 点击“重置”时触发
+        /// 用户点击"重置"按钮时触发，由 Presenter 订阅处理。
         /// </summary>
-        Action ResetClicked { get; set; }
+        event Action ResetClicked;
 
         /// <summary>
-        /// 由 Presenter 调用，刷新计数显示
+        /// 由 Presenter 调用，将最新的计数值推送到 View 刷新显示。
         /// </summary>
+        /// <param name="count">最新的计数值。</param>
+        /// <remarks>
+        /// 这是 Presenter 驱动 View 更新的唯一入口，
+        /// 体现了"被动视图"的核心原则——View 不主动拉取数据，只接受 Presenter 的推送。
+        /// </remarks>
         void UpdateCount(int count);
     }
 }

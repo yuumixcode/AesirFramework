@@ -6,7 +6,9 @@ namespace Runestone.AesirArchitecture.Samples
     /// <remarks>
     /// Model 负责持有和变更业务数据。通过接口定义 Model，使 Controller / View
     /// 依赖抽象而非具体实现，便于替换实现类型（如运行时热替换为继承 MonoBehaviour 的 Model）。
-    /// <para>计数值使用 <see cref="ObservableValue{T}"/> 包装，变更时自动通知所有监听者，无需手动广播事件。</para>
+    /// <para><b>通常档暴露面</b>：直接暴露可写 <see cref="ObservableValue{T}"/>，
+    /// 外部可直接改 <c>Count.Value</c>（快捷档由表现层直写，标准档由 Command 内部直写）；
+    /// 严格档收窄为只读 <c>IReadOnlyObservableValue&lt;T&gt;</c> + 写方法，见 Counter-Mvc-Strict 示例。</para>
     /// </remarks>
     /// <seealso cref="Runestone.AesirArchitecture.IModel"/>
     /// <seealso cref="SampleMvcCounterModel"/>
@@ -14,10 +16,10 @@ namespace Runestone.AesirArchitecture.Samples
     public interface ISampleMvcCounterModel : IModel
     {
         /// <summary>
-        /// 当前计数值，作为可观察属性暴露给外部监听。
+        /// 当前计数值，作为可观察属性暴露给外部监听与修改。
         /// </summary>
         /// <remarks>
-        /// 外部通过 <c>Count.AddListener(...)</c> 注册变更回调，
+        /// 外部通过 <c>Count.AddListener(...)</c> 注册变更回调；
         /// 当 Model 内部修改 <c>Count.Value</c> 时自动触发通知。
         /// </remarks>
         ObservableValue<int> Count { get; }

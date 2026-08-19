@@ -53,12 +53,14 @@ namespace Runestone.AesirArchitecture.Samples
         /// 这样在运行时通过 RegisterModel 动态替换 Model 后，始终能拿到最新实例；
         /// 旧实例在无人持有后可被 GC 正常回收，支持运行时热替换
         /// （如切换为继承 MonoBehaviour 的可视化 Model）。
+        /// <para>⚠️ 每次访问均执行一次字典查找 + 初始化检查。<b>不推荐用于 Update 等每帧路径</b>——
+        /// 如确需每帧调用，请自行确认其必要性与开销；常规做法是在 Awake/Initialize 缓存字段引用。</para>
         /// </remarks>
         ISampleMvcCounterModel Model => this.GetModel<ISampleMvcCounterModel>();
 
         void Awake()
         {
-            Model.Count.AddListener(UpdateCountText).RemoveListenerWhenGameObjectOnDestroyed(gameObject);
+            Model.Count.AddListenerAndInvoke(UpdateCountText).RemoveListenerWhenGameObjectOnDestroyed(gameObject);
             _ctrl = new SampleMvcCounterController();
         }
 
@@ -71,9 +73,9 @@ namespace Runestone.AesirArchitecture.Samples
 
         void OnDisable()
         {
-            increaseButton.onClick.RemoveAllListeners();
-            decreaseButton.onClick.RemoveAllListeners();
-            resetButton.onClick.RemoveAllListeners();
+            increaseButton.onClick.RemoveListener(_ctrl.Increase);
+            decreaseButton.onClick.RemoveListener(_ctrl.Decrease);
+            resetButton.onClick.RemoveListener(_ctrl.ResetCounter);
         }
 
         /// <summary>

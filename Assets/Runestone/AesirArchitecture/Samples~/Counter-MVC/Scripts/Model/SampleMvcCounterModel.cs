@@ -9,7 +9,12 @@ namespace Runestone.AesirArchitecture.Samples
     /// 使用 <see cref="ObservableValue{T}"/> 持有计数值，
     /// 所有修改操作（Increase / Decrease / Reset）只需更新 <c>Count.Value</c>，
     /// 变更通知由 ObservableValue 自动完成，Model 无需手动管理事件发布。
-    /// <para><c>[Serializable]</c> 标记使其可在 Unity Inspector 中序列化显示。</para>
+    /// <para><b>通常档暴露面</b>：Model 直接暴露可写 <see cref="ObservableValue{T}"/>，
+    /// 外部（快捷档由表现层直写，标准档由 Command 内部直写）可直接改值；
+    /// 严格档收窄为只读接口 + 写方法，见 Counter-Mvc-Strict 示例。</para>
+    /// <para><b>序列化口径</b>：<c>[Serializable]</c> + auto-property 形式
+    /// 在 Unity 原生 Inspector 中不可见（Unity 不序列化 auto-property）；
+    /// 安装 Odin Inspector 后可正常序列化显示，属 Inspector 展示加成，不影响运行。</para>
     /// </remarks>
     /// <seealso cref="ISampleMvcCounterModel"/>
     /// <seealso cref="Runestone.AesirArchitecture.AbstractModel"/>
