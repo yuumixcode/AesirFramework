@@ -7,14 +7,14 @@ using UnityEngine.UIElements;
 namespace Runestone.AesirArchitecture.Editor
 {
     /// <summary>
-    /// Context 调试窗口 —— UI Toolkit 纯代码版（V3）。
+    /// Context 调试窗口 —— UI Toolkit 纯代码版。
     /// </summary>
     /// <remarks>
-    /// 三版试做之一：现代感最强的一版（卡片式布局 + 状态徽标配色 + retained mode 性能）。
+    /// 三版试做的选定版本（2026-08-19 用户选型）：现代感最强的一版（卡片式布局 + 状态徽标配色 + retained mode 性能）。
     /// <para><b>纯代码构建</b>：不用 UXML/UIBuilder，全部经 <c>VisualElement</c> + 内联 USS 风格构建——
     /// 样式可被 AI 读写与 diff，契合 G10 Inspector 精简原则。</para>
     /// <para><b>性能</b>：retained mode，仅数据变更时局部刷新，不每帧轮询。</para>
-    /// <para>菜单：Tools → Aesir → Architecture → Debugger (UI Toolkit)。</para>
+    /// <para>菜单：Tools → Aesir → Architecture → Context Debugger。</para>
     /// </remarks>
     public sealed class ToolkitContextDebuggerWindow : EditorWindow
     {
@@ -32,10 +32,10 @@ namespace Runestone.AesirArchitecture.Editor
         VisualElement _detailPane;
         Label _statusLabel;
 
-        [MenuItem("Tools/Aesir/Architecture/Debugger (UI Toolkit)")]
+        [MenuItem("Tools/Aesir/Architecture/Context Debugger")]
         static void Open()
         {
-            var window = GetWindow<ToolkitContextDebuggerWindow>("Context Debugger (UI Toolkit)");
+            var window = GetWindow<ToolkitContextDebuggerWindow>("Context Debugger");
             window.minSize = new Vector2(600, 340);
             window.Show();
         }
