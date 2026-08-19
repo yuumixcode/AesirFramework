@@ -22,14 +22,34 @@
   },
   "samples": [
     {
-      "displayName": "Counter-MVC",
-      "description": "MVC 模式计数器示例。设计一个全局的 Context 上下文对象，View 持有 Controller 类型的模块，在 Controller 中发布 Command 命令，通过 Command 修改 Model 的数据，通过 Model 通知 View 进行样式修改。",
+      "displayName": "Counter-MVC-Quick（快捷档）",
+      "description": "MVC 快捷写法计数器示例。View 兼 Controller（MonoViewController）直写直读 Model，不建 Command——第一课：最少概念跑通数据驱动 UI 闭环。",
+      "path": "Samples~/Counter-Mvc-Quick"
+    },
+    {
+      "displayName": "Counter-MVC（标准档）",
+      "description": "MVC 标准写法计数器示例。View 持有 Controller，Controller 经 Command 修改 Model，Model 通过 ObservableValue 通知 View 刷新——第二课：写入唯一入口。",
       "path": "Samples~/Counter-MVC"
     },
     {
-      "displayName": "UI Counter-MVP",
-      "description": "MVP 模式计数器示例。设计一个全局的 Context 上下文对象，Presenter 作为 Model 与 View 之间的中介，View 持有 Presenter 类型的模块，具体操作逻辑由 Presenter 完成，通过 Presenter 操作 Model 以及修改 View 的样式。",
+      "displayName": "Counter-MVC-Strict（严格档）",
+      "description": "MVC 严格写法计数器示例。Model 只读接口 + 写方法，View 不持有 Model：写入走 Command，读取走 Query——进阶课：读写全解耦。",
+      "path": "Samples~/Counter-Mvc-Strict"
+    },
+    {
+      "displayName": "Counter-MVP-Simple（简单档）",
+      "description": "MVP 简单写法计数器示例。Presenter 直写 Model（不建 Command）并推送刷新 View——MVP 入门：先理解被动视图。",
+      "path": "Samples~/Counter-Mvp-Simple"
+    },
+    {
+      "displayName": "Counter-MVP（标准档）",
+      "description": "MVP 标准写法计数器示例。Presenter 经 Command 修改 Model，再读取 Model 推送刷新 View——与 MVC 标准档共享写入铁律。",
       "path": "Samples~/Counter-MVP"
+    },
+    {
+      "displayName": "Counter-MVP-Strict（严格档）",
+      "description": "MVP 严格写法计数器示例。Model 只读接口 + 写方法，Presenter 写入走 Command、读取走 Query——MVP 进阶：与 MVC 严格档同构。",
+      "path": "Samples~/Counter-Mvp-Strict"
     },
     {
       "displayName": "ObservableValue (Dependency Odin Inspector)",

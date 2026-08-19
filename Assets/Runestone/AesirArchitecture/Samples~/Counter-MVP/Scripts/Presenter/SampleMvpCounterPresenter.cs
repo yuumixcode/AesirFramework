@@ -1,15 +1,16 @@
 namespace Runestone.AesirArchitecture.Samples
 {
     /// <summary>
-    /// MVP 示例 —— 计数器 Presenter 实现。
+    /// MVP 示例 —— 计数器 Presenter 实现（标准档）。
     /// </summary>
     /// <remarks>
     /// Presenter 是 MVP 模式中的"协调者"：它同时持有 View 接口引用和 Model 访问入口，
-    /// 将 View 的用户输入事件转化为对 Model 的操作，再将 Model 的最新值推送回 View。
-    /// <para>与 MVC 不同，MVP 不经过 Command 层，Presenter 直接调用 Model 方法。
-    /// 这样做的好处是流程更简洁、适合简单的 UI 交互；
-    /// 如果需要更复杂的状态管理（如撤销/重做、操作日志），可以引入 Command 层。</para>
-    /// <para>数据流：View（用户输入）→ Presenter → Model → Presenter → View（刷新显示）。</para>
+    /// 将 View 的用户输入事件转化为 Command 执行，再将 Model 的最新值推送回 View。
+    /// <para><b>标准档写入</b>：表现层写入必经 Command（与 MVC-2 共享同一条写入铁律）；
+    /// MVP-1 简单档（Counter-Mvp-Simple）保留 Presenter 直写 Model 作为对照。</para>
+    /// <para><b>刷新路径</b>：Presenter 推送刷新（<c>_view.UpdateCount(...)</c>）是 MVP 模式特征，
+    /// 与 MVC 的 ObservableValue 订阅刷新形成教学对比。</para>
+    /// <para>数据流：View（用户输入）→ Presenter → Command → Model → Presenter → View（刷新显示）。</para>
     /// </remarks>
     /// <seealso cref="ISampleMvpCounterPresenter"/>
     /// <seealso cref="Runestone.AesirArchitecture.IPresenter{T}"/>
@@ -27,6 +28,8 @@ namespace Runestone.AesirArchitecture.Samples
         /// 这样在运行时通过 RegisterModel 动态替换 Model 后，始终能拿到最新实例；
         /// 旧实例在无人持有后可被 GC 正常回收，支持运行时热替换
         /// （如切换为继承 MonoBehaviour 的可视化 Model）。
+        /// <para>⚠️ 每次访问均执行一次字典查找 + 初始化检查。<b>不推荐用于 Update 等每帧路径</b>——
+        /// 如确需每帧调用，请自行确认其必要性与开销；常规做法是缓存字段引用。</para>
         /// </remarks>
         ISampleMvpCounterModel Model => this.GetModel<ISampleMvpCounterModel>();
 
@@ -46,25 +49,30 @@ namespace Runestone.AesirArchitecture.Samples
             _view.ResetClicked += OnResetClicked;
         }
 
+        /// <summary>
+        /// 同步初始值到 View，避免场景残留文本与 Model 初始值不一致。
+        /// </summary>
+        public void SyncInitialValue()
+        {
+            _view.UpdateCount(Model.Count.Value);
+        }
+
         void OnIncreaseClicked()
         {
-            Model.Increase();
+            this.ExecuteCommand<SampleMvpIncreaseCommand>();
             _view.UpdateCount(Model.Count.Value);
-            AesirArchitectureDebug.Log("Increase Counter");
         }
 
         void OnDecreaseClicked()
         {
-            Model.Decrease();
+            this.ExecuteCommand<SampleMvpDecreaseCommand>();
             _view.UpdateCount(Model.Count.Value);
-            AesirArchitectureDebug.Log("Decrease Counter");
         }
 
         void OnResetClicked()
         {
-            Model.Reset();
+            this.ExecuteCommand<SampleMvpResetCommand>();
             _view.UpdateCount(Model.Count.Value);
-            AesirArchitectureDebug.Log("Reset Counter");
         }
 
         /// <summary>

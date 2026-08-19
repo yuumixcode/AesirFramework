@@ -1,27 +1,41 @@
 namespace Runestone.AesirArchitecture.Samples
 {
     /// <summary>
-    /// 计数器模型接口
+    /// MVC 示例 —— 计数器模型接口。
     /// </summary>
+    /// <remarks>
+    /// Model 负责持有和变更业务数据。通过接口定义 Model，使 Controller / View
+    /// 依赖抽象而非具体实现，便于替换实现类型（如运行时热替换为继承 MonoBehaviour 的 Model）。
+    /// <para><b>通常档暴露面</b>：直接暴露可写 <see cref="ObservableValue{T}"/>，
+    /// 外部可直接改 <c>Count.Value</c>（快捷档由表现层直写，标准档由 Command 内部直写）；
+    /// 严格档收窄为只读 <c>IReadOnlyObservableValue&lt;T&gt;</c> + 写方法，见 Counter-Mvc-Strict 示例。</para>
+    /// </remarks>
+    /// <seealso cref="Runestone.AesirArchitecture.IModel"/>
+    /// <seealso cref="SampleMvcCounterModel"/>
+    /// <seealso cref="Runestone.AesirArchitecture.ObservableValue{T}"/>
     public interface ISampleMvcCounterModel : IModel
     {
         /// <summary>
-        /// 当前计数值（只读可观察属性）
+        /// 当前计数值，作为可观察属性暴露给外部监听与修改。
         /// </summary>
+        /// <remarks>
+        /// 外部通过 <c>Count.AddListener(...)</c> 注册变更回调；
+        /// 当 Model 内部修改 <c>Count.Value</c> 时自动触发通知。
+        /// </remarks>
         ObservableValue<int> Count { get; }
 
         /// <summary>
-        /// 计数+1
+        /// 计数 +1 并通过 <see cref="Count"/> 发布变更事件。
         /// </summary>
         void Increase();
 
         /// <summary>
-        /// 计数-1
+        /// 计数 -1 并通过 <see cref="Count"/> 发布变更事件。
         /// </summary>
         void Decrease();
 
         /// <summary>
-        /// 重置为0
+        /// 将计数重置为 0 并通过 <see cref="Count"/> 发布变更事件。
         /// </summary>
         void Reset();
     }

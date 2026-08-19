@@ -6,9 +6,12 @@ namespace Runestone.AesirArchitecture.Samples
     /// MVP 示例 —— 计数器模型实现。
     /// </summary>
     /// <remarks>
-    /// 与 MVC 版本（<see cref="SampleMvcCounterModel"/>）的实现逻辑完全一致，
+    /// 与 MVC 版本（<see cref="SampleMvcCounterModel"/>）的实现逻辑一致，
     /// 说明 Model 层在 MVC 和 MVP 模式下是通用的，架构模式的差异不影响数据层设计。
-    /// <para><c>[Serializable]</c> 标记使其可在 Unity Inspector 中序列化显示。</para>
+    /// <para><b>通常档暴露面</b>：直接暴露可写 <see cref="ObservableValue{T}"/>；
+    /// 严格档收窄为只读接口 + 写方法，见 Counter-Mvp-Strict 示例。</para>
+    /// <para><b>序列化口径</b>：<c>[Serializable]</c> + auto-property 形式
+    /// 在 Unity 原生 Inspector 中不可见；安装 Odin Inspector 后可正常显示，属展示加成，不影响运行。</para>
     /// </remarks>
     /// <seealso cref="ISampleMvpCounterModel"/>
     /// <seealso cref="Runestone.AesirArchitecture.AbstractModel"/>

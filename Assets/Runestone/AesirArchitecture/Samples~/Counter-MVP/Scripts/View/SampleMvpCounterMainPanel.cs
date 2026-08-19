@@ -12,7 +12,7 @@ namespace Runestone.AesirArchitecture.Samples
     /// 既是 MonoBehaviour 的 UI 容器，也是 Presenter 可驱动的被动视图。
     /// <para>View 全程不直接访问 Model，只通过事件将用户输入通知 Presenter，
     /// 并由 Presenter 回调 <see cref="UpdateCount"/> 推送显示数据。</para>
-    /// <para>数据流：按钮点击 → View 事件 → Presenter → Model → Presenter → View 刷新。</para>
+    /// <para>数据流：按钮点击 → View 事件 → Presenter → Command → Model → Presenter → View 刷新。</para>
     /// </remarks>
     /// <seealso cref="Runestone.AesirArchitecture.MonoView{T}"/>
     /// <seealso cref="ISampleMvpCounterView"/>
@@ -50,18 +50,24 @@ namespace Runestone.AesirArchitecture.Samples
             _presenter = new SampleMvpCounterPresenter(this);
         }
 
+        void Start()
+        {
+            // 同步初始值：避免场景残留文本与 Model 初始值不一致
+            _presenter.SyncInitialValue();
+        }
+
         void OnEnable()
         {
-            increaseButton.onClick.AddListener(IncreaseClicked.Invoke);
-            decreaseButton.onClick.AddListener(DecreaseClicked.Invoke);
-            resetButton.onClick.AddListener(ResetClicked.Invoke);
+            increaseButton.onClick.AddListener(RaiseIncreaseClicked);
+            decreaseButton.onClick.AddListener(RaiseDecreaseClicked);
+            resetButton.onClick.AddListener(RaiseResetClicked);
         }
 
         void OnDisable()
         {
-            increaseButton.onClick.RemoveAllListeners();
-            decreaseButton.onClick.RemoveAllListeners();
-            resetButton.onClick.RemoveAllListeners();
+            increaseButton.onClick.RemoveListener(RaiseIncreaseClicked);
+            decreaseButton.onClick.RemoveListener(RaiseDecreaseClicked);
+            resetButton.onClick.RemoveListener(RaiseResetClicked);
         }
 
         void OnDestroy()
@@ -69,20 +75,18 @@ namespace Runestone.AesirArchitecture.Samples
             _presenter.Dispose();
         }
 
-        /// <summary>
-        /// 用户点击"增加"按钮时触发，由 Presenter 订阅处理。
-        /// </summary>
-        public Action IncreaseClicked { get; set; }
+        /// <inheritdoc />
+        public event Action IncreaseClicked;
 
-        /// <summary>
-        /// 用户点击"减少"按钮时触发，由 Presenter 订阅处理。
-        /// </summary>
-        public Action DecreaseClicked { get; set; }
+        /// <inheritdoc />
+        public event Action DecreaseClicked;
 
-        /// <summary>
-        /// 用户点击"重置"按钮时触发，由 Presenter 订阅处理。
-        /// </summary>
-        public Action ResetClicked { get; set; }
+        /// <inheritdoc />
+        public event Action ResetClicked;
+
+        void RaiseIncreaseClicked() => IncreaseClicked?.Invoke();
+        void RaiseDecreaseClicked() => DecreaseClicked?.Invoke();
+        void RaiseResetClicked() => ResetClicked?.Invoke();
 
         /// <summary>
         /// 由 Presenter 调用，将最新计数值更新到 UI 文本。
