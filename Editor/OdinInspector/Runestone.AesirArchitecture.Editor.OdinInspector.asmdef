@@ -2,7 +2,8 @@
   "name": "Runestone.AesirArchitecture.Editor.OdinInspector",
   "rootNamespace": "Runestone.AesirArchitecture.Editor",
   "references": [
-    "Runestone.AesirArchitecture"
+    "Runestone.AesirArchitecture",
+    "Runestone.AesirArchitecture.Editor"
   ],
   "includePlatforms": [
     "Editor"
