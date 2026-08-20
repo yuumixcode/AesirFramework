@@ -6,7 +6,7 @@ namespace Runestone.AesirArchitecture
     /// 能力扩展方法集合
     /// </summary>
     /// <remarks>
-    /// 能力接口组合模式是本框架角色系统的核心设计。
+    /// 能力接口组合模式是本架构角色系统的核心设计。
     /// <para>
     /// 角色类型（如 Model、Service、Command、Query 等）通过组合不同的细粒度能力接口
     /// （<see cref="ICanGetModel" />、<see cref="ICanGetService" />、<see cref="ICanExecuteCommand" />、

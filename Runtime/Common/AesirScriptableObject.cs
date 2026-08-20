@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Runestone.AesirArchitecture
 {
     /// <summary>
-    /// RAA 框架标准 ScriptableObject 基类，根据运行环境自动选择序列化方式。
+    /// RAA 架构标准 ScriptableObject 基类，根据运行环境自动选择序列化方式。
     /// </summary>
     /// <remarks>
     /// 通过条件编译在编译期决定基类，与 <see cref="AesirMonoBehaviour"/> 采用相同的策略：
