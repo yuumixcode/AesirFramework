@@ -31,10 +31,10 @@
 
 - **示例家族从 2 个扩为 6 个渐进档位**（MVC/MVP 各三档）：
   - `Counter-Mvc-Quick`（MVC-1 快捷档）— `MonoViewController<T>` 直写直读，~5 文件最小闭环（第一课）
-  - `Counter-MVC`（MVC-2 标准档）— Command 写入 + 独立 Controller（第二课，修复后）
+  - `Counter-MVC`（MVC-2 标准档，已移除）— Command 写入 + 独立 Controller
   - `Counter-Mvc-Strict`（MVC-3 严格档）— 只读 Model + Command 写 + Query 读，View 零持有（进阶）
   - `Counter-Mvp-Simple`（MVP-1 简单档）— Presenter 直写 Model
-  - `Counter-MVP`（MVP-2 标准档）— Presenter 走 Command（修复后）
+  - `Counter-MVP`（MVP-2 标准档，已移除）— Presenter 走 Command
   - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读
 - **Model 暴露面分档** — 通常档（快捷/标准）直接暴露可写 `ObservableValue<T>`；严格档收窄为 `IReadOnlyObservableValue<T>` 只读接口 + 写方法；全家族 Model 统一为 `[SerializeField]` 字段 + 属性转发形式（可被 Unity 原生与 Odin 序列化显示）
 - **`OrderingAndLifecycleTests`** — 新增 7 个 EditMode 测试（保序/逆序/近失识别/根单例静态重置），测试总数 34 → 41
