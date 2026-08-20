@@ -203,7 +203,7 @@ namespace Runestone.AesirArchitecture
         {
             foreach (var entry in locator.GetAllEntries())
             {
-                if (typeof(TQuery).IsInstanceOfType(entry.Value))
+                if (entry.Value is TQuery)
                 {
                     return $" 检测到已注册实例（注册键 {entry.Key.Name}）可赋值给查询类型 {typeof(TQuery).Name}——" +
                            "Register 与 Get 必须使用相同类型参数。";

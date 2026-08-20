@@ -18,7 +18,7 @@ namespace Runestone.AesirArchitecture.Tests
     /// <para><see cref="UnityEngine.Object"/> 重载了 <c>==</c>/<c>!=</c> 运算符和隐式转换，
     /// 使 <c>obj == null</c> 不仅检查 C# 引用是否为 null，还检查底层 C++ native counterpart 是否已销毁。
     /// 这是 Unity 独有的行为，与纯 C# 的 null 语义不同，容易导致框架代码中出现隐蔽的空引用 bug。</para>
-    /// <para>Aesir Architecture 框架中的 View、Controller、Presenter 等角色经常持有 <see cref="UnityEngine.Object"/> 派生类型的引用，
+    /// <para>Aesir Architecture 架构中的 View、Controller、Presenter 等角色经常持有 <see cref="UnityEngine.Object"/> 派生类型的引用，
     /// 理解这些 null 语义差异对于编写安全的框架代码至关重要——特别是在生命周期管理和对象销毁场景中。</para>
     /// <para>测试使用 <c>[UnityTest]</c> 而非 <c>[Test]</c>，因为部分场景需要跨帧等待（如 <c>Object.Destroy</c> 的延迟销毁）。</para>
     /// </remarks>
@@ -64,7 +64,7 @@ namespace Runestone.AesirArchitecture.Tests
         /// <para>
         /// 这一行为对框架至关重要：如果 View 持有的 <see cref="GameObject"/> 引用被 Destroy 后未清理，
         /// 框架代码通过 <c>is not null</c> 检查会误认为对象仍然有效，继续访问已销毁的 native 对象将抛出异常。
-        /// 框架必须使用 <c>== null</c> 或 <see cref="Object"/> 的隐式 bool 转换来正确检测 native 对象的销毁状态。
+        /// 架构必须使用 <c>== null</c> 或 <see cref="Object"/> 的隐式 bool 转换来正确检测 native 对象的销毁状态。
         /// </para>
         /// </remarks>
         /// <seealso cref="UnityEngine.Object"/>
@@ -102,7 +102,7 @@ namespace Runestone.AesirArchitecture.Tests
         /// <remarks>
         /// 仅丢弃 C# 引用不会触发 native 对象的销毁，必须显式调用 <see cref="Object.Destroy"/>。
         /// <para>
-        /// 这意味着框架中的 View/Controller 如果仅将引用置为 null 而不调用 Destroy，
+        /// 这意味着架构中的 View/Controller 如果仅将引用置为 null 而不调用 Destroy，
         /// native <see cref="GameObject"/> 及其组件将泄漏在场景中，持续占用内存并参与每帧更新，
         /// 最终导致性能下降或逻辑错误（如隐藏的 Collider 仍参与碰撞检测）。
         /// 此测试通过 <c>Resources.FindObjectsOfTypeAll</c> 重新查找泄漏对象来验证 native 对象的存活状态，

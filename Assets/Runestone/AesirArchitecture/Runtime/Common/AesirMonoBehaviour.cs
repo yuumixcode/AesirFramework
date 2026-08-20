@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Runestone.AesirArchitecture
 {
     /// <summary>
-    /// RAA 框架标准 MonoBehaviour 基类，根据运行环境自动选择序列化方式。
+    /// RAA 架构标准 MonoBehaviour 基类，根据运行环境自动选择序列化方式。
     /// </summary>
     /// <remarks>
     /// 通过条件编译在编译期决定基类，避免运行时反射开销：
