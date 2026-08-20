@@ -27,11 +27,6 @@
       "path": "Samples~/Counter-Mvc-Quick"
     },
     {
-      "displayName": "Counter-MVC（标准档）",
-      "description": "MVC 标准写法计数器示例。View 持有 Controller，Controller 经 Command 修改 Model，Model 通过 ObservableValue 通知 View 刷新——第二课：写入唯一入口。",
-      "path": "Samples~/Counter-MVC"
-    },
-    {
       "displayName": "Counter-MVC-Strict（严格档）",
       "description": "MVC 严格写法计数器示例。Model 只读接口 + 写方法，View 不持有 Model：写入走 Command，读取走 Query——进阶课：读写全解耦。",
       "path": "Samples~/Counter-Mvc-Strict"
@@ -40,11 +35,6 @@
       "displayName": "Counter-MVP-Simple（简单档）",
       "description": "MVP 简单写法计数器示例。Presenter 直写 Model（不建 Command）并推送刷新 View——MVP 入门：先理解被动视图。",
       "path": "Samples~/Counter-Mvp-Simple"
-    },
-    {
-      "displayName": "Counter-MVP（标准档）",
-      "description": "MVP 标准写法计数器示例。Presenter 经 Command 修改 Model，再读取 Model 推送刷新 View——与 MVC 标准档共享写入铁律。",
-      "path": "Samples~/Counter-MVP"
     },
     {
       "displayName": "Counter-MVP-Strict（严格档）",

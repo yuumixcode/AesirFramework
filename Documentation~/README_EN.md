@@ -129,9 +129,9 @@ public class UICounterMvcPanel : MonoView<CounterContext>
 
 > **Three-tier progressive path**:
 > - **Lesson 1 (Quick tier, ~5 files)**: Context + Model + `MonoViewController<T>` panel (View doubles as Controller, direct read/write), see `Counter-Mvc-Quick` sample;
-> - **Lesson 2 (Standard tier, ~8 files)**: Extract `MonoView` + standalone Controller, writes go through Command, see `Counter-MVC` sample;
+> - **Lesson 2 (Standard tier, ~8 files)**: Extract `MonoView` + standalone Controller, writes go through Command;
 > - **Lesson 3 (Strict tier, ~7 files)**: Read-only Model interface + write methods, reads go through Query, see `Counter-Mvc-Strict` sample.
-> MVP tiers (`Counter-Mvp-Simple` / `Counter-MVP` / `Counter-Mvp-Strict`) mirror the same structure.
+> MVP tiers (`Counter-Mvp-Simple` / `Counter-Mvp-Strict`) mirror the same structure.
 
 ### 4. Use a Command
 
@@ -259,10 +259,8 @@ cn.runestone.aesir.architecture/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
 │   ├── Counter-Mvc-Quick/         # MVC-1 quick tier (MonoViewController direct read/write, lesson 1)
-│   ├── Counter-MVC/               # MVC-2 standard tier (Command writes + standalone Controller, lesson 2)
 │   ├── Counter-Mvc-Strict/        # MVC-3 strict tier (read-only Model + Command writes + Query reads)
 │   ├── Counter-Mvp-Simple/        # MVP-1 simple tier (Presenter writes Model directly)
-│   ├── Counter-MVP/               # MVP-2 standard tier (Presenter writes via Command)
 │   ├── Counter-Mvp-Strict/        # MVP-3 strict tier (Command writes + Query reads)
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
 │   └── MiniEvent/                 # MiniEvent usage examples

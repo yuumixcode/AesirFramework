@@ -129,9 +129,9 @@ public class UICounterMvcPanel : MonoView<CounterContext>
 
 > **三档渐进路径**：
 > - **第一课（快捷档，~5 文件）**：Context + Model + `MonoViewController<T>` 面板（View 兼 Controller 直写直读），见 `Counter-Mvc-Quick` 示例；
-> - **第二课（标准档，~8 文件）**：拆出 `MonoView` + 独立 Controller，写入改走 Command，见 `Counter-MVC` 示例；
+> - **第二课（标准档，~8 文件）**：拆出 `MonoView` + 独立 Controller，写入改走 Command；
 > - **第三课（严格档，~7 文件）**：Model 只读接口 + 写方法，读取改走 Query，见 `Counter-Mvc-Strict` 示例。
-> MVP 三档（`Counter-Mvp-Simple` / `Counter-MVP` / `Counter-Mvp-Strict`）同构对照。
+> MVP 三档（`Counter-Mvp-Simple` / `Counter-Mvp-Strict`）同构对照。
 
 ### 4. 使用 Command
 
@@ -259,10 +259,8 @@ cn.runestone.aesir.architecture/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
 │   ├── Counter-Mvc-Quick/         # MVC-1 快捷档（MonoViewController 直写直读，第一课）
-│   ├── Counter-MVC/               # MVC-2 标准档（Command 写入 + 独立 Controller，第二课）
 │   ├── Counter-Mvc-Strict/        # MVC-3 严格档（只读 Model + Command 写 + Query 读，进阶）
 │   ├── Counter-Mvp-Simple/        # MVP-1 简单档（Presenter 直写 Model）
-│   ├── Counter-MVP/               # MVP-2 标准档（Presenter 走 Command）
 │   ├── Counter-Mvp-Strict/        # MVP-3 严格档（Command 写 + Query 读）
 │   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
 │   └── MiniEvent/                 # MiniEvent 使用案例
