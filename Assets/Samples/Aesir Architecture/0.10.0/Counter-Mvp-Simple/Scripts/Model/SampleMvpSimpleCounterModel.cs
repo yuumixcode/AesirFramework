@@ -38,10 +38,5 @@ namespace Runestone.AesirArchitecture.Samples
         /// 将计数重置为 0。
         /// </summary>
         public void Reset() => _count.Value = 0;
-
-        /// <summary>
-        /// Model 初始化回调，在注册到 Context 时由框架调用。
-        /// </summary>
-        protected override void OnInitialize() { }
     }
 }
