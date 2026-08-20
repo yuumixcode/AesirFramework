@@ -33,6 +33,9 @@ namespace Runestone.AesirArchitecture
         /// <remarks>
         /// 注册的回调会在每次域加载时由 <see cref="ResetStaticsAll"/> 自动执行，无需手动调用。
         /// 适用于重置任何在 Disable Domain Reload 模式下不会自动清空的静态字段。
+        /// <para><b>约定</b>：重置回调中禁止调用 <see cref="Register"/>——
+        /// 遍历回调列表时动态添加会导致 <c>InvalidOperationException: Collection was modified</c>。
+        /// 当前全部注册均在静态构造函数中完成（一次性、非动态），不触发此问题。</para>
         /// </remarks>
         public static void Register(Action callback)
         {
