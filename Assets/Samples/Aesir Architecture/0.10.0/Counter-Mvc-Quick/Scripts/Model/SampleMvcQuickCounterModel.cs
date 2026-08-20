@@ -23,10 +23,5 @@ namespace Runestone.AesirArchitecture.Samples
         /// 当前计数值（快捷档可写暴露，表现层可直接改值）。
         /// </summary>
         public ObservableValue<int> Count => _count;
-
-        /// <summary>
-        /// Model 初始化回调，在注册到 Context 时由框架调用。
-        /// </summary>
-        protected override void OnInitialize() { }
     }
 }
