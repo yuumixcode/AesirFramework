@@ -1,16 +1,16 @@
 {
-    "name": "Runestone.AesirModules",
-    "rootNamespace": "Runestone.AesirModules",
-    "references": [
-        "Runestone.AesirArchitecture"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "Runestone.AesirModules",
+  "rootNamespace": "Runestone.AesirModules",
+  "references": [
+    "Runestone.AesirArchitecture"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

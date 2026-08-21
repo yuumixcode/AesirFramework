@@ -12,10 +12,23 @@ namespace Runestone.AesirModules.Editor.OdinIntegration
     /// </summary>
     public class UIRootAttributeProcessor : OdinAttributeProcessor<UIRoot>
     {
+        /// <summary>
+        /// DDOL 开关的取值含义说明文案（字段级 Info 信息框内容）。
+        /// </summary>
+        const string DontDestroyOnLoadFieldInfo = "勾选：本物体加入 DontDestroyOnLoad 场景，跨场景持久存在（默认）。\n" +
+                                                  "取消勾选：本物体保留在所在场景、随场景卸载销毁——必须自行处理多场景叠加（Additive）加载。\n" +
+                                                  "运行时自动创建的实例恒为勾选状态。";
+
         public override void ProcessChildMemberAttributes(InspectorProperty parentProperty,
             MemberInfo member,
             List<Attribute> attributes)
         {
+            if (member.Name == UIRoot.DontDestroyOnLoadFieldName)
+            {
+                attributes.Add(new InfoBoxAttribute(DontDestroyOnLoadFieldInfo));
+                return;
+            }
+
             switch (member.Name)
             {
                 case UIRoot.LayerCanvasesFieldName:
