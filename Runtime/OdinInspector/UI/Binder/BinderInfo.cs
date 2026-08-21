@@ -7,7 +7,7 @@ namespace Runestone.AesirModules
     /// <summary>
     /// 绑定单元数据。描述一个自动绑定的组件引用信息。
     /// <para>
-    /// 每条 <see cref="BinderInfo"/> 对应生成脚本中的一个 <c>[SerializeField]</c> 字段和 <c>BindReferences()</c> 中的一行赋值代码。
+    /// 每条 <see cref="BinderInfo" /> 对应生成脚本中的一个 <c>[SerializeField]</c> 字段和 <c>BindReferences()</c> 中的一行赋值代码。
     /// </para>
     /// </summary>
     [Serializable]
@@ -38,8 +38,8 @@ namespace Runestone.AesirModules
         public string FieldName;
 
         /// <summary>
-        /// 相对于 <see cref="BinderAssistant"/> 的 <c>transform.Find()</c> 路径。
-        /// 由 <see cref="UpdatePath"/> 自动计算，只读展示。
+        /// 相对于 <see cref="BinderAssistant" /> 的 <c>transform.Find()</c> 路径。
+        /// 由 <see cref="UpdatePath" /> 自动计算，只读展示。
         /// </summary>
         [DisplayAsString(13, Overflow = false)]
         [LabelText("Find ( ) 路径: ")]
@@ -74,7 +74,7 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// 获取 <see cref="LabelObj"/> 上可绑定的组件类型下拉列表
+        /// 获取 <see cref="LabelObj" /> 上可绑定的组件类型下拉列表
         /// </summary>
         ValueDropdownList<string> GetTypesString()
         {

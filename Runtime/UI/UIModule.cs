@@ -12,15 +12,38 @@ namespace Runestone.AesirModules
     /// UI 管理器（MonoBehaviour 单例）。
     /// 负责面板生命周期管理，UI 根节点构建委托给 <see cref="UIRoot" />。
     /// </summary>
+    /// <remarks>
+    /// 是否加入 DontDestroyOnLoad 场景由序列化字段 <see cref="dontDestroyOnLoad" /> 控制，
+    /// 仅在本物体为根物体（场景预放置）时生效；运行时自动创建的实例挂载在 <see cref="AesirModules" /> 宿主下，
+    /// 实际是否 DDOL 跟随宿主的 <c>dontDestroyOnLoad</c> 决策。
+    /// </remarks>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-999)]
     public class UIModule : AesirMonoBehaviour
     {
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
         static UIModule _instance;
-        readonly Dictionary<Type, GameObject> _prefabDict = new Dictionary<Type, GameObject>();
-        readonly Dictionary<Type, IUIPanel> _uiPanelDict = new Dictionary<Type, IUIPanel>();
+
+        /// <summary>
+        /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效。
+        /// </summary>
+        /// <remarks>
+        /// 默认 true（跨场景持久）。设为 false 时实例保留在所在场景、随场景卸载销毁，
+        /// 必须自行处理多场景叠加（Additive）加载下的生命周期管理。
+        /// 运行时自动创建的实例挂载在 [Aesir Modules] 宿主下（非根物体），
+        /// DDOL 跟随宿主决策，本字段不参与判断。
+        /// <para>
+        /// Inspector 呈现（字段说明 InfoBox 与关闭警告 InfoBox）由
+        /// <c>UIModuleAttributeProcessor</c> 动态注入，运行时代码不持有任何 Inspector 样式特性。
+        /// </para>
+        /// </remarks>
+        [SerializeField]
+        bool dontDestroyOnLoad = true;
+
         readonly Dictionary<Type, IUIPanel> _activatedPanelDict = new Dictionary<Type, IUIPanel>();
         readonly Dictionary<Type, IUIPanel> _deactivatedPanelDict = new Dictionary<Type, IUIPanel>();
+        readonly Dictionary<Type, GameObject> _prefabDict = new Dictionary<Type, GameObject>();
+        readonly Dictionary<Type, IUIPanel> _uiPanelDict = new Dictionary<Type, IUIPanel>();
 
         IUIAssetLoader _loader;
         UIRoot _uiRoot;
@@ -67,6 +90,17 @@ namespace Runestone.AesirModules
 
             _instance = this;
             _loader ??= new ResourcesUILoader();
+
+            // 非根物体（运行时自动创建于 [Aesir Modules] 宿主下）时 DDOL 跟随宿主，本字段不参与判断
+            if (!dontDestroyOnLoad)
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                    "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" + "必须自行处理多场景叠加（Additive）加载下的生命周期");
+            }
+            else if (transform.root == transform)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
         }
 
         void OnDestroy()
@@ -208,7 +242,8 @@ namespace Runestone.AesirModules
                 return activatedPanel;
             }
 
-            if (_deactivatedPanelDict.TryGetValue(key, out var deactivatedPanel) && deactivatedPanel == uiPanel)
+            if (_deactivatedPanelDict.TryGetValue(key, out var deactivatedPanel) &&
+                deactivatedPanel == uiPanel)
             {
                 var root = _uiRoot.GetLayerRoot(deactivatedPanel.Layer);
                 if (root != null && ((MonoBehaviour)deactivatedPanel).transform.parent != root)
@@ -435,7 +470,8 @@ namespace Runestone.AesirModules
                 _instance._activatedPanelDict.Remove(panelKey);
             }
 
-            if (_instance._deactivatedPanelDict.TryGetValue(panelKey, out var deactivated) && deactivated == panel)
+            if (_instance._deactivatedPanelDict.TryGetValue(panelKey, out var deactivated) &&
+                deactivated == panel)
             {
                 _instance._deactivatedPanelDict.Remove(panelKey);
             }

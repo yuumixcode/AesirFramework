@@ -17,14 +17,14 @@ namespace Runestone.AesirModules
         SceneAssetWrapper bootstrapScene;
 
         /// <summary>
-        /// 当前正在进行的异步加载操作列表
-        /// </summary>
-        readonly List<AsyncOperation> _loadingOperations = new List<AsyncOperation>();
-
-        /// <summary>
         /// 动态添加的场景路径列表，追踪通过 AddScene 加载的叠加场景
         /// </summary>
         readonly List<string> _addedScenePaths = new List<string>();
+
+        /// <summary>
+        /// 当前正在进行的异步加载操作列表
+        /// </summary>
+        readonly List<AsyncOperation> _loadingOperations = new List<AsyncOperation>();
 
         /// <summary>
         /// 预设的启动场景名称数组

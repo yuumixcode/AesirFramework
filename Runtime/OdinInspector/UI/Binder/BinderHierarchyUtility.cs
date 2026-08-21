@@ -8,7 +8,7 @@ namespace Runestone.AesirModules
     /// 场景层级路径工具类，用于 Object Binder 计算物体在层级中的路径。
     /// <para>
     /// 提供绝对路径和相对路径两种计算方式：
-    /// - 绝对路径：从场景根物体到目标的完整路径，用于 <see cref="BinderAssistant"/> 和 <see cref="BinderTag"/> 的路径标识。
+    /// - 绝对路径：从场景根物体到目标的完整路径，用于 <see cref="BinderAssistant" /> 和 <see cref="BinderTag" /> 的路径标识。
     /// - 相对路径：子物体相对于父物体的路径，用于生成脚本中 <c>transform.Find()</c> 的参数。
     /// </para>
     /// </summary>
