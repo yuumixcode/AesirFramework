@@ -6,11 +6,17 @@ namespace Runestone.AesirArchitecture.Samples
     /// <remarks>
     /// <para><b>严格档</b>：写入走 <c>ExecuteCommand</c>（Command 经 Model 写方法修改），
     /// 读取走 <c>ExecuteQuery</c>（替代 Model.Count.Value 直读）——Presenter 对 Model 的写/读均不直接接触。</para>
-    /// <para>对照 MVP-2 标准档（Counter-MVP）：Command 写 + Model 直读。</para>
+    /// <para>双接口设计：业务接口 <see cref="ISampleMvpStrictCounterPresenter"/> 是 View 侧的持有类型
+    ///（只暴露生命周期入口）；框架角色接口 <see cref="Runestone.AesirArchitecture.IPresenter{T}"/> 提供 Command / Query 能力——
+    /// 两者各司其职，与 MVC-3（Counter-Mvc-Strict）的双接口设计同构。</para>
+    /// <para>对照：快捷档（Counter-Mvp-Quick）Presenter 直改可写 ObservableValue；
+    /// 标准档（Counter-Mvp-Standard）写方法直调 + Model 直读——与 MVC 三档分级一致，差异仅在刷新路径（Presenter 推送 vs View 订阅）。</para>
     /// <para>数据流：View → Presenter → Command → Model → Query 拉取 → Presenter → View 刷新。</para>
     /// </remarks>
     /// <seealso cref="ISampleMvpStrictCounterPresenter"/>
-    public sealed class SampleMvpStrictCounterPresenter : ISampleMvpStrictCounterPresenter
+    /// <seealso cref="SampleMvpStrictCounterMainPanel"/>
+    public sealed class SampleMvpStrictCounterPresenter : ISampleMvpStrictCounterPresenter,
+        IPresenter<SampleMvpStrictCounterContext>
     {
         readonly ISampleMvpStrictCounterView _view;
 

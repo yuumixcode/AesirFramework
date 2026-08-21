@@ -12,10 +12,14 @@ namespace Runestone.AesirArchitecture
     /// <remarks>
     /// 各阶段对应的 PlayerLoop 插入位置（按执行顺序）：
     /// <list type="bullet">
-    /// <item><see cref="BeforeUpdate"/>：通过 <c>PlayerLoopUtility.InsertSystemBefore&lt;Update&gt;</c> 注入到
-    /// <c>PlayerLoop.Update</c> 子系统之前，确保架构逻辑在每帧 Update 阶段开始前执行。</item>
-    /// <item><see cref="AfterUpdate"/>：通过 <c>PlayerLoopUtility.InsertSystemAfter&lt;PostLateUpdate&gt;</c> 注入到
-    /// <c>PlayerLoop.PostLateUpdate</c> 子系统之后，确保架构逻辑在每帧所有更新完成后执行，可读取当前帧的最终状态。</item>
+    ///     <item>
+    ///     <see cref="BeforeUpdate" />：通过 <c>PlayerLoopUtility.InsertSystemBefore&lt;Update&gt;</c> 注入到
+    ///     <c>PlayerLoop.Update</c> 子系统之前，确保架构逻辑在每帧 Update 阶段开始前执行。
+    ///     </item>
+    ///     <item>
+    ///     <see cref="AfterUpdate" />：通过 <c>PlayerLoopUtility.InsertSystemAfter&lt;PostLateUpdate&gt;</c> 注入到
+    ///     <c>PlayerLoop.PostLateUpdate</c> 子系统之后，确保架构逻辑在每帧所有更新完成后执行，可读取当前帧的最终状态。
+    ///     </item>
     /// </list>
     /// </remarks>
     public enum AesirArchitectureLifecyclePhase
@@ -43,15 +47,21 @@ namespace Runestone.AesirArchitecture
     /// </para>
     /// </summary>
     /// <remarks>
-    /// <para><b>待处理命令机制</b>：在遍历回调执行期间，如果有 <see cref="Register"/> 或 <see cref="Unregister"/> 调用，
-    /// 不会直接修改回调集合（否则会抛出 <see cref="InvalidOperationException"/>），
-    /// 而是将操作缓存到 <c>PendingCommands</c> 列表中，待当前遍历结束后统一执行。</para>
-    /// <para><b>稳定排序机制</b>：回调列表使用 <c>Order</c> 字段进行优先级排序，<c>Order</c> 越小越先执行。
-    /// 当多个回调的 <c>Order</c> 相同时，使用 <c>InsertionIndex</c>（插入顺序自增序号）作为次级排序键，
-    /// 确保相同优先级的回调按注册顺序执行，排序结果稳定可预期。</para>
-    /// <para><b>域加载安全</b>：通过 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c>
-    /// 在 Unity 的子系统注册阶段自动注入 PlayerLoop，该阶段早于场景加载和脚本初始化，
-    /// 确保在 Disable Domain Reload 模式下也能正确重建钩子系统。</para>
+    ///     <para>
+    ///     <b>待处理命令机制</b>：在遍历回调执行期间，如果有 <see cref="Register" /> 或 <see cref="Unregister" /> 调用，
+    ///     不会直接修改回调集合（否则会抛出 <see cref="InvalidOperationException" />），
+    ///     而是将操作缓存到 <c>PendingCommands</c> 列表中，待当前遍历结束后统一执行。
+    ///     </para>
+    ///     <para>
+    ///     <b>稳定排序机制</b>：回调列表使用 <c>Order</c> 字段进行优先级排序，<c>Order</c> 越小越先执行。
+    ///     当多个回调的 <c>Order</c> 相同时，使用 <c>InsertionIndex</c>（插入顺序自增序号）作为次级排序键，
+    ///     确保相同优先级的回调按注册顺序执行，排序结果稳定可预期。
+    ///     </para>
+    ///     <para>
+    ///     <b>域加载安全</b>：通过 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c>
+    ///     在 Unity 的子系统注册阶段自动注入 PlayerLoop，该阶段早于场景加载和脚本初始化，
+    ///     确保在 Disable Domain Reload 模式下也能正确重建钩子系统。
+    ///     </para>
     /// </remarks>
     public static class AesirArchitecturePlayerLoop
     {
@@ -79,15 +89,15 @@ namespace Runestone.AesirArchitecture
         /// <remarks>
         /// PlayerLoop 注入的自愈入口，幂等可重复调用。第三方 SDK 若使用其缓存的 PlayerLoop 副本调用
         /// <c>PlayerLoop.SetPlayerLoop</c>，会连同框架注入的两个子系统一起抹掉，
-        /// 导致 <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate"/> /
-        /// <see cref="AesirArchitectureLifecyclePhase.AfterUpdate"/> 钩子静默失效。
-        /// 此方法通过 <see cref="PlayerLoopUtility.ContainsSystem{TTarget}"/> 检测后仅补插缺失的子系统，
+        /// 导致 <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate" /> /
+        /// <see cref="AesirArchitectureLifecyclePhase.AfterUpdate" /> 钩子静默失效。
+        /// 此方法通过 <see cref="PlayerLoopUtility.ContainsSystem{TTarget}" /> 检测后仅补插缺失的子系统，
         /// 并保留当前 PlayerLoop 中第三方已有的其他修改。调用时机：
         /// <list type="bullet">
-        /// <item><see cref="Initialize"/> 在域加载时调用；</item>
-        /// <item><see cref="Register"/> 每次注册回调时调用（注册即自愈）；</item>
-        /// <item><see cref="MonoLifecycleProxy"/> 运行期间周期性调用（运行中自愈）；</item>
-        /// <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用。</item>
+        ///     <item><see cref="Initialize" /> 在域加载时调用；</item>
+        ///     <item><see cref="Register" /> 每次注册回调时调用（注册即自愈）；</item>
+        ///     <item><see cref="MonoLifecycleProxy" /> 运行期间周期性调用（运行中自愈）；</item>
+        ///     <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用。</item>
         /// </list>
         /// </remarks>
         public static void EnsureInjected()
@@ -169,7 +179,7 @@ namespace Runestone.AesirArchitecture
         /// 清空所有回调
         /// </summary>
         /// <remarks>
-        /// 此方法在 <see cref="Initialize"/> 中调用，确保域重载后清空旧的回调数据和待处理命令，
+        /// 此方法在 <see cref="Initialize" /> 中调用，确保域重载后清空旧的回调数据和待处理命令，
         /// 防止 Disable Domain Reload 模式下残留的静态状态导致回调重复执行或引用已销毁的对象。
         /// </remarks>
         public static void Reset()
@@ -307,8 +317,8 @@ namespace Runestone.AesirArchitecture
         /// 回调条目，记录单个生命周期回调及其排序信息
         /// </summary>
         /// <remarks>
-        /// <see cref="InsertionIndex"/> 是一个自增的序号，在每次 <c>AddHook</c> 时分配。
-        /// 当多个条目的 <see cref="Order"/> 相同时，使用 <c>InsertionIndex</c> 作为次级排序键，
+        /// <see cref="InsertionIndex" /> 是一个自增的序号，在每次 <c>AddHook</c> 时分配。
+        /// 当多个条目的 <see cref="Order" /> 相同时，使用 <c>InsertionIndex</c> 作为次级排序键，
         /// 确保相同优先级的回调按注册先后顺序执行，实现稳定排序。
         /// </remarks>
         struct HookEntry

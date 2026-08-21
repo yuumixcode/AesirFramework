@@ -7,20 +7,18 @@ namespace Runestone.AesirArchitecture
     /// 泛型对象定位器。按类型注册、查询与获取以 <typeparamref name="T" /> 为基类的对象实例。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 内部以 <see cref="Type" /> 为键、<typeparamref name="T" /> 为值的 <see cref="Dictionary{TKey, TValue}" /> 作为容器，
-    /// 支持按类型注册和获取实例。注册时以 <c>typeof(TItem)</c> 作为键，查询时须使用相同的类型参数。
-    /// </para>
-    /// <para>
-    /// <see cref="AbstractContext{T}" /> 内部使用两个 <see cref="GenericLocator{T}" /> 实例分别管理
-    /// <c>IModel</c> 和 <c>IService</c>，实现 Model / Service 的注册与查询。
-    /// </para>
+    ///     <para>
+    ///     内部以 <see cref="Type" /> 为键、<typeparamref name="T" /> 为值的 <see cref="Dictionary{TKey, TValue}" /> 作为容器，
+    ///     支持按类型注册和获取实例。注册时以 <c>typeof(TItem)</c> 作为键，查询时须使用相同的类型参数。
+    ///     </para>
+    ///     <para>
+    ///     <see cref="AbstractContext{T}" /> 内部使用两个 <see cref="GenericLocator{T}" /> 实例分别管理
+    ///     <c>IModel</c> 和 <c>IService</c>，实现 Model / Service 的注册与查询。
+    ///     </para>
     /// </remarks>
     [Serializable]
     public sealed class GenericLocator<T> : IGenericLocator<T>, IDisposable where T : class
     {
-        readonly Dictionary<Type, T> _registry = new Dictionary<Type, T>();
-
         /// <summary>
         /// 注册键的插入顺序列表。<see cref="GetAll" /> 按此顺序枚举，
         /// 使"按注册顺序"成为有结构保证的契约，而非依赖 <see cref="Dictionary{TKey, TValue}" />
@@ -31,6 +29,8 @@ namespace Runestone.AesirArchitecture
         /// <see cref="Unregister{TItem}" /> 同步移除（再注册时按新插入语义追加到末尾）。
         /// </remarks>
         readonly List<Type> _insertionOrder = new List<Type>();
+
+        readonly Dictionary<Type, T> _registry = new Dictionary<Type, T>();
 
         /// <summary>
         /// 释放资源，清空所有注册。

@@ -122,7 +122,8 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <remarks>
     /// 这是一个标记接口（marker interface），本身不包含任何方法。
-    /// 实际的 <c>ExecuteCommand</c> 功能通过 <see cref="CapabilityExtensions.ExecuteCommand{T}(ICanExecuteCommand, T)" /> 扩展方法实现。
+    /// 实际的 <c>ExecuteCommand</c> 功能通过 <see cref="CapabilityExtensions.ExecuteCommand{T}(ICanExecuteCommand, T)" />
+    /// 扩展方法实现。
     /// <para>
     /// 通过标记接口 + 扩展方法的组合，编译器可以确保只有声明了此能力的类型才能调用 <c>ExecuteCommand</c>，
     /// 从而在编译期实现细粒度的访问控制。
@@ -136,7 +137,8 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <remarks>
     /// 这是一个标记接口（marker interface），本身不包含任何方法。
-    /// 实际的 <c>ExecuteQuery</c> 功能通过 <see cref="CapabilityExtensions.ExecuteQuery{TResult}(ICanExecuteQuery, IQuery{TResult})" /> 扩展方法实现。
+    /// 实际的 <c>ExecuteQuery</c> 功能通过
+    /// <see cref="CapabilityExtensions.ExecuteQuery{TResult}(ICanExecuteQuery, IQuery{TResult})" /> 扩展方法实现。
     /// <para>
     /// 通过标记接口 + 扩展方法的组合，编译器可以确保只有声明了此能力的类型才能调用 <c>ExecuteQuery</c>，
     /// 从而在编译期实现细粒度的访问控制。

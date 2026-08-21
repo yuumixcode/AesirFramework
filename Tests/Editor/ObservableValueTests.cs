@@ -7,13 +7,13 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// 验证 <see cref="ObservableValue{T}" /> 的值比较、通知触发与静默设置行为。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// ObservableValue 是 Model 层向 View 层暴露只读订阅的响应式属性载体，
-    /// 值变化时才触发通知（EqualityComparer&lt;T&gt;.Default 比较）是其核心契约。
-    /// </para>
-    /// <para>纯 C# 逻辑，EditMode 即可运行。</para>
+    ///     <para>
+    ///     ObservableValue 是 Model 层向 View 层暴露只读订阅的响应式属性载体，
+    ///     值变化时才触发通知（EqualityComparer&lt;T&gt;.Default 比较）是其核心契约。
+    ///     </para>
+    ///     <para>纯 C# 逻辑，EditMode 即可运行。</para>
     /// </remarks>
-    /// <seealso cref="ObservableValue{T}"/>
+    /// <seealso cref="ObservableValue{T}" />
     public class ObservableValueTests
     {
         /// <summary>
@@ -111,7 +111,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             var observable = new ObservableValue<int>(0);
             var count = 0;
-            void Callback(int _) => count++;
+
+            void Callback(int _)
+            {
+                count++;
+            }
 
             var handle = observable.AddListener(Callback);
             observable.Value = 1;

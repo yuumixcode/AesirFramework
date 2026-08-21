@@ -27,7 +27,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` / `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, etc.) — expose only what you need
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
-- **`ObservableValue<T>` reactive property** — Normal tier: Model exposes writable `ObservableValue<T>` directly (quick tier: presentation writes directly; standard tier: Command writes internally); strict tier: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods
+- **`ObservableValue<T>` reactive property** — Quick tier: Model exposes writable `ObservableValue<T>` directly (presentation writes directly); Standard tier onward: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods; Strict tier: interface registration + Command writes on top
 - **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
 - **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, with global singleton support
@@ -41,7 +41,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 |------|-----------|-------------------|
 | Lifecycle | MonoBehaviour event callbacks | Native PlayerLoop injection (BeforeUpdate / AfterUpdate) |
 | Architecture root | Generic singleton `Architecture<T>` | Generic static singleton `AbstractContext<T>` + `GenericLocator` |
-| Observable property | `BindableProperty<T>` | `ObservableValue<T>` (normal tier writable / strict tier `IReadOnlyObservableValue<out T>` read-only) |
+| Observable property | `BindableProperty<T>` | `ObservableValue<T>` (quick tier writable / standard tier onward `IReadOnlyObservableValue<out T>` read-only + write methods) |
 | Logging | `Debug.Log` | `AesirArchitectureDebug` (conditional compilation, unified) |
 | Static state | No Domain Reset guarantee | `[RuntimeInitializeOnLoadMethod]` explicit reset |
 | Presentation layer | No clear abstraction | `IView` interface + `IController` / `IPresenter` dual modes |
@@ -53,7 +53,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 Install via UPM by adding a Git URL in Unity Package Manager:
 
 ```
-https://github.com/yuumixcode/Unity-Aesir-Packages.git
+https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture
 ```
 
 UPM identifies this package via the `name` field in `package.json` (`cn.runestone.aesir.architecture`).
@@ -83,7 +83,7 @@ public class CounterContext : AbstractContext<CounterContext>
 ```csharp
 public interface ICounterModel : IModel
 {
-    ObservableValue<int> Count { get; }
+    IReadOnlyObservableValue<int> Count { get; }
     void Increase();
     void Decrease();
     void Reset();
@@ -91,18 +91,19 @@ public interface ICounterModel : IModel
 
 public sealed class CounterModel : AbstractModel, ICounterModel
 {
-    // Normal tier: expose writable ObservableValue directly (standard tier: written by Command internally)
-    public ObservableValue<int> Count { get; set; } = new ObservableValue<int>(0);
+    // Quick tier may expose a writable ObservableValue directly; standard tier onward: read-only interface + write methods
+    [SerializeField] ObservableValue<int> count = new ObservableValue<int>(0);
 
-    public void Increase() => Count.Value++;
-    public void Decrease() => Count.Value--;
-    public void Reset() => Count.Value = 0;
+    public IReadOnlyObservableValue<int> Count => count;
+    public void Increase() => count.Value++;
+    public void Decrease() => count.Value--;
+    public void Reset() => count.Value = 0;
 
     protected override void OnInitialize() { }
 }
 ```
 
-### 3. Define a View (MVC standard tier)
+### 3. Define a View (MVC strict tier)
 
 ```csharp
 public class UICounterMvcPanel : MonoView<CounterContext>
@@ -110,12 +111,13 @@ public class UICounterMvcPanel : MonoView<CounterContext>
     [SerializeField] Text countText;
     [SerializeField] Button increaseButton;
 
-    ICounterController _ctrl;
+    ICounterModel _model;
+    CounterController _ctrl;
 
-    void Awake()
+    void Start()
     {
-        this.GetModel<ICounterModel>().Count
-            .AddListenerAndInvoke(UpdateCountText)
+        _model = this.GetModel<ICounterModel>();
+        _model.Count.AddListenerAndInvoke(UpdateCountText)
             .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
         _ctrl = new CounterController();
     }
@@ -128,10 +130,10 @@ public class UICounterMvcPanel : MonoView<CounterContext>
 ```
 
 > **Three-tier progressive path**:
-> - **Lesson 1 (Quick tier, ~5 files)**: Context + Model + `MonoViewController<T>` panel (View doubles as Controller, direct read/write), see `Counter-Mvc-Quick` sample;
-> - **Lesson 2 (Standard tier, ~8 files)**: Extract `MonoView` + standalone Controller, writes go through Command;
-> - **Lesson 3 (Strict tier, ~7 files)**: Read-only Model interface + write methods, reads go through Query, see `Counter-Mvc-Strict` sample.
-> MVP tiers (`Counter-Mvp-Simple` / `Counter-Mvp-Strict`) mirror the same structure.
+> - **Lesson 1 (Quick tier, ~5 files)**: Context + Model (writable ObservableValue exposed directly) + `MonoViewController<T>` panel (View doubles as Controller, writes directly), see `Counter-Mvc-Quick` sample;
+> - **Lesson 2 (Standard tier, ~6 files)**: Model narrowed to read-only interface exposure + write methods; View becomes `MonoView`, separated from the Controller instance while sharing the same Model (write methods called directly, no Command), see `Counter-Mvc-Standard` sample;
+> - **Lesson 3 (Strict tier, ~10 files)**: Model registered by interface; Controller issues Commands via Context, processed reads go through Query, View holds the Model as the interface type with subscription refresh and holds the Controller via a narrow business interface, see `Counter-Mvc-Strict` sample.
+> The three MVP tiers (`Counter-Mvp-Quick` / `Counter-Mvp-Standard` / `Counter-Mvp-Strict`) mirror the MVC structure — the Model exposure is identical at each tier; the only difference is the refresh path: MVC Views subscribe to the Model themselves, MVP Views are passive and refreshed by the Presenter.
 
 ### 4. Use a Command
 
@@ -149,6 +151,35 @@ public class AddScoreCommand : AbstractCommand
 // Execute a command
 this.ExecuteCommand<AddScoreCommand>();
 ```
+
+## Samples
+
+The package provides 8 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
+
+### MVC family (View subscribes itself)
+
+| Sample | Tier | Model exposure | Write / read path |
+|------|------|-------------|----------------|
+| `Counter-Mvc-Quick` | Lesson 1 · Quick | Concrete-class registration, writable `ObservableValue` modified directly | View-as-Controller writes / reads directly |
+| `Counter-Mvc-Standard` | Lesson 2 · Standard | Concrete-class registration, read-only exposure + write methods | Controller calls write methods / View read-only subscription |
+| `Counter-Mvc-Strict` | Lesson 3 · Strict | Interface registration, read-only exposure + write methods | Controller issues Commands / processed reads via Query |
+
+### MVP family (View passive, Presenter pushes)
+
+| Sample | Tier | Model exposure | Write / read path |
+|------|------|-------------|----------------|
+| `Counter-Mvp-Quick` | Lesson 1 · Quick | Concrete-class registration, writable `ObservableValue` modified directly | Presenter writes / reads directly and pushes |
+| `Counter-Mvp-Standard` | Lesson 2 · Standard | Concrete-class registration, read-only exposure + write methods | Presenter calls write methods / reads Model and pushes |
+| `Counter-Mvp-Strict` | Lesson 3 · Strict | Interface registration, read-only exposure + write methods | Command writes / Query pulls and pushes |
+
+> **MVP View boundary**: all three MVP Views are plain `MonoBehaviour` (passive views carry no Context capability); the Quick tier has no interface abstractions at all (the Presenter holds the concrete panel class), from the Standard tier onward the View contract exists as an `IXxxView` interface, and the Strict tier View additionally holds the Presenter via a narrow business interface (`IXxxPresenter`, lifecycle methods only).
+
+### Utility samples
+
+| Sample | Description | Dependency |
+|------|------|------|
+| `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
+| `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
 
 ## Architecture Overview
 
@@ -258,10 +289,12 @@ cn.runestone.aesir.architecture/
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
-│   ├── Counter-Mvc-Quick/         # MVC-1 quick tier (MonoViewController direct read/write, lesson 1)
-│   ├── Counter-Mvc-Strict/        # MVC-3 strict tier (read-only Model + Command writes + Query reads)
-│   ├── Counter-Mvp-Simple/        # MVP-1 simple tier (Presenter writes Model directly)
-│   ├── Counter-Mvp-Strict/        # MVP-3 strict tier (Command writes + Query reads)
+│   ├── Counter-Mvc-Quick/         # MVC-1 quick tier (MonoViewController writes writable ObservableValue directly, lesson 1)
+│   ├── Counter-Mvc-Standard/      # MVC-2 standard tier (read-only exposure + write methods, View/Controller separated sharing Model, lesson 2)
+│   ├── Counter-Mvc-Strict/        # MVC-3 strict tier (interface registration + Command writes + Query processed reads, lesson 3)
+│   ├── Counter-Mvp-Quick/         # MVP-1 quick tier (Presenter writes writable ObservableValue directly, lesson 1)
+│   ├── Counter-Mvp-Standard/      # MVP-2 standard tier (read-only exposure + write methods, Presenter calls write methods directly, lesson 2)
+│   ├── Counter-Mvp-Strict/        # MVP-3 strict tier (Command writes + Query reads, View holds Presenter via narrow interface, lesson 3)
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
 │   └── MiniEvent/                 # MiniEvent usage examples
 └── Third Party Notices.md          # Third-party license notices
@@ -288,7 +321,7 @@ cn.runestone.aesir.architecture/
 | `Register` and `Get` must use the same type argument | Exact-key matching: querying an interface-keyed registration by implementation type returns null / throws not-registered (with near-miss hint) |
 | Runtime Model/Service replacement is for testing/debugging only | The old instance is disposed, its subscriptions are not migrated; subscribed views must re-subscribe |
 | Call `AesirArchitecturePlayerLoop.EnsureInjected()` once after a third-party SDK rewrites the PlayerLoop | BeforeUpdate / AfterUpdate hooks silently stop firing (`Register` self-heals on callback registration) |
-| **Write-discipline tiers** | Quick/Simple tier: direct Model writes are legal; Standard tier onward: presentation-layer writes must go through Command; Strict tier: read-only Model + write methods; Services may write directly. Recommended: start from the Standard tier |
+| **Write-discipline tiers** | Quick tier: direct writes to the writable ObservableValue are legal; Standard tier: Model narrowed to read-only interface + write methods (Controller calls write methods directly); Strict tier: writes must go through Command + interface registration; Services may write directly. Recommended: start from the Standard tier |
 
 ## Design Principles
 

@@ -45,9 +45,10 @@ namespace Runestone.AesirArchitecture
         readonly Dictionary<MonoLifecycleEvent, List<ListenerEntry>> _sortedListeners =
             new Dictionary<MonoLifecycleEvent, List<ListenerEntry>>();
 
-        bool _sortDirty;
         long _nextInsertionIndex;
         bool _playerLoopRegistered;
+
+        bool _sortDirty;
 
         /// <summary>
         /// 重置所有实例状态：清空监听、注销 PlayerLoop
@@ -60,25 +61,6 @@ namespace Runestone.AesirArchitecture
         {
             ClearAllListeners();
             UnregisterFromPlayerLoop();
-        }
-
-        /// <summary>
-        /// 域加载时重置静态单例并清空监听，兼容关闭 Domain Reload 的 Play 模式设置
-        /// </summary>
-        /// <remarks>
-        /// 由 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c> 自动触发，无需手动调用。
-        /// 关闭 Domain Reload 时静态字段不会自动清零，此方法确保下次进入 Play 模式时单例被重新查找/创建，
-        /// 不残留上一次 Play 会话的引用与监听。
-        /// </remarks>
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics()
-        {
-            if (_instance != null)
-            {
-                _instance.Reset();
-            }
-
-            _instance = null;
         }
 
         void Update()
@@ -114,6 +96,25 @@ namespace Runestone.AesirArchitecture
         void OnApplicationQuit()
         {
             InvokeEvent(MonoLifecycleEvent.OnApplicationQuit);
+        }
+
+        /// <summary>
+        /// 域加载时重置静态单例并清空监听，兼容关闭 Domain Reload 的 Play 模式设置
+        /// </summary>
+        /// <remarks>
+        /// 由 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c> 自动触发，无需手动调用。
+        /// 关闭 Domain Reload 时静态字段不会自动清零，此方法确保下次进入 Play 模式时单例被重新查找/创建，
+        /// 不残留上一次 Play 会话的引用与监听。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            if (_instance != null)
+            {
+                _instance.Reset();
+            }
+
+            _instance = null;
         }
 
         /// <summary>

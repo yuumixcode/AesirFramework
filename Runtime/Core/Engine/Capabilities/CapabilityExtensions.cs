@@ -20,7 +20,7 @@ namespace Runestone.AesirArchitecture
     public static class CapabilityExtensions
     {
         /// <summary>
-        /// 获取已注册的 Model。未注册时由 <see cref="IContext.GetModel{T}"/> 抛出异常；
+        /// 获取已注册的 Model。未注册时由 <see cref="IContext.GetModel{T}" /> 抛出异常；
         /// 已注册但尚未初始化时，抛出注册顺序错误或循环依赖异常。
         /// </summary>
         /// <typeparam name="T">要获取的 Model 类型，必须实现 <see cref="IModel" /></typeparam>
@@ -45,7 +45,7 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 获取已注册的 Service。未注册时由 <see cref="IContext.GetService{T}"/> 抛出异常；
+        /// 获取已注册的 Service。未注册时由 <see cref="IContext.GetService{T}" /> 抛出异常；
         /// 已注册但尚未初始化时，抛出注册顺序错误或循环依赖异常。
         /// </summary>
         /// <typeparam name="T">要获取的 Service 类型，必须实现 <see cref="IService" /></typeparam>
@@ -89,8 +89,10 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 执行无参命令
         /// </summary>
-        /// <typeparam name="T">命令类型，必须实现 <see cref="ICommand" /> 并具有无参公共构造函数（<c>new()</c>），
-        /// 因为框架需要通过无参构造创建命令实例</typeparam>
+        /// <typeparam name="T">
+        /// 命令类型，必须实现 <see cref="ICommand" /> 并具有无参公共构造函数（<c>new()</c>），
+        /// 因为框架需要通过无参构造创建命令实例
+        /// </typeparam>
         /// <param name="self">调用方实例，必须已持有有效的上下文引用</param>
         /// <remarks>
         /// 命令在执行前会通过 <see cref="ICanSetContext.SetContext" /> 注入当前上下文引用，
@@ -125,8 +127,10 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 执行无参查询
         /// </summary>
-        /// <typeparam name="TQuery">查询类型，必须实现 <see cref="IQuery{TResult}" /> 并具有无参公共构造函数（<c>new()</c>），
-        /// 因为框架需要通过无参构造创建查询实例</typeparam>
+        /// <typeparam name="TQuery">
+        /// 查询类型，必须实现 <see cref="IQuery{TResult}" /> 并具有无参公共构造函数（<c>new()</c>），
+        /// 因为框架需要通过无参构造创建查询实例
+        /// </typeparam>
         /// <typeparam name="TResult">查询返回值类型</typeparam>
         /// <param name="self">调用方实例，必须已持有有效的上下文引用</param>
         /// <returns>查询执行结果</returns>
