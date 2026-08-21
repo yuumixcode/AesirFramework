@@ -1,6 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Runestone.AesirArchitecture.Tests.Editor
 {
@@ -9,20 +13,22 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// 初始化正序 / 销毁逆序、未注册异常的近失识别提示，以及框架根单例的静态重置。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 保序与逆序是"注册顺序 = 依赖顺序"这一核心时序语义的结构保证：
-    /// 底层不再依赖 <see cref="Dictionary{TKey,TValue}" /> 枚举顺序（无 .NET 契约保证）。
-    /// </para>
-    /// <para>
-    /// 近失识别锁定"Register 与 Get 必须使用相同类型参数"的异常体验：
-    /// 按实现类注册、按接口查询时，异常消息应识别兼容实例并提示。
-    /// </para>
-    /// <para>纯 C# 逻辑，EditMode 即可运行。</para>
+    ///     <para>
+    ///     保序与逆序是"注册顺序 = 依赖顺序"这一核心时序语义的结构保证：
+    ///     底层不再依赖 <see cref="Dictionary{TKey,TValue}" /> 枚举顺序（无 .NET 契约保证）。
+    ///     </para>
+    ///     <para>
+    ///     近失识别锁定"Register 与 Get 必须使用相同类型参数"的异常体验：
+    ///     按实现类注册、按接口查询时，异常消息应识别兼容实例并提示。
+    ///     </para>
+    ///     <para>纯 C# 逻辑，EditMode 即可运行。</para>
     /// </remarks>
-    /// <seealso cref="GenericLocator{T}.GetAll"/>
-    /// <seealso cref="AbstractContext{T}.Dispose"/>
+    /// <seealso cref="GenericLocator{T}.GetAll" />
+    /// <seealso cref="AbstractContext{T}.Dispose" />
     public class OrderingAndLifecycleTests
     {
+        static readonly List<string> OrderLog = new List<string>();
+
         [SetUp]
         public void SetUp()
         {
@@ -128,11 +134,9 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var context = new NearMissContext();
             context.Initialize();
 
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => context.GetModel<INearMissModel>());
+            var ex = Assert.Throws<InvalidOperationException>(() => context.GetModel<INearMissModel>());
 
-            StringAssert.Contains("相同类型参数", ex.Message,
-                "按实现类注册、按接口查询时应提示 Register 与 Get 必须使用相同类型参数");
+            StringAssert.Contains("相同类型参数", ex.Message, "按实现类注册、按接口查询时应提示 Register 与 Get 必须使用相同类型参数");
             StringAssert.Contains("NearMissModel", ex.Message, "异常消息应包含注册键类型名");
             AesirArchitectureDebug.LogTestInfo("近失识别: 实现类注册、接口查询时提示类型参数一致");
         }
@@ -146,11 +150,9 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var context = new NearMissContext();
             context.Initialize();
 
-            var ex = Assert.Throws<InvalidOperationException>(
-                () => context.GetModel<UnrelatedModel>());
+            var ex = Assert.Throws<InvalidOperationException>(() => context.GetModel<UnrelatedModel>());
 
-            StringAssert.DoesNotContain("相同类型参数", ex.Message,
-                "无兼容注册时异常消息不应含近失提示");
+            StringAssert.DoesNotContain("相同类型参数", ex.Message, "无兼容注册时异常消息不应含近失提示");
             AesirArchitectureDebug.LogTestInfo("近失识别(无兼容): 不含提示");
         }
 
@@ -165,34 +167,58 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void AesirArchitecture_ResetStatics_ClearsStaticFields()
         {
             var type = typeof(AesirArchitecture);
-            const System.Reflection.BindingFlags flags =
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static;
+            const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Static;
 
             var instanceField = type.GetField("_instance", flags);
-            var pendingField = type.GetField("_pendingDontDestroyOnLoad", flags);
             var resetMethod = type.GetMethod("ResetStatics", flags);
 
             Assert.IsNotNull(instanceField, "_instance 字段应存在");
-            Assert.IsNotNull(pendingField, "_pendingDontDestroyOnLoad 字段应存在");
             Assert.IsNotNull(resetMethod, "ResetStatics 方法应存在（非泛型类按铁律类内自重置）");
 
-            // 预置非默认值后调用重置
-            pendingField.SetValue(null, true);
+            // 预置非默认值后调用重置（EditMode 下 AddComponent 不触发 Awake，实例字段不会写入 _instance）
+            // 使用非泛型 AddComponent(Type)：本测试程序集未引用 Sirenix，
+            // 泛型 AddComponent<T> 需编译期展开 AesirMonoBehaviour 的 Odin 基类链
+            var go = new GameObject();
+            var fakeInstance = go.AddComponent(typeof(AesirArchitecture));
+            instanceField.SetValue(null, fakeInstance);
             resetMethod.Invoke(null, null);
 
             Assert.IsNull(instanceField.GetValue(null), "ResetStatics 后 _instance 应为 null");
-            Assert.IsFalse((bool)pendingField.GetValue(null), "ResetStatics 后 _pendingDontDestroyOnLoad 应为 false");
+            Object.DestroyImmediate(go);
             AesirArchitectureDebug.LogTestInfo("AesirArchitecture.ResetStatics: 静态字段正确清空");
+        }
+
+        /// <summary>
+        /// 验证 <c>dontDestroyOnLoad</c> 序列化字段存在且默认值为 true（默认加入 DDOL 场景）。
+        /// </summary>
+        /// <remarks>
+        /// DDOL 开关机制的核心契约：预放置与运行时创建两种来源共用字段默认值 true——
+        /// 运行时创建的实例依赖该默认值自动进入 DDOL 场景（AddComponent 同步触发 Awake，无法在创建后修改）。
+        /// </remarks>
+        [Test]
+        public void AesirArchitecture_DontDestroyOnLoad_DefaultsToTrue()
+        {
+            // 同上：非泛型 AddComponent(Type) 规避 Sirenix 基类链的编译期引用
+            var go = new GameObject();
+            var component = go.AddComponent(typeof(AesirArchitecture));
+            var so = new SerializedObject(component);
+            var prop = so.FindProperty(AesirArchitecture.DontDestroyOnLoadFieldName);
+
+            Assert.IsNotNull(prop, "dontDestroyOnLoad 字段应存在且可序列化");
+            Assert.IsTrue(prop.boolValue, "dontDestroyOnLoad 默认值应为 true（默认加入 DDOL 场景）");
+            Object.DestroyImmediate(go);
+            AesirArchitectureDebug.LogTestInfo("AesirArchitecture.dontDestroyOnLoad 默认值为 true");
         }
 
         // ──────────────────────────── 测试用具 ────────────────────────────
 
         interface IItem { }
-        class ItemA : IItem { }
-        class ItemB : IItem { }
-        class ItemC : IItem { }
 
-        static readonly List<string> OrderLog = new List<string>();
+        class ItemA : IItem { }
+
+        class ItemB : IItem { }
+
+        class ItemC : IItem { }
 
         class OrderedModel1 : AbstractModel
         {
@@ -222,10 +248,10 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             protected override void Configure()
             {
-                RegisterModel<OrderedModel1>(new OrderedModel1());
-                RegisterModel<OrderedModel2>(new OrderedModel2());
-                RegisterService<OrderedService1>(new OrderedService1());
-                RegisterService<OrderedService2>(new OrderedService2());
+                RegisterModel(new OrderedModel1());
+                RegisterModel(new OrderedModel2());
+                RegisterService(new OrderedService1());
+                RegisterService(new OrderedService2());
             }
         }
 
@@ -240,7 +266,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             protected override void Configure()
             {
                 // 按实现类注册（而非接口）——制造"实现类注册、接口查询"的近失场景
-                RegisterModel<NearMissModel>(new NearMissModel());
+                RegisterModel(new NearMissModel());
             }
         }
     }

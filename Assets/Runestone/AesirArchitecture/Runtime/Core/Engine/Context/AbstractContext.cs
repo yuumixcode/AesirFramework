@@ -9,41 +9,41 @@ namespace Runestone.AesirArchitecture
     /// <para>子类在 <see cref="Configure" /> 中注册 Model 和 Service，通过 <see cref="Instance" /> 获取全局单例。</para>
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 本类采用泛型自引用模式（CRTP）：泛型约束 <c>where T : AbstractContext&lt;T&gt;, new()</c>
-    /// 要求子类将自身作为类型参数传入，例如 <c>class MyContext : AbstractContext&lt;MyContext&gt;</c>。
-    /// 这样 <see cref="Instance" /> 静态属性就能在编译期确定具体类型并返回其单例，
-    /// 避免了反射或运行时类型查找的开销。
-    /// </para>
-    /// <para>
-    /// <b>初始化流程</b>（由 <see cref="Instance" /> 首次访问触发）：
-    /// <list type="number">
-    /// <item>创建子类实例 <c>new T()</c></item>
-    /// <item>调用 <see cref="Initialize" /></item>
-    /// <item><see cref="Initialize" /> 先调用 <see cref="Configure" />，由子类注册全部 Model 和 Service</item>
-    /// <item>按注册顺序依次调用各 Model 的 <c>Initialize</c></item>
-    /// <item>按注册顺序依次调用各 Service 的 <c>Initialize</c></item>
-    /// </list>
-    /// </para>
-    /// <para>
-    /// <b>释放流程</b>（由 <see cref="Dispose" /> 触发）：
-    /// <list type="number">
-    /// <item>逆序于初始化地先销毁所有 Service</item>
-    /// <item>再逆序于初始化地销毁所有 Model</item>
-    /// <item>清空 Model 与 Service 容器</item>
-    /// </list>
-    /// 先 Service 后 Model 的销毁顺序确保 Service 在销毁时仍可访问所依赖的 Model。
-    /// </para>
-    /// <para>
-    /// <b>域加载安全</b>：静态构造函数通过 <see cref="ResetStaticsAssistant.Register(Action)" />
-    /// 注册 <c>_instance = null</c> 重置回调。当 Unity 关闭 Domain Reload（Enter Play Mode Settings）
-    /// 时，静态字段不会被运行时自动清零，该回调确保下次进入 Play 模式时单例被正确重建。
-    /// 之所以经助手注册而非类内声明 <c>[RuntimeInitializeOnLoadMethod]</c>：泛型类中的该方法特性
-    /// 会被 Unity 静默跳过（不执行也不报错），只能由非泛型的中心位置代为触发。
-    /// </para>
+    ///     <para>
+    ///     本类采用泛型自引用模式（CRTP）：泛型约束 <c>where T : AbstractContext&lt;T&gt;, new()</c>
+    ///     要求子类将自身作为类型参数传入，例如 <c>class MyContext : AbstractContext&lt;MyContext&gt;</c>。
+    ///     这样 <see cref="Instance" /> 静态属性就能在编译期确定具体类型并返回其单例，
+    ///     避免了反射或运行时类型查找的开销。
+    ///     </para>
+    ///     <para>
+    ///     <b>初始化流程</b>（由 <see cref="Instance" /> 首次访问触发）：
+    ///     <list type="number">
+    ///         <item>创建子类实例 <c>new T()</c></item>
+    ///         <item>调用 <see cref="Initialize" /></item>
+    ///         <item><see cref="Initialize" /> 先调用 <see cref="Configure" />，由子类注册全部 Model 和 Service</item>
+    ///         <item>按注册顺序依次调用各 Model 的 <c>Initialize</c></item>
+    ///         <item>按注册顺序依次调用各 Service 的 <c>Initialize</c></item>
+    ///     </list>
+    ///     </para>
+    ///     <para>
+    ///     <b>释放流程</b>（由 <see cref="Dispose" /> 触发）：
+    ///     <list type="number">
+    ///         <item>逆序于初始化地先销毁所有 Service</item>
+    ///         <item>再逆序于初始化地销毁所有 Model</item>
+    ///         <item>清空 Model 与 Service 容器</item>
+    ///     </list>
+    ///     先 Service 后 Model 的销毁顺序确保 Service 在销毁时仍可访问所依赖的 Model。
+    ///     </para>
+    ///     <para>
+    ///     <b>域加载安全</b>：静态构造函数通过 <see cref="ResetStaticsAssistant.Register(Action)" />
+    ///     注册 <c>_instance = null</c> 重置回调。当 Unity 关闭 Domain Reload（Enter Play Mode Settings）
+    ///     时，静态字段不会被运行时自动清零，该回调确保下次进入 Play 模式时单例被正确重建。
+    ///     之所以经助手注册而非类内声明 <c>[RuntimeInitializeOnLoadMethod]</c>：泛型类中的该方法特性
+    ///     会被 Unity 静默跳过（不执行也不报错），只能由非泛型的中心位置代为触发。
+    ///     </para>
     /// </remarks>
     /// <typeparam name="T">具体上下文子类类型，必须具有无参公共构造函数</typeparam>
-    /// <seealso cref="IContext"/>
+    /// <seealso cref="IContext" />
     [Serializable]
     public abstract class AbstractContext<T> : IContext where T : AbstractContext<T>, new()
     {
@@ -76,9 +76,11 @@ namespace Runestone.AesirArchitecture
         /// <b>重入约定</b>：<see cref="Configure" /> 及各模块的初始化方法中禁止访问 <c>Instance</c>，
         /// 否则会因单例尚未发布而递归创建第二个上下文实例。
         /// </para>
-        /// <para>该属性返回具体上下文类型 <typeparamref name="T" />（原名 <c>Interface</c>，0.10.0 起更名 <c>Instance</c>
+        /// <para>
+        /// 该属性返回具体上下文类型 <typeparamref name="T" />（原名 <c>Interface</c>，0.10.0 起更名 <c>Instance</c>
         /// 并返回具体类型，消除与 C# 关键字 <c>interface</c> 的术语混淆及子类成员强转成本）。
-        /// 访问 <see cref="IContext" /> 接口成员时 <typeparamref name="T" /> 自动向上转型，无需强转。</para>
+        /// 访问 <see cref="IContext" /> 接口成员时 <typeparamref name="T" /> 自动向上转型，无需强转。
+        /// </para>
         /// </remarks>
         public static T Instance
         {
@@ -176,7 +178,10 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="TService">要获取的 Service 类型，必须为引用类型并实现 <see cref="IService" /></typeparam>
         /// <returns>已注册的 Service 实例</returns>
-        /// <exception cref="InvalidOperationException">目标 Service 未注册时抛出，与 <c>CapabilityExtensions.GetService</c> 的防护语义一致</exception>
+        /// <exception cref="InvalidOperationException">
+        /// 目标 Service 未注册时抛出，与 <c>CapabilityExtensions.GetService</c>
+        /// 的防护语义一致
+        /// </exception>
         public TService GetService<TService>() where TService : class, IService
         {
             if (_serviceLocator.TryGet<TService>(out var service))
@@ -188,29 +193,6 @@ namespace Runestone.AesirArchitecture
                 $"{AesirArchitectureDebug.ErrorTag} [Context] 尝试获取 Service [{typeof(TService).Name}]，" +
                 $"但该 Service 未在 Context 中注册，需要提前调用 RegisterService<{typeof(TService).Name}>() 注册到 Context 中。" +
                 BuildNearMissHint<TService, IService>(_serviceLocator));
-        }
-
-        /// <summary>
-        /// 近失识别：当查询类型未命中、但已注册实例中存在可赋值给查询类型的条目时，
-        /// 生成"Register 与 Get 必须使用相同类型参数"的提示。
-        /// </summary>
-        /// <remarks>
-        /// 仅在异常路径执行（未注册时），正常路径零开销。
-        /// 典型触发：按实现类注册、按接口查询（或反之）——键精确匹配失败但实例实际兼容。
-        /// </remarks>
-        static string BuildNearMissHint<TQuery, TBase>(GenericLocator<TBase> locator) where TQuery : class
-            where TBase : class
-        {
-            foreach (var entry in locator.GetAllEntries())
-            {
-                if (entry.Value is TQuery)
-                {
-                    return $" 检测到已注册实例（注册键 {entry.Key.Name}）可赋值给查询类型 {typeof(TQuery).Name}——" +
-                           "Register 与 Get 必须使用相同类型参数。";
-                }
-            }
-
-            return string.Empty;
         }
 
         /// <summary>
@@ -244,6 +226,7 @@ namespace Runestone.AesirArchitecture
             {
                 model.Dispose();
             }
+
             _serviceLocator.Clear();
             _modelLocator.Clear();
 
@@ -263,6 +246,29 @@ namespace Runestone.AesirArchitecture
         public IEnumerable<IService> GetAllServices() => _serviceLocator.GetAll();
 
         /// <summary>
+        /// 近失识别：当查询类型未命中、但已注册实例中存在可赋值给查询类型的条目时，
+        /// 生成"Register 与 Get 必须使用相同类型参数"的提示。
+        /// </summary>
+        /// <remarks>
+        /// 仅在异常路径执行（未注册时），正常路径零开销。
+        /// 典型触发：按实现类注册、按接口查询（或反之）——键精确匹配失败但实例实际兼容。
+        /// </remarks>
+        static string BuildNearMissHint<TQuery, TBase>(GenericLocator<TBase> locator)
+            where TQuery : class where TBase : class
+        {
+            foreach (var entry in locator.GetAllEntries())
+            {
+                if (entry.Value is TQuery)
+                {
+                    return $" 检测到已注册实例（注册键 {entry.Key.Name}）可赋值给查询类型 {typeof(TQuery).Name}——" +
+                           "Register 与 Get 必须使用相同类型参数。";
+                }
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
         /// 统一初始化。调用 <see cref="Configure" /> 注册模块后，按注册顺序依次初始化 Model 和 Service。
         /// <para>开发者需保证注册顺序满足依赖关系——被依赖的模块先注册。运行时通过 <c>GetModel</c> / <c>GetService</c> 获取未注册模块会抛出异常。</para>
         /// </summary>
@@ -271,13 +277,18 @@ namespace Runestone.AesirArchitecture
         /// <para>
         /// 执行步骤：
         /// <list type="number">
-        /// <item>调用 <see cref="Configure" />，让子类在其中通过 <see cref="RegisterModel{TModel}" /> 和 <see cref="RegisterService{TService}" /> 注册所有模块</item>
-        /// <item>按注册顺序遍历并调用各 Model 的 <c>Initialize</c></item>
-        /// <item>按注册顺序遍历并调用各 Service 的 <c>Initialize</c></item>
+        ///     <item>
+        ///     调用 <see cref="Configure" />，让子类在其中通过 <see cref="RegisterModel{TModel}" /> 和
+        ///     <see cref="RegisterService{TService}" /> 注册所有模块
+        ///     </item>
+        ///     <item>按注册顺序遍历并调用各 Model 的 <c>Initialize</c></item>
+        ///     <item>按注册顺序遍历并调用各 Service 的 <c>Initialize</c></item>
         /// </list>
         /// </para>
-        /// <para>若已初始化则直接返回，保证幂等性。初始化过程中抛出的异常直接向上传播，不做回滚——
-        /// 初始化失败属启动期编程错误，应修复根因（见 <see cref="Instance" /> 备注）。</para>
+        /// <para>
+        /// 若已初始化则直接返回，保证幂等性。初始化过程中抛出的异常直接向上传播，不做回滚——
+        /// 初始化失败属启动期编程错误，应修复根因（见 <see cref="Instance" /> 备注）。
+        /// </para>
         /// </remarks>
         public void Initialize()
         {

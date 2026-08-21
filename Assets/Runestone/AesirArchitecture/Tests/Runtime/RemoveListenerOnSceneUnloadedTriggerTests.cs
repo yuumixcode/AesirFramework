@@ -1,6 +1,5 @@
 using System.Collections;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -10,25 +9,27 @@ namespace Runestone.AesirArchitecture.Tests
     /// 验证 <see cref="RemoveListenerOnSceneUnloadedTrigger" /> 的场景句柄分桶与自动移除行为。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 分桶键为 <see cref="Scene.handle"/>（int）而非场景名，保证：不同路径下的同名场景互不共享桶；
-    /// 显式指定归属场景的监听不受其他场景（包括活动场景）卸载的影响。
-    /// </para>
-    /// <para>
-    /// 测试覆盖两个维度：
-    /// <list type="number">
-    /// <item><b>显式归属场景</b>：additive 流程中活动场景与归属场景不同时，
-    /// 卸载活动场景不得误清归属场景的监听，卸载归属场景时监听被正确移除。</item>
-    /// <item><b>默认活动场景</b>：无参版本按注册时的活动场景归桶，该场景卸载时监听被移除。</item>
-    /// </list>
-    /// </para>
-    /// <para>
-    /// 场景加载/卸载回调仅在 PlayMode 下可用，故使用 <c>[UnityTest]</c>。
-    /// 每个测试在 <see cref="TearDown" /> 中卸载测试创建的场景并恢复原活动场景，确保测试间隔离。
-    /// </para>
+    ///     <para>
+    ///     分桶键为 <see cref="Scene.handle" />（int）而非场景名，保证：不同路径下的同名场景互不共享桶；
+    ///     显式指定归属场景的监听不受其他场景（包括活动场景）卸载的影响。
+    ///     </para>
+    ///     <para>
+    ///     测试覆盖两个维度：
+    ///     <list type="number">
+    ///         <item>
+    ///         <b>显式归属场景</b>：additive 流程中活动场景与归属场景不同时，
+    ///         卸载活动场景不得误清归属场景的监听，卸载归属场景时监听被正确移除。
+    ///         </item>
+    ///         <item><b>默认活动场景</b>：无参版本按注册时的活动场景归桶，该场景卸载时监听被移除。</item>
+    ///     </list>
+    ///     </para>
+    ///     <para>
+    ///     场景加载/卸载回调仅在 PlayMode 下可用，故使用 <c>[UnityTest]</c>。
+    ///     每个测试在 <see cref="TearDown" /> 中卸载测试创建的场景并恢复原活动场景，确保测试间隔离。
+    ///     </para>
     /// </remarks>
-    /// <seealso cref="RemoveListenerExtensions"/>
-    /// <seealso cref="RemoveListenerOnSceneUnloadedTrigger"/>
+    /// <seealso cref="RemoveListenerExtensions" />
+    /// <seealso cref="RemoveListenerOnSceneUnloadedTrigger" />
     public class RemoveListenerOnSceneUnloadedTriggerTests
     {
         Scene _originalActiveScene;
@@ -64,8 +65,8 @@ namespace Runestone.AesirArchitecture.Tests
         /// <remarks>
         /// 模拟 additive 多场景流程：监听归属场景 A，但注册时活动场景为 B。
         /// <list type="number">
-        /// <item>卸载无关场景 B → 监听仍然生效（按句柄分桶，B 的卸载不触碰 A 的桶）；</item>
-        /// <item>卸载归属场景 A → 监听自动移除，事件不再回调。</item>
+        ///     <item>卸载无关场景 B → 监听仍然生效（按句柄分桶，B 的卸载不触碰 A 的桶）；</item>
+        ///     <item>卸载归属场景 A → 监听自动移除，事件不再回调。</item>
         /// </list>
         /// 若分桶按场景名且注册时误用活动场景名（旧缺陷），卸载 B 会误清监听、卸载 A 反而不清理——
         /// 此测试两处断言均会失败。

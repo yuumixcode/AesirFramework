@@ -20,7 +20,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// 获取所有有效构建目标（排除 Unknown 和 Dedicated Server），延迟初始化并缓存。
         /// </summary>
         /// <remarks>
-        /// 通过反射获取 <see cref="NamedBuildTarget"/> 类型的所有公共静态字段，
+        /// 通过反射获取 <see cref="NamedBuildTarget" /> 类型的所有公共静态字段，
         /// 排除 <c>Unknown</c> 和 <c>Server</c>（即 Dedicated Server），
         /// 因为这两者不适用于常规的构建目标宏管理场景。
         /// 结果在首次访问后缓存，避免重复反射开销。
@@ -119,7 +119,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// <param name="symbol">要检查的宏定义符号</param>
         /// <returns>若符号存在于当前选中的构建目标中则返回 <c>true</c>，否则返回 <c>false</c></returns>
         /// <remarks>
-        /// 仅检查当前在 Unity Editor 中选中的构建目标组（<see cref="EditorUserBuildSettings.selectedBuildTargetGroup"/>），
+        /// 仅检查当前在 Unity Editor 中选中的构建目标组（<see cref="EditorUserBuildSettings.selectedBuildTargetGroup" />），
         /// 不遍历所有构建目标。如需检查全部目标，请遍历调用各目标的查询方法。
         /// </remarks>
         public static bool HasScriptingDefineSymbol(string symbol)

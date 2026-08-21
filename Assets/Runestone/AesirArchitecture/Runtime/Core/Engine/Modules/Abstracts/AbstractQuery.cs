@@ -13,8 +13,8 @@ namespace Runestone.AesirArchitecture
     /// 子类实现 <see cref="OnExecute" /> 返回查询结果，不应直接实现
     /// <see cref="IQuery{TResult}.Execute" />——后者已由本基类委托至 <see cref="OnExecute" />。
     /// </remarks>
-    /// <seealso cref="AbstractCommand"/>
-    /// <seealso cref="IQuery{TResult}"/>
+    /// <seealso cref="AbstractCommand" />
+    /// <seealso cref="IQuery{TResult}" />
     public abstract class AbstractQuery<TResult> : IQuery<TResult>
     {
         IContext _context;

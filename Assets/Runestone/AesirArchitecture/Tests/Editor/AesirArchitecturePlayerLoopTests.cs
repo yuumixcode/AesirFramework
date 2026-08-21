@@ -7,18 +7,22 @@ using UnityEngine.PlayerLoop;
 namespace Runestone.AesirArchitecture.Tests.Editor
 {
     /// <summary>
-    /// 验证 <see cref="AesirArchitecturePlayerLoop"/> 与 <see cref="PlayerLoopUtility"/> 在自定义系统插入和生命周期回调方面的正确性。
+    /// 验证 <see cref="AesirArchitecturePlayerLoop" /> 与 <see cref="PlayerLoopUtility" /> 在自定义系统插入和生命周期回调方面的正确性。
     /// <para>测试覆盖三个维度：PlayerLoop 子系统的插入位置、描述输出准确性、以及回调注册/排序/清除的行为。</para>
     /// </summary>
     /// <remarks>
-    /// <para>PlayerLoop 是 Unity 引擎每帧执行的核心调度结构，框架通过向其中注入自定义子系统来实现无需 MonoBehaviour 的帧级回调。
-    /// 如果插入位置错误或回调排序不稳定，将导致架构逻辑在错误的帧阶段执行，引发难以排查的时序 bug。</para>
-    /// <para>每个测试在 <see cref="SetUp"/> 中保存原始 PlayerLoop 快照，在 <see cref="TearDown"/> 中恢复，
-    /// 确保测试间副作用隔离，不会污染全局 PlayerLoop 状态。</para>
+    ///     <para>
+    ///     PlayerLoop 是 Unity 引擎每帧执行的核心调度结构，框架通过向其中注入自定义子系统来实现无需 MonoBehaviour 的帧级回调。
+    ///     如果插入位置错误或回调排序不稳定，将导致架构逻辑在错误的帧阶段执行，引发难以排查的时序 bug。
+    ///     </para>
+    ///     <para>
+    ///     每个测试在 <see cref="SetUp" /> 中保存原始 PlayerLoop 快照，在 <see cref="TearDown" /> 中恢复，
+    ///     确保测试间副作用隔离，不会污染全局 PlayerLoop 状态。
+    ///     </para>
     /// </remarks>
-    /// <seealso cref="AesirArchitecturePlayerLoop"/>
-    /// <seealso cref="PlayerLoopUtility"/>
-    /// <seealso cref="AesirArchitectureLifecyclePhase"/>
+    /// <seealso cref="AesirArchitecturePlayerLoop" />
+    /// <seealso cref="PlayerLoopUtility" />
+    /// <seealso cref="AesirArchitectureLifecyclePhase" />
     public class AesirArchitecturePlayerLoopTests
     {
         /// <summary>
@@ -40,7 +44,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// </summary>
         /// <remarks>
         /// 保存原始 PlayerLoop 是因为被测方法会修改全局 PlayerLoop 状态（调用 <c>PlayerLoop.SetPlayerLoop</c>），
-        /// 若不在 <see cref="TearDown"/> 中恢复，后续测试将基于被污染的 PlayerLoop 执行，导致断言失败或副作用累积。
+        /// 若不在 <see cref="TearDown" /> 中恢复，后续测试将基于被污染的 PlayerLoop 执行，导致断言失败或副作用累积。
         /// </remarks>
         [SetUp]
         public void SetUp()
@@ -64,7 +68,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="PlayerLoopUtility.InsertSystemBefore{TTarget}"/> 将自定义系统插入到目标系统之前。
+        /// 验证 <see cref="PlayerLoopUtility.InsertSystemBefore{TTarget}" /> 将自定义系统插入到目标系统之前。
         /// <para>预期：插入返回 <c>true</c>，且自定义系统在 PlayerLoop 中位于目标系统之前。</para>
         /// </summary>
         /// <remarks>
@@ -72,8 +76,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 如果插入位置错误（如插入到之后或未插入），架构的帧前逻辑将晚于 Update 执行，
         /// 导致依赖帧初始状态的逻辑读取到已被 Update 修改过的数据。
         /// </remarks>
-        /// <seealso cref="PlayerLoopUtility.InsertSystemBefore{TTarget}"/>
-        /// <seealso cref="AesirArchitecturePlayerLoop"/>
+        /// <seealso cref="PlayerLoopUtility.InsertSystemBefore{TTarget}" />
+        /// <seealso cref="AesirArchitecturePlayerLoop" />
         [Test]
         public void InsertSystemBefore_TargetExists_InsertsBefore()
         {
@@ -86,7 +90,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="PlayerLoopUtility.InsertSystemAfter{TTarget}"/> 将自定义系统插入到目标系统之后。
+        /// 验证 <see cref="PlayerLoopUtility.InsertSystemAfter{TTarget}" /> 将自定义系统插入到目标系统之后。
         /// <para>预期：插入返回 <c>true</c>，且自定义系统在 PlayerLoop 中位于目标系统之后。</para>
         /// </summary>
         /// <remarks>
@@ -94,8 +98,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 确保架构逻辑在每帧所有更新完成后执行。如果插入到 PostLateUpdate 之前，
         /// AfterUpdate 回调将读取到尚未完成 LateUpdate 的中间状态。
         /// </remarks>
-        /// <seealso cref="PlayerLoopUtility.InsertSystemAfter{TTarget}"/>
-        /// <seealso cref="AesirArchitecturePlayerLoop"/>
+        /// <seealso cref="PlayerLoopUtility.InsertSystemAfter{TTarget}" />
+        /// <seealso cref="AesirArchitecturePlayerLoop" />
         [Test]
         public void InsertSystemAfter_TargetExists_InsertsAfter()
         {
@@ -109,7 +113,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证对同一目标系统连续两次 <see cref="PlayerLoopUtility.InsertSystemBefore{TTarget}"/> 时，两次插入均生效。
+        /// 验证对同一目标系统连续两次 <see cref="PlayerLoopUtility.InsertSystemBefore{TTarget}" /> 时，两次插入均生效。
         /// <para>预期：两个自定义系统均存在于 PlayerLoop 中。</para>
         /// </summary>
         /// <remarks>
@@ -117,8 +121,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 用户可能需要向同一目标位置插入多个自定义系统。如果后续插入覆盖了先前的插入，
         /// 将导致部分回调丢失。此测试确保插入操作是累加的而非替换的。
         /// </remarks>
-        /// <seealso cref="PlayerLoopUtility.InsertSystemBefore{TTarget}"/>
-        /// <seealso cref="PlayerLoopUtility.ContainsSystem{TTarget}"/>
+        /// <seealso cref="PlayerLoopUtility.InsertSystemBefore{TTarget}" />
+        /// <seealso cref="PlayerLoopUtility.ContainsSystem{TTarget}" />
         [Test]
         public void InsertSystemBefore_SameTargetTwice_InsertsTwoSystems()
         {
@@ -135,7 +139,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription"/> 在默认 PlayerLoop 下包含核心系统名称。
+        /// 验证 <see cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription" /> 在默认 PlayerLoop 下包含核心系统名称。
         /// <para>预期：输出字符串中包含 <c>Update</c>、<c>FixedUpdate</c>、<c>PostLateUpdate</c> 等核心系统名。</para>
         /// </summary>
         /// <remarks>
@@ -143,7 +147,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// PlayerLoop 的实际结构，开发者将无法通过输出来确认注入是否成功，增加排查难度。
         /// 此测试以 Unity 引擎保证存在的核心系统作为基准，验证描述输出的基本可靠性。
         /// </remarks>
-        /// <seealso cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription"/>
+        /// <seealso cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription" />
         [Test]
         public void GetCurrentPlayerLoopDescription_DefaultLoop_ContainsCoreSystems()
         {
@@ -157,7 +161,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription"/> 在插入自定义系统后能输出该系统名称。
+        /// 验证 <see cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription" /> 在插入自定义系统后能输出该系统名称。
         /// <para>预期：描述字符串中包含被插入系统的类型名。</para>
         /// </summary>
         /// <remarks>
@@ -165,8 +169,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 描述输出会以 <c>[Aesir Architecture]</c> 标签标注。此测试验证注入后的子系统能被描述输出正确反映，
         /// 使开发者能够通过日志确认框架是否已成功接入 PlayerLoop。
         /// </remarks>
-        /// <seealso cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription"/>
-        /// <seealso cref="PlayerLoopUtility.InsertSystemBefore{TTarget}"/>
+        /// <seealso cref="PlayerLoopUtility.GetCurrentPlayerLoopDescription" />
+        /// <seealso cref="PlayerLoopUtility.InsertSystemBefore{TTarget}" />
         [Test]
         public void GetCurrentPlayerLoopDescription_AfterInsert_ShowsInsertedSystem()
         {
@@ -182,7 +186,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate"/> 和 <see cref="AesirArchitectureLifecyclePhase.AfterUpdate"/> 两个阶段的注册互不干扰。
+        /// 验证 <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate" /> 和
+        /// <see cref="AesirArchitectureLifecyclePhase.AfterUpdate" /> 两个阶段的注册互不干扰。
         /// <para>预期：两个阶段各自计数为 1，注册到一阶段的回调不出现在另一阶段。</para>
         /// </summary>
         /// <remarks>
@@ -190,9 +195,9 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 如果阶段隔离失败（如键冲突或共享列表），注册到 BeforeUpdate 的回调可能在 AfterUpdate 阶段也被执行，
         /// 导致同一逻辑被重复调用或在不正确的帧阶段执行。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register"/>
-        /// <seealso cref="AesirArchitecturePlayerLoop.GetHookCount"/>
-        /// <seealso cref="AesirArchitectureLifecyclePhase"/>
+        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
+        /// <seealso cref="AesirArchitecturePlayerLoop.GetHookCount" />
+        /// <seealso cref="AesirArchitectureLifecyclePhase" />
         [Test]
         public void Register_BeforeAndAfterUpdate_AreDistinct()
         {
@@ -209,7 +214,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitecturePlayerLoop.Reset"/> 清除之前注册的所有回调。
+        /// 验证 <see cref="AesirArchitecturePlayerLoop.Reset" /> 清除之前注册的所有回调。
         /// <para>预期：清除后回调计数归零。</para>
         /// </summary>
         /// <remarks>
@@ -217,8 +222,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 用于在域重载后清理 Disable Domain Reload 模式下残留的静态状态。
         /// 如果清理失败，旧的回调引用将指向已销毁的对象，在帧循环中触发空引用异常或调用已失效的逻辑。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Reset"/>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register"/>
+        /// <seealso cref="AesirArchitecturePlayerLoop.Reset" />
+        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
         [Test]
         public void Clear_RemovesAllRegisteredHooks()
         {
@@ -244,8 +249,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 此测试直接调用 <c>OnBeforeUpdate</c>（通过 InternalsVisibleTo 可见）模拟帧触发，
         /// 避免依赖真实 PlayerLoop 帧循环的时间不确定性。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register"/>
-        /// <seealso cref="AesirArchitecturePlayerLoop.OnBeforeUpdate"/>
+        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
+        /// <seealso cref="AesirArchitecturePlayerLoop.OnBeforeUpdate" />
         [Test]
         public void Register_SameOrder_ExecutesInRegistrationOrder()
         {
@@ -271,7 +276,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitecturePlayerLoop.EnsureInjected"/> 在注入点被第三方覆盖后能重新补插缺失的子系统。
+        /// 验证 <see cref="AesirArchitecturePlayerLoop.EnsureInjected" /> 在注入点被第三方覆盖后能重新补插缺失的子系统。
         /// <para>预期：注入成功后被模拟覆盖抹掉，调用 <c>EnsureInjected</c> 后两个子系统恢复存在。</para>
         /// </summary>
         /// <remarks>
@@ -283,7 +288,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 均位于 PlayerLoop 根层级，注入点也在根层级。
         /// </para>
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.EnsureInjected"/>
+        /// <seealso cref="AesirArchitecturePlayerLoop.EnsureInjected" />
         [Test]
         public void EnsureInjected_AfterThirdPartyWipe_ReinjectsMissingSystems()
         {
@@ -308,14 +313,14 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitecturePlayerLoop.Register"/> 在注入点被第三方覆盖后触发自愈补插。
+        /// 验证 <see cref="AesirArchitecturePlayerLoop.Register" /> 在注入点被第三方覆盖后触发自愈补插。
         /// <para>预期：覆盖后调用 <c>Register</c>，两个注入点均恢复存在。</para>
         /// </summary>
         /// <remarks>
-        /// <c>Register</c> 内部调用 <see cref="AesirArchitecturePlayerLoop.EnsureInjected"/>（注册即自愈），
+        /// <c>Register</c> 内部调用 <see cref="AesirArchitecturePlayerLoop.EnsureInjected" />（注册即自愈），
         /// 覆盖"覆盖发生后、周期性检测到来之前"的时间窗口内新注册回调的场景。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register"/>
+        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
         [Test]
         public void Register_AfterThirdPartyWipe_HealsInjection()
         {
@@ -377,7 +382,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 断言 <paramref name="markerType"/> 在 PlayerLoop 中与 <paramref name="targetType"/> 处于同一父级，且排在 targetType 之前
+        /// 断言 <paramref name="markerType" /> 在 PlayerLoop 中与 <paramref name="targetType" /> 处于同一父级，且排在 targetType 之前
         /// </summary>
         /// <remarks>
         /// 此方法通过递归遍历 <c>PlayerLoopSystem.subSystemList</c> 查找两个类型所在的兄弟索引，
@@ -395,7 +400,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 断言 <paramref name="markerType"/> 在 PlayerLoop 中与 <paramref name="targetType"/> 处于同一父级，且排在 targetType 之后
+        /// 断言 <paramref name="markerType" /> 在 PlayerLoop 中与 <paramref name="targetType" /> 处于同一父级，且排在 targetType 之后
         /// </summary>
         /// <remarks>
         /// 此方法通过递归遍历 <c>PlayerLoopSystem.subSystemList</c> 查找两个类型所在的兄弟索引，

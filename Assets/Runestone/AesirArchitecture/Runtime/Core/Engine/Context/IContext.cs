@@ -9,9 +9,12 @@ namespace Runestone.AesirArchitecture
     /// <remarks>
     /// 此接口定义了上下文的模块注册与获取契约。
     /// <see cref="AbstractContext{T}" /> 是其默认实现，提供了懒加载单例、统一初始化和有序释放等完整功能。
-    /// <para>实现类应在初始化阶段注册所有需要的 Model 和 Service，运行时通过 <see cref="GetModel{T}" /> / <see cref="GetService{T}" /> 获取模块实例——未注册时抛出 <see cref="InvalidOperationException"/> 而非返回 null。</para>
+    /// <para>
+    /// 实现类应在初始化阶段注册所有需要的 Model 和 Service，运行时通过 <see cref="GetModel{T}" /> / <see cref="GetService{T}" />
+    /// 获取模块实例——未注册时抛出 <see cref="InvalidOperationException" /> 而非返回 null。
+    /// </para>
     /// </remarks>
-    /// <seealso cref="AbstractContext{T}"/>
+    /// <seealso cref="AbstractContext{T}" />
     public interface IContext : IDisposable
     {
         /// <summary>
@@ -38,7 +41,9 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="T">要获取的 Model 类型，必须为引用类型并实现 <see cref="IModel" /></typeparam>
         /// <returns>已注册的 Model 实例</returns>
-        /// <exception cref="InvalidOperationException">目标 Model 未注册时抛出，提示提前调用 <c>RegisterModel&lt;T&gt;()</c></exception>
+        /// <exception cref="InvalidOperationException">
+        /// 目标 Model 未注册时抛出，提示提前调用 <c>RegisterModel&lt;T&gt;()</c>
+        /// </exception>
         T GetModel<T>() where T : class, IModel;
 
         /// <summary>
@@ -46,7 +51,9 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="T">要获取的 Service 类型，必须为引用类型并实现 <see cref="IService" /></typeparam>
         /// <returns>已注册的 Service 实例</returns>
-        /// <exception cref="InvalidOperationException">目标 Service 未注册时抛出，提示提前调用 <c>RegisterService&lt;T&gt;()</c></exception>
+        /// <exception cref="InvalidOperationException">
+        /// 目标 Service 未注册时抛出，提示提前调用 <c>RegisterService&lt;T&gt;()</c>
+        /// </exception>
         T GetService<T>() where T : class, IService;
 
         /// <summary>
