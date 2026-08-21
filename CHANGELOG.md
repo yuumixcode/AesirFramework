@@ -5,6 +5,39 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.11.0] - 2026-08-22
+
+### Breaking Changes
+
+- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — `AesirArchitecture` 新增 `[SerializeField] bool dontDestroyOnLoad = true`，两种实例来源共用同一份决策：默认勾选时（含场景预放置实例）一律在 Awake 加入 DontDestroyOnLoad 场景（此前预放置实例保留在场景中）；取消勾选时实例保留在所在场景、随场景卸载销毁，必须自行处理多场景叠加（Additive）加载——Inspector 显示警告 InfoBox（Odin），运行时输出提醒日志（仅编辑器期）。移除 `static bool _pendingDontDestroyOnLoad`（字段默认值天然覆盖运行时创建路径）与 `_isPrePlaced` / `IsPrePlacedFieldName`（警告条件改绑新字段）；`RemoveListenerOnSceneUnloadedTrigger` 的 Inspector 警告文案同步改为"宿主 dontDestroyOnLoad 关闭"语义。测试更新：`ResetStatics` 测试去除 pending 字段断言，新增 `DontDestroyOnLoad` 默认值测试（41 → 42）
+- **MVP 快捷档更名：`Counter-Mvp-Simple` → `Counter-Mvp-Quick`** — 档位命名与 MVC 对齐（简单档 → 快捷档）；类名 `SampleMvpSimpleCounter*` → `SampleMvpQuickCounter*`、asmdef `MvpSimple` → `MvpQuick`、场景与预制体同步更名（GUID 不变，已导入副本的引用不断）。已导入 0.10.0 示例的项目请删除旧导入副本后重新导入
+- **MVP View 统一为纯 `MonoBehaviour`** — 三档 View 不再继承 `MonoView<T>`：被动视图不携带任何 Context 能力，与 View 契约"不继承 `IView`"的 MVP 边界闭环；`ISampleMvpSimpleCounterView` 接口移除（快捷档零接口抽象，Presenter 直接持有具体面板类），标准档起 View 契约以 `IXxxView` 接口形式存在
+
+### Added（渐进式示例家族扩为六档）
+
+- **示例家族从 4 个扩为 6 个渐进档位**（MVC / MVP 各三档）：
+  - `Counter-Mvc-Standard`（MVC-2 标准档，新设）— Model 只读暴露 + 写方法（具体类注册）；View 与 Controller 分离实例、共享同一 Model 实例，写方法直调不经 Command（第二课）
+  - `Counter-Mvp-Standard`（MVP-2 标准档，新设）— Model 只读暴露 + 写方法（具体类注册）；Presenter 直调写方法 + Model 直读推送（第二课）
+  - `Counter-Mvc-Quick`（MVC-1 快捷档）— 移除 Model 接口（`ISampleMvcQuickCounterModel`），快捷档零接口抽象（第一课）
+  - `Counter-Mvc-Strict`（MVC-3 严格档）— Model 接口注册 + 只读暴露 + 写方法；View 与 Controller 分离，写入经 Command、加工读取经 Query（第三课）
+  - `Counter-Mvp-Quick`（MVP-1 快捷档）— Presenter 直改可写 ObservableValue（零接口抽象）并推送刷新被动 View（第一课）
+  - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读；View 按业务窄接口持有 Presenter（第三课）
+- **MVC-3 严格档重设计** — View 按接口类型持有 Model 并订阅刷新（撤销"View 零持有 + Query 拉取"旧口径）；Controller 抽为纯 C# 类（`IController<T>`），由 View 在 Start 中 new 出，写入经 Command；Query 收窄为加工值场景（`GetRoundedCountQuery` 十位四舍五入示例替代 `GetCounterValueQuery`），返回原始值无需 Query；三档 View 统一 Start 中 GetModel 缓存 + 事件订阅的初始化口径
+- **严格档双接口设计** — MVC-3 新增 `ISampleMvcStrictCounterController` 业务窄接口（独立文件，不继承 `IController`）；MVP-3 `ISampleMvpStrictCounterPresenter` 改为业务窄接口（`SyncInitialValue` + `IDisposable`，不继承 `IPresenter`）。View 按窄接口存储 Controller / Presenter（与 Model 接口存储对称），类型层面拿不到 `ExecuteCommand` / `GetModel` 等框架能力——读写分离由类型系统闭环
+- **DDOL 开关字段级 InfoBox** — `dontDestroyOnLoad` 字段的 `[Tooltip]` 迁移为 AttributeProcessor 经 `ProcessChildMemberAttributes` 注入的 Info 级信息框（取值含义三行说明，恒显示），运行时程序集零 Inspector 样式特性
+
+### Fixed
+
+- **DDOL 警告 InfoBox 可见性反转** — Odin `InfoBoxAttribute` 的 `visibleIfMemberName` 对 bool 成员为"true 时显示"语义（与 ShowIf 一致），旧写法导致警告在开关开启（安全态）时显示、关闭（风险态）时反而静默；改用 `"@!" + 字段名` 表达式反转，关闭开关时正确显示警告（PropertyTree + drawer 链探针验证 8/8 PASS）
+
+### Changed（文档与格式）
+
+- **README 新增「示例（Samples）」总览节** — 8 个示例按 MVC 系列 / MVP 系列 / 工具类三组呈现双三档对照表（Model 暴露面 + 读写路径 + View 边界）；项目结构树同步；移除「与 QFramework 的差异」对比章节
+- **英文 README 同步** — 示例总览节 + 安装 URL 修正补 `?path=Assets/Runestone/AesirArchitecture` 参数（与中文版及 monorepo 安装规范一致）
+- **package.json samples 六档条目** — MVP-Quick 更名 + MVC-Standard / MVP-Standard 新增，8 个示例齐整
+- **《事件机制决策表》MVC-3 口径修正** — MVC-3 原始值仍走 ObservableValue 订阅刷新，Query 仅用于加工值（如四舍五入）
+- **全包 XML 注释与代码格式统一** — `<see />` 闭合空格、`<para>` / `<item>` 缩进、空行与断行规范；示例 asmdef 缩进统一
+
 ## [0.10.0] - 2026-08-19
 
 ### Breaking Changes
