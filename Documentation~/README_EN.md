@@ -3,7 +3,7 @@
 > A progressive MVP/MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.10.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.11.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -34,17 +34,6 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **Domain Reload safety** — Static variables explicitly reset via `[RuntimeInitializeOnLoadMethod]`; no residue across Play Mode entry/exit
 - **Pure C# core + MonoBehaviour adapter** — Framework core is pure C#; the Engine layer does NOT depend on any Component layer type. `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` serve as MonoBehaviour adapters
 - **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional) for stricter Model-View separation
-
-### Comparison with QFramework
-
-| Dimension | QFramework | AesirArchitecture |
-|------|-----------|-------------------|
-| Lifecycle | MonoBehaviour event callbacks | Native PlayerLoop injection (BeforeUpdate / AfterUpdate) |
-| Architecture root | Generic singleton `Architecture<T>` | Generic static singleton `AbstractContext<T>` + `GenericLocator` |
-| Observable property | `BindableProperty<T>` | `ObservableValue<T>` (quick tier writable / standard tier onward `IReadOnlyObservableValue<out T>` read-only + write methods) |
-| Logging | `Debug.Log` | `AesirArchitectureDebug` (conditional compilation, unified) |
-| Static state | No Domain Reset guarantee | `[RuntimeInitializeOnLoadMethod]` explicit reset |
-| Presentation layer | No clear abstraction | `IView` interface + `IController` / `IPresenter` dual modes |
 
 ## Installation
 
