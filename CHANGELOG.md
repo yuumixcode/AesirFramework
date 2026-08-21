@@ -19,7 +19,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.10.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.11.0** |
 | Aesir Modules | `cn.runestone.aesir.modules` | **0.9.0** |
 | Aesir Inspector | `cn.runestone.aesir.inspector` | **0.9.0** |
 
@@ -30,6 +30,37 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Inspector** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 同时依赖 Aesir Architecture + Aesir Inspector / depends on BOTH Aesir Architecture AND Aesir Inspector
+
+---
+
+## [0.11.0] - 2026-08-22
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Breaking Changes
+
+- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — 默认勾选时（含场景预放置实例）一律加入 DontDestroyOnLoad 场景（此前预放置实例保留在场景中）；取消勾选时随所在场景卸载销毁，须自行处理多场景叠加（Additive）加载。移除 `_pendingDontDestroyOnLoad` 静态标志与 `_isPrePlaced`
+- **MVP 快捷档更名：`Counter-Mvp-Simple` → `Counter-Mvp-Quick`** — 档位命名与 MVC 对齐（简单档 → 快捷档）；类名 / asmdef / 场景 / 预制体同步更名（GUID 不变）
+- **MVP View 统一为纯 `MonoBehaviour`** — 三档 View 不再继承 `MonoView<T>`（被动视图不携带 Context 能力）；快捷档零接口抽象（移除 `ISampleMvpSimpleCounterView`）
+
+#### Added
+
+- **示例家族从 4 个扩为 6 个渐进档位**（MVC / MVP 各三档）— 新设 `Counter-Mvc-Standard`（只读暴露 + 写方法，View/Controller 分离共享 Model）与 `Counter-Mvp-Standard`（Presenter 直调写方法 + Model 直读推送）；MVC-1 移除 Model 接口对齐零接口抽象
+- **MVC-3 严格档重设计** — Controller 抽为纯 C# 类 + 业务窄接口 `ISampleMvcStrictCounterController`（独立文件，不继承 `IController`）；View 按接口持有 Model 订阅刷新（撤销"View 零持有"旧口径）；Query 收窄为加工值场景（`GetRoundedCountQuery` 替代 `GetCounterValueQuery`）
+- **严格档双接口设计** — MVC-3 / MVP-3 View 按业务窄接口存储 Controller / Presenter，类型层面拿不到 `ExecuteCommand` / `GetModel` 等框架能力，读写分离由类型系统闭环
+- **DDOL 开关字段级 InfoBox** — `[Tooltip]` 迁移为 AttributeProcessor 注入的 Info 级信息框（样式与逻辑分离，运行时程序集零 Inspector 样式特性）
+
+#### Fixed
+
+- **DDOL 警告 InfoBox 可见性反转** — Odin `visibleIfMemberName` 对 bool 成员为"true 时显示"语义，旧写法导致警告在开关开启时显示、关闭时静默；改用 `"@!" + 字段名` 表达式反转（探针验证 8/8 PASS）
+
+#### Changed
+
+- **README 新增「示例（Samples）」总览节**（8 示例双三档对照表）；移除「与 QFramework 的差异」对比章节；英文 README 同步并修正安装 URL `?path=` 参数
+- **package.json samples 六档条目**；《事件机制决策表》MVC-3 口径修正（原始值订阅刷新，Query 仅加工值）
+- **全包 XML 注释与代码格式统一**
 
 ---
 

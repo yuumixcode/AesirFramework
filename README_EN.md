@@ -17,7 +17,7 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC framework (capability composition, command pattern, PlayerLoop) | `cn.runestone.aesir.architecture` | `0.10.0` |
+| **Aesir Architecture** | Progressive MVC framework (capability composition, command pattern, PlayerLoop) | `cn.runestone.aesir.architecture` | `0.11.0` |
 | **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + ⚠️ Experimental Event Module | `cn.runestone.aesir.modules` | `0.9.0` |
 | **Aesir Inspector** | Editor extension library (bilingual Inspector, safe editor utilities, script doc generator, Summary sync tool) | `cn.runestone.aesir.inspector` | `0.9.0` |
 
