@@ -11,9 +11,9 @@ namespace Runestone.AesirArchitecture
     /// Model 通过 <c>IReadOnlyObservableValue&lt;T&gt;</c> 向 View 暴露只读订阅，
     /// 确保数据流向单向可控——View 只能观察变化，不能回写。
     /// </remarks>
-    /// <seealso cref="AbstractSubmodule"/>
-    /// <seealso cref="IModel"/>
-    /// <seealso cref="ObservableValue{T}"/>
+    /// <seealso cref="AbstractSubmodule" />
+    /// <seealso cref="IModel" />
+    /// <seealso cref="ObservableValue{T}" />
     [Serializable]
     public abstract class AbstractModel : AbstractSubmodule, IModel { }
 }

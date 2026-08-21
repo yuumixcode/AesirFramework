@@ -11,8 +11,8 @@ namespace Runestone.AesirArchitecture
     /// 能力：GetModel, GetService, Initialize, Dispose
     /// </para>
     /// </summary>
-    /// <seealso cref="AbstractService"/>
-    /// <seealso cref="ICanInitialize"/>
+    /// <seealso cref="AbstractService" />
+    /// <seealso cref="ICanInitialize" />
     public interface IService : IContextHolder, ICanSetContext, ICanGetModel, ICanGetService,
         ICanInitialize { }
 }

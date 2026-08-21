@@ -2,20 +2,19 @@ namespace Runestone.AesirArchitecture
 {
     /// <summary>
     /// 自定义生命周期接口集合。实现这些接口的类可通过
-    /// <see cref="MonoLifecycleProxy.Register(object)"/> 自动注册到对应的生命周期事件。
+    /// <see cref="MonoLifecycleProxy.Register(object)" /> 自动注册到对应的生命周期事件。
     /// </summary>
     /// <remarks>
-    /// 每个接口对应一个 <see cref="MonoLifecycleEvent"/>，方法名以 <c>OnCustom</c> 前缀区分 Unity 原生回调。
+    /// 每个接口对应一个 <see cref="MonoLifecycleEvent" />，方法名以 <c>OnCustom</c> 前缀区分 Unity 原生回调。
     /// <para>
-    /// <see cref="MonoLifecycleProxy.RegisterAuto(object)"/> 会扫描目标对象实现的所有
+    /// <see cref="MonoLifecycleProxy.RegisterAuto(object)" /> 会扫描目标对象实现的所有
     /// ICustomXXX 接口，将对应方法注册到匹配的事件中，并在对象销毁时自动取消订阅。
     /// </para>
     /// </remarks>
-    /// <seealso cref="MonoLifecycleProxy"/>
-    /// <seealso cref="MonoLifecycleEvent"/>
-
+    /// <seealso cref="MonoLifecycleProxy" />
+    /// <seealso cref="MonoLifecycleEvent" />
     /// <summary>
-    /// 自定义 FixedUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.FixedUpdate"/>。
+    /// 自定义 FixedUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.FixedUpdate" />。
     /// </summary>
     public interface ICustomFixedUpdate
     {
@@ -26,7 +25,7 @@ namespace Runestone.AesirArchitecture
     }
 
     /// <summary>
-    /// 自定义 BeforeUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.BeforeUpdate"/>。
+    /// 自定义 BeforeUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.BeforeUpdate" />。
     /// </summary>
     public interface ICustomBeforeUpdate
     {
@@ -37,7 +36,7 @@ namespace Runestone.AesirArchitecture
     }
 
     /// <summary>
-    /// 自定义 Update 生命周期。对应 <see cref="MonoLifecycleEvent.Update"/>。
+    /// 自定义 Update 生命周期。对应 <see cref="MonoLifecycleEvent.Update" />。
     /// </summary>
     public interface ICustomUpdate
     {
@@ -48,7 +47,7 @@ namespace Runestone.AesirArchitecture
     }
 
     /// <summary>
-    /// 自定义 LateUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.LateUpdate"/>。
+    /// 自定义 LateUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.LateUpdate" />。
     /// </summary>
     public interface ICustomLateUpdate
     {
@@ -59,7 +58,7 @@ namespace Runestone.AesirArchitecture
     }
 
     /// <summary>
-    /// 自定义 AfterUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.AfterUpdate"/>。
+    /// 自定义 AfterUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.AfterUpdate" />。
     /// </summary>
     public interface ICustomAfterUpdate
     {
@@ -70,7 +69,7 @@ namespace Runestone.AesirArchitecture
     }
 
     /// <summary>
-    /// 自定义 OnApplicationFocus 生命周期。对应 <see cref="MonoLifecycleEvent.OnApplicationFocus"/>。
+    /// 自定义 OnApplicationFocus 生命周期。对应 <see cref="MonoLifecycleEvent.OnApplicationFocus" />。
     /// </summary>
     public interface ICustomOnApplicationFocus
     {
@@ -81,7 +80,7 @@ namespace Runestone.AesirArchitecture
     }
 
     /// <summary>
-    /// 自定义 OnApplicationPause 生命周期。对应 <see cref="MonoLifecycleEvent.OnApplicationPause"/>。
+    /// 自定义 OnApplicationPause 生命周期。对应 <see cref="MonoLifecycleEvent.OnApplicationPause" />。
     /// </summary>
     public interface ICustomOnApplicationPause
     {
@@ -92,7 +91,7 @@ namespace Runestone.AesirArchitecture
     }
 
     /// <summary>
-    /// 自定义 OnApplicationQuit 生命周期。对应 <see cref="MonoLifecycleEvent.OnApplicationQuit"/>。
+    /// 自定义 OnApplicationQuit 生命周期。对应 <see cref="MonoLifecycleEvent.OnApplicationQuit" />。
     /// </summary>
     public interface ICustomOnApplicationQuit
     {

@@ -58,8 +58,10 @@ namespace Runestone.AesirArchitecture
         /// 订阅事件或加载持久化数据；无初始化需求的子类可不覆写（默认空实现）。
         /// 此方法在 <see cref="ICanInitialize.Initialize" /> 中被调用，
         /// 调用完成后 <see cref="Initialized" /> 自动置为 <c>true</c>。
-        /// <para>区别于 <c>AbstractCommand.OnExecute</c> / <c>AbstractQuery.OnExecute</c>（abstract，子类必须实现）——
-        /// 本方法为 virtual 空实现，覆写是可选的。</para>
+        /// <para>
+        /// 区别于 <c>AbstractCommand.OnExecute</c> / <c>AbstractQuery.OnExecute</c>（abstract，子类必须实现）——
+        /// 本方法为 virtual 空实现，覆写是可选的。
+        /// </para>
         /// </remarks>
         protected virtual void OnInitialize() { }
 

@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 
 namespace Runestone.AesirArchitecture.Tests.Editor
@@ -6,30 +7,15 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// 验证 <see cref="GenericLocator{T}" /> 的注册、查询、注销与清空行为。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// GenericLocator 是 <see cref="AbstractContext{T}" /> 内部 Model / Service 容器的底层实现，
-    /// 其注册键语义（以 <c>typeof(TItem)</c> 为键、注册与查询必须使用相同类型参数）是框架的核心约定。
-    /// </para>
-    /// <para>纯 C# 逻辑，EditMode 即可运行。</para>
+    ///     <para>
+    ///     GenericLocator 是 <see cref="AbstractContext{T}" /> 内部 Model / Service 容器的底层实现，
+    ///     其注册键语义（以 <c>typeof(TItem)</c> 为键、注册与查询必须使用相同类型参数）是框架的核心约定。
+    ///     </para>
+    ///     <para>纯 C# 逻辑，EditMode 即可运行。</para>
     /// </remarks>
-    /// <seealso cref="GenericLocator{T}"/>
+    /// <seealso cref="GenericLocator{T}" />
     public class GenericLocatorTests
     {
-        /// <summary>
-        /// 测试用实现类型，与接口键区分以验证键语义
-        /// </summary>
-        interface IItem
-        {
-        }
-
-        class ItemA : IItem
-        {
-        }
-
-        class ItemB : IItem
-        {
-        }
-
         /// <summary>
         /// 验证注册后可按同一类型参数获取，未注册类型返回 null。
         /// </summary>
@@ -104,14 +90,14 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证非泛型注册入口 <see cref="GenericLocator{T}.Register(System.Type, T)"/> 的类型匹配校验。
+        /// 验证非泛型注册入口 <see cref="GenericLocator{T}.Register(System.Type, T)" /> 的类型匹配校验。
         /// </summary>
         [Test]
         public void Register_ByType_TypeMismatch_Throws()
         {
             var locator = new GenericLocator<IItem>();
 
-            Assert.Throws<System.ArgumentException>(() => locator.Register(typeof(ItemB), new ItemA()),
+            Assert.Throws<ArgumentException>(() => locator.Register(typeof(ItemB), new ItemA()),
                 "实例类型与注册键不匹配时应抛出 ArgumentException");
             AesirArchitectureDebug.LogTestInfo("Register(Type): 实例与键类型不匹配时抛异常");
         }
@@ -170,5 +156,14 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsNull(locator.GetByType(typeof(ItemB)));
             AesirArchitectureDebug.LogTestInfo("GetByType: 按 Type 正确查询");
         }
+
+        /// <summary>
+        /// 测试用实现类型，与接口键区分以验证键语义
+        /// </summary>
+        interface IItem { }
+
+        class ItemA : IItem { }
+
+        class ItemB : IItem { }
     }
 }

@@ -6,7 +6,7 @@ namespace Runestone.AesirArchitecture
     /// 能力：GetModel, Initialize, Dispose
     /// </para>
     /// </summary>
-    /// <seealso cref="AbstractModel"/>
-    /// <seealso cref="ICanInitialize"/>
+    /// <seealso cref="AbstractModel" />
+    /// <seealso cref="ICanInitialize" />
     public interface IModel : IContextHolder, ICanSetContext, ICanGetModel, ICanInitialize { }
 }

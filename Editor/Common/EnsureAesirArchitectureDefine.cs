@@ -11,11 +11,11 @@ namespace Runestone.AesirArchitecture.Editor
     /// </summary>
     /// <remarks>
     /// <c>[InitializeOnLoad]</c> 特性使 Unity 在编辑器加载时自动调用此类的静态构造函数，
-    /// 静态构造函数通过 <see cref="ScriptingSymbolUtility.EnsureScriptingDefineSymbol"/> 方法
+    /// 静态构造函数通过 <see cref="ScriptingSymbolUtility.EnsureScriptingDefineSymbol" /> 方法
     /// 确保所有构建目标中都存在 <c>AESIR_ARCHITECTURE</c> 宏定义，
     /// 从而使依赖本架构的其他包可以通过条件编译指令在编译期检测架构是否可用。
     /// </remarks>
-    /// <seealso cref="ScriptingSymbolUtility"/>
+    /// <seealso cref="ScriptingSymbolUtility" />
     [InitializeOnLoad]
     internal static class EnsureAesirArchitectureDefine
     {
