@@ -7,33 +7,33 @@ using UnityEngine.TestTools;
 namespace Runestone.AesirArchitecture.Tests
 {
     /// <summary>
-    /// 验证 <see cref="MonoLifecycleProxy"/> 的订阅、排序和取消订阅行为。
+    /// 验证 <see cref="MonoLifecycleProxy" /> 的订阅、排序和取消订阅行为。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 测试使用 <c>[UnityTest]</c> 在 PlayMode 下运行，因为 <see cref="MonoLifecycleProxy"/> 依赖
-    /// Unity 生命周期回调（Update / FixedUpdate / LateUpdate）和 PlayerLoop 注入来触发事件，
-    /// 纯 EditMode 无法驱动这些回调。
-    /// </para>
-    /// <para>
-    /// 测试使用 <see cref="MonoLifecycleProxy.Instance"/> 全局单例，
-    /// 每个测试在结束时移除所有已注册的监听者，确保测试间隔离。
-    /// </para>
-    /// <para>
-    /// 测试覆盖三个维度：
-    /// <list type="number">
-    /// <item><b>订阅</b>：注册回调后，对应生命周期事件触发时回调被执行。</item>
-    /// <item><b>排序</b>：多个回调按 order 升序执行，同 order 按注册顺序执行。</item>
-    /// <item><b>取消订阅</b>：注销后回调不再被触发。</item>
-    /// </list>
-    /// </para>
+    ///     <para>
+    ///     测试使用 <c>[UnityTest]</c> 在 PlayMode 下运行，因为 <see cref="MonoLifecycleProxy" /> 依赖
+    ///     Unity 生命周期回调（Update / FixedUpdate / LateUpdate）和 PlayerLoop 注入来触发事件，
+    ///     纯 EditMode 无法驱动这些回调。
+    ///     </para>
+    ///     <para>
+    ///     测试使用 <see cref="MonoLifecycleProxy.Instance" /> 全局单例，
+    ///     每个测试在结束时移除所有已注册的监听者，确保测试间隔离。
+    ///     </para>
+    ///     <para>
+    ///     测试覆盖三个维度：
+    ///     <list type="number">
+    ///         <item><b>订阅</b>：注册回调后，对应生命周期事件触发时回调被执行。</item>
+    ///         <item><b>排序</b>：多个回调按 order 升序执行，同 order 按注册顺序执行。</item>
+    ///         <item><b>取消订阅</b>：注销后回调不再被触发。</item>
+    ///     </list>
+    ///     </para>
     /// </remarks>
-    /// <seealso cref="MonoLifecycleProxy"/>
-    /// <seealso cref="MonoLifecycleEvent"/>
+    /// <seealso cref="MonoLifecycleProxy" />
+    /// <seealso cref="MonoLifecycleEvent" />
     public class MonoLifecycleProxyTests
     {
-        MonoLifecycleProxy _proxy;
         readonly List<string> _log = new List<string>();
+        MonoLifecycleProxy _proxy;
 
         /// <summary>
         /// 获取全局单例并清空日志
@@ -61,12 +61,12 @@ namespace Runestone.AesirArchitecture.Tests
         /// <remarks>
         /// 此测试同时覆盖订阅和取消订阅两个方面：
         /// <list type="number">
-        /// <item>注册回调后等待一帧，断言回调被触发（订阅验证）。</item>
-        /// <item>注销回调后等待一帧，断言回调不再触发（取消订阅验证）。</item>
+        ///     <item>注册回调后等待一帧，断言回调被触发（订阅验证）。</item>
+        ///     <item>注销回调后等待一帧，断言回调不再触发（取消订阅验证）。</item>
         /// </list>
         /// </remarks>
-        /// <seealso cref="MonoLifecycleProxy.AddListener"/>
-        /// <seealso cref="MonoLifecycleProxy.RemoveListener"/>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
+        /// <seealso cref="MonoLifecycleProxy.RemoveListener" />
         [UnityTest]
         public IEnumerator AddListener_Update_CallbackInvokedThenRemoved()
         {
@@ -109,11 +109,12 @@ namespace Runestone.AesirArchitecture.Tests
         /// FixedUpdate 在固定时间步长执行，可能在一帧内触发多次或零次。
         /// 此测试等待足够长的帧数确保至少触发一次物理帧。
         /// </remarks>
-        /// <seealso cref="MonoLifecycleProxy.AddListener"/>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
         [UnityTest]
         public IEnumerator AddListener_FixedUpdate_CallbackInvoked()
         {
             var called = false;
+
             void Callback()
             {
                 called = true;
@@ -136,12 +137,13 @@ namespace Runestone.AesirArchitecture.Tests
         /// <summary>
         /// 验证订阅 LateUpdate 事件后，回调在 LateUpdate 阶段被触发，注销后不再触发。
         /// </summary>
-        /// <seealso cref="MonoLifecycleProxy.AddListener"/>
-        /// <seealso cref="MonoLifecycleProxy.RemoveListener"/>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
+        /// <seealso cref="MonoLifecycleProxy.RemoveListener" />
         [UnityTest]
         public IEnumerator AddListener_LateUpdate_CallbackInvokedThenRemoved()
         {
             var called = false;
+
             void Callback()
             {
                 called = true;
@@ -177,7 +179,7 @@ namespace Runestone.AesirArchitecture.Tests
         /// 预期执行顺序：order=-1 → order=1 → order=2。
         /// 此测试覆盖排序验证。
         /// </remarks>
-        /// <seealso cref="MonoLifecycleProxy.AddListener"/>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
         [UnityTest]
         public IEnumerator AddListener_MultipleCallbacks_ExecutedByOrder()
         {
@@ -192,8 +194,7 @@ namespace Runestone.AesirArchitecture.Tests
             Assert.AreEqual("A", _log[0], "order=-1 的回调应最先执行");
             Assert.AreEqual("B", _log[1], "order=1 的回调应第二个执行");
             Assert.AreEqual("C", _log[2], "order=2 的回调应最后执行");
-            AesirArchitectureDebug.LogTestInfo(
-                "排序验证: 回调按 order 升序执行 — A(-1) → B(1) → C(2)");
+            AesirArchitectureDebug.LogTestInfo("排序验证: 回调按 order 升序执行 — A(-1) → B(1) → C(2)");
         }
 
         /// <summary>
@@ -202,15 +203,15 @@ namespace Runestone.AesirArchitecture.Tests
         /// <remarks>
         /// 注册三个回调到 Update 事件，order 均为 0。
         /// 预期执行顺序按注册顺序：First → Second → Third。
-        /// <see cref="MonoLifecycleProxy"/> 使用 InsertionIndex 作为次级排序键实现稳定排序。
+        /// <see cref="MonoLifecycleProxy" /> 使用 InsertionIndex 作为次级排序键实现稳定排序。
         /// </remarks>
-        /// <seealso cref="MonoLifecycleProxy.AddListener"/>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
         [UnityTest]
         public IEnumerator AddListener_SameOrder_ExecutedInRegistrationOrder()
         {
-            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("First"), 0);
-            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("Second"), 0);
-            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("Third"), 0);
+            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("First"));
+            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("Second"));
+            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("Third"));
 
             yield return null;
 
@@ -218,23 +219,23 @@ namespace Runestone.AesirArchitecture.Tests
             Assert.AreEqual("First", _log[0], "同 order 的回调应按注册顺序执行");
             Assert.AreEqual("Second", _log[1], "同 order 的回调应按注册顺序执行");
             Assert.AreEqual("Third", _log[2], "同 order 的回调应按注册顺序执行");
-            AesirArchitectureDebug.LogTestInfo(
-                "稳定排序验证: 相同 order 的回调按注册顺序执行 — First → Second → Third");
+            AesirArchitectureDebug.LogTestInfo("稳定排序验证: 相同 order 的回调按注册顺序执行 — First → Second → Third");
         }
 
         /// <summary>
-        /// 验证 <see cref="AutoRemoveListenerHandle"/> Dispose 后回调不再被触发。
+        /// 验证 <see cref="AutoRemoveListenerHandle" /> Dispose 后回调不再被触发。
         /// </summary>
         /// <remarks>
-        /// <see cref="MonoLifecycleProxy.AddListener"/> 返回 <see cref="AutoRemoveListenerHandle"/>，
-        /// 调用 <see cref="AutoRemoveListenerHandle.Dispose"/> 应等效于 <see cref="MonoLifecycleProxy.RemoveListener"/>。
+        /// <see cref="MonoLifecycleProxy.AddListener" /> 返回 <see cref="AutoRemoveListenerHandle" />，
+        /// 调用 <see cref="AutoRemoveListenerHandle.Dispose" /> 应等效于 <see cref="MonoLifecycleProxy.RemoveListener" />。
         /// 此测试覆盖通过句柄取消订阅的路径。
         /// </remarks>
-        /// <seealso cref="AutoRemoveListenerHandle"/>
+        /// <seealso cref="AutoRemoveListenerHandle" />
         [UnityTest]
         public IEnumerator AddListener_HandleDispose_CallbackRemoved()
         {
             var called = false;
+
             void Callback()
             {
                 called = true;
@@ -263,29 +264,27 @@ namespace Runestone.AesirArchitecture.Tests
         /// <summary>
         /// 验证 GetListenerCount 在订阅和取消订阅后正确反映监听者数量。
         /// </summary>
-        /// <seealso cref="MonoLifecycleProxy.GetListenerCount"/>
+        /// <seealso cref="MonoLifecycleProxy.GetListenerCount" />
         [UnityTest]
         public IEnumerator GetListenerCount_AddAndRemove_ReturnsCorrectCount()
         {
-            Assert.AreEqual(0, _proxy.GetListenerCount(MonoLifecycleEvent.Update),
-                "初始状态下不应有监听者");
+            Assert.AreEqual(0, _proxy.GetListenerCount(MonoLifecycleEvent.Update), "初始状态下不应有监听者");
 
-            void Callback() => _log.Add("invoked");
+            void Callback()
+            {
+                _log.Add("invoked");
+            }
 
             _proxy.AddListener(MonoLifecycleEvent.Update, Callback);
-            Assert.AreEqual(1, _proxy.GetListenerCount(MonoLifecycleEvent.Update),
-                "订阅后监听者数量应为 1");
+            Assert.AreEqual(1, _proxy.GetListenerCount(MonoLifecycleEvent.Update), "订阅后监听者数量应为 1");
 
             _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("other"));
-            Assert.AreEqual(2, _proxy.GetListenerCount(MonoLifecycleEvent.Update),
-                "第二个订阅后监听者数量应为 2");
+            Assert.AreEqual(2, _proxy.GetListenerCount(MonoLifecycleEvent.Update), "第二个订阅后监听者数量应为 2");
 
             _proxy.RemoveListener(MonoLifecycleEvent.Update, Callback);
-            Assert.AreEqual(1, _proxy.GetListenerCount(MonoLifecycleEvent.Update),
-                "取消一个订阅后监听者数量应为 1");
+            Assert.AreEqual(1, _proxy.GetListenerCount(MonoLifecycleEvent.Update), "取消一个订阅后监听者数量应为 1");
 
-            AesirArchitectureDebug.LogTestInfo(
-                "监听者数量验证: 订阅增加计数，取消订阅减少计数，数量正确");
+            AesirArchitectureDebug.LogTestInfo("监听者数量验证: 订阅增加计数，取消订阅减少计数，数量正确");
 
             yield return null;
         }
@@ -306,8 +305,8 @@ namespace Runestone.AesirArchitecture.Tests
         /// 这三个应用级事件无法在 PlayMode 测试中可靠触发。
         /// </para>
         /// </remarks>
-        /// <seealso cref="MonoLifecycleProxy.AddListener"/>
-        /// <seealso cref="MonoLifecycleEvent"/>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
+        /// <seealso cref="MonoLifecycleEvent" />
         [UnityTest]
         public IEnumerator AllFrameEvents_ExecutedInCorrectOrder()
         {
@@ -336,7 +335,9 @@ namespace Runestone.AesirArchitecture.Tests
                 yield return null;
 
                 if (_log.Count < expected.Length)
+                {
                     continue;
+                }
 
                 for (var j = 0; j <= _log.Count - expected.Length; j++)
                 {
@@ -351,18 +352,22 @@ namespace Runestone.AesirArchitecture.Tests
                     }
 
                     if (!match)
+                    {
                         continue;
+                    }
+
                     found = true;
                     break;
                 }
 
                 if (found)
+                {
                     break;
+                }
             }
 
             Assert.IsTrue(found,
-                $"未找到符合预期顺序的连续事件块。预期: {string.Join(" → ", expected)}。" +
-                $"日志: [{string.Join(", ", _log)}]");
+                $"未找到符合预期顺序的连续事件块。预期: {string.Join(" → ", expected)}。" + $"日志: [{string.Join(", ", _log)}]");
 
             AesirArchitectureDebug.LogTestInfo(
                 "全生命周期顺序验证: FixedUpdate → BeforeUpdate → Update → LateUpdate → AfterUpdate");

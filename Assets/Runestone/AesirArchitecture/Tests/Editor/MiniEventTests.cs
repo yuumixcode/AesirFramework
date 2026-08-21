@@ -8,20 +8,20 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// 验证 <see cref="MiniEvent" />、<see cref="MiniEvent{T}" /> 的原生事件语义与监听句柄行为。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 极简约定（2026-08-15 裁决）：事件调用为直接多播调用，零分配；
-    /// 异常语义与原生 C# 事件一致——某个监听者抛出异常会中断后续监听者的执行并向上传播（fail-fast），
-    /// 监听回调不应抛异常属框架约定，业务异常应在回调内部自行处理。
-    /// 本测试锁定该语义，防止未来误加异常吞噬或快照分配。
-    /// </para>
-    /// <para>
-    /// <see cref="ObservableValue{T}"/> 内部经 <see cref="MiniEvent{T}"/> 派发通知，
-    /// 语义随 MiniEvent 一致，其专项行为由 <c>ObservableValueTests</c> 覆盖。
-    /// </para>
-    /// <para>纯 C# 逻辑，EditMode 即可运行。</para>
+    ///     <para>
+    ///     极简约定（2026-08-15 裁决）：事件调用为直接多播调用，零分配；
+    ///     异常语义与原生 C# 事件一致——某个监听者抛出异常会中断后续监听者的执行并向上传播（fail-fast），
+    ///     监听回调不应抛异常属框架约定，业务异常应在回调内部自行处理。
+    ///     本测试锁定该语义，防止未来误加异常吞噬或快照分配。
+    ///     </para>
+    ///     <para>
+    ///     <see cref="ObservableValue{T}" /> 内部经 <see cref="MiniEvent{T}" /> 派发通知，
+    ///     语义随 MiniEvent 一致，其专项行为由 <c>ObservableValueTests</c> 覆盖。
+    ///     </para>
+    ///     <para>纯 C# 逻辑，EditMode 即可运行。</para>
     /// </remarks>
-    /// <seealso cref="MiniEvent"/>
-    /// <seealso cref="AutoRemoveListenerHandle"/>
+    /// <seealso cref="MiniEvent" />
+    /// <seealso cref="AutoRemoveListenerHandle" />
     public class MiniEventTests
     {
         /// <summary>
@@ -80,8 +80,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             evt.AddListener(() => throw new InvalidOperationException("boom"));
             evt.AddListener(() => secondInvoked = true);
 
-            Assert.Throws<InvalidOperationException>(() => evt.Invoke(),
-                "监听者异常应从 Invoke 向上传播（fail-fast）");
+            Assert.Throws<InvalidOperationException>(() => evt.Invoke(), "监听者异常应从 Invoke 向上传播（fail-fast）");
             Assert.IsFalse(secondInvoked, "首个监听者抛异常后，后续监听者不应被执行（原生多播语义）");
             AesirArchitectureDebug.LogTestInfo("MiniEvent 异常语义: 监听者异常中断后续并向上传播（fail-fast）");
         }

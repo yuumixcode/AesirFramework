@@ -23,22 +23,32 @@
   "samples": [
     {
       "displayName": "Counter-MVC-Quick（快捷档）",
-      "description": "MVC 快捷写法计数器示例。View 兼 Controller（MonoViewController）直写直读 Model，不建 Command——第一课：最少概念跑通数据驱动 UI 闭环。",
+      "description": "MVC 快捷写法计数器示例。View 兼 Controller（MonoViewController）直改可写 ObservableValue，具体类注册与存储——第一课：最少概念跑通数据驱动 UI 闭环。",
       "path": "Samples~/Counter-Mvc-Quick"
     },
     {
+      "displayName": "Counter-MVC-Standard（标准档）",
+      "description": "MVC 标准写法计数器示例。Model 只读暴露 + 写方法（具体类注册）；View 与 Controller 分离实例、共享同一 Model，写方法直调不经 Command——第二课：Model 封装修改入口。",
+      "path": "Samples~/Counter-Mvc-Standard"
+    },
+    {
       "displayName": "Counter-MVC-Strict（严格档）",
-      "description": "MVC 严格写法计数器示例。Model 只读接口 + 写方法，View 不持有 Model：写入走 Command，读取走 Query——进阶课：读写全解耦。",
+      "description": "MVC 严格写法计数器示例。Model 接口注册 + 只读暴露 + 写方法；View 与 Controller 分离：写入经 Command、加工读取经 Query——第三课：读写全解耦、扩展性最好。",
       "path": "Samples~/Counter-Mvc-Strict"
     },
     {
-      "displayName": "Counter-MVP-Simple（简单档）",
-      "description": "MVP 简单写法计数器示例。Presenter 直写 Model（不建 Command）并推送刷新 View——MVP 入门：先理解被动视图。",
-      "path": "Samples~/Counter-Mvp-Simple"
+      "displayName": "Counter-MVP-Quick（快捷档）",
+      "description": "MVP 快捷写法计数器示例。Presenter 直改可写 ObservableValue（具体类注册与存储、无任何接口抽象）并推送刷新被动 View——第一课：最少概念理解被动视图与 Presenter 中介。",
+      "path": "Samples~/Counter-Mvp-Quick"
+    },
+    {
+      "displayName": "Counter-MVP-Standard（标准档）",
+      "description": "MVP 标准写法计数器示例。Model 只读暴露 + 写方法（具体类注册）；Presenter 直调写方法 + Model 直读推送——第二课：Model 封装修改入口。",
+      "path": "Samples~/Counter-Mvp-Standard"
     },
     {
       "displayName": "Counter-MVP-Strict（严格档）",
-      "description": "MVP 严格写法计数器示例。Model 只读接口 + 写方法，Presenter 写入走 Command、读取走 Query——MVP 进阶：与 MVC 严格档同构。",
+      "description": "MVP 严格写法计数器示例。Model 接口注册 + 只读暴露 + 写方法；Presenter 写入走 Command、读取走 Query——第三课：读写全解耦、View 按窄接口存储 Presenter，与 MVC 严格档同构。",
       "path": "Samples~/Counter-Mvp-Strict"
     },
     {

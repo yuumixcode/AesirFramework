@@ -10,23 +10,24 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <typeparam name="T">属性值类型</typeparam>
     /// <remarks>
-    /// 内部使用 <see cref="MiniEvent{T}"/> 管理监听者，零分配事件系统。
+    /// 内部使用 <see cref="MiniEvent{T}" /> 管理监听者，零分配事件系统。
     /// <para>
     /// <c>[SerializeField]</c> 标记 value 字段使其可在 Inspector 中编辑。
     /// </para>
     /// <para>
-    /// <see cref="PrivateValueFieldName"/> 和 <see cref="InvokeMethodName"/> 常量供 ObservableValueAttributeProcessor 反射引用，避免硬编码字符串导致的重构断裂。
+    /// <see cref="PrivateValueFieldName" /> 和 <see cref="InvokeMethodName" /> 常量供 ObservableValueAttributeProcessor
+    /// 反射引用，避免硬编码字符串导致的重构断裂。
     /// </para>
     /// <para>
-    /// Model 层持有可写实例（<see cref="IObservableValue{T}"/>），View 层通过 <see cref="IReadOnlyObservableValue{T}"/> 只读订阅。
+    /// Model 层持有可写实例（<see cref="IObservableValue{T}" />），View 层通过 <see cref="IReadOnlyObservableValue{T}" /> 只读订阅。
     /// </para>
     /// <para>
-    /// 值比较使用 <see cref="EqualityComparer{T}"/>.Default.Equals，支持值类型和引用类型的正确比较。
+    /// 值比较使用 <see cref="EqualityComparer{T}" />.Default.Equals，支持值类型和引用类型的正确比较。
     /// </para>
     /// </remarks>
-    /// <seealso cref="IObservableValue{T}"/>
-    /// <seealso cref="IReadOnlyObservableValue{T}"/>
-    /// <seealso cref="MiniEvent{T}"/>
+    /// <seealso cref="IObservableValue{T}" />
+    /// <seealso cref="IReadOnlyObservableValue{T}" />
+    /// <seealso cref="MiniEvent{T}" />
     [Serializable]
     public sealed class ObservableValue<T> : IObservableValue<T>
     {
@@ -59,7 +60,7 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 读写属性值。设置新值时若与旧值不同，则触发变更通知。
         /// </summary>
-        /// <remarks>使用 <see cref="EqualityComparer{T}"/>.Default 判断值是否变化，仅在变化时触发 <see cref="MiniEvent{T}"/>.Invoke。</remarks>
+        /// <remarks>使用 <see cref="EqualityComparer{T}" />.Default 判断值是否变化，仅在变化时触发 <see cref="MiniEvent{T}" />.Invoke。</remarks>
         public T Value
         {
             get => value;
@@ -103,22 +104,22 @@ namespace Runestone.AesirArchitecture
         /// 添加监听者。回调参数为新值。
         /// </summary>
         /// <param name="callback">值变更时调用的回调函数，参数为变更后的新值。</param>
-        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle"/>，释放后自动移除监听，避免手动管理生命周期。</returns>
+        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle" />，释放后自动移除监听，避免手动管理生命周期。</returns>
         public AutoRemoveListenerHandle AddListener(Action<T> callback) =>
             _valueChangedEvent.AddListener(callback);
 
         /// <summary>
         /// 移除监听者。
         /// </summary>
-        /// <param name="callback">先前通过 <see cref="AddListener"/> 注册的回调函数。</param>
+        /// <param name="callback">先前通过 <see cref="AddListener" /> 注册的回调函数。</param>
         public void RemoveListener(Action<T> callback) => _valueChangedEvent.RemoveListener(callback);
 
         /// <summary>
         /// 添加监听并立即触发一次当前值，用于初始化时同步监听方状态。
         /// </summary>
         /// <param name="callback">值变更时调用的回调函数，参数为变更后的新值。</param>
-        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle"/>，释放后自动移除监听。</returns>
-        /// <remarks>先通过 <see cref="AddListener"/> 添加监听，再立即用当前值触发一次回调，确保订阅方在注册瞬间即可同步初始状态。</remarks>
+        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle" />，释放后自动移除监听。</returns>
+        /// <remarks>先通过 <see cref="AddListener" /> 添加监听，再立即用当前值触发一次回调，确保订阅方在注册瞬间即可同步初始状态。</remarks>
         public AutoRemoveListenerHandle AddListenerAndInvoke(Action<T> callback)
         {
             var handle = AddListener(callback);

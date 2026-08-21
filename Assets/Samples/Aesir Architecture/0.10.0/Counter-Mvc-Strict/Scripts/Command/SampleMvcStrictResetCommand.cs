@@ -3,7 +3,7 @@ namespace Runestone.AesirArchitecture.Samples
     /// <summary>
     /// MVC-3 严格档示例 —— 重置计数命令。
     /// </summary>
-    /// <seealso cref="SampleMvcStrictIncreaseCommand"/>
+    /// <seealso cref="SampleMvcStrictIncreaseCommand" />
     public class SampleMvcStrictResetCommand : AbstractCommand
     {
         /// <summary>

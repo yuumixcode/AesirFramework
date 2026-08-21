@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Runestone.AesirArchitecture.Samples
@@ -10,16 +9,11 @@ namespace Runestone.AesirArchitecture.Samples
     /// </summary>
     public sealed class MiniEventSample : MonoBehaviour
     {
-        struct CustomEvent
-        {
-            public int Score;
-            public string Message;
-        }
+        readonly MiniEvent<CustomEvent> _onCustomEvent = new MiniEvent<CustomEvent>();
 
         readonly MiniEvent _onGameStart = new MiniEvent();
         readonly MiniEvent<string> _onMessageReceived = new MiniEvent<string>();
         readonly MiniEvent<int> _onScoreChanged = new MiniEvent<int>();
-        readonly MiniEvent<CustomEvent> _onCustomEvent = new MiniEvent<CustomEvent>();
 
         void Start()
         {
@@ -52,5 +46,11 @@ namespace Runestone.AesirArchitecture.Samples
         [ContextMenu("触发 OnCustomEvent")]
         void InvokeCustomEvent() =>
             _onCustomEvent.Invoke(new CustomEvent { Score = 100, Message = "Hello MiniEvent!" });
+
+        struct CustomEvent
+        {
+            public int Score;
+            public string Message;
+        }
     }
 }

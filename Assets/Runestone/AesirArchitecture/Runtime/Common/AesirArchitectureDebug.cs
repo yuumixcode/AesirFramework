@@ -13,10 +13,14 @@ namespace Runestone.AesirArchitecture
     /// <remarks>
     /// 编译行为差异：
     /// <list type="bullet">
-    /// <item><c>Log</c> 与 <c>LogWarning</c> 系列方法标注了 <c>[Conditional("UNITY_EDITOR")]</c>，
-    /// 在非编辑器构建时编译器会自动移除所有调用点，不会产生任何运行时开销。</item>
-    /// <item><c>LogError</c> 系列方法未使用 <c>[Conditional]</c> 特性，在所有构建中均保留，
-    /// 因为错误日志在生产环境中同样需要可见，以便定位问题。</item>
+    ///     <item>
+    ///     <c>Log</c> 与 <c>LogWarning</c> 系列方法标注了 <c>[Conditional("UNITY_EDITOR")]</c>，
+    ///     在非编辑器构建时编译器会自动移除所有调用点，不会产生任何运行时开销。
+    ///     </item>
+    ///     <item>
+    ///     <c>LogError</c> 系列方法未使用 <c>[Conditional]</c> 特性，在所有构建中均保留，
+    ///     因为错误日志在生产环境中同样需要可见，以便定位问题。
+    ///     </item>
     /// </list>
     /// </remarks>
     public static class AesirArchitectureDebug
@@ -31,7 +35,7 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <remarks>
         /// 此常量供 <c>CapabilityExtensions</c> 的异常消息复用，
-        /// 确保抛出的异常在控制台中与直接调用 <see cref="LogError(string)"/> 保持一致的 <c>[AesirArchitecture]</c> 标识风格，
+        /// 确保抛出的异常在控制台中与直接调用 <see cref="LogError(string)" /> 保持一致的 <c>[AesirArchitecture]</c> 标识风格，
         /// 便于开发者快速识别错误来源。
         /// </remarks>
         public const string ErrorTag = TagError;

@@ -7,7 +7,7 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <remarks>
     /// 作为抽象基类，本身不绑定任何 Unity 生命周期回调。子类通过在 <c>OnDestroy</c>、<c>OnDisable</c> 等回调中
-    /// 调用 <see cref="RemoveAllListeners"/> 来触发批量清理，从而将"何时移除监听"的策略交由子类决定。
+    /// 调用 <see cref="RemoveAllListeners" /> 来触发批量清理，从而将"何时移除监听"的策略交由子类决定。
     /// </remarks>
     public abstract class RemoveListenerTrigger : MonoBehaviour
     {
@@ -26,7 +26,7 @@ namespace Runestone.AesirArchitecture
         /// 移除所有已注册的监听并清空列表
         /// </summary>
         /// <remarks>
-        /// 将批量清理委托给 <see cref="RemoveListenerHandleCollection.RemoveAllListeners"/> 执行，
+        /// 将批量清理委托给 <see cref="RemoveListenerHandleCollection.RemoveAllListeners" /> 执行，
         /// 确保所有已注册的监听句柄按统一流程被正确移除并释放引用。
         /// </remarks>
         protected void RemoveAllListeners() => _handles.RemoveAllListeners();

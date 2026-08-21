@@ -8,15 +8,15 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <typeparam name="T">定位器管理的基类型，所有注册的实例必须可赋值给该类型。</typeparam>
     /// <remarks>
-    /// <para>
-    /// 定位器的抽象契约，定义了注册、查询、获取与注销实例的标准接口。
-    /// <see cref="GenericLocator{T}" /> 是其默认实现，内部以 <see cref="Dictionary{TKey, TValue}" />
-    /// 存储注册关系。
-    /// </para>
-    /// <para>
-    /// 注册与查询须使用相同的类型参数。若以具体类型注册（如 <c>Register&lt;Sword&gt;</c>），
-    /// 再以接口类型查询（如 <c>Get&lt;IWeapon&gt;</c>），将返回 <c>null</c>。
-    /// </para>
+    ///     <para>
+    ///     定位器的抽象契约，定义了注册、查询、获取与注销实例的标准接口。
+    ///     <see cref="GenericLocator{T}" /> 是其默认实现，内部以 <see cref="Dictionary{TKey,TValue}" />
+    ///     存储注册关系。
+    ///     </para>
+    ///     <para>
+    ///     注册与查询须使用相同的类型参数。若以具体类型注册（如 <c>Register&lt;Sword&gt;</c>），
+    ///     再以接口类型查询（如 <c>Get&lt;IWeapon&gt;</c>），将返回 <c>null</c>。
+    ///     </para>
     /// </remarks>
     /// <seealso cref="GenericLocator{T}" />
     public interface IGenericLocator<T> where T : class

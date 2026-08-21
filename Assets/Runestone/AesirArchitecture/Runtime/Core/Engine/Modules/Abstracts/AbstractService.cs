@@ -10,8 +10,8 @@ namespace Runestone.AesirArchitecture
     /// 但不包含 Command / Query 执行能力——Command/Query 的执行入口应由
     /// Controller / Presenter 触发，避免 Service 成为逻辑黑洞。
     /// </remarks>
-    /// <seealso cref="AbstractSubmodule"/>
-    /// <seealso cref="IService"/>
+    /// <seealso cref="AbstractSubmodule" />
+    /// <seealso cref="IService" />
     [Serializable]
     public abstract class AbstractService : AbstractSubmodule, IService { }
 }

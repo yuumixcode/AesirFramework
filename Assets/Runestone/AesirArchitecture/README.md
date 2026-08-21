@@ -27,7 +27,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 - **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand` 等能力标记接口组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`，按需暴露能力
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
-- **ObservableValue 响应式属性** — 通常档 Model 直接暴露可写 `ObservableValue<T>`（快捷档表现层直写，标准档 Command 内部直写）；严格档收窄为 `IReadOnlyObservableValue<out T>` 只读接口 + 写方法
+- **ObservableValue 响应式属性** — 快捷档 Model 直接暴露可写 `ObservableValue<T>`（表现层直改值）；标准档起收窄为 `IReadOnlyObservableValue<out T>` 只读接口 + 写方法；严格档再做接口注册 + Command 写入
 - **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换 Model 的调试模式
 - **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule` 基类，消除代码重复
 - **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，支持全局单例
@@ -41,7 +41,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 |------|-----------|-------------------|
 | 生命周期 | MonoBehaviour 事件回调 | PlayerLoop 原生注入（BeforeUpdate / AfterUpdate） |
 | 架构根 | 泛型单例 `Architecture<T>` | 泛型静态单例 `AbstractContext<T>` + `GenericLocator` 全局定位 |
-| 可观察属性 | `BindableProperty<T>` | `ObservableValue<T>`（通常档可写 / 严格档 `IReadOnlyObservableValue<out T>` 只读）|
+| 可观察属性 | `BindableProperty<T>` | `ObservableValue<T>`（快捷档可写 / 标准档起 `IReadOnlyObservableValue<out T>` 只读 + 写方法）|
 | 日志 | `Debug.Log` | `AesirArchitectureDebug` 条件编译统一日志 |
 | 静态状态 | 无 Domain Reset 保障 | `[RuntimeInitializeOnLoadMethod]` 显式重置 |
 | 表现层 | 无明确抽象 | `IView` 表现层接口 + `IController` / `IPresenter` 双模式 |
@@ -83,7 +83,7 @@ public class CounterContext : AbstractContext<CounterContext>
 ```csharp
 public interface ICounterModel : IModel
 {
-    ObservableValue<int> Count { get; }
+    IReadOnlyObservableValue<int> Count { get; }
     void Increase();
     void Decrease();
     void Reset();
@@ -91,18 +91,19 @@ public interface ICounterModel : IModel
 
 public sealed class CounterModel : AbstractModel, ICounterModel
 {
-    // 通常档：直接暴露可写 ObservableValue（标准档由 Command 内部直写）
-    public ObservableValue<int> Count { get; set; } = new ObservableValue<int>(0);
+    // 快捷档可直接暴露可写 ObservableValue；标准档起收窄为只读接口 + 写方法
+    [SerializeField] ObservableValue<int> count = new ObservableValue<int>(0);
 
-    public void Increase() => Count.Value++;
-    public void Decrease() => Count.Value--;
-    public void Reset() => Count.Value = 0;
+    public IReadOnlyObservableValue<int> Count => count;
+    public void Increase() => count.Value++;
+    public void Decrease() => count.Value--;
+    public void Reset() => count.Value = 0;
 
     protected override void OnInitialize() { }
 }
 ```
 
-### 3. 定义 View（MVC 标准档）
+### 3. 定义 View（MVC 严格档）
 
 ```csharp
 public class UICounterMvcPanel : MonoView<CounterContext>
@@ -110,12 +111,13 @@ public class UICounterMvcPanel : MonoView<CounterContext>
     [SerializeField] Text countText;
     [SerializeField] Button increaseButton;
 
-    ICounterController _ctrl;
+    ICounterModel _model;
+    CounterController _ctrl;
 
-    void Awake()
+    void Start()
     {
-        this.GetModel<ICounterModel>().Count
-            .AddListenerAndInvoke(UpdateCountText)
+        _model = this.GetModel<ICounterModel>();
+        _model.Count.AddListenerAndInvoke(UpdateCountText)
             .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
         _ctrl = new CounterController();
     }
@@ -128,10 +130,10 @@ public class UICounterMvcPanel : MonoView<CounterContext>
 ```
 
 > **三档渐进路径**：
-> - **第一课（快捷档，~5 文件）**：Context + Model + `MonoViewController<T>` 面板（View 兼 Controller 直写直读），见 `Counter-Mvc-Quick` 示例；
-> - **第二课（标准档，~8 文件）**：拆出 `MonoView` + 独立 Controller，写入改走 Command；
-> - **第三课（严格档，~7 文件）**：Model 只读接口 + 写方法，读取改走 Query，见 `Counter-Mvc-Strict` 示例。
-> MVP 三档（`Counter-Mvp-Simple` / `Counter-Mvp-Strict`）同构对照。
+> - **第一课（快捷档，~5 文件）**：Context + Model（可写 ObservableValue 直接暴露）+ `MonoViewController<T>` 面板（View 兼 Controller 直改值），见 `Counter-Mvc-Quick` 示例；
+> - **第二课（标准档，~6 文件）**：Model 收窄为只读接口暴露 + 写方法；View 拆出 `MonoView`，与 Controller 分离实例并共享同一 Model（写方法直调，不经 Command），见 `Counter-Mvc-Standard` 示例；
+> - **第三课（严格档，~10 文件）**：Model 接口注册；Controller 经 Context 发布 Command 写入、加工读取走 Query，View 按接口持有 Model 订阅刷新、按业务窄接口持有 Controller，见 `Counter-Mvc-Strict` 示例。
+> MVP 三档（`Counter-Mvp-Quick` / `Counter-Mvp-Standard` / `Counter-Mvp-Strict`）与 MVC 同构对照——每档 Model 暴露面一致，唯一差异是刷新路径：MVC 的 View 自订阅 Model，MVP 的 View 被动、由 Presenter 推送。
 
 ### 4. 使用 Command
 
@@ -149,6 +151,35 @@ public class AddScoreCommand : AbstractCommand
 // 执行命令
 this.ExecuteCommand<AddScoreCommand>();
 ```
+
+## 示例（Samples）
+
+包内提供 8 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
+
+### MVC 系列（View 自订阅刷新）
+
+| 示例 | 档次 | Model 暴露面 | 写入 / 读取路径 |
+|------|------|-------------|----------------|
+| `Counter-Mvc-Quick` | 第一课 · 快捷档 | 具体类注册，可写 `ObservableValue` 直改 | View 兼 Controller 直改 / 直读 |
+| `Counter-Mvc-Standard` | 第二课 · 标准档 | 具体类注册，只读暴露 + 写方法 | Controller 直调写方法 / View 只读订阅 |
+| `Counter-Mvc-Strict` | 第三课 · 严格档 | 接口注册，只读暴露 + 写方法 | Controller 发布 Command / 加工读取经 Query |
+
+### MVP 系列（View 被动、Presenter 推送）
+
+| 示例 | 档次 | Model 暴露面 | 写入 / 读取路径 |
+|------|------|-------------|----------------|
+| `Counter-Mvp-Quick` | 第一课 · 快捷档 | 具体类注册，可写 `ObservableValue` 直改 | Presenter 直改 / 直读推送 |
+| `Counter-Mvp-Standard` | 第二课 · 标准档 | 具体类注册，只读暴露 + 写方法 | Presenter 直调写方法 / Model 直读推送 |
+| `Counter-Mvp-Strict` | 第三课 · 严格档 | 接口注册，只读暴露 + 写方法 | Command 写入 / Query 拉取推送 |
+
+> **MVP View 边界**：三档 View 均为纯 `MonoBehaviour`（被动视图不携带任何 Context 能力）；快捷档无任何接口抽象（Presenter 直接持有具体面板类），标准档起 View 契约以 `IXxxView` 接口形式存在；严格档 View 另按业务窄接口（`IXxxPresenter`，仅生命周期方法）持有 Presenter。
+
+### 工具类示例
+
+| 示例 | 说明 | 依赖 |
+|------|------|------|
+| `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
+| `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
 
 ## 架构总览
 
@@ -258,10 +289,12 @@ cn.runestone.aesir.architecture/
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
 ├── Samples~/
-│   ├── Counter-Mvc-Quick/         # MVC-1 快捷档（MonoViewController 直写直读，第一课）
-│   ├── Counter-Mvc-Strict/        # MVC-3 严格档（只读 Model + Command 写 + Query 读，进阶）
-│   ├── Counter-Mvp-Simple/        # MVP-1 简单档（Presenter 直写 Model）
-│   ├── Counter-Mvp-Strict/        # MVP-3 严格档（Command 写 + Query 读）
+│   ├── Counter-Mvc-Quick/         # MVC-1 快捷档（MonoViewController 直改可写 ObservableValue，第一课）
+│   ├── Counter-Mvc-Standard/      # MVC-2 标准档（只读暴露 + 写方法，View/Controller 分离共享 Model，第二课）
+│   ├── Counter-Mvc-Strict/        # MVC-3 严格档（接口注册 + Command 写 + Query 加工读，第三课）
+│   ├── Counter-Mvp-Quick/         # MVP-1 快捷档（Presenter 直改可写 ObservableValue，第一课）
+│   ├── Counter-Mvp-Standard/      # MVP-2 标准档（只读暴露 + 写方法，Presenter 直调写方法，第二课）
+│   ├── Counter-Mvp-Strict/        # MVP-3 严格档（Command 写 + Query 读，View 按窄接口持有 Presenter，第三课）
 │   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
 │   └── MiniEvent/                 # MiniEvent 使用案例
 └── Third Party Notices.md          # 第三方许可声明
@@ -288,7 +321,7 @@ cn.runestone.aesir.architecture/
 | `Register` 与 `Get` 必须使用相同类型参数 | 按键精确匹配，用实现类查询接口键注册的实例返回 null / 抛未注册异常（含近失识别提示） |
 | 运行时替换 Model/Service 仅用于测试调试 | 旧实例被 Dispose，其上的订阅不会迁移，已订阅的 View 需自行重新订阅 |
 | 第三方 SDK 修改 PlayerLoop 后手动调用一次 `AesirArchitecturePlayerLoop.EnsureInjected()` | BeforeUpdate / AfterUpdate 钩子静默失效（`Register` 注册回调时会自动检测补插） |
-| **写入纪律档位** | 快捷/简单档直写 Model 合法；标准档起表现层写入必须经 Command；严格档 Model 只读 + 写方法；Service 可直写。推荐项目从标准档起步 |
+| **写入纪律档位** | 快捷档直改可写 ObservableValue 合法；标准档 Model 收窄为只读接口 + 写方法（Controller 直调写方法）；严格档写入必经 Command + 接口注册；Service 可直写。推荐项目从标准档起步 |
 
 ## 设计原则
 
