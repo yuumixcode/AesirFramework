@@ -1,19 +1,19 @@
 {
-    "name": "Runestone.AesirModules.InputSystem",
-    "rootNamespace": "Runestone.AesirModules",
-    "references": [
-        "Runestone.AesirModules",
-        "Unity.InputSystem"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [
-        "ENABLE_INPUT_SYSTEM"
-    ],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "Runestone.AesirModules.InputSystem",
+  "rootNamespace": "Runestone.AesirModules",
+  "references": [
+    "Runestone.AesirModules",
+    "Unity.InputSystem"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "ENABLE_INPUT_SYSTEM"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

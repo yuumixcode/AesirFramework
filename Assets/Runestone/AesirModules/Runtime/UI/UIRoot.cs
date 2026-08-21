@@ -15,6 +15,11 @@ namespace Runestone.AesirModules
     /// UI 根节点组件。
     /// 负责创建 UICamera、EventSystem、分层 Canvas 以及应用 Canvas 统一配置。
     /// </summary>
+    /// <remarks>
+    /// 是否加入 DontDestroyOnLoad 场景由序列化字段 <see cref="dontDestroyOnLoad" /> 统一控制，
+    /// 场景预放置与运行时创建两种来源共用同一份决策（默认勾选，跨场景持久）。
+    /// 取消勾选时实例保留在所在场景、随场景卸载销毁——必须自行处理多场景叠加（Additive）加载下的生命周期管理。
+    /// </remarks>
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-999)]
     public class UIRoot : AesirMonoBehaviour
@@ -24,23 +29,10 @@ namespace Runestone.AesirModules
         const int UILayerMask = (1 << UILayerIndex) | (1 << TransparentFXLayerIndex);
         internal const string LayerCanvasesFieldName = nameof(_layerCanvases);
         internal const string UICanvasConfigFieldName = nameof(uiCanvasConfigSO);
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
 
         static UIRoot _instance;
         static UICanvasConfigSO _defaultCanvasConfig;
-
-        /// <summary>
-        /// 自定义输入模块创建回调。
-        /// 由 Runestone.AesirModules.InputSystem 程序集在 InputSystem 启用时注册，
-        /// 使用 InputSystemUIInputModule 替代默认的 StandaloneInputModule。
-        /// 为 null 时使用 StandaloneInputModule。
-        /// </summary>
-        public static Action<GameObject> CreateInputModule { get; set; }
-
-        /// <summary>
-        /// 一次性临时标记：通知下一次 <see cref="Awake" /> 调用需要执行 <see cref="UnityEngine.Object.DontDestroyOnLoad" />。
-        /// 由 <see cref="Instance" /> getter 在创建实例前置为 true，Awake 消费后立即重置为 false。
-        /// </summary>
-        static bool _pendingDontDestroyOnLoad;
 
         static readonly Dictionary<UILayer, int> LayerSortOrders = new Dictionary<UILayer, int>
         {
@@ -50,10 +42,33 @@ namespace Runestone.AesirModules
             { UILayer.Top, 400 }
         };
 
-        readonly Dictionary<UILayer, Canvas> _layerCanvases = new Dictionary<UILayer, Canvas>();
-
         [SerializeField]
         UICanvasConfigSO uiCanvasConfigSO;
+
+        /// <summary>
+        /// 是否将本物体加入 DontDestroyOnLoad 场景。
+        /// </summary>
+        /// <remarks>
+        /// 默认 true（跨场景持久）。设为 false 时实例保留在所在场景、随场景卸载销毁，
+        /// 必须自行处理多场景叠加（Additive）加载下的生命周期管理；
+        /// 运行时自动创建的实例恒以默认值 true 创建（AddComponent 同步触发 Awake，无法在创建后修改）。
+        /// <para>
+        /// Inspector 呈现（字段说明 InfoBox 与关闭警告 InfoBox）由
+        /// <c>UIRootAttributeProcessor</c> 动态注入，运行时代码不持有任何 Inspector 样式特性。
+        /// </para>
+        /// </remarks>
+        [SerializeField]
+        bool dontDestroyOnLoad = true;
+
+        readonly Dictionary<UILayer, Canvas> _layerCanvases = new Dictionary<UILayer, Canvas>();
+
+        /// <summary>
+        /// 自定义输入模块创建回调。
+        /// 由 Runestone.AesirModules.InputSystem 程序集在 InputSystem 启用时注册，
+        /// 使用 InputSystemUIInputModule 替代默认的 StandaloneInputModule。
+        /// 为 null 时使用 StandaloneInputModule。
+        /// </summary>
+        public static Action<GameObject> CreateInputModule { get; set; }
 
         public static UIRoot Instance
         {
@@ -72,19 +87,31 @@ namespace Runestone.AesirModules
                     return _instance;
                 }
 
-                // 未找到预放置实例 → 运行时创建，标记后由 Awake 决定是否 DDOL
-                _pendingDontDestroyOnLoad = true;
+                // 未找到预放置实例 → 运行时创建；AddComponent 同步触发 Awake，
+                // 由 dontDestroyOnLoad 默认值（true）决定自动加入 DDOL 场景
                 var go = new GameObject("[UIRoot]");
-                // AddComponent 在主线程同步执行，Awake 会在 AddComponent 返回前完成，
-                // 此时 _pendingDontDestroyOnLoad 已被 Awake 消费完毕，可以安全重置。
-                // 重置后标志不会残留，避免影响后续 Awake（如 Enter Play Mode 触发的 Domain Reload）。
                 _instance = go.AddComponent<UIRoot>();
-                _pendingDontDestroyOnLoad = false;
                 return _instance;
             }
         }
 
         public Camera UICamera { get; private set; }
+
+        /// <summary>
+        /// 运行时默认配置（仅内存实例）。静态缓存避免编辑器下反复调用 <see cref="Build" /> 时重复 CreateInstance 造成泄漏。
+        /// </summary>
+        static UICanvasConfigSO DefaultCanvasConfig
+        {
+            get
+            {
+                if (_defaultCanvasConfig == null)
+                {
+                    _defaultCanvasConfig = UICanvasConfigSO.CreateDefault();
+                }
+
+                return _defaultCanvasConfig;
+            }
+        }
 
         void Awake()
         {
@@ -96,10 +123,14 @@ namespace Runestone.AesirModules
 
             _instance = this;
 
-            // 仅需要跨场景持久化的实例使用 DontDestroyOnLoad；场景中预放置的实例保留在场景中
-            if (_pendingDontDestroyOnLoad)
+            if (dontDestroyOnLoad)
             {
                 DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                    "UIRoot 的 dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" + "必须自行处理多场景叠加（Additive）加载下的生命周期");
             }
 
             UIModule.Instance.RegisterUIRoot(this);
@@ -142,8 +173,7 @@ namespace Runestone.AesirModules
             if (canvas == null)
             {
                 AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
-                    $"UIRoot 缺少 {layer} 层的 Canvas（子物体 {layer}Layer 缺失或被重命名），" +
-                    "面板将无法挂载到该层，请重建 UIRoot 层级");
+                    $"UIRoot 缺少 {layer} 层的 Canvas（子物体 {layer}Layer 缺失或被重命名），" + "面板将无法挂载到该层，请重建 UIRoot 层级");
                 return null;
             }
 
@@ -157,22 +187,6 @@ namespace Runestone.AesirModules
             EnsurePresetLayers();
             SetLayerRecursively(transform, UILayerIndex);
             CacheLayerCanvases();
-        }
-
-        /// <summary>
-        /// 运行时默认配置（仅内存实例）。静态缓存避免编辑器下反复调用 <see cref="Build" /> 时重复 CreateInstance 造成泄漏。
-        /// </summary>
-        static UICanvasConfigSO DefaultCanvasConfig
-        {
-            get
-            {
-                if (_defaultCanvasConfig == null)
-                {
-                    _defaultCanvasConfig = UICanvasConfigSO.CreateDefault();
-                }
-
-                return _defaultCanvasConfig;
-            }
         }
 
         void EnsureCanvasConfig()

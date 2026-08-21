@@ -1,19 +1,19 @@
 {
-    "name": "Runestone.AesirModules.OdinInspector",
-    "rootNamespace": "Runestone.AesirModules",
-    "references": [
-        "Runestone.AesirModules",
-        "Runestone.AesirArchitecture"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [
-        "ODIN_INSPECTOR"
-    ],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "Runestone.AesirModules.OdinInspector",
+  "rootNamespace": "Runestone.AesirModules",
+  "references": [
+    "Runestone.AesirModules",
+    "Runestone.AesirArchitecture"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "ODIN_INSPECTOR"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

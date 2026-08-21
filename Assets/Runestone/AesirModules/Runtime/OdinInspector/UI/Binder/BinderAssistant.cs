@@ -15,11 +15,11 @@ namespace Runestone.AesirModules
     /// Object Binder 核心组件。配置自动绑定信息并生成对应的脚本代码。
     /// <para>
     /// 工作流程：
-    /// 1. 在需要自动绑定引用的子物体上添加 <see cref="BinderTag"/> 组件，设置绑定数量。
-    /// 2. 在本组件上点击「构建绑定单元」扫描所有 BinderTag，生成 <see cref="BinderInfo"/> 列表。
+    /// 1. 在需要自动绑定引用的子物体上添加 <see cref="BinderTag" /> 组件，设置绑定数量。
+    /// 2. 在本组件上点击「构建绑定单元」扫描所有 BinderTag，生成 <see cref="BinderInfo" /> 列表。
     /// 3. 点击「生成脚本」生成两个 partial class 文件：
-    ///    - <c>*.generated.cs</c>：自动维护，包含字段声明和 <c>BindReferences()</c> 方法。
-    ///    - <c>*.cs</c>：开发者手动编写业务逻辑，仅生成一次。
+    /// - <c>*.generated.cs</c>：自动维护，包含字段声明和 <c>BindReferences()</c> 方法。
+    /// - <c>*.cs</c>：开发者手动编写业务逻辑，仅生成一次。
     /// 4. 脚本编译后自动将生成的脚本组件挂载到当前 GameObject 并执行一次绑定。
     /// </para>
     /// </summary>
@@ -333,7 +333,7 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 脚本重编译后，将生成的脚本组件自动挂载到目标 GameObject 并执行一次绑定。
-        /// 依赖 <see cref="WriteGeneratedScript"/> 中写入的 EditorPrefs 数据。
+        /// 依赖 <see cref="WriteGeneratedScript" /> 中写入的 EditorPrefs 数据。
         /// </summary>
         [DidReloadScripts]
         static void AttachToGameObject()

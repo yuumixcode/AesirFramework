@@ -8,9 +8,9 @@ using UnityEngine;
 namespace Runestone.AesirModules
 {
     /// <summary>
-    /// Binder 标签组件。挂载在需要自动绑定引用的子物体上，标记该物体可被 <see cref="BinderAssistant"/> 扫描并生成绑定信息。
+    /// Binder 标签组件。挂载在需要自动绑定引用的子物体上，标记该物体可被 <see cref="BinderAssistant" /> 扫描并生成绑定信息。
     /// <para>
-    /// 一个物体上可绑定多个不同类型的组件，通过 <see cref="ComponentNumber"/> 指定数量。
+    /// 一个物体上可绑定多个不同类型的组件，通过 <see cref="ComponentNumber" /> 指定数量。
     /// </para>
     /// </summary>
     [DisallowMultipleComponent]
@@ -21,7 +21,7 @@ namespace Runestone.AesirModules
         int componentNumber;
 
         /// <summary>
-        /// 当前物体上需要绑定的组件数量。<see cref="BinderAssistant"/> 据此为每个组件生成一条 <see cref="BinderInfo"/>。
+        /// 当前物体上需要绑定的组件数量。<see cref="BinderAssistant" /> 据此为每个组件生成一条 <see cref="BinderInfo" />。
         /// </summary>
         [ShowInInspector]
         [LabelText("绑定组件数量: ")]
@@ -47,7 +47,7 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 当前物体上可绑定的组件类型集合（含 GameObject 自身）。
-        /// 排除了 <see cref="BinderTag"/> 自身，避免将标记组件纳入绑定选项。
+        /// 排除了 <see cref="BinderTag" /> 自身，避免将标记组件纳入绑定选项。
         /// </summary>
         public IEnumerable<Type> Types
         {

@@ -19,6 +19,13 @@ namespace Runestone.AesirModules
         [SerializeField]
         bool destroyOnHide = true;
 
+        void OnDestroy()
+        {
+            // 实例被销毁（外部 Destroy / 场景卸载 / DestroyPanel）时反向通知 UIModule 清理注册表，
+            // 避免字典残留已销毁实例，导致后续 ShowPanel 命中无效条目
+            UIModule.RemovePanelRecord(this);
+        }
+
         /// <summary>
         /// 面板所在的 UI 层级。
         /// </summary>
@@ -57,13 +64,6 @@ namespace Runestone.AesirModules
 
             OnClose();
             Destroy(gameObject);
-        }
-
-        void OnDestroy()
-        {
-            // 实例被销毁（外部 Destroy / 场景卸载 / DestroyPanel）时反向通知 UIModule 清理注册表，
-            // 避免字典残留已销毁实例，导致后续 ShowPanel 命中无效条目
-            UIModule.RemovePanelRecord(this);
         }
 
         /// <summary>

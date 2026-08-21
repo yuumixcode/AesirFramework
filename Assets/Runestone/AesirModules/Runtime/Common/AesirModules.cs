@@ -7,31 +7,44 @@ namespace Runestone.AesirModules
     /// Aesir Modules 接入 MonoBehaviour 生命周期的持久化物体对象。
     /// </summary>
     /// <remarks>
-    /// 支持两种使用方式：
+    /// 是否加入 DontDestroyOnLoad 场景由序列化字段 <see cref="dontDestroyOnLoad" /> 统一控制，
+    /// 场景预放置与运行时创建两种来源共用同一份决策：
     /// <list type="bullet">
-    /// <item><b>场景预放置</b>：将本组件放在场景中的 GameObject 上，<see cref="Instance"/> 会自动发现，
-    /// 不调用 <c>DontDestroyOnLoad</c>，实例随场景生命周期销毁。适合多场景叠加加载的开发模式。</item>
-    /// <item><b>运行时创建</b>：未在场景中预放置时，首次访问 <see cref="Instance"/> 会自动创建
-    /// <c>[Aesir Modules]</c> GameObject 并调用 <c>DontDestroyOnLoad</c>。</item>
+    ///     <item><b>默认（勾选）</b>：实例在 <c>Awake</c> 时加入 DontDestroyOnLoad 场景，跨场景持久存在。</item>
+    ///     <item>
+    ///     <b>取消勾选</b>：实例保留在所在场景、随场景卸载销毁——必须自行处理多场景叠加（Additive）加载下的
+    ///     生命周期管理。Inspector 会显示警告信息框，运行时亦输出提醒日志。
+    ///     </item>
     /// </list>
     /// </remarks>
     [DefaultExecutionOrder(-999)]
     [DisallowMultipleComponent]
     public class AesirModules : AesirMonoBehaviour
     {
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
         static AesirModules _instance;
 
         /// <summary>
-        /// 一次性临时标记：通知下一次 <see cref="Awake" /> 调用需要执行 <see cref="UnityEngine.Object.DontDestroyOnLoad" />。
-        /// 由 <see cref="Instance" /> getter 在创建实例前置为 true，Awake 消费后立即重置为 false。
+        /// 是否将本物体加入 DontDestroyOnLoad 场景。
         /// </summary>
-        static bool _pendingDontDestroyOnLoad;
+        /// <remarks>
+        /// 默认 true（跨场景持久）。设为 false 时实例保留在所在场景、随场景卸载销毁，
+        /// 必须自行处理多场景叠加（Additive）加载下的生命周期管理；
+        /// 运行时自动创建的实例恒以默认值 true 创建（AddComponent 同步触发 Awake，无法在创建后修改）。
+        /// <para>
+        /// Inspector 呈现（字段说明 InfoBox 与关闭警告 InfoBox）由
+        /// <c>AesirModulesAttributeProcessor</c> 动态注入，运行时代码不持有任何 Inspector 样式特性。
+        /// </para>
+        /// </remarks>
+        [SerializeField]
+        bool dontDestroyOnLoad = true;
 
         /// <summary>
         /// 获取全局唯一的架构管理器实例
         /// </summary>
         /// <remarks>
-        /// 优先在已加载场景中查找预放置的实例；未找到时运行时创建并调用 <c>DontDestroyOnLoad</c>。
+        /// 优先在已加载场景中查找预放置的实例；未找到时运行时创建，
+        /// 新实例依据 <see cref="dontDestroyOnLoad" /> 默认值（true）在 Awake 中自动加入 DontDestroyOnLoad 场景。
         /// </remarks>
         public static AesirModules Instance
         {
@@ -50,15 +63,10 @@ namespace Runestone.AesirModules
                     return _instance;
                 }
 
-                // 未找到预放置实例 → 运行时创建，标记后由 Awake 决定是否 DDOL
-                _pendingDontDestroyOnLoad = true;
+                // 未找到预放置实例 → 运行时创建；AddComponent 同步触发 Awake，
+                // 由 dontDestroyOnLoad 默认值（true）决定自动加入 DDOL 场景
                 var go = new GameObject("[Aesir Modules]");
-                // AddComponent 在主线程同步执行，Awake 会在 AddComponent 返回前完成，
-                // 此时 _pendingDontDestroyOnLoad 已被 Awake 消费完毕，可以安全重置。
-                // 重置后标志不会残留，避免影响后续 Awake（如 Enter Play Mode 触发的 Domain Reload）。
                 _instance = go.AddComponent<AesirModules>();
-                _pendingDontDestroyOnLoad = false;
-
                 return _instance;
             }
         }
@@ -73,10 +81,14 @@ namespace Runestone.AesirModules
 
             _instance = this;
 
-            // 仅需要跨场景持久化的实例使用 DontDestroyOnLoad；场景中预放置的实例保留在场景中
-            if (_pendingDontDestroyOnLoad)
+            if (dontDestroyOnLoad)
             {
                 DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.AesirModulesTag,
+                    "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" + "必须自行处理多场景叠加（Additive）加载下的生命周期");
             }
         }
 

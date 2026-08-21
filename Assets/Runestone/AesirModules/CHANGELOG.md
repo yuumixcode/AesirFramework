@@ -73,6 +73,7 @@
 
 - **package.json**：更新描述反映事件模块，新增 `samples` 数组声明
 - **README**：新增事件模块章节（核心类型表、快速开始、API 速查、目录结构）
+- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — `AesirModules`、`UIRoot`、`UIModule`（UI 模块）新增 `[SerializeField] bool dontDestroyOnLoad = true`，默认勾选时（含场景预放置实例）一律在 Awake 加入 DontDestroyOnLoad 场景（此前预放置实例保留在场景中）；取消勾选时实例保留在所在场景、随场景卸载销毁，必须自行处理多场景叠加（Additive）加载——Inspector 显示警告 InfoBox（Odin，新增 `AesirModulesAttributeProcessor` / `UIModuleAttributeProcessor`，扩展 `UIRootAttributeProcessor`），运行时输出提醒日志（仅编辑器期）。`UIModule` 的字段仅在预放置为根物体时生效，运行时自动创建时挂载于 [Aesir Modules] 宿主下跟随宿主决策。移除 `AesirModules` / `UIRoot` 的 `static bool _pendingDontDestroyOnLoad`（字段默认值天然覆盖运行时创建路径）
 
 ### 规划中
 
