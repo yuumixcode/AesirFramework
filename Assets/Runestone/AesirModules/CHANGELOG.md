@@ -5,6 +5,22 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.11.0] - 2026-08-22
+
+### Breaking Changes
+
+- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — `AesirModules`、`UIRoot`、`UIModule`（UI 模块）新增 `[SerializeField] bool dontDestroyOnLoad = true`，默认勾选时（含场景预放置实例）一律在 Awake 加入 DontDestroyOnLoad 场景（此前预放置实例保留在场景中）；取消勾选时实例保留在所在场景、随场景卸载销毁，必须自行处理多场景叠加（Additive）加载——Inspector 显示警告 InfoBox（Odin，新增 `AesirModulesAttributeProcessor` / `UIModuleAttributeProcessor`，扩展 `UIRootAttributeProcessor`），运行时输出提醒日志（仅编辑器期）。`UIModule` 的字段仅在预放置为根物体时生效，运行时自动创建时挂载于 [Aesir Modules] 宿主下跟随宿主决策。移除 `AesirModules` / `UIRoot` 的 `static bool _pendingDontDestroyOnLoad`（字段默认值天然覆盖运行时创建路径）
+
+### Added
+
+- **DDOL 开关字段级 InfoBox** — `dontDestroyOnLoad` 字段的 `[Tooltip]` 迁移为 AttributeProcessor 经 `ProcessChildMemberAttributes` 注入的 Info 级信息框（取值含义说明，恒显示），运行时程序集零 Inspector 样式特性
+- **DDOL 警告 InfoBox 可见性修复** — 警告框改用 `"@!" + 字段名` 反转表达式，关闭开关时正确显示警告（此前 Odin `visibleIfMemberName` 的"true 时显示"语义导致警告在安全态显示、风险态静默；PropertyTree 探针验证 8/8 PASS）
+
+### Changed
+
+- **依赖版本同步** — Architecture 依赖版本号更新至 `0.11.0`
+- **全包 XML 注释与 asmdef 缩进格式统一**（`<see />` 闭合空格、`<para>` / `<item>` 缩进、断行规范）
+
 ## [0.9.0] - 2026-08-15
 
 ### Changed
@@ -73,7 +89,6 @@
 
 - **package.json**：更新描述反映事件模块，新增 `samples` 数组声明
 - **README**：新增事件模块章节（核心类型表、快速开始、API 速查、目录结构）
-- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — `AesirModules`、`UIRoot`、`UIModule`（UI 模块）新增 `[SerializeField] bool dontDestroyOnLoad = true`，默认勾选时（含场景预放置实例）一律在 Awake 加入 DontDestroyOnLoad 场景（此前预放置实例保留在场景中）；取消勾选时实例保留在所在场景、随场景卸载销毁，必须自行处理多场景叠加（Additive）加载——Inspector 显示警告 InfoBox（Odin，新增 `AesirModulesAttributeProcessor` / `UIModuleAttributeProcessor`，扩展 `UIRootAttributeProcessor`），运行时输出提醒日志（仅编辑器期）。`UIModule` 的字段仅在预放置为根物体时生效，运行时自动创建时挂载于 [Aesir Modules] 宿主下跟随宿主决策。移除 `AesirModules` / `UIRoot` 的 `static bool _pendingDontDestroyOnLoad`（字段默认值天然覆盖运行时创建路径）
 
 ### 规划中
 
