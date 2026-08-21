@@ -5,6 +5,16 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.12.0] - 2026-08-22
+
+### Added
+
+- **AI Skill 文档集** — `Documentation~/AesirArchitecture-Skill/` 新增 AI 编码指南，供 AI 助手按 RAA 架构规范快速生成代码：
+  - `SKILL.md` — 主指南：MVC/MVP 模式决策树、Quick/Standard/Strict 三档分级表、核心 API 速查、事件机制决策表、10 条关键约定、命名规范与文件组织指南
+  - `references/mvc-quick.md` / `mvc-standard.md` / `mvc-strict.md` — MVC 三档完整代码模板（Context + Model + View + Controller + Command + Query）
+  - `references/mvp-quick.md` / `mvp-standard.md` / `mvp-strict.md` — MVP 三档完整代码模板（Context + Model + View + Presenter + Command + Query）
+  - `references/core-api.md` — 辅助模块 API 速查（ObservableValue、MiniEvent、Context、GenericLocator、PlayerLoop 等）
+
 ## [0.11.0] - 2026-08-22
 
 ### Breaking Changes
