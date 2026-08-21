@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
 | Aesir Architecture | `cn.runestone.aesir.architecture` | **0.11.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.9.0** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.9.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.11.0** |
+| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.11.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
 > *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
@@ -61,6 +61,30 @@ versions follow [Semantic Versioning](https://semver.org/).
 - **README 新增「示例（Samples）」总览节**（8 示例双三档对照表）；移除「与 QFramework 的差异」对比章节；英文 README 同步并修正安装 URL `?path=` 参数
 - **package.json samples 六档条目**；《事件机制决策表》MVC-3 口径修正（原始值订阅刷新，Query 仅加工值）
 - **全包 XML 注释与代码格式统一**
+
+---
+
+### [modules] Aesir Modules
+
+#### Breaking Changes
+
+- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — `AesirModules` / `UIRoot` / `UIModule` 新增 `[SerializeField] bool dontDestroyOnLoad = true`（默认加入 DontDestroyOnLoad 场景，此前预放置实例保留在场景中）；取消勾选时随所在场景卸载销毁，须自行处理多场景叠加（Additive）加载。`UIModule` 字段仅预放置为根物体时生效（运行时创建挂载于 [Aesir Modules] 宿主下跟随宿主决策）；移除 `AesirModules` / `UIRoot` 的 `_pendingDontDestroyOnLoad` 静态标志
+
+#### Added
+
+- **DDOL 开关字段级 InfoBox + 警告可见性修复** — 新增 `AesirModulesAttributeProcessor` / `UIModuleAttributeProcessor`、扩展 `UIRootAttributeProcessor`：字段级 Info 信息框（替代运行时 `[Tooltip]`，样式与逻辑分离）+ 类级警告框改用 `"@!" + 字段名` 反转表达式（修复 Odin VisibleIf 语义导致的可见性反转）
+
+#### Changed
+
+- **依赖版本同步** — Architecture 依赖版本号更新至 `0.11.0`；全包 XML 注释与 asmdef 缩进格式统一
+
+---
+
+### [inspector] Aesir Inspector
+
+#### Changed
+
+- 版本号与 Aesir Architecture / Aesir Modules 同步更新至 `0.11.0`，本包本版本无功能性变更
 
 ---
 

@@ -1,6 +1,6 @@
 # Unity-Aesir-Packages · Aesir 系列 Unity 包集合
 
-> 面向团结引擎 / Unity 的渐进式架构框架 + UI 框架 + 编辑器工具集。三个子包可分别通过 Git URL 直接安装，按需选用。
+> 面向团结引擎 / Unity 的渐进式 MVC 架构 + UI 框架 + 编辑器工具集。三个子包可分别通过 Git URL 直接安装，按需选用。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
@@ -17,11 +17,62 @@
 
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
-| **Aesir Architecture** | 渐进式 MVC 架构框架（能力接口组合、命令模式、PlayerLoop） | `cn.runestone.aesir.architecture` | `0.11.0` |
-| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ ⚠️ 实验性事件模块 | `cn.runestone.aesir.modules` | `0.9.0` |
-| **Aesir Inspector** | 编辑器扩展库（双语 Inspector、安全编辑器工具、脚本文档生成器、Summary 同步工具） | `cn.runestone.aesir.inspector` | `0.9.0` |
+| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.11.0` |
+| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ ⚠️ 实验性事件模块 | `cn.runestone.aesir.modules` | `0.11.0` |
+| **Aesir Inspector** | 编辑器扩展库（双语 Inspector、安全编辑器工具、脚本文档生成器、Summary 同步工具） | `cn.runestone.aesir-inspector` | `0.11.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
+
+---
+
+## 🏛️ Aesir Architecture（RAA）——本仓库的核心
+
+**RAA 是一个以"Unity 原生优先"为核心理念的渐进式 MVC 架构**。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的分层规范。框架以 **MVC 为主要模式**（`IController` 是推荐的快速开发入口），`IPresenter`（MVP）作为可选的严格分层模式。
+
+### 架构角色与能力接口
+
+框架采用**能力接口组合**模式——每个角色通过组合细粒度能力接口按需暴露能力，而非继承大而全的基类接口：
+
+| 角色 | 接口 | 能力 | 职责 |
+|------|------|------|------|
+| **Model** | `IModel` → `AbstractModel` | GetModel, GetService | 数据层；持有 `ObservableValue<T>`，修改必经写方法 |
+| **Service** | `IService` → `AbstractService` | GetModel, GetService | 跨模块协调；可直写 Model，不能执行 Command/Query |
+| **View** | `IView` | GetModel, GetService（只读） | 表现层；自订阅 Model 通知刷新 |
+| **Controller** | `IController` | GetModel, GetService, **ExecuteCommand**, **ExecuteQuery** | MVC 模式入口（推荐） |
+| **Presenter** | `IPresenter` | 全部 Controller + IDisposable | MVP 模式（可选）；中介 Model ↔ View，View 被动 |
+| **Command** | `ICommand` → `AbstractCommand` | Execute() | 写操作（同步、无返回值） |
+| **Query** | `IQuery<TResult>` → `AbstractQuery` | Execute() → TResult | 读操作（无副作用），CQRS 风格 |
+
+`AbstractContext<T>`（CRTP 泛型静态单例）是架构根：子类在 `Configure()` 中注册 Model / Service，`Instance` 首次访问触发初始化（注册顺序初始化 Model → Service），未注册类型抛含修复提示的异常而非返回 null。
+
+### 三档渐进路径（核心设计）
+
+RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，到读写全解耦的严格分层，每档只有一个核心增量。MVC 与 MVP 各三档逐课同构对照：
+
+| 档位 | Model 暴露面 | MVC（View 自订阅） | MVP（View 被动、Presenter 推送） |
+|------|-------------|--------------------|----------------------------------|
+| **第一课 · 快捷档** | 具体类注册，可写 `ObservableValue` 直改 | `MonoViewController<T>` 直改值 | Presenter 直改值并推送 |
+| **第二课 · 标准档** | 只读暴露 + 写方法 | Controller 直调写方法 | Presenter 直调写方法 |
+| **第三课 · 严格档** | 接口注册 + 只读暴露 + 写方法 | Command 写 + Query 加工读 | Command 写 + Query 读 |
+
+快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / MiniEvent 两个工具示例，逐课可导入。
+
+### 核心机制速览
+
+- **`ObservableValue<T>` 响应式属性** — Model 持有可写实例，View 经 `IReadOnlyObservableValue<T>` 只读订阅；`AddListenerAndInvoke` 订阅即同步初始值
+- **`MiniEvent` / `MiniEvent<T>`** — 零分配轻量事件（直接多播调用，原生 C# fail-fast 语义）；返回 `AutoRemoveListenerHandle` 自动清理，支持随 GameObject 销毁 / 场景卸载自动注销
+- **PlayerLoop 原生生命周期** — `AesirArchitecturePlayerLoop` 注入 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour；第三方 SDK 覆盖 PlayerLoop 后 `EnsureInjected()` 自愈
+- **DDOL 显式决策** — 根单例的 `dontDestroyOnLoad` 序列化字段统一控制预放置 / 运行时两种来源（默认跨场景持久；关闭时随场景卸载销毁，Inspector 警告 + 运行时提醒，多场景叠加加载自行处理）
+- **Domain Reload 安全（铁律）** — 静态变量全部显式重置（非泛型类内 RIOLM / 泛型类经 `ResetStaticsAssistant`），反复进出 Play Mode 无残留
+- **纯 C# 核心 + MonoBehaviour 适配** — Engine 层零 MonoBehaviour 依赖；`MonoView<T>` / `MonoViewController<T>` 等作为适配层，Odin 可选增强而非运行前置
+
+### 设计哲学
+
+1. **Unity 原生优先** — 用引擎能力（PlayerLoop / SO / Editor API），不自建平行体系
+2. **极简边界** — 不做事件总线、Context 多实例、Command 池化 / async / Undo；低概率问题用文档约定与编辑期提示（InfoBox）杜绝，不加运行时防御兜底
+3. **样式与逻辑分离** — Inspector 呈现全部经 Odin AttributeProcessor 动态注入，运行时程序集零样式特性
+
+完整文档见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md)（English）。
 
 ---
 
@@ -30,7 +81,7 @@
 ```
 ┌──────────────────────┐         ┌──────────────────────────┐
 │  Aesir Architecture  │         │  Aesir Inspector          │
-│  MVP/MVC 基础框架     │  互相独立 │  编辑器扩展（强依赖 Odin）  │
+│  MVC 架构（核心包）    │  互相独立 │  编辑器扩展（强依赖 Odin）  │
 │  能力接口 / 命令 / 事件 │         └──────────────────────────┘
 └──────────────────────┘
             ▲
@@ -75,7 +126,7 @@
   "dependencies": {
     "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture",
     "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules",
-    "cn.runestone.aesir.inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector"
+    "cn.runestone.aesir-inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector"
   }
 }
 ```
@@ -99,15 +150,19 @@ public class CounterContext : AbstractContext<CounterContext>
 }
 ```
 
+View 订阅刷新、Controller 发布 Command 的完整三课路径，见包内 README 与 6 个计数器示例（Package Manager → Samples）。
+
 完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md)（English）。
 
-### Aesir Modules — 一个 `Open<T>()` 打开面板
+### Aesir Modules — 一个 `Show<T>()` 打开面板
 
 ```csharp
-UIManager.RegisterPrefab<MainMenuPanel>(prefab);
-UIManager.Open<MainMenuPanel>();
-UIManager.Open<ConfirmDialogPanel>(new ConfirmData { message = "确定？" });
+UIModule.RegisterPrefab<MainMenuPanel>(prefab);
+UIModule.Show<MainMenuPanel>();
+UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "确定？" });
 ```
+
+UI 框架提供 Manager-of-Managers 单例、四层 Canvas 层级（`UILayer`）、面板生命周期（激活 → 停用缓存 → 销毁）与可插拔资源加载器（默认 Resources，可换 Addressables）。
 
 完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirModules/Documentation~/README_EN.md)（English）。
 
@@ -138,7 +193,7 @@ Unity-Aesir-Packages/                       # 你现在看到的仓库
     │   ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
     │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
     ├── AesirModules/                      # 依赖 Architecture
-    │   ├── Runtime/  Editor/  Documentation~/
+    │   ├── Runtime/  Editor/  Samples~/  Documentation~/
     │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
     └── AesirInspector/                    # 不依赖其他 Aesir 子包；强依赖 Odin Inspector
         ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
