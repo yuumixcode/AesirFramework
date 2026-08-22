@@ -19,9 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.11.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.11.0** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.11.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.12.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.12.0** |
+| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.12.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
 > *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
@@ -30,6 +30,34 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Inspector** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 同时依赖 Aesir Architecture + Aesir Inspector / depends on BOTH Aesir Architecture AND Aesir Inspector
+
+---
+
+## [0.12.0] - 2026-08-22
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Added
+
+- **AI Skill 文档集** — `Documentation~/AesirArchitecture-Skill/` 新增 AI 编码指南，供 AI 助手按 RAA 架构规范快速生成代码：SKILL.md 主指南（MVC/MVP 模式决策树、Quick/Standard/Strict 三档分级表、核心 API 速查、事件机制决策表、10 条关键约定、命名规范与文件组织指南）+ 6 份三档完整代码模板（MVC/MVP 各三档）+ core-api.md 辅助模块 API 速查
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- 版本号与 Aesir Architecture / Aesir Inspector 同步更新至 `0.12.0`，本包本版本无功能性变更
+
+---
+
+### [inspector] Aesir Inspector
+
+#### Changed
+
+- 版本号与 Aesir Architecture / Aesir Modules 同步更新至 `0.12.0`，本包本版本无功能性变更
 
 ---
 

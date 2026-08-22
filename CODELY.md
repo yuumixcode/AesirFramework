@@ -9,25 +9,25 @@
 - **许可证：** MIT
 - **作者：** [yuumixcode](https://github.com/yuumixcode)
 - **语言：** C#（代码注释和 XML 文档使用中文，代码标识符使用英文）
-- **代码规模：** 约 540 个 .cs 文件，分布在 3 个包中（Architecture 79、Modules 39、Inspector 425）
+- **代码规模：** 约 567 个 .cs 文件，分布在 3 个包中（Architecture 101、Modules 41、Inspector 425）
 
 ### 包列表
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.9.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.9.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 |
-| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.9.0 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具、Odin Inspector 可选集成 |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.12.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.12.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 |
+| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.12.0 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具，强依赖 Odin Inspector |
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
 - **Aesir Inspector** — 不依赖任何 Aesir 子包，可独立安装；强依赖 Odin Inspector
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.9.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.12.0）
 
 ---
 
-## Aesir Architecture（0.9.0）
+## Aesir Architecture（0.12.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -56,20 +56,32 @@
 - `IContext` — 模块注册与获取；`GetModel`/`GetService` 未注册时抛 `InvalidOperationException`（不返回 null）
 - `AbstractContext<T>` — 纯 C# 单例实现（不依赖 MonoBehaviour）
   - `Configure()` 抽象方法 — 在此注册 Model 和 Service
-  - `Interface` 静态属性 — 懒加载单例访问器；初始化成功后才赋值 `_instance`，失败不缓存、根因异常每次抛出
+  - `Instance` 静态属性 — 懒加载单例访问器；初始化成功后才赋值 `_instance`，失败不缓存、根因异常每次抛出
   - `Initialize()` — 调用 `Configure()`，然后按注册顺序初始化 Model → Service；失败不做回滚
-  - `Dispose()` — 逆序销毁 Service → Model
+  - `Dispose()` — 逆序销毁 Service → Model（按注册逆序，`GenericLocator<T>` 保序）
 
 ### 关键运行时类
 
-- **`AesirArchitecture`** — MonoBehaviour 单例（`[DefaultExecutionOrder(-999)]`），支持场景预放置（不 DDOL）和运行时创建（DDOL）两种模式
+- **`AesirArchitecture`** — MonoBehaviour 单例（`[DefaultExecutionOrder(-999)]`），预放置/运行时创建统一由 `[SerializeField] bool dontDestroyOnLoad = true` 序列化字段控制
 - **`AesirMonoBehaviour`** — 架构感知 MonoBehaviour 基类
 - **`AesirScriptableObject`** — 架构感知 ScriptableObject 基类
 - **`ObservableValue<T>`** — 响应式属性；Model 持有可写实例，View 通过 `IReadOnlyObservableValue<T>` 订阅。支持 `SetValueSilently`、`AddListenerAndInvoke`
 - **`MiniEvent` / `MiniEvent<T>`** — 轻量级零分配事件系统（直接多播调用）；返回 `AutoRemoveListenerHandle` 自动清理。异常语义 = 原生 C# 事件（fail-fast）
-- **`GenericLocator<T>`** — 类型键控的服务定位器
+- **`GenericLocator<T>`** — 类型键控的服务定位器（保序注册/查询）
 - **`AesirArchitecturePlayerLoop`** — PlayerLoop 注入；`EnsureInjected()` 公开 API + `Register` 期自动检测
 - **`ResetStaticsAssistant`** — 仅服务泛型类的静态重置（泛型类 RIOLM 被 Unity 静默跳过）
+- **`MonoLifecycleProxy`** — 生命周期代理，将 Unity 原生回调统一为可订阅的 MiniEvent
+
+### 渐进式示例家族（六档）
+
+| 档位 | 示例 | Model 暴露面 | 读写路径 | View 边界 |
+|------|------|-------------|---------|-----------|
+| MVC-1 快捷 | Counter-Mvc-Quick | 具体类，可写 ObservableValue | View 兼 Controller 直写直读 | `MonoViewController<T>` |
+| MVC-2 标准 | Counter-Mvc-Standard | 具体类，只读暴露 + 写方法 | Controller 直调写方法 | View 与 Controller 分离 |
+| MVC-3 严格 | Counter-Mvc-Strict | 接口注册，只读暴露 + 写方法 | Command 写 + Query 读 | View 按窄接口持有 Controller |
+| MVP-1 快捷 | Counter-Mvp-Quick | 具体类，可写 ObservableValue | Presenter 直写 + 推送 | 纯 MonoBehaviour，零接口 |
+| MVP-2 标准 | Counter-Mvp-Standard | 具体类，只读暴露 + 写方法 | Presenter 直调写方法 | View 契约 `IXxxView` |
+| MVP-3 严格 | Counter-Mvp-Strict | 接口注册，只读暴露 + 写方法 | Command 写 + Query 读 | View 按窄接口持有 Presenter |
 
 ### 设计边界（极简原则）
 
@@ -79,16 +91,18 @@
 - **View 生命周期脚手架** — 不做；面板生命周期由 Aesir Modules 的 UIModule 负责
 - **线程安全** — 不做；仅保证主线程使用
 - **监听回调不应抛异常** — 框架约定（fail-fast），异常直接向上传播由 Unity 记日志
-- **`Configure()` 中禁止访问 `Interface`** — 会递归创建第二个上下文实例
+- **`Configure()` 中禁止访问 `Instance`** — 会递归创建第二个上下文实例
 - **`Register` 与 `Get` 必须使用相同类型参数** — 按键精确匹配
 - **运行时替换 Model/Service 仅用于测试调试** — 旧实例被 Dispose，其上的订阅不会迁移
 - **第三方 SDK 修改 PlayerLoop 后手动调用 `AesirArchitecturePlayerLoop.EnsureInjected()`** — `Register` 注册回调时会自动检测补插
+- **写入纪律档位** — 快捷/标准档表现层可直写 Model；标准档起表现层写入必经 Command；严格档只读 + 写方法；Service 可直写
 
 ### Odin Inspector 集成
 
 - 通过 `ODIN_INSPECTOR` 定义符号条件编译
 - Odin 集成使用独立 asmdef：`Runestone.AesirArchitecture.OdinInspector`（Editor）和 `Runestone.AesirArchitecture.Editor.OdinInspector`（Editor）
 - 预放置实例风险通过 Odin AttributeProcessor 注入 Warning InfoBox
+- DDOL 开关字段级 InfoBox — `[Tooltip]` 迁移为 AttributeProcessor 注入的 Info 级信息框（样式与逻辑分离，运行时程序集零 Inspector 样式特性）
 
 ### 自定义定义符号
 
@@ -97,7 +111,7 @@
 
 ---
 
-## Aesir Modules（0.9.0）
+## Aesir Modules（0.12.0）
 
 ### UI 框架
 
@@ -113,6 +127,12 @@
 - **`BinderAssistant` / `BinderTag`** — UI 元素组件绑定系统（OdinInspector 程序集）
 - **`SceneModule`** — 场景管理模块
 
+### DDOL 机制
+
+- `AesirModules`、`UIRoot`、`UIModule` 新增 `[SerializeField] bool dontDestroyOnLoad = true`，预放置/运行时创建统一由该字段控制
+- `UIModule` 的字段仅在预放置为根物体时生效，运行时自动创建时挂载于 [Aesir Modules] 宿主下跟随宿主决策
+- DDOL 开关字段级 InfoBox + 警告可见性修复（`AesirModulesAttributeProcessor` / `UIModuleAttributeProcessor` / `UIRootAttributeProcessor`）
+
 ### 场景编辑器
 
 - `SceneManagerWindow` — 场景管理自定义编辑器窗口
@@ -121,31 +141,20 @@
 
 ---
 
-## Aesir Inspector（0.9.0）
+## Aesir Inspector（0.12.0）
 
 ### 核心功能
 
 | # | 功能 | Odin 依赖 | 说明 |
 |---|------|-----------|------|
 | 1 | **Attribute Overview Pro** ⚡ | 需要 | 可搜索树形菜单展示所有 Odin & Aesir Inspector 特性面板，实时预览与示例代码。`Tools → Aesir → Inspector → Attribute Overview Pro` |
-| 2 | **Script Doc Generator** ⚡ | 需要 | 通过反射分析 C# 类型信息生成结构化 API 文档，支持增量生成、个性化扩展。153 个单元测试覆盖。完全离线、AI 友好 Markdown 输出 |
+| 2 | **Script Doc Generator** ⚡ | 需要 | 通过反射分析 C# 类型信息生成结构化 API 文档，支持增量生成、个性化扩展。107 个单元测试覆盖。完全离线、AI 友好 Markdown 输出 |
 | 3 | **Summary Tool** | 无 | 右键菜单处理 XML `<summary>` ↔ `[Summary]` 双向同步，支持 Sync/Replace/Remove 三种模式，宏定义感知 |
 | 4 | **Mini Tools** ⚡ | 需要 | MenuItem Viewer（菜单项检查器）、Syntax Highlighter（语法高亮测试）、Quick Create SO（右键快捷创建 ScriptableObject） |
 | 5 | **Extension Package Manager** ⚡ | 需要 | 卡片式 UI 一键安装/移除推荐 Unity Packages，基于 Git URL |
 | 6 | **Bilingual Attributes** ⚡ | 需要 | `[BilingualTitle]`、`[BilingualButton]`、`[BilingualInfoBox]`、`[BilingualText]` 等双语特性，支持中英同时显示 |
-| 7 | **OdinBridge** | 无 | `IOdinBridge` 接口隔离 Odin 依赖，无 Odin 时 `DefaultOdinBridge` 回退，有 Odin 时 `OdinInspectorBridge` 增强 |
-| 8 | **Safe Editor Utilities** | 无 | 12+ 安全编辑器工具类（`ScriptableObjectSafeEditorUtility`、`PathUtility`、`HierarchyUtility`、`ReflectionUtility` 等），构建时自动剔除 |
-| 9 | **Custom Attributes** | 无 | `[Summary]` 特性，等同于 XML `<summary>`，运行时可通过 `GetSummary()` 获取 |
-
-### OdinBridge 架构
-
-核心程序集（`Runtime/Unity/`、`Editor/Unity/`）零 Odin 依赖。OdinInspector 程序集通过 `ODIN_INSPECTOR` 编译约束自动启用/禁用：
-
-```
-IOdinBridge (接口) ──→ OdinBridgeLocator (运行时定位)
-                        ├── OdinInspectorBridge (Odin 可用时)
-                        └── DefaultOdinBridge (Odin 不可用时)
-```
+| 7 | **Safe Editor Utilities** | 无 | 12+ 安全编辑器工具类（`ScriptableObjectSafeEditorUtility`、`PathUtility`、`HierarchyUtility`、`ReflectionUtility` 等），构建时自动剔除 |
+| 8 | **Custom Attributes** | 无 | `[Summary]` 特性，等同于 XML `<summary>`，运行时可通过 `GetSummary()` 获取（仅用于 ScriptDocGenerator 反射回退） |
 
 ### SafeEditorUtility 模式
 
@@ -155,14 +164,18 @@ IOdinBridge (接口) ──→ OdinBridgeLocator (运行时定位)
 
 ### AesirInspector 编码规范（与其他包不同）
 
-Aesir Inspector 采用**自文档化代码**和**无注释范式**，与 AesirArchitecture/Modules 的 XML 注释风格不同：
+Aesir Inspector 采用**自文档化代码**范式，与 AesirArchitecture/Modules 的风格有差异：
 
-- **禁止 XML 注释**：不使用 `/// <summary>`、`/// <param>` 等
-- **类必须使用 `[Summary]`**：所有 class/struct/interface 必须具备 `[Summary("...")]`
-- **命名即文档**：其他成员通过清晰命名传达意图，仅复杂逻辑使用 `[Summary]`
+- **使用 XML 文档注释**（`/// <summary>`）；`[Summary]` 特性已从全部源码中移除（252 文件，897 处），`SummaryAttribute` 类仅保留供 ScriptDocGenerator 反射回退
+- **自文档化代码**：命名即文档，仅复杂逻辑使用 XML 注释解释"为什么"
 - **严禁**对 `UnityEngine.Object` 派生类使用 `?.` / `??`
 - **事件命名**：事件无 `On` 前缀（`DoorOpened`），订阅 `OnDoorOpened`，触发 `RaiseDoorOpened`
-- **Utility 命名**：Runtime `XxxUtility`、Editor 安全封装 `XxxSafeEditorUtility`、Editor-only `XxxEditorUtility`
+- **Enum**：普通含 `None = 0` 显式赋值；Flags `[Flags]` 值为 `1 << n`
+- **Utility 命名**：Runtime `XxxUtility` / `XxxSafeEditorUtility`（`Runtime/Unity/Utilities/`），Editor-only `XxxEditorUtility`（`Editor/Unity/`）
+- **Odin 依赖代码**必须放在 `OdinInspector/` 子目录，使用独立 asmdef
+- **核心程序集**通过 `#if ODIN_INSPECTOR` 条件编译直接使用 Sirenix API（OdinBridge 桥接层已移除）
+- **Processor**：`internal sealed`，与目标类同文件定义
+- **免除注释规范的模块**：`AttributeOverviewPro/Data/`、`AttributeOverviewPro/AttributePanels/`、`AttributeOverviewPro/UsageExamples/`
 
 ### 示例（Samples~/）
 
@@ -173,7 +186,7 @@ Aesir Inspector 采用**自文档化代码**和**无注释范式**，与 AesirAr
 
 ## 程序集定义
 
-### Aesir Architecture（10 个 asmdef）
+### Aesir Architecture（13 个 asmdef）
 
 | 程序集 | 路径 | 引用 |
 |--------|------|------|
@@ -182,12 +195,16 @@ Aesir Inspector 采用**自文档化代码**和**无注释范式**，与 AesirAr
 | `Runestone.AesirArchitecture.Editor.OdinInspector` | Editor/OdinInspector/ | — |
 | `Runestone.AesirArchitecture.Tests` | Tests/Runtime/ | — |
 | `Runestone.AesirArchitecture.Tests.Editor` | Tests/Editor/ | — |
-| `Runestone.AesirArchitecture.Samples.Mvc` | Samples~/Counter-MVC/Scripts/ | — |
-| `Runestone.AesirArchitecture.Samples.Mvp` | Samples~/Counter-MVP/Scripts/ | — |
+| `Runestone.AesirArchitecture.Samples.MvcQuick` | Samples~/Counter-Mvc-Quick/Scripts/ | — |
+| `Runestone.AesirArchitecture.Samples.MvcStandard` | Samples~/Counter-Mvc-Standard/Scripts/ | — |
+| `Runestone.AesirArchitecture.Samples.MvcStrict` | Samples~/Counter-Mvc-Strict/Scripts/ | — |
+| `Runestone.AesirArchitecture.Samples.MvpQuick` | Samples~/Counter-Mvp-Quick/Scripts/ | — |
+| `Runestone.AesirArchitecture.Samples.MvpStandard` | Samples~/Counter-Mvp-Standard/Scripts/ | — |
+| `Runestone.AesirArchitecture.Samples.MvpStrict` | Samples~/Counter-Mvp-Strict/Scripts/ | — |
 | `Runestone.AesirArchitecture.Samples.MiniEvent` | Samples~/MiniEvent/Scripts/ | — |
 | `Runestone.AesirArchitecture.Samples.ObservableValue` | Samples~/ObservableValue/Scripts/ | — |
 
-### Aesir Modules（5 个 asmdef）
+### Aesir Modules（6 个 asmdef）
 
 | 程序集 | 路径 | 引用 |
 |--------|------|------|
@@ -196,6 +213,7 @@ Aesir Inspector 采用**自文档化代码**和**无注释范式**，与 AesirAr
 | `Runestone.AesirModules.Editor` | Editor/ | — |
 | `Runestone.AesirModules.Editor.OdinInspector` | Editor/OdinInspector/ | — |
 | `Runestone.AesirModules.InputSystem` | Runtime/InputSystem/ | — |
+| `Runestone.AesirModules.Samples.Events.KeyPress` | Samples~/Events/01_KeyPress/ | — |
 
 ### Aesir Inspector（9 个 asmdef）
 
@@ -218,34 +236,29 @@ Aesir Inspector 采用**自文档化代码**和**无注释范式**，与 AesirAr
 | 场景 | 路径 | 用途 |
 |------|------|------|
 | SampleScene | `Assets/Scenes/SampleScene.unity` | 默认 Unity 示例场景 |
-| SampleForCounterMvc | `Assets/Samples/Aesir Architecture/0.9.0/Counter-MVC/Scene/SampleForCounterMvc.unity` | MVC 计数器示例 |
-| SampleForCounterMvp | `Assets/Samples/Aesir Architecture/0.9.0/Counter-MVP/Scene/SampleForCounterMvp.unity` | MVP 计数器示例 — 包含增加/减少/重置按钮的 Canvas |
-| MiniEventSample | `Assets/Samples/Aesir Architecture/0.9.0/MiniEvent/Scene/MiniEventSample.unity` | MiniEvent 使用示例 |
-| ObservableValueInspector | `Assets/Samples/Aesir Architecture/0.9.0/ObservableValue/Scene/ObservableValueInspector.unity` | ObservableValue Inspector 演示 |
-
-### 当前场景层级（SampleForCounterMvp）
-
-```
-Camera
-Canvas
-  └─ SampleMvpCounterMainPanel
-       ├─ IncreaseButton → Text
-       ├─ CountText
-       ├─ DecreaseButton → Text
-       └─ ResetButton → Text
-EventSystem
-```
+| SampleForCounterMvcQuick | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity` | MVC 快捷档计数器示例 |
+| SampleForCounterMvcStandard | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvc-Standard/Scene/SampleForCounterMvcStandard.unity` | MVC 标准档计数器示例 |
+| SampleForCounterMvcStrict | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvc-Strict/Scene/SampleForCounterMvcStrict.unity` | MVC 严格档计数器示例 |
+| SampleForCounterMvpQuick | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Quick/Scene/SampleForCounterMvpQuick.unity` | MVP 快捷档计数器示例 |
+| SampleForCounterMvpStandard | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Standard/Scene/SampleForCounterMvpStandard.unity` | MVP 标准档计数器示例 |
+| SampleForCounterMvpStrict | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Strict/Scene/SampleForCounterMvpStrict.unity` | MVP 严格档计数器示例 |
+| MiniEventSample | `Assets/Samples/Aesir Architecture/0.12.0/MiniEvent/Scene/MiniEventSample.unity` | MiniEvent 使用示例 |
+| ObservableValueInspector | `Assets/Samples/Aesir Architecture/0.12.0/ObservableValue/Scene/ObservableValueInspector.unity` | ObservableValue Inspector 演示 |
 
 ---
 
 ## 示例
 
-### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.9.0/`）
+### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.12.0/`）
 
-1. **Counter-MVC** — MVC 模式：Context → Controller → Command → Model → View 事件通知
-2. **UI Counter-MVP** — MVP 模式：Presenter 中介 Model 和 View；使用 `UIModule` 管理面板
-3. **ObservableValue (Odin Inspector)** — `ObservableValue<T>` 自定义 Drawer 演示；需要 Odin Inspector
-4. **MiniEvent** — `MiniEvent` 和 `MiniEvent<T>` 使用示例（无参/单参事件）
+1. **Counter-Mvc-Quick（快捷档）** — `MonoViewController<T>` 直写直读，最少概念跑通数据驱动 UI 闭环
+2. **Counter-Mvc-Standard（标准档）** — Model 只读暴露 + 写方法；View 与 Controller 分离共享 Model
+3. **Counter-Mvc-Strict（严格档）** — Model 接口注册 + 只读暴露 + 写方法；Command 写 + Query 读；View 按窄接口持有 Controller
+4. **Counter-Mvp-Quick（快捷档）** — Presenter 直改可写 ObservableValue（零接口抽象）并推送被动 View
+5. **Counter-Mvp-Standard（标准档）** — Model 只读暴露 + 写方法；Presenter 直调写方法 + Model 直读推送
+6. **Counter-Mvp-Strict（严格档）** — Command 写 + Query 读；View 按窄接口持有 Presenter，与 MVC 严格档同构
+7. **ObservableValue (Odin Inspector)** — `ObservableValue<T>` 自定义 Drawer 演示；需要 Odin Inspector
+8. **MiniEvent** — `MiniEvent` 和 `MiniEvent<T>` 使用示例（无参/单参事件）
 
 ### Aesir Modules（`Assets/Runestone/AesirModules/Samples~/`）
 
@@ -270,12 +283,12 @@ EventSystem
 - `com.unity.test-framework` 1.1.33 — Unity 测试框架
 - `com.unity.ide.rider` 3.0.40 — Rider IDE 支持
 - `com.unity.ide.visualstudio` 2.0.27 — VS IDE 支持
-- `cn.tuanjie.codely.bridge` 1.0.75 — Codely Unity Bridge
+- `cn.tuanjie.codely.bridge` 1.0.76 — Codely Unity Bridge
 - `cn.tuanjie.ai.generators`（本地）— TJ AI Generators，文件引用 `.codely-cli/extensions/TJGenerators/`
 
 ### 第三方插件
 
-- **Sirenix Odin Inspector** — 位于 `Assets/Plugins/Sirenix/`（已 gitignore；独立授权）。三个包的可选依赖。所有 Odin 相关代码均通过条件编译保护。
+- **Sirenix Odin Inspector** — 位于 `Assets/Plugins/Sirenix/`（已 gitignore；独立授权）。Aesir Inspector 强依赖；Architecture 和 Modules 的 Odin 相关代码均通过条件编译保护（可选增强）。
 
 ---
 
@@ -284,7 +297,7 @@ EventSystem
 ```
 Assets/
 ├── Runestone/                        # 包源代码
-│   ├── AesirArchitecture/            # 核心架构框架（79 .cs）
+│   ├── AesirArchitecture/            # 核心架构框架（101 .cs）
 │   │   ├── Runtime/
 │   │   │   ├── Runestone.AesirArchitecture.asmdef
 │   │   │   ├── Core/                # 核心：Context 上下文 + MVC/MVP 架构
@@ -313,9 +326,10 @@ Assets/
 │   │   │   ├── Common/
 │   │   │   ├── Utilities/
 │   │   │   └── OdinInspector/       # AttributeProcessors
-│   │   ├── Tests/                    # 编辑器模式和运行时模式测试
-│   │   └── Samples~/                # Counter-MVC, Counter-MVP, ObservableValue, MiniEvent
-│   ├── AesirModules/                 # 功能模块（39 .cs）
+│   │   ├── Tests/                    # 编辑器模式和运行时模式测试（42 个）
+│   │   ├── Samples~/                # 六档计数器 + ObservableValue + MiniEvent
+│   │   └── Documentation~/          # README_EN, AesirArchitecture-Skill/（AI 编码指南）
+│   ├── AesirModules/                 # 功能模块（41 .cs）
 │   │   ├── Runtime/
 │   │   │   ├── Common/              # AesirModules 单例、调试、程序集信息
 │   │   │   ├── Scene/               # SceneModule, SceneAssetWrapper
@@ -350,13 +364,14 @@ Assets/
 │       │       ├── ScriptDocGenerator/ # 文档生成器编辑器逻辑
 │       │       └── Windows/         # Getting Started, Preferences
 │       ├── Tests/
-│       │   ├── Editor/              # 编辑器模式测试（153+ ScriptDocGenerator 测试）
+│       │   ├── Editor/              # 编辑器模式测试（107 ScriptDocGenerator 测试）
 │       │   └── Runtime/             # 运行时模式测试
 │       ├── Samples~/                # PluginConfigSolutions, RuntimeInitializeLoadType
 │       └── Documentation~/          # 用户文档与开发者指南
 ├── Samples/                          # 导入的示例
-│   ├── Aesir Architecture/0.9.0/
-│   └── Aesir Inspector/0.9.0/
+│   ├── Aesir Architecture/0.12.0/
+│   ├── Aesir Inspector/0.12.0/
+│   └── Aesir Modules/0.12.0/
 ├── Scenes/                           # 示例场景
 ├── Settings/                         # URP 资源（Renderer2D, UniversalRP）、场景模板
 └── Plugins/
@@ -374,7 +389,7 @@ Assets/
 - **类名：** PascalCase（如 `AbstractContext`、`ObservableValue`、`MiniEvent`）
 - **接口：** `I` 前缀（如 `ICommand`、`IContext`、`IUIPanel`）
 - **抽象类：** `Abstract` 前缀（如 `AbstractModel`、`AbstractCommand`）
-- **MonoBehaviour 单例：** 静态 `Instance` 属性、`[DefaultExecutionOrder(-999)]`、支持场景预放置（不 DDOL）和运行时创建（DDOL）
+- **MonoBehaviour 单例：** 静态 `Instance` 属性、`[DefaultExecutionOrder(-999)]`、预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制
 - **包 ID：** 反向域名（`cn.runestone.aesir.*`、`cn.runestone.aesir-inspector`）
 - **私有字段：** `_camelCase`（非序列化）、`camelCase`（带 `[SerializeField]` 序列化）
 - **常量/静态只读：** PascalCase
@@ -394,14 +409,14 @@ Assets/
 
 #### Aesir Inspector（不同规范）
 
-- **禁止 XML 注释**，使用 `[Summary("...")]` 特性替代
-- **自文档化代码**：命名即文档，仅复杂逻辑使用 `[Summary]` 解释"为什么"
+- **使用 XML 文档注释**（`/// <summary>`）；`[Summary]` 特性已从全部源码中移除，`SummaryAttribute` 类仅保留供 ScriptDocGenerator 反射回退
+- **自文档化代码**：命名即文档，仅复杂逻辑使用 XML 注释解释"为什么"
 - **严禁**对 `UnityEngine.Object` 派生类使用 `?.` / `??`
 - **事件命名**：事件无 `On` 前缀（`DoorOpened`），订阅 `OnDoorOpened`，触发 `RaiseDoorOpened`
 - **Enum**：普通含 `None = 0` 显式赋值；Flags `[Flags]` 值为 `1 << n`
 - **Utility 命名**：Runtime `XxxUtility` / `XxxSafeEditorUtility`（`Runtime/Unity/Utilities/`），Editor-only `XxxEditorUtility`（`Editor/Unity/`）
 - **Odin 依赖代码**必须放在 `OdinInspector/` 子目录，使用独立 asmdef
-- **核心程序集不允许**直接引用 Odin API — 通过 `IOdinBridge` 桥接
+- **核心程序集**通过 `#if ODIN_INSPECTOR` 条件编译直接使用 Sirenix API（OdinBridge 桥接层已移除）
 - **Processor**：`internal sealed`，与目标类同文件定义
 - **免除注释规范的模块**：`AttributeOverviewPro/Data/`、`AttributeOverviewPro/AttributePanels/`、`AttributeOverviewPro/UsageExamples/`
 
@@ -419,8 +434,8 @@ Assets/
 ### 编辑器
 
 1. 在 Unity 2022.3.62f3c1（或团结引擎等效版本）中打开项目
-2. 打开 `Assets/Samples/Aesir Architecture/0.9.0/Counter-MVP/Scene/SampleForCounterMvp.unity`
-3. 按 **Play** 运行 MVP 计数器示例
+2. 打开 `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Quick/Scene/SampleForCounterMvpQuick.unity`
+3. 按 **Play** 运行 MVP 快捷档计数器示例
 
 ### 命令行构建
 
@@ -433,9 +448,9 @@ Unity -batchmode -quit -projectPath . \
 
 ### 测试
 
-- **Architecture 编辑器模式：** `Assets/Runestone/AesirArchitecture/Tests/Editor/`（34 个测试：PlayerLoop、Context 初始化、GenericLocator、MiniEvent、ObservableValue）
+- **Architecture 编辑器模式：** `Assets/Runestone/AesirArchitecture/Tests/Editor/`（42 个测试：PlayerLoop、Context 初始化、GenericLocator 保序/逆序、MiniEvent、ObservableValue、未注册异常近失识别、根单例静态重置、DDOL 默认值）
 - **Architecture 运行时模式：** `Assets/Runestone/AesirArchitecture/Tests/Runtime/`（MonoLifecycleProxy PlayMode、RemoveListenerOnSceneUnloaded PlayMode、UnityEngineObjectCheckNull）
-- **Inspector 编辑器模式：** `Assets/Runestone/AesirInspector/Tests/Editor/`（153+ ScriptDocGenerator 测试）
+- **Inspector 编辑器模式：** `Assets/Runestone/AesirInspector/Tests/Editor/`（107 ScriptDocGenerator 测试）
 - **Inspector 运行时模式：** `Assets/Runestone/AesirInspector/Tests/Runtime/`
 - **CLI 运行测试：**
   ```bash
@@ -451,6 +466,7 @@ Unity -batchmode -quit -projectPath . \
 ### 忽略（按 `.gitignore`）
 
 - `Library/`、`Temp/`、`obj/`、`Build/`、`Builds/`、`Logs/`、`UserSettings/`
+- `.codely.packages/` — Codely Bridge 编辑器扩展自动更新缓存（版本升级时旧目录删除、新目录创建）
 - `Assets/Plugins/Sirenix/` — Odin Inspector（独立授权，不分发）
 - 生成的 IDE 文件（`*.csproj`、`*.sln`、`.vs/`、`.idea/`）
 - `*.unitypackage`、`*.apk`、`*.aab`、`*.app`
@@ -474,7 +490,6 @@ Unity -batchmode -quit -projectPath . \
 - 未找到 CI/CD 管道配置
 - 无 Addressables 配置（UI 默认使用 `ResourcesUILoader`；`IUIAssetLoader` 接口已预留 Addressables 支持）
 - URP 设置位于 `Assets/Settings/UniversalRP.asset` 和 `Renderer2D.asset`
-- Aesir Inspector `Third Party Notices.md` 包含占位内容（Semver/MyComponent）— 需更新
 
 ## Codely Structured Memories
 
@@ -512,7 +527,8 @@ Unity -batchmode -quit -projectPath . \
 - [2026-08-15 22:20:30] AesirModules UI 模块缺陷修复进度（2026-08-15）：已完成 #1（Binder 迁至 OdinInspector 程序集）、#5（InstantiateInactive）、#6（字典键归一化）、#7（OnDestroy 静态反清理）、#8（EventSystem 检查）、#9（Build 统一走 EnsureCanvasConfig）、#10（GetLayerRoot 缺层 LogError）、#11（异常补 Error 日志）、#17（泛型重载）。PlayMode 实测 7 项全过。**Why:** 用户按缺陷文档指定修复范围。**How to apply:** 剩余未修：P0 #2/#3/#4（Binder 代码生成器）、P2-4 #12-29。
 - [2026-08-15 22:20:30] AesirArchitecture 0.9.0 已提交（commit a09bdc8，159 文件 +2005 −475）。核心变更：①MVC 优先定位；②目录重构为三层 — Runtime/Core/（Context+MVC/MVP 核心）、Runtime/Modules/（辅助模块）、Runtime/Common/（基础设施）；③极简化；④Odin 程序集重命名；⑤场景分桶改 Scene.handle；⑥静态重置职责拆分。测试 34/34 两轮同域通过。文档：Docs/AesirArchitecture-极简分析与改进计划.md、Docs/Unity-RuntimeInitializeOnLoadMethod-指南.md。**Why:** 用户要求 MVC 优先 + 极简 + 目录重构。**How to apply:** 版本已升至 0.9.0。
 - [2026-08-22 02:05:19] MVP 示例三档定稿（2026-08-22，RAA 0.10.0 在制品）：Counter-Mvp-Quick/Standard/Strict 与 MVC 三档命名、分级完全对齐（原 Mvp-Simple 已更名 Mvp-Quick，类名 SampleMvpQuickCounter*、asmdef MvpQuick）。规范要点：①MVP View 一律纯 MonoBehaviour（不继承 MonoView<T>）；②快捷档零接口抽象——无 Model/Presenter/View 任何接口，Presenter 持具体面板类；③标准档只读暴露+写方法、View 契约 IXxxView；④严格档 Command 写+Query 读、View 按窄接口 ISampleMvpStrictCounterPresenter（SyncInitialValue+IDisposable）存储 Presenter，与 MVC-3 Controller 窄接口（ISampleMvcStrictCounterController）对称。**Why:** 用户要求 MVP 与 MVC 分级规范逐档同构、Simple 更名 Quick 对齐命名、移除快捷档冗余 View 接口。**How to apply:** 新增 MVP 示例遵循此分级口径；快捷档零接口是明确定稿规范。另：批量 mv 重命名 Unity 资产会与 debounced 自动刷新竞态导致 prefab 内存导入污染（序列化引用丢失）——重命名后须 ImportAsset(ForceUpdate|ForceSynchronousImport) 强制重导入受影响 prefab 并验证序列化引用，勿信编译通过即无恙。
-- [2026-08-22 03:39:21] Aesir 三包 0.11.0 全量定稿完成（4 commits：00c52a4 RAA 主体 → 0ba5910 RAA 版本定稿 → 4c4fefb RAM 主体 → 800c6d1 三包同步+README 重写，工作区已全净）。发版已验证两轮的要点：①Inspector 包 ID 是 cn.runestone.aesir-inspector（连字符）——旧根 README 误写 aesir.inspector（点号）已修正，包 ID 一律以 package.json name 字段为准；②RAM CHANGELOG 曾把 DDOL 条目误植在 0.4.2 节——新增条目必须紧跟新版本节标题，勿追加到旧节；③Modules 快速开始真实 API 是 UIModule.Show<T>()（旧 README 的 UIManager.Open<T>() 是虚构接口）；④Inspector 英文 README 无版本徽章（仅 license badge），同步时不需处理；⑤三包 Samples 导入副本已全部对齐 0.11.0（Architecture 0.10.0→、Inspector 0.9.0→、Modules 0.8.0→，meta 随移 GUID 不变）；⑥根 README 已重写（中英同步）新增 RAA 核心章节（角色表/三档渐进/核心机制/设计哲学）。**Why:** 用户要求提交其余修改、三包版本同步、重写 README 突出 RAA。**How to apply:** 下次发版照 aesir-version-sync skill + 以上坑位清单执行。
+- [2026-08-22 11:29:09] Aesir 三包 0.12.0 版本同步完成（2026-08-22）：Architecture 先行升至 0.12.0（新增 AI Skill 文档集），Modules 和 Inspector 同步升至 0.12.0（无功能变更）。CODELY.md 全面更新至 0.12.0 状态。本次验证要点补充：①CODELY.md 是 memory file，replace/write_file 工具被阻止——需写入临时文件后 mv 替换；②Inspector 英文 README 无版本徽章（仅 license badge），同步时不需处理；③三包 Samples 导入副本已全部对齐 0.12.0（meta 随移 GUID 不变）。**Why:** Architecture 新增 AI Skill 文档集后需同步版本。**How to apply:** 下次发版照 aesir-version-sync skill + 以上坑位清单执行。
+
 
 
 

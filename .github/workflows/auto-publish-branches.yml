@@ -1,0 +1,66 @@
+name: Auto Publish Package Branches
+
+# 触发条件：推送到 main 分支，或手动触发
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GITHUB_TOKEN 需要写权限以推送分支
+permissions:
+  contents: write
+
+# 同一工作流的多次运行只保留最新一次
+concurrency:
+  group: auto-publish-branches
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      # 任一包失败不影响其他包
+      fail-fast: false
+      matrix:
+        include:
+          # 包目录名 → 发布分支名
+          - package: AesirArchitecture
+            branch: raa
+          - package: AesirModules
+            branch: ram
+          - package: AesirInspector
+            branch: rai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 完整历史，subtree split 需要
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Split and push package branch
+        run: |
+          PACKAGE_DIR="Assets/Runestone/${{ matrix.package }}"
+          BRANCH="${{ matrix.branch }}"
+
+          echo "📦 Splitting $PACKAGE_DIR → branch $BRANCH"
+
+          if [ ! -d "$PACKAGE_DIR" ]; then
+            echo "::error::Package directory $PACKAGE_DIR does not exist"
+            exit 1
+          fi
+
+          # 删除本地同名分支（fresh checkout 通常不存在，保险起见）
+          git branch -D "$BRANCH" 2>/dev/null || true
+
+          # 将子目录拆分为独立分支（包内容成为分支根目录）
+          git subtree split --prefix="$PACKAGE_DIR" --branch "$BRANCH"
+
+          # 强制推送到远端
+          git push origin "$BRANCH" --force
+
+          echo "✅ Published $BRANCH — latest commit:"
+          git log --oneline -1 "$BRANCH"
