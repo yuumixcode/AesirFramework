@@ -124,3 +124,6 @@ InitTestScene*.unity*
 
 # Codely CLI 剪贴板临时图片（用户输入时使用，不上传远端）
 .codely/clipboard/
+
+# 内部开发文档（已迁移至私有仓库 Aesir-Docs）
+/Docs/
