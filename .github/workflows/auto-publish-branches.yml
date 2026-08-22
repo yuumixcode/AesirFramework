@@ -23,13 +23,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # 包目录名 → 发布分支名
+          # 包目录名 → 发布分支名前缀（分支名 = 前缀 + 版本号，如 AesirArchitecture-v0.12.0）
           - package: AesirArchitecture
-            branch: raa
+            branch_prefix: AesirArchitecture
           - package: AesirModules
-            branch: ram
+            branch_prefix: AesirModules
           - package: AesirInspector
-            branch: rai
+            branch_prefix: AesirInspector
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,14 +44,17 @@ jobs:
       - name: Split and push package branch
         run: |
           PACKAGE_DIR="Assets/Runestone/${{ matrix.package }}"
-          BRANCH="${{ matrix.branch }}"
-
-          echo "📦 Splitting $PACKAGE_DIR → branch $BRANCH"
 
           if [ ! -d "$PACKAGE_DIR" ]; then
             echo "::error::Package directory $PACKAGE_DIR does not exist"
             exit 1
           fi
+
+          # 从 package.json 动态读取版本号
+          VERSION=$(jq -r '.version' "$PACKAGE_DIR/package.json")
+          BRANCH="${{ matrix.branch_prefix }}-v${VERSION}"
+
+          echo "📦 Splitting $PACKAGE_DIR → branch $BRANCH"
 
           # 删除本地同名分支（fresh checkout 通常不存在，保险起见）
           git branch -D "$BRANCH" 2>/dev/null || true
