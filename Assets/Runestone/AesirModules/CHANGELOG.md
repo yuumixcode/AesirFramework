@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.13.0] - 2026-09-03
+
+### Changed
+
+- **UIRoot 序列化引用重构** — 层 Canvas、UICamera、EventSystem 改为 `[SerializeField]` 引用持久化（`_layerCanvases` 以 `List<LayerCanvasEntry>` 存储替代字典，`[HideInInspector]` 隐藏，Inspector 呈现仍由 `UIRootAttributeProcessor` 注入）：存在性判定只依赖引用非空（Unity 假 null 即子物体已销毁、需重建），子物体重命名不再破坏引用、不再按物体名全量查找；旧版已搭建层级在引用缺失时按约定名一次性回收（保存场景后引用持久化，此后不再按名查找）；`PresetLayers` 静态缓存 `UILayer` 枚举值，避免每次构建调用 `Enum.GetValues` 产生装箱分配
+- **Input System 集成目录迁移** — `Runtime/InputSystem/` → `Runtime/UI/InputSystem/`（程序集 `Runestone.AesirModules.InputSystem` 归位 UI 域，`InputSystemModuleHook` 逻辑不变）
+
 ## [0.12.0] - 2026-08-22
 
 ### Changed

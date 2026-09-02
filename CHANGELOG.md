@@ -19,9 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.12.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.12.0** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.12.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.13.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.13.0** |
+| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.13.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
 > *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
@@ -29,7 +29,41 @@ versions follow [Semantic Versioning](https://semver.org/).
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Inspector** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
-> - **Aesir Modules** — 同时依赖 Aesir Architecture + Aesir Inspector / depends on BOTH Aesir Architecture AND Aesir Inspector
+> - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.13.0] - 2026-09-03
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Added
+
+- **可观察集合 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>`** — 组合 `List<T>` / `Dictionary<TKey, TValue>` 存储 + `MiniEvent` 零分配事件（与 ObservableValue 同一套读写分离与事件模式）；List 事件 Added / Removed / Replaced / Cleared，Dictionary 事件 Added / Removed / Updated / Cleared；readonly struct 事件参数（`CollectionAddEventArgs` 等）；只读接口 `IReadOnlyObservableList<T>` / `IReadOnlyObservableDictionary<TKey, TValue>` 为不变型（结构体事件参数与协变冲突）；监听 API 返回 `AutoRemoveListenerHandle` 自动清理；新增测试 25 个
+
+#### Changed
+
+- **Context 动态替换模块输出 Warning** — `RegisterModel` / `RegisterService` 键命中已有实例时输出一条 Warning（提醒旧实例 Dispose 后事件订阅不迁移）；首次注册不输出，替换仍为合法操作
+- **README 中英文同步** — 新增"可观察集合"特性条目与"集合可观察全家桶不做"设计边界（高级能力推荐 Cysharp.ObservableCollections）
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- **UIRoot 序列化引用重构** — 层 Canvas / UICamera / EventSystem 序列化引用持久化（`List<LayerCanvasEntry>` 替代字典），存在性判定只依赖引用非空，子物体重命名不再破坏引用；旧版层级按约定名一次性回收；`PresetLayers` 静态缓存避免 `Enum.GetValues` 装箱
+- **Input System 集成目录迁移** — `Runtime/InputSystem/` → `Runtime/UI/InputSystem/`
+
+---
+
+### [inspector] Aesir Inspector
+
+#### Changed
+
+- 版本号与 Aesir Architecture / Aesir Modules 同步更新至 `0.13.0`，本包本版本无功能性变更
 
 ---
 

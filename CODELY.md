@@ -15,19 +15,19 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.12.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.12.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 |
-| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.12.0 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具，强依赖 Odin Inspector |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.13.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.13.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 |
+| Aesir Inspector | `cn.runestone.aesir-inspector` | 0.13.0 | `Runestone.AesirInspector` | 编辑器扩展库 — 双语 Inspector UI、安全编辑器工具、脚本文档生成器、XML Summary 同步工具，强依赖 Odin Inspector |
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
 - **Aesir Inspector** — 不依赖任何 Aesir 子包，可独立安装；强依赖 Odin Inspector
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.12.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.13.0）
 
 ---
 
-## Aesir Architecture（0.12.0）
+## Aesir Architecture（0.13.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -111,7 +111,7 @@
 
 ---
 
-## Aesir Modules（0.12.0）
+## Aesir Modules（0.13.0）
 
 ### UI 框架
 
@@ -141,7 +141,7 @@
 
 ---
 
-## Aesir Inspector（0.12.0）
+## Aesir Inspector（0.13.0）
 
 ### 核心功能
 
@@ -212,7 +212,7 @@ Aesir Inspector 采用**自文档化代码**范式，与 AesirArchitecture/Modul
 | `Runestone.AesirModules.OdinInspector` | Runtime/OdinInspector/ | — |
 | `Runestone.AesirModules.Editor` | Editor/ | — |
 | `Runestone.AesirModules.Editor.OdinInspector` | Editor/OdinInspector/ | — |
-| `Runestone.AesirModules.InputSystem` | Runtime/InputSystem/ | — |
+| `Runestone.AesirModules.InputSystem` | Runtime/UI/InputSystem/ | — |
 | `Runestone.AesirModules.Samples.Events.KeyPress` | Samples~/Events/01_KeyPress/ | — |
 
 ### Aesir Inspector（9 个 asmdef）
@@ -236,20 +236,20 @@ Aesir Inspector 采用**自文档化代码**范式，与 AesirArchitecture/Modul
 | 场景 | 路径 | 用途 |
 |------|------|------|
 | SampleScene | `Assets/Scenes/SampleScene.unity` | 默认 Unity 示例场景 |
-| SampleForCounterMvcQuick | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity` | MVC 快捷档计数器示例 |
-| SampleForCounterMvcStandard | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvc-Standard/Scene/SampleForCounterMvcStandard.unity` | MVC 标准档计数器示例 |
-| SampleForCounterMvcStrict | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvc-Strict/Scene/SampleForCounterMvcStrict.unity` | MVC 严格档计数器示例 |
-| SampleForCounterMvpQuick | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Quick/Scene/SampleForCounterMvpQuick.unity` | MVP 快捷档计数器示例 |
-| SampleForCounterMvpStandard | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Standard/Scene/SampleForCounterMvpStandard.unity` | MVP 标准档计数器示例 |
-| SampleForCounterMvpStrict | `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Strict/Scene/SampleForCounterMvpStrict.unity` | MVP 严格档计数器示例 |
-| MiniEventSample | `Assets/Samples/Aesir Architecture/0.12.0/MiniEvent/Scene/MiniEventSample.unity` | MiniEvent 使用示例 |
-| ObservableValueInspector | `Assets/Samples/Aesir Architecture/0.12.0/ObservableValue/Scene/ObservableValueInspector.unity` | ObservableValue Inspector 演示 |
+| SampleForCounterMvcQuick | `Assets/Samples/Aesir Architecture/0.13.0/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity` | MVC 快捷档计数器示例 |
+| SampleForCounterMvcStandard | `Assets/Samples/Aesir Architecture/0.13.0/Counter-Mvc-Standard/Scene/SampleForCounterMvcStandard.unity` | MVC 标准档计数器示例 |
+| SampleForCounterMvcStrict | `Assets/Samples/Aesir Architecture/0.13.0/Counter-Mvc-Strict/Scene/SampleForCounterMvcStrict.unity` | MVC 严格档计数器示例 |
+| SampleForCounterMvpQuick | `Assets/Samples/Aesir Architecture/0.13.0/Counter-Mvp-Quick/Scene/SampleForCounterMvpQuick.unity` | MVP 快捷档计数器示例 |
+| SampleForCounterMvpStandard | `Assets/Samples/Aesir Architecture/0.13.0/Counter-Mvp-Standard/Scene/SampleForCounterMvpStandard.unity` | MVP 标准档计数器示例 |
+| SampleForCounterMvpStrict | `Assets/Samples/Aesir Architecture/0.13.0/Counter-Mvp-Strict/Scene/SampleForCounterMvpStrict.unity` | MVP 严格档计数器示例 |
+| MiniEventSample | `Assets/Samples/Aesir Architecture/0.13.0/MiniEvent/Scene/MiniEventSample.unity` | MiniEvent 使用示例 |
+| ObservableValueInspector | `Assets/Samples/Aesir Architecture/0.13.0/ObservableValue/Scene/ObservableValueInspector.unity` | ObservableValue Inspector 演示 |
 
 ---
 
 ## 示例
 
-### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.12.0/`）
+### Aesir Architecture（`Assets/Samples/Aesir Architecture/0.13.0/`）
 
 1. **Counter-Mvc-Quick（快捷档）** — `MonoViewController<T>` 直写直读，最少概念跑通数据驱动 UI 闭环
 2. **Counter-Mvc-Standard（标准档）** — Model 只读暴露 + 写方法；View 与 Controller 分离共享 Model
@@ -334,8 +334,8 @@ Assets/
 │   │   │   ├── Common/              # AesirModules 单例、调试、程序集信息
 │   │   │   ├── Scene/               # SceneModule, SceneAssetWrapper
 │   │   │   ├── UI/                   # UIModule, UIRoot, UICanvasConfigSO, AesirBasePanel
+│   │   │   │   └── InputSystem/     # Input System 集成（UIRoot 输入模块替换）
 │   │   │   ├── Events/              # 实验性事件模块
-│   │   │   ├── InputSystem/         # Input System 集成
 │   │   │   └── OdinInspector/       # Binder 全家桶（ODIN_INSPECTOR）
 │   │   ├── Editor/                   # 场景编辑器窗口、Odin 集成、UI 菜单项
 │   │   └── Samples~/                # Events/01_KeyPress
@@ -369,9 +369,9 @@ Assets/
 │       ├── Samples~/                # PluginConfigSolutions, RuntimeInitializeLoadType
 │       └── Documentation~/          # 用户文档与开发者指南
 ├── Samples/                          # 导入的示例
-│   ├── Aesir Architecture/0.12.0/
-│   ├── Aesir Inspector/0.12.0/
-│   └── Aesir Modules/0.12.0/
+│   ├── Aesir Architecture/0.13.0/
+│   ├── Aesir Inspector/0.13.0/
+│   └── Aesir Modules/0.13.0/
 ├── Scenes/                           # 示例场景
 ├── Settings/                         # URP 资源（Renderer2D, UniversalRP）、场景模板
 └── Plugins/
@@ -434,7 +434,7 @@ Assets/
 ### 编辑器
 
 1. 在 Unity 2022.3.62f3c1（或团结引擎等效版本）中打开项目
-2. 打开 `Assets/Samples/Aesir Architecture/0.12.0/Counter-Mvp-Quick/Scene/SampleForCounterMvpQuick.unity`
+2. 打开 `Assets/Samples/Aesir Architecture/0.13.0/Counter-Mvp-Quick/Scene/SampleForCounterMvpQuick.unity`
 3. 按 **Play** 运行 MVP 快捷档计数器示例
 
 ### 命令行构建
@@ -509,6 +509,7 @@ Unity -batchmode -quit -projectPath . \
 - [2026-08-15 22:20:13] 移除不实用的生命周期事件时，优先保留语义清晰、执行频率可预期的事件。**Why:** BeforeFixedUpdate 通过 PlayerLoop 每帧触发，但 FixedUpdate 并非每帧执行，导致语义误导（名字暗示"在 FixedUpdate 之前"但实际每帧都跑）。**How to apply:** 评估自定义生命周期事件时，确保事件名与实际触发频率一致；若框架提供 PlayerLoopUtility 供用户自行扩展，则不需要预置低实用性的事件阶段。
 - [2026-08-15 22:20:13] 框架保持极简（2026-08-15 强调，已全部实施完毕）：低概率问题、或因不推荐编写方式造成的问题，一律在项目前期用文档约定杜绝，不加防御性代码兜底。已撤销的防护：MiniEvent/MonoLifecycleProxy 异常吞噬（恢复零分配 + 原生 C# fail-fast）、MonoLifecycleProxy 120 帧自愈轮询（保留 EnsureInjected + Register 期检测）、AbstractContext 初始化失败回滚（改为"成功后才赋值 _instance"）。已删除：ModelReplaced/ServiceReplaced 替换通知事件（测试场景自行处理）、GenericLocator.Global 与 GetRegistry()。**Why:** 防御本身有隐性代价（吞异常掩盖根因、快照分配、时好时坏的自愈）。**How to apply:** 后续为 Aesir 三包添加任何"保护措施"前先问：防的问题真实概率多高？是否因用户写错代码？是否有隐性代价？优先用 README 设计边界节约定或编辑期提示（InfoBox）替代运行时防御。
 - [2026-08-22 03:53:52] `.codely.packages/` 目录是 Codely Bridge 编辑器扩展的自动更新缓存（版本号文件夹如 `cn.tuanjie.codely.bridge@1.0.75-exp.1/` → `@1.0.76-exp.1/`），不属于本项目代码。**Why:** Bridge 版本升级时旧目录被删除、新目录被创建，导致 git status 大量 deleted + untracked 噪声。**How to apply:** 提交时仅 `git add` 明确相关的文件（如 `Assets/Runestone/` 下的变更），不要 `git add -A` 或 `git add .`，避免误纳入 bridge 更新；如需彻底排除可将 `.codely.packages/` 加入 .gitignore。
+- [2026-08-24 20:44:35] [feedback] 跨平台中文动态字体方案（用户要求）：不使用 Mac 专有系统字体，不引入全局 TMP 字体资产。运行时 Font.GetOSInstalledFontNames() 探测候选列表 + Font.CreateDynamicFontFromOSFont() 生成。候选优先级：Microsoft YaHei（Windows）→ PingFang SC（macOS）→ Noto Sans CJK SC（Linux/跨平台）→ WenQuanYi Zen Hei（部分 Linux）。全部不可用时回退 Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")（无中文但至少可见）。**Why:** 用户要求兼容 Windows 和 Mac，不使用 Mac 系统专有字体，且不引入全局字体资产修改。**How to apply:** 示例/教学中需要中文 uGUI Text 时用此方案；需要 TMP 中文时才走 TMPChineseFont skill（需用户授权全局回退）。
 
 ### Project
 - [2026-08-15 22:20:30] AttributeOverviewPro 子资产重构已完成并合并到 main（2026-07-25）：~194 个独立 .asset 文件合并为 3 个文件 — AttributeOverviewDatabase.asset（DatabaseSO + 70 PanelSO 子资产）、UnityExamples.asset（Unity 原生序列化 ExampleSO）、OdinExamples.asset（Odin 序列化 ExampleSO）。按序列化方式分离存储。初始化超时 bug 已修复（批量创建跳过逐次 SaveAssets）。
@@ -528,9 +529,16 @@ Unity -batchmode -quit -projectPath . \
 - [2026-08-15 22:20:30] AesirArchitecture 0.9.0 已提交（commit a09bdc8，159 文件 +2005 −475）。核心变更：①MVC 优先定位；②目录重构为三层 — Runtime/Core/（Context+MVC/MVP 核心）、Runtime/Modules/（辅助模块）、Runtime/Common/（基础设施）；③极简化；④Odin 程序集重命名；⑤场景分桶改 Scene.handle；⑥静态重置职责拆分。测试 34/34 两轮同域通过。文档：Docs/AesirArchitecture-极简分析与改进计划.md、Docs/Unity-RuntimeInitializeOnLoadMethod-指南.md。**Why:** 用户要求 MVC 优先 + 极简 + 目录重构。**How to apply:** 版本已升至 0.9.0。
 - [2026-08-22 02:05:19] MVP 示例三档定稿（2026-08-22，RAA 0.10.0 在制品）：Counter-Mvp-Quick/Standard/Strict 与 MVC 三档命名、分级完全对齐（原 Mvp-Simple 已更名 Mvp-Quick，类名 SampleMvpQuickCounter*、asmdef MvpQuick）。规范要点：①MVP View 一律纯 MonoBehaviour（不继承 MonoView<T>）；②快捷档零接口抽象——无 Model/Presenter/View 任何接口，Presenter 持具体面板类；③标准档只读暴露+写方法、View 契约 IXxxView；④严格档 Command 写+Query 读、View 按窄接口 ISampleMvpStrictCounterPresenter（SyncInitialValue+IDisposable）存储 Presenter，与 MVC-3 Controller 窄接口（ISampleMvcStrictCounterController）对称。**Why:** 用户要求 MVP 与 MVC 分级规范逐档同构、Simple 更名 Quick 对齐命名、移除快捷档冗余 View 接口。**How to apply:** 新增 MVP 示例遵循此分级口径；快捷档零接口是明确定稿规范。另：批量 mv 重命名 Unity 资产会与 debounced 自动刷新竞态导致 prefab 内存导入污染（序列化引用丢失）——重命名后须 ImportAsset(ForceUpdate|ForceSynchronousImport) 强制重导入受影响 prefab 并验证序列化引用，勿信编译通过即无恙。
 - [2026-08-22 11:29:09] Aesir 三包 0.12.0 版本同步完成（2026-08-22）：Architecture 先行升至 0.12.0（新增 AI Skill 文档集），Modules 和 Inspector 同步升至 0.12.0（无功能变更）。CODELY.md 全面更新至 0.12.0 状态。本次验证要点补充：①CODELY.md 是 memory file，replace/write_file 工具被阻止——需写入临时文件后 mv 替换；②Inspector 英文 README 无版本徽章（仅 license badge），同步时不需处理；③三包 Samples 导入副本已全部对齐 0.12.0（meta 随移 GUID 不变）。**Why:** Architecture 新增 AI Skill 文档集后需同步版本。**How to apply:** 下次发版照 aesir-version-sync skill + 以上坑位清单执行。
+- [2026-09-03 01:18:26] [project] PlaneWar 飞机大战对比示例（2026-08-24，Mono 版已完成并验证通过）：位于 Assets/Samples/Aesir Architecture/0.13.0/PlaneWar/。Mono 版（Scripts/Mono）已完成：asmdef + Editor asmdef + 6 个 SamplePlaneWarMono* 脚本 + 5 prefab（Player/Bullet/EnemyA-C）+ Scene/SampleForPlaneWarMono.unity + Editor/PlaneWarSceneSetup.cs（菜单 Tools→Aesir→PlaneWar→Fix Scene References 一键修复引用）。素材自包含拷贝自 Assets/Vertical 2D Shooting BE4（Goldmetal，PPU 24 切片）。玩法：玩家在下方（y=-4）朝上射击，敌机自上方（y=6.5）往下飞，子弹命中得分（A=10/B=20/C=30），敌机碰玩家坠毁游戏结束按 Space 重开，HUD 左上角显示得分+系统时间。验证通过：编译 0 错误、HUD 中文显示（跨平台动态字体）、12 秒 Play 录制无报错（PlaneWarMono-final-v5.mp4, 91KB, start_game_view_recording 方式录制）。RAA 版（Scripts/Raa）待编写。**Why:** 用户要建"同一游戏两种写法"的对比教学案例。**How to apply:** 后续任务：①RAA 版编写 ②注册 package.json samples ③sync-samples；命名空间 Runestone.AesirArchitecture.Samples、类名 SamplePlaneWarMono*。
 
 
 
+- [2026-08-22 16:23:07] [project] execute_csharp_script 两个实测坑（2026-08-22，团结引擎 2022.3.62）：①会话中新编译的 asmdef 程序集（如新示例包）无法在脚本文本里编译期引用（CS0246），需运行时解析：AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("命名空间.类名", false)).FirstOrDefault(t => t != null) 再 AddComponent(Type) + SerializedObject 设私有字段；②团结引擎 TextureImporter 的切片 API 名与标准 Unity 文档不同：sprites 属性不存在，实际为 spritesheet（SpriteMetaData[]，可写）与 spritePixelsPerUnit（非 spritePixelsToUnit），先用反射列属性名再写导入脚本。**Why:** 两者都导致脚本编译失败，靠报错+反射排查耗时。**How to apply:** 写涉及新程序集类型或 TextureImporter 的编辑器脚本时直接用上述方案。
+- [2026-08-22 16:59:25] 用户正在开发视频课程《从 0 构建你的第一套 Unity 架构 —— RAA 极简前端架构实战》，课程规划文档位于 Docs/RAA-Course/（Docs 是独立私有仓库 Aesir-Docs）。核心设定：RAA 迭代拆成 Git 版本教学（V0.1.0 分层+获取路径 → V0.2.0 Command/Query → V0.3.0 MiniEvent/ObservableValue → V1.0.0 实战整合），每版本一个 Tag；实战案例用 Assets/Vertical 2D Shooting BE4（纯精灵资源包）从零实现纵版射击。**Why:** 课程面向初次接触架构的 Unity 开发者，每节 ≤10 分钟是硬约束。**How to apply:** 后续课程相关文档/大纲/讲义统一放 Docs/RAA-Course/，版本规划以 04-版本迭代计划.md 为准。
+- [2026-08-24 20:44:35] [project] Unity 2D 触发器碰撞 + 自动属性序列化 三个坑（2026-08-22，团结引擎 2022.3.62 实测）：①两个 Trigger Collider2D 之间必须有至少一个 Kinematic Rigidbody2D 才能触发 OnTriggerEnter2D——Enemy prefab 缺 Rigidbody2D 导致子弹命中无回调，加上 Kinematic Rigidbody2D + NeverSleep 后修复。②C# 自动属性 `public bool IsGameOver { get; private set; }` 的编译器生成 backing field 会被 Unity 序列化到场景文件，编辑器反复 Play 时残留上次值（Awake 中重置会被场景反序列化覆盖）——改为显式非序列化字段 `bool _isGameOver;` + 只读属性 `public bool IsGameOver => _isGameOver;` 修复。③通过 execute_csharp_script 创建的场景对象，其 [SerializeField] 引用（如 HUD 的 Text 组件、Player 的 bulletPrefab）在 Domain Reload 后可能丢失——需编辑器菜单脚本用 SerializedObject 重新绑定。**Why:** 三个坑都导致 Play 模式行为异常且排查耗时极长（自动属性序列化坑最隐蔽）。**How to apply:** MonoBehaviour 中的运行状态字段一律用显式非序列化字段（不带 [SerializeField]）；2D 触发器碰撞双方至少一个挂 Kinematic Rigidbody2D；脚本创建场景对象后务必验证引用完整性。
+- [2026-08-24 20:58:48] [project] execute_csharp_script + record_game_view 录制 Play 模式 MP4 的正确方式（2026-08-24 实测）：record_game_view 参数会在脚本执行前触发一次 Roslyn 编译（8-13 秒），期间游戏自由运行——对于有失败条件的实时游戏（如飞机大战），Player 会在编译期间被敌机撞死。解决方案：用 start_game_view_recording（不触发脚本编译）开始录制 → 等待 durationSeconds → finish_game_view_recording 收取 MP4。游戏靠自身 Input 系统 + Player 脚本自然运行，不需要外部驱动脚本。**Why:** record_game_view 的编译延迟对实时游戏是致命的。**How to apply:** 录制实时游戏玩法用 start/finish_game_view_recording 分离方式；只有能在编译期间暂停（如编辑器脚本触发效果）的场景才用 record_game_view。
+- [2026-09-02 22:01:16] [project] Observable 集合只读接口为不变型（IReadOnlyObservableList<T> / IReadOnlyObservableDictionary<TKey,TValue> 无 out），与 IReadOnlyObservableValue<out T> 不对称——原因：集合事件参数是结构体（CollectionAddEventArgs 等），结构体类型参数不变，`Action<StructArgs<T>>` 方法参数与 `out T` 协变冲突（CS1961）；ObservableValue 能协变是因为 Action<T> 本身逆变（双重抵消）。**Why:** 2026-09-02 实现 ObservableList/ObservableDictionary 时实测编译报错，代码 remarks 未解释该不对称。**How to apply:** 后续扩展 Observable 家族（HashSet/Queue 等）沿用"不变型接口 + 结构体事件参数"，勿改回 out；若强需协变须把事件参数改为接口/委托形式（不符合极简原则）。
+- [2026-09-02 23:26:06] [project] 性能分配实测两个坑（2026-09-02，团结引擎 2022.3.62）：①Unity Mono（Boehm GC）下 GC.GetAllocatedBytesForCurrentThread() 是空实现——控制组（必然分配的 new object()×1000）也读 0 B，瞬态分配无法用运行时计数器实测，零分配验证只能靠 C# 语言语义论证（结构体枚举器 + 模式化 foreach 按规范不装箱，与 BCL List/Dictionary 同机制）；②exec_editor_script 测性能时 CS0246 的更好解法：把测量代码写成 Assets/Editor/ 临时探针类（编译进真实程序集，测量循环内零反射开销），start_compilation_pipeline 后反射调用其静态方法，用完删除——比纯反射调用更适合测量（反射 Invoke 本身分配会污染数据）。**Why:** 实测全 0 差点误当"零分配证据"，控制组校准才暴露测量工具失效。**How to apply:** 做分配实测前先跑控制组校准；需要编译期引用新程序集类型时优先用临时探针文件方案。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
