@@ -118,6 +118,7 @@ InitTestScene*.unity*
 .codely-cli/extensions/TJGenerators/
 .codely-cli/extensions/TMPChineseFont/
 .codely-cli/settings.json
+.codely-cli/UnityInsight/
 
 # 团结引擎 Codely Bridge 配置文件（本地工具，不随仓库分发）
 .com-unity-codely.json
