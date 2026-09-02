@@ -105,17 +105,19 @@ namespace Runestone.AesirArchitecture
 
         /// <summary>
         /// 注册 Model 并绑定上下文。
-        /// <para>若该类型已注册，旧实例会被 <see cref="Dispose" /> 后再覆盖。</para>
+        /// <para>若该类型已注册，视为动态替换：输出一条 Warning 日志，旧实例会被 <see cref="Dispose" /> 后再覆盖。</para>
         /// </summary>
         /// <typeparam name="TModel">要注册的 Model 接口类型，必须为引用类型并实现 <see cref="IModel" /></typeparam>
         /// <param name="model">要注册的 Model 实例，注册后会绑定到当前上下文</param>
         /// <remarks>
         /// 运行时替换 Model 属测试/调试用途，替换后旧实例上的订阅不会迁移——已订阅的 View 需自行重新订阅。
+        /// 首次注册不输出日志，仅动态替换时输出 Warning 提醒（详见 <see cref="LogReplacementWarning" />）。
         /// </remarks>
         public void RegisterModel<TModel>(TModel model) where TModel : class, IModel
         {
             if (_modelLocator.TryGet<TModel>(out var existing))
             {
+                LogReplacementWarning("Model", typeof(TModel).Name);
                 existing.Dispose();
             }
 
@@ -132,14 +134,19 @@ namespace Runestone.AesirArchitecture
 
         /// <summary>
         /// 注册 Service 并绑定上下文。
-        /// <para>若上下文已完成统一初始化，则立即初始化该 Service。若该类型已注册，旧实例会被 <see cref="Dispose" /> 后再覆盖。</para>
+        /// <para>若上下文已完成统一初始化，则立即初始化该 Service。若该类型已注册，视为动态替换：输出一条 Warning 日志，旧实例会被 <see cref="Dispose" /> 后再覆盖。</para>
         /// </summary>
         /// <typeparam name="TService">要注册的 Service 接口类型，必须为引用类型并实现 <see cref="IService" /></typeparam>
         /// <param name="service">要注册的 Service 实例，注册后会绑定到当前上下文</param>
+        /// <remarks>
+        /// 运行时替换 Service 属测试/调试用途，替换后旧实例上的订阅不会迁移——已订阅方需自行重新订阅。
+        /// 首次注册不输出日志，仅动态替换时输出 Warning 提醒（详见 <see cref="LogReplacementWarning" />）。
+        /// </remarks>
         public void RegisterService<TService>(TService service) where TService : class, IService
         {
             if (_serviceLocator.TryGet<TService>(out var existing))
             {
+                LogReplacementWarning("Service", typeof(TService).Name);
                 existing.Dispose();
             }
 
@@ -244,6 +251,25 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <returns>所有已注册 Service 实例的集合；若无注册则返回空集合</returns>
         public IEnumerable<IService> GetAllServices() => _serviceLocator.GetAll();
+
+        /// <summary>
+        /// 动态替换已注册模块时输出 Warning，提醒事件订阅关系不会自动迁移。
+        /// </summary>
+        /// <remarks>
+        /// 仅提示、不影响执行：替换本身是合法操作（测试/调试用途），但旧实例被 <see cref="Dispose" /> 后，
+        /// 其上的事件订阅（MiniEvent / ObservableValue 等）仍指向旧实例。调用方需自查是否存在此类订阅，
+        /// 有则在新实例上重新订阅，没有则可忽略该警告。
+        /// <para>首次注册不触发此警告——只有键命中已有实例（即发生替换）时才输出。</para>
+        /// </remarks>
+        /// <param name="moduleKind">模块种类（"Model" 或 "Service"）</param>
+        /// <param name="keyName">被替换的注册键类型名（接口、类或任意键类型）</param>
+        static void LogReplacementWarning(string moduleKind, string keyName)
+        {
+            AesirArchitectureDebug.LogWarning(
+                $"[Context] 检测到动态替换 {moduleKind} [{keyName}]：旧实例将被 Dispose 并被新实例覆盖。" +
+                $"这只是一条警告，不影响正常运行。请确认是否有代码订阅了原 {moduleKind} 的事件（MiniEvent / ObservableValue 等）；" +
+                "若有，请在新实例上重新订阅，若没有则可忽略此警告。");
+        }
 
         /// <summary>
         /// 近失识别：当查询类型未命中、但已注册实例中存在可赋值给查询类型的条目时，

@@ -127,3 +127,7 @@ InitTestScene*.unity*
 
 # 内部开发文档（已迁移至私有仓库 Aesir-Docs）
 /Docs/
+
+# 第三方付费素材原件（Goldmetal，PlaneWar 示例内已有自包含拷贝，原件不分发）
+/Assets/Vertical 2D Shooting BE4/
+/Assets/Vertical 2D Shooting BE4.meta
