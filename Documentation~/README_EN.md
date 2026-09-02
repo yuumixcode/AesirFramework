@@ -3,7 +3,7 @@
 > A progressive MVP/MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.12.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -28,6 +28,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
 - **`ObservableValue<T>` reactive property** — Quick tier: Model exposes writable `ObservableValue<T>` directly (presentation writes directly); Standard tier onward: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods; Strict tier: interface registration + Command writes on top
+- **Observable collections** — `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` provide the most common change notifications (Added / Removed / Replaced / Updated / Cleared), following the same read-write separation and MiniEvent event pattern as ObservableValue
 - **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
 - **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, with global singleton support
@@ -247,7 +248,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent zero-alloc events + auto-remove triggers
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy lifecycle proxy
 │   │   ├── Locator/               # GenericLocator type-keyed locator
-│   │   ├── Observable/            # ObservableValue reactive property
+│   │   ├── Observable/            # ObservableValue reactive property + ObservableList/ObservableDictionary observable collections
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # Framework infrastructure
 │   │   ├── AesirArchitecture.cs   # Framework MonoBehaviour singleton entry
@@ -299,6 +300,7 @@ cn.runestone.aesir.architecture/
 - **Multiple Context instances** — `AbstractContext<T>` is a CRTP generic singleton, one instance per concrete context type; model multi-save / multi-room scenarios at the business layer
 - **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
 - **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
+- **Full observable-collection suite** — Only `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` with the most common Added / Removed / Replaced / Updated / Cleared notifications are provided; Move, Sort, synchronized views, R3 integration, and other advanced capabilities are out of scope — use [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) when you need them
 - **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
 
 ### Coding Conventions (violations fail fast; the framework does not compensate)

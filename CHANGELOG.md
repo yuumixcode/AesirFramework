@@ -5,6 +5,22 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.13.0] - 2026-09-03
+
+### Added
+
+- **可观察集合 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>`** — 组合 `List<T>` / `Dictionary<TKey, TValue>` 存储 + `MiniEvent` 零分配事件（与 `ObservableValue<T>` 同一套读写分离与事件模式）：
+  - List 事件：Added / Removed / Replaced / Cleared；Dictionary 事件：Added / Removed / Updated / Cleared
+  - 结构体事件参数 `CollectionAddEventArgs<T>` / `CollectionRemoveEventArgs<T>` / `CollectionReplaceEventArgs<T>` / `DictionaryUpdateEventArgs<TKey, TValue>`（readonly struct，零分配）
+  - 只读接口 `IReadOnlyObservableList<T>` / `IReadOnlyObservableDictionary<TKey, TValue>` 为不变型（无 `out` 协变——结构体事件参数与协变冲突，CS1961），Model 持有可写实例、View 按只读接口订阅，可写接口为 `IObservableList<T>` / `IObservableDictionary<TKey, TValue>`
+  - 监听 API 与 ObservableValue 一致：`AddXxxListener` 返回 `AutoRemoveListenerHandle` 自动清理，`RemoveXxxListener` 手动移除
+  - 新增测试 25 个（ObservableListTests 11 + ObservableDictionaryTests 11 + ContextReplacementWarningTests 3）
+
+### Changed
+
+- **Context 动态替换模块输出 Warning** — `RegisterModel` / `RegisterService` 键命中已有实例时输出一条 Warning 日志（`LogReplacementWarning`），提醒旧实例被 Dispose 后其上的事件订阅（MiniEvent / ObservableValue 等）不会自动迁移；首次注册不输出日志，替换本身仍为合法操作（测试/调试用途）
+- **README 中英文同步** — 特性清单新增"可观察集合"条目；设计边界新增"集合可观察全家桶不做"（Move、Sort、同步视图、R3 集成等高级能力推荐 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)）；目录结构树 Observable/ 注释更新
+
 ## [0.12.0] - 2026-08-22
 
 ### Added

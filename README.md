@@ -3,7 +3,7 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.12.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
@@ -28,6 +28,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
 - **ObservableValue 响应式属性** — 快捷档 Model 直接暴露可写 `ObservableValue<T>`（表现层直改值）；标准档起收窄为 `IReadOnlyObservableValue<out T>` 只读接口 + 写方法；严格档再做接口注册 + Command 写入
+- **可观察集合** — `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` 提供 Added / Removed / Replaced / Updated / Cleared 最常用变更通知，与 ObservableValue 同一套读写分离与 MiniEvent 事件模式
 - **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换 Model 的调试模式
 - **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule` 基类，消除代码重复
 - **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，支持全局单例
@@ -247,7 +248,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent 零分配事件 + 自动移除监听触发器
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
-│   │   ├── Observable/            # ObservableValue 响应式属性
+│   │   ├── Observable/            # ObservableValue 响应式属性 + ObservableList/ObservableDictionary 可观察集合
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # 框架基础设施
 │   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
@@ -299,6 +300,7 @@ cn.runestone.aesir.architecture/
 - **Context 多实例** — `AbstractContext<T>` 为 CRTP 泛型单例，每个具体上下文类型全局仅一份；多存档、多房间等场景请在业务层建模
 - **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
 - **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
+- **集合可观察全家桶** — 可观察集合仅提供 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` 与最常用的 Added / Removed / Replaced / Updated / Cleared 变更；Move、Sort、同步视图、R3 集成等高级能力不做，需要时推荐使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
 
 ### 编写约定（违反时 fail-fast 报错，框架不做兜底）
