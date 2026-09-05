@@ -19,7 +19,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 | Event | ⚠️ 实验性 | `EventModule` 双轨订阅（Attribute + Script）+ 5 档优先级 + 表达式树优化。尚未在实际项目中验证 |
 | Scene | 已实现 | `SceneModule` 启动/叠加场景管理 + 编辑器工具（SceneManagerWindow / BootstrapSceneHelper） |
 
-> 另有两项可选能力：**Binder 组件绑定**（`UI/Runtime/OdinInspector/Binder/`，需 Odin Inspector）与 **Input System 输入模块适配**（`UI/Runtime/InputSystem/`，独立程序集，启用 Input System 时自动生效）。
+> 另有两项可选能力：**Binder 组件绑定**（`Runtime/UI/OdinInspector/Binder/`，需 Odin Inspector）与 **Input System 输入模块适配**（`Runtime/UI/InputSystem/`，独立程序集，启用 Input System 时自动生效）。
 
 ## 依赖
 
@@ -28,15 +28,13 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 
 ## 目录组织
 
-功能模块（UI / Scene / Events）彼此独立、互不依赖，**每个模块的全部内容收敛在单一文件夹内**，仅含 `Runtime/` 与 `Editor/` 两个次级目录；共享基础（宿主单例、调试工具）位于 `Common/`。
+包采用标准 Unity 自定义包根结构：`Runtime/` 与 `Editor/` 为包根两级目录，功能模块以子目录形式存在于对应层级（如 `Runtime/UI/` 与 `Editor/UI/`）；共享基础位于 `Runtime/Common/`。
 
-各常驻程序集的 asmdef 锚点集中在 `Common/`，模块代码通过 **Assembly Definition Reference（asmref）** 汇入对应程序集：
+程序集组织：
 
-- 模块主代码（`Runtime/`、`Editor/`）→ 汇入核心程序集 `Runestone.AesirModules` / `Runestone.AesirModules.Editor`
-- 模块的 Odin 专属代码（`*/OdinInspector/` 子目录）→ 汇入 `Runestone.AesirModules(.Editor).OdinInspector`
-- Scene 的 Addressables 编辑器胶水（`Scene/Editor/Addressables/`）→ 汇入 `Runestone.AesirModules.Editor.Addressables`
-
-因此**删除某个模块文件夹即完整移除该模块**（含其 Odin/Addressables 代码与测试），不会影响其余模块编译。
+- **核心程序集**锚点在层根（`Runtime/Runestone.AesirModules.asmdef`、`Editor/Runestone.AesirModules.Editor.asmdef`）——层内模块主代码默认汇入对应核心程序集，无需 asmref
+- **细分程序集**锚点在 `Common/` 下（Odin 运行时 `Runtime/Common/OdinInspector/`、Odin 编辑器 `Editor/Common/OdinInspector/`、Addressables 胶水 `Editor/Common/Addressables/`）；模块的对应专属代码放在自己的 `OdinInspector/`、`Addressables/` 子目录，经 **Assembly Definition Reference（asmref）** 汇入
+- **删除模块** = 删除 `Runtime/<模块>/` 与 `Editor/<模块>/`（如存在），不会影响其余模块编译
 
 ## 安装
 
@@ -127,7 +125,7 @@ public class MainMenuPanel : AesirBasePanel
 ### 目录结构
 
 ```
-UI/Runtime/                        # 经 asmref 汇入核心运行时程序集
+Runtime/UI/                        # 汇入核心运行时程序集（层根锚点）
 ├── UIModule.cs                    # UI 管理器单例
 ├── UIRoot.cs                      # UI 根节点（四层 Canvas 构建）
 ├── IUIPanel.cs                    # 面板契约
@@ -138,7 +136,7 @@ UI/Runtime/                        # 经 asmref 汇入核心运行时程序集
 ├── UIAssetLoader/                 # IUIAssetLoader + ResourcesUILoader
 ├── InputSystem/                   # Input System 输入模块适配（独立可选程序集）
 └── OdinInspector/Binder/          # Binder 全家桶（经 asmref 汇入 Odin 程序集）
-UI/Editor/                         # 经 asmref 汇入核心编辑器程序集
+Editor/UI/                         # 汇入核心编辑器程序集（层根锚点）
 ├── UIModuleMenuItems.cs           # Create UIRoot / Default UICanvasConfig 菜单项
 └── OdinInspector/                 # Odin AttributeProcessors（经 asmref 汇入 Odin 编辑器程序集）
 ```
@@ -243,7 +241,7 @@ private void OnKeyPressed() { ... }
 ### 目录结构
 
 ```
-Events/Runtime/                    # 经 asmref 汇入核心运行时程序集
+Runtime/Events/                    # 汇入核心运行时程序集（层根锚点）
 ├── AesirEventArgs.cs              # 事件参数基类
 ├── AesirListenerAttribute.cs      # 订阅者特性
 ├── AesirEventUtility.cs           # 静态工具
@@ -268,14 +266,14 @@ Events/Runtime/                    # 经 asmref 汇入核心运行时程序集
 ### 目录结构
 
 ```
-Scene/Runtime/                     # 经 asmref 汇入核心运行时程序集
+Runtime/Scene/                     # 汇入核心运行时程序集（层根锚点）
 ├── SceneModule.cs                 # 场景管理单例（Bootstrap / 加载 / 卸载 / 重载）
 ├── SceneAssetWrapper.cs           # 可序列化场景引用（GUID 锚点 + 状态机）
 ├── SceneAssetWrapperState.cs      # 引用状态机
 ├── SceneAssetWrapperUnsafeReason.cs
 ├── SceneAssetWrapperAddressablesBridge.cs  # Addressables 能力静态桥
 └── Exceptions/                    # 专用异常族
-Scene/Editor/                      # 经 asmref 汇入核心编辑器程序集
+Editor/Scene/                      # 汇入核心编辑器程序集（层根锚点）
 ├── SceneManagerWindow.cs          # 场景管理窗口
 ├── BootstrapSceneHelper.cs        # Bootstrapper 场景注册工具
 ├── SceneEditorSettings.cs         # 编辑器持久化设置
@@ -286,7 +284,7 @@ Scene/Editor/                      # 经 asmref 汇入核心编辑器程序集
 
 ## Binder 组件绑定（Odin 可选）
 
-位于 `UI/Runtime/OdinInspector/Binder/`（经 asmref 汇入 Odin 程序集，需 Odin Inspector）：`BinderAssistant` / `BinderTag` 将面板下 UI 元素（Text、Button 等）按层级自动绑定到脚本字段，减少手工拖引用；配套 `IComponentBinder` 自定义绑定器扩展。
+位于 `Runtime/UI/OdinInspector/Binder/`（经 asmref 汇入 Odin 程序集，需 Odin Inspector）：`BinderAssistant` / `BinderTag` 将面板下 UI 元素（Text、Button 等）按层级自动绑定到脚本字段，减少手工拖引用；配套 `IComponentBinder` 自定义绑定器扩展。
 
 ## 示例
 
