@@ -324,4 +324,6 @@ Copyright (c) 2026 Yuumix
 ## 🔗 推荐链接
 
 - **Aesir Inspector** — 独立公开仓库，专门面向 [Odin Inspector](https://odininspector.com/) 开发者的学习工具包：[yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
+- **ObservableCollections** — Cysharp 出品的高性能可观察集合与同步视图库（MIT）。Aesir Architecture 的 Observable 集合家族保持极简，Move / Sort / 同步视图 / R3 集成等高级能力推荐直接使用：[Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- **Eflatun.SceneReference** — 强类型、可靠的 Unity 场景引用方案（MIT）。Aesir Modules Scene 模块的 `SceneAssetWrapper` 吸收了其功能设计（GUID 锚点自愈、状态机校验、`TryGet` 安全读取家族等）：[starikcetin/Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
 - **作者主页**: [yuumixcode](https://github.com/yuumixcode)
