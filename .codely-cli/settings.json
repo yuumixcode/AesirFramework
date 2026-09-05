@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "TJGenerators": {
-      "httpUrl": "https://ai-generator.tuanjie.cn/mcp"
-    }
-  },
-  "model": "GLM-5.3-FLASH"
-}
