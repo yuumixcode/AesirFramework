@@ -206,15 +206,19 @@
 | `Runestone.AesirArchitecture.Samples.PlaneWarMono` | Samples/PlaneWar/Scripts/Mono/ | Editor-only |
 | `Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor` | Samples/PlaneWar/Editor/ | 场景引用一键修复菜单 |
 
-### Aesir Modules（6 个 asmdef）
+### Aesir Modules（8 个 asmdef + 9 个 asmref）
 
-| 程序集 | 路径 | 说明 |
+> 功能模块（UI / Scene / Events）单文件夹自治：仅含 `Runtime/` 与 `Editor/` 两个次级目录，模块间零依赖，删除模块文件夹即完整移除。常驻程序集 asmdef 锚点集中在 `Common/`，模块代码经 Assembly Definition Reference（asmref）汇入。
+
+| 程序集 | 锚点路径 | 说明 |
 |--------|------|------|
-| `Runestone.AesirModules` | Runtime/ | 引用 AesirArchitecture |
-| `Runestone.AesirModules.OdinInspector` | Runtime/OdinInspector/ | Binder 全家桶（ODIN_INSPECTOR） |
-| `Runestone.AesirModules.Editor` | Editor/ | 场景编辑器窗口、UI 菜单项 |
-| `Runestone.AesirModules.Editor.OdinInspector` | Editor/OdinInspector/ | ODIN_INSPECTOR |
-| `Runestone.AesirModules.InputSystem` | Runtime/UI/InputSystem/ | UIRoot 输入模块替换 |
+| `Runestone.AesirModules` | Common/Runtime/ | 核心运行时锚点（引用 AesirArchitecture）；各模块 Runtime/ 经 asmref 汇入 |
+| `Runestone.AesirModules.OdinInspector` | Common/Runtime/OdinInspector/ | Binder 全家桶（ODIN_INSPECTOR）；UI/Runtime/OdinInspector/ 经 asmref 汇入 |
+| `Runestone.AesirModules.Editor` | Common/Editor/ | 核心编辑器锚点；各模块 Editor/ 经 asmref 汇入 |
+| `Runestone.AesirModules.Editor.OdinInspector` | Common/Editor/OdinInspector/ | Odin 处理器（ODIN_INSPECTOR）；UI、Scene 的 Editor/OdinInspector/ 经 asmref 汇入 |
+| `Runestone.AesirModules.Editor.Addressables` | Common/Editor/Addressables/ | Addressables 胶水（AESIR_MODULES_ADDRESSABLES）；Scene/Editor/Addressables/ 经 asmref 汇入 |
+| `Runestone.AesirModules.InputSystem` | UI/Runtime/InputSystem/ | UIRoot 输入模块替换（ENABLE_INPUT_SYSTEM，独立可选） |
+| `Runestone.AesirModules.Scene.Tests` | Scene/Editor/Tests/ | Scene 模块 EditMode 测试（UNITY_INCLUDE_TESTS） |
 | `Runestone.AesirModules.Samples.Events.KeyPress` | Samples/Events/01_KeyPress/ | Editor-only |
 
 ---
@@ -299,14 +303,11 @@ AesirFramework/
 │   │   │   ├── Samples~/              # 示例发布镜像（Package Manager 按需导入）
 │   │   │   ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
 │   │   │   └── Documentation~/        # 文档镜像（Git URL 安装隐藏副本，无 .meta）
-│   │   └── AesirModules/              # 功能模块
-│   │       ├── Runtime/
-│   │       │   ├── Common/            # AesirModules 单例、调试
-│   │       │   ├── Scene/             # SceneModule, SceneAssetWrapper
-│   │       │   ├── UI/                # UIModule, UIRoot, UICanvasConfigSO, AesirBasePanel（含 InputSystem/）
-│   │       │   ├── Events/            # 实验性事件模块
-│   │       │   └── OdinInspector/     # Binder 全家桶（ODIN_INSPECTOR）
-│   │       ├── Editor/                # 场景编辑器窗口、Odin 集成、UI 菜单项
+│   │   └── AesirModules/              # 功能模块（模块单文件夹自治，模块间零依赖）
+│   │       ├── Common/                # 共享基础 + 常驻程序集锚点（Runtime/Editor + OdinInspector/Addressables）
+│   │       ├── UI/                    # UI 模块（Runtime/ + Editor/；Binder 在 Runtime/OdinInspector/、InputSystem 独立程序集）
+│   │       ├── Scene/                 # Scene 模块（Runtime/ + Editor/；Odin Processor、Addressables 胶水、Tests 经 asmref/asmdef）
+│   │       ├── Events/                # 实验性事件模块（Runtime/）
 │   │       ├── Samples/               # 示例（编写主位，Events/01_KeyPress）
 │   │       ├── Samples~/              # 示例发布镜像
 │   │       ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出）
