@@ -20,15 +20,49 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.15.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.15.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.16.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.16.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.15.0` / `#AesirModules-v0.15.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.16.0` / `#AesirModules-v0.16.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.16.0] - 2026-09-06
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Changed
+
+- 版本号与 Aesir Modules 同步更新至 `0.16.0`，本包本版本无功能性变更
+
+---
+
+### [modules] Aesir Modules
+
+#### Added
+
+- **`SceneAssetWrapper` 功能增强（吸收 Eflatun.SceneReference）** — GUID 锚点自愈（`sceneGuid` 序列化字段 + `EditorSyncFromAsset`）、`State` / `UnsafeReason` 状态机校验、`TryGet` 安全读取家族、`FromScenePath` / `FromAsset`（编辑器）工厂方法、`Address` 序列化缓存与 `AddressablesSupportEnabled`
+- **Addressables 条件架构** — 核心 asmdef `versionDefines` 定义 `AESIR_MODULES_ADDRESSABLES`；独立胶水程序集 `Runestone.AesirModules.Editor.Addressables`（未安装 Addressables 时整体不编译，零报错），经 `SceneAssetWrapperAddressablesBridge` 静态委托桥注册地址查询与加入默认组能力
+- **Scene 模块测试程序集 `Runestone.AesirModules.Scene.Tests`** — 27 个 EditMode 用例，自适应装 / 未装 Addressables 环境
+
+#### Changed（破坏性变更）
+
+- **删除 `AddScene` / `UnloadAddedScene`**（含 `*WithSceneAssetWrapper` 变体）— 统一为 `LoadSceneAdditive` 纯叠加追踪：不再自动卸载上个场景、不再抢占激活场景
+- **`ReloadScene` 同步改异步** — 带 `onCompleted` / `onFailed` 回调
+- **加载失败新增 `onFailed` 回调** — `LoadSceneSingle` / `LoadSceneAdditive` / `UnloadScene` / `ReloadScene` 全系支持
+- **`SceneAssetWrapper` 空引用语义收紧** — `ScenePath` / `Guid` / `SceneName` / `BuildIndex` / `LoadedScene` 空引用由返回空值改为抛 `EmptySceneAssetWrapperException`
+- **`*WithSceneAssetWrapper` 6 个方法改为同名重载**
+
+#### Changed（包结构重组）
+
+- **目录调整为标准 Unity 自定义包根结构** — 包根两级目录 `Runtime/` 与 `Editor/`，功能模块（UI / Scene / Events）以子目录存在于对应层级，模块间零依赖，删除模块 = 删除对应层的模块子目录；核心程序集锚点在层根（模块主代码自动汇入），Odin / Addressables 细分程序集锚点收拢至 `Common/` 下，模块专属代码经 4 个 asmref 汇入；程序集名称与公共 API 不变
 
 ---
 
