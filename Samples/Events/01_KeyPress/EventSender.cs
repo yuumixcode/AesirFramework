@@ -1,12 +1,12 @@
 using UnityEngine;
 
-namespace Runestone.AesirModules.Samples.Events
+namespace Runestone.AesirModules.Samples.Events.KeyPress
 {
     /// <summary>
-    /// 按键事件发布者。按指定键发布 <see cref="OnKeyPressed"/> 事件。
+    /// 按键事件发布者。按指定键发布 <see cref="KeyPressedEvent"/> 事件。
     /// </summary>
     [AddComponentMenu("")]
-    public class EventEmitter : MonoBehaviour
+    public class EventSender : MonoBehaviour
     {
         [SerializeField] KeyCode triggerKey = KeyCode.Space;
 
@@ -14,7 +14,7 @@ namespace Runestone.AesirModules.Samples.Events
         {
             if (Input.GetKeyDown(triggerKey))
             {
-                new OnKeyPressed { Key = triggerKey }.Invoke(this);
+                new KeyPressedEvent { Key = triggerKey }.Invoke(this);
             }
         }
     }

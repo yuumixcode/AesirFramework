@@ -1,11 +1,9 @@
-using Runestone.AesirModules;
-
-namespace Runestone.AesirModules.Samples.Events
+namespace Runestone.AesirModules.Samples.Events.KeyPress
 {
     /// <summary>
-    /// 按键按下事件参数。
+    /// 按键按下事件。
     /// </summary>
-    public class OnKeyPressed : AesirEventArgs
+    public class KeyPressedEvent : AesirEventArgs
     {
         /// <summary>
         /// 被按下的键。
