@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 
-namespace Runestone.AesirArchitecture.Editor.OdinIntegration
+namespace Runestone.AesirArchitecture.Editor.OdinInspector
 {
     /// <summary>
     /// 为 RemoveListenerOnSceneUnloadedTrigger 类提供 Odin Inspector 属性处理器

@@ -4,7 +4,7 @@ using System.Reflection;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 
-namespace Runestone.AesirArchitecture.Editor.OdinIntegration
+namespace Runestone.AesirArchitecture.Editor.OdinInspector
 {
     /// <summary>
     /// 为泛型 ObservableValue 提供的 Odin Inspector 特性处理器，用于优化其在面板上的展示效果。

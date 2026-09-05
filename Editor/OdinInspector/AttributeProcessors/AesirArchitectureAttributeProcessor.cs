@@ -4,7 +4,7 @@ using System.Reflection;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 
-namespace Runestone.AesirArchitecture.Editor.OdinIntegration
+namespace Runestone.AesirArchitecture.Editor.OdinInspector
 {
     /// <summary>
     /// 为 AesirArchitecture 类动态添加特性。
