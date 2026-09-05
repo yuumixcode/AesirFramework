@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern) and an event module (reflection binding + attribute-marked static subscription + dynamic subscription + expression-tree optimization).
+Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an experimental event module, and scene management tooling.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](../CHANGELOG.md)
@@ -15,9 +15,11 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 | Module | Status | Description |
 |------|------|------|
-| UI | Implemented | UIManager singleton; 4-layer Canvas + panel lifecycle |
-| Event | ⚠️ Experimental | EventModule singleton; dual-track subscription (Attribute + Script) + 5 priority levels + expression-tree optimization. Not yet validated in a production project |
-| Scene | Planned | Scene loading, SceneReference |
+| UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + pluggable asset loading |
+| Event | ⚠️ Experimental | `EventModule` dual-track subscription (Attribute + Script) + 5 priority levels + expression-tree optimization. Not yet validated in a production project |
+| Scene | Implemented | `SceneModule` bootstrap/additive scene management + editor tools (SceneManagerWindow / BootstrapSceneHelper) |
+
+> Two additional optional capabilities: **Binder component binding** (`Runtime/OdinInspector/UI/Binder/`, requires Odin Inspector) and **Input System input module adaptation** (`Runtime/UI/InputSystem/`, separate assembly, active automatically when the Input System is enabled).
 
 ## Dependencies
 
@@ -26,95 +28,108 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Installation
 
-Add the package via Unity Package Manager (pinned to the 0.14.0 version branch; the branch root is the package content):
+### UPM (Git URL, recommended)
+
+In the Unity Package Manager window, click `+` → `Add package from git URL...`:
 
 ```
-Packages/manifest.json -> dependencies:
-"cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0"
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0
 ```
 
-Track the latest development version on `main`:
+Or edit `Packages/manifest.json`:
 
+```json
+{
+  "dependencies": {
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0"
+  }
+}
 ```
-"cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules"
-```
+
+To track the latest development version on `main`, replace the URL with `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules`.
 
 UPM automatically resolves the `dependencies` field in `package.json` and pulls Aesir Architecture.
+
+### unitypackage Import
+
+Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated in one click via the Unity menu `Tools → Aesir → Check for Updates` (shipped with Aesir Architecture).
 
 ## UI Module
 
 ### Core Types
 
 | Type | Layer | Description |
-|------|------|------|
-| `UIManager` | Component | MonoBehaviour singleton; manages panel loading, lifecycle, and layering; includes 4-layer Canvas, UICamera, EventSystem |
-| `IUIPanel` | Engine | Panel contract interface |
-| `IUIAssetLoader` | Engine | Asset loader contract interface |
-| `IUICanvasConfig` | Engine | Canvas config contract interface |
-| `PanelConfig` | Engine | Panel config (layer / destroyOnClose) |
-| `UILayer` | Engine | Layer enum: Background=0, Normal=1, Popup=2, Top=3 |
-| `ResourcesUILoader` | Engine | Default loader (Resources folder) |
-| `AesirUIPanel` | Component | Panel abstract base, inherits from AesirMonoBehaviour |
-| `UICanvasConfigSO` | Component | ScriptableObject config asset (CreateAssetMenu) |
+|------|----|------|
+| `UIModule` | Component | UI manager singleton: panel registration, showing, hiding, prewarming and registry maintenance; static shortcut API for global access |
+| `UIRoot` | Component | UI root node: builds the 4-layer Canvas (Background / Normal / Popup / Top) + UICamera + EventSystem, applies the unified Canvas config |
+| `IUIPanel` | Engine | Panel contract: lifecycle `Initialize → Show(payload) → Hide → DestroyPanel`; properties `Layer` / `DestroyOnHide` / `IsOpen` |
+| `AesirBasePanel` | Component | Abstract panel base: virtual `OnInit` / `OnShow` / `OnHide` / `OnClose`, serialized fields `layer` / `destroyOnHide`, convenience `HideSelf()` |
+| `AesirBasePanelView<T>` | Component | MVP-mode panel view base: inherits `AesirBasePanel` and binds to a Context type (`IView`), accessing Models / Services via the Context |
+| `IUIAssetLoader` / `ResourcesUILoader` | Engine | Pluggable asset loading contract and default implementation (Resources folder) |
+| `UICanvasConfigSO` | Component | Unified Canvas config asset (a default asset can be created from the Create menu) |
+| `UILayer` | Engine | Layer enum: Background / Normal / Popup / Top |
 
 ### Quick Start
 
-1. Create a UI prefab whose root node has a script inheriting from `AesirUIPanel`.
-2. Register the prefab and open the panel:
+1. Create the UI root node with the full hierarchy via `GameObject → Aesir Modules → Create UIRoot` (or pre-place an object with `UIRoot` in the scene).
+2. Create a panel prefab whose root node has a script inheriting from `AesirBasePanel` (inherit `AesirBasePanelView<TContext>` for the MVP pattern).
+3. Register the prefab and show the panel:
 
 ```csharp
-// Setup at startup (must be called before first panel operation)
-UIManager.Instance.SetLoader(new ResourcesUILoader());
-UIManager.Instance.SetCanvasConfig(configSO);   // optional
+// Register the panel prefab
+UIModule.RegisterPrefab<MainMenuPanel>(prefab);
 
-// Register a prefab
-UIManager.RegisterPrefab<MainMenuPanel>(prefab);
+// Show the panel
+UIModule.Show<MainMenuPanel>();
 
-// Open a panel
-UIManager.Open<MainMenuPanel>();
+// Show with a strongly-typed payload
+UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "Confirm?" });
 
-// Open with payload
-UIManager.Open<ConfirmDialogPanel>(new ConfirmData { message = "Confirm?" });
+// Hide the panel (DestroyOnHide decides destroy vs. cache for reuse)
+UIModule.Hide<ConfirmDialogPanel>();
 
-// Close a panel
-UIManager.Close<ConfirmDialogPanel>();
+// Prewarm: pre-instantiate and hide; the first Show reuses it directly
+UIModule.Prewarm<MainMenuPanel>();
 ```
 
-3. Panel lifecycle:
+To use custom asset loading (e.g. Addressables), replace the default loader:
 
 ```csharp
-public class MainMenuPanel : AesirUIPanel
+UIModule.Instance.RegisterAssetLoader(new MyAddressablesLoader());
+```
+
+4. Panel lifecycle (all driven by `UIModule`):
+
+```csharp
+public class MainMenuPanel : AesirBasePanel
 {
-    protected override void OnInit() { }           // Called on first creation
-    protected override void OnShow(object payload) { } // Called on each show
-    protected override void OnHide() { }            // Called on hide
-    protected override void OnClose() { }           // Called on destroy
+    protected override void OnInit() { }               // Called once after first instantiation
+    protected override void OnShow(object payload) { } // Called on each show (including the first)
+    protected override void OnHide() { }               // Called on hide (defaults to SetActive(false))
+    protected override void OnClose() { }              // Called before destroy
 }
 ```
+
+> **Lifecycle details**: panels are instantiated in an inactive state (Awake / OnEnable are deferred until activation inside Show, so OnEnable can safely access references that only get values after OnInit), driven in the order attach-to-layer → `Initialize` → `Show`; panel registration is keyed by the instance's **actual type** — after showing via a base type, close it via the actual type (or `HideSelf()` inside the panel).
 
 ### Directory Structure
 
 ```
 Runtime/
-├── Engine/UI/
-│   ├── Interfaces/
-│   │   ├── IUIPanel.cs
-│   │   ├── IUIAssetLoader.cs
-│   │   └── IUICanvasConfig.cs
-│   ├── PanelConfig.cs
-│   ├── UILayer.cs
-│   ├── ResourcesUILoader.cs
-│   └── UILog.cs
-├── Component/UI/
-│   ├── UIManager.cs
-│   ├── AesirUIPanel.cs
-│   └── UICanvasConfigSO.cs
+└── UI/
+    ├── UIModule.cs               # UI manager singleton
+    ├── UIRoot.cs                 # UI root node (4-layer Canvas construction)
+    ├── IUIPanel.cs               # Panel contract
+    ├── AesirBasePanel.cs         # Panel base class
+    ├── AesirBasePanelView.cs     # MVP panel view base (Context-bound)
+    ├── UILayer.cs                # Layer enum
+    ├── UICanvasConfigSO.cs       # Canvas config asset
+    ├── UIAssetLoader/            # IUIAssetLoader + ResourcesUILoader
+    └── InputSystem/              # Input System input module adaptation (separate assembly)
 Editor/
-└── Odin Integration/UI/
-    └── UICanvasConfigSOAttributeProcessor.cs
+├── UI/UIModuleMenuItems.cs       # Create UIRoot / Default UICanvasConfig menu items
+└── OdinInspector/UI/             # Odin AttributeProcessors (optional enhancement)
 ```
-
-Detailed docs: [Documentation/ui-module-manual.md](Documentation/ui-module-manual.md).
 
 ## Event Module
 
@@ -226,12 +241,25 @@ Runtime/Events/
 └── SubscriberPriority.cs          # Priority enum (5 levels)
 ```
 
-Detailed docs: [Documentation/event-module.md](Documentation/event-module.md).
+Detailed docs: [event-module.md](./event-module.md).
+
+## Scene Module
+
+`SceneModule` (MonoBehaviour singleton) manages the bootstrap and additive scenes:
+
+- **Bootstrap scene** — auto-discovers the bootstrap scene by preset names (`Bootstrap` / `Bootstrapper` etc.) or a custom `SceneAssetWrapper` reference, ensures it sits at index 0 of Build Settings and loads first
+- **Additive scenes** — `AddScene` loads additively and tracks them (`AddedScenePaths` / `LastLoadedScene`)
+- **Editor companions** — `SceneManagerWindow` scene management window; `BootstrapSceneHelper` auto/manual bootstrap scene collection and Build Settings registration; `SceneAssetWrapper` serializable scene reference
+
+## Binder Component Binding (Odin optional)
+
+Located in `Runtime/OdinInspector/UI/Binder/` (separate assembly, requires Odin Inspector): `BinderAssistant` / `BinderTag` auto-bind UI elements under a panel (Text, Button, etc.) to script fields by hierarchy, reducing manual reference dragging; extend via `IComponentBinder` for custom binders.
 
 ## Samples
 
 - **Browsing / downloading this repository directly**: samples live in the package's `Samples/` folder, ready to view and run.
 - **Git URL install**: Package Manager → select this package → `Samples` tab → import on demand (sources are kept in the package's hidden `Samples~/` folder, excluded from builds).
+- **unitypackage import**: samples ship inside the package and run right after import.
 
 Currently provided:
 
@@ -242,3 +270,4 @@ Currently provided:
 ## License
 
 MIT
+

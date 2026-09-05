@@ -24,7 +24,7 @@
 
 ---
 
-## 🏛️ Aesir Architecture (RAA) — The Core of This Repository
+## 🏛️ Aesir Architecture (RAA) — Architecture Framework
 
 **RAA is a progressive MVC architecture built on a "Unity-native-first" philosophy.** It does not build a parallel system to the engine; instead it deeply integrates with Unity's PlayerLoop, ScriptableObject, and Editor API — staying lightweight while providing clear layering for small to medium-large projects. The framework is **MVC-first** (`IController` is the recommended entry point for rapid development); `IPresenter` (MVP) is an optional pattern for stricter layering.
 
@@ -54,11 +54,12 @@ RAA's most distinctive feature is **tiered progression** — from the minimal co
 | **Lesson 2 · Standard** | Read-only exposure + write methods | Controller calls write methods | Presenter calls write methods |
 | **Lesson 3 · Strict** | Interface registration + read-only + write methods | Command writes + Query processed reads | Command writes + Query reads |
 
-Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/ Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + ObservableValue / MiniEvent / PlaneWar hands-on samples, importable lesson by lesson.
+Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + ObservableValue / MiniEvent / PlaneWar hands-on samples, importable lesson by lesson.
 
 ### Core Mechanics at a Glance
 
 - **`ObservableValue<T>` reactive property** — Models hold writable instances; Views subscribe read-only via `IReadOnlyObservableValue<T>`; `AddListenerAndInvoke` synchronizes the initial value on subscription
+- **Observable collection family** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` provide Added / Removed / Replaced / Updated / Cleared change notifications, following the same read-write separation and event pattern as ObservableValue
 - **`MiniEvent` / `MiniEvent<T>`** — Zero-allocation lightweight events (direct multicast invocation, native C# fail-fast semantics); returns `AutoRemoveListenerHandle` for automatic cleanup, with auto-unsubscribe on GameObject destroy / scene unload
 - **Native PlayerLoop lifecycle** — `AesirArchitecturePlayerLoop` injects `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour; `EnsureInjected()` self-heals after third-party SDKs rewrite the PlayerLoop
 - **Explicit DDOL decision** — Root singletons expose a serialized `dontDestroyOnLoad` field governing both pre-placed and runtime-created instances (persistent by default; when disabled the instance dies with its scene — Inspector warning + runtime reminder, additive multi-scene loading is up to you)
@@ -71,11 +72,34 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 2. **Minimal boundaries** — No event bus, no multi-Context instances, no Command pooling / async / Undo; low-probability issues are prevented up front via documented conventions and edit-time hints (InfoBox), not runtime defensive code
 3. **Presentation/logic separation** — All Inspector presentation is injected dynamically via Odin AttributeProcessors; runtime assemblies carry zero styling attributes
 
-Full documentation: [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文) / [`Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md) (English).
+---
+
+## 🧱 Aesir Modules (RAM) — Functional Module Package
+
+**RAM is the functional module collection built on top of Architecture**, currently providing a UI framework and an experimental event module, plus scene management tooling.
+
+### UI Framework
+
+- **`UIModule` (Manager-of-Managers singleton)** — Static shortcut API: `UIModule.Show<T>()` / `Hide<T>()` / `Get<T>()` / `Prewarm<T>()` / `RegisterPrefab<T>()`; panel state machine: active → deactivated cache → destroyed
+- **`UIRoot` 4-layer Canvas hierarchy** — One-click construction of Background / Normal / Popup / Top layered Canvases + UICamera + EventSystem (`GameObject → Aesir Modules → Create UIRoot`); layer Canvas references are serialized and persisted
+- **Panel lifecycle** — `IUIPanel` contract `Initialize → Show(payload) → Hide → DestroyPanel`; `AesirBasePanel` offers virtual `OnInit` / `OnShow` / `OnHide` / `OnClose`; `DestroyOnHide` decides whether hiding destroys the panel or caches it for reuse
+- **Pluggable asset loading** — `ResourcesUILoader` by default (Resources folder); implement `IUIAssetLoader` to swap in Addressables or anything else
+- **Prewarming** — `Prewarm<T>()` pre-instantiates frame by frame; `PrewarmAll()` spreads out first-open instantiation cost
+- **Binder component binding (Odin optional)** — `BinderAssistant` / `BinderTag` auto-bind UI elements to panel scripts
+- **Input System adaptation** — A separate assembly automatically swaps in `InputSystemUIInputModule` when the Input System is enabled
+
+### Event Module (⚠️ Experimental)
+
+A dual-track subscription event system: `[AesirListener]` attribute-based static subscription + `AddListener<T>` dynamic lambda subscription, coexisting in one dispatch flow sorted by 5 priority levels; static bindings use expression-tree-compiled delegates to optimize reflection overhead. **Not yet validated in a production project; APIs may change.**
+
+### Scene Module & Editor Tools
+
+- **`SceneModule`** — Automatic discovery and prioritized loading of the bootstrap scene, additive scene load tracking
+- **Editor tools** — `SceneManagerWindow` scene management window, `BootstrapSceneHelper` one-click bootstrap scene registration, `SceneAssetWrapper` serializable scene reference
 
 ---
 
-## 🧩 Dependency Graph
+## 🕸️ Dependency Graph
 
 ```
 ┌──────────────────────┐
@@ -112,14 +136,28 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 
 > Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches.
 
-### Option 2: Track main (Development Preview)
+### Option 2: unitypackage Import + In-Package Updater (mainland / offline friendly)
+
+Download the matching unitypackage from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and drop it into your project:
+
+| Asset | Content |
+|---|---|
+| `AesirArchitecture-v<version>.unitypackage` | Aesir Architecture only |
+| `AesirModules-v<version>.unitypackage` | Aesir Modules only (no dependencies; import Architecture yourself) |
+| `AesirFramework-v<version>.unitypackage` | Both packages combined |
+
+Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for one-click "detect new version → auto backup → diff-based stale cleanup → silent import". Version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); via CDN, a new release may take up to ~12 hours to be detected.
+
+> Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
+
+### Option 3: Track main (Development Preview)
 
 ```
 https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture
 https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules
 ```
 
-### Option 3: Via `manifest.json`
+### Option 4: Via `manifest.json`
 
 Add the following to your project's `Packages/manifest.json`:
 
@@ -138,6 +176,7 @@ Add only the sub-packages you need — **when installing only Aesir Modules**, U
 
 - **Browsing / downloading this repository directly**: samples live in each package's `Samples/` folder, ready to view and run.
 - **Git URL install**: Package Manager → select the package → `Samples` tab → import on demand; the sample sources are also kept in each package's hidden `Samples~/` folder.
+- **unitypackage import**: samples ship inside the package and run right after import.
 
 ---
 
@@ -174,6 +213,21 @@ Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Asset
 
 ---
 
+## 🗺️ Documentation Map
+
+| Document | Location |
+|---|---|
+| Architecture tutorial (中文 / English) | Each package's `README.md` / `Documentation/README_EN.md` |
+| Event-mechanism decision table (choosing between ObservableValue / MiniEvent / collections / EventModule) | [`AesirArchitecture/Documentation/事件机制决策表.md`](./Assets/Runestone/AesirArchitecture/Documentation/事件机制决策表.md) |
+| Common pitfalls (10 frequent traps and fixes) | [`AesirArchitecture/Documentation/常见陷阱清单.md`](./Assets/Runestone/AesirArchitecture/Documentation/常见陷阱清单.md) |
+| AI coding guide (for AI assistants generating RAA-style code) | [`AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md) |
+| Event module detailed manual | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
+| Changelogs (repo-level aggregate / per-package) | Root [`CHANGELOG.md`](./CHANGELOG.md) and each package's `CHANGELOG.md` |
+
+> The in-package `Documentation/` folder ships with the unitypackage (excluded from player builds); Git URL users can read the `Documentation~/` mirror contents via the Package Manager.
+
+---
+
 ## 🗂️ Repository Layout
 
 > This is a **multi-package monorepo** — both sub-packages live here, each installable independently via Git URL.
@@ -187,6 +241,7 @@ AesirFramework/                            # this repo
 ├── CONTRIBUTING.md                        # contributing guide
 ├── CODE_OF_CONDUCT.md                     # community guidelines
 ├── CODELY.md                              # detailed architecture docs
+├── Assets/Scripts/Editor/                 # repo-local editor tooling (package export etc., not shipped with packages)
 └── Assets/Runestone/
     ├── AesirArchitecture/                 # does NOT depend on other Aesir packages
     │   ├── Runtime/  Editor/  Tests/
@@ -203,6 +258,15 @@ AesirFramework/                            # this repo
         ├── Documentation~/                # docs mirror (hidden copy for Git URL installs)
         └── README.md  CHANGELOG.md  package.json
 ```
+
+---
+
+## ✅ Quality & CI
+
+- **Tests** — 100 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, and more; CLI usage below in [Development Setup](#️-development-setup)
+- **CI (GitHub Actions)** —
+  - `auto-release.yml`: every push to `main` publishes a GitHub Release (three unitypackages plus the update-info.json / files-manifest used by the in-package updater)
+  - `auto-publish-branches.yml`: per-package subtree split generating `AesirArchitecture-v<version>` / `AesirModules-v<version>` pinned branches
 
 ---
 
@@ -261,3 +325,5 @@ See root [`LICENSE`](./LICENSE) for details.
 
 - **Aesir Inspector** — separate public repository, a learning toolkit for [Odin Inspector](https://odininspector.com/) developers: [yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
 - **Author homepage**: [yuumixcode](https://github.com/yuumixcode)
+
+
