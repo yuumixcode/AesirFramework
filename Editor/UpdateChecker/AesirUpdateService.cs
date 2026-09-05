@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -16,6 +17,13 @@ namespace Runestone.AesirArchitecture.Editor
     /// 不位于 Assets 下，本工具扫描不到，应改用 Package Manager 更新。
     /// </para>
     /// <para>
+    /// 版本检测面向大陆用户做了多源兜底（unitypackage 下载始终走 GitHub Release 直链）：
+    /// ① jsDelivr 多域名拉取仓库内 <see cref="UpdateInfoRelativePath" />（CDN 直达、无限流，
+    /// 分支引用有最长约 12 小时的缓存延迟）；② GitHub Releases API（未认证 60 次/时/IP）；③
+    /// GitHub releases/latest 的 302 重定向探测（完全绕开 API 限流）。见
+    /// <see cref="FetchLatestReleaseSnapshotAsync" />。
+    /// </para>
+    /// <para>
     /// 更新流程与 QFramework PackageKit 同构：远程版本源（此处为 GitHub Releases 而非自建服务器）
     /// → 本地版本记录（此处直接读取包内 package.json）→ 下载 .unitypackage → 先删后导。
     /// 相比 QF 的两处增强：更新前自动备份（用户可能修改过代码）；残留清理按"上次安装清单 − 新版清单"
@@ -26,12 +34,29 @@ namespace Runestone.AesirArchitecture.Editor
     {
         #region 常量
 
-        /// <summary>GitHub Releases 最新版 API（一次调用同时取回版本号与全部资产下载地址）。</summary>
-        public const string LatestReleaseApiUrl =
-            "https://api.github.com/repos/yuumixcode/AesirFramework/releases/latest";
+        /// <summary>GitHub 仓库路径（owner/repo）。</summary>
+        public const string RepoPath = "yuumixcode/AesirFramework";
+
+        /// <summary>GitHub Releases 最新版 API（降级源之二，未认证限流 60 次/时/IP）。</summary>
+        public static readonly string LatestReleaseApiUrl = $"https://api.github.com/repos/{RepoPath}/releases/latest";
+
+        /// <summary>GitHub releases/latest 页面地址（302 到最新 tag，可完全绕开 API 限流）。</summary>
+        public static readonly string LatestReleasePageUrl = $"https://github.com/{RepoPath}/releases/latest";
 
         /// <summary>Releases 网页地址（供用户手动下载 / 查看更新日志）。</summary>
-        public const string ReleasesPageUrl = "https://github.com/yuumixcode/AesirFramework/releases";
+        public static readonly string ReleasesPageUrl = $"https://github.com/{RepoPath}/releases";
+
+        /// <summary>GitHub Release 资产下载地址前缀（资产命名约定见 ReleaseSnapshot.GetUnityPackageUrl）。</summary>
+        public static readonly string GitHubDownloadUrlBase = $"https://github.com/{RepoPath}/releases/download";
+
+        /// <summary>jsDelivr CDN 域名（按大陆可达性经验排序；fastly 会 301 跳转到主域名，自动跟随）。</summary>
+        public static readonly string[] JsDelivrDomains =
+        {
+            "cdn.jsdelivr.net", "testingcf.jsdelivr.net", "gcore.jsdelivr.net", "fastly.jsdelivr.net",
+        };
+
+        /// <summary>update-info.json 在仓库内的路径（CI 发版后以 [skip ci] 提交回 main）。</summary>
+        public const string UpdateInfoRelativePath = ".github/update-info.json";
 
         /// <summary>包安装根目录（项目相对路径）。</summary>
         public const string InstallRootRelativePath = "Assets/Runestone";
@@ -45,50 +70,72 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>本地安装清单文件名（记录每次更新成功后各包的完整文件列表）。</summary>
         public const string ManifestFileName = "installed-manifest.json";
 
-        /// <summary>Release 中的文件清单资产名（由 CI 的 build_unitypackage.py --manifest 生成）。</summary>
-        public const string RemoteManifestAssetName = "files-manifest.json";
-
         /// <summary>本地备份保留份数（超出后按时间从旧到新删除）。</summary>
         public const int BackupKeepCount = 3;
 
+        /// <summary>jsDelivr 检测超时（秒）——不可达时通常立刻失败，超时不宜过长。</summary>
+        public const int JsDelivrCheckTimeoutSeconds = 5;
+
+        /// <summary>GitHub API / 重定向探测超时（秒）。</summary>
+        public const int GitHubCheckTimeoutSeconds = 12;
+
+        /// <summary>unitypackage 下载超时（秒）——大文件慢速连接，给足余量。</summary>
+        public const int DownloadTimeoutSeconds = 120;
+
         /// <summary>package.json 中 Aesir 包 id 的公共前缀。</summary>
         const string PackageIdPrefix = "cn.runestone.aesir.";
-
-        /// <summary>Release 中 unitypackage 资产的命名约定：&lt;包目录名&gt;-v&lt;版本&gt;.unitypackage。</summary>
-        const string UnityPackageAssetSuffix = ".unitypackage";
 
         #endregion
 
         #region 数据模型
 
-        /// <summary>GitHub Releases API 响应（只解析本工具用到的字段，其余自动忽略）。</summary>
+        /// <summary>
+        /// update-info.json 结构：版本信息 + 各包文件清单（仓库内文件，jsDelivr / GitHub 均可拉取）。
+        /// <para>数组而非 Dictionary — JsonUtility 不支持字典序列化。</para>
+        /// </summary>
         [Serializable]
-        public sealed class ReleaseInfo
+        public sealed class UpdateInfo
         {
-            /// <summary>Release 标签名，如 v0.15.0。</summary>
-            public string tag_name;
+            /// <summary>版本号（如 0.15.0）。</summary>
+            public string version;
 
-            /// <summary>Release 网页地址。</summary>
-            public string html_url;
+            /// <summary>Release 标签名（如 v0.15.0）。</summary>
+            public string tag;
 
-            /// <summary>Release 资产列表。</summary>
-            public ReleaseAsset[] assets;
-        }
+            /// <summary>各包文件清单。</summary>
+            public FilesManifest.PackageEntry[] packages;
 
-        /// <summary>GitHub Release 资产（unitypackage / files-manifest.json 等）。</summary>
-        [Serializable]
-        public sealed class ReleaseAsset
-        {
-            /// <summary>资产文件名。</summary>
-            public string name;
-
-            /// <summary>资产下载地址。</summary>
-            public string browser_download_url;
+            /// <summary>按包目录名查找条目；不存在返回 null。</summary>
+            public FilesManifest.PackageEntry GetPackage(string dirName) =>
+                packages?.FirstOrDefault(p => p != null && p.name == dirName);
         }
 
         /// <summary>
-        /// files-manifest.json / 本地 installed-manifest.json 的公共结构。
-        /// <para>数组而非 Dictionary — JsonUtility 不支持字典序列化。</para>
+        /// 一次成功检测的结果快照：来源 + tag +（可能缺失的）清单。
+        /// unitypackage 下载地址按命名约定从 tag 构造，不依赖 API 的资产列表。
+        /// </summary>
+        public sealed class ReleaseSnapshot
+        {
+            /// <summary>来源描述（如 "jsDelivr (cdn.jsdelivr.net)" / "GitHub API" / "GitHub 重定向"）。</summary>
+            public string Source;
+
+            /// <summary>Release 标签名（如 v0.15.0）。</summary>
+            public string Tag;
+
+            /// <summary>版本与清单信息；302 重定向路径只有 tag，此字段为 null（更新时跳过残留清理）。</summary>
+            public UpdateInfo Info;
+
+            /// <summary>
+            /// 指定包目录的 unitypackage 下载地址。
+            /// 命名约定由 CI 保证：&lt;包目录名&gt;-v&lt;版本&gt;.unitypackage。
+            /// </summary>
+            public string GetUnityPackageUrl(string dirName) =>
+                $"{GitHubDownloadUrlBase}/{Tag}/{dirName}-v{Tag.TrimStart('v')}.unitypackage";
+        }
+
+        /// <summary>
+        /// files-manifest 结构的本地安装清单（.aesir/installed-manifest.json）。
+        /// 与 <see cref="UpdateInfo" /> 共用 <see cref="PackageEntry" />。
         /// </summary>
         [Serializable]
         public sealed class FilesManifest
@@ -190,7 +237,7 @@ namespace Runestone.AesirArchitecture.Editor
 
         /// <summary>
         /// 解析 package.json 的 name 与 version 字段。
-        /// <para>与 AesirPackageInstaller 相同的轻量字段提取（两工具均要求自包含，不引入 JSON 库）。</para>
+        /// <para>轻量字段提取（要求自包含，不引入 JSON 库）。</para>
         /// </summary>
         public static (string name, string version) ParsePackageJson(string path)
         {
@@ -239,7 +286,6 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>将磁盘绝对路径转为 Assets 相对路径（形如 Assets/Runestone/Xxx）。</summary>
         static string ToAssetsRelativePath(string absolutePath)
         {
-            var dataPath = Application.dataPath;
             var projectRoot = ProjectRootPath;
             var full = Path.GetFullPath(absolutePath);
             var projectRootFull = Path.GetFullPath(projectRoot);
@@ -292,14 +338,141 @@ namespace Runestone.AesirArchitecture.Editor
 
         #endregion
 
+        #region 远程版本检测（jsDelivr → GitHub API → 302 探测）
+
+        /// <summary>
+        /// 获取最新 Release 快照（tag + 可能的清单）。按以下顺序兜底，首个成功即返回：
+        /// ① jsDelivr 多域名拉取仓库内 update-info.json（大陆友好、无限流，CDN 缓存延迟最长约 12 小时）；
+        /// ② GitHub Releases API（未认证 60 次/时/IP）；③ GitHub releases/latest 的 302 重定向探测。
+        /// 全部失败时抛出含各源错误明细的异常。
+        /// </summary>
+        public static async Task<ReleaseSnapshot> FetchLatestReleaseSnapshotAsync()
+        {
+            var errors = new List<string>();
+
+            foreach (var domain in JsDelivrDomains)
+            {
+                try
+                {
+                    var url = $"https://{domain}/gh/{RepoPath}@main/{UpdateInfoRelativePath}";
+                    var info = ParseUpdateInfo(await GetTextAsync(url, JsDelivrCheckTimeoutSeconds));
+                    if (info?.tag != null)
+                    {
+                        return new ReleaseSnapshot { Source = $"jsDelivr ({domain})", Tag = info.tag, Info = info };
+                    }
+
+                    errors.Add($"jsDelivr ({domain}): 响应中无 tag 字段");
+                }
+                catch (Exception e)
+                {
+                    errors.Add($"jsDelivr ({domain}): {e.Message}");
+                }
+            }
+
+            try
+            {
+                var json = await GetTextAsync(LatestReleaseApiUrl, GitHubCheckTimeoutSeconds);
+                var tag = ExtractJsonField(json, "tag_name");
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    return new ReleaseSnapshot { Source = "GitHub API", Tag = tag };
+                }
+
+                errors.Add("GitHub API: 响应中无 tag_name 字段");
+            }
+            catch (Exception e)
+            {
+                errors.Add($"GitHub API: {e.Message}");
+            }
+
+            try
+            {
+                var tag = await ProbeLatestTagFromRedirect();
+                if (tag != null)
+                {
+                    return new ReleaseSnapshot { Source = "GitHub 重定向", Tag = tag };
+                }
+
+                errors.Add("GitHub 重定向: Location 中未解析到 tag");
+            }
+            catch (Exception e)
+            {
+                errors.Add($"GitHub 重定向: {e.Message}");
+            }
+
+            throw new Exception("所有更新源均不可用：\n" + string.Join("\n", errors));
+        }
+
+        /// <summary>
+        /// 解析 update-info.json；内容为空或格式异常时返回 null（调用方按"源不可用"处理）。
+        /// </summary>
+        public static UpdateInfo ParseUpdateInfo(string json)
+        {
+            if (string.IsNullOrEmpty(json))
+            {
+                return null;
+            }
+
+            try
+            {
+                var info = JsonUtility.FromJson<UpdateInfo>(json);
+                return info?.tag != null || info?.version != null ? info : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 向 GitHub releases/latest 发起禁止重定向的 HEAD 请求，从 302 Location 中提取最新 tag。
+        /// 完全绕开 API 限流（该路径不走 api.github.com）。
+        /// </summary>
+        public static async Task<string> ProbeLatestTagFromRedirect()
+        {
+            using var request = UnityWebRequest.Head(LatestReleasePageUrl);
+            request.redirectLimit = 0;
+            request.timeout = GitHubCheckTimeoutSeconds;
+            var operation = request.SendWebRequest();
+            while (!operation.isDone)
+            {
+                await Task.Yield();
+            }
+
+            if (request.responseCode < 300 || request.responseCode >= 400)
+            {
+                throw new Exception($"预期 302 重定向，实际状态码 {request.responseCode}");
+            }
+
+            var location = request.GetResponseHeader("Location");
+            return ExtractTagFromLocation(location)
+                ?? throw new Exception($"Location 头中未解析到 tag: {location}");
+        }
+
+        /// <summary>
+        /// 从 releases/latest 重定向地址中提取 tag（如 .../releases/tag/v0.15.0 → v0.15.0）；
+        /// 不匹配返回 null。
+        /// </summary>
+        public static string ExtractTagFromLocation(string location)
+        {
+            if (string.IsNullOrEmpty(location))
+            {
+                return null;
+            }
+
+            var match = Regex.Match(location, @"releases/tag/([^/?#]+)");
+            return match.Success ? match.Groups[1].Value : null;
+        }
+
+        #endregion
+
         #region 网络下载
 
         /// <summary>GET 文本内容（UnityWebRequest，编辑器主线程异步等待）。</summary>
-        public static async Task<string> GetTextAsync(string url)
+        public static async Task<string> GetTextAsync(string url, int timeoutSeconds = 20)
         {
             using var request = UnityWebRequest.Get(url);
-            request.SetRequestHeader("Accept", "application/vnd.github+json");
-            request.timeout = 20;
+            request.timeout = timeoutSeconds;
             var operation = request.SendWebRequest();
             while (!operation.isDone)
             {
@@ -314,11 +487,12 @@ namespace Runestone.AesirArchitecture.Editor
             return request.downloadHandler.text;
         }
 
-        /// <summary>GET 二进制内容（用于下载 unitypackage / 清单资产），通过回调上报 0~1 下载进度。</summary>
-        public static async Task<byte[]> DownloadBytesAsync(string url, Action<float> onProgress = null)
+        /// <summary>GET 二进制内容（用于下载 unitypackage），通过回调上报 0~1 下载进度。</summary>
+        public static async Task<byte[]> DownloadBytesAsync(string url, Action<float> onProgress = null,
+            int timeoutSeconds = DownloadTimeoutSeconds)
         {
             using var request = UnityWebRequest.Get(url);
-            request.timeout = 120;
+            request.timeout = timeoutSeconds;
             var operation = request.SendWebRequest();
             while (!operation.isDone)
             {
@@ -335,40 +509,6 @@ namespace Runestone.AesirArchitecture.Editor
             return request.downloadHandler.data;
         }
 
-        /// <summary>拉取最新 Release 信息（版本号 + 全部资产下载地址）。</summary>
-        public static async Task<ReleaseInfo> FetchLatestReleaseAsync()
-        {
-            var json = await GetTextAsync(LatestReleaseApiUrl);
-            var release = JsonUtility.FromJson<ReleaseInfo>(json);
-            if (release == null || string.IsNullOrEmpty(release.tag_name))
-            {
-                throw new Exception("GitHub Releases 响应解析失败（tag_name 为空）");
-            }
-
-            return release;
-        }
-
-        #endregion
-
-        #region Release 资产定位
-
-        /// <summary>
-        /// 在 Release 资产中定位指定包目录对应的 unitypackage
-        /// （命名约定由 CI 保证：&lt;包目录名&gt;-v&lt;版本&gt;.unitypackage）。
-        /// </summary>
-        public static ReleaseAsset FindUnityPackageAsset(ReleaseInfo release, string dirName)
-        {
-            var prefix = dirName + "-v";
-            return release.assets?.FirstOrDefault(asset => asset != null
-                && asset.name != null
-                && asset.name.StartsWith(prefix, StringComparison.Ordinal)
-                && asset.name.EndsWith(UnityPackageAssetSuffix, StringComparison.Ordinal));
-        }
-
-        /// <summary>在 Release 资产中定位 files-manifest.json；缺失（旧版 Release）返回 null。</summary>
-        public static ReleaseAsset FindManifestAsset(ReleaseInfo release) =>
-            release.assets?.FirstOrDefault(asset => asset != null && asset.name == RemoteManifestAssetName);
-
         #endregion
 
         #region 清单与残留清理
@@ -376,7 +516,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>本地安装清单的项目相对路径。</summary>
         public static string StateFilePath => StateDirName + "/" + ManifestFileName;
 
-        /// <summary>解析清单 JSON；内容为空或格式异常时返回 null（调用方按"无记录"处理）。</summary>
+        /// <summary>解析本地清单 JSON；内容为空或格式异常时返回 null（调用方按"无记录"处理）。</summary>
         public static FilesManifest ParseFilesManifest(string json)
         {
             if (string.IsNullOrEmpty(json))
