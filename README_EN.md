@@ -21,8 +21,6 @@
 | **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + ⚠️ Experimental Event Module | `cn.runestone.aesir.modules` | `0.14.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
->
-> 📦 **Aesir Inspector has moved to a separate public repository** — repositioned as a learning toolkit specifically for [Odin Inspector](https://odininspector.com/) developers, no longer distributed with this repository.
 
 ---
 
@@ -98,7 +96,6 @@ Full documentation: [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Ru
 
 - **Aesir Architecture** — does NOT depend on any Aesir sub-package; can be installed standalone
 - **Aesir Modules** — depends on `cn.runestone.aesir.architecture`
-- **Aesir Inspector** — separate public repository, no longer distributed with this repository
 
 ---
 
@@ -258,6 +255,7 @@ See root [`LICENSE`](./LICENSE) for details.
 
 ---
 
-## 🔗 Links
+## 🔗 Recommended Links
 
-> - **Author homepage**: [yuumixcode](https://github.com/yuumixcode)
+- **Aesir Inspector** — separate public repository, a learning toolkit for [Odin Inspector](https://odininspector.com/) developers: [yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
+- **Author homepage**: [yuumixcode](https://github.com/yuumixcode)
