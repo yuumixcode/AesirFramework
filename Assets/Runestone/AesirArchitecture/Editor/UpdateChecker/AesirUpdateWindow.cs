@@ -10,11 +10,13 @@ namespace Runestone.AesirArchitecture.Editor
 {
     /// <summary>
     /// Aesir 包更新窗口 — 面向"代码导入 Assets/Runestone（非 UPM）"的用户，
-    /// 从 GitHub Releases 检查并一键更新本地安装的 Aesir 包。
+    /// 检查远程最新版本并一键更新本地安装的 Aesir 包。
     /// <para>
-    /// 流程：检查远程版本 → 下载对应 unitypackage（命名约定 &lt;包目录名&gt;-v&lt;版本&gt;.unitypackage）
-    /// → 自动备份 Assets/Runestone → 按清单差集清理残留 → 静默导入 → 逐包登记安装清单。
-    /// 实现参考 QFramework PackageKit 的更新链路，差异点见 <see cref="AesirUpdateService" /> 文档。
+    /// 版本检测面向大陆用户做多源兜底（jsDelivr 多域名 → GitHub API → 302 探测，见
+    /// <see cref="AesirUpdateService.FetchLatestReleaseSnapshotAsync" />）；unitypackage 一律从
+    /// GitHub Release 直链下载。流程：备份 Assets/Runestone → 按清单差集清理残留 → 静默导入 →
+    /// 逐包登记安装清单。实现参考 QFramework PackageKit 的更新链路，差异点见
+    /// <see cref="AesirUpdateService" /> 文档。
     /// </para>
     /// </summary>
     public class AesirUpdateWindow : EditorWindow
@@ -25,7 +27,7 @@ namespace Runestone.AesirArchitecture.Editor
         const string ProgressTitle = "Aesir 更新";
 
         List<AesirUpdateService.InstalledPackage> _packages = new();
-        AesirUpdateService.ReleaseInfo _release;
+        AesirUpdateService.ReleaseSnapshot _snapshot;
         bool _busy;
         string _status = "点击「检查更新」获取远程最新版本。";
 
@@ -90,7 +92,8 @@ namespace Runestone.AesirArchitecture.Editor
         {
             EditorGUILayout.HelpBox(
                 "更新范围：Assets/Runestone 下的本地安装（复制 / unitypackage 导入）。\n" +
-                "经 Package Manager（Git URL）安装的副本不在本工具管辖内，请使用 Package Manager 更新。",
+                "经 Package Manager（Git URL）安装的副本不在本工具管辖内，请使用 Package Manager 更新。\n" +
+                "版本检测经 CDN，最新发布最长约 12 小时后才会被检测到（可点「打开 Releases 页面」确认）。",
                 MessageType.Info);
 
             if (Directory.Exists(AesirUpdateService.ToAbsolutePath(".git")))
@@ -110,7 +113,7 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 EditorGUILayout.HelpBox(
                     $"未在 {AesirUpdateService.InstallRootRelativePath} 下扫描到 Aesir 包。" +
-                    "请先通过 Aesir Package Installer 安装，或确认安装目录正确。", MessageType.Warning);
+                    "请通过 GitHub Releases 导入 unitypackage 安装，或确认安装目录正确。", MessageType.Warning);
                 return;
             }
 
@@ -124,7 +127,7 @@ namespace Runestone.AesirArchitecture.Editor
                 EditorGUILayout.LabelField($"本地 v{pkg.Version}", GUILayout.Width(100));
                 EditorGUILayout.LabelField("→", GUILayout.Width(16));
 
-                if (_release == null)
+                if (_snapshot == null)
                 {
                     EditorGUILayout.LabelField("远程未检查", EditorStyles.miniLabel, GUILayout.Width(160));
                 }
@@ -160,7 +163,7 @@ namespace Runestone.AesirArchitecture.Editor
 
         #region 状态判定
 
-        string RemoteVersion => string.IsNullOrEmpty(_release?.tag_name) ? null : _release.tag_name;
+        string RemoteVersion => string.IsNullOrEmpty(_snapshot?.Tag) ? null : _snapshot.Tag;
 
         bool IsOutdated(AesirUpdateService.InstalledPackage pkg) =>
             RemoteVersion != null && AesirUpdateService.CompareVersion(pkg.Version, RemoteVersion) < 0;
@@ -184,15 +187,15 @@ namespace Runestone.AesirArchitecture.Editor
 
             try
             {
-                SetProgress("正在请求 GitHub Releases ...", 0.1f);
-                _release = await AesirUpdateService.FetchLatestReleaseAsync();
+                SetProgress("正在检测远程最新版本 ...", 0.1f);
+                _snapshot = await AesirUpdateService.FetchLatestReleaseSnapshotAsync();
                 Rescan();
-                _status = $"远程最新版本 {RemoteVersion}。";
-                Debug.Log($"[Aesir Updater] 远程最新版本 {RemoteVersion}");
+                _status = $"远程最新版本 {RemoteVersion}（来源：{_snapshot.Source}）。";
+                Debug.Log($"[Aesir Updater] 远程最新版本 {RemoteVersion}（来源：{_snapshot.Source}）");
             }
             catch (Exception e)
             {
-                _release = null;
+                _snapshot = null;
                 _status = "检查更新失败：" + e.Message;
                 Debug.LogWarning($"[Aesir Updater] {_status}\n{e}");
             }
@@ -207,7 +210,9 @@ namespace Runestone.AesirArchitecture.Editor
         #region 执行更新
 
         /// <summary>
-        /// 更新指定的包列表：备份 → 下载清单 → 逐包（下载 → 清残留 → 静默导入 → 登记清单）→ 刷新。
+        /// 更新指定的包列表：备份 → 逐包（下载 → 清残留 → 静默导入 → 登记清单）→ 刷新。
+        /// 检测结果 <see cref="AesirUpdateService.ReleaseSnapshot.Info" /> 同时承载新清单；
+        /// 302 重定向降级路径无清单，残留清理自动跳过。
         /// </summary>
         async void UpdatePackages(List<AesirUpdateService.InstalledPackage> targets)
         {
@@ -218,49 +223,40 @@ namespace Runestone.AesirArchitecture.Editor
 
             try
             {
-                var release = _release;
+                var snapshot = _snapshot;
 
                 // 1. 整体备份（一次，覆盖本次全部导入）
                 SetProgress("备份 Assets/Runestone ...", 0.05f);
                 var backupPath = AesirUpdateService.BackupRunestone(
                     $"{DateTime.Now:yyyyMMdd-HHmmss}_v{GetMaxLocalVersion()}");
 
-                // 2. 远程清单（旧版 Release 可能没有，缺失时跳过残留清理）
-                SetProgress("下载文件清单 ...", 0.1f);
-                var manifestAsset = AesirUpdateService.FindManifestAsset(release);
-                AesirUpdateService.FilesManifest remoteManifest = null;
-                if (manifestAsset != null)
-                {
-                    remoteManifest = AesirUpdateService.ParseFilesManifest(
-                        await AesirUpdateService.GetTextAsync(manifestAsset.browser_download_url));
-                }
-
                 var localManifest = AesirUpdateService.LoadLocalManifest();
 
-                // 3. 逐包下载导入（targets 已按依赖顺序排列）
+                // 2. 逐包下载导入（targets 已按依赖顺序排列）
                 for (var i = 0; i < targets.Count; i++)
                 {
                     var pkg = targets[i];
-                    var asset = AesirUpdateService.FindUnityPackageAsset(release, pkg.DirName)
-                        ?? throw new Exception($"Release {RemoteVersion} 中未找到 {pkg.DirName} 的 unitypackage");
+                    var assetUrl = snapshot.GetUnityPackageUrl(pkg.DirName);
+                    var assetName = $"{pkg.DirName}-v{snapshot.Tag.TrimStart('v')}.unitypackage";
 
-                    var progressBase = 0.15f + 0.7f * i / targets.Count;
-                    var progressSpan = 0.7f / targets.Count;
-                    SetProgress($"[{pkg.DirName}] 下载 {asset.name} ...", progressBase);
-                    var bytes = await AesirUpdateService.DownloadBytesAsync(asset.browser_download_url,
-                        p => SetProgress($"[{pkg.DirName}] 下载 {asset.name} ...", progressBase + progressSpan * p));
+                    var progressBase = 0.1f + 0.8f * i / targets.Count;
+                    var progressSpan = 0.8f / targets.Count;
+                    SetProgress($"[{pkg.DirName}] 下载 {assetName} ...", progressBase);
+                    var bytes = await AesirUpdateService.DownloadBytesAsync(assetUrl,
+                        p => SetProgress($"[{pkg.DirName}] 下载 {assetName} ...", progressBase + progressSpan * p));
 
                     var tempDir = AesirUpdateService.ToAbsolutePath("Temp/AesirUpdate");
                     Directory.CreateDirectory(tempDir);
-                    var tempFile = Path.Combine(tempDir, asset.name);
+                    var tempFile = Path.Combine(tempDir, assetName);
                     File.WriteAllBytes(tempFile, bytes);
 
-                    // 残留清理：仅当本地存在上次安装清单时有明确删除依据
-                    if (remoteManifest != null)
+                    // 残留清理：仅当本次检测带清单且本地存在上次安装清单时有明确删除依据
+                    var newEntry = snapshot.Info?.GetPackage(pkg.DirName);
+                    if (newEntry != null)
                     {
                         var stale = AesirUpdateService.ComputeStaleFiles(
                             localManifest?.GetPackage(pkg.DirName)?.files,
-                            remoteManifest.GetPackage(pkg.DirName)?.files,
+                            newEntry.files,
                             pkg.AssetsPath);
                         var deleted = AesirUpdateService.DeleteStaleEntries(stale);
                         AesirUpdateService.PruneEmptyDirectories(pkg.AssetsPath);
@@ -270,14 +266,14 @@ namespace Runestone.AesirArchitecture.Editor
                         }
                     }
 
-                    SetProgress($"[{pkg.DirName}] 导入 {asset.name} ...", progressBase + progressSpan * 0.95f);
+                    SetProgress($"[{pkg.DirName}] 导入 {assetName} ...", progressBase + progressSpan * 0.95f);
                     AssetDatabase.ImportPackage(tempFile, false);
                     File.Delete(tempFile);
 
-                    // 4. 逐包登记新清单：更新中途域重载时，已导入包的状态保证正确落盘
-                    if (remoteManifest?.GetPackage(pkg.DirName) is { } entry)
+                    // 3. 逐包登记新清单：更新中途域重载时，已导入包的状态保证正确落盘
+                    if (newEntry != null)
                     {
-                        localManifest = AesirUpdateService.MergePackageEntry(localManifest, entry);
+                        localManifest = AesirUpdateService.MergePackageEntry(localManifest, newEntry);
                         AesirUpdateService.SaveLocalManifest(localManifest);
                     }
                 }
