@@ -165,14 +165,14 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <param name="key">要移除的键。</param>
         /// <returns>找到并移除返回 <c>true</c>；键不存在时不触发事件，返回 <c>false</c>。</returns>
+        /// <remarks>使用 <see cref="Dictionary{TKey, TValue}.Remove(TKey, out TValue)" /> 在移除的同时取回旧值，单次哈希查找。</remarks>
         public bool Remove(TKey key)
         {
-            if (!dictionary.TryGetValue(key, out TValue value))
+            if (!dictionary.Remove(key, out TValue value))
             {
                 return false;
             }
 
-            dictionary.Remove(key);
             _removedEvent.Invoke(new KeyValuePair<TKey, TValue>(key, value));
             return true;
         }
@@ -182,7 +182,7 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <param name="item">要移除的键值对。</param>
         /// <returns>找到并移除返回 <c>true</c>；未匹配时不触发事件，返回 <c>false</c>。</returns>
-        /// <remarks>不复用 <see cref="Remove(TKey)" />，验证值相等后直接移除，省去一次冗余哈希查找。</remarks>
+        /// <remarks>不复用 <see cref="Remove(TKey)" />——其按键删除不校验值；此处先验证键值对完全匹配再移除，避免误删同键不同值。</remarks>
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
             if (!dictionary.TryGetValue(item.Key, out TValue value) ||
