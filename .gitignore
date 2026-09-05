@@ -113,13 +113,12 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
 # 团结引擎 AI Codely 本地工具链
-# 入库：Codely Bridge 包缓存 + TJGenerators 扩展（与 Bridge 强绑定）+ CLI MCP 配置，保证克隆后与本地一致
-# 忽略：其余扩展、Skill、UnityInsight 索引缓存、自动保存、工具输出、剪贴板等运行时数据
+# 入库：Codely Bridge 包缓存 + TJGenerators 扩展（与 Bridge 强绑定），保证克隆后功能一致
+# 忽略：CLI 设置（应用自动重写，易变）、其余扩展、Skill、UnityInsight 索引缓存、自动保存、工具输出、剪贴板等运行时数据
 .codely-cli/*
 !.codely-cli/extensions
 .codely-cli/extensions/*
 !.codely-cli/extensions/TJGenerators
-!.codely-cli/settings.json
 .codely/
 .codelyignore
 .com-unity-codely.json
