@@ -260,7 +260,7 @@ Runtime/Events/                    # 汇入核心运行时程序集（层根锚�
 - **启动场景（Bootstrap）** — 按预设名称（`Bootstrap` / `Bootstrapper` 等）或自定义 `SceneAssetWrapper` 引用自动发现启动场景，并确保其在构建场景列表中序号为 0、优先加载
 - **场景加载** — `LoadSceneSingle` 单模式加载、`LoadSceneAdditive` 叠加加载（纯叠加追踪，`AddedScenePaths` / `LastLoadedScene` / `GetTotalLoadingProgress`）；均支持路径或 `SceneAssetWrapper` 重载与完成/失败回调
 - **场景卸载** — `UnloadScene` 按路径或引用卸载、`UnloadAllAddedScenes` 批量回收、`ReloadScene` 异步重载当前场景
-- **`SceneAssetWrapper`** — 可序列化场景引用：GUID 锚点自愈、状态机校验（`State` / `UnsafeReason`）、`TryGet` 安全读取家族；安装 Addressables 时自动扩展地址查询能力（经胶水程序集条件编译，未安装时相关功能自动隐藏）
+- **`SceneAssetWrapper`** — 可序列化场景引用：GUID 锚点自愈、状态机校验（`State` / `UnsafeReason`）、`TryGet` 安全读取家族；安装 Addressables 时自动扩展地址查询能力（经胶水程序集条件编译，未安装时相关功能自动隐藏）。功能设计参考 [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
 - **编辑器配套** — `SceneManagerWindow` 场景管理窗口；`BootstrapSceneHelper` 自动/手动搜集 Bootstrapper 场景并注册进 Build Settings
 
 ### 目录结构
