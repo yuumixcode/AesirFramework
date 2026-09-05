@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
-[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
+[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
 >
@@ -236,10 +236,11 @@ this.ExecuteCommand<AddScoreCommand>();
 cn.runestone.aesir.architecture/
 ├── package.json
 ├── README.md                       # 本文件（中文）
-├── Documentation~/
+├── Documentation/                  # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
 │   ├── README_EN.md               # English version
 │   ├── 事件机制决策表.md            # 四种通知机制的场景决策表
 │   └── 常见陷阱清单.md              # 10 条初学者高频陷阱与修法
+├── Documentation~/                 # 文档镜像（Git URL 安装隐藏副本，无 .meta）
 ├── CHANGELOG.md
 ├── LICENSE.md
 ├── Third Party Notices.md

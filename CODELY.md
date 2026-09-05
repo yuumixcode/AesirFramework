@@ -109,6 +109,23 @@
 - **写入纪律档位** — 快捷/标准档表现层可直写 Model；标准档起表现层写入必经 Command；严格档只读 + 写方法；Service 可直写
 - **示例不进构建包** — Samples 程序集一律 Editor-only（见 Samples 双目录结构节）
 
+### Documentation 双目录结构（0.14.0 起）
+
+- **`Documentation/`（编写主位）** — Assets 中可见、随 unitypackage 导出；两包各一份，存放 README_EN、教学文档、LICENSE/Third Party Notices 与 AesirArchitecture-Skill（AI 编码指南）
+- **`Documentation~/`（UPM 镜像）** — Git URL 安装时包内的隐藏副本；内容无 .meta（UPM 不导入它），由 `Documentation/` 同步而来（同步时排除 .meta 与 .DS_Store）
+- **同步方向** — 先编写 `Documentation/`，再同步到 `Documentation~/`
+- **构建剔除** — Markdown 经 Unity 导入为 TextAsset，但无任何场景/资产引用，玩家构建自动排除；约定该目录只放文档，不放会被引用的资产
+- **双目录动因** — 与 Samples 同理：`~` 目录对 AssetDatabase 不可见、不进 unitypackage，而 Release 下载与包内更新器的用户同样需要随包文档
+
+### 包内更新器（Editor）
+
+- **`AesirUpdateService` / `AesirUpdateWindow`** — 位于 `Editor/UpdateChecker/`（`Runestone.AesirArchitecture.Editor` 程序集），菜单 `Tools/Aesir/Check for Updates`
+- 面向"代码导入 Assets/Runestone（非 UPM）"的用户：扫描 `Assets/Runestone/*/package.json` 识别本地安装，与 GitHub Releases 最新版（`releases/latest` API，仅点击时调用）比对版本
+- 更新流程：下载 `<包目录名>-v<版本>.unitypackage`（Release 资产命名约定）→ 自动备份 `Assets/Runestone` 到项目根 `.aesir-backup/`（时间戳前缀命名保证排序即时间序，保留最近 3 份）→ 按"上次安装清单 − 新版清单"差集删除残留条目（仅限本包目录内，无历史清单则跳过，不误伤用户新增文件）→ `AssetDatabase.ImportPackage` 静默导入 → 逐包合并登记 `.aesir/installed-manifest.json`（更新中途域重载时已导入包的状态保证正确落盘）
+- Release 资产 `files-manifest.json` 由 CI `build_unitypackage.py --manifest` 生成（数组结构，兼容 JsonUtility），随 unitypackage 一起发布；清单含目录条目，供空目录回收
+- 设计边界：UPM（Git URL）安装的副本不在管辖内（不在 Assets 下，扫描不到），请用 Package Manager 更新；开发仓库（存在 `.git`）窗口显示警告勿更新——Release 内容会覆盖本地源码；实现参考 QFramework PackageKit（版本记录随包走 + 先删后导），增强点为自动备份与精确差集清理
+- EditMode 单测：`Tests/Editor/AesirUpdateServiceTests.cs`（版本比较 / package.json 解析 / 清单差集 / 残留删除与空目录回收 / 备份裁剪 / 清单 JSON / Release 资产定位）
+
 ### Odin Inspector 集成
 
 - 通过 `ODIN_INSPECTOR` 定义符号条件编译
@@ -177,7 +194,7 @@
 | `Runestone.AesirArchitecture.Editor` | Editor/ | 编辑器（含 QuickCreateSOMenuItem、EnsureAesirArchitectureDefine） |
 | `Runestone.AesirArchitecture.Editor.OdinInspector` | Editor/OdinInspector/ | ODIN_INSPECTOR |
 | `Runestone.AesirArchitecture.Tests` | Tests/Runtime/ | PlayMode 测试（MonoLifecycleProxy 快照语义等） |
-| `Runestone.AesirArchitecture.Tests.Editor` | Tests/Editor/ | EditMode 测试（42 个） |
+| `Runestone.AesirArchitecture.Tests.Editor` | Tests/Editor/ | EditMode 测试（83 个） |
 | `Runestone.AesirArchitecture.Samples.MvcQuick` | Samples/Counter-Mvc-Quick/Scripts/ | Editor-only |
 | `Runestone.AesirArchitecture.Samples.MvcStandard` | Samples/Counter-Mvc-Standard/Scripts/ | Editor-only |
 | `Runestone.AesirArchitecture.Samples.MvcStrict` | Samples/Counter-Mvc-Strict/Scripts/ | Editor-only |
@@ -276,11 +293,12 @@ AesirFramework/
 │   │   │   │   ├── Modules/           # Event(MiniEvent) / CustomLifecycle(MonoLifecycleProxy) / Locator / Observable / Utilities
 │   │   │   │   ├── Common/            # AesirArchitecture 单例、Debug、ResetStaticsAssistant
 │   │   │   │   └── OdinInspector/     # 独立程序集（ODIN_INSPECTOR）
-│   │   │   ├── Editor/                # 定义符号管理、QuickCreateSO、Odin AttributeProcessors
+│   │   │   ├── Editor/                # 定义符号管理、QuickCreateSO、包内更新器、Odin AttributeProcessors
 │   │   │   ├── Tests/                 # Editor 42 个 + Runtime PlayMode 测试
 │   │   │   ├── Samples/               # 示例（编写主位，9 个，构建剔除）
 │   │   │   ├── Samples~/              # 示例发布镜像（Package Manager 按需导入）
-│   │   │   └── Documentation~/        # README_EN、AesirArchitecture-Skill（AI 编码指南）
+│   │   │   ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
+│   │   │   └── Documentation~/        # 文档镜像（Git URL 安装隐藏副本，无 .meta）
 │   │   └── AesirModules/              # 功能模块
 │   │       ├── Runtime/
 │   │       │   ├── Common/            # AesirModules 单例、调试
@@ -290,7 +308,9 @@ AesirFramework/
 │   │       │   └── OdinInspector/     # Binder 全家桶（ODIN_INSPECTOR）
 │   │       ├── Editor/                # 场景编辑器窗口、Odin 集成、UI 菜单项
 │   │       ├── Samples/               # 示例（编写主位，Events/01_KeyPress）
-│   │       └── Samples~/              # 示例发布镜像
+│   │       ├── Samples~/              # 示例发布镜像
+│   │       ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出）
+│   │       └── Documentation~/        # 文档镜像（无 .meta）
 │   ├── Scenes/                        # SampleScene
 │   ├── Settings/                      # URP 资源（UniversalRP, Renderer2D）
 │   └── Plugins/Sirenix/               # Odin Inspector（已 gitignore）
@@ -444,6 +464,7 @@ undefined
 - [2026-09-05 15:27:22] [project] AesirFramework 0.14.0 仓库重构完成（2026-09-05，commit 3721b57/8e16afd/559fbe3/f070b84 已推送）：①GitHub 仓库已改名 AesirFramework（本地 remote URL 已同步更新），AesirInspector 迁出为独立公开仓库（定位：Odin Inspector 开发者学习工具包），AESIR_INSPECTOR 宏已从 ProjectSettings 全平台清除。②Samples 双目录规范：包内 Samples/ 为编写主位（直接可见可运行）、Samples~/ 为发布镜像，同步方向 Samples/ → Samples~/（cp -R 含 .meta）；全部 11 个示例 asmdef includePlatforms=["Editor"]（构建剔除）；命名空间 Runestone.AesirArchitecture.Samples.<示例名>（PlaneWar 用 PlaneWarMono），**例外：MiniEvent 与 ObservableValue 示例保留前缀 Runestone.AesirArchitecture.Samples（命名空间段与所演示框架类型同名会 CS0118）**。③分支策略：CI（auto-publish-branches.yml）在 main 推送时 subtree split 生成 AesirArchitecture-v0.14.0 / AesirModules-v0.14.0，旧版本分支随发版删除（6 个旧分支已删）。④manifest.json 已无本地 file: 引用——本机下次打开 Unity 时 Bridge/TJGenerators 包会被卸载，需重新启用 Codely 扩展或手动加回两行。验证基线：batchmode 编译 0 错误、EditMode 67/67 通过、248 个场景/预制体脚本 GUID 零缺失。**How to apply:** 后续发版按此流程（版本号→CI 建分支→删旧分支）；新示例一律 Samples/ 主位 + Editor-only asmdef + 规范命名空间；MiniEvent/ObservableValue 后缀例外勿"修正"。
 - [2026-09-05 15:52:04] [project] 两个容易漏的发版同步点（2026-09-05 发现）：①`Assets/Scripts/Editor/AesirPackageInstaller/AesirPackageInstaller.cs` 的 `s_packages` 硬编码版本常量（0.14.0）与 GitRepoUrl，发版需手动同步，否则工具"验证安装"报版本不符（Exporter 无此问题，运行时读 package.json）；该目录是仓库本地编辑器工具，不在两包内。②包内 `Documentation~/README_EN.md` 与中文包 README 靠人工保持同步，本轮发现整体过期（徽章停在 0.13.0、Modules 版整章事件模块缺失），已全部同步至 0.14.0。**Why:** 两处都不在 aesir-version-sync skill 覆盖的清单（package.json/CHANGELOG/根 README）内，改名/发版时易遗漏。**How to apply:** 下次发版把 installer 版本常量纳入同步清单；改中文包 README 时同步对应英文版。
 - [2026-09-05 16:20:30] [project] unitypackage 导出方案定稿(2026-09-05 用户裁决"更能满足需求者胜出,弃用另一方案"):实测 Guardingpearsoftware/public-unity-package-exporter(.NET 8 CLI,Lachee fork)后**弃用**——其纯文件级打包不识别本仓库结构:①Samples/ 与 Samples~/ 同 GUID 导致 tar 内 84 对重复 GUID 条目(导入哪个 pathname 不可控);②Documentation~ 等无 .meta 文件被打包且生成全零 GUID 假 meta;③不支持文件夹条目(文件夹 meta 全丢);④glob `**.*` 语义怪异会匹配目录。机制层面它本身满足无-Odin 铁律(纯字节复制、defineConstraints 保留、-r Assets/Runestone 限定后无 Sirenix)。**选定** `.github/scripts/build_unitypackage.py`(配合 auto-release.yml 出 RAA/RAM/RAF 三包),本地实测 253/72/325 条目全通过:零缺失、字节一致、无重复 GUID、无 ~/点路径、无 Sirenix/Plugins、文件夹条目保留、4 处 ODIN_INSPECTOR defineConstraints 原样。**How to apply:** 后续导出/发版一律走 build_unitypackage.py;勿再引入该 CLI 工具或重新评估。
+- [2026-09-05 16:39:28] [project] 包内更新器（Aesir Updater）已实现（2026-09-05）：位于 AesirArchitecture/Editor/UpdateChecker/（Runestone.AesirArchitecture.Editor 程序集），菜单 Tools/Aesir/Check for Updates。机制（参考 QF PackageKit"版本记录随包走+先删后导"，增强=自动备份+精确差集）：扫描 Assets/Runestone/*/package.json → GitHub API releases/latest（tag_name+资产）→ 下载 <包目录名>-v<版本>.unitypackage → 备份 Assets/Runestone 到项目根 .aesir-backup/（时间戳前缀命名，保留 3 份）→ 按"上次 .aesir/installed-manifest.json − 新版 files-manifest.json"差集删残留（仅限本包目录，无历史清单跳过）→ ImportPackage 静默导入 → 逐包合并登记清单（域重载中断安全）。CI 侧 auto-release.yml 现发布 3 个 unitypackage + dist/files-manifest.json（build_unitypackage.py --manifest，数组结构兼容 JsonUtility，本地验证 253/72 条目与基线一致）。**Why:** 用户需求"Assets 导入（代码可改）无法走 Git URL 更新"，需 QF 式按钮。**How to apply:** ①开发仓库（有 .git）切勿点更新（Release 会覆盖本地源码，窗口已有警告）②真实导入 E2E 未实测（不可拿 Release 覆盖开发仓库），待下个 Release 后在测试项目验证 ③Release 命名约定 <包目录名>-v<版本>.unitypackage 是更新器资产定位依据，CI 改名会破坏更新 ④EditMode 测试 67→83（新增 AesirUpdateServiceTests 16 个）。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。

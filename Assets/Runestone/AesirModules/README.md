@@ -6,7 +6,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 [![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
-[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
+[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
 > - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.14.0`）
@@ -114,7 +114,7 @@ Editor/
     └── UICanvasConfigSOAttributeProcessor.cs
 ```
 
-详细文档见 [Documentation~/ui-module-manual.md](Documentation~/ui-module-manual.md)。
+详细文档见 [Documentation/ui-module-manual.md](Documentation/ui-module-manual.md)。
 
 ## 事件模块
 
@@ -226,7 +226,7 @@ Runtime/Events/
 └── SubscriberPriority.cs          # 优先级枚举（5 档）
 ```
 
-详细文档见 [Documentation~/event-module.md](Documentation~/event-module.md)。
+详细文档见 [Documentation/event-module.md](Documentation/event-module.md)。
 
 ## 示例
 

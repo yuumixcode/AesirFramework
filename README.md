@@ -71,7 +71,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 2. **极简边界** — 不做事件总线、Context 多实例、Command 池化 / async / Undo；低概率问题用文档约定与编辑期提示（InfoBox）杜绝，不加运行时防御兜底
 3. **样式与逻辑分离** — Inspector 呈现全部经 Odin AttributeProcessor 动态注入，运行时程序集零样式特性
 
-完整文档见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md)（English）。
+完整文档见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md)（English）。
 
 ---
 
@@ -158,7 +158,7 @@ public class CounterContext : AbstractContext<CounterContext>
 
 View 订阅刷新、Controller 发布 Command 的完整三课路径，见包内 README 与 6 个计数器示例（Package Manager → Samples）。
 
-完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md)（English）。
+完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md)（English）。
 
 ### Aesir Modules — 一个 `Show<T>()` 打开面板
 
@@ -170,7 +170,7 @@ UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "确�
 
 UI 框架提供 Manager-of-Managers 单例、四层 Canvas 层级（`UILayer`）、面板生命周期（激活 → 停用缓存 → 销毁）与可插拔资源加载器（默认 Resources，可换 Addressables）。
 
-完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirModules/Documentation~/README_EN.md)（English）。
+完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirModules/Documentation/README_EN.md)（English）。
 
 ---
 
@@ -192,13 +192,15 @@ AesirFramework/                            # 你现在看到的仓库
     │   ├── Runtime/  Editor/  Tests/
     │   ├── Samples/                       # 示例（仓库内直接可见可运行）
     │   ├── Samples~/                      # 示例源（Git URL 安装后按需导入）
-    │   ├── Documentation~/
+    │   ├── Documentation/                 # 文档主位（Assets 可见、随 unitypackage 导出）
+    │   ├── Documentation~/                # 文档镜像（Git URL 安装隐藏副本）
     │   └── README.md  CHANGELOG.md  package.json
     └── AesirModules/                      # 依赖 Architecture
         ├── Runtime/  Editor/
         ├── Samples/                       # 示例（仓库内直接可见可运行）
         ├── Samples~/                      # 示例源（Git URL 安装后按需导入）
-        ├── Documentation~/
+        ├── Documentation/                 # 文档主位（Assets 可见、随 unitypackage 导出）
+        ├── Documentation~/                # 文档镜像（Git URL 安装隐藏副本）
         └── README.md  CHANGELOG.md  package.json
 ```
 

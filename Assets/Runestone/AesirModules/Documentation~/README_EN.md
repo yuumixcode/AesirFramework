@@ -114,7 +114,7 @@ Editor/
     └── UICanvasConfigSOAttributeProcessor.cs
 ```
 
-Detailed docs: [Documentation~/ui-module-manual.md](Documentation~/ui-module-manual.md).
+Detailed docs: [Documentation/ui-module-manual.md](Documentation/ui-module-manual.md).
 
 ## Event Module
 
@@ -226,7 +226,7 @@ Runtime/Events/
 └── SubscriberPriority.cs          # Priority enum (5 levels)
 ```
 
-Detailed docs: [Documentation~/event-module.md](Documentation~/event-module.md).
+Detailed docs: [Documentation/event-module.md](Documentation/event-module.md).
 
 ## Samples
 

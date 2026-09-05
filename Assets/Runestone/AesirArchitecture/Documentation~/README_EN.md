@@ -236,7 +236,7 @@ The package provides 9 importable samples (Package Manager → Aesir Architectur
 cn.runestone.aesir.architecture/
 ├── package.json
 ├── README.md                       # Chinese
-├── Documentation~/
+├── Documentation/
 │   ├── README_EN.md               # This file
 │   ├── 事件机制决策表.md            # Event mechanism decision table (Chinese)
 │   └── 常见陷阱清单.md              # Common pitfalls checklist (Chinese)
