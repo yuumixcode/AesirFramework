@@ -206,19 +206,19 @@
 | `Runestone.AesirArchitecture.Samples.PlaneWarMono` | Samples/PlaneWar/Scripts/Mono/ | Editor-only |
 | `Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor` | Samples/PlaneWar/Editor/ | 场景引用一键修复菜单 |
 
-### Aesir Modules（8 个 asmdef + 9 个 asmref）
+### Aesir Modules（8 个 asmdef + 4 个 asmref）
 
-> 功能模块（UI / Scene / Events）单文件夹自治：仅含 `Runtime/` 与 `Editor/` 两个次级目录，模块间零依赖，删除模块文件夹即完整移除。常驻程序集 asmdef 锚点集中在 `Common/`，模块代码经 Assembly Definition Reference（asmref）汇入。
+> 标准 Unity 自定义包根结构：包根两级目录 `Runtime/` 与 `Editor/`，功能模块以子目录形式存在于对应层级（如 `Runtime/UI/`、`Editor/UI/`），模块间零依赖；删除模块 = 删 `Runtime/<模块>/` 与 `Editor/<模块>/`。核心程序集锚点在层根，层内模块主代码自动汇入；细分程序集锚点在 `Common/` 下，模块专属代码（`OdinInspector/`、`Addressables/` 子目录）经 Assembly Definition Reference（asmref）汇入。
 
 | 程序集 | 锚点路径 | 说明 |
 |--------|------|------|
-| `Runestone.AesirModules` | Common/Runtime/ | 核心运行时锚点（引用 AesirArchitecture）；各模块 Runtime/ 经 asmref 汇入 |
-| `Runestone.AesirModules.OdinInspector` | Common/Runtime/OdinInspector/ | Binder 全家桶（ODIN_INSPECTOR）；UI/Runtime/OdinInspector/ 经 asmref 汇入 |
-| `Runestone.AesirModules.Editor` | Common/Editor/ | 核心编辑器锚点；各模块 Editor/ 经 asmref 汇入 |
-| `Runestone.AesirModules.Editor.OdinInspector` | Common/Editor/OdinInspector/ | Odin 处理器（ODIN_INSPECTOR）；UI、Scene 的 Editor/OdinInspector/ 经 asmref 汇入 |
-| `Runestone.AesirModules.Editor.Addressables` | Common/Editor/Addressables/ | Addressables 胶水（AESIR_MODULES_ADDRESSABLES）；Scene/Editor/Addressables/ 经 asmref 汇入 |
-| `Runestone.AesirModules.InputSystem` | UI/Runtime/InputSystem/ | UIRoot 输入模块替换（ENABLE_INPUT_SYSTEM，独立可选） |
-| `Runestone.AesirModules.Scene.Tests` | Scene/Editor/Tests/ | Scene 模块 EditMode 测试（UNITY_INCLUDE_TESTS） |
+| `Runestone.AesirModules` | Runtime/（层根） | 核心运行时锚点（引用 AesirArchitecture）；Common/UI/Scene/Events 主代码自动汇入 |
+| `Runestone.AesirModules.OdinInspector` | Runtime/Common/OdinInspector/ | Binder 全家桶（ODIN_INSPECTOR）；Runtime/UI/OdinInspector/ 经 asmref 汇入 |
+| `Runestone.AesirModules.Editor` | Editor/（层根） | 核心编辑器锚点；Common/UI/Scene 编辑器代码自动汇入 |
+| `Runestone.AesirModules.Editor.OdinInspector` | Editor/Common/OdinInspector/ | Odin 处理器（ODIN_INSPECTOR）；Editor/UI、Editor/Scene 的 OdinInspector/ 经 asmref 汇入 |
+| `Runestone.AesirModules.Editor.Addressables` | Editor/Common/Addressables/ | Addressables 胶水（AESIR_MODULES_ADDRESSABLES）；Editor/Scene/Addressables/ 经 asmref 汇入 |
+| `Runestone.AesirModules.InputSystem` | Runtime/UI/InputSystem/ | UIRoot 输入模块替换（ENABLE_INPUT_SYSTEM，独立可选） |
+| `Runestone.AesirModules.Scene.Tests` | Editor/Scene/Tests/ | Scene 模块 EditMode 测试（UNITY_INCLUDE_TESTS） |
 | `Runestone.AesirModules.Samples.Events.KeyPress` | Samples/Events/01_KeyPress/ | Editor-only |
 
 ---
@@ -303,11 +303,16 @@ AesirFramework/
 │   │   │   ├── Samples~/              # 示例发布镜像（Package Manager 按需导入）
 │   │   │   ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
 │   │   │   └── Documentation~/        # 文档镜像（Git URL 安装隐藏副本，无 .meta）
-│   │   └── AesirModules/              # 功能模块（模块单文件夹自治，模块间零依赖）
-│   │       ├── Common/                # 共享基础 + 常驻程序集锚点（Runtime/Editor + OdinInspector/Addressables）
-│   │       ├── UI/                    # UI 模块（Runtime/ + Editor/；Binder 在 Runtime/OdinInspector/、InputSystem 独立程序集）
-│   │       ├── Scene/                 # Scene 模块（Runtime/ + Editor/；Odin Processor、Addressables 胶水、Tests 经 asmref/asmdef）
-│   │       ├── Events/                # 实验性事件模块（Runtime/）
+│   │   └── AesirModules/              # 功能模块（标准包根结构，模块间零依赖）
+│   │       ├── Runtime/               # 核心运行时锚点（Runestone.AesirModules.asmdef）
+│   │       │   ├── Common/            # 共享基础 + Odin 运行时锚点（OdinInspector/）
+│   │       │   ├── UI/                # UIModule、UIRoot 等（InputSystem/ 独立程序集、OdinInspector/ Binder 经 asmref）
+│   │       │   ├── Scene/             # SceneModule、SceneAssetWrapper（含 Exceptions/）
+│   │       │   └── Events/            # 实验性事件模块（含 Component/）
+│   │       ├── Editor/                # 核心编辑器锚点（Runestone.AesirModules.Editor.asmdef）
+│   │       │   ├── Common/            # Odin 编辑器锚点（OdinInspector/）+ Addressables 胶水锚点（Addressables/）
+│   │       │   ├── UI/                # UI 菜单项（OdinInspector/ Processor 经 asmref）
+│   │       │   └── Scene/             # 场景编辑器窗口（Tests/ 测试程序集、OdinInspector/、Addressables/ 经 asmref/asmdef）
 │   │       ├── Samples/               # 示例（编写主位，Events/01_KeyPress）
 │   │       ├── Samples~/              # 示例发布镜像
 │   │       ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出）
@@ -478,6 +483,8 @@ undefined
 - [2026-09-05 22:52:22] [project] Docs/（Aesir-Docs 私有仓库）已按包重组并归档（2026-09-05，commit 0e2a4dd）：活跃文档按包归类——AesirArchitecture/（RAA-Course、Unity-RuntimeInitializeOnLoadMethod-指南、DI容器调研[仍未 git 提交]）、AesirModules/EventModule/；跨包 Auto-Publish-Branches.md 留根；Analysis/ 与 TaskReports/ 目录撤销，10 篇归档入 Archive/2026-09-v0.15.0/（含 Inspector 迁出后失效的 JakePineOdinTools×4 + Summary-Feature-Replacement-Plan）；新增 Docs/README.md 索引；Auto-Publish-Branches.md 已对齐当前 CI（2 包、版本分支 AesirArchitecture-v0.15.0 式命名、AesirFramework 仓库 URL）。**Why:** Inspector 迁出后仓库只有两包，文档按包格局重组。**How to apply:** 旧记忆/CODELY.md 正文引用的 Docs/EventModule/、Docs/RAA-Course/、Docs/Analysis/ 路径均已失效，新路径为 Docs/AesirModules/EventModule/、Docs/AesirArchitecture/RAA-Course/；CODELY.md 正文"事件模块"节的 Docs/EventModule/ 引用需用户手动更新；Docs 仓库提交风格为 docs: 中文单行主题。
 - [2026-09-05 23:30:19] [project] RAM Scene 模块重构完成（2026-09-05，Eflatun.SceneReference 功能吸收，未发版）：SceneAssetWrapper ≈ SceneReference+Odin——新增 GUID 锚点自愈（sceneGuid 序列化字段+EditorSyncFromAsset）、State/UnsafeReason 状态机、TryGet 家族、专用异常族（SceneAssetWrapperException 基类+Empty/Creation/NotAddressable/SupportDisabled）、FromScenePath/FromAsset(编辑器) 工厂、Address 序列化缓存与 AddressablesSupportEnabled；Addressables 条件架构=核心 asmdef versionDefines 设 AESIR_MODULES_ADDRESSABLES + 独立胶水程序集 Runestone.AesirModules.Editor.Addressables（defineConstraints 排除，经 SceneAssetWrapperAddressablesBridge 静态委托桥注册 GetAddress/MakeAddressable）；SceneModule 修复全部 P0 语义 bug；新增 Tests/Editor 程序集 27 用例（自适应装/不装 Addressables）。**Why:** 用户要求吸收 Eflatun 有用功能、支持 Addressables 且遵循最小惊讶原则、缺失依赖时"不报错而是不编译"。**How to apply:** 下次发版 CHANGELOG 必须写破坏性变更清单——①删 AddScene/UnloadAddedScene(+WithWrapper 变体)，统一 LoadSceneAdditive 纯叠加追踪；②*WithSceneAssetWrapper 6 方法改为同名重载；③ReloadScene 同步→异步(带回调)；④ScenePath/Guid/SceneName/BuildIndex/LoadedScene 空引用由返回空值改为抛 EmptySceneAssetWrapperException；⑤LoadSceneAdditive 不再卸载上个场景、Additive 不再抢激活场景；⑥加载失败新增 onFailed 回调。
 - [2026-09-05 23:30:33] [project] 条件编译方案三态实测结论（2026-09-05，团结引擎 2022.3.62）：①asmdef defineConstraints 不满足时会先排除程序集再解析 references——胶水程序集用 **name 引用** Unity.Addressables.Editor + defineConstraints [AESIR_MODULES_ADDRESSABLES]（versionDefines 由 com.unity.addressables 任意版本触发），装/卸包双向实测 0 编译错误（Eflatun 用的是 GUID 引用+整文件 #if，两者皆可行）；②versionDefines 声明在核心 asmdef 与胶水 asmdef 各放一份（belt-and-braces，Unity 对宏是否全局可见无需依赖单一声明位置）；③**坑：安装 Addressables 后 Odin Inspector 会自动生成 Assets/Plugins/Sirenix/Odin Inspector/Modules/Unity.Addressables/ 模块（硬引用无守卫），卸包后 Odin 不会主动撤走 → 42 个 CS0234 编译错误**——需手动删除该模块文件夹（.data/.info.txt 注册表文件保留，Odin 装包时会自动重新导入）；④Unity 包 resolve 会把 manifest.json 中 file: 本地引用重排到列表头部，checkout 恢复即可。**Why:** 卸包验证时踩中 Odin 模块残留与 manifest 重排两个非预期变更。**How to apply:** 装卸 Addressables 做验证时：装→跑测试→卸→删 Odin 模块文件夹→refresh→checkout manifest.json；任何"可选包集成"用 defineConstraints+独立程序集方案可放心用 name 引用。
+- [2026-09-06 01:11:40] [project] RAM 功能模块结构重组完成（2026-09-06，commit 49b9e76 + 标准包根二次调整，未发版）：**标准 Unity 自定义包根结构**——包根两级目录 `Runtime/` 与 `Editor/`，功能模块以子目录存在于对应层级（`Runtime/UI/`、`Editor/UI/`），模块间零依赖；删除模块 = 删 `Runtime/<模块>/` 与 `Editor/<模块>/`。核心程序集锚点在层根（`Runtime/Runestone.AesirModules.asmdef`、`Editor/Runestone.AesirModules.Editor.asmdef`），层内模块主代码自动汇入无需 asmref；细分程序集锚点在 `Common/` 下（Odin 运行时 `Runtime/Common/OdinInspector/`、Odin 编辑器 `Editor/Common/OdinInspector/`、Addressables 胶水 `Editor/Common/Addressables/`），模块专属代码放各自 `OdinInspector/`、`Addressables/` 子目录经 4 个 asmref 汇入；Scene 测试程序集改名 Runestone.AesirModules.Scene.Tests 位于 Editor/Scene/Tests/；模块隔离为约定保证（重组时审计零跨模块引用，单核心程序集模式下无编译期强制）；删除 Events 模块需连带删 Samples/Events/（示例依赖事件模块）。**Why:** 用户裁决采用标准 Unity Custom Package 根目录结构（首次方案把模块文件夹放顶层被用户纠正）。**How to apply:** 新增 RAM 功能模块 = 建 `Runtime/<模块>/` + `Editor/<模块>/`（主代码自动汇入核心程序集）；Odin 专属代码放该层 `OdinInspector/` 子目录 + 一个 asmref；Addressables 胶水锚点在 Editor/Common/Addressables/；关键实测依据：asmref 指向被 defineConstraints 排除的程序集时整体静默排除、约束满足时正确汇入（双向探针验证，团结 2022.3.62）；SampleScene 存在一条重组前即缺失的脚本 GUID（b7cd017143765464fbeb78c71e462d18，历史遗留，做 GUID 扫描时勿误判为新问题）。
+
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
