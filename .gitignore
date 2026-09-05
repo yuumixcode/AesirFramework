@@ -129,3 +129,6 @@ InitTestScene*.unity*
 # 第三方付费素材原件（Goldmetal，PlaneWar 示例内已有自包含拷贝，原件不分发）
 /Assets/Vertical 2D Shooting BE4/
 /Assets/Vertical 2D Shooting BE4.meta
+
+# ScriptableSingleton（如 RuntimeInitializeLoadType 示例）写入项目根目录的设置资产，运行时生成，不入库
+/ScriptableSingleton/
