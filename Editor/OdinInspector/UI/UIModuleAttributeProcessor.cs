@@ -4,7 +4,7 @@ using System.Reflection;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 
-namespace Runestone.AesirModules.Editor.OdinIntegration
+namespace Runestone.AesirModules.Editor.OdinInspector
 {
     /// <summary>
     /// 为 <see cref="UIModule" /> 提供 Odin Inspector 属性处理器，
