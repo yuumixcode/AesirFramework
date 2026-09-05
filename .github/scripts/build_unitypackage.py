@@ -89,13 +89,17 @@ def read_package_version(package_dir):
     return match.group(1)
 
 
-def write_manifest(package_dirs, entries, manifest_path):
-    """Write the files manifest JSON consumed by the in-editor Aesir updater.
+def write_update_info(package_dirs, entries, output_path):
+    """Write the update-info JSON consumed by the in-editor Aesir updater.
 
-    Format (array-based so Unity's JsonUtility can deserialize it directly):
-      {"packages": [{"name": ..., "version": ..., "files": [...]}]}
-    File lists are sorted for deterministic output."""
+    This file is committed back to the repo (.github/update-info.json) by CI so
+    users can fetch it via the jsDelivr CDN (mainland-friendly, no rate limit).
+    Format (array-based so Unity's JsonUtility can deserialize it):
+      {"version": ..., "tag": ..., "packages": [{"name": ..., "version": ..., "files": [...]}]}
+    File lists are sorted for deterministic output. The top-level version comes
+    from the first package dir (CI enforces all packages share one version)."""
     normalized_dirs = [os.path.normpath(d).replace(os.sep, "/") for d in package_dirs]
+    version = read_package_version(normalized_dirs[0])
     packages = {
         os.path.basename(norm): {"name": os.path.basename(norm),
                                  "version": read_package_version(norm),
@@ -112,16 +116,17 @@ def write_manifest(package_dirs, entries, manifest_path):
         packages[os.path.basename(best)]["files"].append(pathname)
     for entry in packages.values():
         entry["files"].sort()
-    data = {"packages": [packages[name] for name in sorted(packages)]}
+    data = {"version": version, "tag": "v" + version,
+            "packages": [packages[name] for name in sorted(packages)]}
 
-    output_dir = os.path.dirname(os.path.abspath(manifest_path))
+    output_dir = os.path.dirname(os.path.abspath(output_path))
     os.makedirs(output_dir, exist_ok=True)
-    with open(manifest_path, "w", encoding="utf-8", newline="\n") as f:
+    with open(output_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
         f.write("\n")
 
 
-def build(package_dirs, output_path, manifest_path=None):
+def build(package_dirs, output_path, update_info_path=None):
     entries = list(collect_entries(package_dirs))
     output_dir = os.path.dirname(os.path.abspath(output_path))
     os.makedirs(output_dir, exist_ok=True)
@@ -140,8 +145,8 @@ def build(package_dirs, output_path, manifest_path=None):
                         open(os.path.join(entry_dir, "asset"), "wb") as dst:
                     dst.write(src.read())
             tar.add(entry_dir, arcname=guid)
-    if manifest_path:
-        write_manifest(package_dirs, entries, manifest_path)
+    if update_info_path:
+        write_update_info(package_dirs, entries, update_info_path)
 
 
 def main():
@@ -151,11 +156,11 @@ def main():
                         help="package dir relative to repo root; repeatable, "
                              "multiple dirs are combined into one package")
     parser.add_argument("--output", required=True, help="output .unitypackage path")
-    parser.add_argument("--manifest", default=None,
-                        help="optional output path for the files-manifest.json "
-                             "(grouped by package dir; used by the Aesir updater)")
+    parser.add_argument("--update-info", default=None,
+                        help="optional output path for update-info.json (version + tag + "
+                             "per-package file lists; committed to the repo for jsDelivr)")
     args = parser.parse_args()
-    build(args.package, args.output, args.manifest)
+    build(args.package, args.output, args.update_info)
 
 
 if __name__ == "__main__":
