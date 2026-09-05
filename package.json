@@ -1,7 +1,7 @@
 {
   "name": "cn.runestone.aesir.architecture",
   "displayName": "Aesir Architecture",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "unity": "2022.3",
   "description": "面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。能力接口组合、命令/查询模式（CQRS）、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 原生生命周期、纯 C# 架构根与 MonoBehaviour 适配层分离，可选集成 Odin Inspector。",
   "keywords": [
@@ -60,6 +60,11 @@
       "displayName": "MiniEvent",
       "description": "MiniEvent 使用案例，包括无参，单参数事件。多参数事件推荐使用一个结构体封装多个参数，形成单参数事件。",
       "path": "Samples~/MiniEvent"
+    },
+    {
+      "displayName": "PlaneWar（Mono 版）",
+      "description": "纵版射击飞机大战实战示例（Mono 版）：自包含素材、得分 HUD、三型敌机与重开流程，演示 MiniEvent、ObservableValue 与 MonoLifecycleProxy 在真实玩法中的组合运用。",
+      "path": "Samples~/PlaneWar"
     }
   ]
 }

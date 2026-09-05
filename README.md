@@ -3,16 +3,16 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
 
-> 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
+> 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
 >
 > 关联包：
-> - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)**（独立）
-> - **[Aesir Modules](https://github.com/yuumixcode/Unity-Aesir-Packages)**（依赖 Architecture）
+> - **[Aesir Modules](https://github.com/yuumixcode/AesirFramework)**（依赖 Architecture）
+> - Aesir Inspector 已迁移至独立公开仓库（面向 Odin Inspector 开发者的学习工具包），不再随本仓库分发
 
 > **Odin Inspector 为可选增强**（Inspector 样式与调试体验），非运行前置——核心架构流程闭环（Context 注册 → 初始化 → Command/Query → ObservableValue 通知）无 Odin 可完整运行。
 
@@ -40,10 +40,16 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 ### 通过 UPM（Git URL）
 
-在 Unity Package Manager 中通过 Git URL 安装：
+在 Unity Package Manager 中通过 Git URL 安装（固定 0.14.0 版本分支，包内容即分支根目录）：
 
 ```
-https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.14.0
+```
+
+跟踪 main 最新开发版：
+
+```
+https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture
 ```
 
 UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone.aesir.architecture`）。
@@ -144,7 +150,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## 示例（Samples）
 
-包内提供 8 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
+包内提供 9 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
 
 ### MVC 系列（View 自订阅刷新）
 
@@ -170,6 +176,12 @@ this.ExecuteCommand<AddScoreCommand>();
 |------|------|------|
 | `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
 | `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
+
+### 实战示例
+
+| 示例 | 说明 | 依赖 |
+|------|------|------|
+| `PlaneWar` | 纵版射击飞机大战（Mono 版）：自包含素材的完整小游戏，演示 MiniEvent、ObservableValue 与 MonoLifecycleProxy 在真实玩法中的组合运用 | 无 |
 
 ## 架构总览
 
@@ -278,7 +290,7 @@ cn.runestone.aesir.architecture/
 │   │   └── Runestone.AesirArchitecture.Tests.asmdef
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
-├── Samples~/
+├── Samples/                       # 示例（仓库内直接可见可运行，与 Samples~ 内容同步）
 │   ├── Counter-Mvc-Quick/         # MVC-1 快捷档（MonoViewController 直改可写 ObservableValue，第一课）
 │   ├── Counter-Mvc-Standard/      # MVC-2 标准档（只读暴露 + 写方法，View/Controller 分离共享 Model，第二课）
 │   ├── Counter-Mvc-Strict/        # MVC-3 严格档（接口注册 + Command 写 + Query 加工读，第三课）
@@ -286,7 +298,9 @@ cn.runestone.aesir.architecture/
 │   ├── Counter-Mvp-Standard/      # MVP-2 标准档（只读暴露 + 写方法，Presenter 直调写方法，第二课）
 │   ├── Counter-Mvp-Strict/        # MVP-3 严格档（Command 写 + Query 读，View 按窄接口持有 Presenter，第三课）
 │   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
-│   └── MiniEvent/                 # MiniEvent 使用案例
+│   ├── MiniEvent/                 # MiniEvent 使用案例
+│   └── PlaneWar/                  # 纵版射击飞机大战（Mono 版实战示例）
+├── Samples~/                      # 示例源镜像（Git URL 安装后经 Package Manager 按需导入；构建时自动剔除）
 └── Third Party Notices.md          # 第三方许可声明
 ```
 
