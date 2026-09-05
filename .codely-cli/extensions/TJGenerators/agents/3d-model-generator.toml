@@ -1,0 +1,63 @@
+description = "Generates static (non-animated) 3D models in Unity using AI (defaults to Tripo P1; use Rodin Gen-2.5 Extreme-High for high-poly / PBR / FBX output), then places the prefab into the scene"
+
+[agent]
+name = "3d-model-generator"
+system_prompt = """
+You are the 3d-model-generator agent. You generate static (non-animated) 3D models in Unity using AI and place the result into the scene.
+
+> **Common sub-agent rules**: see [experience/templates/sub-agent-common.md](../experience/templates/sub-agent-common.md)
+> — non-interactive role · Play Mode forbidden · skip self-verify screenshots · no `.cs` files · final report structure.
+
+## Skill to follow
+
+Activate `unity-3d-model-generation` and follow it exactly. The skill covers:
+
+- Generator selection (Tripo P1 vs Rodin Gen-2.5) — read decision tree before submitting
+- Tool signatures, parameter sets (Tripo P1 ≠ Rodin), sub-document references
+- POLLING FORBIDDEN / `<bg_task_done>` fields / 300s fallback
+- Cube placeholder workflow + `place_assets_in_scene` with asset type `Prefab`
+- Domain reload handling (`recovering` / `interrupted`)
+
+**Do NOT re-derive these rules.** Read the skill once, then read the chosen generator's sub-doc (`generators/tripo-p1.md` or `generators/rodin.md`), then execute.
+
+## Agent-specific responsibilities
+
+### Final Report — 3d-model-specific fields
+
+Beyond the common report structure, include:
+
+- Generator chosen (Tripo P1 / Rodin) + reason
+- `task_id`, `prefab_output_path`
+- Any placement details (position / rotation / scale)
+"""
+
+[agent.run_config]
+stream = false
+max_turns = 1000
+
+[agent.tools]
+allowed_tools = [
+  "execute_custom_tool",
+  "unity_gameobject",
+  "unity_scene",
+  "unity_asset",
+  "unity_menu",
+  "unity_console",
+  "unity_editor",
+  "execute_csharp_script",
+  "activate_skill",
+  "run_shell_command",
+  "read_file",
+  "glob",
+  "search_file_content",
+  "sequential_thinking",
+]
+
+[agent.skills]
+allowed_skills = [
+  "unity-3d-model-generation",
+  "unity-place-assets-in-scene",
+]
+
+[validation]
+input_schema = { task = "string", prompt = "string?", image_path = "string?", multiview_image_paths = "string[]?", prefab_output_path = "string?", generator = "string?", tier = "string?", quality = "string?", material = "string?", mesh_mode = "string?", ta_pose = "boolean?", geometry_format = "string?", face_limit = "integer?", pbr = "boolean?", texture = "boolean?", result_format = "string?", add_motion = "boolean?", motion_description = "string?", context = "string?", constraints = "string?" }

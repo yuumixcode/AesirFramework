@@ -1,0 +1,76 @@
+codely_bridge_code_coverage_all:
+  name: Codely Bridge Package Tests All Coverage
+  agent:
+    image: cds-ops/win10-vs2017-300g:stable
+    type: Unity::VM::Volc
+    flavor: intel.8C16G
+  commands:
+    - powershell -command "$ErrorActionPreference = 'Stop'; $editmodeArchive = 'artifacts@proj0-Codely Bridge Code Coverage EditMode - Windows/upm-ci~/CodeCoverage/CodeCoverageResultsEditMode.zip'; if (!(Test-Path -LiteralPath $editmodeArchive)) { throw 'EditMode coverage archive was not produced.' }; New-Item -ItemType Directory -Path 'upm-ci~/CodeCoverage/Results/EditMode' -Force | Out-Null; Expand-Archive -LiteralPath $editmodeArchive -DestinationPath 'upm-ci~/CodeCoverage/Results/EditMode' -Force"
+    - powershell -command "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue'; $archive = 'upm-ci~/ReportGenerator_5.3.9.zip'; Invoke-WebRequest -UseBasicParsing -Uri $env:REPORT_GENERATOR_URL -OutFile $archive; $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash; if ($actual -ne $env:REPORT_GENERATOR_SHA256) { throw 'ReportGenerator SHA-256 verification failed.' }; Expand-Archive -LiteralPath $archive -DestinationPath 'upm-ci~/ReportGenerator' -Force"
+    - powershell -command "$ErrorActionPreference = 'Stop'; $coverageRoot = Join-Path $env:YAMATO_SOURCE_DIR 'upm-ci~/CodeCoverage'; $coverageFiles = @(Get-ChildItem -LiteralPath (Join-Path $coverageRoot 'Results') -Recurse -Filter '*.xml'); if ($coverageFiles.Count -eq 0) { throw 'No coverage XML files were found.' }; $tool = Join-Path $env:YAMATO_SOURCE_DIR 'upm-ci~/ReportGenerator/net47/ReportGenerator.exe'; $reports = '-reports:' + (Join-Path $coverageRoot 'Results/**/*.xml'); $target = '-targetdir:' + (Join-Path $coverageRoot 'Report'); $tag = '-tag:' + $env:YAMATO_PROJECT_NAME; & $tool $reports $target '-reporttypes:Html;HtmlSummary;XmlSummary' '-title:Codely Bridge Package Code Coverage' $tag; if ($LASTEXITCODE -ne 0) { throw 'ReportGenerator failed.' }"
+    - 7z a "upm-ci~\CodeCoverage\CodelyBridgeCodeCoverageResults.zip" ".\upm-ci~\CodeCoverage\Results"
+    - 7z a "upm-ci~\CodeCoverage\CodelyBridgeCodeCoverageReport.zip" ".\upm-ci~\CodeCoverage\Report"
+    - 7z a "upm-ci~\CodeCoverage\CodelyBridgeCodeCoverageBundle.zip" ".\upm-ci~\CodeCoverage\CodelyBridgeCodeCoverageResults.zip" ".\upm-ci~\CodeCoverage\CodelyBridgeCodeCoverageReport.zip"
+    - powershell -command "$ErrorActionPreference = 'Stop'; if ([string]::IsNullOrWhiteSpace($env:ARTIFACTORY_USERNAME) -or [string]::IsNullOrWhiteSpace($env:ARTIFACTORY_PASSWORD)) { Write-Warning 'Artifactory credentials are unavailable; coverage upload is skipped.'; exit 0 }; $package = Get-Content -Raw 'package.json' | ConvertFrom-Json; $date = Get-Date -Format 'yyyy-MM-dd'; $url = 'https://artifactory-cds.internal.unity.cn:443/artifactory/tools/CodeCoverage/Packages/' + $package.name + '/' + $package.version + '/coverage_' + $date + '.zip'; $credentialBytes = [Text.Encoding]::UTF8.GetBytes($env:ARTIFACTORY_USERNAME + ':' + $env:ARTIFACTORY_PASSWORD); $headers = @{ Authorization = 'Basic ' + [Convert]::ToBase64String($credentialBytes) }; try { Invoke-WebRequest -UseBasicParsing -Method Put -Uri $url -Headers $headers -InFile 'upm-ci~/CodeCoverage/CodelyBridgeCodeCoverageBundle.zip' | Out-Null } catch { Write-Warning ('Coverage upload failed and will not fail the job. ' + $_.Exception.Message) }"
+  after:
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    CodeCoverage:
+      paths:
+        - "upm-ci~/CodeCoverage/**/*"
+    crash-dumps:
+      paths:
+        - "upm-ci~/CrashDumps/**/*"
+  dependencies:
+    - path: .yamato/code-coverage.yml#codely_bridge_code_coverage_editmode_win
+      location: artifacts@proj0-Codely Bridge Code Coverage EditMode - Windows
+      specific_options:
+        build-CrashDumps:
+          ignore_artifact: true
+  variables:
+    TUANJIE_VERSION: 1.9.3
+    REPORT_GENERATOR_URL: https://github.com/danielpalme/ReportGenerator/releases/download/v5.3.9/ReportGenerator_5.3.9.zip
+    REPORT_GENERATOR_SHA256: 71422C1335561E401AD604148719577D820080ED2603EA0D8909E28CC2293ED0
+
+codely_bridge_code_coverage_editmode_win:
+  name: Codely Bridge Code Coverage EditMode - Windows
+  agent:
+    image: cds-ops/win10-vs2017-300g:stable
+    type: Unity::VM::Volc
+    flavor: intel.8C16G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\CodeCoverage
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\CodeCoverage
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - C:\tools\upm-ci.exe package test --tuanjie-version %TUANJIE_VERSION% --platform editmode --type package-tests --enable-code-coverage --code-coverage-options "generateAdditionalMetrics;generateRootEmptyReport;assemblyFilters:+UnityTcp.Editor,+Codely.Common,+Cn.Tuanjie.Codely.Editor,-UnityTcp.Editor.Tests;pathFilters:-**/Tests/**;verbosity:warning" --extra-editor-arg=-disableEditorAnalytics
+  after:
+    - powershell -command "$ErrorActionPreference = 'Stop'; $results = 'upm-ci~/test-results/CodeCoverage/package-tests/editmode/Results'; if (!(Test-Path -LiteralPath $results -PathType Container)) { throw ('EditMode coverage results directory was not produced at ' + $results) }; $xmlFiles = @(Get-ChildItem -LiteralPath $results -Recurse -File -Filter '*.xml'); if ($xmlFiles.Count -eq 0) { throw ('EditMode coverage results contain no XML files at ' + $results) }; $archive = 'upm-ci~/CodeCoverage/CodeCoverageResultsEditMode.zip'; & 7z a $archive $results; if ($LASTEXITCODE -ne 0) { throw 'Failed to archive EditMode coverage results.' }"
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    CodeCoverage:
+      paths:
+        - "upm-ci~/CodeCoverage/**/*"
+    test-results:
+      paths:
+        - "upm-ci~/test-results/**"
+    crash-dumps:
+      paths:
+        - "upm-ci~/CrashDumps/**/*"
+    reported-artifacts:
+      paths:
+        - "upm-ci~/ReportedArtifacts/**/*"
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    TUANJIE_VERSION: 1.9.3

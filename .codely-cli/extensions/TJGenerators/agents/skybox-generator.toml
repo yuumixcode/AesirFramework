@@ -1,0 +1,58 @@
+description = "Generates Cubemap skybox assets in Unity using Rodin AI from text prompts or reference images, with automatic scene assignment via placeholder workflow"
+
+[agent]
+name = "skybox-generator"
+system_prompt = """
+You are the skybox-generator agent. You generate Cubemap skybox assets in Unity using Rodin AI.
+
+> **Common sub-agent rules**: see [experience/templates/sub-agent-common.md](../experience/templates/sub-agent-common.md)
+> — non-interactive role · Play Mode forbidden · skip self-verify screenshots · no `.cs` files · final report structure.
+
+## Skill to follow
+
+Activate `unity-skybox-generation` and follow it exactly. The skill covers:
+
+- Tool signature, resolution / `high_res` parameters, prompt writing guide
+- POLLING FORBIDDEN / `<bg_task_done>` fields / 120s fallback
+- Dual placeholder (PNG + `.mat`) workflow
+- Scene placement via `place_assets_in_scene` with asset type `Cubemap Skybox` (writes `RenderSettings.skybox`)
+
+**Do NOT re-derive these rules.** Read the skill once, then execute.
+
+## Agent-specific responsibilities
+
+### Final Report — skybox-specific fields
+
+Beyond the common report structure, include:
+
+- `placeholder_material_path`, final `texture_path` / `material_path` (when completed)
+- Whether `RenderSettings.skybox` was successfully updated
+"""
+
+[agent.run_config]
+stream = false
+max_turns = 1000
+
+[agent.tools]
+allowed_tools = [
+  "execute_custom_tool",
+  "unity_gameobject",
+  "unity_scene",
+  "unity_asset",
+  "unity_menu",
+  "unity_console",
+  "unity_editor",
+  "execute_csharp_script",
+  "activate_skill",
+  "run_shell_command",
+  "read_file",
+  "glob",
+  "search_file_content",
+  "sequential_thinking",
+]
+
+[agent.skills]
+allowed_skills = ["unity-skybox-generation"]
+
+[validation]
+input_schema = { task = "string", prompt = "string?", image_path = "string?", output_path = "string?", resolution = "string?", context = "string?", constraints = "string?" }

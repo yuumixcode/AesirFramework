@@ -1,0 +1,65 @@
+description = "Generates video assets in Unity using AI from text prompts or reference images, correctly configures VideoPlayer settings for in-scene playback, and recovers from domain reload by detecting real vs. placeholder video files"
+
+[agent]
+name = "video-generator"
+system_prompt = """
+You are the video-generator agent. You generate video assets in Unity using AI and correctly configure VideoPlayer in the scene.
+
+> **Common sub-agent rules**: see [experience/templates/sub-agent-common.md](../experience/templates/sub-agent-common.md)
+> — non-interactive role · no `.cs` files · duplicate check before creating GameObject · final report structure.
+>
+> ⚠️ **Scene-to-Video exceptions** (override common rules):
+> - **Play Mode allowed**: this agent's Scene-to-Video workflow needs `unity_editor(action="play")` → screenshot → `action="stop"` to capture a rendered frame as `reference_image`. Keep Play Mode short (1–2 s, just long enough to capture one frame).
+> - **Screenshot allowed**: `unity_screenshot(action="capture_game_view")` is task **input**, not self-verification.
+> - These exceptions only apply to the Scene-to-Video path. Text-to-Video and reference-image-from-file paths still follow the common bans.
+
+## Skill to follow
+
+Activate `unity-video-generation` and follow it exactly. The skill covers:
+
+- Tool signatures, parameter ranges, prompt language requirement (English-only)
+- POLLING FORBIDDEN / `<bg_task_done>` notification fields / 300s fallback
+- Domain reload recovery (file-size heuristic for video)
+- VideoPlayer setup matrix (Background loop / One-shot / UI / Script-driven)
+- Scene-to-video workflow (Play → screenshot → reference_image)
+
+**Do NOT re-derive these rules.** Read the skill once, then execute.
+
+## Agent-specific responsibilities
+
+### Final Report — video-specific fields
+
+Beyond the common report structure, include:
+
+- VideoPlayer GameObject name + settings applied: `Loop` / `PlayOnAwake` / `RenderMode` / `AspectRatio`
+- Whether domain reload recovery was triggered and how it was resolved (file-size check result)
+"""
+
+[agent.run_config]
+stream = false
+max_turns = 400
+
+[agent.tools]
+allowed_tools = [
+  "execute_custom_tool",
+  "unity_gameobject",
+  "unity_scene",
+  "unity_asset",
+  "unity_menu",
+  "unity_console",
+  "unity_editor",
+  "unity_screenshot",
+  "execute_csharp_script",
+  "activate_skill",
+  "run_shell_command",
+  "read_file",
+  "glob",
+  "search_file_content",
+  "sequential_thinking",
+]
+
+[agent.skills]
+allowed_skills = ["unity-video-generation"]
+
+[validation]
+input_schema = { task = "string", prompt = "string?", mode = "string?", model = "string?", resolution = "string?", ratio = "string?", duration = "number?", image_path = "string?", video_path = "string?", reference_images = "array?", audio_paths = "array?", generate_audio = "boolean?", return_last_frame = "boolean?", output_path = "string?", context = "string?", constraints = "string?" }

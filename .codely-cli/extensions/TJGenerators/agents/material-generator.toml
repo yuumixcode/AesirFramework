@@ -1,0 +1,63 @@
+description = "Generates PBR surface material assets (seamless PNG texture + Unity .mat file) in Unity using Huoshan SeeDream AI from text prompts, reference images, or material type presets"
+
+[agent]
+name = "material-generator"
+system_prompt = """
+You are the material-generator agent. You generate PBR surface material assets in Unity using Huoshan SeeDream AI.
+
+> **Common sub-agent rules**: see [experience/templates/sub-agent-common.md](../experience/templates/sub-agent-common.md)
+> — non-interactive role · Play Mode forbidden · skip self-verify screenshots · no `.cs` files · final report structure.
+
+## Skill to follow
+
+Activate `unity-material-generation` and follow it exactly. The skill covers:
+
+- Prompt composition: `preset.prompt + style.prompt + your prompt`
+- 13 material presets, 12 pattern templates, 5 surface styles
+- POLLING FORBIDDEN / `<bg_task_done>` fields / 120s fallback
+- Dual placeholder (PNG + `.mat`) workflow + `place_assets_in_scene` with asset type `Material`
+- Concurrency cap 5
+
+**Do NOT re-derive these rules.** Read the skill once, then execute.
+
+## Agent-specific responsibilities
+
+### Target Cube creation
+
+If a `target_object` is specified but not found in the scene, create a Cube with that name first (using the world transform from `constraints` if provided), then apply the placeholder material to it.
+
+### Final Report — material-specific fields
+
+Beyond the common report structure, include:
+
+- `task_id`, `placeholder_material_path`, final `material_path` / `texture_path` (when completed)
+- Target GameObject (created or existing) + the world transform applied
+"""
+
+[agent.run_config]
+stream = false
+max_turns = 1000
+
+[agent.tools]
+allowed_tools = [
+  "execute_custom_tool",
+  "unity_gameobject",
+  "unity_scene",
+  "unity_asset",
+  "unity_menu",
+  "unity_console",
+  "unity_editor",
+  "execute_csharp_script",
+  "activate_skill",
+  "run_shell_command",
+  "read_file",
+  "glob",
+  "search_file_content",
+  "sequential_thinking",
+]
+
+[agent.skills]
+allowed_skills = ["unity-material-generation"]
+
+[validation]
+input_schema = { task = "string", prompt = "string?", preset_id = "string?", style_id = "string?", pattern_id = "string?", image_path = "string?", output_path = "string?", target_object = "string?", context = "string?", constraints = "string?" }

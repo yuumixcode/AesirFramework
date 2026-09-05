@@ -1,0 +1,370 @@
+# Codely Bridge (cn.tuanjie.codely.bridge) remote UPM EditMode test cases
+# TUANJIE_VERSION: Tuanjie version string (e.g. 1.9.3) → upm-ci --tuanjie-version
+# UNITY_VERSION:   Unity editor install path (e.g. C:\editor\2019.4.40f1c1\) → upm-ci --unity-version
+#
+# Batchmode / CI: upm-ci runs the editor with -batchmode. The package skips TCP bridge
+# and NativeWindowBridge (NWB) auto-start in unattended runs. Do NOT set
+# UNITY_TCP_ALLOW_BATCH in these jobs unless you are explicitly testing bridge startup
+# in batchmode (setting it enables both UnityTcpBridge and ManageWindowBridge autostart).
+#
+# Groups (Yamato job list / MR checks):
+#   [All]     codely_bridge_tests_all
+#   [Tuanjie] codely_bridge_tests_tuanjie  — Win / Mac / Linux @ Tuanjie 1.9.3
+#   [Unity]   codely_bridge_tests_unity    — Windows multi-version Unity editors
+
+# ── Group: All ────────────────────────────────────────────────────────────────
+codely_bridge_tests_all:
+  name: "[All] Codely Bridge Package Tests"
+  dependencies:
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_tuanjie
+      location: artifacts@proj0-[Tuanjie] Codely Bridge Tests EditMode
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_unity
+      location: artifacts@proj0-[Unity] Codely Bridge Tests EditMode - Windows
+  triggers:
+    cancel_old_ci: true
+    expression: push.branch eq "main"
+  variables:
+    TUANJIE_VERSION: 1.9.3
+
+# ── Group: Tuanjie (Win / Mac / Linux) ────────────────────────────────────────
+codely_bridge_tests_tuanjie:
+  name: "[Tuanjie] Codely Bridge Tests EditMode"
+  dependencies:
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_tuanjie_-_windowseditor
+      location: artifacts@proj0-[Tuanjie] EditMode - Windows
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_tuanjie_-_maceditor_-_silicon
+      location: artifacts@proj0-[Tuanjie] EditMode - Mac Silicon
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_tuanjie_-_linuxeditor_ubuntu_24_04
+      location: artifacts@proj0-[Tuanjie] EditMode - Linux (Ubuntu 24.04)
+  variables:
+    TUANJIE_VERSION: 1.9.3
+
+# ── Group: Unity (Windows multi-version) ──────────────────────────────────────
+codely_bridge_tests_unity:
+  name: "[Unity] Codely Bridge Tests EditMode - Windows"
+  dependencies:
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2019_4_40f1c1
+      location: artifacts@proj0-[Unity] EditMode - Windows - 2019.4.40f1c1
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2020_3_49f1c1
+      location: artifacts@proj0-[Unity] EditMode - Windows - 2020.3.49f1c1
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2021_3_45f2c1
+      location: artifacts@proj0-[Unity] EditMode - Windows - 2021.3.45f2c1
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2022_3_62f3c1
+      location: artifacts@proj0-[Unity] EditMode - Windows - 2022.3.62f3c1
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_unity_-_windowseditor_-_6000_3_19f1
+      location: artifacts@proj0-[Unity] EditMode - Windows - 6000.3.19f1
+    - path: .yamato/bridge-tests.yml#codely_bridge_tests_editmode_-_unity_-_windowseditor_-_6000_5_3f1
+      location: artifacts@proj0-[Unity] EditMode - Windows - 6000.5.3f1
+
+# ── Tuanjie platform jobs ─────────────────────────────────────────────────────
+codely_bridge_tests_editmode_-_tuanjie_-_windowseditor:
+  name: "[Tuanjie] EditMode - Windows"
+  agent:
+    image: cds-ops/win10-vs2017-300g:stable
+    type: Unity::VM::Volc
+    flavor: intel.8C16G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - C:\tools\upm-ci.exe package test --tuanjie-version %TUANJIE_VERSION% --platform editmode --extra-editor-arg=-disableEditorAnalytics
+  after:
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    TUANJIE_VERSION: 1.9.3
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+codely_bridge_tests_editmode_-_tuanjie_-_maceditor_-_silicon:
+  name: "[Tuanjie] EditMode - Mac Silicon"
+  agent:
+    image: osx_silicon_m4
+    type: Unity::VM::Posx
+    flavor: m1.mac
+  commands:
+    - curl --location --request GET "https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci-mac" --output ~/Downloads/upm-ci && chmod +x ~/Downloads/upm-ci
+    - mkdir -p upm-ci~
+    - if [ -f "artifacts@proj0-Pack/upm-ci~/" ]; then rsync --remove-source-files "artifacts@proj0-Pack/upm-ci~/" "upm-ci~"; fi
+    - mkdir -p upm-ci~/ReportedArtifacts
+    - unset UNITY_TCP_ALLOW_BATCH || true
+    - ~/Downloads/upm-ci package test --tuanjie-version $TUANJIE_VERSION --platform editmode --extra-editor-arg=-disableEditorAnalytics
+  after:
+    - mv $HOME/buildTemp/ReportedArtifact* upm-ci~/ReportedArtifacts/. || true
+    - if [ -f "$HOME/Library/Logs/Tuanjie/Tuanjie.Licensing.Client.log" ]; then mv $HOME/Library/Logs/Tuanjie/Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true; fi
+    - mkdir -p upm-ci~/CrashDumps
+    - sudo cp -R /Library/Logs/CrashReporter/* upm-ci~/CrashDumps/. || true
+    - sudo chown -R $USER:staff upm-ci~/CrashDumps/ || true
+    - chmod -R 755 $HOME/Library/Logs/DiagnosticReports || true
+    - if [ "$YAMATO_COMMAND_BLOCK_SUCCESS" == "0" ]; then for f in `find . -name AssetImportWorker*.log`; do rsync --relative `echo $f | sed s@/@/./@7` upm-ci~/ReportedArtifacts/; done || true; fi
+    - if [ -d "~/Library/Logs/DiagnosticReports" ]; then cp -r "~/Library/Logs/DiagnosticReports" "copied/Library/Logs/DiagnosticReports"; fi
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    TUANJIE_VERSION: 1.9.3
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+codely_bridge_tests_editmode_-_tuanjie_-_linuxeditor_ubuntu_24_04:
+  name: "[Tuanjie] EditMode - Linux (Ubuntu 24.04)"
+  agent:
+    image: cds-ops/ubuntu24
+    type: Unity::VM::Volc
+    flavor: amd.16C32G
+  commands:
+    - curl --location --request GET "https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci-linux" --output ~/Downloads/upm-ci && chmod +x ~/Downloads/upm-ci
+    - mkdir -p upm-ci~
+    - if [ -f "artifacts@proj0-Pack/upm-ci~/" ]; then rsync --remove-source-files "artifacts@proj0-Pack/upm-ci~/" "upm-ci~"; fi
+    - mkdir -p upm-ci~/ReportedArtifacts
+    - unset UNITY_TCP_ALLOW_BATCH || true
+    - ~/Downloads/upm-ci package test --tuanjie-version $TUANJIE_VERSION --platform editmode --extra-editor-arg=-disableEditorAnalytics
+  after:
+    - mv $HOME/buildTemp/ReportedArtifact* upm-ci~/ReportedArtifacts/. || true
+    - if [ -f "$HOME/.config/tuanjie/Tuanjie/Tuanjie.Licensing.Client.log" ]; then mv $HOME/.config/tuanjie/Tuanjie/Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true; fi
+    - if [ -f "$HOME/.local/share/tuanjie/Tuanjie/Tuanjie.Licensing.Client.log" ]; then mv $HOME/.local/share/tuanjie/Tuanjie/Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true; fi
+    - mkdir -p upm-ci~/CrashDumps
+    - mv /var/crash/* upm-ci~/CrashDumps/. || true
+    - chmod -R 755 upm-ci~/CrashDumps || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    TUANJIE_VERSION: 1.9.3
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+# ── Unity Windows multi-version jobs (C:\editor\<version>\) ───────────────────
+codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2019_4_40f1c1:
+  name: "[Unity] EditMode - Windows - 2019.4.40f1c1"
+  agent:
+    image: image-yeqit3dy9x9sgb22hh0r
+    type: Unity::VM::Volc
+    flavor: amd.16C32G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - command: C:\tools\upm-ci.exe package test --type package-tests --unity-version %UNITY_VERSION% --platform editmode --extra-editor-arg=-disableEditorAnalytics
+      retries: 2
+  after:
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    UNITY_VERSION: C:\editor\2019.4.40f1c1\
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2020_3_49f1c1:
+  name: "[Unity] EditMode - Windows - 2020.3.49f1c1"
+  agent:
+    image: image-yeqit3dy9x9sgb22hh0r
+    type: Unity::VM::Volc
+    flavor: amd.16C32G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - command: C:\tools\upm-ci.exe package test --type package-tests --unity-version %UNITY_VERSION% --platform editmode --extra-editor-arg=-disableEditorAnalytics
+      retries: 2
+  after:
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    UNITY_VERSION: C:\editor\2020.3.49f1c1\
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2021_3_45f2c1:
+  name: "[Unity] EditMode - Windows - 2021.3.45f2c1"
+  agent:
+    image: qa_codely
+    type: Unity::VM::Pwin
+    flavor: intel.8C16G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - command: C:\tools\upm-ci.exe package test --type package-tests --unity-version %UNITY_VERSION% --platform editmode --extra-editor-arg=-disableEditorAnalytics
+      retries: 2
+  after:
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    UNITY_VERSION: C:\editor\2021.3.45f2c1\
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+codely_bridge_tests_editmode_-_unity_-_windowseditor_-_2022_3_62f3c1:
+  name: "[Unity] EditMode - Windows - 2022.3.62f3c1"
+  agent:
+    image: qa_codely
+    type: Unity::VM::Pwin
+    flavor: intel.8C16G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - command: C:\tools\upm-ci.exe package test --type package-tests --unity-version %UNITY_VERSION% --platform editmode --extra-editor-arg=-disableEditorAnalytics
+      retries: 2
+  after:
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    UNITY_VERSION: C:\editor\2022.3.62f3c1\
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+codely_bridge_tests_editmode_-_unity_-_windowseditor_-_6000_3_19f1:
+  name: "[Unity] EditMode - Windows - 6000.3.19f1"
+  agent:
+    image: image-yeqit3dy9x9sgb22hh0r
+    type: Unity::VM::Volc
+    flavor: amd.16C32G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - command: C:\tools\upm-ci.exe package test --type package-tests --unity-version %UNITY_VERSION% --platform editmode --extra-editor-arg=-disableEditorAnalytics
+      retries: 2
+  after:
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    UNITY_VERSION: C:\editor\6000.3.19f1\
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
+
+codely_bridge_tests_editmode_-_unity_-_windowseditor_-_6000_5_3f1:
+  name: "[Unity] EditMode - Windows - 6000.5.3f1"
+  agent:
+    image: image-yeqit3dy9x9sgb22hh0r
+    type: Unity::VM::Volc
+    flavor: amd.16C32G
+  commands:
+    - powershell -command "(New-Object Net.WebClient).DownloadFile('https://artifactory-cds.internal.unity.cn:443/artifactory/tools/upm-ci/upm-ci.exe', 'C:\tools\upm-ci.exe')"
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~\ReportedArtifacts
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~\ReportedArtifacts
+    - IF EXIST "artifacts@proj0-Pack/upm-ci~/" cp -r "artifacts@proj0-Pack/upm-ci~/." "upm-ci~"
+    - IF DEFINED UNITY_TCP_ALLOW_BATCH set UNITY_TCP_ALLOW_BATCH=
+    - command: C:\tools\upm-ci.exe package test --type package-tests --unity-version %UNITY_VERSION% --platform editmode --extra-editor-arg=-disableEditorAnalytics
+      retries: 2
+  after:
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Unity\Unity.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF EXIST "%HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log" mv %HOMEDRIVE%%HOMEPATH%\AppData\Local\Tuanjie\Tuanjie.Licensing.Client.log upm-ci~/ReportedArtifacts/. || true
+    - IF NOT EXIST "C:\cygwin64\bin\mkdir.exe" mkdir -p upm-ci~/CrashDumps
+    - IF EXIST "C:\cygwin64\bin\mkdir.exe" C:\cygwin64\bin\mkdir.exe -p upm-ci~/CrashDumps
+    - cp -R C:\CrashDump/* upm-ci~/CrashDumps/. || true
+  artifacts:
+    crash-dumps:
+      paths:
+        - upm-ci~/CrashDumps/**
+    reported-artifacts:
+      paths:
+        - upm-ci~/ReportedArtifacts/**
+  dependencies:
+    - .yamato/upm-ci.yml#pack
+  variables:
+    UNITY_VERSION: C:\editor\6000.5.3f1\
+    PACKAGE_NAME: cn.tuanjie.codely.bridge
