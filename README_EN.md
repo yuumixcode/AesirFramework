@@ -71,7 +71,7 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 2. **Minimal boundaries** — No event bus, no multi-Context instances, no Command pooling / async / Undo; low-probability issues are prevented up front via documented conventions and edit-time hints (InfoBox), not runtime defensive code
 3. **Presentation/logic separation** — All Inspector presentation is injected dynamically via Odin AttributeProcessors; runtime assemblies carry zero styling attributes
 
-Full documentation: [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文) / [`Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md) (English).
+Full documentation: [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文) / [`Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md) (English).
 
 ---
 
@@ -158,7 +158,7 @@ public class CounterContext : AbstractContext<CounterContext>
 
 For the full three-lesson path — View subscription refresh, Controller command dispatch — see the package README and the 6 counter samples (Package Manager → Samples).
 
-Full guide: [`Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation~/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文).
+Full guide: [`Assets/Runestone/AesirArchitecture/Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文).
 
 ### Aesir Modules — Show a Panel with `Show<T>()`
 
@@ -170,7 +170,7 @@ UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "Conf
 
 The UI framework provides Manager-of-Managers singletons, a 4-layer Canvas hierarchy (`UILayer`), panel lifecycle (active → deactivated cache → destroyed), and a pluggable asset loader (Resources by default, Addressables-ready).
 
-Full guide: [`Assets/Runestone/AesirModules/Documentation~/README_EN.md`](./Assets/Runestone/AesirModules/Documentation~/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
+Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Assets/Runestone/AesirModules/Documentation/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
 
 ---
 
@@ -192,13 +192,15 @@ AesirFramework/                            # this repo
     │   ├── Runtime/  Editor/  Tests/
     │   ├── Samples/                       # samples (directly visible & runnable in this repo)
     │   ├── Samples~/                      # sample sources (import on demand after Git URL install)
-    │   ├── Documentation~/
+    │   ├── Documentation/                 # docs master (visible in Assets, shipped in unitypackage)
+    │   ├── Documentation~/                # docs mirror (hidden copy for Git URL installs)
     │   └── README.md  CHANGELOG.md  package.json
     └── AesirModules/                      # depends on Architecture
         ├── Runtime/  Editor/
         ├── Samples/                       # samples (directly visible & runnable in this repo)
         ├── Samples~/                      # sample sources (import on demand after Git URL install)
-        ├── Documentation~/
+        ├── Documentation/                 # docs master (visible in Assets, shipped in unitypackage)
+        ├── Documentation~/                # docs mirror (hidden copy for Git URL installs)
         └── README.md  CHANGELOG.md  package.json
 ```
 

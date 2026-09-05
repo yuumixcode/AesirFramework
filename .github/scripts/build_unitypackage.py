@@ -17,7 +17,9 @@ bundle of RAA + RAM).
 """
 
 import argparse
+import json
 import os
+import re
 import tarfile
 import tempfile
 
@@ -74,11 +76,57 @@ def _register(seen_guids, guid, path):
     seen_guids.add(guid)
 
 
-def build(package_dirs, output_path):
+def read_package_version(package_dir):
+    """Read the 'version' field from the package's package.json (dependency-free)."""
+    pkg_json = os.path.join(package_dir, "package.json")
+    if not os.path.isfile(pkg_json):
+        raise SystemExit(f"package.json not found in {package_dir}")
+    with open(pkg_json, "r", encoding="utf-8") as f:
+        content = f.read()
+    match = re.search(r'"version"\s*:\s*"([^"]+)"', content)
+    if match is None:
+        raise SystemExit(f"'version' field not found in {pkg_json}")
+    return match.group(1)
+
+
+def write_manifest(package_dirs, entries, manifest_path):
+    """Write the files manifest JSON consumed by the in-editor Aesir updater.
+
+    Format (array-based so Unity's JsonUtility can deserialize it directly):
+      {"packages": [{"name": ..., "version": ..., "files": [...]}]}
+    File lists are sorted for deterministic output."""
+    normalized_dirs = [os.path.normpath(d).replace(os.sep, "/") for d in package_dirs]
+    packages = {
+        os.path.basename(norm): {"name": os.path.basename(norm),
+                                 "version": read_package_version(norm),
+                                 "files": []}
+        for norm in normalized_dirs
+    }
+    for _, _, _, pathname in entries:
+        # Longest-prefix match: combined builds span several sibling package dirs.
+        candidates = [norm for norm in normalized_dirs
+                      if pathname == norm or pathname.startswith(norm + "/")]
+        if not candidates:
+            continue
+        best = max(candidates, key=len)
+        packages[os.path.basename(best)]["files"].append(pathname)
+    for entry in packages.values():
+        entry["files"].sort()
+    data = {"packages": [packages[name] for name in sorted(packages)]}
+
+    output_dir = os.path.dirname(os.path.abspath(manifest_path))
+    os.makedirs(output_dir, exist_ok=True)
+    with open(manifest_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
+def build(package_dirs, output_path, manifest_path=None):
+    entries = list(collect_entries(package_dirs))
     output_dir = os.path.dirname(os.path.abspath(output_path))
     os.makedirs(output_dir, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp, tarfile.open(output_path, "w:gz") as tar:
-        for guid, asset_path, meta_path, pathname in collect_entries(package_dirs):
+        for guid, asset_path, meta_path, pathname in entries:
             entry_dir = os.path.join(tmp, guid)
             os.mkdir(entry_dir)
             with open(os.path.join(entry_dir, "pathname"), "w",
@@ -92,6 +140,8 @@ def build(package_dirs, output_path):
                         open(os.path.join(entry_dir, "asset"), "wb") as dst:
                     dst.write(src.read())
             tar.add(entry_dir, arcname=guid)
+    if manifest_path:
+        write_manifest(package_dirs, entries, manifest_path)
 
 
 def main():
@@ -101,8 +151,11 @@ def main():
                         help="package dir relative to repo root; repeatable, "
                              "multiple dirs are combined into one package")
     parser.add_argument("--output", required=True, help="output .unitypackage path")
+    parser.add_argument("--manifest", default=None,
+                        help="optional output path for the files-manifest.json "
+                             "(grouped by package dir; used by the Aesir updater)")
     args = parser.parse_args()
-    build(args.package, args.output)
+    build(args.package, args.output, args.manifest)
 
 
 if __name__ == "__main__":
