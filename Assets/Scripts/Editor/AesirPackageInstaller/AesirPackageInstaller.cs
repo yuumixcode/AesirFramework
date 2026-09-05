@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Runestone.AesirPackageInstaller
 {
     /// <summary>
-    /// Aesir 包安装器 — 将三个 Aesir 包安装到 Assets/ 目录（非 Unity Package Manager）。
+    /// Aesir 包安装器 — 将两个 Aesir 包安装到 Assets/ 目录（非 Unity Package Manager）。
     /// <para>使用方式：将此文件放入目标项目的 Assets/Editor/ 目录，然后通过 Tools → Aesir → Package Installer 打开。</para>
     /// <para>支持本地目录安装（测试用）和 Git 远程安装（正式）。</para>
     /// </summary>
@@ -19,7 +19,7 @@ namespace Runestone.AesirPackageInstaller
         #region 常量
 
         const string MenuPath = "Tools/Aesir/Package Installer";
-        const string GitRepoUrl = "https://github.com/yuumixcode/Unity-Aesir-Packages.git";
+        const string GitRepoUrl = "https://github.com/yuumixcode/AesirFramework.git";
         const string DefaultInstallRoot = "Assets/Runestone";
         const string TempStagingDir = "Temp/AesirInstallTest";
 
@@ -78,26 +78,19 @@ namespace Runestone.AesirPackageInstaller
 
         static readonly PackageDef[] s_packages =
         {
-            new("Aesir Architecture", "cn.runestone.aesir.architecture", "0.12.0",
+            new("Aesir Architecture", "cn.runestone.aesir.architecture", "0.14.0",
                 "AesirArchitecture",
                 new[] { "Runtime/Runestone.AesirArchitecture.asmdef" },
                 "Runestone.AesirArchitecture",
                 "Runestone.AesirArchitecture.AesirArchitecture",
                 Array.Empty<string>(), false),
 
-            new("Aesir Modules", "cn.runestone.aesir.modules", "0.12.0",
+            new("Aesir Modules", "cn.runestone.aesir.modules", "0.14.0",
                 "AesirModules",
                 new[] { "Runtime/Runestone.AesirModules.asmdef" },
                 "Runestone.AesirModules",
                 "Runestone.AesirModules.AesirModules",
                 new[] { "cn.runestone.aesir.architecture" }, false),
-
-            new("Aesir Inspector", "cn.runestone.aesir-inspector", "0.12.0",
-                "AesirInspector",
-                new[] { "Runtime/Unity/Runestone.AesirInspector.asmdef" },
-                "Runestone.AesirInspector",
-                "Runestone.AesirInspector.AesirInspectorVersion",
-                Array.Empty<string>(), true),
         };
 
         #endregion

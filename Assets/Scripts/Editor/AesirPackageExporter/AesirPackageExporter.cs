@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Runestone.AesirPackageExporter
 {
     /// <summary>
-    /// Aesir 包导出工具，支持单独导出或一次性导出全部三个包。
+    /// Aesir 包导出工具，支持单独导出或一次性导出全部两个包。
     /// </summary>
     public static class AesirPackageExporter
     {
@@ -17,12 +17,11 @@ namespace Runestone.AesirPackageExporter
         static readonly PackageInfo[] Packages =
         {
             new("Aesir Architecture", "Assets/Runestone/AesirArchitecture"),
-            new("Aesir Modules", "Assets/Runestone/AesirModules"),
-            new("Aesir Inspector", "Assets/Runestone/AesirInspector")
+            new("Aesir Modules", "Assets/Runestone/AesirModules")
         };
 
         /// <summary>
-        /// 导出全部三个包到指定输出目录。
+        /// 导出全部两个包到指定输出目录。
         /// </summary>
         [MenuItem(MenuRoot + "/Export All Packages", false, 0)]
         static void ExportAll()
@@ -68,15 +67,6 @@ namespace Runestone.AesirPackageExporter
         static void ExportModules()
         {
             ExportSingle(Packages[1]);
-        }
-
-        /// <summary>
-        /// 导出 Aesir Inspector 包。
-        /// </summary>
-        [MenuItem(MenuRoot + "/Export Aesir Inspector", false, 3)]
-        static void ExportInspector()
-        {
-            ExportSingle(Packages[2]);
         }
 
         static void ExportSingle(PackageInfo pkg)
