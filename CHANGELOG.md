@@ -20,15 +20,38 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.16.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.16.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.16.1** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.16.1** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.16.0` / `#AesirModules-v0.16.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.16.1` / `#AesirModules-v0.16.1`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.16.1] - 2026-09-06
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Changed
+
+- **Third Party Notices 收录 ObservableCollections（Cysharp，MIT）** — 设计参考条目：可观察集合高级能力（Move / Sort / 同步视图 / R3 集成）的推荐替代库；注明仅设计参考、未包含源码
+- 根 README（中英）推荐链接新增 ObservableCollections
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- **新增 `Documentation/Third Party Notices.md`** — 收录 Eflatun.SceneReference（MIT）设计参考条目（Scene 模块 `SceneAssetWrapper` 吸收其功能设计）；注明仅设计参考、未包含源码
+- **README（中英）Scene 模块 `SceneAssetWrapper` 条目补注功能设计参考来源**
+- 根 README（中英）推荐链接新增 Eflatun.SceneReference
 
 ---
 

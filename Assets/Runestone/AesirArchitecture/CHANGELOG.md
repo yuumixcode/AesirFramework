@@ -13,6 +13,13 @@
 - Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
 - 运行时集合（RuntimeSet）
 
+## [0.16.1] - 2026-09-06
+
+### Changed
+
+- **Third Party Notices 收录 ObservableCollections（Cysharp，MIT）** — 设计参考条目：可观察集合高级能力（Move / Sort / 同步视图 / R3 集成）的推荐替代库；注明仅设计参考、未包含源码
+- 根 README（中英）推荐链接新增 ObservableCollections
+
 ## [0.16.0] - 2026-09-06
 
 ### Changed

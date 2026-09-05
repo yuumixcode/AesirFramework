@@ -12,6 +12,14 @@
 - Scene 模块（SceneLoader、SceneReference）
 - 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
 
+## [0.16.1] - 2026-09-06
+
+### Changed
+
+- **新增 `Documentation/Third Party Notices.md`** — 收录 Eflatun.SceneReference（MIT）设计参考条目（Scene 模块 `SceneAssetWrapper` 吸收其功能设计）；注明仅设计参考、未包含源码
+- **README（中英）Scene 模块 `SceneAssetWrapper` 条目补注功能设计参考来源**
+- 根 README（中英）推荐链接新增 Eflatun.SceneReference
+
 ## [0.16.0] - 2026-09-06
 
 ### Added
