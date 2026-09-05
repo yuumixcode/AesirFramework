@@ -27,10 +27,10 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
 - **ObservableValue 响应式属性** — 快捷档 Model 直接暴露可写 `ObservableValue<T>`（表现层直改值）；标准档起收窄为 `IReadOnlyObservableValue<out T>` 只读接口 + 写方法；严格档再做接口注册 + Command 写入
-- **可观察集合** — `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` 提供 Added / Removed / Replaced / Updated / Cleared 最常用变更通知，与 ObservableValue 同一套读写分离与 MiniEvent 事件模式
+- **可观察集合** — `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 提供 Added / Removed / Replaced / Updated / Cleared 最常用变更通知，与 ObservableValue 同一套读写分离与 MiniEvent 事件模式
 - **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换 Model 的调试模式
 - **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule` 基类，消除代码重复
-- **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，支持全局单例
+- **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，按注册顺序保序
 - **Domain Reload 安全** — 静态变量通过 `[RuntimeInitializeOnLoadMethod]` 显式重置，反复进出 Play Mode 无残留
 - **纯 C# 核心 + MonoBehaviour 适配** — 框架核心为纯 C# 对象，Engine 层不依赖任何 Component 层类型，`AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` 作为 MonoBehaviour 适配层
 - **MVC + MVP 双模式** — `IController`（MVC，推荐）适合快速开发，`IPresenter`（MVP，可选）提供更严格的 Model-View 隔离
@@ -56,6 +56,12 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 ### 手动安装
 
 将本包目录复制到项目的 `Packages/` 目录下即可。
+
+### unitypackage 导入
+
+从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**一键检查并更新：版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测），更新前自动备份 `Assets/Runestone`，并按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件。
+
+> 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
 
 ## 快速开始
 
@@ -260,7 +266,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent 零分配事件 + 自动移除监听触发器
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
-│   │   ├── Observable/            # ObservableValue 响应式属性 + ObservableList/ObservableDictionary 可观察集合
+│   │   ├── Observable/            # ObservableValue 响应式属性 + ObservableList/ObservableDictionary/ObservableHashSet 可观察集合
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # 框架基础设施
 │   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
@@ -269,20 +275,20 @@ cn.runestone.aesir.architecture/
 │   │   ├── AesirArchitectureDebug.cs
 │   │   ├── AssemblyInfo.cs
 │   │   └── ResetStaticsAssistant.cs
-│   └── OdinInspector/            # 独立程序集（依赖 Odin Inspector）
-│       ├── Runestone.AesirArchitecture.OdinInspector.asmdef
-│       └── DescriptionSO.cs
 ├── Editor/
 │   ├── Runestone.AesirArchitecture.Editor.asmdef
 │   ├── Common/
 │   │   └── EnsureAesirArchitectureDefine.cs  # 编译符号管理
 │   ├── Utilities/
-│   │   └── ScriptingSymbolUtility.cs
+│   │   ├── ScriptingSymbolUtility.cs
+│   │   └── QuickCreateSOMenuItem.cs          # 右键快捷创建 SO（Aesir Inspector 存在时自动让位）
+│   ├── UpdateChecker/                        # 包内更新器（Tools → Aesir → Check for Updates）
+│   │   ├── AesirUpdateService.cs             # 无状态工具集：扫描安装、多源版本检测、清单差集、备份
+│   │   └── AesirUpdateWindow.cs              # 更新窗口
 │   └── OdinInspector/            # Odin Inspector 集成（可选）
 │       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef
 │       └── AttributeProcessors/
 │           ├── AesirArchitectureAttributeProcessor.cs
-│           ├── MonoLifecycleProxyAttributeProcessor.cs
 │           ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
 │           └── ObservableValueAttributeProcessor.cs
 ├── Tests/
@@ -314,7 +320,7 @@ cn.runestone.aesir.architecture/
 - **Context 多实例** — `AbstractContext<T>` 为 CRTP 泛型单例，每个具体上下文类型全局仅一份；多存档、多房间等场景请在业务层建模
 - **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
 - **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
-- **集合可观察全家桶** — 可观察集合仅提供 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` 与最常用的 Added / Removed / Replaced / Updated / Cleared 变更；Move、Sort、同步视图、R3 集成等高级能力不做，需要时推荐使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- **集合可观察全家桶** — 可观察集合仅提供 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 与最常用的 Added / Removed / Replaced / Updated / Cleared 变更；Move、Sort、同步视图、R3 集成等高级能力不做，需要时推荐使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
 
 ### 编写约定（违反时 fail-fast 报错，框架不做兜底）
@@ -351,8 +357,9 @@ cn.runestone.aesir.architecture/
 - [x] 运行时错误日志（替代前置依赖校验）
 - [x] Engine 层脱离 Component 层（纯 C#）
 - [x] Domain Reload 安全
+- [x] 可观察集合家族（List / Dictionary / HashSet）
+- [x] 包内更新器（Aesir Updater）
 - [ ] ScriptableObject 可视化配置层
-- [ ] SO EventChannel 事件通道
 - [ ] Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
 - [ ] 运行时集合（RuntimeSet）
 

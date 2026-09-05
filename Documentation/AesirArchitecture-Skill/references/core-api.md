@@ -112,7 +112,7 @@ public class GameContext : AbstractContext<GameContext>
 }
 
 // 访问单例（懒加载，初始化成功后才赋值）
-GameContext.Interface.GetModel<IGameModel>();
+GameContext.Instance.GetModel<IGameModel>();
 
 // 模块 OnInitialize（全部注册完毕后调用）
 public class GameModel : AbstractModel, IGameModel
@@ -126,7 +126,7 @@ public class GameModel : AbstractModel, IGameModel
 
 ### 禁忌
 
-- **Configure() 中禁止访问 `Interface`**——会递归创建第二个上下文
+- **Configure() 中禁止访问 `Instance`**——会递归创建第二个上下文
 - **Register 与 Get 类型参数必须一致**——按接口注册就按接口获取
 - **被依赖的模块先注册**——框架按注册顺序初始化 Model → Service
 
