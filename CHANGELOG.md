@@ -20,15 +20,61 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.14.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.14.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.15.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.15.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.14.0` / `#AesirModules-v0.14.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.15.0` / `#AesirModules-v0.15.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.15.0] - 2026-09-05
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Added
+
+- **可观察集合 `ObservableHashSet<T>`** — 与 List / Dictionary 同构：组合 `HashSet<T>` 存储 + `MiniEvent` 零分配事件；事件负载单值直传 `Action<T>`（对齐 Dictionary 的 KeyValuePair 直传先例）；只读接口 `IReadOnlyObservableHashSet<T>` 为不变型；新增 ObservableHashSetTests 14 个
+- **RuntimeInitializeLoadType 示例** — 编辑器窗口演示 `RuntimeInitializeLoadType` 五个初始化时机的执行顺序与静态重置最佳实践；菜单归位 `Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType`；ScriptableSingleton 落盘统一 `ScriptableSingleton/` 前缀
+
+#### Changed
+
+- **包内更新器大陆优化（jsDelivr 方案）** — 版本检测三级兜底：jsDelivr 四域名拉取仓库内 `.github/update-info.json`（CI 发版后以 `[skip ci]` 提交回 main）→ GitHub Releases API → `releases/latest` 302 重定向探测；unitypackage 下载仍走 GitHub Release 直链
+- **CI** — `build_unitypackage.py` 的 files-manifest 升级为 update-info.json（顶层 version/tag）；`auto-release.yml` 发布后回写 main
+- **ObservableDictionary.Remove(TKey) 优化** — 改用 `Dictionary.Remove(key, out TValue)` 单次哈希查找取回旧值
+- **Odin 编辑器处理器命名空间对齐** — `Editor.OdinIntegration` → `Editor.OdinInspector`（与 0.9.0 程序集/目录改名对齐）
+- **文档核查整理** — 两包中英 README 修正过时描述并补更新器/unitypackage 安装说明；AesirModules README 从 UIManager 旧架构重写为 UIModule 架构；Skill core-api.md `Interface` → `Instance`；CONTRIBUTING 单例规范更正
+
+#### Fixed
+
+- **PlaneWar 场景引用修复工具** — 原硬编码 `Assets/Samples/.../0.12.0` 路径失效，改为 `FindAssets` 动态定位（兼容包内 `Samples/` 与 UPM 导入副本两种布局）
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- 版本号与 Aesir Architecture 同步更新至 `0.15.0`，本包无功能性变更；中英 README 随全项目文档核查刷新至 UIModule 架构
+
+---
+
+### [repo] 仓库级
+
+#### Changed
+
+- **根 README 重构（中英）** — 新增 Aesir Modules 对等章节、文档地图、质量与 CI；安装方式扩为 4 种（新增 unitypackage 导入 + 包内更新器）
+- **CONTRIBUTING 修正** — OdinIntegration 旧命名更正；MonoBehaviour 单例规范更新为预放置优先 + `dontDestroyOnLoad` 序列化字段
+
+#### Removed
+
+- **仓库本地 AesirPackageInstaller**（`Assets/Scripts/Editor/`）— 硬编码版本常量需发版手动同步，本地复制安装路线已被 unitypackage Release 管线取代；版本/安装检查统一为包内更新器
 
 ---
 
