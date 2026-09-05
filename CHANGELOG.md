@@ -5,6 +5,34 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### 规划中
+
+- ScriptableObject 可视化配置层
+- Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
+- 运行时集合（RuntimeSet）
+
+## [0.15.0] - 2026-09-05
+
+### Added
+
+- **可观察集合 `ObservableHashSet<T>`** — 与 List / Dictionary 同构：组合 `HashSet<T>` 存储 + `MiniEvent` 零分配事件；事件负载单值直传 `Action<T>`（对齐 Dictionary 的 KeyValuePair 直传先例）；只读接口 `IReadOnlyObservableHashSet<T>` 为不变型（接口自行声明的 `Contains(T)` 处于输入位）；新增 ObservableHashSetTests 14 个
+- **RuntimeInitializeLoadType 示例** — 编辑器窗口演示 `RuntimeInitializeLoadType` 五个初始化时机的执行顺序与静态重置最佳实践（附讲解文档）；菜单归位 `Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType`；ScriptableSingleton + `[FilePath]` 落盘统一 `ScriptableSingleton/` 前缀（`.gitignore` 忽略运行时生成目录）
+
+### Changed
+
+- **包内更新器大陆优化（jsDelivr 方案）** — 版本检测三级兜底：jsDelivr 四域名（cdn / testingcf / gcore / fastly）拉取仓库内 `.github/update-info.json` → GitHub Releases API → `releases/latest` 302 重定向探测（完全绕开 API 限流）；unitypackage 下载仍走 GitHub Release 直链
+- **ObservableDictionary.Remove(TKey) 优化** — 改用 `Dictionary.Remove(key, out TValue)` 单次哈希查找取回旧值
+- **Odin 编辑器处理器命名空间对齐** — `Editor.OdinIntegration` → `Editor.OdinInspector`（与 0.9.0 程序集/目录改名对齐；纯命名空间标识符变更）
+- **文档核查整理** — 包中英 README 修正过时描述（GenericLocator 全局单例旧述、结构树失效条目），补包内更新器与 unitypackage 安装说明；Skill core-api.md `GameContext.Interface` → `.Instance`
+
+### Fixed
+
+- **PlaneWar 场景引用修复工具** — 原硬编码 `Assets/Samples/.../0.12.0` 路径在 Samples 双目录迁移后失效，改为 `FindAssets` 动态定位（兼容包内 `Samples/` 与 UPM 导入副本两种布局），预制体缺失时报错而非静默跳过
+
+> 注：本文件曾漏记 0.5.0 – 0.14.0 的逐版本条目，该区间历史见仓库根 CHANGELOG（聚合视图）。
+
 ## [0.14.0] - 2026-09-05
 
 ### Changed（仓库结构调整）
@@ -200,15 +228,6 @@
 
 - **单例竞争修复**：`AesirArchitecture` 重复实例 `Destroy` 后提前 `return`，避免继续执行赋值和 `DontDestroyOnLoad`；`OnDestroy` 仅在 `_instance == this` 时清空，避免销毁非自身实例时误清
 - **RemoveListenerTrigger**：移除 `[DisallowMultipleComponent]` 限制
-
-## [Unreleased]
-
-### 规划中
-
-- ScriptableObject 可视化配置层
-- SO EventChannel 事件通道
-- Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
-- 运行时集合（RuntimeSet）
 
 ## [0.4.2] - 2026-07-24
 
