@@ -3,7 +3,7 @@
 > A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.15.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.16.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -39,10 +39,10 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 ### Via UPM (Git URL)
 
-Install via UPM with a Git URL pinned to the 0.15.0 version branch (the branch root is the package content):
+Install via UPM with a Git URL pinned to the 0.16.0 version branch (the branch root is the package content):
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.15.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.16.0
 ```
 
 Track the latest development version on `main`:
