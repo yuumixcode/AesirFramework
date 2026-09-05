@@ -7,7 +7,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 {
     /// <summary>
     /// 验证 <see cref="AesirUpdateService" /> 的纯逻辑部分：版本比较、package.json 字段解析、
-    /// 清单差集计算与残留删除、空目录回收、备份复制与裁剪、清单 JSON 解析与合并、Release 资产定位。
+    /// 清单差集计算与残留删除、空目录回收、备份复制与裁剪、清单 JSON 解析与合并、
+    /// update-info 解析、重定向 tag 提取、下载地址构造。
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -294,33 +295,70 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
         #endregion
 
-        #region Release 资产定位
+        #region 远程检测纯逻辑（update-info 解析 / 重定向 tag 提取 / 下载地址构造）
 
         [Test]
-        public void FindUnityPackageAsset_MatchesNamingConvention()
+        public void ParseUpdateInfo_VersionTagAndPackages()
         {
-            var release = new AesirUpdateService.ReleaseInfo
+            const string json = @"
+{
+    ""version"": ""0.15.0"",
+    ""tag"": ""v0.15.0"",
+    ""packages"": [
+        { ""name"": ""AesirArchitecture"", ""version"": ""0.15.0"", ""files"": [""Assets/Runestone/AesirArchitecture/package.json""] },
+        { ""name"": ""AesirModules"", ""version"": ""0.15.0"", ""files"": [] }
+    ]
+}";
+
+            var info = AesirUpdateService.ParseUpdateInfo(json);
+
+            Assert.IsNotNull(info);
+            Assert.AreEqual("0.15.0", info.version);
+            Assert.AreEqual("v0.15.0", info.tag);
+            Assert.AreEqual(2, info.packages.Length);
+            Assert.AreEqual("0.15.0", info.GetPackage("AesirArchitecture").version);
+            Assert.IsNull(info.GetPackage("NotInstalled"));
+        }
+
+        [Test]
+        public void ParseUpdateInfo_InvalidOrEmptyReturnsNull()
+        {
+            Assert.IsNull(AesirUpdateService.ParseUpdateInfo(null));
+            Assert.IsNull(AesirUpdateService.ParseUpdateInfo(""));
+            Assert.IsNull(AesirUpdateService.ParseUpdateInfo("not a json"));
+        }
+
+        [Test]
+        public void ExtractTagFromLocation_GitHubRedirectFormats()
+        {
+            // 绝对地址（curl 实测格式）
+            Assert.AreEqual("v1.0.246-Unity2018Compatible", AesirUpdateService.ExtractTagFromLocation(
+                "https://github.com/liangxiegame/QFramework/releases/tag/v1.0.246-Unity2018Compatible"));
+            // 相对地址（Location 可能只给路径）
+            Assert.AreEqual("v0.15.0", AesirUpdateService.ExtractTagFromLocation(
+                "/yuumixcode/AesirFramework/releases/tag/v0.15.0"));
+            // 不匹配 / 空值
+            Assert.IsNull(AesirUpdateService.ExtractTagFromLocation("https://github.com/yuumixcode/AesirFramework"));
+            Assert.IsNull(AesirUpdateService.ExtractTagFromLocation(null));
+            Assert.IsNull(AesirUpdateService.ExtractTagFromLocation(""));
+        }
+
+        [Test]
+        public void ReleaseSnapshot_UnityPackageUrlFollowsNamingConvention()
+        {
+            var snapshot = new AesirUpdateService.ReleaseSnapshot
             {
-                tag_name = "v0.15.0",
-                assets = new[]
-                {
-                    new AesirUpdateService.ReleaseAsset
-                        { name = "AesirArchitecture-v0.15.0.unitypackage", browser_download_url = "url-arch" },
-                    new AesirUpdateService.ReleaseAsset
-                        { name = "AesirModules-v0.15.0.unitypackage", browser_download_url = "url-mods" },
-                    new AesirUpdateService.ReleaseAsset
-                        { name = "files-manifest.json", browser_download_url = "url-manifest" },
-                    new AesirUpdateService.ReleaseAsset
-                        { name = "source.zip", browser_download_url = "url-zip" },
-                }
+                Source = "jsDelivr (cdn.jsdelivr.net)",
+                Tag = "v0.15.0",
             };
 
-            Assert.AreEqual("url-arch",
-                AesirUpdateService.FindUnityPackageAsset(release, "AesirArchitecture").browser_download_url);
-            Assert.AreEqual("url-mods",
-                AesirUpdateService.FindUnityPackageAsset(release, "AesirModules").browser_download_url);
-            Assert.IsNull(AesirUpdateService.FindUnityPackageAsset(release, "NotShipped"));
-            Assert.AreEqual("url-manifest", AesirUpdateService.FindManifestAsset(release).browser_download_url);
+            // 资产命名约定 <包目录名>-v<版本>.unitypackage，下载走 GitHub Release 直链
+            StringAssert.AreEqualIgnoringCase(
+                "https://github.com/yuumixcode/AesirFramework/releases/download/v0.15.0/AesirArchitecture-v0.15.0.unitypackage",
+                snapshot.GetUnityPackageUrl("AesirArchitecture"));
+            StringAssert.AreEqualIgnoringCase(
+                "https://github.com/yuumixcode/AesirFramework/releases/download/v0.15.0/AesirModules-v0.15.0.unitypackage",
+                snapshot.GetUnityPackageUrl("AesirModules"));
         }
 
         #endregion
