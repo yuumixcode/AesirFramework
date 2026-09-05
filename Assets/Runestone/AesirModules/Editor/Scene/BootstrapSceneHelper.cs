@@ -15,11 +15,10 @@ namespace Runestone.AesirModules.Editor
     [InitializeOnLoad]
     public static class BootstrapSceneHelper
     {
-        static readonly string[] PresetBootstrapSceneNames =
-        {
-            "Bootstrap", "BootstrapScene", "Bootstrapper", "BootstrapperScene", "bootstrap_scene",
-            "bootstrap", "bootstrapper_scene", "bootstrapper"
-        };
+        /// <summary>
+        /// 预设的启动场景名称数组（单一事实来源：与运行时 SceneModule 共用 <see cref="SceneModule.PresetBootstrapSceneNames" />）
+        /// </summary>
+        static readonly string[] PresetBootstrapSceneNames = SceneModule.PresetBootstrapSceneNames;
 
         /// <summary>
         /// 静态构造函数配合 [InitializeOnLoad] 特性，在编译后立刻执行一次。
