@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -25,6 +26,7 @@ namespace Runestone.AesirArchitecture.Tests
     ///         <item><b>订阅</b>：注册回调后，对应生命周期事件触发时回调被执行。</item>
     ///         <item><b>排序</b>：多个回调按 order 升序执行，同 order 按注册顺序执行。</item>
     ///         <item><b>取消订阅</b>：注销后回调不再被触发。</item>
+    ///         <item><b>快照语义</b>：回调执行中增删监听不影响本趟遍历，变更在趟末统一生效。</item>
     ///     </list>
     ///     </para>
     /// </remarks>
@@ -371,6 +373,127 @@ namespace Runestone.AesirArchitecture.Tests
 
             AesirArchitectureDebug.LogTestInfo(
                 "全生命周期顺序验证: FixedUpdate → BeforeUpdate → Update → LateUpdate → AfterUpdate");
+        }
+
+        /// <summary>
+        /// 验证快照语义：回调执行中新增的监听不在本趟执行，下一趟才生效。
+        /// </summary>
+        /// <remarks>
+        /// 与原生 C# 多播委托一致，本趟遍历基于调用开始时的监听列表；
+        /// 新增变更在趟末统一应用，因此下一趟按注册顺序追加执行。
+        /// </remarks>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
+        [UnityTest]
+        public IEnumerator AddListener_DuringInvocation_TakesEffectNextPass()
+        {
+            _proxy.AddListener(MonoLifecycleEvent.Update, () =>
+            {
+                _log.Add("existing");
+                _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("added"));
+            });
+
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "existing" }, _log, "调用期间新增的监听不应在本趟执行");
+
+            _log.Clear();
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "existing", "added" }, _log, "新增监听应在下一趟按注册顺序生效");
+            AesirArchitectureDebug.LogTestInfo("快照语义验证: 调用中新增的监听下一趟生效");
+        }
+
+        /// <summary>
+        /// 验证快照语义：回调执行中自移除不会跳过本趟的后续监听，下一趟起不再执行。
+        /// </summary>
+        /// <seealso cref="MonoLifecycleProxy.RemoveListener" />
+        [UnityTest]
+        public IEnumerator RemoveListener_SelfDuringInvocation_DoesNotSkipNextListener()
+        {
+            Action self = null;
+
+            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("first"));
+
+            self = () =>
+            {
+                _log.Add("self");
+                _proxy.RemoveListener(MonoLifecycleEvent.Update, self);
+            };
+
+            _proxy.AddListener(MonoLifecycleEvent.Update, self);
+            _proxy.AddListener(MonoLifecycleEvent.Update, () => _log.Add("third"));
+
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "first", "self", "third" }, _log, "自移除不应导致本趟后续监听被跳过");
+
+            _log.Clear();
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "first", "third" }, _log, "自移除的监听下一趟不应再执行");
+            AesirArchitectureDebug.LogTestInfo("快照语义验证: 自移除不跳过后续监听，下一趟失效");
+        }
+
+        /// <summary>
+        /// 验证快照语义：回调执行中移除尚未执行的监听，该监听本趟仍会执行一次，下一趟起失效。
+        /// </summary>
+        /// <remarks>
+        /// 与原生 C# 多播委托一致：本趟遍历基于调用开始时的快照，
+        /// 移除变更在趟末应用，因此本趟尚未执行的被移除监听仍会执行一次。
+        /// </remarks>
+        /// <seealso cref="MonoLifecycleProxy.RemoveListener" />
+        [UnityTest]
+        public IEnumerator RemoveListener_LaterDuringInvocation_StillInvokedThisPass()
+        {
+            Action later = null;
+
+            _proxy.AddListener(MonoLifecycleEvent.Update, () =>
+            {
+                _log.Add("first");
+                _proxy.RemoveListener(MonoLifecycleEvent.Update, later);
+            });
+
+            later = () => _log.Add("later");
+            _proxy.AddListener(MonoLifecycleEvent.Update, later);
+
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "first", "later" }, _log, "快照语义：被移除的监听本趟尚未执行仍会执行一次");
+
+            _log.Clear();
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "first" }, _log, "被移除的监听下一趟不应再执行");
+            AesirArchitectureDebug.LogTestInfo("快照语义验证: 调用中移除的监听本趟仍执行一次，下一趟失效");
+        }
+
+        /// <summary>
+        /// 验证快照语义：同一趟内先添加后移除同一回调，变更按发生顺序应用后相互抵消。
+        /// </summary>
+        /// <seealso cref="MonoLifecycleProxy.AddListener" />
+        /// <seealso cref="MonoLifecycleProxy.RemoveListener" />
+        [UnityTest]
+        public IEnumerator AddThenRemove_SameCallbackDuringInvocation_CancelsOut()
+        {
+            Action transient = null;
+
+            _proxy.AddListener(MonoLifecycleEvent.Update, () =>
+            {
+                _log.Add("existing");
+                transient = () => _log.Add("transient");
+                _proxy.AddListener(MonoLifecycleEvent.Update, transient);
+                _proxy.RemoveListener(MonoLifecycleEvent.Update, transient);
+            });
+
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "existing" }, _log, "本趟不应有额外监听执行");
+
+            _log.Clear();
+            yield return null;
+
+            CollectionAssert.AreEqual(new[] { "existing" }, _log, "同趟内先加后删的监听应相互抵消，下一趟不执行");
+            AesirArchitectureDebug.LogTestInfo("快照语义验证: 同趟内先加后删相互抵消");
         }
     }
 }
