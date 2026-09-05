@@ -1,18 +1,17 @@
 # Aesir Architecture
 
-> A progressive MVP/MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
+> A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
 
-> 📦 **This package is part of the [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo.** This package does **NOT depend on** any other Aesir sub-package (standalone installable).
+> 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package does **NOT depend on** any other Aesir sub-package (standalone installable).
 >
 > Related:
-> - **[Aesir Inspector](https://github.com/yuumixcode/Unity-Aesir-Packages)** (standalone)
-> - **[Aesir Modules](https://github.com/yuumixcode/Unity-Aesir-Packages)** (depends on Architecture)
+> - **[Aesir Modules](https://github.com/yuumixcode/AesirFramework)** (depends on Architecture)
 
 > **Odin Inspector is an optional enhancement** (Inspector presentation and debugging experience), not a runtime prerequisite — the core architecture loop (Context registration → initialization → Command/Query → ObservableValue notification) runs fully without Odin.
 
@@ -40,10 +39,16 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 ### Via UPM (Git URL)
 
-Install via UPM by adding a Git URL in Unity Package Manager:
+Install via UPM with a Git URL pinned to the 0.14.0 version branch (the branch root is the package content):
 
 ```
-https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.14.0
+```
+
+Track the latest development version on `main`:
+
+```
+https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture
 ```
 
 UPM identifies this package via the `name` field in `package.json` (`cn.runestone.aesir.architecture`).
@@ -144,7 +149,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## Samples
 
-The package provides 8 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
+The package provides 9 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
 
 ### MVC family (View subscribes itself)
 
@@ -170,6 +175,12 @@ The package provides 8 importable samples (Package Manager → Aesir Architectur
 |------|------|------|
 | `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
 | `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
+
+### Hands-on sample
+
+| Sample | Description | Dependency |
+|------|------|------|
+| `PlaneWar` | Vertical shooter "Plane War" (Mono version): a complete self-contained mini-game demonstrating how MiniEvent, ObservableValue, and MonoLifecycleProxy combine in real gameplay | None |
 
 ## Architecture Overview
 
@@ -278,7 +289,7 @@ cn.runestone.aesir.architecture/
 │   │   └── Runestone.AesirArchitecture.Tests.asmdef
 │   └── Editor/
 │       └── Runestone.AesirArchitecture.Tests.Editor.asmdef
-├── Samples~/
+├── Samples/                       # Samples (directly visible & runnable in this repo, kept in sync with Samples~)
 │   ├── Counter-Mvc-Quick/         # MVC-1 quick tier (MonoViewController writes writable ObservableValue directly, lesson 1)
 │   ├── Counter-Mvc-Standard/      # MVC-2 standard tier (read-only exposure + write methods, View/Controller separated sharing Model, lesson 2)
 │   ├── Counter-Mvc-Strict/        # MVC-3 strict tier (interface registration + Command writes + Query processed reads, lesson 3)
@@ -286,7 +297,9 @@ cn.runestone.aesir.architecture/
 │   ├── Counter-Mvp-Standard/      # MVP-2 standard tier (read-only exposure + write methods, Presenter calls write methods directly, lesson 2)
 │   ├── Counter-Mvp-Strict/        # MVP-3 strict tier (Command writes + Query reads, View holds Presenter via narrow interface, lesson 3)
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
-│   └── MiniEvent/                 # MiniEvent usage examples
+│   ├── MiniEvent/                 # MiniEvent usage examples
+│   └── PlaneWar/                  # Vertical shooter "Plane War" (Mono hands-on sample)
+├── Samples~/                      # Sample source mirror (import on demand via Package Manager after Git URL install; excluded from builds)
 └── Third Party Notices.md          # Third-party license notices
 ```
 
