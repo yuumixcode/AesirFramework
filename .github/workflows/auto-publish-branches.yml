@@ -28,8 +28,6 @@ jobs:
             branch_prefix: AesirArchitecture
           - package: AesirModules
             branch_prefix: AesirModules
-          - package: AesirInspector
-            branch_prefix: AesirInspector
     steps:
       - name: Checkout
         uses: actions/checkout@v4

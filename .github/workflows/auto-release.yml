@@ -1,0 +1,76 @@
+name: Auto Release Packages
+
+# 每次推送 main 自动发布 GitHub Release（滚动更新当前版本）：
+# 资产为 RAA / RAM / RAF 三个 .unitypackage（RAF = 两包合并），说明取自根 CHANGELOG 对应版本段落。
+# 纯 Python 生成 unitypackage（格式经 Unity 导出参考包逐字节校验），CI 无需 Unity 编辑器。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GITHUB_TOKEN 需要写权限以创建 Release 与 tag
+permissions:
+  contents: write
+
+# 同一工作流的多次运行只保留最新一次
+concurrency:
+  group: auto-release
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Verify package versions match
+        run: |
+          ARCH=$(jq -r '.version' Assets/Runestone/AesirArchitecture/package.json)
+          MODS=$(jq -r '.version' Assets/Runestone/AesirModules/package.json)
+          if [ "$ARCH" != "$MODS" ]; then
+            echo "::error::Version mismatch: Architecture=$ARCH Modules=$MODS"
+            exit 1
+          fi
+          echo "VERSION=$ARCH" >> "$GITHUB_ENV"
+          echo "📦 Release version: $ARCH"
+
+      - name: Build unitypackages (RAA / RAM / RAF)
+        run: |
+          python .github/scripts/build_unitypackage.py \
+            --package Assets/Runestone/AesirArchitecture \
+            --output "dist/AesirArchitecture-v${VERSION}.unitypackage"
+          python .github/scripts/build_unitypackage.py \
+            --package Assets/Runestone/AesirModules \
+            --output "dist/AesirModules-v${VERSION}.unitypackage"
+          python .github/scripts/build_unitypackage.py \
+            --package Assets/Runestone/AesirArchitecture \
+            --package Assets/Runestone/AesirModules \
+            --output "dist/AesirFramework-v${VERSION}.unitypackage"
+          ls -lh dist/
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          python .github/scripts/extract_release_notes.py \
+            --changelog CHANGELOG.md \
+            --version "${VERSION}" > release_notes.md
+          cat release_notes.md
+
+      - name: Publish rolling release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${VERSION}"
+
+          # 滚动发布：同版本重复推送时删除旧 Release 与 tag，基于当前提交重建
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          git push origin ":refs/tags/$TAG" 2>/dev/null || true
+
+          gh release create "$TAG" \
+            --title "AesirFramework ${TAG}" \
+            --notes-file release_notes.md \
+            dist/*
