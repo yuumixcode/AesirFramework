@@ -13,6 +13,12 @@
 - Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
 - 运行时集合（RuntimeSet）
 
+## [0.16.0] - 2026-09-06
+
+### Changed
+
+- 版本号与 Aesir Modules 同步更新至 `0.16.0`，本包本版本无功能性变更
+
 ## [0.15.0] - 2026-09-05
 
 ### Added
