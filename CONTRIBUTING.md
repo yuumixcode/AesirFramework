@@ -1,4 +1,4 @@
-# Contributing to Unity-Aesir-Packages / 贡献指南
+# Contributing to AesirFramework / 贡献指南
 
 > 感谢你考虑为本项目做出贡献！无论是 Bug 报告、功能建议、文档改进还是代码提交，我们都非常欢迎。
 >
@@ -34,13 +34,13 @@
 
 #### 报告 Bug
 
-1. 在 [Issues](https://github.com/yuumixcode/Unity-Aesir-Packages/issues) 搜索是否已有相同问题。
+1. 在 [Issues](https://github.com/yuumixcode/AesirFramework/issues) 搜索是否已有相同问题。
 2. 如果没有，**创建新 Issue**，并附上：
    - **复现步骤**：最小可复现路径
    - **预期行为** vs **实际行为**
    - **环境信息**：Unity / Tuanjie 版本、是否启用 Odin、操作系统
    - **截图/日志**（如适用）
-3. 标注影响哪个子包：`Aesir Architecture` / `Aesir Modules` / `Aesir Inspector` / `monorepo`
+3. 标注影响哪个子包：`Aesir Architecture` / `Aesir Modules` / `monorepo`
 
 #### 建议功能
 
@@ -75,7 +75,7 @@
 #### 克隆仓库
 
 ```bash
-git clone https://github.com/yuumixcode/Unity-Aesir-Packages.git
+git clone https://github.com/yuumixcode/AesirFramework.git
 ```
 
 #### 预热包缓存（不开 GUI）
@@ -86,18 +86,17 @@ Unity -batchmode -quit -projectPath . -nographics -logFile /dev/null
 
 ### 仓库结构
 
-> 这是**多包 monorepo**——三个子包都放在 `Assets/Runestone/` 下，每个子包都有自己独立的 `package.json`、`README.md`、`CHANGELOG.md`。
+> 这是**多包 monorepo**——两个子包都放在 `Assets/Runestone/` 下，每个子包都有自己独立的 `package.json`、`README.md`、`CHANGELOG.md`。
 >
-> This is a **multi-package monorepo** — three sub-packages live under `Assets/Runestone/`, each with its own `package.json`, `README.md`, and `CHANGELOG.md`.
+> This is a **multi-package monorepo** — two sub-packages live under `Assets/Runestone/`, each with its own `package.json`, `README.md`, and `CHANGELOG.md`.
 
 ```
 Assets/Runestone/
 ├── AesirArchitecture/      # Aesir Architecture 包源（不依赖其他 Aesir 子包）
-├── AesirModules/           # Aesir Modules 包源（依赖 Architecture）
-└── AesirInspector/         # Aesir Inspector 包源（不依赖其他 Aesir 子包；强依赖 Odin Inspector）
+└── AesirModules/           # Aesir Modules 包源（依赖 Architecture）
 ```
 
-详细目录与程序集结构见 [`AGENTS.md`](./AGENTS.md) / [`CODELY.md`](./CODELY.md)。
+详细目录与程序集结构见 [`CODELY.md`](./CODELY.md)。
 
 ### 编码规范
 
@@ -115,11 +114,8 @@ Assets/Runestone/
 
 | 子包 | 规范来源 |
 |---|---|
-| Aesir Architecture | [`AGENTS.md`](./AGENTS.md) + [`CODELY.md`](./CODELY.md) |
+| Aesir Architecture | [`CODELY.md`](./CODELY.md) |
 | Aesir Modules | 同上 |
-| Aesir Inspector | [`Assets/Runestone/AesirInspector/CONTRIBUTING.md`](./Assets/Runestone/AesirInspector/CONTRIBUTING.md)（最详细，含 CodeStyle 文件路径） |
-
-> ⚠️ Aesir Inspector 采用**无 XML 注释范式**（用 `[Summary]` 特性替代），与其他两个子包风格不同。贡献前请先阅读对应子包的规范。
 
 ### 测试要求
 
@@ -150,7 +146,7 @@ Unity -batchmode -quit -projectPath . \
 | `test:` | 仅测试变更 | `test: Add coverage for AutoRemoveListenerHandle` |
 | `chore:` | 构建/工具/依赖 | `chore: Bump Aesir Architecture to 0.3.2` |
 
-> **Scope 建议**：`feat(architecture):` / `fix(modules):` / `chore(inspector):` —— 通过 scope 标明影响哪个子包。
+> **Scope 建议**：`feat(architecture):` / `fix(modules):` —— 通过 scope 标明影响哪个子包。
 
 ### Pull Request 流程
 
@@ -186,7 +182,7 @@ Unity -batchmode -quit -projectPath . \
 - [ ] 代码遵循项目编码规范
 - [ ] 已添加/更新单元测试
 - [ ] 所有测试通过
-- [ ] 公共 API 有中文 XML 文档注释（Aesir Inspector 除外，用 `[Summary]`）
+- [ ] 公共 API 有中文 XML 文档注释
 - [ ] 未引入未使用的依赖
 - [ ] `Assets/Plugins/Sirenix/` 未被提交（已 gitignore）
 - [ ] 提交信息遵循 Conventional Commits
@@ -194,9 +190,9 @@ Unity -batchmode -quit -projectPath . \
 
 ### 问题与帮助
 
-- **Bug 报告 & 功能建议**: [GitHub Issues](https://github.com/yuumixcode/Unity-Aesir-Packages/issues)
-- **讨论 & 提问**: [GitHub Discussions](https://github.com/yuumixcode/Unity-Aesir-Packages/discussions)
-- **子包 Aesir Inspector 专属问题**: 前往 [yuumixcode/aesir-inspector](https://github.com/yuumixcode/Unity-Aesir-Packages/issues) 提 Issue
+- **Bug 报告 & 功能建议**: [GitHub Issues](https://github.com/yuumixcode/AesirFramework/issues)
+- **讨论 & 提问**: [GitHub Discussions](https://github.com/yuumixcode/AesirFramework/discussions)
+- **Aesir Inspector 相关问题**: Aesir Inspector 已迁移至独立公开仓库，请前往 [yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector/issues) 提 Issue
 
 ---
 
@@ -226,13 +222,13 @@ This project follows the [Contributor Covenant v2.1](./CODE_OF_CONDUCT.md). By p
 
 #### Reporting Bugs
 
-1. Search [Issues](https://github.com/yuumixcode/Unity-Aesir-Packages/issues) for duplicates.
+1. Search [Issues](https://github.com/yuumixcode/AesirFramework/issues) for duplicates.
 2. If none, open a new Issue with:
    - **Steps to reproduce** (minimal)
    - **Expected vs actual** behavior
    - **Environment**: Unity / Tuanjie version, Odin status, OS
    - **Screenshots / logs** if applicable
-3. Tag the affected sub-package: `Aesir Architecture` / `Aesir Modules` / `Aesir Inspector` / `monorepo`
+3. Tag the affected sub-package: `Aesir Architecture` / `Aesir Modules` / `monorepo`
 
 #### Suggesting Features
 
@@ -267,7 +263,7 @@ Docs are first-class. Fix typos, expand examples, complete translations — all 
 Clone:
 
 ```bash
-git clone https://github.com/yuumixcode/Unity-Aesir-Packages.git
+git clone https://github.com/yuumixcode/AesirFramework.git
 ```
 
 Pre-warm package cache without GUI:
@@ -278,16 +274,15 @@ Unity -batchmode -quit -projectPath . -nographics -logFile /dev/null
 
 ### Repository Structure
 
-> This is a **multi-package monorepo** — three sub-packages live under `Assets/Runestone/`, each with its own `package.json`, `README.md`, and `CHANGELOG.md`.
+> This is a **multi-package monorepo** — two sub-packages live under `Assets/Runestone/`, each with its own `package.json`, `README.md`, and `CHANGELOG.md`.
 
 ```
 Assets/Runestone/
 ├── AesirArchitecture/      # Aesir Architecture source
-├── AesirModules/           # Aesir Modules source (depends on Architecture)
-└── AesirInspector/         # Aesir Inspector source (independent; requires Odin Inspector)
+└── AesirModules/           # Aesir Modules source (depends on Architecture)
 ```
 
-See [`AGENTS.md`](./AGENTS.md) / [`CODELY.md`](./CODELY.md) for detailed layout.
+See [`CODELY.md`](./CODELY.md) for detailed layout.
 
 ### Coding Standards
 
@@ -305,11 +300,8 @@ See [`AGENTS.md`](./AGENTS.md) / [`CODELY.md`](./CODELY.md) for detailed layout.
 
 | Sub-Package | Standards Reference |
 |---|---|
-| Aesir Architecture | [`AGENTS.md`](./AGENTS.md) + [`CODELY.md`](./CODELY.md) |
+| Aesir Architecture | [`CODELY.md`](./CODELY.md) |
 | Aesir Modules | Same as above |
-| Aesir Inspector | [`Assets/Runestone/AesirInspector/CONTRIBUTING.md`](./Assets/Runestone/AesirInspector/CONTRIBUTING.md) (most detailed; includes CodeStyle file path) |
-
-> ⚠️ Aesir Inspector uses a **no-XML-comment style** (`[Summary]` attributes instead) — different from the other two. Read the relevant sub-package's guide before contributing.
 
 ### Testing Requirements
 
@@ -340,7 +332,7 @@ Unity -batchmode -quit -projectPath . \
 | `test:` | Tests only | `test: Add coverage for AutoRemoveListenerHandle` |
 | `chore:` | Build / tooling / deps | `chore: Bump Aesir Architecture to 0.3.2` |
 
-> **Recommended scope**: `feat(architecture):` / `fix(modules):` / `chore(inspector):` — make the affected sub-package explicit.
+> **Recommended scope**: `feat(architecture):` / `fix(modules):` — make the affected sub-package explicit.
 
 ### Pull Request Workflow
 
@@ -374,7 +366,7 @@ Unity -batchmode -quit -projectPath . \
 - [ ] Code follows project standards
 - [ ] Tests added / updated
 - [ ] All tests pass
-- [ ] Public API has Chinese XML doc comments (except Aesir Inspector, which uses `[Summary]`)
+- [ ] Public API has Chinese XML doc comments
 - [ ] No new unused dependencies
 - [ ] `Assets/Plugins/Sirenix/` not committed (gitignored)
 - [ ] Commit messages follow Conventional Commits
@@ -382,11 +374,11 @@ Unity -batchmode -quit -projectPath . \
 
 ### Getting Help
 
-- **Bug reports & feature requests**: [GitHub Issues](https://github.com/yuumixcode/Unity-Aesir-Packages/issues)
-- **Discussions & Q&A**: [GitHub Discussions](https://github.com/yuumixcode/Unity-Aesir-Packages/discussions)
-- **Aesir Inspector-specific issues**: open in [yuumixcode/aesir-inspector](https://github.com/yuumixcode/Unity-Aesir-Packages/issues)
+- **Bug reports & feature requests**: [GitHub Issues](https://github.com/yuumixcode/AesirFramework/issues)
+- **Discussions & Q&A**: [GitHub Discussions](https://github.com/yuumixcode/AesirFramework/discussions)
+- **Aesir Inspector-related issues**: Aesir Inspector now lives in its own public repository — open issues at [yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector/issues)
 
 ---
 
-感谢你的贡献！每一次提交都让 Aesir Packages 变得更好。
-Thanks for contributing — every commit makes Aesir Packages better.
+感谢你的贡献！每一次提交都让 AesirFramework 变得更好。
+Thanks for contributing — every commit makes AesirFramework better.

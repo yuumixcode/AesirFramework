@@ -12,7 +12,6 @@
 >
 > 关联包：
 > - **[Aesir Modules](https://github.com/yuumixcode/AesirFramework)**（依赖 Architecture）
-> - Aesir Inspector 已迁移至独立公开仓库（面向 Odin Inspector 开发者的学习工具包），不再随本仓库分发
 
 > **Odin Inspector 为可选增强**（Inspector 样式与调试体验），非运行前置——核心架构流程闭环（Context 注册 → 初始化 → Command/Query → ObservableValue 通知）无 Odin 可完整运行。
 

@@ -21,8 +21,6 @@
 | **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ ⚠️ 实验性事件模块 | `cn.runestone.aesir.modules` | `0.14.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
->
-> 📦 **Aesir Inspector 已迁移至独立公开仓库**——定位为专门面向 [Odin Inspector](https://odininspector.com/) 开发者的学习工具包，不再随本仓库分发。
 
 ---
 
@@ -98,7 +96,6 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
 - **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`
-- **Aesir Inspector** — 独立公开仓库，不随本仓库分发
 
 ---
 
@@ -258,6 +255,7 @@ Copyright (c) 2026 Yuumix
 
 ---
 
-## 🔗 链接
+## 🔗 推荐链接
 
-> - **作者主页**: [yuumixcode](https://github.com/yuumixcode)
+- **Aesir Inspector** — 独立公开仓库，专门面向 [Odin Inspector](https://odininspector.com/) 开发者的学习工具包：[yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
+- **作者主页**: [yuumixcode](https://github.com/yuumixcode)
