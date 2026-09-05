@@ -1,6 +1,6 @@
 using UnityEditor;
 
-namespace Runestone.AesirModules.Editor.OdinIntegration
+namespace Runestone.AesirModules.Editor.OdinInspector
 {
     /// <summary>
     /// Object Binder 编辑器持久化设置。
