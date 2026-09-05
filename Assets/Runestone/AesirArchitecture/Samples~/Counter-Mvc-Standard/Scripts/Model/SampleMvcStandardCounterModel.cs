@@ -1,19 +1,21 @@
 using System;
 using UnityEngine;
 
-namespace Runestone.AesirArchitecture.Samples
+namespace Runestone.AesirArchitecture.Samples.MvcStandard
 {
     /// <summary>
     /// MVC-2 标准档示例 —— 计数器模型实现。
     /// </summary>
     /// <remarks>
     /// 标准档：内部私有可序列化字段 + 对外只读接口暴露 + 公开写方法——
-    /// 外部只能订阅与读取（<see cref="Count"/>），修改必经写方法；
+    /// 外部只能订阅与读取（<see cref="Count" />），修改必经写方法；
     /// 但仍不做接口抽象（Context 按具体类注册），写入也不经 Command（由 Controller 直接调写方法）。
-    /// <para>对照：快捷档（Counter-Mvc-Quick）可写 ObservableValue 直接对外开放；
-    /// 严格档（Counter-Mvc-Strict）再加接口注册 + Command 写入。</para>
+    /// <para>
+    /// 对照：快捷档（Counter-Mvc-Quick）可写 ObservableValue 直接对外开放；
+    /// 严格档（Counter-Mvc-Strict）再加接口注册 + Command 写入。
+    /// </para>
     /// </remarks>
-    /// <seealso cref="SampleMvcStandardCounterController"/>
+    /// <seealso cref="SampleMvcStandardCounterController" />
     [Serializable]
     public sealed class SampleMvcStandardCounterModel : AbstractModel
     {

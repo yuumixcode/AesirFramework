@@ -5,6 +5,14 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.14.0] - 2026-09-05
+
+### Changed（仓库结构调整）
+
+- **AesirFramework 转型同步** — AesirInspector 已独立为公开仓库（面向 Odin Inspector 开发者的学习工具包），本仓库仅含 Architecture 与 Modules 两个子包；依赖声明 `cn.runestone.aesir.architecture` 同步至 `0.14.0`
+- **Samples 双目录结构** — 包内同时提供 `Samples/`（仓库内直接可见可运行）与 `Samples~/`（Git URL 安装后按需导入的源镜像）；示例目录统一为 `Events/01_KeyPress`（与 package.json samples 路径一致），示例代码随最新版本更新（EventEmitter → EventSender、OnKeyPressed → KeyPressedEvent）并以 `Samples/` 为编写主位同步至 `Samples~`
+- **示例程序集构建剔除 + 命名空间统一** — 示例程序集 `includePlatforms` 收窄为 `Editor`（不进入构建包）；命名空间统一为 `Runestone.AesirModules.Samples.Events.KeyPress`
+
 ## [0.13.0] - 2026-09-03
 
 ### Changed

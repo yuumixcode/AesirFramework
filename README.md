@@ -1,6 +1,6 @@
-# Unity-Aesir-Packages · Aesir 系列 Unity 包集合
+# AesirFramework · Aesir 系列 Unity 框架集合
 
-> 面向团结引擎 / Unity 的渐进式 MVC 架构 + UI 框架 + 编辑器工具集。三个子包可分别通过 Git URL 直接安装，按需选用。
+> 面向团结引擎 / Unity 的渐进式 MVC 架构 + UI 框架。两个子包通过 Git URL 直接安装，按需选用。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
@@ -11,17 +11,18 @@
 
 ---
 
-## ✨ 三个子包，独立可装
+## ✨ 两个子包，独立可装
 
-> **关键点：所有子包都通过同一 Git 仓库发布。** Aesir Architecture 和 Aesir Inspector **互相独立**；Aesir Modules **依赖** Architecture。Aesir Inspector **强依赖 [Odin Inspector](https://odininspector.com/)**。
+> **关键点：所有子包都通过同一 Git 仓库发布。** Aesir Modules **依赖** Aesir Architecture；两者均可独立安装 Architecture。
 
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
-| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.13.0` |
-| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ ⚠️ 实验性事件模块 | `cn.runestone.aesir.modules` | `0.13.0` |
-| **Aesir Inspector** | 编辑器扩展库（双语 Inspector、安全编辑器工具、脚本文档生成器、Summary 同步工具） | `cn.runestone.aesir-inspector` | `0.13.0` |
+| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.14.0` |
+| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ ⚠️ 实验性事件模块 | `cn.runestone.aesir.modules` | `0.14.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
+>
+> 📦 **Aesir Inspector 已迁移至独立公开仓库**——定位为专门面向 [Odin Inspector](https://odininspector.com/) 开发者的学习工具包，不再随本仓库分发。
 
 ---
 
@@ -41,7 +42,7 @@
 | **Controller** | `IController` | GetModel, GetService, **ExecuteCommand**, **ExecuteQuery** | MVC 模式入口（推荐） |
 | **Presenter** | `IPresenter` | 全部 Controller + IDisposable | MVP 模式（可选）；中介 Model ↔ View，View 被动 |
 | **Command** | `ICommand` → `AbstractCommand` | Execute() | 写操作（同步、无返回值） |
-| **Query** | `IQuery<TResult>` → `AbstractQuery` | Execute() → TResult | 读操作（无副作用），CQRS 风格 |
+| **Query** | `IQuery<TResult>` | Execute() → TResult | 读操作（无副作用），CQRS 风格 |
 
 `AbstractContext<T>`（CRTP 泛型静态单例）是架构根：子类在 `Configure()` 中注册 Model / Service，`Instance` 首次访问触发初始化（注册顺序初始化 Model → Service），未注册类型抛含修复提示的异常而非返回 null。
 
@@ -55,7 +56,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | **第二课 · 标准档** | 只读暴露 + 写方法 | Controller 直调写方法 | Presenter 直调写方法 |
 | **第三课 · 严格档** | 接口注册 + 只读暴露 + 写方法 | Command 写 + Query 加工读 | Command 写 + Query 读 |
 
-快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / MiniEvent 两个工具示例，逐课可导入。
+快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / MiniEvent / PlaneWar 三个实战示例，逐课可导入。
 
 ### 核心机制速览
 
@@ -79,16 +80,16 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 ## 🧩 依赖关系
 
 ```
-┌──────────────────────┐         ┌──────────────────────────┐
-│  Aesir Architecture  │         │  Aesir Inspector          │
-│  MVC 架构（核心包）    │  互相独立 │  编辑器扩展（强依赖 Odin）  │
-│  能力接口 / 命令 / 事件 │         └──────────────────────────┘
+┌──────────────────────┐
+│  Aesir Architecture  │
+│  MVC 架构（核心包）    │
+│  能力接口 / 命令 / 事件 │
 └──────────────────────┘
             ▲
             │ 依赖
             │
 ┌──────────────────────┐
-│   Aesir Modules      │ ─── 依赖 Architecture
+│   Aesir Modules      │
 │   UI 框架             │
 └──────────────────────┘
 ```
@@ -96,42 +97,50 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 **关键约束**：
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Inspector** — 不依赖任何 Aesir 子包，可独立安装；**强依赖 Odin Inspector**
 - **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`
+- **Aesir Inspector** — 独立公开仓库，不随本仓库分发
 
 ---
 
 ## 📦 安装方式
 
-### 方式 1：通过 UPM Git URL 安装（推荐）
+### 方式 1：固定版本分支安装（推荐）
 
 在 Unity Package Manager 窗口点击左上角 `+` → `Add package from git URL...`，填入对应子包的 Git URL：
 
-| 子包 | Git URL |
+| 子包 | Git URL（固定 0.14.0） |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture` |
-| Aesir Modules | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules` |
-| Aesir Inspector | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.14.0` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0` |
 
-按需安装——只添加你需要的子包。
+> 版本分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 生成（包内容即分支根目录），仓库只保留最新版本分支。
 
-**只安装 Aesir Modules 时**，UPM 会自动解析依赖并拉取 Aesir Architecture（因为 `package.json` 的 `dependencies` 字段里声明了）。
+### 方式 2：跟踪 main 最新（开发预览）
 
-### 方式 2：通过 `manifest.json` 编辑安装
+```
+https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture
+https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules
+```
+
+### 方式 3：通过 `manifest.json` 编辑安装
 
 在项目的 `Packages/manifest.json` 文件中添加：
 
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules",
-    "cn.runestone.aesir-inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.14.0",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0"
   }
 }
 ```
 
-只添加你需要的子包——三个包互相独立（除 Aesir Modules 自动依赖 Architecture 外）。Aesir Inspector 需额外安装 Odin Inspector。
+只添加你需要的子包——**只安装 Aesir Modules 时**，UPM 会自动解析依赖并拉取 Aesir Architecture（`package.json` 的 `dependencies` 字段已声明）。
+
+### 安装示例（Samples）
+
+- **本仓库直接浏览 / 下载源码**：示例就在各包的 `Samples/` 文件夹内，可直接查看运行。
+- **Git URL 安装**：Package Manager → 选中包 → `Samples` 标签页 → 按需 Import；示例源同时保留在各包的 `Samples~/` 隐藏目录中。
 
 ---
 
@@ -166,38 +175,34 @@ UI 框架提供 Manager-of-Managers 单例、四层 Canvas 层级（`UILayer`）
 
 完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirModules/Documentation~/README_EN.md)（English）。
 
-### Aesir Inspector — 右键即可同步 XML Summary
-
-在 Project 窗口选中脚本 → 右键 → `Aesir → Summary Tool` → 选择 Sync / Replace / Remove。
-
-完整指南见 [`Assets/Runestone/AesirInspector/README.md`](./Assets/Runestone/AesirInspector/README.md)（中文）/ [`Documentation~/README_EN.md`](./Assets/Runestone/AesirInspector/Documentation~/README_EN.md)（English）。
-
 ---
 
 ## 🗂️ 仓库目录结构
 
-> 这是一个**多包 monorepo**——三个子包的源都在这里，但每个子包都能独立通过 Git URL 安装。
+> 这是一个**多包 monorepo**——两个子包的源都在这里，但每个子包都能独立通过 Git URL 安装。
 
 ```
-Unity-Aesir-Packages/                       # 你现在看到的仓库
+AesirFramework/                            # 你现在看到的仓库
 ├── README.md                              # 本文件（中文）
 ├── README_EN.md                           # English version
 ├── LICENSE                                # MIT
-├── CHANGELOG.md                           # 仓库级别变更日志（聚合三个子包）
+├── CHANGELOG.md                           # 仓库级别变更日志（聚合两个子包）
 ├── CONTRIBUTING.md                        # 贡献指南
 ├── CODE_OF_CONDUCT.md                     # 社区准则
-├── AGENTS.md                              # Agent 协作说明
 ├── CODELY.md                              # 架构详细文档
 └── Assets/Runestone/
     ├── AesirArchitecture/                 # 不依赖其他 Aesir 子包
-    │   ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
-    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    ├── AesirModules/                      # 依赖 Architecture
-    │   ├── Runtime/  Editor/  Samples~/  Documentation~/
-    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    └── AesirInspector/                    # 不依赖其他 Aesir 子包；强依赖 Odin Inspector
-        ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
-        ├── README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE.md  package.json
+    │   ├── Runtime/  Editor/  Tests/
+    │   ├── Samples/                       # 示例（仓库内直接可见可运行）
+    │   ├── Samples~/                      # 示例源（Git URL 安装后按需导入）
+    │   ├── Documentation~/
+    │   └── README.md  CHANGELOG.md  package.json
+    └── AesirModules/                      # 依赖 Architecture
+        ├── Runtime/  Editor/
+        ├── Samples/                       # 示例（仓库内直接可见可运行）
+        ├── Samples~/                      # 示例源（Git URL 安装后按需导入）
+        ├── Documentation~/
+        └── README.md  CHANGELOG.md  package.json
 ```
 
 ---
@@ -206,7 +211,7 @@ Unity-Aesir-Packages/                       # 你现在看到的仓库
 
 > - **Unity / Tuanjie**: 2022.3.62f3c1（或等价 LTS 版本）
 > - **渲染管线**: URP 14.0.12
-> - **依赖**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — Aesir Inspector **强依赖** Odin Inspector；Aesir Architecture / Modules 通过 `#if ODIN_INSPECTOR` 条件编译可选集成
+> - **依赖**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — 可选增强，Aesir Architecture / Modules 通过 `#if ODIN_INSPECTOR` 条件编译集成，未安装时自动排除
 
 首次打开项目时，Unity 会自动从 `Packages/manifest.json` 解析依赖。
 
@@ -220,14 +225,12 @@ Unity -batchmode -quit -projectPath . -nographics -logFile /dev/null
 
 ```bash
 # Edit 模式
-Unity -batchmode -quit -projectPath . \
+Unity -batchmode -projectPath . \
        -testPlatform editmode -runTests \
        -testResults TestResults.xml -logFile test.log
 
 # Play 模式 — 把 editmode 换成 playmode
 ```
-
-详细构建与测试流程见 [`AGENTS.md`](./AGENTS.md)。
 
 ---
 
@@ -239,14 +242,11 @@ Unity -batchmode -quit -projectPath . \
 - 遵循 [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
 - 推荐从 `main` 拉分支；提交信息遵循 [Conventional Commits](https://www.conventionalcommits.org/)
 
-子包 Aesir Inspector 单独有一份更详细的 `CONTRIBUTING.md`（含编码规范细节）：
-[`Assets/Runestone/AesirInspector/CONTRIBUTING.md`](./Assets/Runestone/AesirInspector/CONTRIBUTING.md)。
-
 ---
 
 ## 📄 许可证
 
-本仓库及三个子包均采用 **MIT License** 开源。
+本仓库及两个子包均采用 **MIT License** 开源。
 
 ```
 MIT License
@@ -254,7 +254,7 @@ MIT License
 Copyright (c) 2026 Yuumix
 ```
 
-详见根目录 [`LICENSE`](./LICENSE) 与各子包 `LICENSE.md`。
+详见根目录 [`LICENSE`](./LICENSE)。
 
 ---
 

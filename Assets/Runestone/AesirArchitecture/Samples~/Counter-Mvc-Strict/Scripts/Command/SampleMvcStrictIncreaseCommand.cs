@@ -1,4 +1,4 @@
-namespace Runestone.AesirArchitecture.Samples
+namespace Runestone.AesirArchitecture.Samples.MvcStrict
 {
     /// <summary>
     /// MVC-3 严格档示例 —— 增加计数命令。
@@ -8,7 +8,7 @@ namespace Runestone.AesirArchitecture.Samples
     /// 与标准档（Counter-Mvc-Standard）Controller 直调写方法、
     /// 快捷档（Counter-Mvc-Quick）直改 ObservableValue 形成对照。
     /// </remarks>
-    /// <seealso cref="Runestone.AesirArchitecture.AbstractCommand"/>
+    /// <seealso cref="Runestone.AesirArchitecture.AbstractCommand" />
     public class SampleMvcStrictIncreaseCommand : AbstractCommand
     {
         /// <summary>
