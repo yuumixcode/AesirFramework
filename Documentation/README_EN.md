@@ -19,7 +19,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 | Event | ⚠️ Experimental | `EventModule` dual-track subscription (Attribute + Script) + 5 priority levels + expression-tree optimization. Not yet validated in a production project |
 | Scene | Implemented | `SceneModule` bootstrap/additive scene management + editor tools (SceneManagerWindow / BootstrapSceneHelper) |
 
-> Two additional optional capabilities: **Binder component binding** (`UI/Runtime/OdinInspector/Binder/`, requires Odin Inspector) and **Input System input module adaptation** (`UI/Runtime/InputSystem/`, separate assembly, active automatically when the Input System is enabled).
+> Two additional optional capabilities: **Binder component binding** (`Runtime/UI/OdinInspector/Binder/`, requires Odin Inspector) and **Input System input module adaptation** (`Runtime/UI/InputSystem/`, separate assembly, active automatically when the Input System is enabled).
 
 ## Dependencies
 
@@ -28,15 +28,13 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Directory Layout
 
-Functional modules (UI / Scene / Events) are independent of one another, and **all content of each module is consolidated in a single folder** containing only two secondary directories, `Runtime/` and `Editor/`; the shared foundation (host singleton, debug utilities) lives in `Common/`.
+The package uses the standard Unity custom package root layout: `Runtime/` and `Editor/` are the two root-level folders, and functional modules live as subfolders within the corresponding layer (e.g. `Runtime/UI/` and `Editor/UI/`); the shared foundation lives in `Runtime/Common/`.
 
-The asmdef anchors of the standing assemblies are centralized in `Common/`; module code is joined into the corresponding assembly via **Assembly Definition References (asmref)**:
+Assembly organization:
 
-- Module main code (`Runtime/`, `Editor/`) → joined into the core assemblies `Runestone.AesirModules` / `Runestone.AesirModules.Editor`
-- Module-specific Odin code (`*/OdinInspector/` subfolders) → joined into `Runestone.AesirModules(.Editor).OdinInspector`
-- The Scene Addressables editor glue (`Scene/Editor/Addressables/`) → joined into `Runestone.AesirModules.Editor.Addressables`
-
-Consequently, **deleting a module folder removes that module completely** (including its Odin/Addressables code and tests) without affecting the compilation of any other module.
+- **Core assemblies** are anchored at the layer roots (`Runtime/Runestone.AesirModules.asmdef`, `Editor/Runestone.AesirModules.Editor.asmdef`) — module main code under a layer joins the corresponding core assembly automatically, no asmref needed
+- **Fine-grained assemblies** are anchored under `Common/` (Odin runtime `Runtime/Common/OdinInspector/`, Odin editor `Editor/Common/OdinInspector/`, Addressables glue `Editor/Common/Addressables/`); a module's matching dedicated code sits in its own `OdinInspector/` / `Addressables/` subfolder and is joined via an **Assembly Definition Reference (asmref)**
+- **Deleting a module** = deleting `Runtime/<module>/` and `Editor/<module>/` (if present), without affecting the compilation of any other module
 
 ## Installation
 
@@ -127,7 +125,7 @@ public class MainMenuPanel : AesirBasePanel
 ### Directory Structure
 
 ```
-UI/Runtime/                        # joined into the core runtime assembly via asmref
+Runtime/UI/                        # joins the core runtime assembly (layer-root anchor)
 ├── UIModule.cs                    # UI manager singleton
 ├── UIRoot.cs                      # UI root node (4-layer Canvas construction)
 ├── IUIPanel.cs                    # Panel contract
@@ -138,7 +136,7 @@ UI/Runtime/                        # joined into the core runtime assembly via a
 ├── UIAssetLoader/                 # IUIAssetLoader + ResourcesUILoader
 ├── InputSystem/                   # Input System input module adaptation (separate optional assembly)
 └── OdinInspector/Binder/          # Binder family (joined into the Odin assembly via asmref)
-UI/Editor/                         # joined into the core editor assembly via asmref
+Editor/UI/                         # joins the core editor assembly (layer-root anchor)
 ├── UIModuleMenuItems.cs           # Create UIRoot / Default UICanvasConfig menu items
 └── OdinInspector/                 # Odin AttributeProcessors (joined into the Odin editor assembly via asmref)
 ```
@@ -243,7 +241,7 @@ private void OnKeyPressed() { ... }
 ### Directory Structure
 
 ```
-Events/Runtime/                    # joined into the core runtime assembly via asmref
+Runtime/Events/                    # joins the core runtime assembly (layer-root anchor)
 ├── AesirEventArgs.cs              # Event args base class
 ├── AesirListenerAttribute.cs      # Subscriber attribute
 ├── AesirEventUtility.cs           # Static utilities
@@ -268,14 +266,14 @@ Detailed docs: [event-module.md](./event-module.md).
 ### Directory Structure
 
 ```
-Scene/Runtime/                     # joined into the core runtime assembly via asmref
+Runtime/Scene/                     # joins the core runtime assembly (layer-root anchor)
 ├── SceneModule.cs                 # Scene management singleton (bootstrap / load / unload / reload)
 ├── SceneAssetWrapper.cs           # Serializable scene reference (GUID anchor + state machine)
 ├── SceneAssetWrapperState.cs      # Reference state machine
 ├── SceneAssetWrapperUnsafeReason.cs
 ├── SceneAssetWrapperAddressablesBridge.cs  # Addressables capability static bridge
 └── Exceptions/                    # Dedicated exception family
-Scene/Editor/                      # joined into the core editor assembly via asmref
+Editor/Scene/                      # joins the core editor assembly (layer-root anchor)
 ├── SceneManagerWindow.cs          # Scene management window
 ├── BootstrapSceneHelper.cs        # Bootstrap scene registration tool
 ├── SceneEditorSettings.cs         # Editor persisted settings
@@ -286,7 +284,7 @@ Scene/Editor/                      # joined into the core editor assembly via as
 
 ## Binder Component Binding (Odin optional)
 
-Located in `UI/Runtime/OdinInspector/Binder/` (joined into the Odin assembly via asmref, requires Odin Inspector): `BinderAssistant` / `BinderTag` auto-bind UI elements under a panel (Text, Button, etc.) to script fields by hierarchy, reducing manual reference dragging; extend via `IComponentBinder` for custom binders.
+Located in `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via asmref, requires Odin Inspector): `BinderAssistant` / `BinderTag` auto-bind UI elements under a panel (Text, Button, etc.) to script fields by hierarchy, reducing manual reference dragging; extend via `IComponentBinder` for custom binders.
 
 ## Samples
 
