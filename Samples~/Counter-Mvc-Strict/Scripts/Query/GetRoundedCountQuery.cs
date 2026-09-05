@@ -1,6 +1,6 @@
 using System;
 
-namespace Runestone.AesirArchitecture.Samples
+namespace Runestone.AesirArchitecture.Samples.MvcStrict
 {
     /// <summary>
     /// MVC-3 严格档示例 —— 查询十位四舍五入后的计数近似值。
@@ -11,7 +11,7 @@ namespace Runestone.AesirArchitecture.Samples
     /// <para>本查询将计数值四舍五入到最近的 10 的倍数（43 → 40，45 → 50）。</para>
     /// <para>对照：标准档（Counter-Mvc-Standard）无 Query；快捷档（Counter-Mvc-Quick）无 Query。</para>
     /// </remarks>
-    /// <seealso cref="Runestone.AesirArchitecture.AbstractQuery{TResult}"/>
+    /// <seealso cref="Runestone.AesirArchitecture.AbstractQuery{TResult}" />
     public class GetRoundedCountQuery : AbstractQuery<int>
     {
         /// <summary>
@@ -19,7 +19,7 @@ namespace Runestone.AesirArchitecture.Samples
         /// </summary>
         protected override int OnExecute()
         {
-            int count = this.GetModel<ISampleMvcStrictCounterModel>().Count.Value;
+            var count = this.GetModel<ISampleMvcStrictCounterModel>().Count.Value;
             return (int)Math.Round(count / 10.0, MidpointRounding.AwayFromZero) * 10;
         }
     }

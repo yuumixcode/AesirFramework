@@ -1,17 +1,21 @@
 using System;
 
-namespace Runestone.AesirArchitecture.Samples
+namespace Runestone.AesirArchitecture.Samples.MvpStrict
 {
     /// <summary>
     /// MVP-3 严格档示例 —— 计数器被动视图接口。
     /// </summary>
     /// <remarks>
-    /// <para><b>不继承 IView</b>：被动视图契约不携带任何 Context 能力——
-    /// 从接口层面保证"View 不访问 Model"的 MVP 边界。</para>
-    /// <para>三档 MVP 的 View 契约完全相同（用户输入事件 + 刷新入口），
-    /// 档次差异全部在 Model 暴露面与 Presenter 的读写路径。</para>
+    ///     <para>
+    ///     <b>不继承 IView</b>：被动视图契约不携带任何 Context 能力——
+    ///     从接口层面保证"View 不访问 Model"的 MVP 边界。
+    ///     </para>
+    ///     <para>
+    ///     三档 MVP 的 View 契约完全相同（用户输入事件 + 刷新入口），
+    ///     档次差异全部在 Model 暴露面与 Presenter 的读写路径。
+    ///     </para>
     /// </remarks>
-    /// <seealso cref="SampleMvpStrictCounterMainPanel"/>
+    /// <seealso cref="SampleMvpStrictCounterMainPanel" />
     public interface ISampleMvpStrictCounterView
     {
         /// <summary>

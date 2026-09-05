@@ -1,26 +1,32 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Runestone.AesirArchitecture.Samples
+namespace Runestone.AesirArchitecture.Samples.MvcStrict
 {
     /// <summary>
     /// MVC-3 严格档示例 —— 计数器主面板（View，与 Controller 分离实例）。
     /// </summary>
     /// <remarks>
-    /// 严格档：面板继承 <see cref="MonoView{T}"/>（仅只读能力，接口层面不可执行 Command），
+    /// 严格档：面板继承 <see cref="MonoView{T}" />（仅只读能力，接口层面不可执行 Command），
     /// 与 Controller 拆为两个实例；Start 中 GetModel 按<b>接口类型</b>缓存引用（而非具体类）
-    /// 并订阅刷新，随后 new 出 Controller 并按接口类型 <see cref="ISampleMvcStrictCounterController"/>
+    /// 并订阅刷新，随后 new 出 Controller 并按接口类型 <see cref="ISampleMvcStrictCounterController" />
     /// 存储——写入全部经 Controller 发布 Command。
-    /// <para>显示取值：原始值直接来自只读订阅（通常情况直接用只读值即可）；
-    /// 加工值（十位近似）经 Controller 查询 <see cref="GetRoundedCountQuery"/>。</para>
-    /// <para>对照：标准档（Counter-Mvc-Standard）View 持具体类 Model、Controller 直调写方法；
-    /// 快捷档（Counter-Mvc-Quick）View 兼 Controller 直改 ObservableValue。</para>
-    /// <para>数据流：按钮点击 → Controller → ExecuteCommand → Model 写方法 →
-    /// ObservableValue 通知 → 面板刷新（原始值 + Query 加工值）。</para>
+    /// <para>
+    /// 显示取值：原始值直接来自只读订阅（通常情况直接用只读值即可）；
+    /// 加工值（十位近似）经 Controller 查询 <see cref="GetRoundedCountQuery" />。
+    /// </para>
+    /// <para>
+    /// 对照：标准档（Counter-Mvc-Standard）View 持具体类 Model、Controller 直调写方法；
+    /// 快捷档（Counter-Mvc-Quick）View 兼 Controller 直改 ObservableValue。
+    /// </para>
+    /// <para>
+    /// 数据流：按钮点击 → Controller → ExecuteCommand → Model 写方法 →
+    /// ObservableValue 通知 → 面板刷新（原始值 + Query 加工值）。
+    /// </para>
     /// </remarks>
-    /// <seealso cref="Runestone.AesirArchitecture.MonoView{T}"/>
-    /// <seealso cref="ISampleMvcStrictCounterController"/>
-    /// <seealso cref="SampleMvcStrictCounterController"/>
+    /// <seealso cref="Runestone.AesirArchitecture.MonoView{T}" />
+    /// <seealso cref="ISampleMvcStrictCounterController" />
+    /// <seealso cref="SampleMvcStrictCounterController" />
     public class SampleMvcStrictCounterMainPanel : MonoView<SampleMvcStrictCounterContext>
     {
         /// <summary>
@@ -48,6 +54,16 @@ namespace Runestone.AesirArchitecture.Samples
         Button resetButton;
 
         /// <summary>
+        /// 经 Context 发布 Command 的控制器（Start 中 new，与 View 分离实例，接口类型存储）。
+        /// </summary>
+        /// <remarks>
+        /// 与 <see cref="_model" /> 的接口存储对称：View 按业务接口持有引用而非具体类，
+        /// 经接口仅可触达增 / 减 / 重置 / 查询近似值四项业务操作，
+        /// 类型层面拿不到 ExecuteCommand 等框架能力（见 <see cref="ISampleMvcStrictCounterController" />）。
+        /// </remarks>
+        ISampleMvcStrictCounterController _controller;
+
+        /// <summary>
         /// 当前 Context 中注册的计数器 Model（接口类型存储，非具体类）。
         /// </summary>
         /// <remarks>
@@ -55,16 +71,6 @@ namespace Runestone.AesirArchitecture.Samples
         /// 获取并缓存为字段，避免 Update 等每帧路径重复查找。
         /// </remarks>
         ISampleMvcStrictCounterModel _model;
-
-        /// <summary>
-        /// 经 Context 发布 Command 的控制器（Start 中 new，与 View 分离实例，接口类型存储）。
-        /// </summary>
-        /// <remarks>
-        /// 与 <see cref="_model"/> 的接口存储对称：View 按业务接口持有引用而非具体类，
-        /// 经接口仅可触达增 / 减 / 重置 / 查询近似值四项业务操作，
-        /// 类型层面拿不到 ExecuteCommand 等框架能力（见 <see cref="ISampleMvcStrictCounterController"/>）。
-        /// </remarks>
-        ISampleMvcStrictCounterController _controller;
 
         void Start()
         {

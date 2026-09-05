@@ -1,22 +1,24 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Runestone.AesirArchitecture.Samples
+namespace Runestone.AesirArchitecture.Samples.MvcStandard
 {
     /// <summary>
     /// MVC-2 标准档示例 —— 计数器主面板（View，与 Controller 分离实例）。
     /// </summary>
     /// <remarks>
-    /// 标准档：面板继承 <see cref="MonoView{T}"/>（仅只读能力，接口层面不可执行 Command），
+    /// 标准档：面板继承 <see cref="MonoView{T}" />（仅只读能力，接口层面不可执行 Command），
     /// 与 Controller 拆为两个实例；Start 中 GetModel 按<b>具体类</b>缓存引用并订阅刷新，
     /// 随后把该实例注入 Controller——View 与 Controller <b>共享同一个 Model 实例</b>。
     /// <para>写入路径：按钮点击 → Controller 直调 Model 写方法（不经 Command）。</para>
-    /// <para>对照：快捷档（Counter-Mvc-Quick）View 兼 Controller 同一实例直改 ObservableValue；
-    /// 严格档（Counter-Mvc-Strict）Controller 经 Context 发布 Command。</para>
+    /// <para>
+    /// 对照：快捷档（Counter-Mvc-Quick）View 兼 Controller 同一实例直改 ObservableValue；
+    /// 严格档（Counter-Mvc-Strict）Controller 经 Context 发布 Command。
+    /// </para>
     /// <para>数据流：按钮点击 → Controller 调 Model 写方法 → ObservableValue 通知 → 面板刷新。</para>
     /// </remarks>
-    /// <seealso cref="Runestone.AesirArchitecture.MonoView{T}"/>
-    /// <seealso cref="SampleMvcStandardCounterController"/>
+    /// <seealso cref="Runestone.AesirArchitecture.MonoView{T}" />
+    /// <seealso cref="SampleMvcStandardCounterController" />
     public class SampleMvcStandardCounterMainPanel : MonoView<SampleMvcStandardCounterContext>
     {
         /// <summary>
@@ -44,6 +46,11 @@ namespace Runestone.AesirArchitecture.Samples
         Button resetButton;
 
         /// <summary>
+        /// 与 View 共享同一 Model 实例的控制器（Start 中构造注入）。
+        /// </summary>
+        SampleMvcStandardCounterController _controller;
+
+        /// <summary>
         /// 当前 Context 中注册的计数器 Model（具体类存储）。
         /// </summary>
         /// <remarks>
@@ -51,11 +58,6 @@ namespace Runestone.AesirArchitecture.Samples
         /// 获取并缓存为字段，避免 Update 等每帧路径重复查找。
         /// </remarks>
         SampleMvcStandardCounterModel _model;
-
-        /// <summary>
-        /// 与 View 共享同一 Model 实例的控制器（Start 中构造注入）。
-        /// </summary>
-        SampleMvcStandardCounterController _controller;
 
         void Start()
         {

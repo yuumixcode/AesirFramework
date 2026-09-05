@@ -1,9 +1,9 @@
-namespace Runestone.AesirArchitecture.Samples
+namespace Runestone.AesirArchitecture.Samples.MvpStrict
 {
     /// <summary>
     /// MVP-3 严格档示例 —— 增加计数命令。
     /// </summary>
-    /// <seealso cref="Runestone.AesirArchitecture.AbstractCommand"/>
+    /// <seealso cref="Runestone.AesirArchitecture.AbstractCommand" />
     public class SampleMvpStrictIncreaseCommand : AbstractCommand
     {
         /// <summary>
