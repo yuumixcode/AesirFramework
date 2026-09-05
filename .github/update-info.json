@@ -1,10 +1,10 @@
 {
-  "version": "0.16.0",
-  "tag": "v0.16.0",
+  "version": "0.16.1",
+  "tag": "v0.16.1",
   "packages": [
     {
       "name": "AesirArchitecture",
-      "version": "0.16.0",
+      "version": "0.16.1",
       "files": [
         "Assets/Runestone/AesirArchitecture/CHANGELOG.md",
         "Assets/Runestone/AesirArchitecture/Documentation",
@@ -295,7 +295,7 @@
     },
     {
       "name": "AesirModules",
-      "version": "0.16.0",
+      "version": "0.16.1",
       "files": [
         "Assets/Runestone/AesirModules/CHANGELOG.md",
         "Assets/Runestone/AesirModules/Documentation",
