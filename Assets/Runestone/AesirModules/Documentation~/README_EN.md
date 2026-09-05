@@ -260,7 +260,7 @@ Detailed docs: [event-module.md](./event-module.md).
 - **Bootstrap scene** — auto-discovers the bootstrap scene by preset names (`Bootstrap` / `Bootstrapper` etc.) or a custom `SceneAssetWrapper` reference, ensures it sits at index 0 of Build Settings and loads first
 - **Scene loading** — `LoadSceneSingle` for single-mode loading, `LoadSceneAdditive` for additive loading (pure additive tracking, `AddedScenePaths` / `LastLoadedScene` / `GetTotalLoadingProgress`); both accept a path or a `SceneAssetWrapper` overload with completion/failure callbacks
 - **Scene unloading** — `UnloadScene` by path or reference, `UnloadAllAddedScenes` for batch recycling, `ReloadScene` for async reload of the current scene
-- **`SceneAssetWrapper`** — serializable scene reference: GUID-anchor self-healing, state-machine validation (`State` / `UnsafeReason`), a `TryGet` safe-read family; when Addressables is installed, address-query capability is extended automatically (via a conditionally-compiled glue assembly; related features hide themselves when it is absent)
+- **`SceneAssetWrapper`** — serializable scene reference: GUID-anchor self-healing, state-machine validation (`State` / `UnsafeReason`), a `TryGet` safe-read family; when Addressables is installed, address-query capability is extended automatically (via a conditionally-compiled glue assembly; related features hide themselves when it is absent). Functional design references [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
 - **Editor companions** — `SceneManagerWindow` scene management window; `BootstrapSceneHelper` auto/manual bootstrap scene collection and Build Settings registration
 
 ### Directory Structure
