@@ -1,11 +1,12 @@
 # Changelog / 变更日志
 
-> **本文件为 monorepo 聚合视图**——同时记录三个子包（Aesir Architecture / Aesir Modules / Aesir Inspector）的版本变更。每个条目标注 `[architecture]` / `[modules]` / `[inspector]` 归属。
+> **本文件为 monorepo 聚合视图**——同时记录两个子包（Aesir Architecture / Aesir Modules）的版本变更。每个条目标注 `[architecture]` / `[modules]` 归属。
 >
 > 各自子包的**详细历史**（含 0.4.0 之前的版本）见：
 > - Aesir Architecture: [`Assets/Runestone/AesirArchitecture/CHANGELOG.md`](./Assets/Runestone/AesirArchitecture/CHANGELOG.md)
 > - Aesir Modules: [`Assets/Runestone/AesirModules/CHANGELOG.md`](./Assets/Runestone/AesirModules/CHANGELOG.md)
-> - Aesir Inspector: [`Assets/Runestone/AesirInspector/CHANGELOG.md`](./Assets/Runestone/AesirInspector/CHANGELOG.md)（中文） / [`Documentation~/CHANGELOG_EN.md`](./Assets/Runestone/AesirInspector/Documentation~/CHANGELOG_EN.md)（English）
+>
+> Aesir Inspector 已迁移至独立公开仓库（面向 Odin Inspector 开发者的学习工具包），其变更日志不再随本仓库维护。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
@@ -19,17 +20,44 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.13.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.13.0** |
-| Aesir Inspector | `cn.runestone.aesir.inspector` | **0.13.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.14.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.14.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，三个子包均通过 [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) 拉取，按需选用。
-> *The repository is published as a single monorepo. All three sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/Unity-Aesir-Packages.git) and used on demand.*
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.14.0` / `#AesirModules-v0.14.0`），按需选用。
+> *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
-> - **Aesir Inspector** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.14.0] - 2026-09-05
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Changed
+
+- **AesirFramework 转型** — AesirInspector 已从本仓库移出，作为面向 Odin Inspector 开发者的学习工具包独立发布；本仓库更名定位为 AesirFramework，由 Aesir Architecture 与 Aesir Modules 组成
+- **Samples 双目录结构** — 包内同时提供 `Samples/`（仓库内直接可见可运行）与 `Samples~/`（Git URL 安装后经 Package Manager 按需导入的源镜像）；以 `Samples/` 为编写主位，内容同步至 `Samples~`，两份内容保持一致
+- **示例程序集构建剔除** — 全部示例程序集（asmdef）`includePlatforms` 收窄为 `Editor`，示例脚本与资产（场景/预制体/贴图均无 Resources 目录、无构建场景引用）不会进入玩家构建包
+- **示例命名空间统一** — 计数器六档与 PlaneWar 示例统一为 `Runestone.AesirArchitecture.Samples.<示例名>`（MvcQuick / MvcStandard / MvcStrict / MvpQuick / MvpStandard / MvpStrict / PlaneWarMono）；`MiniEvent` 与 `ObservableValue` 两示例因命名空间段与所演示的框架类型同名冲突（CS0118），保留 `Runestone.AesirArchitecture.Samples` 前缀命名空间
+
+#### Added
+
+- **PlaneWar 实战示例（Mono 版）** — 纵版射击飞机大战：自包含素材、得分 HUD、三型敌机与重开流程；已注册进 package.json samples，并纳入 Samples 双目录同步
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- **AesirFramework 转型同步** — 依赖声明 `cn.runestone.aesir.architecture` 同步至 `0.14.0`
+- **Samples 双目录结构** — 包内同时提供 `Samples/` 与 `Samples~/`；示例目录统一为 `Events/01_KeyPress`（与 package.json samples 路径一致），示例代码随最新版本更新（EventEmitter → EventSender、OnKeyPressed → KeyPressedEvent）并以 `Samples/` 为编写主位同步至 `Samples~`
+- **示例程序集构建剔除 + 命名空间统一** — 示例程序集 `includePlatforms` 收窄为 `Editor`（不进入构建包）；命名空间统一为 `Runestone.AesirModules.Samples.Events.KeyPress`
 
 ---
 

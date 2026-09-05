@@ -1,26 +1,5 @@
 {
   "dependencies": {
-    "cn.tuanjie.ai.generators": {
-      "version": "file:../.codely-cli/extensions/TJGenerators/Packages/cn.tuanjie.ai.generators",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "cn.tuanjie.codely.bridge": "1.0.69",
-        "com.unity.modules.jsonserialize": "1.0.0",
-        "com.unity.modules.unitywebrequest": "1.0.0",
-        "com.unity.modules.video": "1.0.0",
-        "com.unity.editorcoroutines": "1.0.1"
-      }
-    },
-    "cn.tuanjie.codely.bridge": {
-      "version": "file:../.codely.packages/cn.tuanjie.codely.bridge@1.0.80-exp.1",
-      "depth": 0,
-      "source": "local",
-      "dependencies": {
-        "com.unity.ext.nunit": "1.0.6",
-        "com.unity.ugui": "1.0.0"
-      }
-    },
     "com.unity.2d.animation": {
       "version": "9.2.0",
       "depth": 1,
@@ -142,13 +121,6 @@
         "com.unity.burst": "1.6.6",
         "com.unity.test-framework": "1.1.31"
       },
-      "url": "https://packages.unity.cn"
-    },
-    "com.unity.editorcoroutines": {
-      "version": "1.0.1",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {},
       "url": "https://packages.unity.cn"
     },
     "com.unity.ext.nunit": {

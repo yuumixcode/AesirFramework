@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）和事件模块（反射绑定 + 特性标记静态订阅 + 动态订阅 + 表达式树优化）。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.13.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation~/README_EN.md)
 
-> 📦 **本包是 [Unity-Aesir-Packages](https://github.com/yuumixcode/Unity-Aesir-Packages) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/Unity-Aesir-Packages)**（`>= 0.8.0`）
+> 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.14.0`）
 
 ## 模块
 
@@ -21,16 +21,22 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.13.0（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.14.0（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。
 
 ## 安装
 
-通过 Unity Package Manager 添加包：
+通过 Unity Package Manager 添加包（固定 0.14.0 版本分支，包内容即分支根目录）：
 
 ```
 Packages/manifest.json -> dependencies:
-"cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules"
+"cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0"
+```
+
+跟踪 main 最新开发版：
+
+```
+"cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules"
 ```
 
 UPM 会自动解析 `package.json` 的 `dependencies` 字段，拉取 Aesir Architecture。
@@ -221,6 +227,17 @@ Runtime/Events/
 ```
 
 详细文档见 [Documentation~/event-module.md](Documentation~/event-module.md)。
+
+## 示例
+
+- 本仓库直接浏览 / 下载源码：示例位于包内 `Samples/` 文件夹，可直接查看运行。
+- Git URL 安装：Package Manager → 选中本包 → `Samples` 标签页按需导入（源在包内 `Samples~/` 隐藏目录，构建时自动剔除）。
+
+当前提供：
+
+| 示例 | 说明 |
+|------|------|
+| `Events/01_KeyPress` | 事件模块基本发布-订阅示例：按键发布事件、`[AesirListener]` 静态订阅 |
 
 ## 许可证
 

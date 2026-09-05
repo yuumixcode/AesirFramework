@@ -1,6 +1,6 @@
-# Unity-Aesir-Packages · Aesir Series Unity Packages
+# AesirFramework · Aesir Series Unity Packages
 
-> A progressive MVC architecture, UI framework, and editor toolkit collection for Tuanjie Engine / Unity. Each sub-package can be installed separately via Git URL and used on demand.
+> A progressive MVC architecture and UI framework collection for Tuanjie Engine / Unity. Each sub-package can be installed separately via Git URL and used on demand.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
@@ -11,17 +11,18 @@
 
 ---
 
-## ✨ Three Sub-Packages, Independently Installable
+## ✨ Two Sub-Packages, Independently Installable
 
-> **Key point: all sub-packages are published from the same Git repository.** Aesir Architecture and Aesir Inspector are **independent of each other**; Aesir Modules **depends on** Architecture. Aesir Inspector **requires [Odin Inspector](https://odininspector.com/)**.
+> **Key point: all sub-packages are published from the same Git repository.** Aesir Modules **depends on** Aesir Architecture; both can be installed standalone.
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.13.0` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + ⚠️ Experimental Event Module | `cn.runestone.aesir.modules` | `0.13.0` |
-| **Aesir Inspector** | Editor extension library (bilingual Inspector, safe editor utilities, script doc generator, Summary sync tool) | `cn.runestone.aesir-inspector` | `0.13.0` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.14.0` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + ⚠️ Experimental Event Module | `cn.runestone.aesir.modules` | `0.14.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
+>
+> 📦 **Aesir Inspector has moved to a separate public repository** — repositioned as a learning toolkit specifically for [Odin Inspector](https://odininspector.com/) developers, no longer distributed with this repository.
 
 ---
 
@@ -41,7 +42,7 @@ The framework uses **capability interface composition** — each role exposes on
 | **Controller** | `IController` | GetModel, GetService, **ExecuteCommand**, **ExecuteQuery** | MVC entry point (recommended) |
 | **Presenter** | `IPresenter` | All Controller + IDisposable | MVP pattern (optional); mediates Model ↔ View, View is passive |
 | **Command** | `ICommand` → `AbstractCommand` | Execute() | Write operations (synchronous, no return value) |
-| **Query** | `IQuery<TResult>` → `AbstractQuery` | Execute() → TResult | Read operations (no side effects), CQRS-style |
+| **Query** | `IQuery<TResult>` | Execute() → TResult | Read operations (no side effects), CQRS-style |
 
 `AbstractContext<T>` (CRTP generic static singleton) is the architecture root: subclasses register Models/Services in `Configure()`; the first access to `Instance` triggers initialization (Models then Services in registration order); unregistered types throw descriptive exceptions instead of returning null.
 
@@ -55,7 +56,7 @@ RAA's most distinctive feature is **tiered progression** — from the minimal co
 | **Lesson 2 · Standard** | Read-only exposure + write methods | Controller calls write methods | Presenter calls write methods |
 | **Lesson 3 · Strict** | Interface registration + read-only + write methods | Command writes + Query processed reads | Command writes + Query reads |
 
-Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/ Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + ObservableValue / MiniEvent utility samples, importable lesson by lesson.
+Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/ Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + ObservableValue / MiniEvent / PlaneWar hands-on samples, importable lesson by lesson.
 
 ### Core Mechanics at a Glance
 
@@ -79,16 +80,16 @@ Full documentation: [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Ru
 ## 🧩 Dependency Graph
 
 ```
-┌──────────────────────┐         ┌──────────────────────────┐
-│  Aesir Architecture  │         │  Aesir Inspector          │
-│  MVC architecture    │ independent │  editor extensions (requires Odin) │
-│  (core package)      │         └──────────────────────────┘
+┌──────────────────────┐
+│  Aesir Architecture  │
+│  MVC architecture    │
+│  (core package)      │
 └──────────────────────┘
             ▲
             │ depends on
             │
 ┌──────────────────────┐
-│   Aesir Modules      │ ─── depends on Architecture
+│   Aesir Modules      │
 │   UI framework       │
 └──────────────────────┘
 ```
@@ -96,42 +97,50 @@ Full documentation: [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Ru
 **Key constraints**:
 
 - **Aesir Architecture** — does NOT depend on any Aesir sub-package; can be installed standalone
-- **Aesir Inspector** — does NOT depend on any Aesir sub-package; can be installed standalone; **requires Odin Inspector**
 - **Aesir Modules** — depends on `cn.runestone.aesir.architecture`
+- **Aesir Inspector** — separate public repository, no longer distributed with this repository
 
 ---
 
 ## 📦 Installation
 
-### Option 1: Via UPM Git URL (Recommended)
+### Option 1: Pinned Version Branch (Recommended)
 
 In the Unity Package Manager window, click `+` in the top-left → `Add package from git URL...` and paste the corresponding sub-package URL:
 
-| Sub-Package | Git URL |
+| Sub-Package | Git URL (pinned to 0.14.0) |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture` |
-| Aesir Modules | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules` |
-| Aesir Inspector | `https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.14.0` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0` |
 
-Install only what you need.
+> Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches.
 
-**When installing only Aesir Modules**, UPM will automatically resolve the dependencies and pull Aesir Architecture (declared in `package.json`'s `dependencies` field).
+### Option 2: Track main (Development Preview)
 
-### Option 2: Via `manifest.json`
+```
+https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture
+https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules
+```
+
+### Option 3: Via `manifest.json`
 
 Add the following to your project's `Packages/manifest.json`:
 
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirArchitecture",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirModules",
-    "cn.runestone.aesir-inspector": "https://github.com/yuumixcode/Unity-Aesir-Packages.git?path=Assets/Runestone/AesirInspector"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.14.0",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0"
   }
 }
 ```
 
-Add only the sub-packages you need — they are independent of each other (except Aesir Modules auto-depends on Architecture). Aesir Inspector requires Odin Inspector to be installed separately.
+Add only the sub-packages you need — **when installing only Aesir Modules**, UPM will automatically resolve the dependencies and pull Aesir Architecture (declared in `package.json`'s `dependencies` field).
+
+### Installing Samples
+
+- **Browsing / downloading this repository directly**: samples live in each package's `Samples/` folder, ready to view and run.
+- **Git URL install**: Package Manager → select the package → `Samples` tab → import on demand; the sample sources are also kept in each package's hidden `Samples~/` folder.
 
 ---
 
@@ -166,38 +175,34 @@ The UI framework provides Manager-of-Managers singletons, a 4-layer Canvas hiera
 
 Full guide: [`Assets/Runestone/AesirModules/Documentation~/README_EN.md`](./Assets/Runestone/AesirModules/Documentation~/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
 
-### Aesir Inspector — Right-Click to Sync XML Summary
-
-Select a script in the Project window → right-click → `Aesir → Summary Tool` → choose Sync / Replace / Remove.
-
-Full guide: [`Assets/Runestone/AesirInspector/Documentation~/README_EN.md`](./Assets/Runestone/AesirInspector/Documentation~/README_EN.md) (English) / [`Assets/Runestone/AesirInspector/README.md`](./Assets/Runestone/AesirInspector/README.md) (中文).
-
 ---
 
 ## 🗂️ Repository Layout
 
-> This is a **multi-package monorepo** — all three sub-packages live here, each installable independently via Git URL.
+> This is a **multi-package monorepo** — both sub-packages live here, each installable independently via Git URL.
 
 ```
-Unity-Aesir-Packages/                       # this repo
+AesirFramework/                            # this repo
 ├── README.md                              # 中文
 ├── README_EN.md                           # this file
 ├── LICENSE                                # MIT
-├── CHANGELOG.md                           # repo-level changelog (aggregates all three)
+├── CHANGELOG.md                           # repo-level changelog (aggregates both packages)
 ├── CONTRIBUTING.md                        # contributing guide
 ├── CODE_OF_CONDUCT.md                     # community guidelines
-├── AGENTS.md                              # agent collaboration notes
 ├── CODELY.md                              # detailed architecture docs
 └── Assets/Runestone/
     ├── AesirArchitecture/                 # does NOT depend on other Aesir packages
-    │   ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
-    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    ├── AesirModules/                      # depends on Architecture
-    │   ├── Runtime/  Editor/  Samples~/  Documentation~/
-    │   ├── README.md  CHANGELOG.md  LICENSE.md  package.json
-    └── AesirInspector/                    # does NOT depend on other Aesir packages; requires Odin Inspector
-        ├── Runtime/  Editor/  Tests/  Samples~/  Documentation~/
-        ├── README.md  CHANGELOG.md  CONTRIBUTING.md  LICENSE.md  package.json
+    │   ├── Runtime/  Editor/  Tests/
+    │   ├── Samples/                       # samples (directly visible & runnable in this repo)
+    │   ├── Samples~/                      # sample sources (import on demand after Git URL install)
+    │   ├── Documentation~/
+    │   └── README.md  CHANGELOG.md  package.json
+    └── AesirModules/                      # depends on Architecture
+        ├── Runtime/  Editor/
+        ├── Samples/                       # samples (directly visible & runnable in this repo)
+        ├── Samples~/                      # sample sources (import on demand after Git URL install)
+        ├── Documentation~/
+        └── README.md  CHANGELOG.md  package.json
 ```
 
 ---
@@ -206,7 +211,7 @@ Unity-Aesir-Packages/                       # this repo
 
 > - **Unity / Tuanjie**: 2022.3.62f3c1 (or equivalent LTS)
 > - **Render Pipeline**: URP 14.0.12
-> - **Dependency**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — Aesir Inspector **requires** Odin Inspector; Aesir Architecture / Modules use `#if ODIN_INSPECTOR` conditional compilation for optional integration
+> - **Dependency**: [Odin Inspector](https://odininspector.com/) 3.3.x+ — optional enhancement; Aesir Architecture / Modules use `#if ODIN_INSPECTOR` conditional compilation and are excluded automatically when Odin is absent
 
 On first open, Unity resolves dependencies from `Packages/manifest.json` automatically.
 
@@ -220,14 +225,12 @@ Unity -batchmode -quit -projectPath . -nographics -logFile /dev/null
 
 ```bash
 # Edit mode
-Unity -batchmode -quit -projectPath . \
+Unity -batchmode -projectPath . \
        -testPlatform editmode -runTests \
        -testResults TestResults.xml -logFile test.log
 
 # Play mode — replace editmode with playmode
 ```
-
-Detailed build & test workflows: [`AGENTS.md`](./AGENTS.md).
 
 ---
 
@@ -239,14 +242,11 @@ Contributions of all kinds are welcome — bug reports, feature requests, doc im
 - Follow [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)
 - Branch from `main`; commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)
 
-The Aesir Inspector sub-package has its own detailed `CONTRIBUTING.md` (with full code-style rules):
-[`Assets/Runestone/AesirInspector/CONTRIBUTING.md`](./Assets/Runestone/AesirInspector/CONTRIBUTING.md).
-
 ---
 
 ## 📄 License
 
-This repository and all three sub-packages are released under the **MIT License**.
+This repository and both sub-packages are released under the **MIT License**.
 
 ```
 MIT License
@@ -254,7 +254,7 @@ MIT License
 Copyright (c) 2026 Yuumix
 ```
 
-See root [`LICENSE`](./LICENSE) and per-package `LICENSE.md` for details.
+See root [`LICENSE`](./LICENSE) for details.
 
 ---
 
