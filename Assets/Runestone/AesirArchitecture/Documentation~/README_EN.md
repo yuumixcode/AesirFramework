@@ -27,10 +27,10 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
 - **`ObservableValue<T>` reactive property** — Quick tier: Model exposes writable `ObservableValue<T>` directly (presentation writes directly); Standard tier onward: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods; Strict tier: interface registration + Command writes on top
-- **Observable collections** — `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` provide the most common change notifications (Added / Removed / Replaced / Updated / Cleared), following the same read-write separation and MiniEvent event pattern as ObservableValue
+- **Observable collections** — `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` provide the most common change notifications (Added / Removed / Replaced / Updated / Cleared), following the same read-write separation and MiniEvent event pattern as ObservableValue
 - **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
 - **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
-- **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, with global singleton support
+- **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, preserving registration order
 - **Domain Reload safety** — Static variables explicitly reset via `[RuntimeInitializeOnLoadMethod]`; no residue across Play Mode entry/exit
 - **Pure C# core + MonoBehaviour adapter** — Framework core is pure C#; the Engine layer does NOT depend on any Component layer type. `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` serve as MonoBehaviour adapters
 - **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional) for stricter Model-View separation
@@ -56,6 +56,12 @@ UPM identifies this package via the `name` field in `package.json` (`cn.runeston
 ### Manual Installation
 
 Copy this package directory into your project's `Packages/` folder.
+
+### unitypackage Import
+
+Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated in one click via the Unity menu `Tools → Aesir → Check for Updates` — the **in-package updater**: version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); it backs up `Assets/Runestone` before updating, then removes stale entries by the exact diff of "previous install manifest − new manifest" without touching user-added files.
+
+> Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
 
 ## Quick Start
 
@@ -259,7 +265,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent zero-alloc events + auto-remove triggers
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy lifecycle proxy
 │   │   ├── Locator/               # GenericLocator type-keyed locator
-│   │   ├── Observable/            # ObservableValue reactive property + ObservableList/ObservableDictionary observable collections
+│   │   ├── Observable/            # ObservableValue reactive property + ObservableList/ObservableDictionary/ObservableHashSet observable collections
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # Framework infrastructure
 │   │   ├── AesirArchitecture.cs   # Framework MonoBehaviour singleton entry
@@ -268,20 +274,20 @@ cn.runestone.aesir.architecture/
 │   │   ├── AesirArchitectureDebug.cs
 │   │   ├── AssemblyInfo.cs
 │   │   └── ResetStaticsAssistant.cs
-│   └── OdinInspector/            # Independent assembly (depends on Odin Inspector)
-│       ├── Runestone.AesirArchitecture.OdinInspector.asmdef
-│       └── DescriptionSO.cs
 ├── Editor/
 │   ├── Runestone.AesirArchitecture.Editor.asmdef
 │   ├── Common/
 │   │   └── EnsureAesirArchitectureDefine.cs  # Compile symbol management
 │   ├── Utilities/
-│   │   └── ScriptingSymbolUtility.cs
+│   │   ├── ScriptingSymbolUtility.cs
+│   │   └── QuickCreateSOMenuItem.cs          # Context-menu quick SO creation (yields to Aesir Inspector when present)
+│   ├── UpdateChecker/                        # In-package updater (Tools → Aesir → Check for Updates)
+│   │   ├── AesirUpdateService.cs             # Stateless toolkit: install scanning, multi-source version check, manifest diff, backup
+│   │   └── AesirUpdateWindow.cs              # Updater window
 │   └── OdinInspector/            # Odin Inspector integration (optional)
 │       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef
 │       └── AttributeProcessors/
 │           ├── AesirArchitectureAttributeProcessor.cs
-│           ├── MonoLifecycleProxyAttributeProcessor.cs
 │           ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
 │           └── ObservableValueAttributeProcessor.cs
 ├── Tests/
@@ -313,7 +319,7 @@ cn.runestone.aesir.architecture/
 - **Multiple Context instances** — `AbstractContext<T>` is a CRTP generic singleton, one instance per concrete context type; model multi-save / multi-room scenarios at the business layer
 - **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
 - **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
-- **Full observable-collection suite** — Only `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` with the most common Added / Removed / Replaced / Updated / Cleared notifications are provided; Move, Sort, synchronized views, R3 integration, and other advanced capabilities are out of scope — use [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) when you need them
+- **Full observable-collection suite** — Only `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` with the most common Added / Removed / Replaced / Updated / Cleared notifications are provided; Move, Sort, synchronized views, R3 integration, and other advanced capabilities are out of scope — use [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) when you need them
 - **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
 
 ### Coding Conventions (violations fail fast; the framework does not compensate)
@@ -350,8 +356,9 @@ cn.runestone.aesir.architecture/
 - [x] Runtime error logging (replacing pre-flight validation)
 - [x] Engine layer decoupled from Component layer (pure C#)
 - [x] Domain Reload safety
+- [x] Observable collection family (List / Dictionary / HashSet)
+- [x] In-package updater (Aesir Updater)
 - [ ] ScriptableObject visualization config layer
-- [ ] SO EventChannel
 - [ ] Editor toolchain (SO Inspector / MVP scaffold / module visualization)
 - [ ] RuntimeSet
 

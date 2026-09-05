@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）和事件模块（反射绑定 + 特性标记静态订阅 + 动态订阅 + 表达式树优化）。
+Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、实验性事件模块与场景管理工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.14.0-blue.svg)](./CHANGELOG.md)
@@ -11,13 +11,15 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
 > - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.14.0`）
 
-## 模块
+## 模块总览
 
 | 模块 | 状态 | 说明 |
 |------|------|------|
-| UI | 已实现 | UIManager 单例；四层 Canvas + 面板生命周期 |
-| Event | ⚠️ 实验性 | EventModule 单例；双轨订阅（Attribute + Script）+ 5 档优先级 + 表达式树优化。尚未在实际项目中验证 |
-| Scene | 规划中 | 场景加载、SceneReference |
+| UI | 已实现 | `UIModule` 单例（Manager of Managers）+ `UIRoot` 四层 Canvas + 面板生命周期 + 可插拔资源加载 |
+| Event | ⚠️ 实验性 | `EventModule` 双轨订阅（Attribute + Script）+ 5 档优先级 + 表达式树优化。尚未在实际项目中验证 |
+| Scene | 已实现 | `SceneModule` 启动/叠加场景管理 + 编辑器工具（SceneManagerWindow / BootstrapSceneHelper） |
+
+> 另有两项可选能力：**Binder 组件绑定**（`Runtime/OdinInspector/UI/Binder/`，需 Odin Inspector）与 **Input System 输入模块适配**（`Runtime/UI/InputSystem/`，独立程序集，启用 Input System 时自动生效）。
 
 ## 依赖
 
@@ -26,20 +28,31 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 
 ## 安装
 
-通过 Unity Package Manager 添加包（固定 0.14.0 版本分支，包内容即分支根目录）：
+### UPM（Git URL，推荐）
+
+在 Unity Package Manager 窗口 `+` → `Add package from git URL...`：
 
 ```
-Packages/manifest.json -> dependencies:
-"cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0"
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0
 ```
 
-跟踪 main 最新开发版：
+或编辑 `Packages/manifest.json`：
 
+```json
+{
+  "dependencies": {
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.14.0"
+  }
+}
 ```
-"cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules"
-```
+
+跟踪 main 最新开发版：把 URL 换成 `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules`。
 
 UPM 会自动解析 `package.json` 的 `dependencies` 字段，拉取 Aesir Architecture。
+
+### unitypackage 导入
+
+从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirModules-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates`（随 Aesir Architecture 分发）一键检查并更新。
 
 ## UI 模块
 
@@ -47,74 +60,76 @@ UPM 会自动解析 `package.json` 的 `dependencies` 字段，拉取 Aesir Arch
 
 | 类型 | 层 | 说明 |
 |------|----|------|
-| `UIManager` | Component | MonoBehaviour 单例，管理面板加载、生命周期、层级；内含四层 Canvas、UICamera、EventSystem |
-| `IUIPanel` | Engine | 面板契约接口 |
-| `IUIAssetLoader` | Engine | 资源加载器契约接口 |
-| `IUICanvasConfig` | Engine | Canvas 配置契约接口 |
-| `PanelConfig` | Engine | 面板配置（layer / destroyOnClose） |
-| `UILayer` | Engine | 层级枚举：Background=0, Normal=1, Popup=2, Top=3 |
-| `ResourcesUILoader` | Engine | 默认加载器（Resources 目录） |
-| `AesirUIPanel` | Component | 面板抽象基类，继承 AesirMonoBehaviour |
-| `UICanvasConfigSO` | Component | ScriptableObject 配置资产（CreateAssetMenu） |
+| `UIModule` | Component | UI 管理器单例：面板注册、显示、隐藏、预热与注册表维护；提供静态快捷 API 供全局调用 |
+| `UIRoot` | Component | UI 根节点：构建四层 Canvas（Background / Normal / Popup / Top）+ UICamera + EventSystem，应用 Canvas 统一配置 |
+| `IUIPanel` | Engine | 面板契约：生命周期 `Initialize → Show(payload) → Hide → DestroyPanel`；属性 `Layer` / `DestroyOnHide` / `IsOpen` |
+| `AesirBasePanel` | Component | 面板抽象基类：虚方法 `OnInit` / `OnShow` / `OnHide` / `OnClose`，序列化字段 `layer` / `destroyOnHide`，便捷方法 `HideSelf()` |
+| `AesirBasePanelView<T>` | Component | MVP 模式面板视图基类：继承 `AesirBasePanel` 并按 Context 类型绑定（`IView`），经 Context 访问 Model / Service |
+| `IUIAssetLoader` / `ResourcesUILoader` | Engine | 可插拔资源加载契约与默认实现（Resources 目录） |
+| `UICanvasConfigSO` | Component | Canvas 统一配置资产（可经 Create 菜单创建默认资产） |
+| `UILayer` | Engine | 层级枚举：Background / Normal / Popup / Top |
 
 ### 快速开始
 
-1. 创建 UI 预制体，根节点挂脚本继承 `AesirUIPanel`。
-2. 注册预制体并打开面板：
+1. 菜单 `GameObject → Aesir Modules → Create UIRoot` 创建带完整层级结构的 UI 根节点（或在场景中预放置挂载 `UIRoot` 的物体）。
+2. 创建面板预制体，根节点挂脚本继承 `AesirBasePanel`（MVP 模式继承 `AesirBasePanelView<TContext>`）。
+3. 注册预制体并显示面板：
 
 ```csharp
-// 启动时配置（必须在首次面板操作前调用）
-UIManager.Instance.SetLoader(new ResourcesUILoader());
-UIManager.Instance.SetCanvasConfig(configSO);   // 可选
+// 注册面板预制体
+UIModule.RegisterPrefab<MainMenuPanel>(prefab);
 
-// 注册预制体
-UIManager.RegisterPrefab<MainMenuPanel>(prefab);
+// 显示面板
+UIModule.Show<MainMenuPanel>();
 
-// 打开面板
-UIManager.Open<MainMenuPanel>();
+// 带参数显示（强类型 payload）
+UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "确定？" });
 
-// 带参数打开
-UIManager.Open<ConfirmDialogPanel>(new ConfirmData { message = "确定？" });
+// 关闭面板（按面板的 DestroyOnHide 决定销毁或缓存复用）
+UIModule.Hide<ConfirmDialogPanel>();
 
-// 关闭面板
-UIManager.Close<ConfirmDialogPanel>();
+// 预热：预实例化并隐藏，首次 Show 直接复用，避免卡顿
+UIModule.Prewarm<MainMenuPanel>();
 ```
 
-3. 面板生命周期：
+需要自定义资源加载（如 Addressables）时替换默认加载器：
 
 ```csharp
-public class MainMenuPanel : AesirUIPanel
+UIModule.Instance.RegisterAssetLoader(new MyAddressablesLoader());
+```
+
+4. 面板生命周期（全部由 `UIModule` 驱动）：
+
+```csharp
+public class MainMenuPanel : AesirBasePanel
 {
-    protected override void OnInit() { }           // 首次创建时调用
-    protected override void OnShow(object payload) { } // 每次显示时调用
-    protected override void OnHide() { }            // 隐藏时调用
-    protected override void OnClose() { }           // 销毁时调用
+    protected override void OnInit() { }               // 首次实例化后调用一次
+    protected override void OnShow(object payload) { } // 每次显示时调用（含首次）
+    protected override void OnHide() { }               // 隐藏时调用（默认 SetActive(false)）
+    protected override void OnClose() { }              // 销毁前调用
 }
 ```
+
+> **生命周期细节**：面板以停用状态实例化（Awake / OnEnable 推迟到 Show 激活时才触发，保证 OnEnable 可安全访问 OnInit 之后才有值的引用），按 挂层 → `Initialize` → `Show` 顺序驱动；面板注册以实例的**实际类型**为键，以基类类型 Show 后需以实际类型（或面板内 `HideSelf()`）关闭。
 
 ### 目录结构
 
 ```
 Runtime/
-├── Engine/UI/
-│   ├── Interfaces/
-│   │   ├── IUIPanel.cs
-│   │   ├── IUIAssetLoader.cs
-│   │   └── IUICanvasConfig.cs
-│   ├── PanelConfig.cs
-│   ├── UILayer.cs
-│   ├── ResourcesUILoader.cs
-│   └── UILog.cs
-├── Component/UI/
-│   ├── UIManager.cs
-│   ├── AesirUIPanel.cs
-│   └── UICanvasConfigSO.cs
+└── UI/
+    ├── UIModule.cs               # UI 管理器单例
+    ├── UIRoot.cs                 # UI 根节点（四层 Canvas 构建）
+    ├── IUIPanel.cs               # 面板契约
+    ├── AesirBasePanel.cs         # 面板基类
+    ├── AesirBasePanelView.cs     # MVP 面板视图基类（绑定 Context）
+    ├── UILayer.cs                # 层级枚举
+    ├── UICanvasConfigSO.cs       # Canvas 配置资产
+    ├── UIAssetLoader/            # IUIAssetLoader + ResourcesUILoader
+    └── InputSystem/              # Input System 输入模块适配（独立程序集）
 Editor/
-└── Odin Integration/UI/
-    └── UICanvasConfigSOAttributeProcessor.cs
+├── UI/UIModuleMenuItems.cs       # Create UIRoot / Default UICanvasConfig 菜单项
+└── OdinInspector/UI/             # Odin AttributeProcessors（可选增强）
 ```
-
-详细文档见 [Documentation/ui-module-manual.md](Documentation/ui-module-manual.md)。
 
 ## 事件模块
 
@@ -226,12 +241,25 @@ Runtime/Events/
 └── SubscriberPriority.cs          # 优先级枚举（5 档）
 ```
 
-详细文档见 [Documentation/event-module.md](Documentation/event-module.md)。
+详细文档见 [Documentation/event-module.md](./Documentation/event-module.md)。
+
+## 场景模块
+
+`SceneModule`（MonoBehaviour 单例）负责启动场景与叠加场景管理：
+
+- **启动场景（Bootstrap）** — 按预设名称（`Bootstrap` / `Bootstrapper` 等）或自定义 `SceneAssetWrapper` 引用自动发现启动场景，并确保其在构建场景列表中序号为 0、优先加载
+- **叠加场景** — `AddScene` 动态加载并追踪（`AddedScenePaths` / `LastLoadedScene`）
+- **编辑器配套** — `SceneManagerWindow` 场景管理窗口；`BootstrapSceneHelper` 自动/手动搜集 Bootstrapper 场景并注册进 Build Settings；`SceneAssetWrapper` 可序列化场景引用
+
+## Binder 组件绑定（Odin 可选）
+
+位于 `Runtime/OdinInspector/UI/Binder/`（独立程序集，需 Odin Inspector）：`BinderAssistant` / `BinderTag` 将面板下 UI 元素（Text、Button 等）按层级自动绑定到脚本字段，减少手工拖引用；配套 `IComponentBinder` 自定义绑定器扩展。
 
 ## 示例
 
 - 本仓库直接浏览 / 下载源码：示例位于包内 `Samples/` 文件夹，可直接查看运行。
 - Git URL 安装：Package Manager → 选中本包 → `Samples` 标签页按需导入（源在包内 `Samples~/` 隐藏目录，构建时自动剔除）。
+- unitypackage 导入：示例随包内含，导入后即可运行。
 
 当前提供：
 
@@ -242,3 +270,4 @@ Runtime/Events/
 ## 许可证
 
 MIT
+

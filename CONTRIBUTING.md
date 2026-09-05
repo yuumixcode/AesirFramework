@@ -69,7 +69,7 @@
 
 - **Unity / Tuanjie**: 2022.3.62f3c1（或等价 LTS）
 - **渲染管线**: URP 14.0.12
-- **可选依赖**: [Odin Inspector](https://odininspector.com/) 3.3.x+（用于开发 OdinIntegration 增强功能）
+- **可选依赖**: [Odin Inspector](https://odininspector.com/) 3.3.x+（用于开发 OdinInspector 程序集的增强功能）
 - **Git**: 用于版本控制
 
 #### 克隆仓库
@@ -104,8 +104,7 @@ Assets/Runestone/
 
 - **C# 语言** / C#
 - 类用 PascalCase，接口加 `I` 前缀，抽象类加 `Abstract` 前缀
-- `MonoBehaviour` 单例：静态 `Instance` + `[DefaultExecutionOrder(-999)]` + `DontDestroyOnLoad`
-- 通过 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` 自动启动
+- `MonoBehaviour` 单例：静态 `Instance` + `[DefaultExecutionOrder(-999)]`；是否 DDOL 由序列化字段 `dontDestroyOnLoad` 统一控制，`Instance` getter 优先 `FindAnyObjectByType` 搜索场景预放置实例（预放置优先）
 - Domain Reload 安全：非泛型静态单例在类内用 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 重置；泛型类（如 `AbstractContext<T>`）的 RIOLM 会被 Unity 静默跳过，必须经 `ResetStaticsAssistant.Register()` 注册重置回调
 - Runtime / Editor 代码用 asmdef 隔离
 - **XML 文档注释用中文；标识符用英文**
@@ -144,7 +143,7 @@ Unity -batchmode -quit -projectPath . \
 | `docs:` | 仅文档变更 | `docs: Update README for Aesir Modules` |
 | `refactor:` | 重构（无功能变更） | `refactor: Extract AbstractSubmodule base class` |
 | `test:` | 仅测试变更 | `test: Add coverage for AutoRemoveListenerHandle` |
-| `chore:` | 构建/工具/依赖 | `chore: Bump Aesir Architecture to 0.3.2` |
+| `chore:` | 构建/工具/依赖 | `chore: Bump Aesir Architecture to 0.14.0` |
 
 > **Scope 建议**：`feat(architecture):` / `fix(modules):` —— 通过 scope 标明影响哪个子包。
 
@@ -257,7 +256,7 @@ Docs are first-class. Fix typos, expand examples, complete translations — all 
 
 - **Unity / Tuanjie**: 2022.3.62f3c1 (or equivalent LTS)
 - **Render Pipeline**: URP 14.0.12
-- **Optional**: [Odin Inspector](https://odininspector.com/) 3.3.x+ (for OdinIntegration development)
+- **Optional**: [Odin Inspector](https://odininspector.com/) 3.3.x+ (for developing OdinInspector assembly enhancements)
 - **Git**
 
 Clone:
@@ -290,8 +289,7 @@ See [`CODELY.md`](./CODELY.md) for detailed layout.
 
 - C#
 - PascalCase for classes, `I` prefix for interfaces, `Abstract` prefix for abstracts
-- `MonoBehaviour` singletons: static `Instance` + `[DefaultExecutionOrder(-999)]` + `DontDestroyOnLoad`
-- `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]` for auto-bootstrap
+- `MonoBehaviour` singletons: static `Instance` + `[DefaultExecutionOrder(-999)]`; DDOL is governed by the serialized `dontDestroyOnLoad` field, and the `Instance` getter first searches for a pre-placed instance via `FindAnyObjectByType` (pre-placed-first)
 - Domain Reload safety: in-class `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` resets for non-generic static singletons; generic classes (e.g. `AbstractContext<T>`) whose RIOLM is silently ignored by Unity must register reset callbacks via `ResetStaticsAssistant.Register()`
 - Runtime / Editor isolation via asmdef
 - **XML doc comments in Chinese; identifiers in English**
@@ -330,7 +328,7 @@ Unity -batchmode -quit -projectPath . \
 | `docs:` | Docs only | `docs: Update README for Aesir Modules` |
 | `refactor:` | Refactor (no feature change) | `refactor: Extract AbstractSubmodule base class` |
 | `test:` | Tests only | `test: Add coverage for AutoRemoveListenerHandle` |
-| `chore:` | Build / tooling / deps | `chore: Bump Aesir Architecture to 0.3.2` |
+| `chore:` | Build / tooling / deps | `chore: Bump Aesir Architecture to 0.14.0` |
 
 > **Recommended scope**: `feat(architecture):` / `fix(modules):` — make the affected sub-package explicit.
 

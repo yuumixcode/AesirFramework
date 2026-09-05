@@ -24,7 +24,7 @@
 
 ---
 
-## 🏛️ Aesir Architecture（RAA）——本仓库的核心
+## 🏛️ Aesir Architecture（RAA）——架构框架
 
 **RAA 是一个以"Unity 原生优先"为核心理念的渐进式 MVC 架构**。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的分层规范。框架以 **MVC 为主要模式**（`IController` 是推荐的快速开发入口），`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -59,6 +59,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 ### 核心机制速览
 
 - **`ObservableValue<T>` 响应式属性** — Model 持有可写实例，View 经 `IReadOnlyObservableValue<T>` 只读订阅；`AddListenerAndInvoke` 订阅即同步初始值
+- **可观察集合家族** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` 提供 Added / Removed / Replaced / Updated / Cleared 变更通知，与 ObservableValue 同一套读写分离与事件模式
 - **`MiniEvent` / `MiniEvent<T>`** — 零分配轻量事件（直接多播调用，原生 C# fail-fast 语义）；返回 `AutoRemoveListenerHandle` 自动清理，支持随 GameObject 销毁 / 场景卸载自动注销
 - **PlayerLoop 原生生命周期** — `AesirArchitecturePlayerLoop` 注入 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour；第三方 SDK 覆盖 PlayerLoop 后 `EnsureInjected()` 自愈
 - **DDOL 显式决策** — 根单例的 `dontDestroyOnLoad` 序列化字段统一控制预放置 / 运行时两种来源（默认跨场景持久；关闭时随场景卸载销毁，Inspector 警告 + 运行时提醒，多场景叠加加载自行处理）
@@ -71,11 +72,34 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 2. **极简边界** — 不做事件总线、Context 多实例、Command 池化 / async / Undo；低概率问题用文档约定与编辑期提示（InfoBox）杜绝，不加运行时防御兜底
 3. **样式与逻辑分离** — Inspector 呈现全部经 Odin AttributeProcessor 动态注入，运行时程序集零样式特性
 
-完整文档见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md)（English）。
+---
+
+## 🧱 Aesir Modules（RAM）——功能模块包
+
+**RAM 是 Architecture 之上的功能模块集合**，当前提供 UI 框架与实验性事件模块，并附带场景管理工具。
+
+### UI 框架
+
+- **`UIModule`（Manager of Managers 单例）** — 静态快捷 API：`UIModule.Show<T>()` / `Hide<T>()` / `Get<T>()` / `Prewarm<T>()` / `RegisterPrefab<T>()`；面板状态机为 激活 → 停用缓存 → 销毁
+- **`UIRoot` 四层 Canvas 层级** — 一键构建 Background / Normal / Popup / Top 分层 Canvas + UICamera + EventSystem（`GameObject → Aesir Modules → Create UIRoot`），层级 Canvas 序列化引用持久化
+- **面板生命周期** — `IUIPanel` 契约 `Initialize → Show(payload) → Hide → DestroyPanel`；`AesirBasePanel` 提供虚方法 `OnInit` / `OnShow` / `OnHide` / `OnClose`；`DestroyOnHide` 决定隐藏时销毁还是缓存复用
+- **可插拔资源加载** — 默认 `ResourcesUILoader`（Resources 目录），实现 `IUIAssetLoader` 即可替换为 Addressables 等
+- **预热** — `Prewarm<T>()` 逐帧预实例化，`PrewarmAll()` 分摊首次打开的实例化卡顿
+- **Binder 组件绑定（Odin 可选）** — `BinderAssistant` / `BinderTag` 将 UI 元素自动绑定到面板脚本
+- **Input System 适配** — 独立程序集在启用 Input System 时自动以 `InputSystemUIInputModule` 替换默认输入模块
+
+### 事件模块（⚠️ 实验性）
+
+双轨订阅事件系统：`[AesirListener]` 特性静态订阅 + `AddListener<T>` 动态 Lambda 订阅，共存于同一分发流程，按 5 档优先级排序执行；静态绑定经表达式树编译委托优化反射开销。**尚未在实际项目中验证，API 可能调整。**
+
+### 场景模块与编辑器工具
+
+- **`SceneModule`** — 启动场景（Bootstrap）自动发现与优先加载、叠加场景动态加载追踪
+- **编辑器工具** — `SceneManagerWindow` 场景管理窗口、`BootstrapSceneHelper` 启动场景一键注册、`SceneAssetWrapper` 可序列化场景引用
 
 ---
 
-## 🧩 依赖关系
+## 🕸️ 依赖关系
 
 ```
 ┌──────────────────────┐
@@ -112,14 +136,28 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 > 版本分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 生成（包内容即分支根目录），仓库只保留最新版本分支。
 
-### 方式 2：跟踪 main 最新（开发预览）
+### 方式 2：unitypackage 导入 + 包内更新器（大陆 / 离线友好）
+
+从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载对应 unitypackage 拖入项目：
+
+| 资产 | 内容 |
+|---|---|
+| `AesirArchitecture-v<版本>.unitypackage` | 仅 Aesir Architecture |
+| `AesirModules-v<版本>.unitypackage` | 仅 Aesir Modules（不含依赖，需自行导入 Architecture） |
+| `AesirFramework-v<版本>.unitypackage` | 两包合并 |
+
+以此方式安装的包装在 `Assets/Runestone/` 下（代码可改），**更新无需手动重新下载**：Unity 菜单 `Tools → Aesir → Check for Updates` 打开包内更新器，一键完成"检测新版本 → 自动备份 → 差集清理残留 → 静默导入"。版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测）；经 CDN 检测，最新发布最长约 12 小时后才会被检测到。
+
+> 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
+
+### 方式 3：跟踪 main 最新（开发预览）
 
 ```
 https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture
 https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules
 ```
 
-### 方式 3：通过 `manifest.json` 编辑安装
+### 方式 4：通过 `manifest.json` 编辑安装
 
 在项目的 `Packages/manifest.json` 文件中添加：
 
@@ -138,6 +176,7 @@ https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModu
 
 - **本仓库直接浏览 / 下载源码**：示例就在各包的 `Samples/` 文件夹内，可直接查看运行。
 - **Git URL 安装**：Package Manager → 选中包 → `Samples` 标签页 → 按需 Import；示例源同时保留在各包的 `Samples~/` 隐藏目录中。
+- **unitypackage 导入**：示例随包内含，导入后即可运行。
 
 ---
 
@@ -174,6 +213,21 @@ UI 框架提供 Manager-of-Managers 单例、四层 Canvas 层级（`UILayer`）
 
 ---
 
+## 🗺️ 文档地图
+
+| 文档 | 位置 |
+|---|---|
+| 架构教学（中文/英文） | 各包 `README.md` / `Documentation/README_EN.md` |
+| 事件机制决策表（ObservableValue / MiniEvent / 集合 / EventModule 怎么选） | [`AesirArchitecture/Documentation/事件机制决策表.md`](./Assets/Runestone/AesirArchitecture/Documentation/事件机制决策表.md) |
+| 常见陷阱清单（10 条高频坑与修法） | [`AesirArchitecture/Documentation/常见陷阱清单.md`](./Assets/Runestone/AesirArchitecture/Documentation/常见陷阱清单.md) |
+| AI 编码指南（供 AI 助手按 RAA 规范生成代码） | [`AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md) |
+| 事件模块详细手册 | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
+| 变更日志（仓库级聚合 / 各包子包） | 根 [`CHANGELOG.md`](./CHANGELOG.md) 及各包 `CHANGELOG.md` |
+
+> 包内 `Documentation/` 随 unitypackage 一并导出（不进玩家构建）；Git URL 安装的用户可经 Package Manager 读取 `Documentation~/` 镜像内容。
+
+---
+
 ## 🗂️ 仓库目录结构
 
 > 这是一个**多包 monorepo**——两个子包的源都在这里，但每个子包都能独立通过 Git URL 安装。
@@ -187,6 +241,7 @@ AesirFramework/                            # 你现在看到的仓库
 ├── CONTRIBUTING.md                        # 贡献指南
 ├── CODE_OF_CONDUCT.md                     # 社区准则
 ├── CODELY.md                              # 架构详细文档
+├── Assets/Scripts/Editor/                 # 仓库本地编辑器工具（包导出等，不随包分发）
 └── Assets/Runestone/
     ├── AesirArchitecture/                 # 不依赖其他 Aesir 子包
     │   ├── Runtime/  Editor/  Tests/
@@ -203,6 +258,15 @@ AesirFramework/                            # 你现在看到的仓库
         ├── Documentation~/                # 文档镜像（Git URL 安装隐藏副本）
         └── README.md  CHANGELOG.md  package.json
 ```
+
+---
+
+## ✅ 质量与 CI
+
+- **测试** — EditMode 测试 100 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序等；命令行跑法见[开发环境](#️-开发环境)
+- **CI（GitHub Actions）** —
+  - `auto-release.yml`：每次推送 `main` 自动发布 GitHub Release（三个 unitypackage + 更新器所需的 update-info.json / files-manifest）
+  - `auto-publish-branches.yml`：按包目录 subtree split 生成 `AesirArchitecture-v<版本>` / `AesirModules-v<版本>` 固定版本分支
 
 ---
 
