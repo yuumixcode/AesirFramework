@@ -19,6 +19,12 @@ namespace Runestone.AesirArchitecture
     ///     与 <see cref="AesirArchitecturePlayerLoop" /> 的排序机制一致。
     ///     </para>
     ///     <para>
+    ///     <b>快照语义</b>：与原生 C# 多播委托一致，每趟遍历基于调用开始时的监听列表进行。
+    ///     回调执行中发起的 <see cref="AddListener" /> / <see cref="RemoveListener" /> 等变更进入挂起队列，
+    ///     本趟结束后按发生顺序统一应用——调用期间新增的监听下一趟才生效，被移除的监听若尚未执行
+    ///     仍会在本趟执行一次（随后失效），且增删不会导致其他监听被跳过或重复执行。
+    ///     </para>
+    ///     <para>
     ///     <b>自动取消订阅</b>：通过 <see cref="Register(MonoBehaviour)" /> 注册的 MonoBehaviour，
     ///     其所有监听句柄会绑定到目标 GameObject 的 OnDestroy 事件，物体销毁时自动从代理中取消订阅。
     ///     非 MonoBehaviour 对象通过 <see cref="Register(object)" /> 注册，返回组合句柄由调用方管理生命周期。
@@ -45,9 +51,12 @@ namespace Runestone.AesirArchitecture
         readonly Dictionary<MonoLifecycleEvent, List<ListenerEntry>> _sortedListeners =
             new Dictionary<MonoLifecycleEvent, List<ListenerEntry>>();
 
+        readonly List<PendingChange> _pendingChanges = new List<PendingChange>();
+
         long _nextInsertionIndex;
         bool _playerLoopRegistered;
 
+        bool _invoking;
         bool _sortDirty;
 
         /// <summary>
@@ -146,6 +155,9 @@ namespace Runestone.AesirArchitecture
         /// <param name="callback">事件触发时执行的回调委托</param>
         /// <param name="order">执行优先级，值越小越先执行；同 order 时按注册顺序执行</param>
         /// <returns>用于后续自动移除该监听的句柄</returns>
+        /// <remarks>
+        /// 快照语义：在生命周期回调执行中调用时，本趟遍历不会包含新监听，变更延后至本趟结束统一应用。
+        /// </remarks>
         public AutoRemoveListenerHandle AddListener(MonoLifecycleEvent evt, Action callback, int order = 0)
         {
             if (callback == null)
@@ -160,8 +172,15 @@ namespace Runestone.AesirArchitecture
                 InsertionIndex = _nextInsertionIndex++
             };
 
-            GetOrCreateList(evt).Add(entry);
-            _sortDirty = true;
+            if (_invoking)
+            {
+                _pendingChanges.Add(new PendingChange { Event = evt, IsAdd = true, Entry = entry });
+            }
+            else
+            {
+                GetOrCreateList(evt).Add(entry);
+                _sortDirty = true;
+            }
 
             return new AutoRemoveListenerHandle(() => RemoveListener(evt, callback));
         }
@@ -171,8 +190,17 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <param name="evt">目标生命周期事件类型</param>
         /// <param name="callback">要移除的回调委托，必须与注册时传入的实例相同</param>
+        /// <remarks>
+        /// 快照语义：在生命周期回调执行中调用时，被移除的监听若尚未执行仍会在本趟执行一次，随后失效。
+        /// </remarks>
         public void RemoveListener(MonoLifecycleEvent evt, Action callback)
         {
+            if (_invoking)
+            {
+                _pendingChanges.Add(new PendingChange { Event = evt, IsAdd = false, Callback = callback });
+                return;
+            }
+
             if (_sortedListeners.TryGetValue(evt, out var list))
             {
                 for (var i = list.Count - 1; i >= 0; i--)
@@ -266,9 +294,14 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 清空所有事件的监听者
         /// </summary>
+        /// <remarks>
+        /// 快照语义：在生命周期回调执行中调用时，本趟遍历继续执行完毕（基于旧列表），
+        /// 此前累积的挂起变更一并丢弃，之后新增的监听在本趟结束时正常应用。
+        /// </remarks>
         public void ClearAllListeners()
         {
             _sortedListeners.Clear();
+            _pendingChanges.Clear();
             _sortDirty = false;
         }
 
@@ -290,10 +323,47 @@ namespace Runestone.AesirArchitecture
             }
 
             EnsureSorted();
-            for (var i = 0; i < list.Count; i++)
+            _invoking = true;
+            try
             {
-                list[i].Callback();
+                // 快照语义：遍历期间列表被冻结（增删进入挂起队列），循环不受增删影响
+                for (var i = 0; i < list.Count; i++)
+                {
+                    list[i].Callback();
+                }
             }
+            finally
+            {
+                _invoking = false;
+                ApplyPendingChanges();
+            }
+        }
+
+        /// <summary>
+        /// 应用调用期间累积的挂起变更，按发生顺序写回监听列表
+        /// </summary>
+        void ApplyPendingChanges()
+        {
+            if (_pendingChanges.Count == 0)
+            {
+                return;
+            }
+
+            for (var i = 0; i < _pendingChanges.Count; i++)
+            {
+                var change = _pendingChanges[i];
+                if (change.IsAdd)
+                {
+                    GetOrCreateList(change.Event).Add(change.Entry);
+                    _sortDirty = true;
+                }
+                else
+                {
+                    RemoveListener(change.Event, change.Callback);
+                }
+            }
+
+            _pendingChanges.Clear();
         }
 
         void EnsureSorted()
@@ -366,6 +436,21 @@ namespace Runestone.AesirArchitecture
             public Action Callback;
             public int Order;
             public long InsertionIndex;
+        }
+
+        /// <summary>
+        /// 挂起变更条目，记录调用期间累积的一次监听增删操作
+        /// </summary>
+        /// <remarks>
+        /// 快照语义的实现载体：变更按发生顺序暂存于挂起队列，本趟遍历结束后统一应用。
+        /// 先添加后移除同一回调可在按序应用中正确抵消。
+        /// </remarks>
+        struct PendingChange
+        {
+            public MonoLifecycleEvent Event;
+            public bool IsAdd;
+            public Action Callback;
+            public ListenerEntry Entry;
         }
 
         #region 单例
