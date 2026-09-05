@@ -112,21 +112,14 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
-# 团结引擎 AI Codely CLI（本地工具，不随仓库分发）
-.codely-cli/auto-saves/
-.codely-cli/extensions/codely-unity-lsp-server/
-.codely-cli/extensions/TJGenerators/
-.codely-cli/extensions/TMPChineseFont/
-.codely-cli/settings.json
-.codely-cli/UnityInsight/
-
-# 团结引擎 Codely Bridge 配置文件（本地工具，不随仓库分发）
+# 团结引擎 AI Codely 本地工具链（CLI 配置与扩展、Bridge 包缓存、剪贴板缓存，均不随仓库分发）
+.codely-cli/
+.codely.packages/
+.codely/
+.codelyignore
 .com-unity-codely.json
 
-# Codely CLI 剪贴板临时图片（用户输入时使用，不上传远端）
-.codely/clipboard/
-
-# 内部开发文档（已迁移至私有仓库 Aesir-Docs）
+# 开发文档
 /Docs/
 
 # 第三方付费素材原件（Goldmetal，PlaneWar 示例内已有自包含拷贝，原件不分发）
