@@ -20,15 +20,35 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.16.1** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.16.1** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.16.2** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.16.2** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.16.1` / `#AesirModules-v0.16.1`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.16.2` / `#AesirModules-v0.16.2`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.16.2] - 2026-09-06
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Changed
+
+- **`LICENSE.md` 与 `Third Party Notices.md` 移至包根** — 对齐 UPM 包根约定（Package Manager 识别包根的 Third Party Notices），包 README 的 LICENSE 徽章链接随之生效；版权行统一为 Runestone Yuumix
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- **`LICENSE.md` 与 `Third Party Notices.md` 移至包根** — 同 Architecture；`Documentation~/` 镜像不再存放两文件的副本
 
 ---
 

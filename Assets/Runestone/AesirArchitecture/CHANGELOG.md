@@ -13,6 +13,12 @@
 - Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
 - 运行时集合（RuntimeSet）
 
+## [0.16.2] - 2026-09-06
+
+### Changed
+
+- **`LICENSE.md` 与 `Third Party Notices.md` 移至包根** — 对齐 UPM 包根约定（Package Manager 识别包根的 Third Party Notices），包 README 的 LICENSE 徽章链接随之生效；版权行统一为 Runestone Yuumix
+
 ## [0.16.1] - 2026-09-06
 
 ### Changed

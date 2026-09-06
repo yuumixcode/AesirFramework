@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.16.1 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.16.1 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.16.2 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.16.2 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.16.1）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.16.2）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.16.1）
+## Aesir Architecture（0.16.2）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -141,7 +141,7 @@
 
 ---
 
-## Aesir Modules（0.16.1）
+## Aesir Modules（0.16.2）
 
 ### UI 框架
 
@@ -400,7 +400,7 @@ Unity -batchmode -projectPath . -testPlatform editmode -runTests \
 ### 分支策略
 
 - `main` — 开发主线
-- 版本分支 `AesirArchitecture-v0.16.1` / `AesirModules-v0.16.1` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
+- 版本分支 `AesirArchitecture-v0.16.2` / `AesirModules-v0.16.2` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
 
 ---
 
@@ -484,7 +484,7 @@ undefined
 - [2026-09-05 23:30:19] [project] RAM Scene 模块重构完成（2026-09-05，Eflatun.SceneReference 功能吸收，未发版）：SceneAssetWrapper ≈ SceneReference+Odin——新增 GUID 锚点自愈（sceneGuid 序列化字段+EditorSyncFromAsset）、State/UnsafeReason 状态机、TryGet 家族、专用异常族（SceneAssetWrapperException 基类+Empty/Creation/NotAddressable/SupportDisabled）、FromScenePath/FromAsset(编辑器) 工厂、Address 序列化缓存与 AddressablesSupportEnabled；Addressables 条件架构=核心 asmdef versionDefines 设 AESIR_MODULES_ADDRESSABLES + 独立胶水程序集 Runestone.AesirModules.Editor.Addressables（defineConstraints 排除，经 SceneAssetWrapperAddressablesBridge 静态委托桥注册 GetAddress/MakeAddressable）；SceneModule 修复全部 P0 语义 bug；新增 Tests/Editor 程序集 27 用例（自适应装/不装 Addressables）。**Why:** 用户要求吸收 Eflatun 有用功能、支持 Addressables 且遵循最小惊讶原则、缺失依赖时"不报错而是不编译"。**How to apply:** 下次发版 CHANGELOG 必须写破坏性变更清单——①删 AddScene/UnloadAddedScene(+WithWrapper 变体)，统一 LoadSceneAdditive 纯叠加追踪；②*WithSceneAssetWrapper 6 方法改为同名重载；③ReloadScene 同步→异步(带回调)；④ScenePath/Guid/SceneName/BuildIndex/LoadedScene 空引用由返回空值改为抛 EmptySceneAssetWrapperException；⑤LoadSceneAdditive 不再卸载上个场景、Additive 不再抢激活场景；⑥加载失败新增 onFailed 回调。
 - [2026-09-05 23:30:33] [project] 条件编译方案三态实测结论（2026-09-05，团结引擎 2022.3.62）：①asmdef defineConstraints 不满足时会先排除程序集再解析 references——胶水程序集用 **name 引用** Unity.Addressables.Editor + defineConstraints [AESIR_MODULES_ADDRESSABLES]（versionDefines 由 com.unity.addressables 任意版本触发），装/卸包双向实测 0 编译错误（Eflatun 用的是 GUID 引用+整文件 #if，两者皆可行）；②versionDefines 声明在核心 asmdef 与胶水 asmdef 各放一份（belt-and-braces，Unity 对宏是否全局可见无需依赖单一声明位置）；③**坑：安装 Addressables 后 Odin Inspector 会自动生成 Assets/Plugins/Sirenix/Odin Inspector/Modules/Unity.Addressables/ 模块（硬引用无守卫），卸包后 Odin 不会主动撤走 → 42 个 CS0234 编译错误**——需手动删除该模块文件夹（.data/.info.txt 注册表文件保留，Odin 装包时会自动重新导入）；④Unity 包 resolve 会把 manifest.json 中 file: 本地引用重排到列表头部，checkout 恢复即可。**Why:** 卸包验证时踩中 Odin 模块残留与 manifest 重排两个非预期变更。**How to apply:** 装卸 Addressables 做验证时：装→跑测试→卸→删 Odin 模块文件夹→refresh→checkout manifest.json；任何"可选包集成"用 defineConstraints+独立程序集方案可放心用 name 引用。
 - [2026-09-06 01:11:40] [project] RAM 功能模块结构重组完成（2026-09-06，commit 49b9e76 + 标准包根二次调整，未发版）：**标准 Unity 自定义包根结构**——包根两级目录 `Runtime/` 与 `Editor/`，功能模块以子目录存在于对应层级（`Runtime/UI/`、`Editor/UI/`），模块间零依赖；删除模块 = 删 `Runtime/<模块>/` 与 `Editor/<模块>/`。核心程序集锚点在层根（`Runtime/Runestone.AesirModules.asmdef`、`Editor/Runestone.AesirModules.Editor.asmdef`），层内模块主代码自动汇入无需 asmref；细分程序集锚点在 `Common/` 下（Odin 运行时 `Runtime/Common/OdinInspector/`、Odin 编辑器 `Editor/Common/OdinInspector/`、Addressables 胶水 `Editor/Common/Addressables/`），模块专属代码放各自 `OdinInspector/`、`Addressables/` 子目录经 4 个 asmref 汇入；Scene 测试程序集改名 Runestone.AesirModules.Scene.Tests 位于 Editor/Scene/Tests/；模块隔离为约定保证（重组时审计零跨模块引用，单核心程序集模式下无编译期强制）；删除 Events 模块需连带删 Samples/Events/（示例依赖事件模块）。**Why:** 用户裁决采用标准 Unity Custom Package 根目录结构（首次方案把模块文件夹放顶层被用户纠正）。**How to apply:** 新增 RAM 功能模块 = 建 `Runtime/<模块>/` + `Editor/<模块>/`（主代码自动汇入核心程序集）；Odin 专属代码放该层 `OdinInspector/` 子目录 + 一个 asmref；Addressables 胶水锚点在 Editor/Common/Addressables/；关键实测依据：asmref 指向被 defineConstraints 排除的程序集时整体静默排除、约束满足时正确汇入（双向探针验证，团结 2022.3.62）；SampleScene 存在一条重组前即缺失的脚本 GUID（b7cd017143765464fbeb78c71e462d18，历史遗留，做 GUID 扫描时勿误判为新问题）。
-- [2026-09-06 01:44:20] aesir-version-sync 技能部分步骤已失效（2026-09-06，0.16.1 发版实测）：①Inspector 包已迁出，无第三个 package.json/CHANGELOG；②根英文 README 是 README_EN.md（非 README.en.md）；③Assets/Samples/ 导入副本已删除，步骤 8/9 跳过；④包英文 README 主位在 Documentation/README_EN.md（改完 cp 到 Documentation~ 镜像）；⑤根 CHANGELOG 顶部"当前版本"表格与固定分支名也要同步。**How to apply:** 发版时以 `git grep <旧版本号>` 全仓清单为准逐项替换（排除 CHANGELOG 历史段与 .github/update-info.json——后者由 CI 回写），推送前确保根 CHANGELOG 有对应 `## [x.y.z]` 段落；推送被拒通常是 CI 的 [skip ci] 回写提交，fetch+rebase 后重推；推完等 CI 生成新版本分支后删除所有旧版本分支（0.16.1 发版时已补删遗留的 v0.14.0/v0.15.0 分支）。
+- [2026-09-06 01:44:20] aesir-version-sync 技能部分步骤已失效（2026-09-06，0.16.2 发版实测）：①Inspector 包已迁出，无第三个 package.json/CHANGELOG；②根英文 README 是 README_EN.md（非 README.en.md）；③Assets/Samples/ 导入副本已删除，步骤 8/9 跳过；④包英文 README 主位在 Documentation/README_EN.md（改完 cp 到 Documentation~ 镜像）；⑤根 CHANGELOG 顶部"当前版本"表格与固定分支名也要同步。**How to apply:** 发版时以 `git grep <旧版本号>` 全仓清单为准逐项替换（排除 CHANGELOG 历史段与 .github/update-info.json——后者由 CI 回写），推送前确保根 CHANGELOG 有对应 `## [x.y.z]` 段落；推送被拒通常是 CI 的 [skip ci] 回写提交，fetch+rebase 后重推；推完等 CI 生成新版本分支后删除所有旧版本分支（0.16.2 发版时已补删遗留的 v0.14.0/v0.15.0 分支）。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。

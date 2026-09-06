@@ -12,6 +12,12 @@
 - Scene 模块（SceneLoader、SceneReference）
 - 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
 
+## [0.16.2] - 2026-09-06
+
+### Changed
+
+- **`LICENSE.md` 与 `Third Party Notices.md` 移至包根** — 同 Architecture；`Documentation~/` 镜像不再存放两文件的副本
+
 ## [0.16.1] - 2026-09-06
 
 ### Changed
