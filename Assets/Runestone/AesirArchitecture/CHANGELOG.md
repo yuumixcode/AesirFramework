@@ -12,6 +12,10 @@
 - `InternalContextAttribute`：标记框架内部 Context（示例 / 测试等非用户工作流用途）的元数据特性；AesirModules Binder 的「Context 类型」选择器会跳过被标记的类型
 - 包内全部示例与测试 Context（含嵌套）标注 `[InternalContext]`
 
+### Fixed
+
+- **示例场景无法运行（0.14.0 起回归）** — 示例程序集从 Editor-only（`includePlatforms`）改为运行时程序集 + 示例脚本整文件 `#if UNITY_EDITOR` 包裹：Editor-only asmdef 的 MonoBehaviour 被 Unity 判定为"编辑器脚本"、禁止挂载场景物体，导致全部示例场景组件 Missing Script；重构后编辑器内正常编译、挂载与 Play Mode 运行，玩家构建仍整体剔除（示例类型 0 入包）
+
 ## [Unreleased]
 
 ### 规划中
