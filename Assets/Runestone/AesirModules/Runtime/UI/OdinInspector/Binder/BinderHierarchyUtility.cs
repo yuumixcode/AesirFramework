@@ -37,26 +37,28 @@ namespace Runestone.AesirModules
         /// 获取子物体相对于父物体的路径。
         /// <para>
         /// 通过对比两条绝对路径的公共前缀，截取子路径部分。
-        /// 若子路径不以父路径为前缀则报错（说明二者不是父子关系）。
+        /// 若子路径不以父路径为前缀（含子路径比父路径更短）则返回 null（说明二者不是父子关系）。
+        /// 二者为同一物体时返回空字符串（生成代码中用于表示绑定自身）。
         /// </para>
         /// </summary>
         /// <param name="parentPath">父物体的绝对路径。</param>
         /// <param name="childPath">子物体的绝对路径。</param>
-        /// <returns>相对路径字符串（如 <c>Panel/Button</c>）；若不是父子关系则返回 null。</returns>
+        /// <returns>相对路径字符串（如 <c>Panel/Button</c>）；同一物体返回空字符串；不是父子关系则返回 null。</returns>
         public static string GetRelativePath(string parentPath, string childPath)
         {
             var parentPathArray = parentPath.Split('/');
             var childPathArray = childPath.Split('/');
             var targetPathList = new List<string>();
 
-            // 校验：父路径必须是子路径的前缀，否则二者不是父子关系
-            if (parentPathArray.Where((path, i) => childPathArray[i] != path).Any())
+            // 校验: 父路径必须是子路径的前缀，否则二者不是父子关系（子路径更短会越界，需先排除）
+            if (childPathArray.Length < parentPathArray.Length ||
+                parentPathArray.Where((path, i) => childPathArray[i] != path).Any())
             {
                 AesirModulesDebug.LogError(AesirModulesDebug.ObjectBinderTag, "路径错误，并不是子物体");
                 return null;
             }
 
-            // 截取父路径之后的路径段作为相对路径
+            // 截取父路径之后的路径段作为相对路径；二者为同一物体时结果为空字符串
             for (var i = parentPathArray.Length; i < childPathArray.Length; i++)
             {
                 targetPathList.Add(childPathArray[i]);
