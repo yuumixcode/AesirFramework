@@ -18,7 +18,7 @@ namespace Runestone.AesirModules
     {
         [SerializeField]
         [HideInInspector]
-        int componentNumber;
+        int componentNumber = 1;
 
         /// <summary>
         /// 当前物体上需要绑定的组件数量。<see cref="BinderAssistant" /> 据此为每个组件生成一条 <see cref="BinderInfo" />。

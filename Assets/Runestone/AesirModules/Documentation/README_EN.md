@@ -3,13 +3,13 @@
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an experimental event module, and scene management tooling.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.16.2-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.17.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.16.2`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.17.0`)
 
 ## Modules
 
@@ -23,7 +23,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.16.2 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.17.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed.
 
 ## Directory Layout
@@ -43,7 +43,7 @@ Assembly organization:
 In the Unity Package Manager window, click `+` → `Add package from git URL...`:
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.16.2
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.17.0
 ```
 
 Or edit `Packages/manifest.json`:
@@ -51,7 +51,7 @@ Or edit `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.16.2"
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.17.0"
   }
 }
 ```
@@ -284,7 +284,13 @@ Editor/Scene/                      # joins the core editor assembly (layer-root 
 
 ## Binder Component Binding (Odin optional)
 
-Located in `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via asmref, requires Odin Inspector): `BinderAssistant` / `BinderTag` auto-bind UI elements under a panel (Text, Button, etc.) to script fields by hierarchy, reducing manual reference dragging; extend via `IComponentBinder` for custom binders.
+Located at `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via asmref, requires Odin Inspector). The whole Binder feature lives in the Odin assembly (including `[BinderBaseType]`): its type selectors (component/base-class ValueDropdowns) strongly depend on Odin Inspector.
+
+- `BinderTag` marks child objects that need bound references (1 component bound by default); its "bound component count" declares how many components to bind on that object. The hierarchy context menu `GameObject/Aesir/` attaches `BinderAssistant` / `BinderTag` to selected objects in one click.
+- `BinderAssistant` sits on the panel root. "Build Binding Units" incrementally maintains the binding list from the tags (each entry records component type, field name, and binding path). Two generation modes are supported (default "Same-Script Incremental"): "Same-Script Incremental" only replaces the `#region 绑定字段（自动生成）` block (fields + `BindComponents` method, fully-qualified and self-contained) inside the target `*.cs`, leaving everything outside the region to the developer — a scaffold is created automatically when the file does not exist; "Partial Class" produces the hand-written partial `*.cs` (generated once) and an auto-maintained file (suffix selectable, default `.designer.cs` — collapsed by default in Rider, recommended for Rider users). Generated bound fields are grouped under a `TitleGroup` ("绑定字段（自动生成）") marking them as Binder-maintained. Both modes auto-attach the generated component and bind once after compilation.
+- The generated script's base class is selectable from a dropdown: built-in `MonoBehaviour`, the pre-selected Aesir panel family (`AesirBasePanel`, `AesirBasePanelView<T>`, `AesirBasePanelViewController<T>` — the core assembly cannot reference the Odin assembly back to carry the attribute, so the Binder pre-selects them via typeof), and user classes marked with `[BinderBaseType]` (requires referencing `Runestone.AesirModules.OdinInspector`); for the Aesir generic panel bases, pick a concrete Context type from the "Context 类型" dropdown (project-wide AbstractContext derivatives; the placeholder is never emitted into generated code).
+- The default namespace and the partial suffix candidate list are persisted in-editor via ScriptableSingleton.
+- Code generation is pure text assembly, covered by the EditMode test assembly `Runestone.AesirModules.Tests` (package-root `Tests/`); `IComponentBinder` remains the extension point for custom binders.
 
 ## Samples
 

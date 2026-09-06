@@ -5,6 +5,26 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.17.0] - 2026-09-06
+
+### Added
+
+- **Binder 组件绑定全面完善**：
+  - 双生成模式：「同一脚本增量」（默认）与「Partial 分部类」（后缀可选，默认 `.designer.cs`）
+  - 「Context 类型」下拉（AbstractContext 派生类扫描，`[InternalContext]` 内部 Context 自动排除）
+  - 基类下拉新增 AesirBasePanelView<T> / AesirBasePanelViewController<T> 预选（新增 `AesirBasePanelViewController<T>`）
+  - 层级右键菜单快捷挂载 BinderAssistant / BinderTag
+  - 生成代码：TitleGroup 分组、4 空格缩进、全限定自包含、region 含 BindComponents
+  - 命名空间默认值与后缀候选列表 ScriptableSingleton 持久化
+  - 默认字段名规则优化；BinderTag 默认绑定 1 个组件；类级 DetailedInfoBox 使用说明
+  - 新增 EditMode 测试程序集 `Runestone.AesirModules.Tests`（69 个用例）
+
+### Fixed
+
+- 生成脚本实现 IComponentBinder 接口不匹配导致的编译错误
+- Partial 模式重新生成覆盖手写 controller 文件的问题
+- 绑定校验空引用 / 层级路径越界；EditorPrefs 键规范与自动挂载的跨 asmdef 类型解析
+
 ## [Unreleased]
 
 ### 规划中

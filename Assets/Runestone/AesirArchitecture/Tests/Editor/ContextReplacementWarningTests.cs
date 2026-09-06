@@ -125,6 +125,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// <summary>
         /// 预注册一个 Model 和一个 Service 的测试上下文，用于触发替换路径
         /// </summary>
+        [InternalContext]
         class ReplaceableContext : AbstractContext<ReplaceableContext>
         {
             protected override void Configure()

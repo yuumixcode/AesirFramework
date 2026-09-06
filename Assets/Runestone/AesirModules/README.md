@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、实验性事件模块与场景管理工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.16.2-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.17.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.16.2`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.17.0`）
 
 ## 模块总览
 
@@ -23,7 +23,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.16.2（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.17.0（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。
 
 ## 目录组织
@@ -43,7 +43,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 在 Unity Package Manager 窗口 `+` → `Add package from git URL...`：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.16.2
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.17.0
 ```
 
 或编辑 `Packages/manifest.json`：
@@ -51,7 +51,7 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.16.2
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.16.2"
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.17.0"
   }
 }
 ```
@@ -284,7 +284,13 @@ Editor/Scene/                      # 汇入核心编辑器程序集（层根锚�
 
 ## Binder 组件绑定（Odin 可选）
 
-位于 `Runtime/UI/OdinInspector/Binder/`（经 asmref 汇入 Odin 程序集，需 Odin Inspector）：`BinderAssistant` / `BinderTag` 将面板下 UI 元素（Text、Button 等）按层级自动绑定到脚本字段，减少手工拖引用；配套 `IComponentBinder` 自定义绑定器扩展。
+位于 `Runtime/UI/OdinInspector/Binder/`（经 asmref 汇入 Odin 程序集，需 Odin Inspector）。Binder 全部收录于 Odin 程序集（含 `[BinderBaseType]`）：其类型选择器（组件 / 基类的 ValueDropdown）强依赖 Odin Inspector。
+
+- `BinderTag` 挂在需要绑定引用的子物体上做标记（默认绑定 1 个组件），用「绑定组件数量」声明要绑定的组件个数；层级右键菜单 `GameObject/Aesir/` 可为选中物体一键挂载 `BinderAssistant` / `BinderTag`；
+- `BinderAssistant` 挂在根面板上，「构建绑定单元」按标记增量维护绑定列表（每条记录组件类型、字段名、绑定路径），支持两种生成模式（默认「同一脚本增量」）：「同一脚本增量」只替换目标 `*.cs` 内「绑定字段（自动生成）」region 的内容（字段 + `BindComponents` 方法，类型与特性全限定、自包含），region 外内容归开发者所有，文件不存在时自动创建脚手架；「Partial 分部类」产出手写 partial `*.cs`（仅生成一次）与自动维护文件（后缀可选，默认 `.designer.cs`——Rider 中该后缀默认折叠，Rider 用户推荐）；生成脚本的绑定字段以 `TitleGroup`（「绑定字段（自动生成）」）分组标注自动生成；两种模式编译完成后都会自动挂载组件并执行一次绑定；
+- 生成脚本的基类可下拉选择：内置 `MonoBehaviour`、由 Binder 预选的 Aesir 面板家族（`AesirBasePanel`、`AesirBasePanelView<T>`、`AesirBasePanelViewController<T>`——核心程序集无法反向引用 Odin 程序集标注特性，故由 Binder 经 typeof 内置），以及用户以 `[BinderBaseType]` 标记的类（需引用 `Runestone.AesirModules.OdinInspector`）；选择 Aesir 泛型面板基类后在「Context 类型」下拉中选择项目内 AbstractContext 派生类（占位不会写进生成代码）；
+- 命名空间默认值与 partial 后缀候选列表经 ScriptableSingleton 在编辑器阶段持久化；
+- 生成逻辑为纯文本拼装，配套 EditMode 测试程序集 `Runestone.AesirModules.Tests`（包根 `Tests/`）；`IComponentBinder` 保留为自定义绑定器扩展点。
 
 ## 示例
 
