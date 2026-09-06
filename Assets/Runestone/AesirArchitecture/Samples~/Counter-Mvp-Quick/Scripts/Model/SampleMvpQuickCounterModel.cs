@@ -1,3 +1,4 @@
+#if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using System;
 using UnityEngine;
 
@@ -28,3 +29,4 @@ namespace Runestone.AesirArchitecture.Samples.MvpQuick
         public ObservableValue<int> count = new ObservableValue<int>(0);
     }
 }
+#endif
