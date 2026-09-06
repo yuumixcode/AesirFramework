@@ -1,10 +1,10 @@
 {
-  "version": "0.16.2",
-  "tag": "v0.16.2",
+  "version": "0.17.0",
+  "tag": "v0.17.0",
   "packages": [
     {
       "name": "AesirArchitecture",
-      "version": "0.16.2",
+      "version": "0.17.0",
       "files": [
         "Assets/Runestone/AesirArchitecture/CHANGELOG.md",
         "Assets/Runestone/AesirArchitecture/Documentation",
@@ -62,6 +62,7 @@
         "Assets/Runestone/AesirArchitecture/Runtime/Core/Engine/Context",
         "Assets/Runestone/AesirArchitecture/Runtime/Core/Engine/Context/AbstractContext.cs",
         "Assets/Runestone/AesirArchitecture/Runtime/Core/Engine/Context/IContext.cs",
+        "Assets/Runestone/AesirArchitecture/Runtime/Core/Engine/Context/InternalContextAttribute.cs",
         "Assets/Runestone/AesirArchitecture/Runtime/Core/Engine/Modules",
         "Assets/Runestone/AesirArchitecture/Runtime/Core/Engine/Modules/Abstracts",
         "Assets/Runestone/AesirArchitecture/Runtime/Core/Engine/Modules/Abstracts/AbstractCommand.cs",
@@ -295,7 +296,7 @@
     },
     {
       "name": "AesirModules",
-      "version": "0.16.2",
+      "version": "0.17.0",
       "files": [
         "Assets/Runestone/AesirModules/CHANGELOG.md",
         "Assets/Runestone/AesirModules/Documentation",
@@ -325,8 +326,6 @@
         "Assets/Runestone/AesirModules/Editor/UI",
         "Assets/Runestone/AesirModules/Editor/UI/OdinInspector",
         "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/AesirBasePanelAttributeProcessor.cs",
-        "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/Binder",
-        "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/Binder/BinderEditorSettings.cs",
         "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/Runestone.AesirModules.Editor.OdinInspector.asmref",
         "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/UICanvasConfigSOAttributeProcessor.cs",
         "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/UIModuleAttributeProcessor.cs",
@@ -365,6 +364,7 @@
         "Assets/Runestone/AesirModules/Runtime/UI",
         "Assets/Runestone/AesirModules/Runtime/UI/AesirBasePanel.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/AesirBasePanelView.cs",
+        "Assets/Runestone/AesirModules/Runtime/UI/AesirBasePanelViewController.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/IUIPanel.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/InputSystem",
         "Assets/Runestone/AesirModules/Runtime/UI/InputSystem/InputSystemModuleHook.cs",
@@ -373,8 +373,11 @@
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder",
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderAssistant.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderBaseTypeAttribute.cs",
+        "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderCodeGenerator.cs",
+        "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderEditorSettings.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderHierarchyUtility.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderInfo.cs",
+        "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderMenuItems.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/BinderTag.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Binder/IComponentBinder.cs",
         "Assets/Runestone/AesirModules/Runtime/UI/OdinInspector/Runestone.AesirModules.OdinInspector.asmref",
@@ -392,6 +395,12 @@
         "Assets/Runestone/AesirModules/Samples/Events/01_KeyPress/KeyPressSubscriber.cs",
         "Assets/Runestone/AesirModules/Samples/Events/01_KeyPress/KeyPressedEvent.cs",
         "Assets/Runestone/AesirModules/Samples/Events/01_KeyPress/Runestone.AesirModules.Samples.Events.KeyPress.asmdef",
+        "Assets/Runestone/AesirModules/Tests",
+        "Assets/Runestone/AesirModules/Tests/Editor",
+        "Assets/Runestone/AesirModules/Tests/Editor/BinderCodeGeneratorTests.cs",
+        "Assets/Runestone/AesirModules/Tests/Editor/BinderContextSelectorTests.cs",
+        "Assets/Runestone/AesirModules/Tests/Editor/BinderHierarchyUtilityTests.cs",
+        "Assets/Runestone/AesirModules/Tests/Runestone.AesirModules.Tests.asmdef",
         "Assets/Runestone/AesirModules/Third Party Notices.md",
         "Assets/Runestone/AesirModules/package.json"
       ]
