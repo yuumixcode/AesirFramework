@@ -1,3 +1,4 @@
+#if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 namespace Runestone.AesirArchitecture.Samples.MvpStrict
 {
     /// <summary>
@@ -13,6 +14,7 @@ namespace Runestone.AesirArchitecture.Samples.MvpStrict
     /// <para>与 MVC-3（Counter-Mvc-Strict）分级一致，差异仅在刷新路径（Presenter 推送 vs View 订阅）。</para>
     /// </remarks>
     /// <seealso cref="Runestone.AesirArchitecture.AbstractContext{T}" />
+    [InternalContext]
     public sealed class SampleMvpStrictCounterContext : AbstractContext<SampleMvpStrictCounterContext>
     {
         /// <summary>
@@ -24,3 +26,4 @@ namespace Runestone.AesirArchitecture.Samples.MvpStrict
         }
     }
 }
+#endif
