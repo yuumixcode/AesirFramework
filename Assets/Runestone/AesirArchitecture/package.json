@@ -1,7 +1,7 @@
 {
   "name": "cn.runestone.aesir.architecture",
   "displayName": "Aesir Architecture",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "unity": "2022.3",
   "description": "面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。能力接口组合、命令/查询模式（CQRS）、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 原生生命周期、纯 C# 架构根与 MonoBehaviour 适配层分离，可选集成 Odin Inspector。",
   "keywords": [

@@ -3,7 +3,7 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.16.1-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.16.2-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
@@ -39,10 +39,10 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 ### 通过 UPM（Git URL）
 
-在 Unity Package Manager 中通过 Git URL 安装（固定 0.16.1 版本分支，包内容即分支根目录）：
+在 Unity Package Manager 中通过 Git URL 安装（固定 0.16.2 版本分支，包内容即分支根目录）：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.16.1
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.16.2
 ```
 
 跟踪 main 最新开发版：
