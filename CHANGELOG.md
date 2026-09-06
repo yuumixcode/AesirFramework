@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.17.0] - 2026-09-06
+
+### Added
+
+- `InternalContextAttribute`：标记框架内部 Context（示例 / 测试等非用户工作流用途）的元数据特性；AesirModules Binder 的「Context 类型」选择器会跳过被标记的类型
+- 包内全部示例与测试 Context（含嵌套）标注 `[InternalContext]`
+
 ## [Unreleased]
 
 ### 规划中
