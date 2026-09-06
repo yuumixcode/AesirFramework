@@ -32,6 +32,36 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.17.0] - 2026-09-06
+
+---
+
+### [architecture] Aesir Architecture
+
+#### Added
+
+- **`InternalContextAttribute`** — 标记框架内部 Context（示例 / 测试等非用户工作流用途）的元数据特性；AesirModules Binder 的「Context 类型」选择器会跳过被标记的类型
+- 包内全部示例与测试 Context（含嵌套）标注 `[InternalContext]`
+
+#### Fixed
+
+- **示例场景无法运行（0.14.0 起回归）** — 示例程序集从 Editor-only（`includePlatforms`）改为运行时程序集 + 示例脚本整文件 `#if UNITY_EDITOR` 包裹：Editor-only asmdef 的 MonoBehaviour 被 Unity 判定为"编辑器脚本"、禁止挂载场景物体，导致全部示例场景组件 Missing Script；重构后编辑器内正常编译、挂载与 Play Mode 运行，玩家构建仍整体剔除（示例类型 0 入包）
+
+---
+
+### [modules] Aesir Modules
+
+#### Added
+
+- **Binder 组件绑定全面完善** — 双生成模式（「同一脚本增量」默认 / 「Partial 分部类」后缀可选、默认 `.designer.cs`）；「Context 类型」下拉扫描 AbstractContext 派生类并自动排除 `[InternalContext]`；基类下拉新增 `AesirBasePanelView<T>` / `AesirBasePanelViewController<T>` 预选（新增 `AesirBasePanelViewController<T>`）；层级右键菜单快捷挂载 `BinderAssistant` / `BinderTag`；生成代码 TitleGroup 分组、4 空格缩进、全限定自包含；命名空间默认值与后缀候选经 ScriptableSingleton 持久化；新增 EditMode 测试程序集 `Runestone.AesirModules.Tests`（69 个用例）
+
+#### Fixed
+
+- Binder 生成脚本 `IComponentBinder` 接口不匹配导致的编译错误；Partial 模式重新生成覆盖手写 controller 文件的问题；绑定校验空引用 / 层级路径越界；EditorPrefs 键规范与自动挂载的跨 asmdef 类型解析
+- **示例场景无法运行（0.14.0 起回归）** — 同 Architecture 机制：`Events/01_KeyPress` 示例程序集改为运行时程序集 + 整文件 `#if UNITY_EDITOR`，修复 Editor-only asmdef 禁止挂载导致的 Missing Script；玩家构建整体剔除
+
+---
+
 ## [0.16.2] - 2026-09-06
 
 ---

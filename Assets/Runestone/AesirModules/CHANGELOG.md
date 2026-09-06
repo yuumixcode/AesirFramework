@@ -24,6 +24,7 @@
 - 生成脚本实现 IComponentBinder 接口不匹配导致的编译错误
 - Partial 模式重新生成覆盖手写 controller 文件的问题
 - 绑定校验空引用 / 层级路径越界；EditorPrefs 键规范与自动挂载的跨 asmdef 类型解析
+- **示例场景无法运行（0.14.0 起回归）** — `Events/01_KeyPress` 示例程序集从 Editor-only 改为运行时程序集 + 整文件 `#if UNITY_EDITOR` 包裹：修复 Editor-only asmdef 的 MonoBehaviour 禁止挂载场景物体导致的 Missing Script；玩家构建整体剔除
 
 ## [Unreleased]
 
