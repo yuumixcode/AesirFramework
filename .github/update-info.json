@@ -1,10 +1,10 @@
 {
-  "version": "0.16.1",
-  "tag": "v0.16.1",
+  "version": "0.16.2",
+  "tag": "v0.16.2",
   "packages": [
     {
       "name": "AesirArchitecture",
-      "version": "0.16.1",
+      "version": "0.16.2",
       "files": [
         "Assets/Runestone/AesirArchitecture/CHANGELOG.md",
         "Assets/Runestone/AesirArchitecture/Documentation",
@@ -18,9 +18,7 @@
         "Assets/Runestone/AesirArchitecture/Documentation/AesirArchitecture-Skill/references/mvp-quick.md",
         "Assets/Runestone/AesirArchitecture/Documentation/AesirArchitecture-Skill/references/mvp-standard.md",
         "Assets/Runestone/AesirArchitecture/Documentation/AesirArchitecture-Skill/references/mvp-strict.md",
-        "Assets/Runestone/AesirArchitecture/Documentation/LICENSE.md",
         "Assets/Runestone/AesirArchitecture/Documentation/README_EN.md",
-        "Assets/Runestone/AesirArchitecture/Documentation/Third Party Notices.md",
         "Assets/Runestone/AesirArchitecture/Documentation/事件机制决策表.md",
         "Assets/Runestone/AesirArchitecture/Documentation/常见陷阱清单.md",
         "Assets/Runestone/AesirArchitecture/Editor",
@@ -39,6 +37,7 @@
         "Assets/Runestone/AesirArchitecture/Editor/Utilities",
         "Assets/Runestone/AesirArchitecture/Editor/Utilities/QuickCreateSOMenuItem.cs",
         "Assets/Runestone/AesirArchitecture/Editor/Utilities/ScriptingSymbolUtility.cs",
+        "Assets/Runestone/AesirArchitecture/LICENSE.md",
         "Assets/Runestone/AesirArchitecture/README.md",
         "Assets/Runestone/AesirArchitecture/Runtime",
         "Assets/Runestone/AesirArchitecture/Runtime/Common",
@@ -290,18 +289,17 @@
         "Assets/Runestone/AesirArchitecture/Tests/Runtime/RemoveListenerOnSceneUnloadedTriggerTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Runtime/Runestone.AesirArchitecture.Tests.asmdef",
         "Assets/Runestone/AesirArchitecture/Tests/Runtime/UnityEngineObjectCheckNullTests.cs",
+        "Assets/Runestone/AesirArchitecture/Third Party Notices.md",
         "Assets/Runestone/AesirArchitecture/package.json"
       ]
     },
     {
       "name": "AesirModules",
-      "version": "0.16.1",
+      "version": "0.16.2",
       "files": [
         "Assets/Runestone/AesirModules/CHANGELOG.md",
         "Assets/Runestone/AesirModules/Documentation",
-        "Assets/Runestone/AesirModules/Documentation/LICENSE.md",
         "Assets/Runestone/AesirModules/Documentation/README_EN.md",
-        "Assets/Runestone/AesirModules/Documentation/Third Party Notices.md",
         "Assets/Runestone/AesirModules/Documentation/event-module.md",
         "Assets/Runestone/AesirModules/Editor",
         "Assets/Runestone/AesirModules/Editor/Common",
@@ -334,6 +332,7 @@
         "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/UIModuleAttributeProcessor.cs",
         "Assets/Runestone/AesirModules/Editor/UI/OdinInspector/UIRootAttributeProcessor.cs",
         "Assets/Runestone/AesirModules/Editor/UI/UIModuleMenuItems.cs",
+        "Assets/Runestone/AesirModules/LICENSE.md",
         "Assets/Runestone/AesirModules/README.md",
         "Assets/Runestone/AesirModules/Runtime",
         "Assets/Runestone/AesirModules/Runtime/Common",
@@ -393,6 +392,7 @@
         "Assets/Runestone/AesirModules/Samples/Events/01_KeyPress/KeyPressSubscriber.cs",
         "Assets/Runestone/AesirModules/Samples/Events/01_KeyPress/KeyPressedEvent.cs",
         "Assets/Runestone/AesirModules/Samples/Events/01_KeyPress/Runestone.AesirModules.Samples.Events.KeyPress.asmdef",
+        "Assets/Runestone/AesirModules/Third Party Notices.md",
         "Assets/Runestone/AesirModules/package.json"
       ]
     }
