@@ -326,6 +326,7 @@ See root [`LICENSE`](./LICENSE) for details.
 - **Aesir Inspector** — separate public repository, a learning toolkit for [Odin Inspector](https://odininspector.com/) developers: [yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
 - **ObservableCollections** — high-performance observable collections and synchronized views by Cysharp (MIT). The Aesir Architecture Observable collection family stays minimal by design; for advanced capabilities such as Move / Sort / synchronized views / R3 integration, use this library: [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **Eflatun.SceneReference** — strongly typed, robust and reliable scene references for Unity (MIT). `SceneAssetWrapper` in the Aesir Modules Scene module absorbed its functional design (GUID-anchor self-healing, state-machine validation, the `TryGet` safe-read family, etc.): [starikcetin/Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
+- **Vertical 2D Shooting (Goldmetal)** — a vertical-scrolling 2D shooting sprite pack bundled with Goldmetal's BE4 basics course (free to use, including commercially, as long as Goldmetal is credited). The PlaneWar sample in Aesir Architecture contains a self-contained copy of these sprites: [Goldmetal Studio](https://www.goldmetal.co.kr)
 - **Author homepage**: [yuumixcode](https://github.com/yuumixcode)
 
 
