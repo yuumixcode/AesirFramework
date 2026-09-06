@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "com.unity.test-framework": "1.1.33",
-    "cn.runestone.aesir.architecture": "0.16.2"
+    "cn.runestone.aesir.architecture": "0.17.0"
   },
   "samples": [
     {
