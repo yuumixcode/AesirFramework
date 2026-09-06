@@ -145,6 +145,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// <summary>
         /// 初始化失败的测试上下文：先注册正常的 CountingModel，再注册抛异常的 ThrowingModel
         /// </summary>
+        [InternalContext]
         class ThrowingModelContext : AbstractContext<ThrowingModelContext>
         {
             protected override void Configure()
@@ -157,6 +158,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// <summary>
         /// 初始化成功的测试上下文（对照组）
         /// </summary>
+        [InternalContext]
         class HealthyContext : AbstractContext<HealthyContext>
         {
             public static int ConfigureCount;
@@ -171,6 +173,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// <summary>
         /// 不注册任何模块的测试上下文，用于未注册校验测试
         /// </summary>
+        [InternalContext]
         class EmptyContext : AbstractContext<EmptyContext>
         {
             protected override void Configure() { }

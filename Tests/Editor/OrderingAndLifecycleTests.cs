@@ -244,6 +244,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             protected override void OnDispose() => OrderLog.Add("S2.Dispose");
         }
 
+        [InternalContext]
         class OrderedContext : AbstractContext<OrderedContext>
         {
             protected override void Configure()
@@ -261,6 +262,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
         class UnrelatedModel : AbstractModel { }
 
+        [InternalContext]
         class NearMissContext : AbstractContext<NearMissContext>
         {
             protected override void Configure()
