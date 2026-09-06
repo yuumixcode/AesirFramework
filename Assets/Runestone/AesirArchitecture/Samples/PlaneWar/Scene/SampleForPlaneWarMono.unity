@@ -133,6 +133,7 @@ GameObject:
   - component: {fileID: 469272396}
   - component: {fileID: 469272395}
   - component: {fileID: 469272394}
+  - component: {fileID: 469272397}
   m_Layer: 0
   m_Name: TimeText
   m_TagString: Untagged
@@ -201,6 +202,28 @@ RectTransform:
   m_AnchoredPosition: {x: -40, y: -30}
   m_SizeDelta: {x: 800, y: 80}
   m_Pivot: {x: 1, y: 1}
+--- !u!114 &469272397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 469272393}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f688790c6ae314863bf11b6d68e7dae9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  componentNumber: 1
 --- !u!1 &620099836
 GameObject:
   m_ObjectHideFlags: 0
@@ -212,6 +235,7 @@ GameObject:
   - component: {fileID: 620099839}
   - component: {fileID: 620099838}
   - component: {fileID: 620099837}
+  - component: {fileID: 620099840}
   m_Layer: 0
   m_Name: ScoreText
   m_TagString: Untagged
@@ -280,6 +304,28 @@ RectTransform:
   m_AnchoredPosition: {x: 40, y: -30}
   m_SizeDelta: {x: 800, y: 80}
   m_Pivot: {x: 0, y: 1}
+--- !u!114 &620099840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 620099836}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f688790c6ae314863bf11b6d68e7dae9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  componentNumber: 1
 --- !u!1 &832551449
 GameObject:
   m_ObjectHideFlags: 0
@@ -492,6 +538,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1310405741
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1310405742}
+  m_Layer: 0
+  m_Name: MenuProbe
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1310405742
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1310405741}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1436548073
 GameObject:
   m_ObjectHideFlags: 0
@@ -555,6 +632,7 @@ GameObject:
   - component: {fileID: 1597413257}
   - component: {fileID: 1597413259}
   - component: {fileID: 1597413258}
+  - component: {fileID: 1597413260}
   m_Layer: 0
   m_Name: GameOverText
   m_TagString: Untagged
@@ -623,6 +701,28 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1597413256}
   m_CullTransparentMesh: 1
+--- !u!114 &1597413260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1597413256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f688790c6ae314863bf11b6d68e7dae9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  componentNumber: 1
 --- !u!1 &1598946081
 GameObject:
   m_ObjectHideFlags: 0
@@ -636,6 +736,8 @@ GameObject:
   - component: {fileID: 1598946084}
   - component: {fileID: 1598946083}
   - component: {fileID: 1598946082}
+  - component: {fileID: 1598946088}
+  - component: {fileID: 1598946089}
   m_Layer: 0
   m_Name: HUD
   m_TagString: Untagged
@@ -674,7 +776,7 @@ MonoBehaviour:
   m_BlockingObjects: 0
   m_BlockingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 55
 --- !u!114 &1598946084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -743,6 +845,76 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1598946088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1598946081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 211f554172a384b138f88170365c3e0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  OpenAutoValidate: 1
+  ScriptMode: 1
+  TargetNamespace: Game
+  ScriptName: HUDPanel
+  BaseType: Runestone.AesirModules.AesirBasePanelViewController<T>
+  ContextTypeName: Game.HUDContext
+  BaseTypeArguments: 
+  PartialSuffix: .designer.cs
+  FolderPath: Assets/Scripts
+  CustomNamespaces: []
+  Units:
+  - LabelObj: {fileID: 620099836}
+    ComponentFullName: UnityEngine.UI.Text
+    FieldName: scoreText
+    HierarchyPath: ScoreText
+  - LabelObj: {fileID: 469272393}
+    ComponentFullName: UnityEngine.UI.Text
+    FieldName: timeText
+    HierarchyPath: TimeText
+  - LabelObj: {fileID: 1597413256}
+    ComponentFullName: UnityEngine.UI.Text
+    FieldName: gameOverText
+    HierarchyPath: GameOverText
+--- !u!114 &1598946089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1598946081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1942f181705a64700ae0999b84373715, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  serializationData:
+    SerializedFormat: 2
+    SerializedBytes: 
+    ReferencedUnityObjects: []
+    SerializedBytesString: 
+    Prefab: {fileID: 0}
+    PrefabModificationsReferencedUnityObjects: []
+    PrefabModifications: []
+    SerializationNodes: []
+  layer: 1
+  destroyOnHide: 1
+  scoreText: {fileID: 620099837}
+  timeText: {fileID: 469272394}
+  gameOverText: {fileID: 1597413258}
 --- !u!1001 &1841864345
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -854,3 +1026,4 @@ SceneRoots:
   - {fileID: 1598946086}
   - {fileID: 1841864345}
   - {fileID: 1901008187}
+  - {fileID: 1310405742}

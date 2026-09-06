@@ -2,9 +2,7 @@
   "name": "Runestone.AesirArchitecture.Samples.PlaneWarMono",
   "rootNamespace": "Runestone.AesirArchitecture.Samples.PlaneWarMono",
   "references": [],
-  "includePlatforms": [
-    "Editor"
-  ],
+  "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
