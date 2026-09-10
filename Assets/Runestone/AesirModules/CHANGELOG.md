@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.18.0] - 2026-09-10
+
+### Added
+
+- **ScriptDocGenerator 模块（需 Odin）** — 原 `Assets/ScriptDocGenerator` 独立工具整合为本包功能模块：反射分析 C# 类型生成结构化 API 文档（增量保留手写内容），附 Summary 工具（XML `<summary>` ↔ `[Summary]` 双向同步）。命名空间 `Runestone.AesirModules.ScriptDocGenerator`(.Editor)，代码经 asmref 汇入 Odin 程序集；入口 `Tools → Aesir → Script Doc Generator`；153 个单元测试汇入 `Runestone.AesirModules.Tests`
+
 ## [0.17.0] - 2026-09-06
 
 ### Added
@@ -27,10 +33,6 @@
 - **示例场景无法运行（0.14.0 起回归）** — `Events/01_KeyPress` 示例程序集从 Editor-only 改为运行时程序集 + 整文件 `#if UNITY_EDITOR` 包裹：修复 Editor-only asmdef 的 MonoBehaviour 禁止挂载场景物体导致的 Missing Script；玩家构建整体剔除
 
 ## [Unreleased]
-
-### Added
-
-- **ScriptDocGenerator 模块（需 Odin）** — 原 `Assets/ScriptDocGenerator` 独立工具整合为本包功能模块：反射分析 C# 类型生成结构化 API 文档（增量保留手写内容），附 Summary 工具（XML `<summary>` ↔ `[Summary]` 双向同步）。命名空间 `Runestone.AesirModules.ScriptDocGenerator`(.Editor)，代码经 asmref 汇入 Odin 程序集；入口 `Tools → Aesir → Script Doc Generator`；153 个单元测试汇入 `Runestone.AesirModules.Tests`
 
 ### 规划中
 

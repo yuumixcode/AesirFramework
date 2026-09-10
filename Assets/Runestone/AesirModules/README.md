@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、实验性事件模块、场景管理工具与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.17.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.18.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.17.0`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.18.0`）
 
 ## 模块总览
 
@@ -24,7 +24,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.17.0（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.18.0（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。
 
 ## 目录组织
@@ -44,7 +44,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 在 Unity Package Manager 窗口 `+` → `Add package from git URL...`：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.17.0
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.18.0
 ```
 
 或编辑 `Packages/manifest.json`：
@@ -52,7 +52,7 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.17.0
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.17.0"
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.18.0"
   }
 }
 ```
