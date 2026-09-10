@@ -32,7 +32,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [0.19.0] - 2026-09-11
 
 ### [architecture] Aesir Architecture
 
@@ -54,6 +54,14 @@ versions follow [Semantic Versioning](https://semver.org/).
 - **示例：Counter-Mvc-Strict / Counter-Mvp-Strict 查询改缓存实例复用** —— Controller / Presenter 缓存 Query 实例经带实例重载执行（零分配），替代此前每次调用无参重载（每次分配一个查询实例）；严格档 View 注释同步改写为"复用查询实例"教学口径
 - **README（中英）：MiniEvent"零分配事件"项目结构行补"（Invoke 路径）"限定** —— 0.18.0 修正类文档同款失实时漏网的两处
 - **README（中英）项目结构补列 `ObservableCollections` 与 `RuntimeInitializeLoadType` 示例目录** —— 此前树中缺失
+
+---
+
+### [modules] Aesir Modules
+
+#### Changed
+
+- 版本号与 Aesir Architecture 同步更新至 `0.19.0`，本包本版本无功能性变更
 
 ---
 
