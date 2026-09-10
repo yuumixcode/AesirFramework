@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an experimental event module, and scene management tooling.
+Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an experimental event module, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.17.0-blue.svg)](../CHANGELOG.md)
@@ -18,6 +18,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 | UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + pluggable asset loading |
 | Event | ⚠️ Experimental | `EventModule` dual-track subscription (Attribute + Script) + 5 priority levels + expression-tree optimization. Not yet validated in a production project |
 | Scene | Implemented | `SceneModule` bootstrap/additive scene management + editor tools (SceneManagerWindow / BootstrapSceneHelper) |
+| ScriptDocGenerator | Implemented (requires Odin) | Reflection-based C# type analysis generating structured API docs (incremental, preserves hand-written content) + Summary tool (XML `<summary>` ↔ `[Summary]` two-way sync) |
 
 > Two additional optional capabilities: **Binder component binding** (`Runtime/UI/OdinInspector/Binder/`, requires Odin Inspector) and **Input System input module adaptation** (`Runtime/UI/InputSystem/`, separate assembly, active automatically when the Input System is enabled).
 
@@ -291,6 +292,16 @@ Located at `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via
 - The generated script's base class is selectable from a dropdown: built-in `MonoBehaviour`, the pre-selected Aesir panel family (`AesirBasePanel`, `AesirBasePanelView<T>`, `AesirBasePanelViewController<T>` — the core assembly cannot reference the Odin assembly back to carry the attribute, so the Binder pre-selects them via typeof), and user classes marked with `[BinderBaseType]` (requires referencing `Runestone.AesirModules.OdinInspector`); for the Aesir generic panel bases, pick a concrete Context type from the "Context 类型" dropdown (project-wide AbstractContext derivatives; the placeholder is never emitted into generated code).
 - The default namespace and the partial suffix candidate list are persisted in-editor via ScriptableSingleton.
 - Code generation is pure text assembly, covered by the EditMode test assembly `Runestone.AesirModules.Tests` (package-root `Tests/`); `IComponentBinder` remains the extension point for custom binders.
+
+## Script Doc Generator Module (requires Odin)
+
+Located at `Runtime/ScriptDocGenerator/OdinInspector/` and `Editor/ScriptDocGenerator/OdinInspector/` (joined into the Odin assemblies via asmref; **hard dependency on Odin Inspector**, auto-excluded when Odin is not installed). Namespace `Runestone.AesirModules.ScriptDocGenerator` (.Editor).
+
+- **Script Doc Generator** — analyzes C# type information via reflection to generate structured API documentation: fully offline, millisecond-fast, incremental generation (preserves hand-written content after `## Additional Notes` and any Front Matter), Markdown output ready for AI knowledge bases; customizable output path / namespace subfolders / file extension / type-source granularity, extensible via `DocGeneratorSettingsSO`, `IAnalysisDataFactory`, and `IAttributeFilter`. Entry point: `Tools → Aesir → Script Doc Generator`.
+- **Summary Tool** — Project window context menu (`Assets → Script Doc Generator → Process Summary`) performs two-way sync between XML `<summary>` comments and the `[Summary]` attribute: Sync / Replace / Remove modes, batch processing, preprocessor-directive aware, auto-adds the `using` directive.
+- **Custom attributes** — `[Summary]` (readable at runtime via `GetSummary()`), `[ReferenceLinkURL]` (attaches documentation links to types).
+
+See [script-doc-generator.md](./script-doc-generator.md) (Chinese) for full documentation.
 
 ## Samples
 
