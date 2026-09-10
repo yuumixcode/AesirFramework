@@ -155,7 +155,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## Samples
 
-The package provides 9 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
+The package provides 10 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
 
 ### MVC family (View subscribes itself)
 
@@ -180,6 +180,7 @@ The package provides 9 importable samples (Package Manager → Aesir Architectur
 | Sample | Description | Dependency |
 |------|------|------|
 | `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
+| `ObservableCollections` | ObservableList / ObservableDictionary / ObservableHashSet change-event usage: subscribe to Added / Removed / Replaced / Updated / Cleared, trigger mutations and set operations via ContextMenu | None |
 | `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
 
 ### Hands-on sample

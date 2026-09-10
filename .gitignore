@@ -138,3 +138,7 @@ InitTestScene*.unity*
 
 # Codely 工具截图输出
 /screenshots/
+
+# ScriptDocGenerator 运行时再生成的设置资产（ScriptableSingleton 旧位置；API 文档已迁文档站 AesirFramework-Docs，不入库）
+/Assets/Editor Default Resources/
+/Assets/Editor Default Resources.meta

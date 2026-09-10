@@ -155,7 +155,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## 示例（Samples）
 
-包内提供 9 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
+包内提供 10 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
 
 ### MVC 系列（View 自订阅刷新）
 
@@ -180,6 +180,7 @@ this.ExecuteCommand<AddScoreCommand>();
 | 示例 | 说明 | 依赖 |
 |------|------|------|
 | `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
+| `ObservableCollections` | ObservableList / ObservableDictionary / ObservableHashSet 变更事件用法：订阅 Added / Removed / Replaced / Updated / Cleared，经 ContextMenu 触发增删改查与集合运算 | 无 |
 | `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
 
 ### 实战示例

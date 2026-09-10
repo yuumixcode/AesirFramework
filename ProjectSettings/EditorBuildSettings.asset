@@ -24,5 +24,7 @@ EditorBuildSettings:
     Runestone.AesirInspector.OdinIntegration.Editor.ScriptDocGeneratorPanelSO: {fileID: 11400000, guid: 3883d652888c4413ba34caf95f454d50, type: 2}
     Runestone.AesirInspector.OdinIntegration.Editor.ScriptDocGeneratorSO: {fileID: 11400000, guid: 3883d652888c4413ba34caf95f454d50, type: 2}
     Runestone.AesirInspector.Samples.PluginConfig.PluginConfigRuntimeOnEditorSample: {fileID: 11400000, guid: 29f47dde1e1924e3e8233c9b58024632, type: 2}
+    Runestone.AesirModules.ScriptDocGenerator.Editor.DefaultScriptingAPISettingsSO: {fileID: 11400000, guid: 080826e2b906b4502b5dfba4c6fe5e90, type: 2}
+    Runestone.AesirModules.ScriptDocGenerator.Editor.ScriptDocGeneratorPanelSO: {fileID: 11400000, guid: 1e4819cd77ba747e3a0fe03da139b363, type: 2}
     SingleAssemblyPanel: {fileID: 11400000, guid: f7623011804024dc68b94b27a12a0b4a, type: 2}
     SingleScriptPanel: {fileID: 11400000, guid: 9d8a7891a1e024c67b2e6e2b3fa5fa4e, type: 2}

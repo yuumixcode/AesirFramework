@@ -32,6 +32,12 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- [modules] **ScriptDocGenerator 模块（需 Odin）** — 原 `Assets/ScriptDocGenerator` 独立工具整合为 Aesir Modules 功能模块：反射分析 C# 类型生成结构化 API 文档（增量保留手写内容），附 Summary 工具（XML `<summary>` ↔ `[Summary]` 双向同步）。命名空间 `Runestone.AesirModules.ScriptDocGenerator`(.Editor)，代码经 asmref 汇入 Odin 程序集；入口 `Tools → Aesir → Script Doc Generator`
+
 ## [0.17.0] - 2026-09-06
 
 ---

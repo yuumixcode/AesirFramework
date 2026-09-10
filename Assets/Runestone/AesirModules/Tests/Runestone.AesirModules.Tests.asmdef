@@ -5,6 +5,7 @@
         "Runestone.AesirArchitecture",
         "Runestone.AesirModules",
         "Runestone.AesirModules.OdinInspector",
+        "Runestone.AesirModules.Editor.OdinInspector",
         "UnityEngine.TestRunner"
     ],
     "includePlatforms": [

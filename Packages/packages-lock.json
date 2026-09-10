@@ -5,7 +5,7 @@
       "depth": 0,
       "source": "local",
       "dependencies": {
-        "cn.tuanjie.codely.bridge": "1.0.69",
+        "cn.tuanjie.codely.bridge": "1.0.76",
         "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.modules.video": "1.0.0",

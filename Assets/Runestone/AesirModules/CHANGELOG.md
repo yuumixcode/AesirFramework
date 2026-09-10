@@ -28,6 +28,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **ScriptDocGenerator 模块（需 Odin）** — 原 `Assets/ScriptDocGenerator` 独立工具整合为本包功能模块：反射分析 C# 类型生成结构化 API 文档（增量保留手写内容），附 Summary 工具（XML `<summary>` ↔ `[Summary]` 双向同步）。命名空间 `Runestone.AesirModules.ScriptDocGenerator`(.Editor)，代码经 asmref 汇入 Odin 程序集；入口 `Tools → Aesir → Script Doc Generator`；153 个单元测试汇入 `Runestone.AesirModules.Tests`
+
 ### 规划中
 
 - Scene 模块（SceneLoader、SceneReference）
