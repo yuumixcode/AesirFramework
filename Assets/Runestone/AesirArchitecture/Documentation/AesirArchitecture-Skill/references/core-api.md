@@ -132,6 +132,17 @@ public class GameModel : AbstractModel, IGameModel
 - **Register 与 Get 类型参数必须一致**——按接口注册就按接口获取
 - **被依赖的模块先注册**——框架按注册顺序初始化 Model → Service
 
+### 摘除与替换（测试/调试用途）
+
+```csharp
+// 按类型键摘除：被摘除实例被 Dispose（订阅不迁移），未注册时幂等无操作
+GameContext.Instance.UnregisterModel<IGameModel>();
+GameContext.Instance.UnregisterService<IAudioService>();
+
+// 运行时替换：输出 Warning 并 Dispose 旧实例后覆盖
+GameContext.Instance.RegisterModel<IGameModel>(new GameModel());
+```
+
 ## GenericLocator\<T\> — 类型键控定位器
 
 ```csharp
@@ -205,6 +216,7 @@ public abstract class AbstractService : AbstractSubmodule, IService { ... }
 
 // 子模块生命周期：
 // Register → OnInitialize() → ... → OnDispose()
+// Dispose 后 Initialized 重置为 false（已释放模块不再自称已初始化）
 ```
 
 ## ResetStaticsAssistant — 静态变量重置
