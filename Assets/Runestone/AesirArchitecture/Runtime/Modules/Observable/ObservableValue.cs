@@ -10,7 +10,7 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <typeparam name="T">属性值类型</typeparam>
     /// <remarks>
-    /// 内部使用 <see cref="MiniEvent{T}" /> 管理监听者，零分配事件系统。
+    /// 内部使用 <see cref="MiniEvent{T}" /> 管理监听者——Invoke 路径零分配（直接多播调用）。
     /// <para>
     /// <c>[SerializeField]</c> 标记 value 字段使其可在 Inspector 中编辑。
     /// </para>
