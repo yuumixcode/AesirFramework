@@ -229,13 +229,13 @@ The package provides 10 importable samples (Package Manager → Aesir Architectu
 
 ### Capability Matrix
 
-| Module | GetModel | GetService | ExecuteCommand | Initialize | Dispose |
-|------|:--------:|:---------:|:--------------:|:----------:|:-------:|
-| **IModel** | ✓ | | | ✓ | ✓ |
-| **IService** | ✓ | ✓ | | ✓ | ✓ |
-| **IView** | ✓ | ✓ | | | |
-| **IController** | ✓ | ✓ | ✓ | | |
-| **IPresenter** | ✓ | ✓ | ✓ | | ✓ |
+| Module | GetModel | GetService | ExecuteCommand | ExecuteQuery | Initialize | Dispose |
+|------|:--------:|:---------:|:--------------:|:------------:|:----------:|:-------:|
+| **IModel** | ✓ | | | | ✓ | ✓ |
+| **IService** | ✓ | ✓ | | | ✓ | ✓ |
+| **IView** | ✓ | ✓ | | | | |
+| **IController** | ✓ | ✓ | ✓ | ✓ | | |
+| **IPresenter** | ✓ | ✓ | ✓ | ✓ | | ✓ |
 
 ## Project Structure
 

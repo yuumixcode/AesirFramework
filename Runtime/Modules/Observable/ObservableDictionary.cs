@@ -12,7 +12,7 @@ namespace Runestone.AesirArchitecture
     /// <typeparam name="TKey">键类型</typeparam>
     /// <typeparam name="TValue">值类型</typeparam>
     /// <remarks>
-    /// 内部组合 <see cref="Dictionary{TKey, TValue}" /> 存储键值，使用 <see cref="MiniEvent" /> 管理监听者，零分配事件系统。
+    /// 内部组合 <see cref="Dictionary{TKey, TValue}" /> 存储键值，使用 <see cref="MiniEvent" /> 管理监听者——Invoke 路径零分配（直接多播调用）。
     /// <para>
     /// <c>[SerializeField]</c> 标记 dictionary 字段——Unity 原生不序列化 <see cref="Dictionary{TKey, TValue}" />，
     /// 安装 Odin Inspector 后该字段可被 Odin 序列化，便于在 Inspector 中编辑初始键值。

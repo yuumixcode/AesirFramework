@@ -42,8 +42,8 @@ namespace Runestone.AesirArchitecture
     /// </para>
     /// <para>
     /// <b>注入自愈</b>：PlayerLoop 注入可能被第三方 SDK 用其缓存的副本调用 <c>PlayerLoop.SetPlayerLoop</c> 覆盖，
-    /// 导致钩子静默失效。框架通过 <see cref="EnsureInjected" /> 自愈：域加载时、每次 <see cref="Register" /> 时、
-    /// 以及 <see cref="MonoLifecycleProxy" /> 运行期间周期性检测并补插缺失的注入点；用户也可手动调用。
+    /// 导致钩子静默失效。框架通过 <see cref="EnsureInjected" /> 自愈：域加载时与每次 <see cref="Register" /> 时
+    /// 检测并补插缺失的注入点（注册即自愈）；用户也可手动调用。
     /// </para>
     /// </summary>
     /// <remarks>
@@ -94,10 +94,9 @@ namespace Runestone.AesirArchitecture
         /// 此方法通过 <see cref="PlayerLoopUtility.ContainsSystem{TTarget}" /> 检测后仅补插缺失的子系统，
         /// 并保留当前 PlayerLoop 中第三方已有的其他修改。调用时机：
         /// <list type="bullet">
-        ///     <item><see cref="Initialize" /> 在域加载时调用；</item>
-        ///     <item><see cref="Register" /> 每次注册回调时调用（注册即自愈）；</item>
-        ///     <item><see cref="MonoLifecycleProxy" /> 运行期间周期性调用（运行中自愈）；</item>
-        ///     <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用。</item>
+        /// <item><see cref="Initialize" /> 在域加载时调用；</item>
+        /// <item><see cref="Register" /> 每次注册回调时调用（注册即自愈）；</item>
+        /// <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用。</item>
         /// </list>
         /// </remarks>
         public static void EnsureInjected()
@@ -125,13 +124,17 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 注册回调，order 越小越先执行，默认 0。
         /// <para>
-        /// 回调持有者销毁前必须调用 <see cref="Unregister" /> 注销；若未注销，回调将永久残留并阻止目标对象被回收。
+        /// 返回 <see cref="AutoRemoveListenerHandle" />，Dispose 时自动注销本次注册，与全框架监听句柄风格一致。
+        /// 忽略返回值的调用方须在持有者销毁前手动调用 <see cref="Unregister" /> 注销——匿名委托无法经
+        /// <see cref="Unregister" /> 定位注销，只能依赖返回的句柄；若均未注销，回调将永久残留并阻止目标对象被回收。
         /// </para>
         /// </summary>
         /// <param name="phase">目标生命周期阶段，决定回调在哪一帧阶段执行</param>
         /// <param name="callback">每帧执行的回调委托，必须为非空委托实例</param>
         /// <param name="order">执行优先级，值越小越先执行；同 order 时按注册顺序执行</param>
-        public static void Register(AesirArchitectureLifecyclePhase phase, Action callback, int order = 0)
+        /// <returns>自动注销句柄，Dispose 时注销本次注册（与手动 <see cref="Unregister" /> 等效，重复调用安全）</returns>
+        public static AutoRemoveListenerHandle Register(AesirArchitectureLifecyclePhase phase, Action callback,
+            int order = 0)
         {
             if (callback == null)
             {
@@ -149,6 +152,8 @@ namespace Runestone.AesirArchitecture
             {
                 AddHook(phase, callback, order);
             }
+
+            return new AutoRemoveListenerHandle(() => Unregister(phase, callback));
         }
 
         /// <summary>
