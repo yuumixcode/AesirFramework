@@ -166,7 +166,7 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="TModel">要获取的 Model 类型，必须为引用类型并实现 <see cref="IModel" /></typeparam>
         /// <returns>已注册的 Model 实例</returns>
-        /// <exception cref="InvalidOperationException">目标 Model 未注册时抛出，与 <c>CapabilityExtensions.GetModel</c> 的防护语义一致</exception>
+        /// <exception cref="InvalidOperationException">目标 Model 未注册时抛出（"已注册但尚未初始化"的次级防护由 <c>CapabilityExtensions.GetModel</c> 扩展方法补充）</exception>
         public TModel GetModel<TModel>() where TModel : class, IModel
         {
             if (_modelLocator.TryGet<TModel>(out var model))
@@ -185,10 +185,7 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="TService">要获取的 Service 类型，必须为引用类型并实现 <see cref="IService" /></typeparam>
         /// <returns>已注册的 Service 实例</returns>
-        /// <exception cref="InvalidOperationException">
-        /// 目标 Service 未注册时抛出，与 <c>CapabilityExtensions.GetService</c>
-        /// 的防护语义一致
-        /// </exception>
+        /// <exception cref="InvalidOperationException">目标 Service 未注册时抛出（"已注册但尚未初始化"的次级防护由 <c>CapabilityExtensions.GetService</c> 扩展方法补充）</exception>
         public TService GetService<TService>() where TService : class, IService
         {
             if (_serviceLocator.TryGet<TService>(out var service))
@@ -213,6 +210,7 @@ namespace Runestone.AesirArchitecture
         /// 在 Service 释放时仍可能需要读取 Model 状态，因此 Model 必须晚于 Service 销毁。
         /// </para>
         /// <para>若上下文尚未初始化，此方法直接返回不做任何操作。</para>
+        /// <para>释放后解除 <see cref="Instance" /> 的单例缓存——再次访问 <see cref="Instance" /> 将重建并重新初始化全新上下文，而非返回已释放的空壳实例。</para>
         /// <para><c>Reverse()</c> 在关停路径产生一次枚举分配，属可接受的一次性开销。</para>
         /// </remarks>
         public virtual void Dispose()
@@ -238,6 +236,13 @@ namespace Runestone.AesirArchitecture
             _modelLocator.Clear();
 
             Initialized = false;
+
+            // 释放后解除单例缓存：下次访问 Instance 将按懒加载语义重建全新上下文，
+            // 而非持续返回容器已清空的"僵尸"实例（此时 GetModel/GetService 会抛出指向性错误的"未注册"异常）
+            if (ReferenceEquals(_instance, this))
+            {
+                _instance = null;
+            }
         }
 
         /// <summary>

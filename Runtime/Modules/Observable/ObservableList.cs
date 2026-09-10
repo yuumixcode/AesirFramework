@@ -11,7 +11,8 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <typeparam name="T">元素类型</typeparam>
     /// <remarks>
-    /// 内部组合 <see cref="List{T}" /> 存储元素，使用 <see cref="MiniEvent" /> 管理监听者，零分配事件系统。
+    /// 内部组合 <see cref="List{T}" /> 存储元素，使用 <see cref="MiniEvent" /> 管理监听者——Invoke 路径零分配（直接多播调用）。
+    /// 注意：订阅路径（AddListener / 句柄创建）有与监听者数量成正比的委托分配，勿在每帧订阅场景使用。
     /// <para>
     /// <c>[SerializeField]</c> 标记 items 字段使其可在 Inspector 中编辑初始元素；
     /// 反序列化填充不触发任何事件（与 <see cref="ObservableValue{T}" /> 行为一致）。
@@ -109,9 +110,15 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 批量添加元素。逐项添加并逐项触发 Added 事件。
         /// </summary>
-        /// <param name="items">要添加的元素序列。</param>
+        /// <param name="itemsToAdd">要添加的元素序列。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出（对齐 BCL <see cref="List{T}" /> 行为）。</exception>
         public void AddRange(IEnumerable<T> itemsToAdd)
         {
+            if (itemsToAdd == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToAdd));
+            }
+
             foreach (T item in itemsToAdd)
             {
                 Add(item);

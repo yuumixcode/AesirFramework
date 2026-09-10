@@ -66,7 +66,7 @@ namespace Runestone.AesirArchitecture
         /// 由 <see cref="ResetStatics" /> 和 <see cref="OnDestroy" /> 内部调用，
         /// 确保无论域重载还是组件销毁，都走同一条完整重置路径，不会遗漏 PlayerLoop 注销等清理步骤。
         /// </remarks>
-        void Reset()
+        void ClearState()
         {
             ClearAllListeners();
             UnregisterFromPlayerLoop();
@@ -89,7 +89,7 @@ namespace Runestone.AesirArchitecture
 
         void OnDestroy()
         {
-            Reset();
+            ClearState();
         }
 
         void OnApplicationFocus(bool focused)
@@ -120,7 +120,7 @@ namespace Runestone.AesirArchitecture
         {
             if (_instance != null)
             {
-                _instance.Reset();
+                _instance.ClearState();
             }
 
             _instance = null;
@@ -487,7 +487,8 @@ namespace Runestone.AesirArchitecture
         {
             if (_instance != null && _instance != this)
             {
-                Destroy(gameObject);
+                // 仅移除重复组件自身而非整个 GameObject——本组件可能被预放置在用户业务物体上
+                Destroy(this);
                 return;
             }
 

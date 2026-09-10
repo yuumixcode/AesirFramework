@@ -1,3 +1,5 @@
+using System;
+
 namespace Runestone.AesirArchitecture
 {
     /// <summary>
@@ -15,6 +17,7 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     /// <seealso cref="AbstractCommand" />
     /// <seealso cref="IQuery{TResult}" />
+    [Serializable]
     public abstract class AbstractQuery<TResult> : IQuery<TResult>
     {
         IContext _context;

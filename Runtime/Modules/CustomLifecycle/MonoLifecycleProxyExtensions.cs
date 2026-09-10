@@ -19,32 +19,40 @@ namespace Runestone.AesirArchitecture
     public static class MonoLifecycleProxyExtensions
     {
         /// <summary>
-        /// 添加生命周期事件监听。
+        /// 添加生命周期事件监听，并绑定到 <paramref name="mono" /> 所在 GameObject 的销毁事件自动移除。
         /// </summary>
-        /// <param name="mono">监听所依附的 MonoBehaviour</param>
+        /// <param name="mono">监听所依附的 MonoBehaviour，其所在 GameObject 销毁时自动移除监听</param>
         /// <param name="evt">要监听的生命周期事件类型</param>
         /// <param name="callback">事件触发时执行的回调委托</param>
         /// <param name="order">执行优先级，值越小越先执行；同 order 时按注册顺序执行</param>
-        /// <returns>用于后续自动移除该监听的句柄</returns>
+        /// <returns>用于后续手动移除该监听的句柄（Dispose 与销毁自动移除等效，重复调用安全）</returns>
         public static AutoRemoveListenerHandle RegisterCustomLifecycle(this MonoBehaviour mono,
             MonoLifecycleEvent evt,
             Action callback,
-            int order = 0) =>
-            MonoLifecycleProxy.Instance.AddListener(evt, callback, order);
+            int order = 0)
+        {
+            var handle = MonoLifecycleProxy.Instance.AddListener(evt, callback, order);
+            handle.RemoveListenerWhenGameObjectOnDestroyed(mono);
+            return handle;
+        }
 
         /// <summary>
-        /// 添加生命周期事件监听。
+        /// 添加生命周期事件监听，并绑定到 <paramref name="go" /> 的销毁事件自动移除。
         /// </summary>
-        /// <param name="go">监听所依附的 GameObject</param>
+        /// <param name="go">监听所依附的 GameObject，销毁时自动移除监听</param>
         /// <param name="evt">要监听的生命周期事件类型</param>
         /// <param name="callback">事件触发时执行的回调委托</param>
         /// <param name="order">执行优先级，值越小越先执行；同 order 时按注册顺序执行</param>
-        /// <returns>用于后续自动移除该监听的句柄</returns>
+        /// <returns>用于后续手动移除该监听的句柄（Dispose 与销毁自动移除等效，重复调用安全）</returns>
         public static AutoRemoveListenerHandle RegisterCustomLifecycle(this GameObject go,
             MonoLifecycleEvent evt,
             Action callback,
-            int order = 0) =>
-            MonoLifecycleProxy.Instance.AddListener(evt, callback, order);
+            int order = 0)
+        {
+            var handle = MonoLifecycleProxy.Instance.AddListener(evt, callback, order);
+            handle.RemoveListenerWhenGameObjectOnDestroyed(go);
+            return handle;
+        }
 
         /// <summary>
         /// 移除生命周期事件监听。
