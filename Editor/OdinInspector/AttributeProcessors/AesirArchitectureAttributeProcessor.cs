@@ -27,6 +27,13 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
                                                   "运行时自动创建的实例恒为勾选状态。";
 
         /// <summary>
+        /// DDOL 关闭时的多场景叠加风险提醒文案（类级 Warning 信息框内容，仅关闭时显示）。
+        /// </summary>
+        const string DontDestroyOnLoadDisabledWarning =
+            "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" +
+            "必须自行处理多场景叠加（Additive）加载下的生命周期（与运行时提醒日志口径一致）";
+
+        /// <summary>
         /// 处理类自身的特性，添加描述信息框与 DDOL 关闭警告信息框
         /// </summary>
         /// <param name="property">Odin Inspector 正在构建的属性节点，代表被处理的目标对象</param>
@@ -34,6 +41,10 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
         public override void ProcessSelfAttributes(InspectorProperty property, List<Attribute> attributes)
         {
             attributes.Add(new InfoBoxAttribute("Aesir Architecture 接入 MonoBehaviour 生命周期的全局持久化物体对象"));
+
+            // 条件警告：仅当 DDOL 开关闭合时显示；表达式经 $value 引用根对象（本组件实例）
+            attributes.Add(new InfoBoxAttribute(DontDestroyOnLoadDisabledWarning, InfoMessageType.Warning,
+                $"@!$value.{nameof(AesirArchitecture.DontDestroyOnLoad)}"));
         }
 
         /// <summary>

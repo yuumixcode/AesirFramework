@@ -15,9 +15,9 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 
         AutoRemoveListenerHandle _addedSub, _removedSub, _clearedSub;
 
-        int _playerCounter;
-
         string _lastNameAdded;
+
+        int _playerCounter;
 
         void Start()
         {
@@ -28,12 +28,11 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 
         void OnEnable()
         {
-            _addedSub = _onlinePlayers.AddAddedListener(
-                player => Debug.Log($"[HashSet] Added → {player} 上线（当前 {_onlinePlayers.Count} 人）"));
-            _removedSub = _onlinePlayers.AddRemovedListener(
-                player => Debug.Log($"[HashSet] Removed → {player} 下线（当前 {_onlinePlayers.Count} 人）"));
-            _clearedSub = _onlinePlayers.AddClearedListener(
-                () => Debug.Log("[HashSet] Cleared → 在线列表已清空"));
+            _addedSub = _onlinePlayers.AddAddedListener(player =>
+                Debug.Log($"[HashSet] Added → {player} 上线（当前 {_onlinePlayers.Count} 人）"));
+            _removedSub = _onlinePlayers.AddRemovedListener(player =>
+                Debug.Log($"[HashSet] Removed → {player} 下线（当前 {_onlinePlayers.Count} 人）"));
+            _clearedSub = _onlinePlayers.AddClearedListener(() => Debug.Log("[HashSet] Cleared → 在线列表已清空"));
         }
 
         void OnDisable()
@@ -60,7 +59,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
                 return;
             }
 
-            bool added = _onlinePlayers.Add(_lastNameAdded);
+            var added = _onlinePlayers.Add(_lastNameAdded);
             Debug.Log($"[HashSet] Add(\"{_lastNameAdded}\")（重复）→ 返回 {added}，事件未触发");
         }
 
@@ -79,7 +78,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
         [ContextMenu("Remove 不存在的玩家（不触发事件）")]
         void RemoveMissingPlayer()
         {
-            bool removed = _onlinePlayers.Remove("不在线的玩家");
+            var removed = _onlinePlayers.Remove("不在线的玩家");
             Debug.Log($"[HashSet] Remove(\"不在线的玩家\") → 返回 {removed}，事件未触发");
         }
 

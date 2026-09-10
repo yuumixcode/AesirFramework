@@ -23,10 +23,20 @@ namespace Runestone.AesirArchitecture.Samples.MvcQuick
         /// 当前计数值（快捷档可写暴露），初始化为 0。
         /// </summary>
         /// <remarks>
-        /// <c>[SerializeField]</c> 字段形式可被 Unity 原生与 Odin 序列化显示。
+        /// <c>[SerializeField]</c> 私有字段形式可被 Unity 原生与 Odin 序列化显示
+        /// （序列化名 <c>count</c> 不变，既有场景 / 预制体数据兼容）。
         /// </remarks>
         [SerializeField]
-        public ObservableValue<int> count = new ObservableValue<int>(0);
+        ObservableValue<int> count = new ObservableValue<int>(0);
+
+        /// <summary>
+        /// 当前计数值的对外暴露（快捷档可写——可直接改 <c>Value</c>，不可替换整个实例）。
+        /// </summary>
+        /// <remarks>
+        /// 以只读属性暴露：表现层仍可直改 <c>Count.Value++</c>（快捷档零封装语义不变），
+        /// 但无法整体替换 ObservableValue 实例导致既有订阅悬空——修复公开可变字段的封装倒退。
+        /// </remarks>
+        public ObservableValue<int> Count => count;
     }
 }
 #endif

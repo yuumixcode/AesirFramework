@@ -38,10 +38,16 @@ namespace Runestone.AesirArchitecture
         [SerializeField]
         List<T> items = new List<T>();
 
-        readonly MiniEvent<CollectionAddEventArgs<T>> _addedEvent = new MiniEvent<CollectionAddEventArgs<T>>();
-        readonly MiniEvent<CollectionRemoveEventArgs<T>> _removedEvent = new MiniEvent<CollectionRemoveEventArgs<T>>();
-        readonly MiniEvent<CollectionReplaceEventArgs<T>> _replacedEvent = new MiniEvent<CollectionReplaceEventArgs<T>>();
+        readonly MiniEvent<CollectionAddEventArgs<T>>
+            _addedEvent = new MiniEvent<CollectionAddEventArgs<T>>();
+
         readonly MiniEvent _clearedEvent = new MiniEvent();
+
+        readonly MiniEvent<CollectionRemoveEventArgs<T>> _removedEvent =
+            new MiniEvent<CollectionRemoveEventArgs<T>>();
+
+        readonly MiniEvent<CollectionReplaceEventArgs<T>> _replacedEvent =
+            new MiniEvent<CollectionReplaceEventArgs<T>>();
 
         /// <summary>
         /// 默认构造，创建空列表。
@@ -86,7 +92,7 @@ namespace Runestone.AesirArchitecture
             get => items[index];
             set
             {
-                T oldItem = items[index];
+                var oldItem = items[index];
                 if (EqualityComparer<T>.Default.Equals(oldItem, value))
                 {
                     return;
@@ -111,7 +117,10 @@ namespace Runestone.AesirArchitecture
         /// 批量添加元素。逐项添加并逐项触发 Added 事件。
         /// </summary>
         /// <param name="itemsToAdd">要添加的元素序列。</param>
-        /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出（对齐 BCL <see cref="List{T}" /> 行为）。</exception>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="itemsToAdd" /> 为 null 时抛出（对齐 BCL
+        /// <see cref="List{T}" /> 行为）。
+        /// </exception>
         public void AddRange(IEnumerable<T> itemsToAdd)
         {
             if (itemsToAdd == null)
@@ -119,7 +128,7 @@ namespace Runestone.AesirArchitecture
                 throw new ArgumentNullException(nameof(itemsToAdd));
             }
 
-            foreach (T item in itemsToAdd)
+            foreach (var item in itemsToAdd)
             {
                 Add(item);
             }
@@ -143,7 +152,7 @@ namespace Runestone.AesirArchitecture
         /// <returns>找到并移除返回 <c>true</c>；元素不存在时不触发事件，返回 <c>false</c>。</returns>
         public bool Remove(T item)
         {
-            int index = items.IndexOf(item);
+            var index = items.IndexOf(item);
             if (index < 0)
             {
                 return false;
@@ -159,7 +168,7 @@ namespace Runestone.AesirArchitecture
         /// <param name="index">要移除元素的索引。</param>
         public void RemoveAt(int index)
         {
-            T item = items[index];
+            var item = items[index];
             items.RemoveAt(index);
             _removedEvent.Invoke(new CollectionRemoveEventArgs<T>(index, item));
         }
@@ -199,12 +208,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="arrayIndex">目标数组起始索引。</param>
         public void CopyTo(T[] array, int arrayIndex) => items.CopyTo(array, arrayIndex);
 
-        /// <summary>
-        /// 返回遍历元素的结构体枚举器，foreach 具体类型时零分配。
-        /// </summary>
-        /// <returns>元素枚举器。</returns>
-        public Enumerator GetEnumerator() => new Enumerator(items.GetEnumerator());
-
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => items.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)items).GetEnumerator();
@@ -242,6 +245,12 @@ namespace Runestone.AesirArchitecture
             _clearedEvent.RemoveListener(callback);
 
         /// <summary>
+        /// 返回遍历元素的结构体枚举器，foreach 具体类型时零分配。
+        /// </summary>
+        /// <returns>元素枚举器。</returns>
+        public Enumerator GetEnumerator() => new Enumerator(items.GetEnumerator());
+
+        /// <summary>
         /// 清空所有事件监听。
         /// </summary>
         /// <remarks>
@@ -265,7 +274,7 @@ namespace Runestone.AesirArchitecture
         /// </remarks>
         public struct Enumerator : IEnumerator<T>
         {
-            private List<T>.Enumerator _inner;
+            List<T>.Enumerator _inner;
 
             internal Enumerator(List<T>.Enumerator inner) => _inner = inner;
 

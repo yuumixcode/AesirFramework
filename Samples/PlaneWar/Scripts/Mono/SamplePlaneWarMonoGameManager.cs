@@ -25,35 +25,33 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
     /// </remarks>
     public class SamplePlaneWarMonoGameManager : MonoBehaviour
     {
+        // 非序列化字段：防止 Unity 将运行状态保存到场景
+
         /// <summary>
         /// 全局单例访问器；由 Awake 赋值，场景中必须预放置一个实例。
         /// </summary>
         public static SamplePlaneWarMonoGameManager Instance { get; private set; }
 
-        // 非序列化字段：防止 Unity 将运行状态保存到场景
-        int _score;
-        bool _isGameOver;
-
         /// <summary>
         /// 当前得分（只读暴露，写入走 <see cref="AddScore" />）。
         /// </summary>
-        public int Score => _score;
+        public int Score { get; private set; }
 
         /// <summary>
         /// 是否已失败（玩家坠毁后置位）。
         /// </summary>
-        public bool IsGameOver => _isGameOver;
+        public bool IsGameOver { get; private set; }
 
         void Awake()
         {
             Instance = this;
-            _isGameOver = false;
-            _score = 0;
+            IsGameOver = false;
+            Score = 0;
         }
 
         void Update()
         {
-            if (_isGameOver && Input.GetKeyDown(KeyCode.Space))
+            if (IsGameOver && Input.GetKeyDown(KeyCode.Space))
             {
                 Restart();
             }
@@ -64,7 +62,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         /// </summary>
         public void AddScore(int value)
         {
-            _score += value;
+            Score += value;
         }
 
         /// <summary>
@@ -72,13 +70,13 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         /// </summary>
         public void SetGameOver()
         {
-            _isGameOver = true;
+            IsGameOver = true;
         }
 
         void Restart()
         {
-            _isGameOver = false;
-            _score = 0;
+            IsGameOver = false;
+            Score = 0;
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }

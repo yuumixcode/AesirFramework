@@ -14,8 +14,7 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableDictionary{TKey, TValue}" />
     /// <seealso cref="ObservableDictionary{TKey, TValue}" />
-    public interface IObservableDictionary<TKey, TValue> :
-        IReadOnlyObservableDictionary<TKey, TValue>,
+    public interface IObservableDictionary<TKey, TValue> : IReadOnlyObservableDictionary<TKey, TValue>,
         IDictionary<TKey, TValue>
     {
         // 以下成员用 new 重新声明，统一 IDictionary 与 IReadOnlyDictionary 两条平行继承链上的同名成员。
@@ -27,7 +26,8 @@ namespace Runestone.AesirArchitecture
         new int Count { get; }
 
         /// <summary>
-        /// 读写指定键的值。重新声明以统一 <see cref="IDictionary{TKey, TValue}" /> 与 <see cref="IReadOnlyDictionary{TKey, TValue}" /> 的索引器。
+        /// 读写指定键的值。重新声明以统一 <see cref="IDictionary{TKey, TValue}" /> 与 <see cref="IReadOnlyDictionary{TKey, TValue}" />
+        /// 的索引器。
         /// </summary>
         /// <param name="key">键。</param>
         new TValue this[TKey key] { get; set; }

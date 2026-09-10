@@ -38,7 +38,8 @@ namespace Runestone.AesirArchitecture.Editor
         public const string RepoPath = "yuumixcode/AesirFramework";
 
         /// <summary>GitHub Releases 最新版 API（降级源之二，未认证限流 60 次/时/IP）。</summary>
-        public static readonly string LatestReleaseApiUrl = $"https://api.github.com/repos/{RepoPath}/releases/latest";
+        public static readonly string LatestReleaseApiUrl =
+            $"https://api.github.com/repos/{RepoPath}/releases/latest";
 
         /// <summary>GitHub releases/latest 页面地址（302 到最新 tag，可完全绕开 API 限流）。</summary>
         public static readonly string LatestReleasePageUrl = $"https://github.com/{RepoPath}/releases/latest";
@@ -47,12 +48,13 @@ namespace Runestone.AesirArchitecture.Editor
         public static readonly string ReleasesPageUrl = $"https://github.com/{RepoPath}/releases";
 
         /// <summary>GitHub Release 资产下载地址前缀（资产命名约定见 ReleaseSnapshot.GetUnityPackageUrl）。</summary>
-        public static readonly string GitHubDownloadUrlBase = $"https://github.com/{RepoPath}/releases/download";
+        public static readonly string GitHubDownloadUrlBase =
+            $"https://github.com/{RepoPath}/releases/download";
 
         /// <summary>jsDelivr CDN 域名（按大陆可达性经验排序；fastly 会 301 跳转到主域名，自动跟随）。</summary>
         public static readonly string[] JsDelivrDomains =
         {
-            "cdn.jsdelivr.net", "testingcf.jsdelivr.net", "gcore.jsdelivr.net", "fastly.jsdelivr.net",
+            "cdn.jsdelivr.net", "testingcf.jsdelivr.net", "gcore.jsdelivr.net", "fastly.jsdelivr.net"
         };
 
         /// <summary>update-info.json 在仓库内的路径（CI 发版后以 [skip ci] 提交回 main）。</summary>
@@ -116,14 +118,14 @@ namespace Runestone.AesirArchitecture.Editor
         /// </summary>
         public sealed class ReleaseSnapshot
         {
+            /// <summary>版本与清单信息；302 重定向路径只有 tag，此字段为 null（更新时跳过残留清理）。</summary>
+            public UpdateInfo Info;
+
             /// <summary>来源描述（如 "jsDelivr (cdn.jsdelivr.net)" / "GitHub API" / "GitHub 重定向"）。</summary>
             public string Source;
 
             /// <summary>Release 标签名（如 v0.15.0）。</summary>
             public string Tag;
-
-            /// <summary>版本与清单信息；302 重定向路径只有 tag，此字段为 null（更新时跳过残留清理）。</summary>
-            public UpdateInfo Info;
 
             /// <summary>
             /// 指定包目录的 unitypackage 下载地址。
@@ -140,6 +142,13 @@ namespace Runestone.AesirArchitecture.Editor
         [Serializable]
         public sealed class FilesManifest
         {
+            /// <summary>各包清单。</summary>
+            public PackageEntry[] packages;
+
+            /// <summary>按包目录名查找条目；不存在返回 null。</summary>
+            public PackageEntry GetPackage(string dirName) =>
+                packages?.FirstOrDefault(p => p != null && p.name == dirName);
+
             /// <summary>单个包的安装清单。</summary>
             [Serializable]
             public sealed class PackageEntry
@@ -153,18 +162,14 @@ namespace Runestone.AesirArchitecture.Editor
                 /// <summary>包内全部条目的项目相对路径（含目录条目，与 unitypackage 内 pathname 同源）。</summary>
                 public string[] files;
             }
-
-            /// <summary>各包清单。</summary>
-            public PackageEntry[] packages;
-
-            /// <summary>按包目录名查找条目；不存在返回 null。</summary>
-            public PackageEntry GetPackage(string dirName) =>
-                packages?.FirstOrDefault(p => p != null && p.name == dirName);
         }
 
         /// <summary>扫描到的本地已安装包。</summary>
         public sealed class InstalledPackage
         {
+            /// <summary>包目录的 Assets 相对路径（如 Assets/Runestone/AesirArchitecture）。</summary>
+            public string AssetsPath;
+
             /// <summary>包目录名（如 AesirArchitecture）。</summary>
             public string DirName;
 
@@ -173,9 +178,6 @@ namespace Runestone.AesirArchitecture.Editor
 
             /// <summary>package.json 中的版本号。</summary>
             public string Version;
-
-            /// <summary>包目录的 Assets 相对路径（如 Assets/Runestone/AesirArchitecture）。</summary>
-            public string AssetsPath;
         }
 
         #endregion
@@ -198,8 +200,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// 扫描 <paramref name="installRootRelativePath" /> 下的 Aesir 包安装。
         /// 识别依据：子目录中存在 package.json 且包 id 以 cn.runestone.aesir. 开头。
         /// </summary>
-        public static List<InstalledPackage> ScanInstalledPackages(
-            string installRootRelativePath = InstallRootRelativePath)
+        public static List<InstalledPackage> ScanInstalledPackages(string installRootRelativePath =
+            InstallRootRelativePath)
         {
             var results = new List<InstalledPackage>();
             var rootAbs = ToAbsolutePath(installRootRelativePath);
@@ -217,8 +219,7 @@ namespace Runestone.AesirArchitecture.Editor
                 }
 
                 var (name, version) = ParsePackageJson(pkgJsonPath);
-                if (string.IsNullOrEmpty(name) ||
-                    !name.StartsWith(PackageIdPrefix, StringComparison.Ordinal))
+                if (string.IsNullOrEmpty(name) || !name.StartsWith(PackageIdPrefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -228,7 +229,7 @@ namespace Runestone.AesirArchitecture.Editor
                     DirName = Path.GetFileName(dir),
                     PackageId = name,
                     Version = version,
-                    AssetsPath = ToAssetsRelativePath(dir),
+                    AssetsPath = ToAssetsRelativePath(dir)
                 });
             }
 
@@ -290,7 +291,8 @@ namespace Runestone.AesirArchitecture.Editor
             var full = Path.GetFullPath(absolutePath);
             var projectRootFull = Path.GetFullPath(projectRoot);
             var relative = full.StartsWith(projectRootFull, StringComparison.Ordinal)
-                ? full.Substring(projectRootFull.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                ? full.Substring(projectRootFull.Length)
+                    .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
                 : full;
             return relative.Replace(Path.DirectorySeparatorChar, '/');
         }
@@ -358,7 +360,8 @@ namespace Runestone.AesirArchitecture.Editor
                     var info = ParseUpdateInfo(await GetTextAsync(url, JsDelivrCheckTimeoutSeconds));
                     if (info?.tag != null)
                     {
-                        return new ReleaseSnapshot { Source = $"jsDelivr ({domain})", Tag = info.tag, Info = info };
+                        return new ReleaseSnapshot
+                            { Source = $"jsDelivr ({domain})", Tag = info.tag, Info = info };
                     }
 
                     errors.Add($"jsDelivr ({domain}): 响应中无 tag 字段");
@@ -445,8 +448,8 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             var location = request.GetResponseHeader("Location");
-            return ExtractTagFromLocation(location)
-                ?? throw new Exception($"Location 头中未解析到 tag: {location}");
+            return ExtractTagFromLocation(location) ??
+                   throw new Exception($"Location 头中未解析到 tag: {location}");
         }
 
         /// <summary>
@@ -488,7 +491,8 @@ namespace Runestone.AesirArchitecture.Editor
         }
 
         /// <summary>GET 二进制内容（用于下载 unitypackage），通过回调上报 0~1 下载进度。</summary>
-        public static async Task<byte[]> DownloadBytesAsync(string url, Action<float> onProgress = null,
+        public static async Task<byte[]> DownloadBytesAsync(string url,
+            Action<float> onProgress = null,
             int timeoutSeconds = DownloadTimeoutSeconds)
         {
             using var request = UnityWebRequest.Get(url);
@@ -553,7 +557,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// 将远程清单中的一个包条目合并进本地清单（按 name 替换或追加）。
         /// 返回合并后的新清单实例（输入参数不被修改）。
         /// </summary>
-        public static FilesManifest MergePackageEntry(FilesManifest localManifest, FilesManifest.PackageEntry entry)
+        public static FilesManifest MergePackageEntry(FilesManifest localManifest,
+            FilesManifest.PackageEntry entry)
         {
             var result = new FilesManifest
             {
@@ -583,7 +588,9 @@ namespace Runestone.AesirArchitecture.Editor
         /// 宁可残留也不误删。用户在包内新增的文件不在任何清单中，天然不会被删除。
         /// </para>
         /// </summary>
-        public static List<string> ComputeStaleFiles(string[] previousFiles, string[] newFiles, string packageAssetsPath)
+        public static List<string> ComputeStaleFiles(string[] previousFiles,
+            string[] newFiles,
+            string packageAssetsPath)
         {
             var stale = new List<string>();
             if (previousFiles == null || previousFiles.Length == 0)
@@ -685,8 +692,10 @@ namespace Runestone.AesirArchitecture.Editor
         /// 将安装根目录整体复制到备份目录（&lt;backupRoot&gt;/&lt;label&gt;），并裁剪至保留最近
         /// <paramref name="keepCount" /> 份。源目录不存在时返回 null（无安装即无备份）。
         /// </summary>
-        /// <param name="label">备份子目录名，须以时间戳开头（格式 yyyyMMdd-HHmmss_...），
-        /// 保证 Ordinal 排序即时间序（版本号前缀会打乱 0.9 与 0.14 的次序，故时间戳在前）。</param>
+        /// <param name="label">
+        /// 备份子目录名，须以时间戳开头（格式 yyyyMMdd-HHmmss_...），
+        /// 保证 Ordinal 排序即时间序（版本号前缀会打乱 0.9 与 0.14 的次序，故时间戳在前）。
+        /// </param>
         public static string BackupRunestone(string label,
             string sourceRelativePath = InstallRootRelativePath,
             string backupRootRelativePath = BackupDirName,
@@ -731,8 +740,7 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             var dirs = Directory.GetDirectories(backupRootAbsolutePath)
-                .OrderBy(d => d, StringComparer.Ordinal)
-                .ToArray();
+                .OrderBy(d => d, StringComparer.Ordinal).ToArray();
             for (var i = 0; i < dirs.Length - keepCount; i++)
             {
                 Directory.Delete(dirs[i], true);

@@ -179,7 +179,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreEqual(5, list[1]);
 
             var enumerated = new List<int>();
-            foreach (int item in (IEnumerable<int>)list)
+            foreach (var item in (IEnumerable<int>)list)
             {
                 enumerated.Add(item);
             }
@@ -213,7 +213,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var list = new ObservableList<int> { 1, 2, 3 };
 
             var enumerated = new List<int>();
-            foreach (int item in list)
+            foreach (var item in list)
             {
                 enumerated.Add(item);
             }

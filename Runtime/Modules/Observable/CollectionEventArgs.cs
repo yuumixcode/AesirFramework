@@ -100,7 +100,8 @@ namespace Runestone.AesirArchitecture
     /// <typeparam name="TKey">键类型</typeparam>
     /// <typeparam name="TValue">值类型</typeparam>
     /// <remarks>
-    /// 仅在通过索引器为已存在的键赋新值时触发；新增键触发的是 Added 事件（参数为 <see cref="System.Collections.Generic.KeyValuePair{TKey, TValue}" />）。
+    /// 仅在通过索引器为已存在的键赋新值时触发；新增键触发的是 Added 事件（参数为 <see cref="System.Collections.Generic.KeyValuePair{TKey, TValue}" />
+    /// ）。
     /// </remarks>
     public readonly struct DictionaryUpdateEventArgs<TKey, TValue>
     {

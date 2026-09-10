@@ -264,7 +264,7 @@ cn.runestone.aesir.architecture/
 │   │           ├── Interfaces/
 │   │           └── Abstracts/
 │   ├── Modules/                   # 辅助模块
-│   │   ├── Event/                 # MiniEvent 零分配事件 + 自动移除监听触发器
+│   │   ├── Event/                 # MiniEvent 零分配事件（Invoke 路径） + 自动移除监听触发器
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
 │   │   ├── Observable/            # ObservableValue 响应式属性 + ObservableList/ObservableDictionary/ObservableHashSet 可观察集合
@@ -305,8 +305,10 @@ cn.runestone.aesir.architecture/
 │   ├── Counter-Mvp-Standard/      # MVP-2 标准档（只读暴露 + 写方法，Presenter 直调写方法，第二课）
 │   ├── Counter-Mvp-Strict/        # MVP-3 严格档（Command 写 + Query 读，View 按窄接口持有 Presenter，第三课）
 │   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
+│   ├── ObservableCollections/     # 可观察集合（List / Dictionary / HashSet）使用示例
 │   ├── MiniEvent/                 # MiniEvent 使用案例
-│   └── PlaneWar/                  # 纵版射击飞机大战（Mono 版实战示例）
+│   ├── PlaneWar/                  # 纵版射击飞机大战（Mono 版实战示例）
+│   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType 各阶段重置演示（Editor-only 工具，菜单 Tools → Aesir → Architecture → Samples）
 ├── Samples~/                      # 示例源镜像（Git URL 安装后经 Package Manager 按需导入；构建时自动剔除）
 └── Third Party Notices.md          # 第三方许可声明
 ```

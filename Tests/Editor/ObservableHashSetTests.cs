@@ -165,8 +165,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             set.SymmetricExceptWith(new[] { 2, 3, 4 });
 
             Assert.AreEqual(3, log.Count, "移除 2、3 并添加 4 应各触发一次");
-            CollectionAssert.AreEqual(
-                new[] { ("removed", 2), ("removed", 3), ("added", 4) }, log,
+            CollectionAssert.AreEqual(new[] { ("removed", 2), ("removed", 3), ("added", 4) }, log,
                 "应先触发全部 Removed、再触发全部 Added");
             CollectionAssert.AreEquivalent(new[] { 1, 4 }, set, "对称差集结果应为 {1, 4}");
 
@@ -239,7 +238,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsTrue(set.Contains(4));
 
             var enumerated = new List<int>();
-            foreach (int item in (IEnumerable<int>)set)
+            foreach (var item in (IEnumerable<int>)set)
             {
                 enumerated.Add(item);
             }
@@ -273,7 +272,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var set = new ObservableHashSet<int> { 1, 2, 3 };
 
             var enumerated = new List<int>();
-            foreach (int item in set)
+            foreach (var item in set)
             {
                 enumerated.Add(item);
             }

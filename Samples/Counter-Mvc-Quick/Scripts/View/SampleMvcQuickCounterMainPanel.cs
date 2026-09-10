@@ -16,7 +16,7 @@ namespace Runestone.AesirArchitecture.Samples.MvcQuick
     /// 标准档（Counter-Mvc-Standard）收窄为只读暴露 + 写方法；
     /// 严格档（Counter-Mvc-Strict）再加接口注册 + Command 写入。
     /// </para>
-    /// <para>数据流：按钮点击 → 面板直改 count.Value → ObservableValue 通知 → 面板刷新。</para>
+    /// <para>数据流：按钮点击 → 面板直改 Count.Value → ObservableValue 通知 → 面板刷新。</para>
     /// </remarks>
     /// <seealso cref="Runestone.AesirArchitecture.MonoViewController{T}" />
     public class SampleMvcQuickCounterMainPanel : MonoViewController<SampleMvcQuickCounterContext>
@@ -57,7 +57,7 @@ namespace Runestone.AesirArchitecture.Samples.MvcQuick
         void Start()
         {
             _model = this.GetModel<SampleMvcQuickCounterModel>();
-            _model.count.AddListenerAndInvoke(UpdateCountText)
+            _model.Count.AddListenerAndInvoke(UpdateCountText)
                 .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
         }
 
@@ -75,9 +75,9 @@ namespace Runestone.AesirArchitecture.Samples.MvcQuick
             resetButton.onClick.RemoveListener(ResetCounter);
         }
 
-        void Increase() => _model.count.Value++;
-        void Decrease() => _model.count.Value--;
-        void ResetCounter() => _model.count.Value = 0;
+        void Increase() => _model.Count.Value++;
+        void Decrease() => _model.Count.Value--;
+        void ResetCounter() => _model.Count.Value = 0;
 
         /// <summary>
         /// 根据当前计数值更新 UI 文本显示。
