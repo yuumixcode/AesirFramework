@@ -48,29 +48,16 @@ namespace Runestone.AesirArchitecture
     {
         static MonoLifecycleProxy _instance;
 
+        readonly List<PendingChange> _pendingChanges = new List<PendingChange>();
+
         readonly Dictionary<MonoLifecycleEvent, List<ListenerEntry>> _sortedListeners =
             new Dictionary<MonoLifecycleEvent, List<ListenerEntry>>();
 
-        readonly List<PendingChange> _pendingChanges = new List<PendingChange>();
+        bool _invoking;
 
         long _nextInsertionIndex;
         bool _playerLoopRegistered;
-
-        bool _invoking;
         bool _sortDirty;
-
-        /// <summary>
-        /// 重置所有实例状态：清空监听、注销 PlayerLoop
-        /// </summary>
-        /// <remarks>
-        /// 由 <see cref="ResetStatics" /> 和 <see cref="OnDestroy" /> 内部调用，
-        /// 确保无论域重载还是组件销毁，都走同一条完整重置路径，不会遗漏 PlayerLoop 注销等清理步骤。
-        /// </remarks>
-        void ClearState()
-        {
-            ClearAllListeners();
-            UnregisterFromPlayerLoop();
-        }
 
         void Update()
         {
@@ -105,6 +92,19 @@ namespace Runestone.AesirArchitecture
         void OnApplicationQuit()
         {
             InvokeEvent(MonoLifecycleEvent.OnApplicationQuit);
+        }
+
+        /// <summary>
+        /// 重置所有实例状态：清空监听、注销 PlayerLoop
+        /// </summary>
+        /// <remarks>
+        /// 由 <see cref="ResetStatics" /> 和 <see cref="OnDestroy" /> 内部调用，
+        /// 确保无论域重载还是组件销毁，都走同一条完整重置路径，不会遗漏 PlayerLoop 注销等清理步骤。
+        /// </remarks>
+        void ClearState()
+        {
+            ClearAllListeners();
+            UnregisterFromPlayerLoop();
         }
 
         /// <summary>

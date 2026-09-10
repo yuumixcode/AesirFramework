@@ -7,7 +7,7 @@ namespace Runestone.AesirArchitecture.Samples.MvpQuick
     /// <remarks>
     ///     <para>
     ///     <b>快捷档写入</b>：Presenter 直接修改 Model 的可写 ObservableValue
-    ///     （<c>count.Value++</c>，不建 Command、不经写方法），读取直取 <c>count.Value</c>——
+    ///     （<c>Count.Value++</c>，不建 Command、不经写方法），读取直取 <c>Count.Value</c>——
     ///     与 MVC-1（Counter-Mvc-Quick）的 View 兼 Controller 直改写法一致。
     ///     </para>
     ///     <para>
@@ -64,25 +64,25 @@ namespace Runestone.AesirArchitecture.Samples.MvpQuick
         /// </summary>
         public void SyncInitialValue()
         {
-            _view.UpdateCount(_model.count.Value);
+            _view.UpdateCount(_model.Count.Value);
         }
 
         void OnIncreaseClicked()
         {
-            _model.count.Value++;
-            _view.UpdateCount(_model.count.Value);
+            _model.Count.Value++;
+            _view.UpdateCount(_model.Count.Value);
         }
 
         void OnDecreaseClicked()
         {
-            _model.count.Value--;
-            _view.UpdateCount(_model.count.Value);
+            _model.Count.Value--;
+            _view.UpdateCount(_model.Count.Value);
         }
 
         void OnResetClicked()
         {
-            _model.count.Value = 0;
-            _view.UpdateCount(_model.count.Value);
+            _model.Count.Value = 0;
+            _view.UpdateCount(_model.Count.Value);
         }
     }
 }

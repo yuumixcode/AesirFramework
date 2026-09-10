@@ -263,7 +263,7 @@ cn.runestone.aesir.architecture/
 │   │           ├── Interfaces/
 │   │           └── Abstracts/
 │   ├── Modules/                   # Helper modules
-│   │   ├── Event/                 # MiniEvent zero-alloc events + auto-remove triggers
+│   │   ├── Event/                 # MiniEvent zero-alloc events (Invoke path) + auto-remove triggers
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy lifecycle proxy
 │   │   ├── Locator/               # GenericLocator type-keyed locator
 │   │   ├── Observable/            # ObservableValue reactive property + ObservableList/ObservableDictionary/ObservableHashSet observable collections
@@ -304,8 +304,10 @@ cn.runestone.aesir.architecture/
 │   ├── Counter-Mvp-Standard/      # MVP-2 standard tier (read-only exposure + write methods, Presenter calls write methods directly, lesson 2)
 │   ├── Counter-Mvp-Strict/        # MVP-3 strict tier (Command writes + Query reads, View holds Presenter via narrow interface, lesson 3)
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
+│   ├── ObservableCollections/     # Observable collections (List / Dictionary / HashSet) usage examples
 │   ├── MiniEvent/                 # MiniEvent usage examples
-│   └── PlaneWar/                  # Vertical shooter "Plane War" (Mono hands-on sample)
+│   ├── PlaneWar/                  # Vertical shooter "Plane War" (Mono hands-on sample)
+│   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType phase-reset demo (Editor-only tool, menu Tools → Aesir → Architecture → Samples)
 ├── Samples~/                      # Sample source mirror (import on demand via Package Manager after Git URL install; excluded from builds)
 └── Third Party Notices.md          # Third-party license notices
 ```

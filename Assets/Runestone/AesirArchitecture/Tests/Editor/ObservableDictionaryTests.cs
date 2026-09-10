@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 
@@ -94,9 +95,9 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsTrue(dict.ContainsKey("hp"), "存在的键应命中 ContainsKey");
             Assert.IsFalse(dict.ContainsKey("mp"));
 
-            Assert.IsTrue(dict.TryGetValue("hp", out int value), "存在的键应命中 TryGetValue");
+            Assert.IsTrue(dict.TryGetValue("hp", out var value), "存在的键应命中 TryGetValue");
             Assert.AreEqual(100, value);
-            Assert.IsFalse(dict.TryGetValue("mp", out int missing), "不存在的键 TryGetValue 应返回 false");
+            Assert.IsFalse(dict.TryGetValue("mp", out var missing), "不存在的键 TryGetValue 应返回 false");
             Assert.AreEqual(0, missing, "未命中时 out 值应为类型默认值");
             AesirArchitectureDebug.LogTestInfo("TryGetValue/ContainsKey: 读写路径正确");
         }
@@ -156,17 +157,17 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void Constructor_WithInitialItems_NoEvents_Enumerable()
         {
             var addCount = 0;
-            var dict = new ObservableDictionary<string, int>(
-                new[] { new KeyValuePair<string, int>("a", 1), new KeyValuePair<string, int>("b", 2) });
+            var dict = new ObservableDictionary<string, int>(new[]
+                { new KeyValuePair<string, int>("a", 1), new KeyValuePair<string, int>("b", 2) });
             dict.AddAddedListener(_ => addCount++);
 
             Assert.AreEqual(0, addCount, "初始键值构造不应触发 Added");
             Assert.AreEqual(2, dict.Count);
-            CollectionAssert.AreEquivalent(new[] { "a", "b" }, (IEnumerable<string>)dict.Keys, "Keys 应包含全部键");
-            CollectionAssert.AreEquivalent(new[] { 1, 2 }, (IEnumerable<int>)dict.Values, "Values 应包含全部值");
+            CollectionAssert.AreEquivalent(new[] { "a", "b" }, dict.Keys, "Keys 应包含全部键");
+            CollectionAssert.AreEquivalent(new[] { 1, 2 }, dict.Values, "Values 应包含全部值");
 
             var enumerated = new List<KeyValuePair<string, int>>();
-            foreach (KeyValuePair<string, int> pair in (IEnumerable<KeyValuePair<string, int>>)dict)
+            foreach (var pair in (IEnumerable<KeyValuePair<string, int>>)dict)
             {
                 enumerated.Add(pair);
             }
@@ -185,7 +186,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var received = new List<KeyValuePair<string, int>>();
             dict.AddAddedListener(received.Add);
 
-            Assert.Throws<System.ArgumentException>(() => dict.Add("hp", 200), "重复添加应抛 ArgumentException");
+            Assert.Throws<ArgumentException>(() => dict.Add("hp", 200), "重复添加应抛 ArgumentException");
             Assert.AreEqual(0, received.Count, "添加失败不应触发 Added");
             Assert.AreEqual(100, dict["hp"], "添加失败不应改变已有键值");
             AesirArchitectureDebug.LogTestInfo("重复添加: fail-fast 且状态不变");
@@ -203,10 +204,10 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreEqual(1, dict.Count, "组合接口访问 Count 应无多义性");
             Assert.AreEqual(100, dict["hp"], "组合接口访问索引器应无多义性");
             Assert.IsTrue(dict.ContainsKey("hp"), "组合接口访问 ContainsKey 应无多义性");
-            Assert.IsTrue(dict.TryGetValue("hp", out int value), "组合接口访问 TryGetValue 应无多义性");
+            Assert.IsTrue(dict.TryGetValue("hp", out var value), "组合接口访问 TryGetValue 应无多义性");
             Assert.AreEqual(100, value);
-            CollectionAssert.AreEquivalent(new[] { "hp" }, (IEnumerable<string>)dict.Keys, "组合接口访问 Keys 应无多义性");
-            CollectionAssert.AreEquivalent(new[] { 100 }, (IEnumerable<int>)dict.Values, "组合接口访问 Values 应无多义性");
+            CollectionAssert.AreEquivalent(new[] { "hp" }, dict.Keys, "组合接口访问 Keys 应无多义性");
+            CollectionAssert.AreEquivalent(new[] { 100 }, dict.Values, "组合接口访问 Values 应无多义性");
             dict["hp"] = 80;
             Assert.AreEqual(80, dict["hp"], "组合接口索引器应可写");
             AesirArchitectureDebug.LogTestInfo("组合接口访问: 双链成员无多义性");
@@ -222,7 +223,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             var keys = new List<string>();
             var values = new List<int>();
-            foreach (KeyValuePair<string, int> pair in dict)
+            foreach (var pair in dict)
             {
                 keys.Add(pair.Key);
                 values.Add(pair.Value);

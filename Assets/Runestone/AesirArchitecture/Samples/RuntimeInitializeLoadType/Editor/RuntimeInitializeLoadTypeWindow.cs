@@ -12,8 +12,9 @@ namespace Runestone.AesirArchitecture.Samples
     /// </summary>
     public class RuntimeInitializeLoadTypeWindow : OdinEditorWindow
     {
-        [Title("RuntimeInitializeLoadType", "五个初始化时机的执行顺序与最佳实践示例", TitleAlignments.Left)]
-        [InfoBox("官方文档：https://docs.unity3d.com/2022.3/Documentation/ScriptReference/RuntimeInitializeOnLoadMethodAttribute.html",
+        [Title("RuntimeInitializeLoadType", "五个初始化时机的执行顺序与最佳实践示例")]
+        [InfoBox(
+            "官方文档：https://docs.unity3d.com/2022.3/Documentation/ScriptReference/RuntimeInitializeOnLoadMethodAttribute.html",
             InfoMessageType.None)]
         [InlineEditor(InlineEditorObjectFieldModes.Hidden)]
         public RuntimeInitializeLoadTypeSettings runtimeInitializeLoadTypeSettings;

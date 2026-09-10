@@ -103,8 +103,9 @@ namespace Runestone.AesirArchitecture.Samples.MvcStrict
         /// 根据当前计数值更新 UI 文本显示（原始值 + Query 加工值）。
         /// </summary>
         /// <remarks>
-        /// 教学演示：每次通知都执行一次 Query（ExecuteQuery 每调用分配一个查询实例）。
-        /// 生产环境的每帧刷新热路径应缓存加工结果，勿在通知回调中反复查询。
+        /// 加工值经 Controller 查询——Controller 已缓存 Query 实例复用（带实例重载零分配），
+        /// 通知回调频率下查询安全。自建查询时同样应缓存实例复用，
+        /// 勿在高频路径每次调用无参重载（每次分配一个查询实例）。
         /// </remarks>
         void UpdateCountText(int count)
         {

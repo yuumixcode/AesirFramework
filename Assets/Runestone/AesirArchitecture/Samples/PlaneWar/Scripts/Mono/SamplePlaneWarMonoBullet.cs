@@ -43,7 +43,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
                 return;
             }
 
-            if (other.TryGetComponent<SamplePlaneWarMonoEnemy>(out SamplePlaneWarMonoEnemy enemy))
+            if (other.TryGetComponent(out SamplePlaneWarMonoEnemy enemy))
             {
                 enemy.Kill();
                 Destroy(gameObject);
