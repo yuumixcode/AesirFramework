@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.17.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.17.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.18.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.18.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.17.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.18.0）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.17.0）
+## Aesir Architecture（0.18.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -129,7 +129,7 @@
 ### Odin Inspector 集成
 
 - 通过 `ODIN_INSPECTOR` 定义符号条件编译
-- Odin 集成使用独立 asmdef：`Runestone.AesirArchitecture.OdinInspector`（Runtime）和 `Runestone.AesirArchitecture.Editor.OdinInspector`（Editor）
+- Odin 编辑器处理器使用独立 asmdef：`Runestone.AesirArchitecture.Editor.OdinInspector`（Editor/OdinInspector/，ODIN_INSPECTOR 条件编译）；运行时无独立 Odin 程序集，核心运行时程序集经 `#if ODIN_INSPECTOR` 直接使用 Sirenix API（Sirenix DLL 以自动引用方式接入，未安装 Odin 时相关代码整体编译剔除）
 - 预放置实例风险通过 Odin AttributeProcessor 注入 Warning InfoBox
 - DDOL 开关字段级 InfoBox — `[Tooltip]` 迁移为 AttributeProcessor 注入的 Info 级信息框（样式与逻辑分离，运行时程序集零 Inspector 样式特性）
 
@@ -141,7 +141,7 @@
 
 ---
 
-## Aesir Modules（0.17.0）
+## Aesir Modules（0.18.0）
 
 ### UI 框架
 
@@ -193,16 +193,15 @@
 
 ## 程序集定义
 
-### Aesir Architecture（16 个 asmdef）
+### Aesir Architecture（15 个 asmdef）
 
 | 程序集 | 路径 | 说明 |
 |--------|------|------|
 | `Runestone.AesirArchitecture` | Runtime/ | 核心运行时 |
-| `Runestone.AesirArchitecture.OdinInspector` | Runtime/OdinInspector/ | ODIN_INSPECTOR |
 | `Runestone.AesirArchitecture.Editor` | Editor/ | 编辑器（含 QuickCreateSOMenuItem、EnsureAesirArchitectureDefine） |
 | `Runestone.AesirArchitecture.Editor.OdinInspector` | Editor/OdinInspector/ | ODIN_INSPECTOR |
 | `Runestone.AesirArchitecture.Tests` | Tests/Runtime/ | PlayMode 测试（MonoLifecycleProxy 快照语义等） |
-| `Runestone.AesirArchitecture.Tests.Editor` | Tests/Editor/ | EditMode 测试（100 个） |
+| `Runestone.AesirArchitecture.Tests.Editor` | Tests/Editor/ | EditMode 测试（110 个） |
 | `Runestone.AesirArchitecture.Samples.MvcQuick` | Samples/Counter-Mvc-Quick/Scripts/ | 运行时 + #if UNITY_EDITOR |
 | `Runestone.AesirArchitecture.Samples.MvcStandard` | Samples/Counter-Mvc-Standard/Scripts/ | 运行时 + #if UNITY_EDITOR |
 | `Runestone.AesirArchitecture.Samples.MvcStrict` | Samples/Counter-Mvc-Strict/Scripts/ | 运行时 + #if UNITY_EDITOR |
@@ -306,11 +305,10 @@ AesirFramework/
 │   │   │   ├── Runtime/
 │   │   │   │   ├── Core/              # Context 上下文 + MVC/MVP 核心（Engine 纯 C# / Component 适配层）
 │   │   │   │   ├── Modules/           # Event(MiniEvent) / CustomLifecycle(MonoLifecycleProxy) / Locator / Observable / Utilities
-│   │   │   │   ├── Common/            # AesirArchitecture 单例、Debug、ResetStaticsAssistant
-│   │   │   │   └── OdinInspector/     # 独立程序集（ODIN_INSPECTOR）
+│   │   │   │   └── Common/            # AesirArchitecture 单例、Debug、ResetStaticsAssistant
 │   │   │   ├── Editor/                # 定义符号管理、QuickCreateSO、包内更新器、Odin AttributeProcessors
-│   │   │   ├── Tests/                 # Editor 42 个 + Runtime PlayMode 测试
-│   │   │   ├── Samples/               # 示例（编写主位，9 个，构建剔除）
+│   │   │   ├── Tests/                 # Editor 110 个 + Runtime PlayMode 测试
+│   │   │   ├── Samples/               # 示例（编写主位，10 个，构建剔除）
 │   │   │   ├── Samples~/              # 示例发布镜像（Package Manager 按需导入）
 │   │   │   ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
 │   │   │   └── Documentation~/        # 文档镜像（Git URL 安装隐藏副本，无 .meta）
@@ -364,7 +362,7 @@ AesirFramework/
 - 非泛型单例类内 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 重置静态字段；泛型类经 `ResetStaticsAssistant.Register()` 注册重置回调
 - 允许自由使用 `#region` 分段，无最低代码量要求
 - MonoBehaviour 运行状态字段一律用显式非序列化字段（自动属性 backing field 会被场景序列化残留）
-- Odin 依赖代码隔离在 `OdinInspector/` 子目录 + 独立 asmdef；核心程序集经 `#if ODIN_INSPECTOR` 直接使用 Sirenix API
+- Odin 依赖代码隔离在 `OdinInspector/` 子目录（RAA 仅 Editor 侧独立 asmdef；RAM 经 asmref 汇入独立 Odin 程序集）；核心程序集经 `#if ODIN_INSPECTOR` 直接使用 Sirenix API
 - Processor：`internal sealed`，与目标类同文件定义（Odin AttributeProcessor 通过 `nameof` 成员匹配，勿改其匹配的成员形式）
 
 ---
@@ -413,7 +411,7 @@ Unity -batchmode -projectPath . -testPlatform editmode -runTests \
 ### 分支策略
 
 - `main` — 开发主线
-- 版本分支 `AesirArchitecture-v0.17.0` / `AesirModules-v0.17.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
+- 版本分支 `AesirArchitecture-v0.18.0` / `AesirModules-v0.18.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
 
 ---
 
@@ -520,6 +518,8 @@ undefined
 - [2026-09-10 10:42:27] [project] Zensical 模板覆写必须显式声明目录：`[project.theme] custom_dir = "docs/overrides"`(0.0.60 实测默认 None,docs/overrides/ 不会自动生效——技能文档"自动覆盖"说法不完整，放文件不声明则静默不生效）。**Why:** 2026-09-10 写 overrides/main.html 后构建无错但覆写未渲染，查 zensical config.py 才发现 custom_dir 默认 None。**How to apply:** 任何 overrides 先配 custom_dir；调试模板变量别用 HTML 注释输出（构建会剥离注释），用 `<div data-x="{{ var }}" hidden>` 之类可见节点；page.url 形如 `architecture/api/ObservableValue{T}/`,MiniJinja 支持 `"x" in page.url` 子串判断。**后续(2026-09-10)**:API 页专属布局(侧栏钩子+加宽)已被用户否决——全站统一版式：侧栏 12.1→10/9.5rem、nav/TOC 字体 0.7→0.60rem、长标识符 overflow-wrap:anywhere，规则集中在 extra.css 全站段，md-grid 保持 61rem(所有页面两侧空白一致);overrides/main.html 与 custom_dir 已移除，模板覆写机制留作将来需要时用。
 - [2026-09-10 17:50:58] [project] 新增含场景的包内示例在"编辑器未开本项目"时的全手写流程（2026-09-10 ObservableCollections 示例实测走通）：①uuidgen 生成 32 位小写 hex GUID，先 grep 全仓 *.meta 防碰撞；②场景仿 MiniEventSample.unity 模板改写（m_Script 指向新 .cs.meta 的 GUID；URP 相机附加数据组件用内置 GUID a79441f348de89743a2939f4d699eac1 原样保留）；③.meta 按既有模板逐字复制（folder/MonoImporter/AssemblyDefinitionImporter；场景 .meta 是 DefaultImporter 而非 NativeFormatImporter——以 MiniEventSample.unity.meta 为准）；④cp -R 同步 Samples~（顶层不带 folder .meta，与 9 个旧示例惯例一致）；⑤验证：`Unity -batchmode -quit -projectPath . -logFile` 后 grep "error CS"/Exception/Aborting，确认新 asmdef DLL 生成 + 场景以新 GUID 导入（RTT 项目在另一实例打开不冲突）。**Why:** Unity Bridge 未连接时无法让编辑器代生成 meta，手写方案已端到端验证（0 错误、DLL 14.8KB 落盘）。**How to apply:** 下次新增示例（无论编辑器是否连接）可复用该流程；场景 YAML 由模板改写最稳，勿凭空构造。
 - [2026-09-10 18:29:13] RAA 全包锐评完成（2026-09-10，code-review-unity 全包模式 + 一手精读 Runtime 约 40 文件 + 严格档示例全套 + 2 个只读子代理交叉验证；报告未落盘、仅在会话中）。核心未修复发现清单：① Model OnInitialize 期 GetService 必炸且报错文案误导（指示重排注册顺序，实际两阶段初始化"先全部 Model 后全部 Service"决定重排无解，CapabilityExtensions.cs L63-67）；② Editor 主 asmdef defineConstraints=UNITY_INCLUDE_TESTS + package.json 硬依赖 test-framework——消费者删 TF 后全部编辑器工具（含 EnsureAesirArchitectureDefine 宏确保器、包内更新器）静默消失；③ Tests/Runtime asmdef overrideReferences 硬引用 3 个 Sirenix DLL，与"Odin 可选"宣称矛盾；④ AbstractContext.Dispose 后 Instance 返回僵尸上下文（GetModel 报"未注册"指向性错误，修复可 Dispose 内置 _instance=null）；⑤ 三处 XML 文档失实：AesirArchitecturePlayerLoop.cs L46/99"周期性检测"（120 帧轮询 0.9.0 已删仍写）、AesirArchitecture.cs L10 组件宣称"初始化架构基础设施"（实为空壳 DDOL 宿主，Context 是纯 C# 懒加载）、MiniEvent.cs L10/85"零分配监听管理"（仅 Invoke 成立，AddListener 有闭包+多播 O(n) 拷贝分配）；⑥ 测试盲区：Command/Query 两条链零测试（ExecuteCommand/ExecuteQuery 扩展从未被任何用例执行）、View/ViewController 四基类零测试、RemoveListenerOnDestroy/OnDisable 零测试（120 用例集中在集合/Context/Locator/PlayerLoop/MiniEvent）。功能性缺口按频率排序：async/await（框架零 async 故事）> 时间调度原语（延迟/下一帧/定时，纯 C# 类无协程无合法延时手段）> DI/构造注入 > FSM（设计边界未声明，规划盲区）> OnEnable 重订原语（OnDisableTrigger 移除永久不可逆，池化 UI 痛点）> 调试工具（GetListenerCount API 已有但无任何 UI 消费，无 Context 注册表窗口）；其他零碎：私有 void Reset() 撞 Unity 魔法方法（MonoLifecycleProxy L69/SceneUnloadedTrigger L78）、ICustomLifecycle.cs 文件级 doc 挂首类型、AbstractQuery 缺 [Serializable]、RegisterCustomLifecycle 同名重载语义分裂（带参版不绑销毁清理）、Duplicate Awake Destroy(gameObject) 连带销毁用户整 GO。**Why:** 用户可能要求后续修复，重做全包审查需 50+ 工具调用成本高。**How to apply:** 用户提"修上次锐评/审查发现的问题"时按此清单直接定位修复，无需重新审查；逐条修复后更新此记忆对应条目。
+- [2026-09-10 20:31:00] [project] RAA 锐评全部建议项已当日修复完毕（在存档提交 9c5bea5 之后的工作树上，含新测试文件待提交）：Critical 全修——GetService 报错改两阶段初始化说明文案、Editor asmdef 移除 UNITY_INCLUDE_TESTS + package.json 移除 test-framework 硬依赖、Tests/Runtime asmdef 加 ODIN_INSPECTOR defineConstraints 守卫（Sirenix 引用保留，无 Odin 环境自动排除整个测试程序集）、AbstractContext.Dispose 解除 _instance 单例缓存、五文件（MiniEvent/ObservableValue/三集合）"零分配"宣称修正为仅 Invoke 路径；Style 全修——PlayerLoop"周期性检测"失实宣称 ×2、AesirArchitecture 空壳宿主注释改写、IView 措辞降级为档位约定、私有 Reset→ClearState（避免撞 Unity 魔法方法）、ICustomLifecycle 文档错挂、AbstractQuery 补 [Serializable]；Suggestions——AesirArchitecturePlayerLoop.Register 返回 AutoRemoveListenerHandle、RegisterCustomLifecycle(mono/go,evt,cb) 改绑销毁自动移除【行为变更，原先不自动移除】、AesirArchitecture/MonoLifecycleProxy 重复实例 Destroy(this) 替代 Destroy(gameObject)、RemoveListenerOnSceneUnloadedTrigger 补重复守卫、ObservableList.AddRange null→ArgumentNullException、能力矩阵补 ExecuteQuery 列（中英 README + Documentation~ 镜像）、决策表 ACA→RAA；新增 Tests/Editor/CapabilityExtensionsTests.cs 10 用例锁定 CQRS 链（此前 Command/Query 零覆盖）与 Dispose 重建行为。验证：EditMode 438 total/436 passed/0 failed/2 skipped；踩坑——Unity batchmode 存在编译错误时退出码仍为 0（2022.3.62 实测），必须 grep 日志勿信退出码；RemoveListenerWhenGameObjectOnDestroyed 返回 void 不可链式（CS0029）、属性访问不可单独作语句表达式（CS0201，用 _ = 丢弃赋值解决）。**Why:** 上一条锐评清单要求修复后更新对应条目。**How to apply:** 上一条清单已全部处置完毕，勿再当待办引用；剩余项仅新功能方向（async/时间调度/DI/FSM/OnEnable 重订，0.18 候选）；RAM 的 Tests asmdef 存在同样的 Sirenix 硬引用问题，修复时参照 RAA 的 ODIN_INSPECTOR defineConstraints 方案。
+- [2026-09-10 21:05:00] [project] 文档站 API 页结构规律（2026-09-10 手工同步 0.18.0 变更实测）：ScriptDocGenerator 生成的 API 页**只引用 XML <summary>（类与成员摘要），<remarks> 不上页**——因此改源码 remarks 不必同步文档站，改 summary 则必须；页内每个成员出现两次（顶部摘要表 + 成员详情段），手改需两处同步；成员有返回值时详情段含 **返回值** + api-returns-table div 块（签名变化时需补齐）；api/index.md 命名空间索引表也复制类 summary，类级 summary 变更时第三处同步。**Why:** Unity Bridge 不可用时文档站只能手工同步，摸清页面生成规律避免漏改。**How to apply:** API summary 变更后手工同步 = 摘要表行 + 成员详情段 +（类级含 api/index.md 行）；完成后 zensical build --strict 验证；彻底对齐仍需下个 Unity 会话跑生成器重新生成。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
