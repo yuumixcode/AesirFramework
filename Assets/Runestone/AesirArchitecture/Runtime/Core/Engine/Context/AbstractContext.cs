@@ -133,6 +133,24 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
+        /// 注销 Model：按类型键摘除注册并释放被摘除的实例。
+        /// </summary>
+        /// <typeparam name="TModel">要注销的 Model 类型，必须与注册时的类型参数一致</typeparam>
+        /// <remarks>
+        /// 与动态替换同属测试/调试用途：被摘除实例经 <see cref="System.IDisposable.Dispose" /> 释放，
+        /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
+        /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
+        /// </remarks>
+        public void UnregisterModel<TModel>() where TModel : class, IModel
+        {
+            if (_modelLocator.TryGet<TModel>(out var existing))
+            {
+                existing.Dispose();
+                _modelLocator.Unregister<TModel>();
+            }
+        }
+
+        /// <summary>
         /// 注册 Service 并绑定上下文。
         /// <para>若上下文已完成统一初始化，则立即初始化该 Service。若该类型已注册，视为动态替换：输出一条 Warning 日志，旧实例会被 <see cref="Dispose" /> 后再覆盖。</para>
         /// </summary>
@@ -162,11 +180,32 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
+        /// 注销 Service：按类型键摘除注册并释放被摘除的实例。
+        /// </summary>
+        /// <typeparam name="TService">要注销的 Service 类型，必须与注册时的类型参数一致</typeparam>
+        /// <remarks>
+        /// 与动态替换同属测试/调试用途：被摘除实例经 <see cref="System.IDisposable.Dispose" /> 释放，
+        /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
+        /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
+        /// </remarks>
+        public void UnregisterService<TService>() where TService : class, IService
+        {
+            if (_serviceLocator.TryGet<TService>(out var existing))
+            {
+                existing.Dispose();
+                _serviceLocator.Unregister<TService>();
+            }
+        }
+
+        /// <summary>
         /// 获取已注册的 Model。
         /// </summary>
         /// <typeparam name="TModel">要获取的 Model 类型，必须为引用类型并实现 <see cref="IModel" /></typeparam>
         /// <returns>已注册的 Model 实例</returns>
-        /// <exception cref="InvalidOperationException">目标 Model 未注册时抛出（"已注册但尚未初始化"的次级防护由 <c>CapabilityExtensions.GetModel</c> 扩展方法补充）</exception>
+        /// <exception cref="InvalidOperationException">
+        /// 目标 Model 未注册时抛出（"已注册但尚未初始化"的次级防护由
+        /// <c>CapabilityExtensions.GetModel</c> 扩展方法补充）
+        /// </exception>
         public TModel GetModel<TModel>() where TModel : class, IModel
         {
             if (_modelLocator.TryGet<TModel>(out var model))
@@ -185,7 +224,10 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="TService">要获取的 Service 类型，必须为引用类型并实现 <see cref="IService" /></typeparam>
         /// <returns>已注册的 Service 实例</returns>
-        /// <exception cref="InvalidOperationException">目标 Service 未注册时抛出（"已注册但尚未初始化"的次级防护由 <c>CapabilityExtensions.GetService</c> 扩展方法补充）</exception>
+        /// <exception cref="InvalidOperationException">
+        /// 目标 Service 未注册时抛出（"已注册但尚未初始化"的次级防护由
+        /// <c>CapabilityExtensions.GetService</c> 扩展方法补充）
+        /// </exception>
         public TService GetService<TService>() where TService : class, IService
         {
             if (_serviceLocator.TryGet<TService>(out var service))

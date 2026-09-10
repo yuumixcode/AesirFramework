@@ -45,9 +45,17 @@ namespace Runestone.AesirArchitecture.Samples.MvcStrict
         public void ResetCounter() => this.ExecuteCommand<SampleMvcStrictResetCommand>();
 
         /// <summary>
+        /// 缓存的加工值查询实例。Query 无内部状态（每次执行经 Context 重新取 Model），
+        /// 实例可跨调用复用——<c>ExecuteQuery</c> 带实例重载不分配新实例，
+        /// 通知回调等高频路径下亦无查询分配。
+        /// </summary>
+        readonly GetRoundedCountQuery _roundedCountQuery = new GetRoundedCountQuery();
+
+        /// <summary>
         /// 查询十位四舍五入后的近似值（原始值不变）。
         /// </summary>
-        public int GetRoundedCount() => this.ExecuteQuery<GetRoundedCountQuery, int>();
+        /// <remarks>复用缓存实例执行（带实例重载零分配）；对照：无参重载每次调用分配一个查询实例。</remarks>
+        public int GetRoundedCount() => this.ExecuteQuery(_roundedCountQuery);
     }
 }
 #endif

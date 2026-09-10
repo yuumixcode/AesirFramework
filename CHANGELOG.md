@@ -32,6 +32,31 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### [architecture] Aesir Architecture
+
+#### Added
+
+- **`IContext` / `AbstractContext<T>` 新增 `UnregisterModel<TModel>` / `UnregisterService<TService>`** —— 按类型键摘除注册并释放被摘除实例（订阅不迁移），与动态替换语义配套；未注册时静默无操作（幂等），注销后再次注册按新插入语义追加到注册顺序末尾
+- **`AesirArchitecture` 新增只读属性 `DontDestroyOnLoad`** —— 对外暴露 DDOL 决策的当前取值，供运行时查询与编辑器条件提示（Odin 可见性表达式）复用
+
+#### Fixed
+
+- **补齐 `AesirArchitectureAttributeProcessor` 宣称的类级条件 Warning 信息框** —— XML 文档宣称"DDOL 开关关闭时显示的类级 Warning"，此前实现只有两个 Info 框（宣称与实现不符）；现以 `@!$value.DontDestroyOnLoad` 表达式条件注入（仅关闭时显示，与运行时提醒日志口径一致）
+- **`RemoveListenerOnSceneUnloadedTriggerAttributeProcessor` 的宿主 DDOL 警告改为条件显示** —— 此前无条件常显，默认配置（DDOL 开启）下构成高严重度噪音；现仅在宿主存在且关闭时显示（经 `GetComponent` 读宿主只读属性；组件误放至非宿主物体时不显示）
+- **`AbstractSubmodule.Dispose` 现重置 `Initialized` 为 false** —— 已释放的模块不再自称已初始化，消除动态替换场景下旧实例初始化状态的误导
+- **`RemoveListenerOnSceneUnloadedTrigger.Awake` 现写入静态单例缓存** —— 与 `AesirArchitecture` / `MonoLifecycleProxy` 单例范式同形；预放置双实例在各自 Awake 期完成判重，修复"两个从未经 `Instance` 访问的预放置实例双双订阅 `sceneUnloaded`"的窗口（`Instance` getter 的 `FindAnyObjectByType` 保留为销毁后重发现与执行顺序竞态的兜底）
+
+#### Changed
+
+- **示例：Counter-Mvc-Quick / Counter-Mvp-Quick 的 Model 改为只读属性暴露可写 ObservableValue** —— 公开可变字段 `count` 收敛为私有 `[SerializeField]` 字段 + 只读属性 `Count`（写入路径 `Count.Value++` 不变，快捷档零封装语义不受影响；序列化名不变，既有场景/预制体数据兼容），防外部整体替换 ObservableValue 实例导致订阅悬空
+- **示例：Counter-Mvc-Strict / Counter-Mvp-Strict 查询改缓存实例复用** —— Controller / Presenter 缓存 Query 实例经带实例重载执行（零分配），替代此前每次调用无参重载（每次分配一个查询实例）；严格档 View 注释同步改写为"复用查询实例"教学口径
+- **README（中英）：MiniEvent"零分配事件"项目结构行补"（Invoke 路径）"限定** —— 0.18.0 修正类文档同款失实时漏网的两处
+- **README（中英）项目结构补列 `ObservableCollections` 与 `RuntimeInitializeLoadType` 示例目录** —— 此前树中缺失
+
+---
+
 ## [0.18.0] - 2026-09-10
 
 ---

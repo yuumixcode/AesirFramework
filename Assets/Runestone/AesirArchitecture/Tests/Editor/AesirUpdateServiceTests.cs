@@ -28,8 +28,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [SetUp]
         public void SetUp()
         {
-            _testRoot = Path.Combine(AesirUpdateService.ToAbsolutePath("Temp"),
-                "AesirUpdateServiceTests", Guid.NewGuid().ToString("N"));
+            _testRoot = Path.Combine(AesirUpdateService.ToAbsolutePath("Temp"), "AesirUpdateServiceTests",
+                Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(_testRoot);
         }
 
@@ -87,8 +87,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void ParsePackageJson_MissingFileReturnsEmpty()
         {
-            var (name, version) = AesirUpdateService.ParsePackageJson(
-                Path.Combine(_testRoot, "not-exist.json"));
+            var (name, version) =
+                AesirUpdateService.ParsePackageJson(Path.Combine(_testRoot, "not-exist.json"));
 
             Assert.IsEmpty(name);
             Assert.IsEmpty(version);
@@ -106,13 +106,13 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 "Assets/Runestone/AesirArchitecture/A.cs",
                 "Assets/Runestone/AesirArchitecture/Old/Old.cs",
                 "Assets/Runestone/AesirArchitecture/Keep.cs",
-                "Assets/Runestone/AesirModules/B.cs",
+                "Assets/Runestone/AesirModules/B.cs"
             };
             string[] current =
             {
                 "Assets/Runestone/AesirArchitecture/A.cs",
                 "Assets/Runestone/AesirArchitecture/Keep.cs",
-                "Assets/Runestone/AesirArchitecture/New.cs",
+                "Assets/Runestone/AesirArchitecture/New.cs"
             };
 
             var stale = AesirUpdateService.ComputeStaleFiles(
@@ -126,8 +126,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void ComputeStaleFiles_EmptyPreviousMeansNoDeletionBasis()
         {
             // 首次安装 / 无历史记录时没有任何删除依据，必须返回空（宁可残留不误删）
-            var stale = AesirUpdateService.ComputeStaleFiles(
-                null, new[] { "Assets/Runestone/AesirArchitecture/A.cs" }, "Assets/Runestone/AesirArchitecture");
+            var stale = AesirUpdateService.ComputeStaleFiles(null,
+                new[] { "Assets/Runestone/AesirArchitecture/A.cs" }, "Assets/Runestone/AesirArchitecture");
 
             Assert.IsEmpty(stale);
         }
@@ -146,7 +146,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 Rel(Path.Combine(pkgRoot, "Old", "old.cs")),
                 Rel(Path.Combine(pkgRoot, "Old", "Sub", "x.cs")),
                 Rel(Path.Combine(pkgRoot, "Old", "EmptyDir")),
-                Rel(Path.Combine(_testRoot, "Ghost.cs")), // 不存在的条目应被忽略
+                Rel(Path.Combine(_testRoot, "Ghost.cs")) // 不存在的条目应被忽略
             };
 
             var deleted = AesirUpdateService.DeleteStaleEntries(stale);
@@ -191,23 +191,25 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var sourceRel = Rel(srcAbs);
             var backupRootRel = Rel(Path.Combine(_testRoot, "backups"));
 
-            var first = AesirUpdateService.BackupRunestone("20260101-000000_v0.1.0", sourceRel, backupRootRel, 2);
-            var second = AesirUpdateService.BackupRunestone("20260102-000000_v0.2.0", sourceRel, backupRootRel, 2);
-            var third = AesirUpdateService.BackupRunestone("20260103-000000_v0.3.0", sourceRel, backupRootRel, 2);
+            var first =
+                AesirUpdateService.BackupRunestone("20260101-000000_v0.1.0", sourceRel, backupRootRel, 2);
+            var second =
+                AesirUpdateService.BackupRunestone("20260102-000000_v0.2.0", sourceRel, backupRootRel, 2);
+            var third =
+                AesirUpdateService.BackupRunestone("20260103-000000_v0.3.0", sourceRel, backupRootRel, 2);
 
             // 时间戳前缀保证 Ordinal 排序即时间序：保留最近 2 份，最旧的被裁掉
             Assert.IsFalse(Directory.Exists(first));
             Assert.IsTrue(Directory.Exists(second));
             Assert.IsTrue(Directory.Exists(third));
-            StringAssert.AreEqualIgnoringCase("content",
-                File.ReadAllText(Path.Combine(third, "hello.txt")));
+            StringAssert.AreEqualIgnoringCase("content", File.ReadAllText(Path.Combine(third, "hello.txt")));
         }
 
         [Test]
         public void BackupRunestone_MissingSourceReturnsNull()
         {
             var result = AesirUpdateService.BackupRunestone("20260101-000000_v0.1.0",
-                Rel(Path.Combine(_testRoot, "not-exist")), Rel(Path.Combine(_testRoot, "backups")), 3);
+                Rel(Path.Combine(_testRoot, "not-exist")), Rel(Path.Combine(_testRoot, "backups")));
 
             Assert.IsNull(result);
         }
@@ -254,7 +256,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                     {
                         name = "AesirArchitecture", version = "0.14.0",
                         files = new[] { "Assets/Runestone/AesirArchitecture/old.cs" }
-                    },
+                    }
                 }
             };
             var incoming = new AesirUpdateService.FilesManifest.PackageEntry
@@ -332,13 +334,15 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void ExtractTagFromLocation_GitHubRedirectFormats()
         {
             // 绝对地址（curl 实测格式）
-            Assert.AreEqual("v1.0.246-Unity2018Compatible", AesirUpdateService.ExtractTagFromLocation(
-                "https://github.com/liangxiegame/QFramework/releases/tag/v1.0.246-Unity2018Compatible"));
+            Assert.AreEqual("v1.0.246-Unity2018Compatible",
+                AesirUpdateService.ExtractTagFromLocation(
+                    "https://github.com/liangxiegame/QFramework/releases/tag/v1.0.246-Unity2018Compatible"));
             // 相对地址（Location 可能只给路径）
-            Assert.AreEqual("v0.15.0", AesirUpdateService.ExtractTagFromLocation(
-                "/yuumixcode/AesirFramework/releases/tag/v0.15.0"));
+            Assert.AreEqual("v0.15.0",
+                AesirUpdateService.ExtractTagFromLocation("/yuumixcode/AesirFramework/releases/tag/v0.15.0"));
             // 不匹配 / 空值
-            Assert.IsNull(AesirUpdateService.ExtractTagFromLocation("https://github.com/yuumixcode/AesirFramework"));
+            Assert.IsNull(
+                AesirUpdateService.ExtractTagFromLocation("https://github.com/yuumixcode/AesirFramework"));
             Assert.IsNull(AesirUpdateService.ExtractTagFromLocation(null));
             Assert.IsNull(AesirUpdateService.ExtractTagFromLocation(""));
         }
@@ -349,7 +353,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var snapshot = new AesirUpdateService.ReleaseSnapshot
             {
                 Source = "jsDelivr (cdn.jsdelivr.net)",
-                Tag = "v0.15.0",
+                Tag = "v0.15.0"
             };
 
             // 资产命名约定 <包目录名>-v<版本>.unitypackage，下载走 GitHub Release 直链

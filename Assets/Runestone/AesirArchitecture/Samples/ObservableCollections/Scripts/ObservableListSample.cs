@@ -30,8 +30,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
                 Debug.Log($"[List] Removed → 原索引 {evt.Index}：{evt.Item}（当前 {_inventory.Count} 件）"));
             _replacedSub = _inventory.AddReplacedListener(evt =>
                 Debug.Log($"[List] Replaced → 索引 {evt.Index}：{evt.OldItem} → {evt.NewItem}"));
-            _clearedSub = _inventory.AddClearedListener(
-                () => Debug.Log("[List] Cleared → 背包已清空"));
+            _clearedSub = _inventory.AddClearedListener(() => Debug.Log("[List] Cleared → 背包已清空"));
         }
 
         void OnDisable()
@@ -98,7 +97,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
         [ContextMenu("Remove：移除不存在的元素（不触发事件）")]
         void RemoveMissingItem()
         {
-            bool removed = _inventory.Remove("不存在的道具");
+            var removed = _inventory.Remove("不存在的道具");
             Debug.Log($"[List] Remove(\"不存在的道具\") → 返回 {removed}，事件未触发");
         }
 

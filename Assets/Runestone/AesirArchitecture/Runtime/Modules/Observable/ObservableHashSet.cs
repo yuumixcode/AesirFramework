@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
@@ -14,7 +13,8 @@ namespace Runestone.AesirArchitecture
     /// 内部组合 <see cref="HashSet{T}" /> 存储元素，使用 <see cref="MiniEvent" /> 管理监听者——Invoke 路径零分配（直接多播调用）。
     /// <para>
     /// <c>[SerializeField]</c> 标记 set 字段——Unity 原生不序列化 <see cref="HashSet{T}" />，
-    /// 安装 Odin Inspector 后该字段可被 Odin 序列化，便于在 Inspector 中编辑初始元素（与 <see cref="ObservableDictionary{TKey, TValue}" /> 行为一致）。
+    /// 安装 Odin Inspector 后该字段可被 Odin 序列化，便于在 Inspector 中编辑初始元素（与 <see cref="ObservableDictionary{TKey, TValue}" />
+    /// 行为一致）。
     /// </para>
     /// <para>
     /// 写操作完成后才触发事件，监听者回调中读取到的集合已是变更后的状态。
@@ -39,12 +39,11 @@ namespace Runestone.AesirArchitecture
     [Serializable]
     public sealed class ObservableHashSet<T> : IObservableHashSet<T>
     {
-        [SerializeField]
-        HashSet<T> set = new HashSet<T>();
-
         readonly MiniEvent<T> _addedEvent = new MiniEvent<T>();
-        readonly MiniEvent<T> _removedEvent = new MiniEvent<T>();
         readonly MiniEvent _clearedEvent = new MiniEvent();
+        readonly MiniEvent<T> _removedEvent = new MiniEvent<T>();
+
+        HashSet<T> set = new HashSet<T>();
 
         /// <summary>
         /// 默认构造，创建空集合。
@@ -148,7 +147,7 @@ namespace Runestone.AesirArchitecture
         /// <remarks>逐项 Add 对已存在元素天然跳过，参数含重复项或传入集合自身时均为无变化操作。</remarks>
         public void UnionWith(IEnumerable<T> other)
         {
-            foreach (T item in other)
+            foreach (var item in other)
             {
                 Add(item);
             }
@@ -158,8 +157,10 @@ namespace Runestone.AesirArchitecture
         /// 差集运算：逐项复用 <see cref="Remove" />，仅对实际存在的元素触发 Removed 事件。
         /// </summary>
         /// <param name="other">要移除的元素集合。</param>
-        /// <remarks>传入集合自身时短路为 <see cref="Clear" />（语义与 BCL <see cref="HashSet{T}" /> 一致）——
-        /// 若无此短路，枚举期间的自移除会抛 <see cref="InvalidOperationException" />。</remarks>
+        /// <remarks>
+        /// 传入集合自身时短路为 <see cref="Clear" />（语义与 BCL <see cref="HashSet{T}" /> 一致）——
+        /// 若无此短路，枚举期间的自移除会抛 <see cref="InvalidOperationException" />。
+        /// </remarks>
         public void ExceptWith(IEnumerable<T> other)
         {
             if (ReferenceEquals(this, other))
@@ -168,7 +169,7 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            foreach (T item in other)
+            foreach (var item in other)
             {
                 Remove(item);
             }
@@ -178,13 +179,15 @@ namespace Runestone.AesirArchitecture
         /// 交集运算：移除不在 <paramref name="other" /> 中的元素，逐项触发 Removed 事件。
         /// </summary>
         /// <param name="other">保留元素的比较集合。</param>
-        /// <remarks>先物化 <paramref name="other" /> 与自身快照再逐项移除，避免枚举期间修改自身。
-        /// 传入集合自身时为无变化操作，不触发事件。</remarks>
+        /// <remarks>
+        /// 先物化 <paramref name="other" /> 与自身快照再逐项移除，避免枚举期间修改自身。
+        /// 传入集合自身时为无变化操作，不触发事件。
+        /// </remarks>
         public void IntersectWith(IEnumerable<T> other)
         {
             var keep = new HashSet<T>(other);
             var snapshot = new List<T>(set);
-            foreach (T item in snapshot)
+            foreach (var item in snapshot)
             {
                 if (!keep.Contains(item))
                 {
@@ -212,7 +215,7 @@ namespace Runestone.AesirArchitecture
 
             var otherSet = new HashSet<T>(other);
             var snapshot = new List<T>(set);
-            foreach (T item in snapshot)
+            foreach (var item in snapshot)
             {
                 if (otherSet.Remove(item))
                 {
@@ -220,7 +223,7 @@ namespace Runestone.AesirArchitecture
                 }
             }
 
-            foreach (T item in otherSet)
+            foreach (var item in otherSet)
             {
                 Add(item);
             }
@@ -268,12 +271,6 @@ namespace Runestone.AesirArchitecture
         /// <returns>元素相同返回 <c>true</c>，否则返回 <c>false</c>。</returns>
         public bool SetEquals(IEnumerable<T> other) => set.SetEquals(other);
 
-        /// <summary>
-        /// 返回遍历元素的结构体枚举器，foreach 具体类型时零分配。
-        /// </summary>
-        /// <returns>元素枚举器。</returns>
-        public Enumerator GetEnumerator() => new Enumerator(set.GetEnumerator());
-
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => set.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)set).GetEnumerator();
@@ -303,6 +300,12 @@ namespace Runestone.AesirArchitecture
             _clearedEvent.RemoveListener(callback);
 
         /// <summary>
+        /// 返回遍历元素的结构体枚举器，foreach 具体类型时零分配。
+        /// </summary>
+        /// <returns>元素枚举器。</returns>
+        public Enumerator GetEnumerator() => new Enumerator(set.GetEnumerator());
+
+        /// <summary>
         /// 清空所有事件监听。
         /// </summary>
         /// <remarks>
@@ -325,7 +328,7 @@ namespace Runestone.AesirArchitecture
         /// </remarks>
         public struct Enumerator : IEnumerator<T>
         {
-            private HashSet<T>.Enumerator _inner;
+            HashSet<T>.Enumerator _inner;
 
             internal Enumerator(HashSet<T>.Enumerator inner) => _inner = inner;
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
@@ -12,7 +11,7 @@ namespace Runestone.AesirArchitecture
     /// <typeparam name="TKey">键类型</typeparam>
     /// <typeparam name="TValue">值类型</typeparam>
     /// <remarks>
-    /// 内部组合 <see cref="Dictionary{TKey, TValue}" /> 存储键值，使用 <see cref="MiniEvent" /> 管理监听者——Invoke 路径零分配（直接多播调用）。
+    /// 内部组合 <see cref="Dictionary{TKey,TValue}" /> 存储键值，使用 <see cref="MiniEvent" /> 管理监听者——Invoke 路径零分配（直接多播调用）。
     /// <para>
     /// <c>[SerializeField]</c> 标记 dictionary 字段——Unity 原生不序列化 <see cref="Dictionary{TKey, TValue}" />，
     /// 安装 Odin Inspector 后该字段可被 Odin 序列化，便于在 Inspector 中编辑初始键值。
@@ -35,13 +34,18 @@ namespace Runestone.AesirArchitecture
     [Serializable]
     public sealed class ObservableDictionary<TKey, TValue> : IObservableDictionary<TKey, TValue>
     {
-        [SerializeField]
-        Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
+        readonly MiniEvent<KeyValuePair<TKey, TValue>> _addedEvent =
+            new MiniEvent<KeyValuePair<TKey, TValue>>();
 
-        readonly MiniEvent<KeyValuePair<TKey, TValue>> _addedEvent = new MiniEvent<KeyValuePair<TKey, TValue>>();
-        readonly MiniEvent<KeyValuePair<TKey, TValue>> _removedEvent = new MiniEvent<KeyValuePair<TKey, TValue>>();
-        readonly MiniEvent<DictionaryUpdateEventArgs<TKey, TValue>> _updatedEvent = new MiniEvent<DictionaryUpdateEventArgs<TKey, TValue>>();
         readonly MiniEvent _clearedEvent = new MiniEvent();
+
+        readonly MiniEvent<KeyValuePair<TKey, TValue>> _removedEvent =
+            new MiniEvent<KeyValuePair<TKey, TValue>>();
+
+        readonly MiniEvent<DictionaryUpdateEventArgs<TKey, TValue>> _updatedEvent =
+            new MiniEvent<DictionaryUpdateEventArgs<TKey, TValue>>();
+
+        Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
 
         /// <summary>
         /// 默认构造，创建空字典。
@@ -65,7 +69,7 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            foreach (KeyValuePair<TKey, TValue> pair in initialItems)
+            foreach (var pair in initialItems)
             {
                 dictionary.Add(pair.Key, pair.Value);
             }
@@ -102,7 +106,7 @@ namespace Runestone.AesirArchitecture
             get => dictionary[key];
             set
             {
-                if (dictionary.TryGetValue(key, out TValue oldValue))
+                if (dictionary.TryGetValue(key, out var oldValue))
                 {
                     if (EqualityComparer<TValue>.Default.Equals(oldValue, value))
                     {
@@ -168,7 +172,7 @@ namespace Runestone.AesirArchitecture
         /// <remarks>使用 <see cref="Dictionary{TKey, TValue}.Remove(TKey, out TValue)" /> 在移除的同时取回旧值，单次哈希查找。</remarks>
         public bool Remove(TKey key)
         {
-            if (!dictionary.Remove(key, out TValue value))
+            if (!dictionary.Remove(key, out var value))
             {
                 return false;
             }
@@ -185,7 +189,7 @@ namespace Runestone.AesirArchitecture
         /// <remarks>不复用 <see cref="Remove(TKey)" />——其按键删除不校验值；此处先验证键值对完全匹配再移除，避免误删同键不同值。</remarks>
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            if (!dictionary.TryGetValue(item.Key, out TValue value) ||
+            if (!dictionary.TryGetValue(item.Key, out var value) ||
                 !EqualityComparer<TValue>.Default.Equals(value, item.Value))
             {
                 return false;
@@ -218,12 +222,6 @@ namespace Runestone.AesirArchitecture
         public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) =>
             ((ICollection<KeyValuePair<TKey, TValue>>)dictionary).CopyTo(array, arrayIndex);
 
-        /// <summary>
-        /// 返回遍历键值对的结构体枚举器，foreach 具体类型时零分配。
-        /// </summary>
-        /// <returns>键值对枚举器。</returns>
-        public Enumerator GetEnumerator() => new Enumerator(dictionary.GetEnumerator());
-
         IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() =>
             dictionary.GetEnumerator();
 
@@ -251,7 +249,8 @@ namespace Runestone.AesirArchitecture
             _removedEvent.RemoveListener(callback);
 
         /// <inheritdoc cref="IReadOnlyObservableDictionary{TKey, TValue}.AddUpdatedListener" />
-        public AutoRemoveListenerHandle AddUpdatedListener(Action<DictionaryUpdateEventArgs<TKey, TValue>> callback) =>
+        public AutoRemoveListenerHandle AddUpdatedListener(
+            Action<DictionaryUpdateEventArgs<TKey, TValue>> callback) =>
             _updatedEvent.AddListener(callback);
 
         /// <inheritdoc cref="IReadOnlyObservableDictionary{TKey, TValue}.RemoveUpdatedListener" />
@@ -265,6 +264,12 @@ namespace Runestone.AesirArchitecture
         /// <inheritdoc cref="IReadOnlyObservableDictionary{TKey, TValue}.RemoveClearedListener" />
         public void RemoveClearedListener(Action callback) =>
             _clearedEvent.RemoveListener(callback);
+
+        /// <summary>
+        /// 返回遍历键值对的结构体枚举器，foreach 具体类型时零分配。
+        /// </summary>
+        /// <returns>键值对枚举器。</returns>
+        public Enumerator GetEnumerator() => new Enumerator(dictionary.GetEnumerator());
 
         /// <summary>
         /// 清空所有事件监听。
@@ -286,11 +291,12 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <remarks>
         /// 结构体枚举器，foreach 具体类型时零分配。
-        /// 遍历期间修改字典会抛 <see cref="InvalidOperationException" />（继承自内部 <see cref="Dictionary{TKey, TValue}" /> 枚举器的版本检查，与 BCL 语义一致）。
+        /// 遍历期间修改字典会抛 <see cref="InvalidOperationException" />（继承自内部 <see cref="Dictionary{TKey, TValue}" /> 枚举器的版本检查，与
+        /// BCL 语义一致）。
         /// </remarks>
         public struct Enumerator : IEnumerator<KeyValuePair<TKey, TValue>>
         {
-            private Dictionary<TKey, TValue>.Enumerator _inner;
+            Dictionary<TKey, TValue>.Enumerator _inner;
 
             internal Enumerator(Dictionary<TKey, TValue>.Enumerator inner) => _inner = inner;
 

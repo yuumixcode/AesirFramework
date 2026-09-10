@@ -22,8 +22,9 @@ namespace Runestone.AesirArchitecture
         /// 是否已初始化（只读）
         /// </summary>
         /// <remarks>
-        /// 由 <see cref="ICanInitialize.Initialize" /> 在调用 <see cref="OnInitialize" /> 之后设为 <c>true</c>。
-        /// 一旦初始化完成便不可重置，用于在运行时判断子模块是否已就绪。
+        /// 由 <see cref="ICanInitialize.Initialize" /> 在调用 <see cref="OnInitialize" /> 之后设为 <c>true</c>；
+        /// <see cref="Dispose" /> 释放后重置为 <c>false</c>——已释放的模块不再自称已初始化，
+        /// 防止动态替换场景下旧实例的初始化状态产生误导。
         /// </remarks>
         public bool Initialized { get; private set; }
 
@@ -38,12 +39,14 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <remarks>
         /// 先调用 <see cref="OnDispose" /> 执行子类清理逻辑，随后将上下文引用置为 <c>null</c>，
-        /// 断开与模块体系的连接以避免后续误用已释放的上下文。
+        /// 断开与模块体系的连接以避免后续误用已释放的上下文；
+        /// 同时将 <see cref="Initialized" /> 重置为 <c>false</c>——已释放的模块不再自称已初始化。
         /// </remarks>
         public void Dispose()
         {
             OnDispose();
             _context = null;
+            Initialized = false;
         }
 
         void ICanSetContext.SetContext(IContext context) => _context = context;
