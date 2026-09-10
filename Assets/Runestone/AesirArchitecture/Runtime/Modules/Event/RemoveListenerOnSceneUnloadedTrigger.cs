@@ -65,6 +65,13 @@ namespace Runestone.AesirArchitecture
 
         void Awake()
         {
+            if (_instance != null && _instance != this)
+            {
+                // 重复实例只销毁自身，避免重复订阅场景卸载事件造成分桶分裂
+                Destroy(this);
+                return;
+            }
+
             SceneManager.sceneUnloaded += OnSceneUnloaded;
         }
 
@@ -75,7 +82,7 @@ namespace Runestone.AesirArchitecture
         /// 由 <see cref="ResetStatics" /> 和 <see cref="OnDestroy" /> 内部调用，
         /// 确保无论域重载还是组件销毁，都走同一条完整重置路径。
         /// </remarks>
-        void Reset()
+        void ClearState()
         {
             _sceneHandles.Clear();
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
@@ -83,7 +90,7 @@ namespace Runestone.AesirArchitecture
 
         void OnDestroy()
         {
-            Reset();
+            ClearState();
         }
 
         /// <summary>
@@ -97,7 +104,7 @@ namespace Runestone.AesirArchitecture
         {
             if (_instance != null)
             {
-                _instance.Reset();
+                _instance.ClearState();
             }
 
             _instance = null;

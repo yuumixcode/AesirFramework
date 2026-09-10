@@ -17,9 +17,6 @@
     "url": "https://github.com/yuumixcode"
   },
   "license": "MIT",
-  "dependencies": {
-    "com.unity.test-framework": "1.1.33"
-  },
   "samples": [
     {
       "displayName": "Counter-MVC-Quick（快捷档）",

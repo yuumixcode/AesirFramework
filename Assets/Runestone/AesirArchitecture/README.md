@@ -229,13 +229,13 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ### 能力矩阵
 
-| 模块 | GetModel | GetService | ExecuteCommand | Initialize | Dispose |
-|------|:--------:|:---------:|:--------------:|:----------:|:-------:|
-| **IModel** | ✓ | | | ✓ | ✓ |
-| **IService** | ✓ | ✓ | | ✓ | ✓ |
-| **IView** | ✓ | ✓ | | | |
-| **IController** | ✓ | ✓ | ✓ | | |
-| **IPresenter** | ✓ | ✓ | ✓ | | ✓ |
+| 模块 | GetModel | GetService | ExecuteCommand | ExecuteQuery | Initialize | Dispose |
+|------|:--------:|:---------:|:--------------:|:------------:|:----------:|:-------:|
+| **IModel** | ✓ | | | | ✓ | ✓ |
+| **IService** | ✓ | ✓ | | | ✓ | ✓ |
+| **IView** | ✓ | ✓ | | | | |
+| **IController** | ✓ | ✓ | ✓ | ✓ | | |
+| **IPresenter** | ✓ | ✓ | ✓ | ✓ | | ✓ |
 
 ## 项目结构
 

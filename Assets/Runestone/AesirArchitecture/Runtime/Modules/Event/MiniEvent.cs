@@ -7,7 +7,8 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <remarks>
     /// 基于 <see cref="Action" /> 委托的轻量级事件实现。不使用 <see cref="List{T}" /> 存储监听者，
-    /// 而是直接通过 <c>+=</c> / <c>-=</c> 操作委托，实现零分配的监听管理。
+    /// 而是直接通过 <c>+=</c> / <c>-=</c> 操作委托，实现 Invoke 路径零分配（直接多播调用）。
+    /// 注意：订阅与退订路径（<c>+=</c> / <c>-=</c>）有与当前监听者数量成正比的委托分配，仅适合低频订阅场景。
     /// <para>
     /// <see cref="AddListener" /> 返回 <see cref="AutoRemoveListenerHandle" />，
     /// 支持使用 using 语句在作用域结束时自动移除监听，或通过
@@ -82,7 +83,8 @@ namespace Runestone.AesirArchitecture
     /// <typeparam name="T">事件参数类型</typeparam>
     /// <remarks>
     /// 基于 <see cref="Action{T}" /> 委托的轻量级事件实现。不使用 <see cref="List{T}" /> 存储监听者，
-    /// 而是直接通过 <c>+=</c> / <c>-=</c> 操作委托，实现零分配的监听管理。
+    /// 而是直接通过 <c>+=</c> / <c>-=</c> 操作委托，实现 Invoke 路径零分配（直接多播调用）。
+    /// 注意：订阅与退订路径（<c>+=</c> / <c>-=</c>）有与当前监听者数量成正比的委托分配，仅适合低频订阅场景。
     /// <para>
     /// <see cref="AddListener" /> 返回 <see cref="AutoRemoveListenerHandle" />，
     /// 支持使用 using 语句在作用域结束时自动移除监听，或通过

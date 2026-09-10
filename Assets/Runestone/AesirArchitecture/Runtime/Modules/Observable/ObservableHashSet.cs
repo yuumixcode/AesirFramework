@@ -11,7 +11,7 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <typeparam name="T">元素类型</typeparam>
     /// <remarks>
-    /// 内部组合 <see cref="HashSet{T}" /> 存储元素，使用 <see cref="MiniEvent" /> 管理监听者，零分配事件系统。
+    /// 内部组合 <see cref="HashSet{T}" /> 存储元素，使用 <see cref="MiniEvent" /> 管理监听者——Invoke 路径零分配（直接多播调用）。
     /// <para>
     /// <c>[SerializeField]</c> 标记 set 字段——Unity 原生不序列化 <see cref="HashSet{T}" />，
     /// 安装 Odin Inspector 后该字段可被 Odin 序列化，便于在 Inspector 中编辑初始元素（与 <see cref="ObservableDictionary{TKey, TValue}" /> 行为一致）。

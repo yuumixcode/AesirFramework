@@ -6,8 +6,13 @@ namespace Runestone.AesirArchitecture
     /// Aesir Architecture 接入 MonoBehaviour 生命周期的持久化物体对象。
     /// </summary>
     /// <remarks>
-    /// 通过 <c>[DefaultExecutionOrder(-999)]</c> 确保在场景中其他 MonoBehaviour 的 <c>Awake</c> 之前执行，
-    /// 使架构基础设施先于业务逻辑完成初始化。
+    /// 本物体是框架 Mono 组件（MonoLifecycleProxy、RemoveListenerOnSceneUnloadedTrigger 等）的 DDOL 宿主，
+    /// 通过 <c>[DefaultExecutionOrder(-999)]</c> 确保其 <c>Awake</c> 在场景中其他 MonoBehaviour 之前执行，
+    /// 令宿主尽早完成去重与 DDOL 决策。
+    /// <para>
+    /// <b>注意：本物体不初始化任何架构数据</b>——架构上下文（<see cref="AbstractContext{T}" />）是纯 C# 懒加载单例，
+    /// 首次访问 <c>AbstractContext&lt;T&gt;.Instance</c> 时自动创建并完成注册与初始化，不依赖本物体存在；
+    /// 预放置本物体仅在使用上述宿主挂载型组件时才有必要。
     /// <para>
     /// 是否加入 DontDestroyOnLoad 场景由序列化字段 <see cref="dontDestroyOnLoad" /> 统一控制，
     /// 场景预放置与运行时创建两种来源共用同一份决策：
@@ -99,7 +104,8 @@ namespace Runestone.AesirArchitecture
         {
             if (_instance != null && _instance != this)
             {
-                Destroy(gameObject);
+                // 仅移除重复组件自身而非整个 GameObject——本组件可能被预放置在用户业务物体上
+                Destroy(this);
                 return;
             }
 

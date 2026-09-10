@@ -1,21 +1,17 @@
 namespace Runestone.AesirArchitecture
 {
     /// <summary>
-    /// 自定义生命周期接口集合。实现这些接口的类可通过
-    /// <see cref="MonoLifecycleProxy.Register(object)" /> 自动注册到对应的生命周期事件。
+    /// 自定义 FixedUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.FixedUpdate" />。
     /// </summary>
     /// <remarks>
-    /// 每个接口对应一个 <see cref="MonoLifecycleEvent" />，方法名以 <c>OnCustom</c> 前缀区分 Unity 原生回调。
-    /// <para>
-    /// <see cref="MonoLifecycleProxy.RegisterAuto(object)" /> 会扫描目标对象实现的所有
-    /// ICustomXXX 接口，将对应方法注册到匹配的事件中，并在对象销毁时自动取消订阅。
-    /// </para>
+    /// 本文件中的接口集合（ICustomFixedUpdate 至 ICustomOnApplicationQuit）每个接口对应一个
+    /// <see cref="MonoLifecycleEvent" />，方法名以 <c>OnCustom</c> 前缀区分 Unity 原生回调。
+    /// 实现任意 ICustomXXX 接口的对象可通过 <see cref="MonoLifecycleProxy.RegisterAuto(object)" />
+    /// 自动注册到匹配的事件；MonoBehaviour 经 <see cref="MonoLifecycleProxy.Register(MonoBehaviour)" />
+    /// 注册时还会在所在 GameObject 销毁时自动取消订阅。
     /// </remarks>
     /// <seealso cref="MonoLifecycleProxy" />
     /// <seealso cref="MonoLifecycleEvent" />
-    /// <summary>
-    /// 自定义 FixedUpdate 生命周期。对应 <see cref="MonoLifecycleEvent.FixedUpdate" />。
-    /// </summary>
     public interface ICustomFixedUpdate
     {
         /// <summary>

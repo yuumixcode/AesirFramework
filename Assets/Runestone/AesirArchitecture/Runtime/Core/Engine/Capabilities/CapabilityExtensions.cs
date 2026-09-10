@@ -52,7 +52,9 @@ namespace Runestone.AesirArchitecture
         /// <param name="self">调用方实例，必须已持有有效的上下文引用</param>
         /// <returns>已注册且已初始化完成的 Service 实例</returns>
         /// <exception cref="InvalidOperationException">
-        /// 目标 Service 已注册但尚未初始化时抛出——通常表示注册顺序错误或存在循环依赖，被依赖的 Service 应先注册。
+        /// 目标 Service 已注册但尚未初始化时抛出。可能为 Service 间依赖的注册顺序问题（被依赖者应先注册）；
+        /// 若调用发生在 Model 的 <c>OnInitialize</c> 中则属必然——框架按「先全部 Model、后全部 Service」两阶段初始化，
+        /// Model 阶段任何 Service 都尚未初始化，应延迟到运行期方法调用中获取。
         /// </exception>
         public static T GetService<T>(this ICanGetService self) where T : class, IService
         {
@@ -62,8 +64,11 @@ namespace Runestone.AesirArchitecture
             {
                 throw new InvalidOperationException(
                     $"{AesirArchitectureDebug.ErrorTag} [{self.GetType().Name}] 尝试获取 Service [{typeof(T).Name}]，" +
-                    "但该 Service 尚未初始化。这通常表示注册顺序错误或存在循环依赖——" +
-                    $"被依赖的 Service 应先注册。请检查 Configure() 中 RegisterService<{typeof(T).Name}>() 的调用顺序。");
+                    "但该 Service 尚未初始化。可能原因与修复方式：\n" +
+                    "① Service 间依赖注册顺序靠后——被依赖的 Service 应先注册，" +
+                    $"请检查 Configure() 中 RegisterService<{typeof(T).Name}>() 的调用顺序；\n" +
+                    "② 调用发生在 Model 的 OnInitialize 中——Context 按「先全部 Model、后全部 Service」两阶段初始化，" +
+                    "Model 阶段所有 Service 必然尚未初始化（与注册顺序无关），请改为延迟到运行期方法调用中再获取。");
             }
 
             return service;

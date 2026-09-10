@@ -102,7 +102,11 @@ namespace Runestone.AesirArchitecture.Samples.MvcStrict
         /// <summary>
         /// 根据当前计数值更新 UI 文本显示（原始值 + Query 加工值）。
         /// </summary>
-        public void UpdateCountText(int count)
+        /// <remarks>
+        /// 教学演示：每次通知都执行一次 Query（ExecuteQuery 每调用分配一个查询实例）。
+        /// 生产环境的每帧刷新热路径应缓存加工结果，勿在通知回调中反复查询。
+        /// </remarks>
+        void UpdateCountText(int count)
         {
             if (countText != null)
             {
