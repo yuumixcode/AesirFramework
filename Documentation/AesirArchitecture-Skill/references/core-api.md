@@ -48,7 +48,9 @@ void OnCountChanged(int newValue)
 }
 ```
 
-## MiniEvent / MiniEvent\<T\> — 零分配事件
+## MiniEvent / MiniEvent\<T\> — 轻量事件
+
+> Invoke 路径零分配（直接多播调用）；订阅 / 退订路径有与监听者数量成正比的少量委托分配——仅适合低频订阅，勿在每帧路径反复增删监听。
 
 ### 基本用法
 
@@ -94,7 +96,7 @@ MiniEvent<DamageInfo> damageDealt = new MiniEvent<DamageInfo>();
 damageDealt.Invoke(new DamageInfo { Amount = 50, Source = attacker });
 ```
 
-> **异常语义**：MiniEvent 是零分配直调，异常语义 = 原生 C# 事件（fail-fast）。一个监听者抛异常会中断后续监听者。监听回调不应抛异常。
+> **异常语义**：MiniEvent 的 Invoke 为零分配直调，异常语义 = 原生 C# 事件（fail-fast）。一个监听者抛异常会中断后续监听者。监听回调不应抛异常。
 
 ## AbstractContext\<T\> — 上下文
 
@@ -147,10 +149,12 @@ GenericLocator<IAudioService>.Unregister();
 
 ```csharp
 // 注册帧回调（不需要 MonoBehaviour）
-AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, MyFrameCallback);
+// Register 返回 AutoRemoveListenerHandle：Dispose 时自动注销（匿名委托只能靠它注销）
+var handle = AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, MyFrameCallback);
 AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.AfterUpdate, MyAfterUpdateCallback);
 
-// 注销
+// 注销（二选一：句柄 Dispose 或 Unregister 同一委托实例）
+handle.Dispose();
 AesirArchitecturePlayerLoop.Unregister(AesirArchitectureLifecyclePhase.BeforeUpdate, MyFrameCallback);
 
 // 确保已注入（第三方 SDK 修改 PlayerLoop 后调用一次）
@@ -160,13 +164,14 @@ AesirArchitecturePlayerLoop.EnsureInjected();
 > `Register` 注册回调时会自动检测 PlayerLoop 注入状态并补插。
 > 可用阶段：`BeforeUpdate`（Update 前）、`AfterUpdate`（PostLateUpdate 后）。
 
-## AesirArchitecture — MonoBehaviour 单例入口
+## AesirArchitecture — MonoBehaviour 宿主单例
 
 ```csharp
 // 场景预放置（推荐）：直接在场景中放 AesirArchitecture 组件
 // 运行时创建：Instance getter 自动 FindAnyObjectByType，未找到时创建 + DDOL
 ```
 
+> 本组件是框架 Mono 组件（MonoLifecycleProxy 等）的 DDOL 宿主，**不初始化任何架构数据**——Context 为纯 C# 懒加载单例，不依赖本组件即可工作。
 > 预放置实例不 DDOL；运行时创建的实例 DDOL。
 
 ## MonoView\<T\> / MonoViewController\<T\> — MonoBehaviour 适配层

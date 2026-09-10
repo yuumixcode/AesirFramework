@@ -46,7 +46,7 @@ namespace Runestone.AesirArchitecture
 
         /// <summary>
         /// 获取已注册的 Service。未注册时由 <see cref="IContext.GetService{T}" /> 抛出异常；
-        /// 已注册但尚未初始化时，抛出注册顺序错误或循环依赖异常。
+        /// 已注册但尚未初始化时抛出——Service 间依赖为注册顺序问题，Model 初始化阶段调用则属两阶段初始化的必然约束。
         /// </summary>
         /// <typeparam name="T">要获取的 Service 类型，必须实现 <see cref="IService" /></typeparam>
         /// <param name="self">调用方实例，必须已持有有效的上下文引用</param>

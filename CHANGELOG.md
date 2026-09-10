@@ -5,6 +5,33 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.18.0] - 2026-09-10
+
+### Added
+
+- **`AesirArchitecturePlayerLoop.Register` 返回 `AutoRemoveListenerHandle`** — Dispose 时自动注销本次注册，对齐全框架监听句柄风格；忽略返回值的既有调用不受影响
+- **`CapabilityExtensionsTests`（10 用例）** — CQRS 执行链首次获得测试覆盖：带参/无参命令与查询、命令链、查询组合、`IController<T>` 默认接口实现绑定、Model 初始化阶段获取 Service 的两阶段约束异常语义、Dispose 后单例重建
+
+### Fixed
+
+- **修复 Model 初始化阶段获取 Service 的误导性报错** — `CapabilityExtensions.GetService` 原报错指示"调整注册顺序"，但框架按「先全部 Model、后全部 Service」两阶段初始化，Model 的 `OnInitialize` 阶段无论注册顺序如何都无法获取 Service；现明确提示须延迟到运行期方法调用中获取
+- **修复 `AbstractContext<T>.Dispose` 后的"僵尸单例"** — 释放后解除 `Instance` 单例缓存，再次访问将按懒加载语义重建并重新初始化全新上下文，而非返回容器已清空的空壳（原先此时 `GetModel` / `GetService` 会抛出指向性错误的"未注册"异常）
+- **修正三处 XML 文档失实** — `AesirArchitecture` 组件宣称"使架构基础设施先于业务逻辑完成初始化"（实际不初始化任何架构数据，纯 C# Context 懒加载，组件仅为 DDOL 宿主）；`AesirArchitecturePlayerLoop` 残留已废弃的"MonoLifecycleProxy 运行期间周期性检测"宣称（120 帧自愈轮询 0.9.0 已移除）；`MiniEvent`"零分配的监听管理"（仅 Invoke 路径零分配，订阅路径有多播合并与句柄闭包分配）——`ObservableValue` / `ObservableList` / `ObservableDictionary` / `ObservableHashSet` 类文档同步修正
+- `IView` 文档口径修正——"一切写操作经 Command"是严格档编写约定而非接口强制，接口层仅封命令执行入口
+- `ICustomLifecycle.cs` 文件级文档错挂到 `ICustomFixedUpdate`（双 `<summary>` 的 XML 产物错乱），已并入正确的接口文档
+- `RemoveListenerOnSceneUnloadedTrigger` 补重复实例守卫（原先重复实例会重复订阅 `sceneUnloaded` 造成分桶分裂）
+- `ObservableList.AddRange` 传入 null 现抛 `ArgumentNullException`（对齐 BCL 行为，原为 NullReferenceException）
+
+### Changed
+
+- **解除 Editor 工具对测试框架的结构绑定** — Editor 主程序集移除 `UNITY_INCLUDE_TESTS` defineConstraint、package.json 移除 `com.unity.test-framework` 硬依赖：消费者移除测试框架时宏确保器 / 包内更新器等编辑器工具不再整程序集静默消失，生产项目也不再被强塞测试框架
+- **PlayMode 测试程序集以 `ODIN_INSPECTOR` 守卫** — `Tests/Runtime` 引用 Sirenix 预编译 DLL（Odin 序列化基类链所需），无 Odin 的消费环境自动排除该程序集，修复与"Odin 可选"宣称矛盾导致的导入编译错误
+- `MonoLifecycleProxyExtensions.RegisterCustomLifecycle(mono / GameObject, evt, callback)` 现将监听绑定到所在 GameObject 的销毁事件自动移除——与无参重载语义对齐，消除"同名重载生命周期语义分裂"陷阱（**行为变更**：原先监听不会随物体销毁自动移除）
+- `AesirArchitecture` / `MonoLifecycleProxy` 重复实例改用 `Destroy(this)`——不再连带销毁用户预放置组件的业务物体
+- 私有 `Reset` 更名 `ClearState`——避免撞名 Unity 魔法方法导致编辑器 Inspector Reset 回调误触（`MonoLifecycleProxy` / `RemoveListenerOnSceneUnloadedTrigger`）
+- `AbstractQuery` 补 `[Serializable]`（与 `AbstractCommand` 对齐）
+- README 能力矩阵补 `ExecuteQuery` 列（中英与 `Documentation~` 镜像同步）；《事件机制决策表》"ACA"笔误更正为"RAA"；严格档示例 `UpdateCountText` 收敛为 private 并补"勿在通知回调热路径反复 Query"注释
+
 ## [0.17.0] - 2026-09-06
 
 ### Added
