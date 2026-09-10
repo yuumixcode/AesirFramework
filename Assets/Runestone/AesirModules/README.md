@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、实验性事件模块与场景管理工具。
+Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、实验性事件模块、场景管理工具与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.17.0-blue.svg)](./CHANGELOG.md)
@@ -18,6 +18,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 | UI | 已实现 | `UIModule` 单例（Manager of Managers）+ `UIRoot` 四层 Canvas + 面板生命周期 + 可插拔资源加载 |
 | Event | ⚠️ 实验性 | `EventModule` 双轨订阅（Attribute + Script）+ 5 档优先级 + 表达式树优化。尚未在实际项目中验证 |
 | Scene | 已实现 | `SceneModule` 启动/叠加场景管理 + 编辑器工具（SceneManagerWindow / BootstrapSceneHelper） |
+| ScriptDocGenerator | 已实现（需 Odin） | 反射分析 C# 类型生成结构化 API 文档（增量保留手写内容）+ Summary 工具（XML `<summary>` ↔ `[Summary]` 双向同步） |
 
 > 另有两项可选能力：**Binder 组件绑定**（`Runtime/UI/OdinInspector/Binder/`，需 Odin Inspector）与 **Input System 输入模块适配**（`Runtime/UI/InputSystem/`，独立程序集，启用 Input System 时自动生效）。
 
@@ -291,6 +292,16 @@ Editor/Scene/                      # 汇入核心编辑器程序集（层根锚�
 - 生成脚本的基类可下拉选择：内置 `MonoBehaviour`、由 Binder 预选的 Aesir 面板家族（`AesirBasePanel`、`AesirBasePanelView<T>`、`AesirBasePanelViewController<T>`——核心程序集无法反向引用 Odin 程序集标注特性，故由 Binder 经 typeof 内置），以及用户以 `[BinderBaseType]` 标记的类（需引用 `Runestone.AesirModules.OdinInspector`）；选择 Aesir 泛型面板基类后在「Context 类型」下拉中选择项目内 AbstractContext 派生类（占位不会写进生成代码）；
 - 命名空间默认值与 partial 后缀候选列表经 ScriptableSingleton 在编辑器阶段持久化；
 - 生成逻辑为纯文本拼装，配套 EditMode 测试程序集 `Runestone.AesirModules.Tests`（包根 `Tests/`）；`IComponentBinder` 保留为自定义绑定器扩展点。
+
+## 脚本文档生成模块（需 Odin）
+
+位于 `Runtime/ScriptDocGenerator/OdinInspector/` 与 `Editor/ScriptDocGenerator/OdinInspector/`（经 asmref 汇入 Odin 程序集，**强依赖 Odin Inspector**，未安装时自动排除）。命名空间 `Runestone.AesirModules.ScriptDocGenerator`（.Editor）。
+
+- **Script Doc Generator** — 反射分析 C# 类型信息生成结构化 API 文档：全离线、毫秒级、增量生成（保留 `## Additional Notes` 之后的手写内容与 Front Matter）、Markdown 输出可直接用于 AI 知识库；支持自定义输出路径 / 命名空间子目录 / 扩展名 / 类型来源粒度，可经 `DocGeneratorSettingsSO`、`IAnalysisDataFactory`、`IAttributeFilter` 扩展。入口 `Tools → Aesir → Script Doc Generator`。
+- **Summary 工具** — Project 窗口右键（`Assets → Script Doc Generator → Process Summary`）在 XML `<summary>` 注释与 `[Summary]` 特性之间双向同步：Sync / Replace / Remove 三种模式、批量处理、宏定义感知、自动补 `using`。
+- **自定义特性** — `[Summary]`（运行时可经 `GetSummary()` 读取）、`[ReferenceLinkURL]`（为类型附加文档链接）。
+
+详细文档见 [Documentation/script-doc-generator.md](./Documentation/script-doc-generator.md)。
 
 ## 示例
 

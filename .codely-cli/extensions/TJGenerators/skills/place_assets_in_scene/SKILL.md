@@ -1,6 +1,6 @@
 ---
 name: unity-place-assets-in-scene
-description: 将 Unity 资产放入当前场景，支持自然语言描述位置/旋转/缩放。触发条件：用户要求放置或给出位置意图（"放到场景"、"放在桌子旁边"、"scale 0.5"等）；用户询问资产为何未出现在场景；3D 模型任务提交后默认立即放置占位 Prefab（除非用户明确不需要）；search_assets / generate_sprite 完成后主动放置。支持 Prefab / Sprite / AudioClip / Material / Cubemap / AnimationClip / TerrainData。不负责生成资产本身。
+description: 将 Unity 资产放入当前场景，支持自然语言描述位置/旋转/缩放。触发条件：用户要求放置或给出位置意图（"放到场景"、"放在桌子旁边"、"scale 0.5"等）；用户询问资产为何未出现在场景；3D 模型任务提交后默认立即放置占位 Prefab（除非用户明确不需要）；generate_sprite 完成后主动放置。支持 Prefab / Sprite / AudioClip / Material / Cubemap / AnimationClip / TerrainData。不负责生成资产本身。
 ---
 
 # Place Assets in Scene 📌
@@ -22,7 +22,7 @@ description: 将 Unity 资产放入当前场景，支持自然语言描述位置
 
 | 类型 | 典型来源 | 放置方式 |
 |------|---------|---------|
-| Prefab（`.prefab`） | `generate_3d_model_by_rodin`、`generate_3d_model_by_tripo_p1`、`generate_animated_character`、`generate_rigged_model`、`search_assets` | `PrefabUtility.InstantiatePrefab` |
+| Prefab（`.prefab`） | `generate_3d_model_by_rodin`、`generate_3d_model_by_tripo_p1`、`generate_animated_character`、`generate_rigged_model` | `PrefabUtility.InstantiatePrefab` |
 | Sprite（`.png`，`TextureImporterType.Sprite`） | `generate_sprite` | 新建空 GameObject + `SpriteRenderer`，或 Canvas 子节点 + `UnityEngine.UI.Image` |
 | AudioClip BGM（`.wav`） | `generate_audio_clip` | `AudioSource`，`loop=true`，`spatialBlend=0` |
 | AudioClip SFX（`.wav` / `.mp3`） | `generate_sound_effect` | `AudioSource`，`loop=false`，`spatialBlend=1` |
@@ -162,7 +162,6 @@ UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
 
 适用场景：
 - `generate_3d_model_by_rodin` / `generate_3d_model_by_tripo_p1` / `generate_animated_character` / `generate_rigged_model` 正常流程：任务启动后立刻用 `prefab_output_path` 放置占位 Prefab；生成完成后 Placeholder 子节点会自动被真实模型替换，无需二次调用
-- `search_assets` 下载完成后实例化 Prefab
 - 将已完成的 Prefab 放入另一个场景
 
 ```csharp
@@ -551,7 +550,7 @@ for (int i = 0; i < count; i++) {
 }
 ```
 
-当用户请求“把三把武器并排放好”或 `search_assets` 批量下载完成后，可直接套用此策略。
+当用户请求“把三把武器并排放好”等批量放置需求时，可直接套用此策略。
 
 ## Domain Reload
 
@@ -592,6 +591,5 @@ for (int i = 0; i < count; i++) {
 ## 使用提示
 
 - `generate_sprite`：拿到 `placeholder_path` 后立即调用本 skill，通常最省事
-- `search_assets`：下载完成拿到 `prefab_path` 后立即调用本 skill
 - `generate_3d_model_by_rodin` / `generate_3d_model_by_tripo_p1` / `generate_animated_character` / `generate_rigged_model`：用 `prefab_output_path` 提前放置占位物体，生成完成自动替换
 - `generate_terrain`：常规流程继续走 `apply_terrain_heightmap`，不要绕过

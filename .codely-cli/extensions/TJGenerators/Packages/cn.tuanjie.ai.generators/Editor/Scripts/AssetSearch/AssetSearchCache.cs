@@ -150,7 +150,7 @@ namespace TJGenerators.AssetSearch
         }
 
         /// <summary>
-        /// 删除超过 maxAgeHours 的缓存文件；在每次 search_assets 调用时触发。
+        /// 删除超过 maxAgeHours 的缓存文件；在每次资产库搜索时触发。
         /// </summary>
         public static void CleanupExpired(int maxAgeHours = 24)
         {

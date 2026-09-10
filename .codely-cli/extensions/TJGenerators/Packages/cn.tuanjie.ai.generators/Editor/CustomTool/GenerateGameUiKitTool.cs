@@ -85,6 +85,7 @@ namespace UnityTcp.Editor.Tools
                 string screenshotPath = parameters["screenshot_path"]?.ToString();
                 string outputPath = parameters["output_path"]?.ToString();
                 string sessionId = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
                 string provider = parameters["provider"]?.ToString();
 
                 int step = string.IsNullOrEmpty(screenshotPath) ? 1 : 2;

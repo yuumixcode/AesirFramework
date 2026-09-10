@@ -155,6 +155,9 @@ namespace TJGenerators.Pipeline
                 uwr.SetRequestHeader(GenerationRequestOrigin.PackageVersionHeaderName, packageVersion);
             if (!string.IsNullOrEmpty(sessionId))
                 uwr.SetRequestHeader(GenerationRequestOrigin.SessionIdHeaderName, sessionId);
+            string workspaceName = GenerationRequestOrigin.CurrentWorkspaceName;
+            if (!string.IsNullOrEmpty(workspaceName))
+                uwr.SetRequestHeader(GenerationRequestOrigin.WorkspaceNameHeaderName, workspaceName);
         }
 
         internal static byte[] BuildMultipartBody(MultipartRequestData multipartData, out string boundary)

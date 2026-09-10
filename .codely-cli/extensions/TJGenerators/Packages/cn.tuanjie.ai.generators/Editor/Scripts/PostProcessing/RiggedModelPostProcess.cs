@@ -37,7 +37,7 @@ namespace TJGenerators.PostProcessing
                 return;
 
             SetupRiggedCharacterImport(assetPath);
-            AssetDatabase.Refresh();
+            PathUtils.ImportAssetAfterDiskWrite(assetPath);
             TryFixHumanoidBoneMapping(assetPath);
 
             if (!string.IsNullOrEmpty(sourceModelPath) || !string.IsNullOrEmpty(renderedImagePath))
@@ -285,7 +285,6 @@ namespace TJGenerators.PostProcessing
                 if (AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath) != null)
                 {
                     AssetDatabase.DeleteAsset(controllerPath);
-                    AssetDatabase.Refresh();
                     TJLog.Log($"[RiggedModelPostProcess] 已删除旧 Animator Controller，重新创建: {controllerPath}");
                 }
 
@@ -314,7 +313,7 @@ namespace TJGenerators.PostProcessing
                 selfLoop.hasFixedDuration = true;
 
                 AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
+                PathUtils.SafeRefresh();
 
                 TJLog.Log(
                     $"[RiggedModelPostProcess] 单剪辑循环 Animator Controller 已创建: {controllerPath} (clip={clip.name})"
@@ -447,7 +446,6 @@ namespace TJGenerators.PostProcessing
             {
                 importer.SaveAndReimport();
                 AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
             }
 
             TJLog.Log(

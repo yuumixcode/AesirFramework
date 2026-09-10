@@ -57,8 +57,7 @@ execute_custom_tool(
     "generator_id": "rodin-skybox",                # 唯一可用 generator（默认）
     "prompt": "sunset over ocean, dramatic orange sky",  # 至少给一个
     "image_path": "Assets/Reference/concept.png",  # 可选：参考图
-    "resolution": "2048",                          # "512" | "1024" | "2048" | "4096"，默认 "2048"
-    "high_res": False,                             # 可选：高清模式
+    "high_res": True,                              # 可选：高清模式（不传后端默认开启）
     # output_path: 不建议指定，默认 Assets/TJGenerators/History/
   }
 )
@@ -100,11 +99,10 @@ execute_custom_tool(
 | `generator_id` | string | `"rodin-skybox"` | 唯一可用 |
 | `prompt` | string | — | 文本描述（与 `image_path` 至少给一个） |
 | `image_path` | string | — | 参考图（与 `prompt` 至少给一个） |
-| `resolution` | string | `"2048"` | `"512"` / `"1024"` / `"2048"` / `"4096"` |
-| `high_res` | bool | `false` | 高清模式 |
+| `high_res` | bool | 后端默认 `true` | 高清模式开关 |
 | `output_path` | string | — | 自定义路径（自动加 `.png` 后缀） |
 
-> 分辨率越高质量越好但更慢、文件更大。`"2048"` 适合多数游戏场景；`"4096"` 留给 cinematic / hero 环境。
+> ⚠️ **不支持 `resolution` 参数**（`"512"`/`"1024"`/`"2048"`/`"4096"` 均无效，会被静默忽略，不要传）。输出分辨率由 Rodin 服务端决定，没有自定义档位。要更清晰用 `high_res: true`；需要 4K 级输出时，生成后对展开图调用 `upscale_image`（Real-ESRGAN 4x → 4096 宽）。
 
 ## 使用示例
 
@@ -130,7 +128,7 @@ placeholder_material_path = result["placeholder_material_path"]
 ```python
 parameters={
     "image_path": "Assets/ConceptArt/environment_concept.png",
-    "resolution": "4096"
+    "high_res": True
 }
 ```
 
@@ -140,7 +138,6 @@ parameters={
 parameters={
     "prompt": "fantasy sunset with purple clouds and twin moons",
     "output_path": "Assets/Environments/FantasySky",
-    "resolution": "2048",
     "high_res": True
 }
 ```
@@ -183,7 +180,7 @@ Scene side-effect：`RenderSettings.skybox = material; DynamicGI.UpdateEnvironme
 |---|---|---|
 | Cubemap 显示为黑色或缺失 | TextureImporter shape 不对 | 在 Inspector 确认 shape = `Cube`；右键资产 → Reimport |
 | Skybox 应用了但场景光照没刷新 | 漏调 `DynamicGI.UpdateEnvironment()` | 用 `place_assets_in_scene` 的 `Cubemap Skybox` 类型自动包含此调用 |
-| 输出质量差 | prompt 太模糊 / 分辨率不足 | 写更详细 prompt；试 `resolution: "4096"` + `high_res: true`；提供 `image_path` 参考图 |
+| 输出质量差 | prompt 太模糊 / 分辨率不足 | 写更详细 prompt；开 `high_res: true`；提供 `image_path` 参考图；仍不够则对展开图 `upscale_image` 放大 |
 
 ### Domain reload 后 task 丢失
 

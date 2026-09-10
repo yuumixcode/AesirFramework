@@ -1,6 +1,6 @@
 # Generator 异步通用纪律（公共模板）
 
-> **范围**：所有 `generate_*` skill 与 `search_assets` skill 共享的异步任务执行约定。  
+> **范围**：所有 `generate_*` skill 共享的异步任务执行约定。  
 > **使用方式**：各 skill 的 `SKILL.md` 顶部用一行引用本模板，不再重复展开通用纪律。
 > 
 > ```markdown
@@ -54,7 +54,6 @@ G --> F
 | 中任务（sprite_sequence / sound_effect） | 1–3 分钟 | 120 秒 |
 | 长任务（3d_model / animated_character / terrain / video） | 3–15 分钟 | 300 秒 |
 | 复合任务（rigged_animated_model A/B/C） | 1–5 分钟 | 300 秒 |
-| 资产下载（search_assets） | 30 秒–几分钟 | 120 秒（每个 task_id 仅 ONCE） |
 
 各 skill 在自己的 SKILL.md 内只需声明本 skill 落在哪一档。
 
@@ -89,13 +88,12 @@ G --> F
 
 ## 5.1 ⛔ `place_assets_in_scene` 调用规则
 
-适用于**所有**返回 placeholder 的 `generate_*` 工具，以及 `search_assets`。**核心约束：每个资产路径最多调用一次。**
+适用于**所有**返回 placeholder 的 `generate_*` 工具。**核心约束：每个资产路径最多调用一次。**
 
 1. **必须调用一次**：
    - `generate_*`（有 placeholder）：拿到 `placeholder_path` / `prefab_output_path` 后**立即**放占位。
    - `generate_*`（无 placeholder，如 `generate_sprite_sequence`）：等 `<bg_task_done>` 拿到真实资产路径后**调一次**。
-   - `search_assets`：pipeline Step 4 **必须执行**——对每个最终 `prefab_path` 调一次（`download_asset` 响应里的 `skipped` 任务路径和 `<bg_task_done>` 通知里的路径合并去重）。
-2. **`<bg_task_done>` 到达后不要再调**：generator 的资产文件已**原地覆盖**（GUID/路径不变），场景里已实例化的引用自动指向真实资产；search_assets 同一 `prefab_path` 不能放两次。
+2. **`<bg_task_done>` 到达后不要再调**：generator 的资产文件已**原地覆盖**（GUID/路径不变），场景里已实例化的引用自动指向真实资产；同一 `prefab_path` 不能放两次。
 3. **Final Report 里不要问"需要我放到场景中吗？"**——告诉 caller 资产已经在场景里（给出 GameObject 名）。
 4. **例外**：仅当用户**明确要求**"换位置 / 换 scale / 再加一个实例"时，才允许再次调用。
 
@@ -147,7 +145,6 @@ Unity 编译脚本/进入 Play Mode 等动作会触发 domain reload，可能：
 | `completed` | 全部输出就绪 | — |
 | `failed` | 生成失败 | 看 `error` 字段；按各 skill 独有故障表处置 |
 | `interrupted` | 后端记录丢失 | 用相同输入 + `force_overwrite=true`（若支持）重新提交；具体参数见各 skill |
-| `skipped` | 资产已存在（仅 search_assets），路径直接可用，无通知 | — |
 | Task not found | 60 分钟过期 / Editor 重启 | `list_xxx_tasks` 看活跃任务；若不存在则重新生成 |
 
 ## 9. 各 skill SKILL.md 应保留的独有内容

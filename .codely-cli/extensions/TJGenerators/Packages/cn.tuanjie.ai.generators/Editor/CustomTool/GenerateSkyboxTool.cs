@@ -226,6 +226,7 @@ namespace UnityTcp.Editor.Tools
                 string imagePath = parameters["image_path"]?.ToString();
                 string outputPath = parameters["output_path"]?.ToString();
                 string sessionId = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 if (string.IsNullOrEmpty(prompt) && string.IsNullOrEmpty(imagePath))
                 {

@@ -365,6 +365,7 @@ namespace UnityTcp.Editor.Tools
                 string imagePath = parameters["image_path"]?.ToString();
                 string animationType = parameters["animation_type"]?.ToString() ?? "idle";
                 string sessionId = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
                 int fps = 12;
                 bool loop = true;
 

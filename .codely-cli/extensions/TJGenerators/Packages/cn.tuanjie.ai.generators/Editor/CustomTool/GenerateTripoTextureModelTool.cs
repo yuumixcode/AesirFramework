@@ -61,6 +61,7 @@ namespace UnityTcp.Editor.Tools
                 string prefabOutputPath    = parameters["prefab_output_path"]?.ToString();
                 bool   forceOverwrite      = parameters["force_overwrite"]?.ToObject<bool>() ?? false;
                 string sessionId           = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 if (string.IsNullOrEmpty(originalModelTaskId) && string.IsNullOrEmpty(url))
                     return Generate3DModelTool.Fail("At least one of 'original_model_task_id' or 'url' is required.");

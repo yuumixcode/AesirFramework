@@ -162,8 +162,8 @@ namespace TJGenerators.PostProcessing
                 }
             }
 
-            // 统一刷新资产数据库，确保所有帧 PNG 被 Unity 识别
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            // 定向导入文件夹下所有帧 PNG，避免全量 Refresh
+            PathUtils.ImportAssetsUnderFolderAfterDiskWrite(outputDir);
 
             // 统一设置每帧的 TextureImporter（Sprite 类型、透明通道）
             for (int i = 0; i < spriteAssetPaths.Count; i++)
@@ -178,8 +178,8 @@ namespace TJGenerators.PostProcessing
                 }
             }
 
-            // 等待所有帧导入完成后再创建 AnimationClip
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            // 确保所有帧导入完成后再创建 AnimationClip
+            PathUtils.ImportAssetsUnderFolderAfterDiskWrite(outputDir);
             string clipPath = CreateSpriteSequenceAnimationClip(outputDir, spriteAssetPaths, fps, loop);
 
             return new SliceResult

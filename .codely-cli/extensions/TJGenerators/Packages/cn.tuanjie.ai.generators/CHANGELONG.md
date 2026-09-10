@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.25] - 2026-09-08
+
+### Added
+
+- 生成请求增加 `X-Workspace-Name` 请求头，上报当前工作区名称
+
+### Fixed
+
+- FBX 贴图解压后先导入再做材质重映射，避免 `SearchAndRemapMaterials` 找不到纹理 GUID
+- `AssetDatabase.Refresh` 在脚本编译期间延迟执行，避免刷新触发循环重编译；磁盘写入后改为按文件/目录定向导入
+
+### Changed
+
+- 移除 Unity 侧 `search_assets` / `download_asset` CustomTool 链路，改由后端 MCP 提供
+- `cn.tuanjie.codely.bridge` 依赖从 1.0.69 升级到 1.0.76
+- 天空盒文档移除已不支持的分辨率参数（后端仅支持 `high_res`）
+
 ## [1.0.24] - 2026-08-19
 
 ### Added

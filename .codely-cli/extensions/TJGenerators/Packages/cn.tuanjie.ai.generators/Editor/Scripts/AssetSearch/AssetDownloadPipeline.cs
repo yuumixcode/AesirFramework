@@ -11,8 +11,8 @@ using UnityEngine.Networking;
 namespace TJGenerators.AssetSearch
 {
     /// <summary>
-    /// 下载 → 导入 → 后处理的核心协程与调度入口。原 <c>SearchAssetsTool.DownloadPackageCoroutine</c>
-    /// 与 <c>ProcessImportQueue</c> 搬迁至此；逻辑保持一致，对外只公开 <see cref="Run"/> 与
+    /// 下载 → 导入 → 后处理的核心协程与调度入口。原 CustomTool 侧内联实现
+    /// 搬迁至此（该工具已移除，资产库搜索/下载改由后端提供）；对外只公开 <see cref="Run"/> 与
     /// <see cref="ProcessImportQueue"/>。
     /// </summary>
     public static class AssetDownloadPipeline
@@ -119,7 +119,7 @@ namespace TJGenerators.AssetSearch
                 {
                     // 签名 URL 已过期，重试无意义
                     finalError = "URL_EXPIRED: Download URL returned HTTP 400 (signed URL likely expired). " +
-                                 "Re-call search_assets with the same query to get a fresh URL, then retry download_asset.";
+                                 "Re-run the asset library search to get a fresh URL, then retry the download.";
                     TJLog.LogError(
                         $"{LogTag} 下载失败（HTTP 400，URL 已过期，不再重试）" +
                         $" taskId={taskId} httpCode={httpCode} error={httpError} url={url}");

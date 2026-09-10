@@ -391,7 +391,7 @@ Editor/
 
 | 包 | 版本 | 用途 |
 |----|------|------|
-| `cn.tuanjie.codely.bridge` | 1.0.69 | Codely 桥接（提供 `Codely.Newtonsoft.Json`） |
+| `cn.tuanjie.codely.bridge` | 1.0.76 | Codely 桥接（提供 `Codely.Newtonsoft.Json`） |
 | `com.unity.modules.jsonserialize` | 1.0.0 | `JsonUtility` 序列化 |
 | `com.unity.modules.unitywebrequest` | 1.0.0 | HTTP 请求与资源下载 |
 | `com.unity.modules.video` | 1.0.0 | 视频播放与特效视频工作流 |

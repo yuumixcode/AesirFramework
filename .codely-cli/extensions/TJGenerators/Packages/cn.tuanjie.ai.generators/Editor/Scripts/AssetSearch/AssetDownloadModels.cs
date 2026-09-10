@@ -18,7 +18,7 @@ namespace TJGenerators.AssetSearch
     }
 
     /// <summary>
-    /// 启动下载请求参数。对应 CustomTool 的 download_asset 参数集合（原 JObject 入参的 POCO 化）。
+    /// 启动下载请求参数。
     /// </summary>
     public sealed class AssetDownloadRequest
     {

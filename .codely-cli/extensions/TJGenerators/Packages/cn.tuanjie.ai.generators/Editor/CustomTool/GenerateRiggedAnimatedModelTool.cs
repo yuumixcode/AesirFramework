@@ -605,7 +605,7 @@ namespace UnityTcp.Editor.Tools
             RiggedModelPostProcess.SetupAnimationImport(motionFbxPath, _task?.LoopTime ?? true);
 
             // 2. Reimport so animation clips are extractable
-            AssetDatabase.Refresh();
+            PathUtils.SafeRefresh();
 
             // 3. Create single-clip loop AnimatorController named after rigged model
             string riggedDir      = string.IsNullOrEmpty(_task.RiggedModelPath) ? "" :
@@ -705,6 +705,7 @@ namespace UnityTcp.Editor.Tools
                 string prefabOutputPath = parameters["prefab_output_path"]?.ToString();
                 bool   forceOverwrite   = parameters["force_overwrite"]?.ToObject<bool>() ?? false;
                 string sessionId        = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 if (string.IsNullOrEmpty(sourceModelPath))
                     return Fail("'source_model_path' parameter is required");
@@ -893,6 +894,7 @@ namespace UnityTcp.Editor.Tools
                 int    seed              = parameters["random_seed"]?.ToObject<int>()        ?? 0;
                 bool   loopTime          = parameters["loop"]?.ToObject<bool>()             ?? true;
                 string sessionId         = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 if (string.IsNullOrEmpty(riggedModelPath))
                     return Fail("'rigged_model_path' is required");
@@ -1077,6 +1079,7 @@ namespace UnityTcp.Editor.Tools
                 int    seed              = parameters["random_seed"]?.ToObject<int>()        ?? 0;
                 bool   loopTime          = parameters["loop"]?.ToObject<bool>()             ?? true;
                 string sessionId         = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 if (string.IsNullOrEmpty(sourceModelPath))
                 {

@@ -46,6 +46,7 @@ namespace UnityTcp.Editor.Tools
 
                 string audioPath = parameters["audio_path"]?.ToString();
                 string sessionId = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 if (string.IsNullOrEmpty(audioPath))
                 {

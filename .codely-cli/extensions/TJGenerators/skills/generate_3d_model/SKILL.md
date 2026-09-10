@@ -194,14 +194,14 @@ parameters={
 | 调用 Tripo 工具传了 `quad` / `smart_low_poly` / `generate_parts` / `geometry_quality` | P1-20260311 不支持这些 | 直接删掉这些参数，或改用 Rodin |
 | 调用 Rodin 工具传了 `face_limit` / `multiview_image_paths` | Rodin 参数名是 `quality_override`（等价 face_limit，500–2000000）；多视图只 Tripo 支持 | Rodin 用 `tier` / `quality` / `quality_override` |
 | 状态变 `interrupted`（仅 Rodin） | domain reload 丢失后端记录 | 用 `generate_3d_model_by_rodin` + `force_overwrite=true` + 相同 `prefab_output_path` 重新提交 |
-| 内容策略拦截（`content_moderation`） | Tripo P1 对武器/政治/版权词敏感，平台策略不可绕过 | 把拦截原因告知用户；如用户需要类似资产，先说明资产库不保证有合适内容，再询问是否改用 `search_assets` |
+| 内容策略拦截（`content_moderation`） | Tripo P1 对武器/政治/版权词敏感，平台策略不可绕过 | 把拦截原因告知用户；如用户需要类似资产，先说明资产库不保证有合适内容，再询问是否改用后端资产库搜索（`search_asset_lib`） |
 
 **内容策略拦截处理（不改写 prompt）：**
 
 1. 直接告知用户："生成被内容策略拒绝，原因：{拦截原因}"（从错误消息里的「拦截原因」后取；若无则只说被拒绝）
 2. 说明这是平台限制，无法通过修改 prompt 绕过
 3. 提示："也可以尝试从资产库搜索，但不保证有合适的资产，是否搜索？"
-4. **仅在用户确认后**再 `activate_skill("unity-asset-search")`；不要擅自改写 prompt 重试生成
+4. **仅在用户确认后**再调用后端 `search_asset_lib` 搜索资产库；不要擅自改写 prompt 重试生成
 
 ### Domain reload 后 task 丢失
 

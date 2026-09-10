@@ -9,7 +9,7 @@ using UnityEditor;
 namespace TJGenerators.AssetSearch
 {
     /// <summary>
-    /// 下载完成后写入 metadata JSON 到资产目录。字段与原 SearchAssetsTool.WriteMetadata 保持一致。
+    /// 下载完成后写入 metadata JSON 到资产目录。
     /// </summary>
     public static class AssetMetadataWriter
     {

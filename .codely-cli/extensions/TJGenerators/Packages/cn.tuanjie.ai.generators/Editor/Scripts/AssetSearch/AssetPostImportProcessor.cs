@@ -276,12 +276,12 @@ namespace TJGenerators.AssetSearch
         // 返回 (resolvedPath, reason)；resolvedPath 为 null 表示所有 fallback 均失败。
         //
         // 关键点：不再对路径直接调用 AssetDatabase.ImportAsset(ForceUpdate) —— 在路径不存在时
-        // Unity 会打 "'...' does not exist" 错误日志。改为开头做一次 Refresh(ForceSynchronousImport)
+        // Unity 会打 "'...' does not exist" 错误日志。改为开头做一次 SafeRefresh(ForceSynchronousImport)
         // 让 AssetDatabase 同步到 ImportPackage 刚写入的内容，再单用 AssetPathToGUID 判断 Unity 是否识别。
         private static (string resolved, string detail) ResolveActualPrefab(
             string origPrefab, List<string> importedFiles)
         {
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            PathUtils.SafeRefresh(ImportAssetOptions.ForceSynchronousImport);
 
             if (TryResolvePrefabFromImportList(origPrefab, importedFiles, out var hit, attemptDiskRepairImport: true))
                 return (hit, "resolved");

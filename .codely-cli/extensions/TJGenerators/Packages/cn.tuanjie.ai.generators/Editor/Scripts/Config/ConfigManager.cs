@@ -183,7 +183,7 @@ namespace TJGenerators.Config
 
         /// <summary>
         /// 获取 Codely 资产搜索后端根地址（不含路径）。
-        /// 用于 search_assets / download_asset 与换票接口 auth/exchange-with-unity-token。
+        /// 用于资产库搜索/下载与换票接口 auth/exchange-with-unity-token。
         /// </summary>
         public static string GetCodelyBaseUrl()
         {

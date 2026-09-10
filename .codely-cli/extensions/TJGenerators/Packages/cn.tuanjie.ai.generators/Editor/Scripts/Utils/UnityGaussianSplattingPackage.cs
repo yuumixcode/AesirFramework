@@ -185,7 +185,7 @@ namespace TJGenerators.Utils
             if (addRequest.Status == UnityEditor.PackageManager.StatusCode.Success)
             {
                 TJLog.Log($"[UnityGaussianSplatting] 包安装成功: {addRequest.Result?.packageId}");
-                AssetDatabase.Refresh();
+                PathUtils.SafeRefresh();
                 EditorApplication.delayCall += () =>
                 {
                     TJGeneratorsAssetCreation.CreateWorldAssetWithCallback(defaultAssetName);

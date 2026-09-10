@@ -481,6 +481,7 @@ namespace UnityTcp.Editor.Tools
                 string prefabOutputPath = parameters["prefab_output_path"]?.ToString();
                 bool   forceOverwrite   = parameters["force_overwrite"]?.ToObject<bool>() ?? false;
                 string sessionId        = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 if (string.IsNullOrEmpty(prompt) && string.IsNullOrEmpty(imagePath))
                     return Fail("At least one of 'prompt' or 'image_path' is required.");
@@ -1032,6 +1033,7 @@ namespace UnityTcp.Editor.Tools
                 string prefabOutputPath = parameters["prefab_output_path"]?.ToString();
                 bool   forceOverwrite   = parameters["force_overwrite"]?.ToObject<bool>() ?? false;
                 string sessionId        = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
 
                 var mvToken = parameters["multiview_image_paths"];
                 string[] multiviewPaths = null;

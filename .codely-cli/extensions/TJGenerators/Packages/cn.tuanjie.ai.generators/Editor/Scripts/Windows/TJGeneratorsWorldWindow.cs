@@ -1016,7 +1016,7 @@ namespace TJGenerators
 
                 // GaussianSplatAssetCreator.CreateAsset() names the asset after the input file name
                 // (via FilePickerControl.PathToDisplayString), so the expected path is based on the spz file name
-                AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+                PathUtils.SafeRefresh(ImportAssetOptions.ForceUpdate);
                 string spzFileName = Path.GetFileNameWithoutExtension(absSpzPath);
                 string expectedAssetPath = $"{outputFolder}/{spzFileName}.asset";
                 if (File.Exists(PathUtils.ToAbsoluteAssetPath(expectedAssetPath)))

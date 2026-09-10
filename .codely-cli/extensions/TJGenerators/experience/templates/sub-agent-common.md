@@ -1,6 +1,6 @@
 # Generator Sub-Agent 通用约束（公共模板）
 
-> **范围**：所有 `*-generator` 类的 sub-agent + `search-assets` agent 共享的编排层约束。
+> **范围**：所有 `*-generator` 类的 sub-agent 共享的编排层约束。
 > **使用方式**：在 agent toml 的 `system_prompt` 顶部用一行引用本模板，再补充 agent 特有约束。
 >
 > ```text

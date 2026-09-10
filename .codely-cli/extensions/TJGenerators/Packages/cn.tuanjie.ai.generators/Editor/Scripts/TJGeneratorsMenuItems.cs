@@ -287,7 +287,7 @@ namespace TJGenerators
             if (cleaned > 0)
             {
                 AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
+                PathUtils.SafeRefresh();
             }
 
             Debug.Log($"[TJGenerators] 清理完成，共移除 {cleaned} 个占位 GameObject。");

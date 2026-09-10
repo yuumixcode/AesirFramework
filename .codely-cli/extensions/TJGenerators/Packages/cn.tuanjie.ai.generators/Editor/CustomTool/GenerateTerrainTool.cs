@@ -277,6 +277,7 @@ namespace UnityTcp.Editor.Tools
                 string resolution = parameters["resolution"]?.ToString() ?? "2K";
                 string outputPath = parameters["output_path"]?.ToString();
                 string sessionId  = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
                 // aspect_ratio is always "1:1" for terrain heightmaps (square)
                 const string aspectRatio = "1:1";
 
@@ -476,6 +477,7 @@ namespace UnityTcp.Editor.Tools
 
                 string taskId        = parameters["task_id"]?.ToString() ?? "";
                 string sessionId     = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
                 string terrainGoName = parameters["terrain_go_name"]?.ToString() ?? "TJGenerators Terrain";
 
                 // 重入防护：generate_terrain task 已 applied → 直接返回结果

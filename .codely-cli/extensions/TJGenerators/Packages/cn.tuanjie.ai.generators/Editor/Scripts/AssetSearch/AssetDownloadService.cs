@@ -166,7 +166,7 @@ namespace TJGenerators.AssetSearch
                 };
             }
 
-            // asset_id 即 slug，直接用作目录名（与原 SearchAssetsTool 逻辑一致）
+            // asset_id 即 slug，直接用作目录名
             string packageDir   = DefaultDestBase + "/" + request.AssetId;
             string metadataPath = packageDir + "/" + request.AssetId + "_metadata.json";
             string tempPath     = Path.Combine(Application.temporaryCachePath, request.AssetId + ".unitypackage");

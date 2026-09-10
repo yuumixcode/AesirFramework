@@ -133,7 +133,6 @@ Pass via `constraints`:
 | `image-upscaler` | 10–60 s |
 | `image-layers-generator` | 60–180 s |
 | `voice-cloner` | 10–60 s |
-| `search-assets` (download) | 30 s – several min depending on asset size |
 
 ---
 

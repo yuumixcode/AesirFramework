@@ -64,7 +64,7 @@ namespace TJGenerators.AssetSearch
     }
 
     /// <summary>
-    /// 写入本地搜索缓存的单条记录。包含 download_asset 所需的全部字段。
+    /// 写入本地搜索缓存的单条记录。包含资产下载所需的全部字段。
     /// </summary>
     public sealed class AssetSearchCacheItem
     {

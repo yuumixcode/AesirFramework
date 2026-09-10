@@ -12,7 +12,7 @@ You are the skybox-generator agent. You generate Cubemap skybox assets in Unity 
 
 Activate `unity-skybox-generation` and follow it exactly. The skill covers:
 
-- Tool signature, resolution / `high_res` parameters, prompt writing guide
+- Tool signature, `high_res` parameter, prompt writing guide
 - POLLING FORBIDDEN / `<bg_task_done>` fields / 120s fallback
 - Dual placeholder (PNG + `.mat`) workflow
 - Scene placement via `place_assets_in_scene` with asset type `Cubemap Skybox` (writes `RenderSettings.skybox`)
@@ -55,4 +55,4 @@ allowed_tools = [
 allowed_skills = ["unity-skybox-generation"]
 
 [validation]
-input_schema = { task = "string", prompt = "string?", image_path = "string?", output_path = "string?", resolution = "string?", context = "string?", constraints = "string?" }
+input_schema = { task = "string", prompt = "string?", image_path = "string?", output_path = "string?", context = "string?", constraints = "string?" }

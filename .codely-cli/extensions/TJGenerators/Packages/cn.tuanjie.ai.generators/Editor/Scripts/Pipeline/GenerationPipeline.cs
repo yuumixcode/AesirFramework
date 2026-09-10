@@ -780,7 +780,7 @@ namespace TJGenerators.Pipeline
             if (isFBX)
             {
                 ModelPostProcessing(finalModelPath, renderedTexturePath);
-                AssetDatabase.Refresh();
+                PathUtils.ImportAssetAfterDiskWrite(finalModelPath);
 
                 if (!ValidateImportedFbxMesh(finalModelPath, out string meshReason))
                 {
@@ -798,7 +798,7 @@ namespace TJGenerators.Pipeline
             if (finalModelPath.EndsWith(".obj", StringComparison.OrdinalIgnoreCase))
             {
                 ObjModelPostProcessing(finalModelPath);
-                AssetDatabase.Refresh();
+                PathUtils.ImportAssetAfterDiskWrite(finalModelPath);
             }
 
             if (
@@ -1106,7 +1106,7 @@ namespace TJGenerators.Pipeline
             }
             else
             {
-                AssetDatabase.Refresh();
+                PathUtils.ImportAssetAfterDiskWrite(riggedSavePath);
                 RiggedModelPostProcess.ApplyTexturesFromSourceToRiggedModel(
                     extractedModelPath,
                     riggedSavePath,
@@ -1202,7 +1202,7 @@ namespace TJGenerators.Pipeline
             if (motionSavePath.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase))
                 RiggedModelPostProcess.SetupAnimationImport(motionSavePath);
 
-            AssetDatabase.Refresh();
+            PathUtils.ImportAssetAfterDiskWrite(motionSavePath);
 
             string riggedBaseName = Path.GetFileNameWithoutExtension(riggedSavePath);
             generator.ButtonText = TJGeneratorsL10n.L("创建动画控制器...");
@@ -1290,7 +1290,6 @@ namespace TJGenerators.Pipeline
                     ModelImporterMaterialSearch.Local
                 );
                 modelImporter.SaveAndReimport();
-                AssetDatabase.Refresh();
 
                 foreach (string filePath in Directory.GetFiles(absoluteDirectoryPath))
                 {
@@ -1371,7 +1370,7 @@ namespace TJGenerators.Pipeline
 
             // 修改 Prefab 结构（增删子节点）会导致 Unity 在传播变更时丢失场景实例的 position
             // override，使实例位置重置回原点。提前保存所有场景实例的 local transform，
-            // 在 AssetDatabase.Refresh() 之后恢复，避免用户手动调整的位置被覆盖。
+            // 在 SafeRefresh() 之后恢复，避免用户手动调整的位置被覆盖。
             var savedInstanceTransforms = CollectSceneInstanceLocalTransforms(prefab);
 
             // Use prefabPath directly — GetPrefabAssetPathOfNearestInstanceRoot only works on scene
@@ -1449,7 +1448,7 @@ namespace TJGenerators.Pipeline
             }
 
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            PathUtils.SafeRefresh();
 
             RestoreSceneInstanceLocalTransforms(savedInstanceTransforms);
 
@@ -1528,7 +1527,7 @@ namespace TJGenerators.Pipeline
                 return;
 
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            PathUtils.SafeRefresh();
             RestoreSceneInstanceLocalTransforms(savedTransforms);
             TJLog.Log("[GenerationPipeline] 已移除占位 GameObject");
         }
@@ -2171,6 +2170,10 @@ namespace TJGenerators.Pipeline
 
                 modelImporter.ExtractTextures(extractDirRelative);
 
+                // 提取出的贴图是新生成文件（非下载），不走 DownloadFile 的定向导入；
+                // 这里先整目录导入，确保后续 SearchAndRemapMaterials 能拿到贴图 GUID
+                PathUtils.ImportAssetsUnderFolderAfterDiskWrite(extractDirRelative);
+
                 // 在 Refresh 之前，先单独导入法线贴图并设置类型，避免 NormalMap settings 弹窗
                 if (!string.IsNullOrEmpty(absExtract) && Directory.Exists(absExtract))
                 {
@@ -2202,15 +2205,12 @@ namespace TJGenerators.Pipeline
                     }
                 }
 
-                AssetDatabase.Refresh();
-
                 modelImporter.isReadable = true;
                 modelImporter.SearchAndRemapMaterials(
                     ModelImporterMaterialName.BasedOnTextureName,
                     ModelImporterMaterialSearch.Local
                 );
                 modelImporter.SaveAndReimport();
-                AssetDatabase.Refresh();
 
                 ApplyRenderedTextureToImportedModel(assetPath, renderedTexturePath);
             }

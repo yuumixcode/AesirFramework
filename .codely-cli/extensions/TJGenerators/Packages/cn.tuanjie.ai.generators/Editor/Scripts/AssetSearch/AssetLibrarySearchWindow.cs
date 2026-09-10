@@ -1389,7 +1389,6 @@ namespace TJGenerators.AssetSearch
         /// <summary>
         /// 供本会话磁盘缓存使用：按接口返回的分组与顺序逐条写入，不按 asset_id 合并。
         /// 若此处去重，域重载或进入 Play 后 <see cref="TryRestoreResponseFromSessionCache"/> 还原的条数会少于首次展示的 TotalItemCount。
-        /// （CustomTool 侧 <c>SearchAssetsTool</c> 仍可按 asset_id 合并以缩小缓存。）
         /// </summary>
         private static List<AssetSearchCacheItem> BuildSessionPersistenceCacheItems(AssetSearchResponse response)
         {

@@ -475,7 +475,7 @@ namespace TJGenerators.Utils
 
         /// <summary>
         /// 磁盘写入后导入指定资产。优先 <see cref="AssetDatabase.ImportAsset"/>，
-        /// 仅在资产仍不可加载时做一次全量 <see cref="AssetDatabase.Refresh"/> 兜底。
+        /// 仅在资产仍不可加载时做一次全量 <see cref="SafeRefresh"/> 兜底。
         /// 模型资产会额外确保 <see cref="ModelImporter.isReadable"/> 为 true。
         /// </summary>
         public static void ImportAssetAfterDiskWrite(string assetPath)
@@ -489,8 +489,38 @@ namespace TJGenerators.Utils
             if (AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath) != null)
                 return;
 
-            AssetDatabase.Refresh();
+            SafeRefresh();
             EnsureModelImporterReadable(assetPath);
+        }
+
+        /// <summary>
+        /// Guards <see cref="AssetDatabase.Refresh"/> against being called during script
+        /// compilation. When <see cref="EditorApplication.isCompiling"/> is true, defers
+        /// the Refresh to after compilation completes. This breaks the cycle:
+        /// Domain Reload → recovery → Refresh → detect .cs changes → recompile → repeat.
+        /// </summary>
+        private static bool s_refreshPending;
+
+        public static void SafeRefresh(ImportAssetOptions options = ImportAssetOptions.Default)
+        {
+            if (EditorApplication.isCompiling)
+            {
+                if (!s_refreshPending)
+                {
+                    s_refreshPending = true;
+                    EditorApplication.update += FlushPendingRefresh;
+                }
+                return;
+            }
+            AssetDatabase.Refresh(options);
+        }
+
+        private static void FlushPendingRefresh()
+        {
+            if (EditorApplication.isCompiling) return;
+            EditorApplication.update -= FlushPendingRefresh;
+            s_refreshPending = false;
+            AssetDatabase.Refresh();
         }
 
         /// <summary>

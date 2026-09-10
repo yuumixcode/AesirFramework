@@ -422,14 +422,14 @@ public class SceneTransitionManager : MonoBehaviour
 | Scene 截图为黑屏 | 进入 Play Mode 太快 | 截图前等 1–2 秒，确认 Main Camera 渲染配置 |
 | 宣传视频音频不播放 | AudioSource 未配置 | 设 `audioOutputMode = AudioSource`，添加并启用 AudioSource |
 | 转场太短/太长 | duration 不当 | 调整 `duration`（快速转场 2–5 秒，多数 12 秒） |
-| 内容策略拦截（`content_moderation`） | 版权角色名等敏感词触发平台审核，策略不可绕过 | 把拦截原因告知用户；如用户需要类似资产，先说明资产库不保证有合适内容，再询问是否改用 `search_assets` |
+| 内容策略拦截（`content_moderation`） | 版权角色名等敏感词触发平台审核，策略不可绕过 | 把拦截原因告知用户；如用户需要类似资产，先说明资产库不保证有合适内容，再询问是否改用后端资产库搜索（`search_asset_lib`） |
 
 **内容策略拦截处理（不改写 prompt）：**
 
 1. 直接告知用户："生成被内容策略拒绝，原因：{拦截原因}"（从错误消息里的「拦截原因」后取；若无则只说被拒绝）
 2. 说明这是平台限制，无法通过修改 prompt 绕过
 3. 提示："也可以尝试从资产库搜索，但不保证有合适的资产，是否搜索？"
-4. **仅在用户确认后**再 `activate_skill("unity-asset-search")`；不要擅自改写 prompt 重试生成
+4. **仅在用户确认后**再调用后端 `search_asset_lib` 搜索资产库；不要擅自改写 prompt 重试生成
 
 ### Domain reload 后 task 丢失
 

@@ -128,7 +128,7 @@ namespace TJGenerators.PostProcessing
                 assetPaths.Add(assetPath);
             }
 
-            AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            PathUtils.ImportAssetsUnderFolderAfterDiskWrite(outputDir);
 
             if (setAsSprite)
             {

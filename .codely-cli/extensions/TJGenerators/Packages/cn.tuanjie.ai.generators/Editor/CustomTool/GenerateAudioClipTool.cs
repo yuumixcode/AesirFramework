@@ -199,6 +199,7 @@ namespace UnityTcp.Editor.Tools
                 string prompt = parameters["prompt"]?.ToString();
                 string outputPath = parameters["output_path"]?.ToString();
                 string sessionId = parameters["session_id"]?.ToString() ?? "";
+                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
                 bool playOnAwake = parameters["play_on_awake"] != null ? parameters["play_on_awake"].ToObject<bool>() : true;
 
                 if (string.IsNullOrEmpty(prompt))
