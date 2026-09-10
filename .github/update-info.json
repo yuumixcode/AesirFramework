@@ -282,6 +282,7 @@
         "Assets/Runestone/AesirArchitecture/Tests",
         "Assets/Runestone/AesirArchitecture/Tests/Editor",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AbstractContextInitializationTests.cs",
+        "Assets/Runestone/AesirArchitecture/Tests/Editor/AbstractContextUnregisterTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirArchitecturePlayerLoopTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirUpdateServiceTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/CapabilityExtensionsTests.cs",
