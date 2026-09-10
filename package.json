@@ -57,6 +57,11 @@
       "path": "Samples~/ObservableValue"
     },
     {
+      "displayName": "ObservableCollections（可观察集合）",
+      "description": "ObservableList / ObservableDictionary / ObservableHashSet 使用示例：订阅 Added / Removed / Replaced / Updated / Cleared 变更事件，通过 ContextMenu 触发增删改查与集合运算，在 Console 观察事件日志。",
+      "path": "Samples~/ObservableCollections"
+    },
+    {
       "displayName": "MiniEvent",
       "description": "MiniEvent 使用案例，包括无参，单参数事件。多参数事件推荐使用一个结构体封装多个参数，形成单参数事件。",
       "path": "Samples~/MiniEvent"
