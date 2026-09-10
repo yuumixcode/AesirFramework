@@ -36,8 +36,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var controller = new TestController();
             controller.ExecuteCommand(new AddCountCommand { Delta = 5 });
 
-            Assert.AreEqual(5, controller.GetModel<ICounterModel>().Count,
-                "命令应经上下文获取 Model 并完成写入");
+            Assert.AreEqual(5, controller.GetModel<ICounterModel>().Count, "命令应经上下文获取 Model 并完成写入");
             AesirArchitectureDebug.LogTestInfo("ExecuteCommand(带参): 上下文注入 + Model 写入");
         }
 
@@ -51,8 +50,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             controller.ExecuteCommand<IncrementCommand>();
             controller.ExecuteCommand<IncrementCommand>();
 
-            Assert.AreEqual(2, controller.GetModel<ICounterModel>().Count,
-                "两次无参命令各 +1");
+            Assert.AreEqual(2, controller.GetModel<ICounterModel>().Count, "两次无参命令各 +1");
             AesirArchitectureDebug.LogTestInfo("ExecuteCommand(无参): new() 实例化并执行");
         }
 
@@ -155,8 +153,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             var model = new CounterModel();
 
-            Assert.IsFalse(model is ICanGetService,
-                "IModel 不继承 ICanGetService——Model→Service 依赖由编译期阻断");
+            Assert.IsFalse(model is ICanGetService, "IModel 不继承 ICanGetService——Model→Service 依赖由编译期阻断");
             AesirArchitectureDebug.LogTestInfo("标准 Model 能力面: 无 GetService（编译期阻断）");
         }
 
@@ -177,8 +174,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var second = CqrsContext.Instance;
             Assert.AreNotSame(first, second, "Dispose 后 Instance 应重建新实例，而非返回僵尸上下文");
             Assert.IsTrue(second.Initialized, "重建的上下文应完成初始化");
-            Assert.AreEqual(0, second.GetModel<ICounterModel>().Count,
-                "重建后的 Model 应为全新状态（计数归零）");
+            Assert.AreEqual(0, second.GetModel<ICounterModel>().Count, "重建后的 Model 应为全新状态（计数归零）");
             AesirArchitectureDebug.LogTestInfo("Dispose 后 Instance: 重建全新上下文");
         }
 

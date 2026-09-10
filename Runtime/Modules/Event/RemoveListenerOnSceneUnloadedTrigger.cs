@@ -72,7 +72,16 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
+            // 与 AesirArchitecture / MonoLifecycleProxy 单例范式同形：Awake 即写入静态缓存。
+            // 预放置双实例在各自 Awake 期即可完成判重，不再依赖 Instance getter 事后发现
+            // （getter 中的 FindAnyObjectByType 保留为销毁后重发现与执行顺序竞态的兜底路径）
+            _instance = this;
             SceneManager.sceneUnloaded += OnSceneUnloaded;
+        }
+
+        void OnDestroy()
+        {
+            ClearState();
         }
 
         /// <summary>
@@ -86,11 +95,6 @@ namespace Runestone.AesirArchitecture
         {
             _sceneHandles.Clear();
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
-        }
-
-        void OnDestroy()
-        {
-            ClearState();
         }
 
         /// <summary>

@@ -53,6 +53,16 @@ namespace Runestone.AesirArchitecture
         public static string DontDestroyOnLoadFieldName => nameof(dontDestroyOnLoad);
 
         /// <summary>
+        /// 获取 DDOL 开关的当前取值（只读）。
+        /// </summary>
+        /// <remarks>
+        /// 供运行时查询宿主的跨场景持久化决策（如判断引用是否会随场景卸载失效），
+        /// 亦供编辑器条件提示（Odin AttributeProcessor 的可见性表达式）复用——
+        /// 与 <see cref="DontDestroyOnLoadFieldName" /> 同属编辑器协作锚点。
+        /// </remarks>
+        public bool DontDestroyOnLoad => dontDestroyOnLoad;
+
+        /// <summary>
         /// 获取全局唯一的架构管理器实例
         /// </summary>
         /// <remarks>
@@ -98,13 +108,11 @@ namespace Runestone.AesirArchitecture
             return component;
         }
 
-        #region 生命周期
-
         void Awake()
         {
             if (_instance != null && _instance != this)
             {
-                // 仅移除重复组件自身而非整个 GameObject——本组件可能被预放置在用户业务物体上
+                // 仅移除重复组件自身而非整个 GameObject，本组件可能被预放置在用户业务物体上
                 Destroy(this);
                 return;
             }
@@ -146,7 +154,5 @@ namespace Runestone.AesirArchitecture
         {
             _instance = null;
         }
-
-        #endregion
     }
 }

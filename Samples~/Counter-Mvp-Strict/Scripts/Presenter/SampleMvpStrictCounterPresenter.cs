@@ -28,6 +28,13 @@ namespace Runestone.AesirArchitecture.Samples.MvpStrict
         readonly ISampleMvpStrictCounterView _view;
 
         /// <summary>
+        /// 缓存的读值查询实例。Query 无内部状态（每次执行经 Context 重新取 Model），
+        /// 实例可跨调用复用——<c>ExecuteQuery</c> 带实例重载不分配新实例，
+        /// 每次按钮回调的"写后读"路径亦无查询分配。
+        /// </summary>
+        readonly GetCounterValueQuery _getCounterValueQuery = new GetCounterValueQuery();
+
+        /// <summary>
         /// 创建 Presenter 并订阅 View 的用户输入事件。
         /// </summary>
         public SampleMvpStrictCounterPresenter(ISampleMvpStrictCounterView view)
@@ -43,7 +50,7 @@ namespace Runestone.AesirArchitecture.Samples.MvpStrict
         /// </summary>
         public void SyncInitialValue()
         {
-            _view.UpdateCount(this.ExecuteQuery<GetCounterValueQuery, int>());
+            _view.UpdateCount(this.ExecuteQuery(_getCounterValueQuery));
         }
 
         /// <summary>
@@ -59,19 +66,19 @@ namespace Runestone.AesirArchitecture.Samples.MvpStrict
         void OnIncreaseClicked()
         {
             this.ExecuteCommand<SampleMvpStrictIncreaseCommand>();
-            _view.UpdateCount(this.ExecuteQuery<GetCounterValueQuery, int>());
+            _view.UpdateCount(this.ExecuteQuery(_getCounterValueQuery));
         }
 
         void OnDecreaseClicked()
         {
             this.ExecuteCommand<SampleMvpStrictDecreaseCommand>();
-            _view.UpdateCount(this.ExecuteQuery<GetCounterValueQuery, int>());
+            _view.UpdateCount(this.ExecuteQuery(_getCounterValueQuery));
         }
 
         void OnResetClicked()
         {
             this.ExecuteCommand<SampleMvpStrictResetCommand>();
-            _view.UpdateCount(this.ExecuteQuery<GetCounterValueQuery, int>());
+            _view.UpdateCount(this.ExecuteQuery(_getCounterValueQuery));
         }
     }
 }

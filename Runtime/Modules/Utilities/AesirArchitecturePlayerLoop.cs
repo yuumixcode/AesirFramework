@@ -94,9 +94,9 @@ namespace Runestone.AesirArchitecture
         /// 此方法通过 <see cref="PlayerLoopUtility.ContainsSystem{TTarget}" /> 检测后仅补插缺失的子系统，
         /// 并保留当前 PlayerLoop 中第三方已有的其他修改。调用时机：
         /// <list type="bullet">
-        /// <item><see cref="Initialize" /> 在域加载时调用；</item>
-        /// <item><see cref="Register" /> 每次注册回调时调用（注册即自愈）；</item>
-        /// <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用。</item>
+        ///     <item><see cref="Initialize" /> 在域加载时调用；</item>
+        ///     <item><see cref="Register" /> 每次注册回调时调用（注册即自愈）；</item>
+        ///     <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用。</item>
         /// </list>
         /// </remarks>
         public static void EnsureInjected()
@@ -133,7 +133,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="callback">每帧执行的回调委托，必须为非空委托实例</param>
         /// <param name="order">执行优先级，值越小越先执行；同 order 时按注册顺序执行</param>
         /// <returns>自动注销句柄，Dispose 时注销本次注册（与手动 <see cref="Unregister" /> 等效，重复调用安全）</returns>
-        public static AutoRemoveListenerHandle Register(AesirArchitectureLifecyclePhase phase, Action callback,
+        public static AutoRemoveListenerHandle Register(AesirArchitectureLifecyclePhase phase,
+            Action callback,
             int order = 0)
         {
             if (callback == null)
