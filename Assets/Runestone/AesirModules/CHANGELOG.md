@@ -5,6 +5,87 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- **事件模块分发增强与 SO 资产化**：
+  - **订阅者过滤器（精确投递）** — `ISubscriberFilter` 策略接口 + `AesirEventArgs.WithFilter/WithFilters` 链式 API；内建五种过滤器：`WithTag` / `WithPriority` / `SameSceneAsEmitter`（多场景叠加加载）/ `OnlySelf`（自身/子树/父级链）/ `InsideCollider2D`（空间局域广播）；过滤器无法解析对象时按不通过处理（fail-closed），异常与其他订阅者隔离
+  - **死引用清理** — 分发时自动检测已销毁的 Unity 订阅者并从双注册表移除（编辑器内输出告警）；此前仅跳过不清理，注册表会永久累积
+  - **性能监控** — `EventModule` 新增 `executionMsLimit` 字段（毫秒阈值，默认 0 关闭），单次分发超阈值输出 Warning（含事件名、耗时与订阅者数量）；静态 Stopwatch 复用零稳态分配
+  - **SO 资产化** — `AesirEventArgsSO`（Project 右键 `Create → Aesir → Event Module → AesirEventArgsSO` 创建，以资产为发布者触发）+ `UnityEventOnAesirEvent` 桥接组件（Inspector 串联 UnityEvent 回调）+ `SubclassSelector` / `ExcludeSubclassSelector`（`[SerializeReference]` 子类下拉，UI Toolkit PropertyDrawer）+ SO 自定义 Inspector（运行模式限定 Raise 按钮）
+  - **热路径绑定键缓存** — `GetEventBindingKey` 按事件类型缓存 `AssemblyQualifiedName`：原生拼接每次发布 ~1µs 且新分配一个字符串（分发热路径上唯一剩余分配点），缓存后 ~20ns 字典查询、稳态零分配；实测编译委托调用 ~4ns/次（vs `MethodInfo.Invoke` ~300ns，加速 ~78 倍），1000 订阅者单次发布 ~571µs（含死引用检查、过滤器检查与排序）
+  - 新增 EditMode 测试 `EventModuleTests`（22 用例：过滤器全五类、链式 API、死引用清理、性能监控、SO 资产化、多特性订阅、类型推断注册，性能特征回归锁——键缓存引用同一性断言 + 编译委托 vs 反射 20 万次迭代对比计时）
+  - **包内示例** — `Samples/Events/02_Filters`（Space 发布 `WithTag`+`InsideCollider2D` 双重过滤警报、R 发布 `OnlySelf` 家族命令，场景内置多组对照组 + uGUI HUD 日志）、`Samples/Events/03_SOAsset`（`ScoreEventAsset.asset` 配置事件载荷、`UnityEventOnAesirEvent` 桥接组件零代码串联 UnityEvent 回调）；均已登记 package.json samples 并同步 `Samples~` 镜像
+- **音频模块（Audio Module）** — 2D 音频极简门面 `AudioModule`（MonoBehaviour 单例，公开 API 全为静态成员）：
+  - **SFX** — 固定数量独占音源轮询（默认 8，可配）：无每播实例化开销，每次播放的局部音量/音调独立生效，源全忙时抢占最旧；`PlaySfx(clip, volume, pitch, pitchJitter)` 支持音调随机抖动
+  - **BGM** — 专用循环音源；同曲在播幂等返回（跨场景重复触发不打断音乐）；`PlayBgm(clip, fadeSeconds)` / `StopBgm(fadeSeconds)` 协程淡入淡出（`unscaledDeltaTime`，slow motion 不变调）
+  - **音量与静音** — Master / BGM / SFX 三通道乘法链 + 三通道静音（Master 总闸），设置即时生效并经 PlayerPrefs 持久化（键前缀可配）
+  - **暂停** — `PauseAll` / `ResumeAll`
+  - **配置** — 零配置可用；`AudioConfigSO`（Create 菜单 `Aesir Modules → Audio → AudioConfig`）管默认音量、持久化开关与键前缀；预放置实例 Inspector 说明由 Odin AttributeProcessor 注入
+  - 新增 EditMode 测试 `AudioModuleTests`（30 用例：单例生命周期、SFX 轮询、BGM 语义、音量/静音乘法链、持久化、配置载入）与示例 `Samples/Audio/01_BasicUsage`（OnGUI 面板驱动全部 API，自包含程序化 wav 音频）
+- **场景模块（Scene Module）行为层补齐与缺陷修复**：
+  - **生命周期对齐** — `SceneModule` 补 `dontDestroyOnLoad` 序列化字段（默认开，对齐 UIModule 三态 DDOL 范式：预放置根物体 DDOL / 子物体跟随宿主 / 关闭警告）；此前预放置实例会被自己的 `LoadSceneSingle` 随场景卸载销毁、加载回调静默丢失
+  - **`SetActiveScene`** — 激活场景切换 API（`path` / `SceneAssetWrapper` 双重重载，返回 bool），补齐多场景叠加工作流刚需（决定光照设置来源与 Instantiate 默认落点）
+  - **场景事件广播** — `SceneLoadedEvent` / `SceneUnloadedEvent`（`MiniEvent<string>`，参数为场景路径），多系统可订阅场景生命周期
+  - **加载进度** — `LoadSceneSingle` / `LoadSceneAdditive` 新增 `onProgress` 逐帧进度回调（按 Unity 场景激活上限 0.9 归一化到 1）；移除全仓零消费者的 `GetTotalLoadingProgress`
+  - **API 收敛** — 移除零消费者且语义有陷阱的 `BootstrapScene` 属性（stale Scene 快照）及运行时 bootstrap 半链（`AutoSetupBootstrapScene`）；`PresetBootstrapSceneNames` 改只读 `IReadOnlyList<string>`；`UnloadAllAddedScenes` 单个场景卸载失败改为跳过并告警（原为空等一帧静默跳过）
+  - **`SceneAssetWrapper`** — 新增 `IsDangling` 悬空判定与 Inspector 悬空 Error 信息框（此前只有红色着色无说明）；`TryGetAddress` XML 修正"与 Address 一致"的失实表述
+  - **Inspector 文案** — `SceneModule` 的 DetailedInfoBox 由失实的"自动搜索 BuildSettings"改为 DDOL 使用须知
+  - 新增 EditMode 测试 `SceneModuleTests`（20 用例：拒绝矩阵、协程失败分支、Single 失败保留追踪、SetActiveScene、事件、重复实例与 DDOL 语义）与专属文档 `Documentation/scene-module.md`
+- **系统事件（元事件）与 DefaultChannel 频道标签暂缓** — 依赖编辑器工具链（Subscription Monitor / Event Log 等调试窗口），待工具链立项后一并设计；单实例合并不实施（Awake 已销毁重复实例，且订阅均经 `Instance` 单一通道注册，重复实例不可能积累绑定）
+  - **UI 模块文档补齐** — 新增专属文档 `Documentation/ui-module.md`（架构总览、生命周期与 OnClose/OnDestroy 职责分界、注册键语义、加载契约、Canvas 配置、设计边界）；中英 README 的 UI 章节补 `AesirBasePanelViewController<T>`（核心类型表与目录结构此前漏列，仅 Binder 节提及）、键语义警示与设计边界节
+- **脚本文档生成模块（ScriptDocGenerator）修复与增强**：
+  - **生成器正确性修复** — 中文 API 生成器三处输出 bug：单事件类/单方法接口曾整体丢失"事件/方法"章节（入口阈值 `<= 1` 应为 `<= 0`）；public 非 const 字段曾混入"常量字段"表并被双重展示（过滤布尔写反）；仅私有继承属性的类型曾输出空"继承的属性"章节（flag 预计算漏 API 守卫）。回归测试锁定（`DefaultScriptingAPIOutputTests` 4 用例）
+  - **参数/备注全链路输出（Zensical 生成器）** — 参数表与返回值表新增"说明"列（XML `<param>` / `<returns>` 注释落地）；类型头部与成员详情渲染 `<remarks>` 备注、`<value>` 属性值说明与 `<typeparam>` 泛型参数说明；参数类型改从分析期结构化数据直取（`IParameterData[]`），移除约 80 行格式化字符串反解析
+  - **分析数据层注释链路打通** — `ITypeData.TypeParamSummaries` / `IPropertyData.ValueSummary` / `IMemberData.RemarksSummary` / `IConstructorData.Parameters` 与 `ParamSummaries`：六种 XML 文档标签全部从 SourceScanner 流到数据类与生成器；源码文档缓存在每次分析前失效（此前仅靠域重载）
+  - **调试检查模式** — 分析中间结果（完整成员树）默认不再绘制进 Inspector 且不写入面板资产（此前程序集模式下数百类型整图序列化进 .asset，窗口卡顿 + 资产膨胀）；新增"调试检查模式"开关按需开启渲染，程序集模式下开启时有性能警告信息框
+  - **面板状态与交互** — 域重载不再清空用户配置（此前每次编译丢输出路径/生成器/类型来源，仅保留跨域必然失效的分析态）；程序集下拉只列项目脚本程序集并排序（此前全域数百项含引擎模块）；分析完成提示改用 Odin 原生 Toast 与正确文案
+  - **默认输出目录移出 Assets** — 项目根 `ScriptDocGenerator/`（.gitignore 已登记），生成的 .md 不再产生 .meta；需随包分发时可在面板改回 Assets 内路径或任意绝对路径
+  - **窗口收敛** — 移除 UI Toolkit 版窗口与其菜单项（功能子集且写死默认生成器、状态不落盘、工作流逻辑双份）；Odin 窗口为唯一主入口
+  - **Summary 工具语义升级（行为变更）** — 内容源改为 **`[Summary]` 特性优先**：已存在可解析特性时以特性文本为权威（Sync 模式 XML 与特性不一致时回写 XML 对齐，Replace 模式保持特性内容），无特性时回退 XML 生成特性；拼接字符串实参等无法安全解析的特性按"无特性"处理回退 XML
+  - **Summary 工具源码安全修复** — 特性文本双引号/反斜杠转义（此前含 `"` 的 summary 会生成非法 C#）；保留原文件行尾风格（此前 CRLF 整文件转 LF）；`////` 四斜杠普通注释不再误判为 XML 文档注释；Remove 模式批量删除前确认对话框、无特性文件原样跳过不重写；批量处理仅触发一次 `AssetDatabase.Refresh`
+  - **Front Matter 修复** — 旧文档无闭合 `---` 分隔符时不再把整个文件误当 Front Matter 拼回（此前产物为"旧全文 + 新文档"叠加）
+  - **其他修复** — 事件访问器方法过滤 `Contains` → `StartsWith`（名字含 `add_` 的正常方法曾被误杀）；移除 `TypeData.TypeInfo` 死属性、`GetReadableTypeName` 不可达的 `obj` 尾部截断、`ReflectionUtility` 两处异常吞噬/包装（恢复 fail-fast）；字段式事件 `IsStatic` 改以 AddMethod 为准（原 `GetRaiseMethod` 必空引用）
+  - 新增 EditMode 测试：`DefaultScriptingAPIOutputTests`（4）与 `XmlSummaryToolTests` 新语义 7 用例（双向对齐/转义/CRLF/`////`/无变化跳过/拼接回退）
+
+### Changed
+
+- **UI 模块注册表重构（含破坏性变更）**：
+  - **单注册表** — `_activatedPanelDict` / `_deactivatedPanelDict` / `_uiPanelDict` 三字典合并为单实例注册表 `_panelDict`（键 = 实际类型）；激活/停用状态由面板自身 `IUIPanel.IsOpen` 承担，消灭三表双写不一致空间与理论不可达的"内部状态异常"防御分支；`ShowPanel` / `HidePanel` / `PrewarmPanel` 的重复实例化/挂层管线收敛为 `InstantiateAndAttach` 单实现（原先 4 处复制粘贴）
+  - **键语义诊断（行为变更）** — 注册表以实例实际类型为键；以基类类型调用时：重复 `ShowPanel` **报错拒绝并返回 null**（此前会静默重复实例化）、`HidePanel` / `GetPanel` 记录键语义警告（此前 `HidePanel` 静默无效、`GetPanel` 警告文案指向错误方向）；精确未命中且无关联实例时三者均按幂等语义静默（`GetPanel` 原警告移除，与 `HidePanel` 口径统一）
+  - **层 Canvas 缺失中止（行为变更）** — `ShowPanel` / `PrewarmPanel` 在面板所属层 Canvas 缺失（UIRoot 层级结构性损坏）时记录错误并中止显示、清理半挂载实例（此前仅跳过挂层、生命周期照跑，产出不可见僵尸面板）
+  - **`HidePanel<T>` 泛型约束统一** — `where T : IUIPanel` 收紧为 `where T : MonoBehaviour, IUIPanel`（与 Show/Get/Prewarm 家族一致）
+  - **Assets/Create 默认 UICanvasConfig 菜单幂等化** — 已存在时复用并提示（原为拒绝创建 + 警告），与 UIRoot Inspector 按钮共用同一实现，消灭两份等价代码的行为漂移
+- **面板 `OnClose` 语义修正（文档）** — XML 注释与 README 明确：仅受控销毁路径（`HidePanel` 且 `DestroyOnHide=true`）调用；场景卸载/外部 `Destroy` 只触发 `OnDestroy`，事件解绑与订阅释放须放 `OnDestroy`（或两处都写），仅写 `OnClose` 会在场景切换时泄漏
+- **加载器契约收敛（文档）** — `IUIAssetLoader` 宣称从"可替换为 Addressables 等"收敛为同步语义（Resources / 同步缓存）；异步管线需自行预加载后同步返回，XML 与 README 均已注明 WebGL `Handle.Result` 死锁风险
+
+### Removed
+
+- **`UIModule.RegisterUIRoot(UIRoot)`（破坏性）** — UIRoot 不再在 Awake 中反向注册 UIModule，改为纯拉方向（`UIModule.EnsureReady` 经 `UIRoot.Instance` 惰性发现，行为不变）；根因：编辑器菜单 `GameObject → Aesir Modules → UI/Create UIRoot` 此前会经 `RegisterUIRoot` 连带触发 `UIModule.Instance → [Aesir Modules]` 宿主的运行时懒创建链，使运行时路径物体被固化进场景（且 Undo 只注册 UIRoot、撤销会残留连带物体）
+- **`IUIAssetLoader.Unload(GameObject)`（破坏性）** — 全仓零调用的死接口方法；预制体引用由 UIModule 注册表持有、生命周期与模块一致，契约不设释放方法
+
+### Fixed
+
+- **UI 模块缺陷修复**：
+  - `AesirBasePanel.OnClose` XML 注释失实修正（"面板即将销毁前调用"→ 仅受控销毁路径调用 + OnDestroy 职责分界说明）
+  - UIRoot Editor 段（`CreateAndLoadCanvasConfigAsset`）与 `UIModuleMenuItems.CreateUICanvasConfigAsset` 双份等价实现统一为 `UIRoot.EnsureDefaultCanvasConfigAsset` 共享入口
+  - `UIModule` 顶部残留的空 `#if ODIN_INSPECTOR` 条件编译块清除
+  - 新增 EditMode 测试 `UIModuleTests`（13 用例，`Tests/Editor/UI/`）：三路 Show 状态迁移与生命周期顺序（OnInit → OnShow，Awake 推迟由复用断言锁定）、Hide 的 DestroyOnHide 双分叉、Prewarm 幂等与复用、以基类类型操作的键语义诊断（Error/Warning 分级）、`RemovePanelRecord` 外部销毁反清理、层 Canvas 缺失中止、未知类型幂等静默——补齐 0.1.0 时代 UIManager 面板流程测试（拆分时丢失）的回归保护
+- **Scene 模块缺陷修复**：
+  - Single 加载失败不再误清叠加追踪——`_addedScenePaths` 清空从"加载前"移至"加载成功后"，失败路径保留旧追踪
+  - 重复实例改为 `Destroy(this)`（不连带销毁宿主物体上的其他组件，对齐 RAA 先例），并补 `[RuntimeInitializeOnLoadMethod]` 静态重置
+  - `BootstrapSceneHelper` 预设名搜索修复"子串命中即断 + 大小写双标"：`FindAssets` 子串命中但精确过滤落空时继续尝试下一个预设名、文件名比较统一 `OrdinalIgnoreCase`——此前 `Foo_Bootstrapper` 之类会吞掉真实启动场景（如小写 `bootstrap.unity`）的注册
+  - `SceneEditorSettings` 设置资产路径迁至 `ScriptableSingleton/AesirModules/`（遵循项目 ScriptableSingleton 前缀约定，自动被 .gitignore 覆盖；原 `ProjectEditorSettings/` 为未忽略的游离目录）
+  - 编辑器窗口菜单归位 `Tools/Aesir/Scene Editor Settings`（原 `Tools/场景管理方案设置窗口`，违反包内菜单约定）
+  - 文档对齐实现：README"启动场景"段拆写运行时（仅持有引用）与编辑器（`BootstrapSceneHelper`，默认关闭）双系统职责；README 依赖节与 `SceneAssetWrapper` XML 明示 Odin Inspector 边界——wrapper 的 Inspector 面板效果需 Odin，未安装仅保证 API 可用（`FromScenePath` 构造 / `SceneAsset` 代码赋值 / TryGet 家族），面板不支持
+- `AesirListenerAttribute` 补 `AllowMultiple = true`（文档早已宣称、`Bind` 亦按多特性编写，此前单个方法无法标注多个 `[AesirListener]` 监听多种事件）
+- 修正文档与代码不一致：`SubscriberPriority` 实际为 4 档（First/High/Medium/Last），此前 XML 注释、中英 README 与 event-module.md 均描述为 5 档（含 Essential/Low/Cleanup 等不存在的枚举值）
+
+### 规划中
+
+- 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
+
 ## [0.19.0] - 2026-09-11
 
 ### Changed
@@ -37,13 +118,6 @@
 - Partial 模式重新生成覆盖手写 controller 文件的问题
 - 绑定校验空引用 / 层级路径越界；EditorPrefs 键规范与自动挂载的跨 asmdef 类型解析
 - **示例场景无法运行（0.14.0 起回归）** — `Events/01_KeyPress` 示例程序集从 Editor-only 改为运行时程序集 + 整文件 `#if UNITY_EDITOR` 包裹：修复 Editor-only asmdef 的 MonoBehaviour 禁止挂载场景物体导致的 Missing Script；玩家构建整体剔除
-
-## [Unreleased]
-
-### 规划中
-
-- Scene 模块（SceneLoader、SceneReference）
-- 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
 
 ## [0.16.2] - 2026-09-06
 
