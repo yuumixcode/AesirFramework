@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+### 规划中
+
+- 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
+
+## [0.20.0] - 2026-09-11
+
 ### Added
 
 - **事件模块分发增强与 SO 资产化**：
@@ -81,10 +87,6 @@
   - 文档对齐实现：README"启动场景"段拆写运行时（仅持有引用）与编辑器（`BootstrapSceneHelper`，默认关闭）双系统职责；README 依赖节与 `SceneAssetWrapper` XML 明示 Odin Inspector 边界——wrapper 的 Inspector 面板效果需 Odin，未安装仅保证 API 可用（`FromScenePath` 构造 / `SceneAsset` 代码赋值 / TryGet 家族），面板不支持
 - `AesirListenerAttribute` 补 `AllowMultiple = true`（文档早已宣称、`Bind` 亦按多特性编写，此前单个方法无法标注多个 `[AesirListener]` 监听多种事件）
 - 修正文档与代码不一致：`SubscriberPriority` 实际为 4 档（First/High/Medium/Last），此前 XML 注释、中英 README 与 event-module.md 均描述为 5 档（含 Essential/Low/Cleanup 等不存在的枚举值）
-
-### 规划中
-
-- 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
 
 ## [0.19.0] - 2026-09-11
 

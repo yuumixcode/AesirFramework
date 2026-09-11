@@ -3,13 +3,13 @@
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an experimental event module, audio management, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.19.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.20.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.19.0`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.20.0`)
 
 ## Modules
 
@@ -25,7 +25,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.19.0 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.20.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed. Note that **the `SceneAssetWrapper` Inspector experience of the Scene module (drag-assign, coloring, one-click fix buttons) requires Odin**; without Odin, only the API surface is guaranteed (construct via `FromScenePath`, assign `SceneAsset` in code, use the TryGet family) — the panel is not supported.
 
 ## Directory Layout
@@ -45,7 +45,7 @@ Assembly organization:
 In the Unity Package Manager window, click `+` → `Add package from git URL...`:
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.19.0
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.20.0
 ```
 
 Or edit `Packages/manifest.json`:
@@ -53,7 +53,7 @@ Or edit `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.19.0"
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.20.0"
   }
 }
 ```
