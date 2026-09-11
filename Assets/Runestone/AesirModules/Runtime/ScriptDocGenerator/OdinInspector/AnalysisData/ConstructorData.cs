@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
@@ -12,6 +14,16 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// 方法的参数声明字符串，包含参数名称和类型
         /// </summary>
         string ParametersDeclaration { get; }
+
+        /// <summary>
+        /// 构造方法的参数解析数据数组，分析期从反射直接结构化产出
+        /// </summary>
+        IParameterData[] Parameters { get; }
+
+        /// <summary>
+        /// 参数级注释字典（XML <c>&lt;param&gt;</c> 标签），键为参数名。无参数注释时为 null
+        /// </summary>
+        IReadOnlyDictionary<string, string> ParamSummaries { get; }
 
         /// <summary>
         /// 不包含参数的简单方法签名
@@ -37,6 +49,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             AccessModifier = constructorInfo.GetMethodAccessModifierType();
             AccessModifierName = AccessModifier.ConvertToString();
             ParametersDeclaration = constructorInfo.GetParametersNameWithDefaultValue();
+            Parameters = constructorInfo.GetParameters().Select(p => new ParameterData(p)).ToArray();
+            ParamSummaries = ParamSummariesResolver(constructorInfo);
             Signature = GetConstructorFullSignature(AccessModifierName, constructorInfo);
             SignatureWithoutParameters = Signature.Split('(')[0];
             FullDeclarationWithAttributes = AttributesDeclaration + Signature;
@@ -107,6 +121,16 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// 构造方法的参数声明字符串，包含参数名称和类型
         /// </summary>
         public string ParametersDeclaration { get; }
+
+        /// <summary>
+        /// 构造方法的参数解析数据数组，分析期从反射直接结构化产出
+        /// </summary>
+        public IParameterData[] Parameters { get; }
+
+        /// <summary>
+        /// 参数级注释字典（XML <c>&lt;param&gt;</c> 标签），键为参数名。无参数注释时为 null
+        /// </summary>
+        public IReadOnlyDictionary<string, string> ParamSummaries { get; }
 
         /// <summary>
         /// 不包含参数的简单构造方法签名

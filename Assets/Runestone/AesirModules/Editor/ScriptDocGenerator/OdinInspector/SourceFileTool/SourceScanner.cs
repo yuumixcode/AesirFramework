@@ -16,14 +16,13 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     /// </summary>
     public static class SourceScanner
     {
-        static readonly Regex _typeDeclRegex = new Regex(
-            @"\b(class|struct|enum|interface|record)\s+(\w+)", RegexOptions.Compiled);
+        static readonly Regex _typeDeclRegex = new Regex(@"\b(class|struct|enum|interface|record)\s+(\w+)",
+            RegexOptions.Compiled);
 
         static readonly Regex _recordKeywordRegex = new Regex(
             @"\brecord\s+(?:struct|class)\s+(\w+)", RegexOptions.Compiled);
 
-        static readonly Regex _namespaceRegex = new Regex(
-            @"^\s*namespace\s+([\w.]+)", RegexOptions.Compiled);
+        static readonly Regex _namespaceRegex = new Regex(@"^\s*namespace\s+([\w.]+)", RegexOptions.Compiled);
 
         static readonly Regex _leadingAttributesRegex =
             new Regex(@"^(\s*\[.*?\]\s*)+", RegexOptions.Compiled);
@@ -54,12 +53,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             @"|<see\s+langword=(?<lq>[""'])(?<langword>[^""']*)\k<lq>\s*/?>" +
             @"|<paramref\s+name=(?<pq>[""'])(?<paramref>[^""']*)\k<pq>\s*/?>" +
             @"|<typeparamref\s+name=(?<tq>[""'])(?<typeparamref>[^""']*)\k<tq>\s*/?>" +
-            @"|<c>(?<inline>.*?)</c>" +
-            @"|<code>(?<code>.*?)</code>" +
-            @"|<para\s*/?>" +
-            @"|</para>" +
-            @"|<[^>]+>",
-            RegexOptions.Singleline | RegexOptions.Compiled);
+            @"|<c>(?<inline>.*?)</c>" + @"|<code>(?<code>.*?)</code>" + @"|<para\s*/?>" + @"|</para>" +
+            @"|<[^>]+>", RegexOptions.Singleline | RegexOptions.Compiled);
 
         static readonly Regex _multiSpaceRegex = new Regex(@"  +", RegexOptions.Compiled);
 
@@ -148,8 +143,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 // 空行：仅推进结构状态，不打断待关联文档块
                 if (string.IsNullOrWhiteSpace(line))
                 {
-                    UpdateStructure(result, line, sanitized, i, ref depth, nsStack,
-                        ref fileScopedNamespace, typeStack);
+                    UpdateStructure(result, line, sanitized, i, ref depth, nsStack, ref fileScopedNamespace,
+                        typeStack);
                     continue;
                 }
 
@@ -174,8 +169,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                         }
                     }
 
-                    UpdateStructure(result, line, sanitized, i, ref depth, nsStack,
-                        ref fileScopedNamespace, typeStack);
+                    UpdateStructure(result, line, sanitized, i, ref depth, nsStack, ref fileScopedNamespace,
+                        typeStack);
                     continue;
                 }
 
@@ -186,8 +181,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     docBuffer.Clear();
                 }
 
-                UpdateStructure(result, line, sanitized, i, ref depth, nsStack,
-                    ref fileScopedNamespace, typeStack);
+                UpdateStructure(result, line, sanitized, i, ref depth, nsStack, ref fileScopedNamespace,
+                    typeStack);
             }
 
             return result;
@@ -256,8 +251,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     return match.Groups["code"].Value;
                 }
 
-                if (match.Value.StartsWith("<para", StringComparison.Ordinal) ||
-                    match.Value == "</para>")
+                if (match.Value.StartsWith("<para", StringComparison.Ordinal) || match.Value == "</para>")
                 {
                     return "\n";
                 }
@@ -266,13 +260,48 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             });
         }
 
+        sealed class Frame
+        {
+            public readonly int BodyDepth;
+            public readonly string Name;
+            public bool Entered;
+
+            public Frame(string name, int bodyDepth)
+            {
+                Name = name;
+                BodyDepth = bodyDepth;
+            }
+        }
+
+        sealed class SanitizerState
+        {
+            public bool InBlockComment;
+            public bool InVerbatimString;
+        }
+
+        sealed class SourceDocText
+        {
+            public readonly Dictionary<string, string> Params = new Dictionary<string, string>();
+            public readonly Dictionary<string, string> TypeParams = new Dictionary<string, string>();
+            public string Remarks;
+            public string Returns;
+            public string Summary;
+            public string Value;
+
+            public bool IsEmpty =>
+                Summary == null && Returns == null && Remarks == null && Value == null && Params.Count == 0 &&
+                TypeParams.Count == 0;
+        }
+
         #region 净化器
 
         /// <summary>
         /// 字符级净化一行：字符串/字符字面量内容与注释内容置空（保留引号字符以维持 token 结构）。
         /// 行首（跳过空白）为 /// 且处于代码态时识别为 XML 文档注释行，原样返回由上层收集。
         /// </summary>
-        static string SanitizeLine(SanitizerState state, string line, out bool isDocLine,
+        static string SanitizeLine(SanitizerState state,
+            string line,
+            out bool isDocLine,
             out string docContent)
         {
             isDocLine = false;
@@ -290,8 +319,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     firstChar++;
                 }
 
-                if (firstChar + 2 < line.Length && line[firstChar] == '/' &&
-                    line[firstChar + 1] == '/' && line[firstChar + 2] == '/')
+                if (firstChar + 2 < line.Length && line[firstChar] == '/' && line[firstChar + 1] == '/' &&
+                    line[firstChar + 2] == '/')
                 {
                     isDocLine = true;
                     docContent = line.Substring(firstChar + 3).Trim();
@@ -479,8 +508,14 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         #region 结构扫描
 
-        static void UpdateStructure(ParsedSourceDoc result, string line, string[] sanitized, int index,
-            ref int depth, Stack<Frame> nsStack, ref string fileScopedNamespace, Stack<Frame> typeStack)
+        static void UpdateStructure(ParsedSourceDoc result,
+            string line,
+            string[] sanitized,
+            int index,
+            ref int depth,
+            Stack<Frame> nsStack,
+            ref string fileScopedNamespace,
+            Stack<Frame> typeStack)
         {
             var nsMatch = _namespaceRegex.Match(line);
             if (nsMatch.Success)
@@ -615,8 +650,13 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         #region 文档关联
 
-        static void ResolveDoc(ParsedSourceDoc result, List<string> docBuffer, string declText,
-            string namespaceFqn, Stack<Frame> typeStack, int depthBefore, string[] sanitized,
+        static void ResolveDoc(ParsedSourceDoc result,
+            List<string> docBuffer,
+            string declText,
+            string namespaceFqn,
+            Stack<Frame> typeStack,
+            int depthBefore,
+            string[] sanitized,
             int declIndex)
         {
             var doc = ParseDocText(docBuffer);
@@ -771,8 +811,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             }
             else
             {
-                var fallback = joined.Replace("<summary>", string.Empty)
-                    .Replace("</summary>", string.Empty).Trim();
+                var fallback = joined.Replace("<summary>", string.Empty).Replace("</summary>", string.Empty)
+                    .Trim();
                 if (fallback.Length > 0 && !fallback.StartsWith("<param") &&
                     !fallback.StartsWith("<returns") && !fallback.StartsWith("<remarks") &&
                     !fallback.StartsWith("<typeparam") && !fallback.StartsWith("<value"))
@@ -835,13 +875,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             return text.Length == 0 ? null : text;
         }
 
-        static string DecodeXmlEntities(string text) => text
-            .Replace("&lt;", "<")
-            .Replace("&gt;", ">")
-            .Replace("&quot;", "\"")
-            .Replace("&apos;", "'")
-            .Replace("&nbsp;", " ")
-            .Replace("&amp;", "&");
+        static string DecodeXmlEntities(string text) => text.Replace("&lt;", "<").Replace("&gt;", ">")
+            .Replace("&quot;", "\"").Replace("&apos;", "'").Replace("&nbsp;", " ").Replace("&amp;", "&");
 
         static bool IsCtorDeclaration(string declText, string memberName, string typeName)
         {
@@ -872,9 +907,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             var conversionMatch = _conversionOperatorRegex.Match(declText);
             if (conversionMatch.Success)
             {
-                return conversionMatch.Groups[1].Value == "implicit"
-                    ? "op_Implicit"
-                    : "op_Explicit";
+                return conversionMatch.Groups[1].Value == "implicit" ? "op_Implicit" : "op_Explicit";
             }
 
             var wordMatch = _wordOperatorRegex.Match(declText);
@@ -1117,39 +1150,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         }
 
         #endregion
-
-        sealed class Frame
-        {
-            public readonly string Name;
-            public readonly int BodyDepth;
-            public bool Entered;
-
-            public Frame(string name, int bodyDepth)
-            {
-                Name = name;
-                BodyDepth = bodyDepth;
-            }
-        }
-
-        sealed class SanitizerState
-        {
-            public bool InBlockComment;
-            public bool InVerbatimString;
-        }
-
-        sealed class SourceDocText
-        {
-            public string Summary;
-            public string Returns;
-            public string Remarks;
-            public string Value;
-            public readonly Dictionary<string, string> Params = new Dictionary<string, string>();
-            public readonly Dictionary<string, string> TypeParams = new Dictionary<string, string>();
-
-            public bool IsEmpty =>
-                Summary == null && Returns == null && Remarks == null && Value == null &&
-                Params.Count == 0 && TypeParams.Count == 0;
-        }
     }
 }
 #endif

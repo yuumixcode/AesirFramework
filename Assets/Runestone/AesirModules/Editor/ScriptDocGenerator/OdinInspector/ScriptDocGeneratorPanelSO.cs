@@ -29,15 +29,17 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         const string DefaultTypesCacheSoFolderPath =
             ScriptDocGeneratorPaths.PanelConfigFolderPath + "/TypeCache";
 
-        public static string DefaultDocFolderPath => ScriptDocGeneratorPaths.DefaultDocFolderPath;
-
         const string NoneAssembly = "None Assembly";
 
         static readonly string ConfigName = typeof(ScriptDocGeneratorPanelSO).GetNiceFullName();
 
         static ValueDropdownList<string> _currentDomainAssemblies;
-        bool _hasFinishedAnalyze;
-        bool _isCustomizingSaveConfig;
+
+        [PropertyOrder(5)]
+        [SerializeField]
+        [LabelText("调试检查模式")]
+        [Tooltip("开启后在窗口内渲染类型分析的中间结果（完整成员树）。\n" + "仅用于检查分析数据，日常生成文档无需开启；程序集模式下大量类型的整图渲染会明显拖慢窗口。")]
+        bool debugInspectionMode;
 
         [PropertyOrder(2)]
         [SerializeField]
@@ -83,13 +85,20 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         [SerializeField]
         List<string> selectedAssemblyFullNames = new List<string>();
 
+        bool _hasFinishedAnalyze;
+        bool _isCustomizingSaveConfig;
+
+        [NonSerialized]
+        [ShowInInspector]
         [PropertyOrder(90)]
-        [OdinSerialize]
         ITypeData _typeData;
 
+        [NonSerialized]
+        [ShowInInspector]
         [PropertyOrder(90)]
-        [OdinSerialize]
         List<ITypeData> _typeDataList;
+
+        public static string DefaultDocFolderPath => ScriptDocGeneratorPaths.DefaultDocFolderPath;
 
         public static ScriptDocGeneratorPanelSO Instance =>
             ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ScriptDocGeneratorPanelSO>(
@@ -130,15 +139,23 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         bool IsNeedTypeAnalysisDataList => IsMultipleType || IsSingleAssembly || IsMultipleAssemblies;
 
+        /// <summary>是否渲染分析中间结果（仅调试检查模式）</summary>
+        bool ShowTypeAnalysisData => debugInspectionMode;
+
+        /// <summary>程序集模式下渲染整图的性能警告（仅调试检查模式显示）</summary>
+        bool ShowAssemblyDebugWarning => debugInspectionMode && (IsSingleAssembly || IsMultipleAssemblies);
+
         void OnEnable()
         {
-            ResetToDefault();
+            // 只清理跨域重载后必然失效的分析态（Type 引用与进度标志），保留用户配置
+            // （输出路径/生成器/类型来源/缓存资源等经序列化持久化，重置走"重置所有配置"按钮）
+            ResetHasFinishedAnalyzed();
+            ResetTypeAnalysisData();
         }
 
         [PropertyOrder(-5)]
         [Title("脚本文档生成工具")]
-        [InfoBox(
-            "用户提供一个 Type 类型的值，分析 Type 数据，选择合适的文档生成器，一键生成对应的文档。默认提供中文 API 文档生成器，可以自定义适合项目的生成器。",
+        [InfoBox("用户提供一个 Type 类型的值，分析 Type 数据，选择合适的文档生成器，一键生成对应的文档。默认提供中文 API 文档生成器，可以自定义适合项目的生成器。",
             InfoMessageType.None)]
         [Button("重置所有配置", ButtonSizes.Small)]
         public void ResetToDefault()
@@ -157,6 +174,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             ResetSelectedAssemblyFullNames();
             ResetHasFinishedAnalyzed();
             ResetTypeAnalysisData();
+            ResetDebugInspectionMode();
         }
 
         public static event Action<ToastPosition, SdfIconType, string, Color, float> ToastRequested;
@@ -280,8 +298,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return _currentDomainAssemblies;
             }
 
-            _currentDomainAssemblies = new ValueDropdownList<string> { { NoneAssembly, NoneAssembly } };
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            // 只列项目脚本程序集（含 Packages 源码程序集）：引擎模块与预编译 DLL 不存在项目源码，
+            // 全域罗列会产生数百项无效下拉项
+            _currentDomainAssemblies = new ValueDropdownList<string>();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(assembly => ScriptAssemblyFilter.IsScriptAssembly(assembly))
+                .OrderBy(assembly => assembly.GetName().Name, StringComparer.Ordinal);
             foreach (var assembly in assemblies)
             {
                 _currentDomainAssemblies.Add(assembly.GetName().Name, assembly.FullName);
@@ -345,8 +367,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             }
 
             _hasFinishedAnalyze = true;
-            ToastRequested?.Invoke(ToastPosition.BottomRight, SdfIconType.LightningFill,
-                "分析中，等待生成按钮显示。请勿连续点击！", Color.yellow, 4f);
+            ToastRequested?.Invoke(ToastPosition.BottomRight, SdfIconType.CheckCircleFill, "分析完成，生成按钮已启用",
+                Color.green, 4f);
         }
 
         void PerformGenerateDoc()
@@ -532,13 +554,23 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 if (member.Name == nameof(_typeData))
                 {
                     attributes.Add(new TitleGroupAttribute("$" + nameof(_typeAnalysisResultLabel)));
+                    attributes.Add(new ShowIfAttribute(nameof(ShowTypeAnalysisData)));
                     attributes.Add(new ShowIfAttribute(nameof(IsSingleType)));
                 }
 
                 if (member.Name == nameof(_typeDataList))
                 {
                     attributes.Add(new TitleGroupAttribute("$" + nameof(_typeAnalysisResultLabel)));
+                    attributes.Add(new ShowIfAttribute(nameof(ShowTypeAnalysisData)));
                     attributes.Add(new ShowIfAttribute(nameof(IsNeedTypeAnalysisDataList)));
+                }
+
+                if (member.Name == nameof(debugInspectionMode))
+                {
+                    // 条件警告：仅在程序集模式 + 调试检查开启时显示，表达式经 $value 引用面板实例
+                    attributes.Add(new InfoBoxAttribute(
+                        "程序集模式下渲染分析中间结果会一次性绘制数百个类型的完整成员树，窗口可能明显卡顿；" + "仅在需要检查分析数据时开启。",
+                        InfoMessageType.Warning, "@$value.ShowAssemblyDebugWarning"));
                 }
             }
         }
@@ -608,6 +640,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         void ResetHasFinishedAnalyzed()
         {
             _hasFinishedAnalyze = false;
+        }
+
+        void ResetDebugInspectionMode()
+        {
+            debugInspectionMode = false;
         }
 
         void ResetTypeAnalysisData()

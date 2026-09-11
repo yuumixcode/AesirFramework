@@ -13,9 +13,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         static readonly string ConfigName = typeof(DefaultScriptingAPISettingsSO).GetNiceFullName();
 
         public static DefaultScriptingAPISettingsSO Instance =>
-            ScriptDocGeneratorEditorUtility
-                .GetOrCreateEditorScriptableObject<DefaultScriptingAPISettingsSO>(ConfigName,
-                    ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "DefaultCnScriptingAPI");
+            ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<DefaultScriptingAPISettingsSO>(
+                ConfigName, ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "DefaultCnScriptingAPI");
 
         public override string GetGeneratedDocumentation(ITypeData data)
         {
@@ -122,7 +121,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         static StringBuilder CreateEventsContent(IEventData[] eventDataArray)
         {
             var sb = new StringBuilder();
-            if (eventDataArray.Length <= 1)
+            if (eventDataArray.Length <= 0)
             {
                 return sb;
             }
@@ -220,7 +219,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         static StringBuilder CreateMethodsContent(IMethodData[] methodDataArray)
         {
             var sb = new StringBuilder();
-            if (methodDataArray.Length <= 1)
+            if (methodDataArray.Length <= 0)
             {
                 return sb;
             }
@@ -373,6 +372,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     break;
                 }
 
+                if (!propertyData.IsApiMember())
+                {
+                    continue;
+                }
+
                 if (!hasAPI && propertyData.IsApiMember())
                 {
                     hasAPI = true;
@@ -520,7 +524,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 foreach (var fieldData in fieldDataArray)
                 {
                     fieldData.TryAsIMemberData(out var memberData);
-                    if (!fieldData.IsApiMember() && !fieldData.IsConstant)
+                    if (!fieldData.IsApiMember() || !fieldData.IsConstant)
                     {
                         continue;
                     }

@@ -20,18 +20,25 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     /// 表格一律经 &lt;div class="..." markdown="1"&gt; 包裹注入 class —— attr_list 块级标记
     /// {: .cls } 对表格无效（Zensical 实测：class 不应用且标记原文渲染），仅标题级 {#anchor} 行内标记可用。
     /// 成员详情统一"先注释后声明"：读者先看到用途说明，再看签名。
+    /// 参数与返回值说明来自分析期的结构化数据（<see cref="IParameterData" /> 与 XML 文档注释解析链），
+    /// 不从格式化字符串反解析。
     /// </remarks>
     public class ZensicalScriptingAPISettingsSO : DocGeneratorSettingsSO
     {
         static readonly string ConfigName = typeof(ZensicalScriptingAPISettingsSO).GetNiceFullName();
 
+        static readonly MemberGroup[] GroupOrder =
+            { MemberGroup.Constant, MemberGroup.Declared, MemberGroup.Inherited, MemberGroup.Operator };
+
+        static readonly Regex AnchorSanitizeRegex =
+            new Regex("[^a-z0-9\\u4e00-\\u9fff]+", RegexOptions.Compiled);
+
         /// <summary>
         /// Zensical 文档生成设置单例
         /// </summary>
         public static ZensicalScriptingAPISettingsSO Instance =>
-            ScriptDocGeneratorEditorUtility
-                .GetOrCreateEditorScriptableObject<ZensicalScriptingAPISettingsSO>(ConfigName,
-                    ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "ZensicalScriptingAPI");
+            ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ZensicalScriptingAPISettingsSO>(
+                ConfigName, ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "ZensicalScriptingAPI");
 
         /// <inheritdoc />
         public override string GetGeneratedDocumentation(ITypeData data)
@@ -102,8 +109,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
             if (typeData.InterfaceArray is { Length: > 0 })
             {
-                sb.AppendLine("**实现接口:** " +
-                              string.Join("，", typeData.InterfaceArray.Select(t => $"`{t}`")));
+                sb.AppendLine("**实现接口:** " + string.Join("，", typeData.InterfaceArray.Select(t => $"`{t}`")));
                 sb.AppendLine();
             }
 
@@ -116,6 +122,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
                 sb.AppendLine();
             }
+
+            AppendTypeParamSummaries(sb, typeData.TypeParamSummaries);
 
             sb.AppendLine("## 声明");
             sb.AppendLine();
@@ -130,14 +138,21 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 sb.AppendLine();
             }
 
+            if (!string.IsNullOrWhiteSpace(memberData.RemarksSummary))
+            {
+                sb.AppendLine("**备注**");
+                sb.AppendLine();
+                sb.AppendLine(memberData.RemarksSummary);
+                sb.AppendLine();
+            }
+
             return sb;
         }
 
         static void AppendConstructorsContent(StringBuilder sb, IConstructorData[] constructorDataArray)
         {
             AppendMemberSection(sb, "构造方法", "constructor",
-                constructorDataArray.Cast<IDerivedMemberData>().ToList(),
-                _ => MemberGroup.Declared, true);
+                constructorDataArray.Cast<IDerivedMemberData>().ToList(), _ => MemberGroup.Declared, true);
         }
 
         static void AppendFieldsContent(StringBuilder sb, IFieldData[] fieldDataArray)
@@ -158,8 +173,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static void AppendPropertiesContent(StringBuilder sb, IPropertyData[] propertyDataArray)
         {
-            AppendMemberSection(sb, "属性", "property",
-                propertyDataArray.Cast<IDerivedMemberData>().ToList(),
+            AppendMemberSection(sb, "属性", "property", propertyDataArray.Cast<IDerivedMemberData>().ToList(),
                 member =>
                 {
                     member.TryAsIMemberData(out var memberData);
@@ -193,23 +207,14 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 }, true);
         }
 
-        enum MemberGroup
-        {
-            None = 0,
-            Constant,
-            Declared,
-            Inherited,
-            Operator
-        }
-
-        static readonly MemberGroup[] GroupOrder =
-            { MemberGroup.Constant, MemberGroup.Declared, MemberGroup.Inherited, MemberGroup.Operator };
-
         /// <summary>
         /// 通用的成员区块渲染：先输出按分组的概览表格，再输出声明成员的详情小节
         /// </summary>
-        static void AppendMemberSection(StringBuilder sb, string title, string anchorCategory,
-            IReadOnlyList<IDerivedMemberData> members, Func<IDerivedMemberData, MemberGroup> groupSelector,
+        static void AppendMemberSection(StringBuilder sb,
+            string title,
+            string anchorCategory,
+            IReadOnlyList<IDerivedMemberData> members,
+            Func<IDerivedMemberData, MemberGroup> groupSelector,
             bool renderDetails)
         {
             if (members.Count == 0)
@@ -298,8 +303,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             }
         }
 
-        static void AppendSummaryRow(StringBuilder sb, string anchorCategory, IDerivedMemberData member,
-            MemberGroup group, bool linkToDetail, bool withDeclaringType)
+        static void AppendSummaryRow(StringBuilder sb,
+            string anchorCategory,
+            IDerivedMemberData member,
+            MemberGroup group,
+            bool linkToDetail,
+            bool withDeclaringType)
         {
             member.TryAsIMemberData(out var memberData);
             var displayName = GetMemberDisplayName(member, memberData);
@@ -334,6 +343,14 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 sb.AppendLine();
             }
 
+            if (!string.IsNullOrWhiteSpace(memberData.RemarksSummary))
+            {
+                sb.AppendLine("**备注**");
+                sb.AppendLine();
+                sb.AppendLine(memberData.RemarksSummary);
+                sb.AppendLine();
+            }
+
             sb.AppendLine("``` csharp");
             sb.AppendLine(member.FullDeclarationWithAttributes);
             sb.AppendLine("```");
@@ -342,19 +359,29 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             switch (member)
             {
                 case IMethodData methodData:
-                    AppendParametersDetail(sb, methodData.ParametersDeclaration);
+                    AppendParametersDetail(sb, methodData.Parameters, methodData.ParamSummaries);
                     AppendReturnDetail(sb, methodData);
                     break;
                 case IConstructorData constructorData:
-                    AppendParametersDetail(sb, constructorData.ParametersDeclaration);
+                    AppendParametersDetail(sb, constructorData.Parameters, constructorData.ParamSummaries);
+                    break;
+                case IPropertyData propertyData when !string.IsNullOrWhiteSpace(propertyData.ValueSummary):
+                    sb.AppendLine("**属性值**");
+                    sb.AppendLine();
+                    sb.AppendLine(propertyData.ValueSummary);
+                    sb.AppendLine();
                     break;
             }
         }
 
-        static void AppendParametersDetail(StringBuilder sb, string parametersDeclaration)
+        /// <summary>
+        /// 参数表：类型来自结构化 <see cref="IParameterData" />，说明列来自 XML &lt;param&gt; 注释
+        /// </summary>
+        static void AppendParametersDetail(StringBuilder sb,
+            IParameterData[] parameters,
+            IReadOnlyDictionary<string, string> paramSummaries)
         {
-            var parameters = ParseParameters(parametersDeclaration);
-            if (parameters.Count == 0)
+            if (parameters is not { Length: > 0 })
             {
                 return;
             }
@@ -363,11 +390,16 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             sb.AppendLine();
             sb.AppendLine("<div class=\"api-params-table\" markdown=\"1\">");
             sb.AppendLine();
-            sb.AppendLine("| 名称 | 类型 |");
-            sb.AppendLine("| :--- | :--- |");
-            foreach (var (name, type) in parameters)
+            sb.AppendLine("| 名称 | 类型 | 说明 |");
+            sb.AppendLine("| :--- | :--- | :--- |");
+            foreach (var parameter in parameters)
             {
-                sb.AppendLine($"| `{name}` | `{type}` |");
+                var typeName = parameter.ParameterType?.GetReadableTypeName() ?? "object";
+                var description =
+                    paramSummaries != null && paramSummaries.TryGetValue(parameter.Name, out var text)
+                        ? EscapeTableCell(text)
+                        : "—";
+                sb.AppendLine($"| `{parameter.Name}` | `{typeName}` | {description} |");
             }
 
             sb.AppendLine();
@@ -386,11 +418,33 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             sb.AppendLine();
             sb.AppendLine("<div class=\"api-returns-table\" markdown=\"1\">");
             sb.AppendLine();
-            sb.AppendLine("| 类型 |");
-            sb.AppendLine("| :--- |");
-            sb.AppendLine($"| `{methodData.ReturnTypeName}` |");
+            sb.AppendLine("| 类型 | 说明 |");
+            sb.AppendLine("| :--- | :--- |");
+            sb.AppendLine(
+                $"| `{methodData.ReturnTypeName}` | {EscapeTableCell(methodData.ReturnsSummary)} |");
             sb.AppendLine();
             sb.AppendLine("</div>");
+            sb.AppendLine();
+        }
+
+        /// <summary>
+        /// 类型级泛型参数说明（XML &lt;typeparam&gt; 注释）
+        /// </summary>
+        static void AppendTypeParamSummaries(StringBuilder sb,
+            IReadOnlyDictionary<string, string> typeParamSummaries)
+        {
+            if (typeParamSummaries is not { Count: > 0 })
+            {
+                return;
+            }
+
+            sb.AppendLine("**类型参数**");
+            sb.AppendLine();
+            foreach (var kv in typeParamSummaries)
+            {
+                sb.AppendLine($"- `{kv.Key}` — {kv.Value}");
+            }
+
             sb.AppendLine();
         }
 
@@ -412,122 +466,43 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             switch (member)
             {
                 case IMethodData methodData:
-                    return $"{memberData.Name}({GetParameterTypeList(methodData.ParametersDeclaration)})";
+                    return $"{memberData.Name}({GetParameterTypeList(methodData.Parameters)})";
                 case IConstructorData constructorData:
-                    return $"{memberData.Name}({GetParameterTypeList(constructorData.ParametersDeclaration)})";
+                    return $"{memberData.Name}({GetParameterTypeList(constructorData.Parameters)})";
                 default:
                     return memberData.Name;
             }
         }
 
-        static string GetParameterTypeList(string parametersDeclaration) =>
-            string.Join(", ", ParseParameters(parametersDeclaration).Select(p => p.Type));
-
-        static readonly Regex AnchorSanitizeRegex =
-            new Regex("[^a-z0-9\\u4e00-\\u9fff]+", RegexOptions.Compiled);
+        /// <summary>
+        /// 参数类型列表（结构化数据直取，不再从声明字符串反解析）
+        /// </summary>
+        static string GetParameterTypeList(IParameterData[] parameters) =>
+            parameters is not { Length: > 0 }
+                ? string.Empty
+                : string.Join(", ",
+                    parameters.Select(p => p.ParameterType?.GetReadableTypeName() ?? "object"));
 
         /// <summary>
         /// 生成与详情标题一致的锚点 ID：api-{类别}-{成员展示名}，全小写、非法字符转连字符
         /// </summary>
-        static string BuildAnchorId(string anchorCategory, IDerivedMemberData member,
+        static string BuildAnchorId(string anchorCategory,
+            IDerivedMemberData member,
             IMemberData memberData) =>
             AnchorSanitizeRegex
-                .Replace(anchorCategory + "-" + GetMemberDisplayName(member, memberData)
-                    .ToLowerInvariant(), "-")
-                .Trim('-');
+                .Replace(anchorCategory + "-" + GetMemberDisplayName(member, memberData).ToLowerInvariant(),
+                    "-").Trim('-');
 
         static string EscapeTableCell(string text) =>
             string.IsNullOrWhiteSpace(text) ? "—" : text.Replace("\r", " ").Replace("\n", " ").Trim();
 
-        /// <summary>
-        /// 解析参数声明字符串（如 "float force, int count = 3"）为 (名称, 类型) 列表，
-        /// 顶层按逗号拆分（忽略泛型/元组/数组内部的逗号），并剥离默认值与方向修饰符
-        /// </summary>
-        static List<(string Name, string Type)> ParseParameters(string parametersDeclaration)
+        enum MemberGroup
         {
-            var result = new List<(string Name, string Type)>();
-            if (string.IsNullOrWhiteSpace(parametersDeclaration))
-            {
-                return result;
-            }
-
-            foreach (var segment in SplitTopLevel(parametersDeclaration, ','))
-            {
-                var part = segment.Trim();
-                var equalIndex = IndexOfTopLevel(part, '=');
-                if (equalIndex >= 0)
-                {
-                    part = part.Substring(0, equalIndex).Trim();
-                }
-
-                // 剥离扩展方法 this 与方向/params 修饰符
-                foreach (var keyword in new[] { "this ", "params ", "ref ", "out ", "in " })
-                {
-                    if (part.StartsWith(keyword, StringComparison.Ordinal))
-                    {
-                        part = part.Substring(keyword.Length);
-                        break;
-                    }
-                }
-
-                var spaceIndex = part.LastIndexOf(' ');
-                if (spaceIndex < 0)
-                {
-                    result.Add((part, string.Empty));
-                }
-                else
-                {
-                    result.Add((part.Substring(spaceIndex + 1), part.Substring(0, spaceIndex)));
-                }
-            }
-
-            return result;
+            None = 0,
+            Constant,
+            Declared,
+            Inherited,
+            Operator
         }
-
-        static IEnumerable<string> SplitTopLevel(string text, char separator)
-        {
-            var depth = 0;
-            var start = 0;
-            for (var i = 0; i < text.Length; i++)
-            {
-                switch (text[i])
-                {
-                    case '<' or '(' or '[':
-                        depth++;
-                        break;
-                    case '>' or ')' or ']':
-                        depth--;
-                        break;
-                        case var c when c == separator && depth == 0:
-                            yield return text.Substring(start, i - start);
-                            start = i + 1;
-                            break;
-                }
-            }
-
-            yield return text.Substring(start);
-        }
-
-        static int IndexOfTopLevel(string text, char target)
-        {
-            var depth = 0;
-            for (var i = 0; i < text.Length; i++)
-            {
-                switch (text[i])
-                {
-                    case '<' or '(' or '[':
-                        depth++;
-                        break;
-                    case '>' or ')' or ']':
-                        depth--;
-                        break;
-                        case var c when c == target && depth == 0:
-                            return i;
-                }
-            }
-
-            return -1;
-        }
-
     }
 }

@@ -1,9 +1,9 @@
-using Runestone.AesirModules.ScriptDocGenerator;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using Runestone.AesirModules.ScriptDocGenerator;
 
 // ReSharper disable UnusedMember.Local
 
@@ -56,11 +56,6 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         class AccessModifierTestClass
         {
             /// <summary>
-            /// 私有字段
-            /// </summary>
-            int _privateField;
-
-            /// <summary>
             /// 内部字段
             /// </summary>
             internal int InternalField;
@@ -84,6 +79,11 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
             /// 公共字段
             /// </summary>
             public int PublicField;
+
+            /// <summary>
+            /// 私有字段
+            /// </summary>
+            int _privateField;
         }
 
         #endregion

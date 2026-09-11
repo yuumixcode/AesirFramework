@@ -1,7 +1,7 @@
-using Runestone.AesirModules.ScriptDocGenerator;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using Runestone.AesirModules.ScriptDocGenerator;
 using UnityEngine;
 
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator

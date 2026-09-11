@@ -4,8 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using UnityEngine;
 using Sirenix.Utilities;
+using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
 {
@@ -70,6 +70,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         IAnalysisDataFactory DataFactory { get; }
 
         /// <summary>
+        /// 泛型参数注释字典（XML <c>&lt;typeparam&gt;</c> 标签），键为参数名。无注释时为 null
+        /// </summary>
+        IReadOnlyDictionary<string, string> TypeParamSummaries { get; }
+
+        /// <summary>
         /// 类型的构造函数解析数据数组，只包含公共构造函数，GetConstructors() 方法
         /// </summary>
         IConstructorData[] RuntimeReflectedConstructorsData { get; }
@@ -113,7 +118,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             AccessModifier = type.GetTypeAccessModifier();
             AccessModifierName = AccessModifier.ConvertToString();
             DataFactory = factory ?? new DefaultAnalysisDataFactory();
-            TypeInfo = type.GetTypeInfo();
             TypeCategory = type.GetTypeCategory();
             Assembly = type.Assembly;
             AssemblyName = Assembly.GetName().Name;
@@ -124,6 +128,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             ReferenceWebLinkArray = type.GetReferenceLinks();
             InheritanceChain = type.GetInheritanceChain();
             InterfaceArray = type.GetInterfaceArray();
+            TypeParamSummaries = TypeParamsResolver(type);
             Signature = GetTypeFullSignature(type, AccessModifierName, TypeCategory);
             FullDeclarationWithAttributes = AttributesDeclaration + Signature;
             RuntimeReflectedConstructorsData = type.GetConstructors()
@@ -131,8 +136,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedMethodsData = type.GetRuntimeMethods()
                 .Where(x =>
-                    x != null && !x.Name.Contains("add_") && !x.Name.Contains("remove_") &&
-                    !x.Name.Contains("get_") && !x.Name.Contains("set_"))
+                    x != null && !x.Name.StartsWith("add_") && !x.Name.StartsWith("remove_") &&
+                    !x.Name.StartsWith("get_") && !x.Name.StartsWith("set_"))
                 .Select(m => DataFactory.CreateMethodData(m))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedEventsData = type.GetRuntimeEvents().Select(e => DataFactory.CreateEventData(e))
@@ -147,8 +152,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedMethodsData = MarkOverloadMethod(RuntimeReflectedMethodsData);
         }
-
-        TypeInfo TypeInfo { get; }
 
         static string GetTypeFullSignature(Type type, string accessModifierName, TypeCategory category)
         {
@@ -231,7 +234,9 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             {
                 // 已标记为重载的方法跳过，避免重复添加前缀
                 if (methodAnalysisDataArray[i].IsOverloadMethodInDeclaringType)
+                {
                     continue;
+                }
 
                 for (var j = i + 1; j < methodAnalysisDataArray.Length; j++)
                 {
@@ -248,7 +253,9 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             for (var i = 0; i < methodAnalysisDataArray.Length; i++)
             {
                 if (methodAnalysisDataArray[i].IsOverloadMethodInDeclaringType)
+                {
                     methodAnalysisDataArray[i].AddOverloadPrefix();
+                }
             }
 
             return methodAnalysisDataArray;
@@ -310,6 +317,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// 分析数据工厂实例对象
         /// </summary>
         public IAnalysisDataFactory DataFactory { get; }
+
+        /// <summary>
+        /// 泛型参数注释字典（XML <c>&lt;typeparam&gt;</c> 标签），键为参数名。无注释时为 null
+        /// </summary>
+        public IReadOnlyDictionary<string, string> TypeParamSummaries { get; }
 
         /// <summary>
         /// 声明的构造方法解析数据数组，只包含公共构造函数，GetConstructors() 方法
