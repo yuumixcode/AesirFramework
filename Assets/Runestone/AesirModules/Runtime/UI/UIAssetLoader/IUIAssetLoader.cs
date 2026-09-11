@@ -3,8 +3,12 @@ using UnityEngine;
 namespace Runestone.AesirModules
 {
     /// <summary>
-    /// 面板加载器。默认实现 <see cref="ResourcesUILoader" />，可替换为 Addressables 等。
+    /// 面板加载器契约。加载语义为同步：适用于 Resources、同步缓存等管线；
+    /// Addressables 等异步管线需自行预加载后同步返回，无法在接口内表达等待。
     /// </summary>
+    /// <remarks>
+    /// 预制体引用由 <see cref="UIModule" /> 的注册表持有，生命周期与模块一致，契约不设释放方法。
+    /// </remarks>
     public interface IUIAssetLoader
     {
         /// <summary>
@@ -13,11 +17,5 @@ namespace Runestone.AesirModules
         /// <param name="path">资源路径。</param>
         /// <returns>加载到的预制体，未找到返回 null。</returns>
         GameObject Load(string path);
-
-        /// <summary>
-        /// 释放预制体资源。
-        /// </summary>
-        /// <param name="prefab">需要释放的预制体引用。</param>
-        void Unload(GameObject prefab);
     }
 }

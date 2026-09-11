@@ -83,8 +83,14 @@ namespace Runestone.AesirModules
         protected virtual void OnHide() => gameObject.SetActive(false);
 
         /// <summary>
-        /// 面板即将销毁前调用。子类可覆写释放资源、解绑事件等。
+        /// 面板经 <see cref="UIModule.HidePanel" /> 受控销毁前调用（<see cref="IUIPanel.DestroyOnHide" /> 为 true 的关闭路径）。
+        /// 子类可覆写释放资源、解绑事件等。
         /// </summary>
+        /// <remarks>
+        /// 仅受控销毁路径调用本方法；场景卸载、外部 <c>Destroy</c> 等非受控销毁只触发 <c>OnDestroy</c>。
+        /// 因此事件解绑、订阅释放等必须放在 <c>OnDestroy</c> 中（或两处都写），
+        /// 仅写在本方法会在场景卸载时泄漏。
+        /// </remarks>
         protected virtual void OnClose() { }
 
         /// <summary>

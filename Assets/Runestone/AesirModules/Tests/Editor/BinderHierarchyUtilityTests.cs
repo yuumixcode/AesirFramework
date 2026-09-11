@@ -1,5 +1,5 @@
-using NUnit.Framework;
 using System.Text.RegularExpressions;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -30,7 +30,8 @@ namespace Runestone.AesirModules.Tests.Editor
             var grandChild = new GameObject("GrandChild");
             grandChild.transform.SetParent(child.transform);
 
-            Assert.That(BinderHierarchyUtility.GetAbsolutePath(grandChild.transform), Is.EqualTo("Root/Child/GrandChild"));
+            Assert.That(BinderHierarchyUtility.GetAbsolutePath(grandChild.transform),
+                Is.EqualTo("Root/Child/GrandChild"));
         }
 
         [Test]
@@ -67,7 +68,8 @@ namespace Runestone.AesirModules.Tests.Editor
             LogAssert.Expect(LogType.Error, new Regex("路径错误"));
 
             string relative = null;
-            Assert.DoesNotThrow(() => relative = BinderHierarchyUtility.GetRelativePath("Root/Panel", "Root"));
+            Assert.DoesNotThrow(() =>
+                relative = BinderHierarchyUtility.GetRelativePath("Root/Panel", "Root"));
             Assert.That(relative, Is.Null);
         }
     }
