@@ -60,6 +60,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         string SummaryAttributeValue { get; }
 
         /// <summary>
+        /// 备注注释（XML <c>&lt;remarks&gt;</c> 标签）。无注释时为 null
+        /// </summary>
+        string RemarksSummary { get; }
+
+        /// <summary>
         /// 成员是否从继承中获取，这里的成员不包括 Type 类型
         /// </summary>
         bool IsFromInheritance { get; }
@@ -96,6 +101,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             AttributesDeclaration =
                 memberInfo.GetAttributesDeclarationWithMultiLine(filter ?? DefaultAttributeFilter);
             SummaryAttributeValue = SummaryResolver(memberInfo);
+            RemarksSummary = RemarksResolver(memberInfo);
             IsFromInheritance = memberInfo.IsFromInheritance();
             if (memberInfo is Type type)
             {
@@ -115,20 +121,39 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         public static Func<MemberInfo, string> SummaryResolver { get; set; } = ResolveSummaryFromAttribute;
 
         /// <summary>
-        /// 参数级注释解析委托（XML <c>&lt;param&gt;</c> 标签），键为参数名。
+        /// 参数级注释解析委托（XML <c>&lt;param&gt;</c> 标签），键为参数名，适用于方法与构造函数。
         /// Editor 程序集在加载时注入源文件解析实现；默认无参数级注释（返回 null）。
         /// </summary>
-        public static Func<MethodInfo, IReadOnlyDictionary<string, string>> ParamSummariesResolver
+        public static Func<MethodBase, IReadOnlyDictionary<string, string>> ParamSummariesResolver
         {
             get;
             set;
         } = _ => null;
 
         /// <summary>
-        /// 返回值注释解析委托（XML <c>&lt;returns&gt;</c> 标签）。
+        /// 返回值注释解析委托（XML <c>&lt;returns&gt;</c> 标签），适用于方法。
         /// Editor 程序集在加载时注入源文件解析实现；默认无返回值注释（返回 null）。
         /// </summary>
         public static Func<MethodInfo, string> ReturnsSummaryResolver { get; set; } = _ => null;
+
+        /// <summary>
+        /// 备注注释解析委托（XML <c>&lt;remarks&gt;</c> 标签）。
+        /// Editor 程序集在加载时注入源文件解析实现；默认无备注注释（返回 null）。
+        /// </summary>
+        public static Func<MemberInfo, string> RemarksResolver { get; set; } = _ => null;
+
+        /// <summary>
+        /// 属性值注释解析委托（XML <c>&lt;value&gt;</c> 标签），由属性数据类消费。
+        /// Editor 程序集在加载时注入源文件解析实现；默认无注释（返回 null）。
+        /// </summary>
+        public static Func<MemberInfo, string> ValueResolver { get; set; } = _ => null;
+
+        /// <summary>
+        /// 泛型参数注释解析委托（XML <c>&lt;typeparam&gt;</c> 标签），键为参数名，由类型数据类消费。
+        /// Editor 程序集在加载时注入源文件解析实现；默认无注释（返回 null）。
+        /// </summary>
+        public static Func<Type, IReadOnlyDictionary<string, string>> TypeParamsResolver { get; set; } = _ =>
+            null;
 
         static string ResolveSummaryFromAttribute(MemberInfo memberInfo) =>
             memberInfo?.GetCustomAttribute<SummaryAttribute>()?.GetSummary();
@@ -184,6 +209,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// 注释
         /// </summary>
         public string SummaryAttributeValue { get; }
+
+        /// <summary>
+        /// 备注注释（XML <c>&lt;remarks&gt;</c> 标签）。无注释时为 null
+        /// </summary>
+        public string RemarksSummary { get; }
 
         /// <summary>
         /// 成员是否从继承中获取，这里的成员不包括 Type 类型

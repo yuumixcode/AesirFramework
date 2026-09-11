@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -71,6 +72,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         string ParametersDeclaration { get; }
 
         /// <summary>
+        /// 方法的参数解析数据数组，分析期从反射直接结构化产出
+        /// </summary>
+        IParameterData[] Parameters { get; }
+
+        /// <summary>
         /// 参数级注释字典（XML <c>&lt;param&gt;</c> 标签），键为参数名。无参数注释时为 null
         /// </summary>
         IReadOnlyDictionary<string, string> ParamSummaries { get; }
@@ -116,6 +122,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             IsOverride = memberInfo.IsOverrideMethod();
             IsAsync = memberInfo.IsAsyncMethod();
             ParametersDeclaration = memberInfo.GetParametersNameWithDefaultValue();
+            Parameters = memberInfo.GetParameters().Select(p => new ParameterData(p)).ToArray();
             IsFromInterfaceImplement = memberInfo.IsFromInterfaceImplementMethod();
             IsFromAncestor = memberInfo.IsInheritedOverrideFromAncestor(memberInfo.DeclaringType);
             ParamSummaries = ParamSummariesResolver(memberInfo);
@@ -202,6 +209,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// 方法的参数声明字符串，包含参数名称和类型
         /// </summary>
         public string ParametersDeclaration { get; }
+
+        /// <summary>
+        /// 方法的参数解析数据数组，分析期从反射直接结构化产出
+        /// </summary>
+        public IParameterData[] Parameters { get; }
 
         /// <summary>
         /// 参数级注释字典（XML <c>&lt;param&gt;</c> 标签），键为参数名。无参数注释时为 null

@@ -17,16 +17,9 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// </summary>
         public static Assembly[] GetAssembliesOfNameContainString(string partOfAssemblyName)
         {
-            try
-            {
-                var assemblies = AppDomain.CurrentDomain.GetAssemblies()
-                    .Where(assembly => assembly.FullName.Contains(partOfAssemblyName)).ToArray();
-                return assemblies.Length > 0 ? assemblies : Array.Empty<Assembly>();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"发生错误: {ex.Message}");
-            }
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies()
+                .Where(assembly => assembly.FullName.Contains(partOfAssemblyName)).ToArray();
+            return assemblies.Length > 0 ? assemblies : Array.Empty<Assembly>();
         }
 
         /// <summary>
@@ -109,7 +102,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             var eventInfo = member as EventInfo;
             if (eventInfo != null)
             {
-                return eventInfo.GetRaiseMethod(true).IsStatic;
+                // 字段式事件的 RaiseMethod 恒为 null，静态性以 AddMethod 为准
+                return eventInfo.GetAddMethod(true)?.IsStatic ?? false;
             }
 
             var type = member as Type;
@@ -133,17 +127,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// 获取成员上的指定类型特性。
         /// </summary>
         public static IEnumerable<T> GetAttributes<T>(ICustomAttributeProvider member, bool inherit)
-            where T : Attribute
-        {
-            try
-            {
-                return member.GetCustomAttributes(typeof(T), inherit).Cast<T>();
-            }
-            catch
-            {
-                return Array.Empty<T>();
-            }
-        }
+            where T : Attribute =>
+            member.GetCustomAttributes(typeof(T), inherit).Cast<T>();
 
         /// <summary>
         /// 判断方法是否为扩展方法。

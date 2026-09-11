@@ -5,7 +5,7 @@ using UnityEditor;
 namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 {
     /// <summary>
-    /// 右键快捷处理 Summary 特性。
+    /// 右键快捷处理 Summary 特性。批量处理多选脚本时仅触发一次 AssetDatabase.Refresh。
     /// </summary>
     public static class SummaryToolMenuItems
     {
@@ -13,61 +13,39 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             ScriptDocGeneratorMenuPaths.ProcessSummarySyncOrder)]
         public static void QuickSyncSummary()
         {
-            if (Selection.objects.Length == 1)
-            {
-                WriteSyncSummary(AssetDatabase.GetAssetPath(Selection.activeObject));
-            }
-            else
-            {
-                foreach (var obj in Selection.objects)
-                {
-                    WriteSyncSummary(AssetDatabase.GetAssetPath(obj));
-                }
-            }
+            ProcessSelection(XmlSummaryTool.ProcessMode.SyncSummary, null);
         }
 
         [MenuItem(ScriptDocGeneratorMenuPaths.ProcessSummaryReplace, false,
             ScriptDocGeneratorMenuPaths.ProcessSummaryReplaceOrder)]
         public static void QuickReplaceSummary()
         {
-            if (Selection.objects.Length == 1)
-            {
-                WriteReplaceSummary(AssetDatabase.GetAssetPath(Selection.activeObject));
-            }
-            else
-            {
-                foreach (var obj in Selection.objects)
-                {
-                    WriteReplaceSummary(AssetDatabase.GetAssetPath(obj));
-                }
-            }
+            ProcessSelection(XmlSummaryTool.ProcessMode.ReplaceSummary, null);
         }
 
         [MenuItem(ScriptDocGeneratorMenuPaths.ProcessSummaryRemove, false,
             ScriptDocGeneratorMenuPaths.ProcessSummaryRemoveOrder)]
         public static void QuickRemoveSummary()
         {
-            if (Selection.objects.Length == 1)
+            // Remove 是破坏性批量删除 [Summary] 特性，执行前确认
+            var fileCount = Selection.objects.Length;
+            if (!EditorUtility.DisplayDialog("移除 Summary 特性",
+                    $"即将从 {fileCount} 个脚本中移除所有 [Summary] 特性（保留 XML 注释），该操作会直接改写源文件，是否继续？", "移除", "取消"))
             {
-                WriteRemoveSummary(AssetDatabase.GetAssetPath(Selection.activeObject));
+                return;
             }
-            else
-            {
-                foreach (var obj in Selection.objects)
-                {
-                    WriteRemoveSummary(AssetDatabase.GetAssetPath(obj));
-                }
-            }
+
+            ProcessSelection(XmlSummaryTool.ProcessMode.RemoveSummary, null);
         }
 
         [MenuItem(ScriptDocGeneratorMenuPaths.ProcessSummarySync, true)]
-        static bool CanSyncSummary() => IsScriptAsset();
+        static bool CanProcessSummary() => IsScriptAsset();
 
         [MenuItem(ScriptDocGeneratorMenuPaths.ProcessSummaryReplace, true)]
-        static bool CanReplaceSummary() => IsScriptAsset();
+        static bool CanProcessSummaryReplace() => IsScriptAsset();
 
         [MenuItem(ScriptDocGeneratorMenuPaths.ProcessSummaryRemove, true)]
-        static bool CanRemoveSummary() => IsScriptAsset();
+        static bool CanProcessSummaryRemove() => IsScriptAsset();
 
         static bool IsScriptAsset()
         {
@@ -75,31 +53,43 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             return selectedObject && Selection.objects.All(obj => obj is MonoScript);
         }
 
-        static void WriteSyncSummary(string filePath)
+        static void ProcessSelection(XmlSummaryTool.ProcessMode mode, string _)
         {
-            var sourceCode = File.ReadAllText(filePath);
-            var processor = new XmlSummaryTool(sourceCode).ParseSourceScript();
-            sourceCode = processor.GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
-            File.WriteAllText(filePath, sourceCode);
-            AssetDatabase.Refresh();
+            var processed = 0;
+            foreach (var obj in Selection.objects)
+            {
+                if (WriteProcessedScript(AssetDatabase.GetAssetPath(obj), mode))
+                {
+                    processed++;
+                }
+            }
+
+            if (processed > 0)
+            {
+                AssetDatabase.Refresh();
+            }
         }
 
-        static void WriteReplaceSummary(string filePath)
+        /// <summary>
+        /// 处理单个脚本并写回磁盘。无 XML 文档注释或处理结果无变化时跳过写盘，避免无关全文件重写。
+        /// </summary>
+        static bool WriteProcessedScript(string filePath, XmlSummaryTool.ProcessMode mode)
         {
             var sourceCode = File.ReadAllText(filePath);
             var processor = new XmlSummaryTool(sourceCode).ParseSourceScript();
-            sourceCode = processor.GetProcessedSourceScript(XmlSummaryTool.ProcessMode.ReplaceSummary);
-            File.WriteAllText(filePath, sourceCode);
-            AssetDatabase.Refresh();
-        }
+            if (processor.firstXmlCommentLineIndex == -1)
+            {
+                return false;
+            }
 
-        static void WriteRemoveSummary(string filePath)
-        {
-            var sourceCode = File.ReadAllText(filePath);
-            var processor = new XmlSummaryTool(sourceCode).ParseSourceScript();
-            sourceCode = processor.GetProcessedSourceScript(XmlSummaryTool.ProcessMode.RemoveSummary);
-            File.WriteAllText(filePath, sourceCode);
-            AssetDatabase.Refresh();
+            var processed = processor.GetProcessedSourceScript(mode);
+            if (processed == sourceCode)
+            {
+                return false;
+            }
+
+            File.WriteAllText(filePath, processed);
+            return true;
         }
     }
 }

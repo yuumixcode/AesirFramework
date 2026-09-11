@@ -1,18 +1,12 @@
-using Runestone.AesirModules.ScriptDocGenerator;
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using NUnit.Framework;
+using Runestone.AesirModules.ScriptDocGenerator;
 
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 {
     public class GeneratedInternalTypeFilterTests
     {
-        [CompilerGenerated]
-        class CompilerGeneratedDummyClass
-        {
-        }
-
         [Test]
         public void TestCompilerGeneratedAttributeTypeIsFiltered()
         {
@@ -37,7 +31,8 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void TestNormalTypeIsNotFiltered()
         {
-            Assert.IsFalse(TypeAnalyzerUtility.IsGeneratedInternalType(typeof(GeneratedInternalTypeFilterTests)));
+            Assert.IsFalse(
+                TypeAnalyzerUtility.IsGeneratedInternalType(typeof(GeneratedInternalTypeFilterTests)));
             Assert.IsFalse(TypeAnalyzerUtility.IsGeneratedInternalType(typeof(List<int>)));
             Assert.IsFalse(TypeAnalyzerUtility.IsGeneratedInternalTypeName(
                 "Runestone.AesirModules.Tests.Editor.ScriptDocGenerator.GeneratedInternalTypeFilterTests"));
@@ -50,5 +45,8 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
             Assert.IsFalse(TypeAnalyzerUtility.IsGeneratedInternalType(typeof(List<>)));
             Assert.IsFalse(TypeAnalyzerUtility.IsGeneratedInternalType(null));
         }
+
+        [CompilerGenerated]
+        class CompilerGeneratedDummyClass { }
     }
 }

@@ -13,13 +13,16 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     {
         const string MarkerAssetName = "ScriptDocGeneratorAssetMarker";
 
+        [ReadOnly]
+        [SerializeField]
+        string toolName;
+
         [DisplayAsString]
         public string Description =>
             $"Script Doc Generator 模块标识资产，本资产标识的是 {MarkerAssetName}，不要移动或者删除本资产。";
 
-        [ReadOnly]
-        [SerializeField]
-        string toolName;
+        /// <summary>标识资产写入的工具名（Inspector 只读展示，避免字段赋值无消费告警）</summary>
+        public string ToolName => toolName;
 
         /// <summary>
         /// 检查 Script Doc Generator 模块的标识资产是否已初始化。
@@ -46,7 +49,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         }
 
         static string GetMarkerAssetPath() =>
-            Path.Combine(ScriptDocGeneratorPaths.ScriptDocGeneratorAssetsFolderPath, MarkerAssetName + ".asset")
-                .Replace("\\", "/");
+            Path.Combine(ScriptDocGeneratorPaths.ScriptDocGeneratorAssetsFolderPath,
+                MarkerAssetName + ".asset").Replace("\\", "/");
     }
 }

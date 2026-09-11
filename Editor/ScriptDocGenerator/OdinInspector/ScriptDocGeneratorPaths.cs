@@ -8,7 +8,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// <summary>
         /// Script Doc Generator 编辑器资源的根路径。
         /// </summary>
-        public const string EditorDefaultResourcesPath = "Assets/Editor Default Resources/Script Doc Generator";
+        public const string EditorDefaultResourcesPath =
+            "Assets/Editor Default Resources/Script Doc Generator";
 
         /// <summary>
         /// Script Doc Generator 模块资源的存放路径
@@ -31,11 +32,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         public const string GeneratorSettingsFolderPath = PanelConfigFolderPath + "/GeneratorSettings";
 
         /// <summary>
-        /// 默认文档输出路径（绝对路径）。
-        /// 以项目根目录为基准推导，避免 Assets 相对路径在 Assets 外目录（如文档站仓库）不可用的问题。
+        /// 默认文档输出路径（项目根目录下，Assets 外）。
+        /// 输出在 Assets 外可避免为每个生成 .md 产生 .meta 与 AssetDatabase 刷新；
+        /// 需要随包分发时可在面板中改回 Assets 内路径（支持绝对路径，如文档站仓库）。
         /// </summary>
         public static readonly string DefaultDocFolderPath = Path.Combine(
-            Directory.GetParent(Application.dataPath)?.FullName ?? string.Empty,
-            EditorDefaultResourcesPath, "Documents");
+            Directory.GetParent(Application.dataPath)?.FullName ?? string.Empty, "ScriptDocGenerator");
     }
 }

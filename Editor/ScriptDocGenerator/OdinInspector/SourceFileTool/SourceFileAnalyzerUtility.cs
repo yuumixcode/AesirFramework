@@ -42,11 +42,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         // 这些关键字不可能出现在成员声明的行首——命中即视为语句行，直接放弃提取，
         // 防止悬空 /// 文档被错误归属到局部变量（如 var x = 1; 提取出 "x"）
-        static readonly HashSet<string> _statementStarterKeywords = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "var", "using", "return", "if", "else", "while", "for", "foreach", "do", "switch",
-            "case", "break", "continue", "throw", "new", "yield", "await", "lock", "goto"
-        };
+        static readonly HashSet<string> _statementStarterKeywords =
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "var", "using", "return", "if", "else", "while", "for", "foreach", "do", "switch",
+                "case", "break", "continue", "throw", "new", "yield", "await", "lock", "goto"
+            };
 
         static SourceFileAnalyzerUtility() => AssemblyReloadEvents.afterAssemblyReload += ClearCache;
 

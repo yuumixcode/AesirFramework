@@ -15,6 +15,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         object DefaultValue { get; }
 
         /// <summary>
+        /// 属性值注释（XML <c>&lt;value&gt;</c> 标签）。无注释时为 null
+        /// </summary>
+        string ValueSummary { get; }
+
+        /// <summary>
         /// 属性类型
         /// </summary>
         Type PropertyType { get; }
@@ -51,6 +56,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             PropertyTypeName = PropertyType.GetReadableTypeName();
             PropertyTypeFullName = PropertyType.GetReadableTypeName(true);
             DefaultValue = propertyInfo.TryGetPropertyCustomDefaultValue(out var value) ? value : null;
+            ValueSummary = ValueResolver(propertyInfo);
             Signature = GetPropertySignature(propertyInfo,
                 TypeAnalyzerUtility.GetFormattedDefaultValue(PropertyType, DefaultValue));
             FullDeclarationWithAttributes = AttributesDeclaration + Signature;
@@ -133,6 +139,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// 自定义默认值，如果没有自定义默认值，则为 null
         /// </summary>
         public object DefaultValue { get; }
+
+        /// <summary>
+        /// 属性值注释（XML <c>&lt;value&gt;</c> 标签）。无注释时为 null
+        /// </summary>
+        public string ValueSummary { get; }
 
         /// <summary>
         /// 属性类型
