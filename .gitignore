@@ -136,6 +136,9 @@ InitTestScene*.unity*
 # ScriptableSingleton（如 RuntimeInitializeLoadType 示例）写入项目根目录的设置资产，运行时生成，不入库
 /ScriptableSingleton/
 
+# ScriptDocGenerator 默认文档输出目录（项目根，Assets 外），生成物不入库
+/ScriptDocGenerator/
+
 # Codely 工具截图输出
 /screenshots/
 

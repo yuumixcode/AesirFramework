@@ -4,8 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using UnityEngine;
 using Sirenix.Utilities;
+using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
 {
@@ -265,11 +265,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         public static string GetReadableTypeName(this Type type, bool useFullName = false)
         {
             var targetTypeName = useFullName ? type.GetNiceFullName() : type.GetNiceName();
-
-            if (targetTypeName.EndsWith("obj") && targetTypeName.Length > 3)
-            {
-                targetTypeName = targetTypeName[..^3];
-            }
 
             if (TypeAnalyzerUtility.TypeAliasMap.TryGetValue(type, out var alias))
             {

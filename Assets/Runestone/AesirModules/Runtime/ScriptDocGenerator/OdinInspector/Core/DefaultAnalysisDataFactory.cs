@@ -44,7 +44,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
     }
 
     /// <summary>
-    /// Aesir Inspector 默认提供的解析数据工厂实现类
+    /// Aesir Modules 默认提供的解析数据工厂实现类
     /// </summary>
     [Serializable]
     public class DefaultAnalysisDataFactory : IAnalysisDataFactory

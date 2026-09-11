@@ -139,7 +139,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// 将选中脚本添加到 Temporary Types 并打开窗口的菜单路径。
         /// </summary>
         const string AddScriptsToTemporaryTypesAndOpenWindowMenuName =
-            ScriptDocGeneratorMenuPaths.AssetsScriptDocGeneratorRoot + "/Add To Temporary Types And Open Window";
+            ScriptDocGeneratorMenuPaths.AssetsScriptDocGeneratorRoot +
+            "/Add To Temporary Types And Open Window";
 
         /// <summary>
         /// Add To Temporary Types And Open Window 菜单项优先级。

@@ -197,6 +197,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void SpecialCharsSummary_SyncHandlesCorrectly()
         {
+            // summary 含双引号：生成的特性文本必须转义，否则是非法 C#
             ProcessAndAssert(SpecialCharsCode, XmlSummaryTool.ProcessMode.SyncSummary,
                 @"using Runestone.AesirModules.ScriptDocGenerator;
 using System;
@@ -209,7 +210,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
     /// <para>aaa</para>
     /// </summary>
     /// <remarks>AAAAA</remarks>>
-    [Summary(""成员 "" Summary 注释 ???? &lt;para&gt;aaa&lt;/para&gt; aaa"")]
+    [Summary(""成员 \"" Summary 注释 ???? &lt;para&gt;aaa&lt;/para&gt; aaa"")]
     [Obsolete(""临时方法"")] public struct TestStructSummary { }
 }
 ");
@@ -225,7 +226,7 @@ using System;
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 {
     /// <remarks>AAAAA</remarks>>
-    [Summary(""成员 "" Summary 注释 ???? &lt;para&gt;aaa&lt;/para&gt; aaa"")]
+    [Summary(""成员 \"" Summary 注释 ???? &lt;para&gt;aaa&lt;/para&gt; aaa"")]
     [Obsolete(""临时方法"")] public struct TestStructSummary { }
 }
 ");
@@ -285,8 +286,11 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         }
 
         [Test]
-        public void ExistingMultiLineAttribute_SyncUpdatesFromXml()
+        public void ExistingMultiLineAttribute_SyncAttributePriority()
         {
+            // 双向对齐（特性优先）：可解析的 [Summary("AAA")] 是权威内容，
+            // XML summary 与特性不一致时以特性文本回写 XML；类级的拼接字符串实参特性
+            // 无法安全解析，按"无特性"回退 XML 内容重新生成
             ProcessAndAssert(MultiLineAttrCode, XmlSummaryTool.ProcessMode.SyncSummary, @"using System;
 using UnityEngine;
 using Runestone.AesirModules.ScriptDocGenerator;
@@ -300,11 +304,8 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
     [Obsolete(""临时方法"")]
     public class TestRemoveSummaryB
     {
-        /// <summary>
-        /// BBB
-        /// </summary>
-        [Summary(""BBB"")]
-        [Obsolete(""临时方法"")] public void Method()
+        /// <summary>AAA</summary>
+        [Obsolete(""临时方法"")] [Summary(""AAA"")] public void Method()
         {
             Debug.Log(""测试移除多行的 ChineseSummary"");
         }
@@ -314,8 +315,9 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         }
 
         [Test]
-        public void ExistingMultiLineAttribute_ReplaceUpdatesFromXml()
+        public void ExistingMultiLineAttribute_ReplaceAttributePriority()
         {
+            // Replace：内容取特性优先——可解析特性 "AAA" 保持；类级拼接特性回退 XML 文本
             ProcessAndAssert(MultiLineAttrCode, XmlSummaryTool.ProcessMode.ReplaceSummary, @"using System;
 using UnityEngine;
 using Runestone.AesirModules.ScriptDocGenerator;
@@ -326,7 +328,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
     [Obsolete(""临时方法"")]
     public class TestRemoveSummaryB
     {
-        [Summary(""BBB"")]
+        [Summary(""AAA"")]
         [Obsolete(""临时方法"")] public void Method()
         {
             Debug.Log(""测试移除多行的 ChineseSummary"");
@@ -384,8 +386,9 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         }
 
         [Test]
-        public void Preprocessor_SyncAddsAttributeInsideBlock()
+        public void Preprocessor_SyncAlignsXmlAttributeInsideBlock()
         {
+            // 特性优先：可解析的 [Summary("旧内容")] 为权威内容，XML 被对齐回写
             ProcessAndAssert(PreprocessorCode, XmlSummaryTool.ProcessMode.SyncSummary, @"using System;
 using Runestone.AesirModules.ScriptDocGenerator;
 
@@ -397,11 +400,9 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
     [Summary(""编辑器工具类"")]
     public class TestPreprocessor
     {
-        /// <summary>
-        /// 编辑器专用方法
-        /// </summary>
+        /// <summary>旧内容</summary>
 #if UNITY_EDITOR
-        [Summary(""编辑器专用方法"")]
+        [Summary(""旧内容"")]
         public void EditorMethod() { }
 #endif
     }
@@ -410,8 +411,9 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         }
 
         [Test]
-        public void Preprocessor_ReplaceReplacesTagInsideBlock()
+        public void Preprocessor_ReplaceAttributePriorityInsideBlock()
         {
+            // Replace：特性可解析 → 内容取特性（"旧内容"），XML summary 标签移除
             ProcessAndAssert(PreprocessorCode, XmlSummaryTool.ProcessMode.ReplaceSummary, @"using System;
 using Runestone.AesirModules.ScriptDocGenerator;
 
@@ -421,7 +423,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
     public class TestPreprocessor
     {
 #if UNITY_EDITOR
-        [Summary(""编辑器专用方法"")]
+        [Summary(""旧内容"")]
         public void EditorMethod() { }
 #endif
     }
@@ -489,8 +491,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void MixedSingleMultiLine_SyncAddsAttributes()
         {
-            ProcessAndAssert(MixedSingleMultiLineCode, XmlSummaryTool.ProcessMode.SyncSummary,
-                @"using System;
+            ProcessAndAssert(MixedSingleMultiLineCode, XmlSummaryTool.ProcessMode.SyncSummary, @"using System;
 using Runestone.AesirModules.ScriptDocGenerator;
 
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
@@ -534,5 +535,136 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 }
 ");
         }
+
+        #region 新语义与修复回归
+
+        const string EscapedQuoteCode = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>
+    /// 提到 ""字段"" 的注释
+    /// </summary>
+    public class TestEscapedQuote { }
+}
+";
+
+        [Test]
+        public void QuoteInSummary_GeneratedAttributeIsEscaped()
+        {
+            var result = new XmlSummaryTool(EscapedQuoteCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            // 生成的特性字符串必须可编译：双引号转义为 \"
+            StringAssert.Contains("[Summary(\"提到 \\\"字段\\\" 的注释\")]", result);
+        }
+
+        const string CrLfSource =
+            "using System;\r\n\r\npublic class TestCrLf\r\n{\r\n    /// <summary>CRLF 摘要</summary>\r\n    public int Value { get; set; }\r\n}\r\n";
+
+        [Test]
+        public void CrlfSource_LineEndingsPreserved()
+        {
+            var result = new XmlSummaryTool(CrLfSource).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("\r\n", result);
+            Assert.IsFalse(result.Contains("\n") && result.Replace("\r\n", "").Contains("\n"),
+                "输出不应混入 LF 行尾");
+        }
+
+        const string QuadrupleSlashCode = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    public class TestQuadrupleSlash
+    {
+        //// 四斜杠是普通注释，不是 XML 文档注释
+        public void Method() { }
+    }
+}
+";
+
+        [Test]
+        public void QuadrupleSlashComment_NotTreatedAsXmlDoc()
+        {
+            // //// 前无 /// 文档注释：整个文件无文档注释，分组为空，仅头部注入 using
+            var result = new XmlSummaryTool(QuadrupleSlashCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("using Runestone.AesirModules.ScriptDocGenerator;", result);
+            StringAssert.Contains("//// 四斜杠是普通注释，不是 XML 文档注释", result);
+        }
+
+        [Test]
+        public void RemoveMode_NoAttribute_NoRewrite()
+        {
+            // 无 [Summary] 特性时 Remove 模式应原样返回（不重写行尾/空行）
+            var result = new XmlSummaryTool(TypeSummaryCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.RemoveSummary);
+            Assert.AreEqual(TypeSummaryCode, result);
+        }
+
+        [Test]
+        public void SyncAttributePriority_AttributeTextWins()
+        {
+            // 双向对齐：特性文本与 XML 不一致时，特性是权威内容并回写 XML（Sync）
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>XML 旧文本</summary>
+    [Summary(""特性新文本"")]
+    public class TestPriority { }
+}
+";
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("/// <summary>特性新文本</summary>", result);
+            StringAssert.Contains("[Summary(\"特性新文本\")]", result);
+            Assert.IsFalse(result.Contains("XML 旧文本"), "XML 旧文本应被特性内容对齐覆盖");
+        }
+
+        [Test]
+        public void ReplaceAttributePriority_AttributeTextPreserved()
+        {
+            // Replace：已有可解析特性时内容取特性，不再从 XML 重新生成
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>XML 旧文本</summary>
+    [Summary(""特性保留文本"")]
+    public class TestPriority2 { }
+}
+";
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.ReplaceSummary);
+            StringAssert.Contains("[Summary(\"特性保留文本\")]", result);
+            Assert.IsFalse(result.Contains("<summary>"), "Replace 模式应移除 summary 标签");
+        }
+
+        [Test]
+        public void UnparseableConcatAttribute_FallsBackToXml()
+        {
+            // 拼接字符串实参无法安全解析 → 按"无特性"处理，回退 XML 内容重新生成
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>XML 权威文本</summary>
+    [Summary(""前半"" + ""后半"")]
+    public class TestConcat { }
+}
+";
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("[Summary(\"XML 权威文本\")]", result);
+            Assert.IsFalse(result.Contains(@"""前半"" + ""后半"""), "拼接特性无法解析时应在移除后重新生成（RemovedFirst 以宽松匹配删除）");
+        }
+
+        #endregion
     }
 }

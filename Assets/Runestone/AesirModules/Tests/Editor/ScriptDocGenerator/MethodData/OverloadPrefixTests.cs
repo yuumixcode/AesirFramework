@@ -1,8 +1,6 @@
-using Runestone.AesirModules.ScriptDocGenerator;
 using System.Linq;
-using System.Reflection;
 using NUnit.Framework;
-using UnityEngine;
+using Runestone.AesirModules.ScriptDocGenerator;
 
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 {
@@ -21,8 +19,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         {
             var typeData = Factory.CreateTypeData(typeof(TwoOverloadClass), Factory);
             var methods = typeData.RuntimeReflectedMethodsData
-                .Where(m => m.SignatureWithoutParameters.Contains("DoSomething"))
-                .ToArray();
+                .Where(m => m.SignatureWithoutParameters.Contains("DoSomething")).ToArray();
 
             Assert.AreEqual(2, methods.Length, "应有 2 个 DoSomething 重载");
 
@@ -43,8 +40,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         {
             var typeData = Factory.CreateTypeData(typeof(ThreeOverloadClass), Factory);
             var methods = typeData.RuntimeReflectedMethodsData
-                .Where(m => m.SignatureWithoutParameters.Contains("Execute"))
-                .ToArray();
+                .Where(m => m.SignatureWithoutParameters.Contains("Execute")).ToArray();
 
             Assert.AreEqual(3, methods.Length, "应有 3 个 Execute 重载");
 
@@ -65,8 +61,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         {
             var typeData = Factory.CreateTypeData(typeof(FourOverloadClass), Factory);
             var methods = typeData.RuntimeReflectedMethodsData
-                .Where(m => m.SignatureWithoutParameters.Contains("Run"))
-                .ToArray();
+                .Where(m => m.SignatureWithoutParameters.Contains("Run")).ToArray();
 
             Assert.AreEqual(4, methods.Length, "应有 4 个 Run 重载");
 
@@ -87,8 +82,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         {
             var typeData = Factory.CreateTypeData(typeof(NonOverloadClass), Factory);
             var methods = typeData.RuntimeReflectedMethodsData
-                .Where(m => m.SignatureWithoutParameters.Contains("UniqueMethod"))
-                .ToArray();
+                .Where(m => m.SignatureWithoutParameters.Contains("UniqueMethod")).ToArray();
 
             Assert.AreEqual(1, methods.Length);
 
@@ -106,6 +100,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
                 count++;
                 idx += prefix.Length;
             }
+
             return count;
         }
 

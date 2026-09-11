@@ -33,16 +33,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// </summary>
         public const int ScriptDocGeneratorOrder = -895;
 
-        /// <summary>
-        /// 打开 Script Doc Generator UI Toolkit 窗口的菜单路径。
-        /// </summary>
-        public const string ScriptDocGeneratorUIToolkit = "Tools/Aesir/Script Doc Generator (UI Toolkit)";
-
-        /// <summary>
-        /// Script Doc Generator UI Toolkit 菜单项优先级。
-        /// </summary>
-        public const int ScriptDocGeneratorUIToolkitOrder = -894;
-
         #endregion
 
         #region Assets Context Menu

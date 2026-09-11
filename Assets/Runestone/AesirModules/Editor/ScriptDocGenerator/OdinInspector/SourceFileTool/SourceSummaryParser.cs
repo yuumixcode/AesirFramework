@@ -19,17 +19,14 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// assemblyName 非空时作为键前缀，避免不同程序集中同名命名空间+类型名的键冲突。
         /// </summary>
         public static Dictionary<string, string> ParseSummaries(SourceFileEntry[] entries,
-            string assemblyName = null)
-        {
-            return ParseDocComments(entries, assemblyName).Summaries;
-        }
+            string assemblyName = null) =>
+            ParseDocComments(entries, assemblyName).Summaries;
 
         /// <summary>
         /// 解析多个源文件条目中的全部 XML 文档标签（summary/param/returns/remarks/value/typeparam），
         /// 返回结构化解析结果，键规则与 <see cref="ParseSummaries" /> 一致。
         /// </summary>
-        public static ParsedSourceDoc ParseDocComments(SourceFileEntry[] entries,
-            string assemblyName = null)
+        public static ParsedSourceDoc ParseDocComments(SourceFileEntry[] entries, string assemblyName = null)
         {
             var result = new ParsedSourceDoc();
             if (entries == null)

@@ -13,7 +13,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     /// 类型声明检测复用 <see cref="SourceScanner" /> 的字符串/注释感知净化，
     /// 注释与字符串里的假类型声明不会进入索引。索引只存路径与名称，不驻留文件内容。
     /// </summary>
-    static class ProjectScriptIndex
+    internal static class ProjectScriptIndex
     {
         static Dictionary<string, List<string>> _typePaths;
         static Dictionary<string, HashSet<string>> _fileNamespaces;
@@ -45,8 +45,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return true;
             }
 
-            return _fileNamespaces != null &&
-                   _fileNamespaces.TryGetValue(path, out var namespaces) &&
+            return _fileNamespaces != null && _fileNamespaces.TryGetValue(path, out var namespaces) &&
                    namespaces.Contains(namespaceName);
         }
 
@@ -87,7 +86,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     }
 
                     // 仅收集类型/命名空间声明，跳过 /// 文档解析
-                    var doc = SourceScanner.Scan(lines, parseDocs: false);
+                    var doc = SourceScanner.Scan(lines, false);
                     fileNamespaces[path] = doc.DeclaredNamespaces;
                     foreach (var typeName in doc.DeclaredTypeNames)
                     {

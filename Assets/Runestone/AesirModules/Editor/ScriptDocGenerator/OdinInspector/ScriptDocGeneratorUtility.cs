@@ -22,8 +22,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         static readonly StringBuilder UserIdentifierDescriptionParagraph = new StringBuilder()
             .AppendLine(IdentifierCn).AppendLine().AppendLine("> 首个 `" + IdentifierCn +
                                                               "` 是增量生成文档标识符，请勿修改标题级别和内容！" +
-                                                              "本文档由 [`Script Doc Generator`](" + GithubRepository +
-                                                              ") 辅助生成。");
+                                                              "本文档由 [`Script Doc Generator`](" +
+                                                              GithubRepository + ") 辅助生成。");
 
         static readonly IAnalysisDataFactory AnalysisDataFactory = new DefaultAnalysisDataFactory();
 
@@ -68,11 +68,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             {
                 if (TypeAnalyzerUtility.IsGeneratedInternalType(targetType))
                 {
-                    Debug.LogError("目标类型是编译器或 Unity 生成的内部类型，不支持为其生成文档：" +
-                                    targetType.FullName);
+                    Debug.LogError("目标类型是编译器或 Unity 生成的内部类型，不支持为其生成文档：" + targetType.FullName);
                     return null;
                 }
 
+                // 每次分析前失效源码文档缓存，保证读到磁盘上最新的 XML 注释
+                SourceSummaryInitializer.ClearCache();
                 return AnalysisDataFactory.CreateTypeData(targetType, AnalysisDataFactory);
             }
 
@@ -89,6 +90,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             }
 
             types.RemoveAll(x => x == null || TypeAnalyzerUtility.IsGeneratedInternalType(x));
+            SourceSummaryInitializer.ClearCache();
             return types.Select(type => AnalysisDataFactory.CreateTypeData(type, AnalysisDataFactory))
                 .ToList();
         }
@@ -113,6 +115,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             }
 
             var targetAssembly = Assembly.Load(assemblyFullName);
+            SourceSummaryInitializer.ClearCache();
 
             return targetAssembly.GetTypes()
                 .Where(t => t.GetCustomAttribute<CompilerGeneratedAttribute>() == null &&
@@ -323,7 +326,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     : markdownText + ("\n" + UserIdentifierDescriptionParagraph);
             }
 
-            var fileNameWithoutExtension = TypeAnalyzerUtility.ConvertToDocumentationFileName(memberData.Name);
+            var fileNameWithoutExtension =
+                TypeAnalyzerUtility.ConvertToDocumentationFileName(memberData.Name);
 
             if (generatorSettings.generateNamespaceFolder)
             {
@@ -358,6 +362,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         {
             var frontMatterStringBuilder = new StringBuilder();
 
+            // Front Matter 必须以 --- 或 +++ 开头且在文件内闭合；无闭合分隔符视为无 Front Matter，
+            // 避免把整个旧文件误当头部拼回
             if (sourceLines.Length == 0 || (sourceLines[0] != "---" && sourceLines[0] != "+++"))
             {
                 frontMatter = string.Empty;
@@ -374,12 +380,13 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     (sourceLines[0] == "+++" && sourceLines[i] == "+++"))
                 {
                     frontMatterStringBuilder.AppendLine();
-                    break;
+                    frontMatter = frontMatterStringBuilder.ToString();
+                    return true;
                 }
             }
 
-            frontMatter = frontMatterStringBuilder.ToString();
-            return true;
+            frontMatter = string.Empty;
+            return false;
         }
     }
 }

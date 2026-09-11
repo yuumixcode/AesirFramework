@@ -1,9 +1,9 @@
-using Runestone.AesirModules.ScriptDocGenerator;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using Runestone.AesirModules.ScriptDocGenerator;
 
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 {

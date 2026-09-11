@@ -1,5 +1,5 @@
-using Runestone.AesirModules.ScriptDocGenerator;
 using NUnit.Framework;
+using Runestone.AesirModules.ScriptDocGenerator;
 
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 {

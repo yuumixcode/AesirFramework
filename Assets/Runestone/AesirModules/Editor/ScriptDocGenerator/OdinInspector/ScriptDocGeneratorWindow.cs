@@ -1,4 +1,3 @@
-using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Utilities;
 using Sirenix.Utilities.Editor;
@@ -62,15 +61,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
             _soTree ??= PropertyTree.Create(_panelSO);
             _soTree.Draw(false);
-        }
-
-        new void ShowToast(ToastPosition position,
-            SdfIconType icon,
-            string message,
-            Color color,
-            float duration)
-        {
-            ShowNotification(new GUIContent(message), duration);
         }
     }
 }

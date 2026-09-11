@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using NUnit.Framework;
 using Runestone.AesirModules.ScriptDocGenerator;
 using Runestone.AesirModules.ScriptDocGenerator.Editor;
@@ -17,7 +16,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         /// 将源代码字符串转为 SourceFileEntry（模拟文件读取，路径为虚拟值）。
         /// </summary>
         static SourceFileEntry MakeEntry(string source) =>
-            new("TestFile.cs", source.Split('\n'));
+            new SourceFileEntry("TestFile.cs", source.Split('\n'));
 
         /// <summary>
         /// 解析单个源代码字符串，返回 summary 字典。
@@ -46,12 +45,9 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 ";
             var result = Parse(source);
 
-            Assert.IsTrue(result.ContainsKey("TestNS.FakeDocClass"),
-                "真实 summary 应被解析");
-            Assert.AreEqual("这是真正的 summary", result["TestNS.FakeDocClass"],
-                "假 summary 不应覆盖真实 summary");
-            Assert.IsFalse(result.ContainsValue("这是块注释内的假 summary"),
-                "块注释内的假 /// 不应被解析");
+            Assert.IsTrue(result.ContainsKey("TestNS.FakeDocClass"), "真实 summary 应被解析");
+            Assert.AreEqual("这是真正的 summary", result["TestNS.FakeDocClass"], "假 summary 不应覆盖真实 summary");
+            Assert.IsFalse(result.ContainsValue("这是块注释内的假 summary"), "块注释内的假 /// 不应被解析");
         }
 
         /// <summary>
@@ -72,8 +68,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 ";
             var result = Parse(source);
 
-            Assert.IsTrue(result.ContainsKey("TestNS.SameLineCloseClass"),
-                "退出块注释后的 /// 应被识别");
+            Assert.IsTrue(result.ContainsKey("TestNS.SameLineCloseClass"), "退出块注释后的 /// 应被识别");
             Assert.AreEqual("退出块注释后的真实 summary", result["TestNS.SameLineCloseClass"]);
         }
 
@@ -413,10 +408,14 @@ public class NoNamespaceClass
         public void ExtractMemberName_VariousDeclarations()
         {
             Assert.AreEqual("MyField", SourceFileAnalyzerUtility.ExtractMemberName("public int MyField;"));
-            Assert.AreEqual("MyField", SourceFileAnalyzerUtility.ExtractMemberName("public int MyField = 42;"));
-            Assert.AreEqual("MyProperty", SourceFileAnalyzerUtility.ExtractMemberName("public int MyProperty { get; set; }"));
-            Assert.AreEqual("MyMethod", SourceFileAnalyzerUtility.ExtractMemberName("public void MyMethod() { }"));
-            Assert.AreEqual("MyMethod", SourceFileAnalyzerUtility.ExtractMemberName("public void MyMethod(string s, int i) { }"));
+            Assert.AreEqual("MyField",
+                SourceFileAnalyzerUtility.ExtractMemberName("public int MyField = 42;"));
+            Assert.AreEqual("MyProperty",
+                SourceFileAnalyzerUtility.ExtractMemberName("public int MyProperty { get; set; }"));
+            Assert.AreEqual("MyMethod",
+                SourceFileAnalyzerUtility.ExtractMemberName("public void MyMethod() { }"));
+            Assert.AreEqual("MyMethod",
+                SourceFileAnalyzerUtility.ExtractMemberName("public void MyMethod(string s, int i) { }"));
         }
 
         /// <summary>
@@ -474,10 +473,8 @@ public class NoNamespaceClass
         {
             Assert.AreEqual("Interface",
                 SourceFileAnalyzerUtility.ExtractMemberName("public static IContext Interface"));
-            Assert.AreEqual("Count",
-                SourceFileAnalyzerUtility.ExtractMemberName("public int Count"));
-            Assert.AreEqual("Name",
-                SourceFileAnalyzerUtility.ExtractMemberName("protected string Name"));
+            Assert.AreEqual("Count", SourceFileAnalyzerUtility.ExtractMemberName("public int Count"));
+            Assert.AreEqual("Name", SourceFileAnalyzerUtility.ExtractMemberName("protected string Name"));
         }
 
         /// <summary>
@@ -488,11 +485,14 @@ public class NoNamespaceClass
         public void ExtractMemberName_GenericMethod()
         {
             Assert.AreEqual("RegisterModel",
-                SourceFileAnalyzerUtility.ExtractMemberName("public void RegisterModel<TModel>(TModel model) where TModel : class, IModel"));
+                SourceFileAnalyzerUtility.ExtractMemberName(
+                    "public void RegisterModel<TModel>(TModel model) where TModel : class, IModel"));
             Assert.AreEqual("RegisterService",
-                SourceFileAnalyzerUtility.ExtractMemberName("public void RegisterService<TService>(TService service) where TService : class, IService"));
+                SourceFileAnalyzerUtility.ExtractMemberName(
+                    "public void RegisterService<TService>(TService service) where TService : class, IService"));
             Assert.AreEqual("GetModel",
-                SourceFileAnalyzerUtility.ExtractMemberName("public TModel GetModel<TModel>() where TModel : class, IModel"));
+                SourceFileAnalyzerUtility.ExtractMemberName(
+                    "public TModel GetModel<TModel>() where TModel : class, IModel"));
             Assert.AreEqual("GenericMethod",
                 SourceFileAnalyzerUtility.ExtractMemberName("public void GenericMethod<T>(T param)"));
         }
@@ -661,8 +661,7 @@ line3"";
             var result = Parse(source);
 
             // 逐字字符串内的 /// 不应被收集为文档注释
-            Assert.IsFalse(result.ContainsValue("字符串内的假 summary"),
-                "逐字字符串内的假 /// 不应被解析");
+            Assert.IsFalse(result.ContainsValue("字符串内的假 summary"), "逐字字符串内的假 /// 不应被解析");
             // 真实成员的 summary 应被正确解析
             Assert.AreEqual("真 summary", result["TestNS.StringLimitationClass.RealMethod()"]);
         }
@@ -690,8 +689,7 @@ line3"";
 ";
             var result = Parse(source);
 
-            Assert.AreEqual(1, result.Count,
-                "字符串内的 /* 不应吞掉后续真实文档注释");
+            Assert.AreEqual(1, result.Count, "字符串内的 /* 不应吞掉后续真实文档注释");
             Assert.AreEqual("真实成员的 summary", result["TestNS.StringBlockClass.RealMember"]);
         }
 
@@ -875,8 +873,7 @@ line3"";
             Assert.AreEqual("无注释的嵌套结构体", result["TestNS.NestedStructC"]);
 
             // 确保嵌套结构体没有错误地获取外层类的 summary
-            Assert.IsFalse(result.ContainsKey("TestNS.OuterClass+NestedStructA"),
-                "不应存在带 + 的嵌套类型键");
+            Assert.IsFalse(result.ContainsKey("TestNS.OuterClass+NestedStructA"), "不应存在带 + 的嵌套类型键");
         }
 
         /// <summary>
@@ -902,8 +899,7 @@ line3"";
             Assert.AreEqual("外层类的注释", result["TestNS.OuterWithNoCommentNested"]);
 
             // 无注释的嵌套结构体不应出现在结果中
-            Assert.IsFalse(result.ContainsKey("TestNS.NoCommentStruct"),
-                "无 XML 注释的嵌套类型不应出现在结果字典中");
+            Assert.IsFalse(result.ContainsKey("TestNS.NoCommentStruct"), "无 XML 注释的嵌套类型不应出现在结果字典中");
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -950,7 +946,8 @@ line3"";
 
             Assert.AreEqual("单行声明的方法", result["TestNS.MultiLineMethodClass.DoSomething(int)"]);
             Assert.AreEqual("多行声明的方法（参数跨两行）", result["TestNS.MultiLineMethodClass.DoSomething(int, string)"]);
-            Assert.AreEqual("多行声明的方法（每参数一行）", result["TestNS.MultiLineMethodClass.DoSomething(int, string, bool)"]);
+            Assert.AreEqual("多行声明的方法（每参数一行）",
+                result["TestNS.MultiLineMethodClass.DoSomething(int, string, bool)"]);
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -1202,8 +1199,7 @@ line3"";
 ";
             var result = Parse(source);
 
-            Assert.AreEqual("加法运算符",
-                result["TestNS.OpIndexClass.op_Addition(OpIndexClass, OpIndexClass)"]);
+            Assert.AreEqual("加法运算符", result["TestNS.OpIndexClass.op_Addition(OpIndexClass, OpIndexClass)"]);
             Assert.AreEqual("加法运算符", result["TestNS.OpIndexClass.op_Addition(2)"]);
             Assert.AreEqual("索引器", result["TestNS.OpIndexClass.Item"]);
         }
