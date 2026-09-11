@@ -77,9 +77,8 @@ namespace Runestone.AesirArchitecture
         /// 否则会因单例尚未发布而递归创建第二个上下文实例。
         /// </para>
         /// <para>
-        /// 该属性返回具体上下文类型 <typeparamref name="T" />（原名 <c>Interface</c>，0.10.0 起更名 <c>Instance</c>
-        /// 并返回具体类型，消除与 C# 关键字 <c>interface</c> 的术语混淆及子类成员强转成本）。
-        /// 访问 <see cref="IContext" /> 接口成员时 <typeparamref name="T" /> 自动向上转型，无需强转。
+        /// 该属性返回具体上下文类型 <typeparamref name="T" />，
+        /// 访问 <see cref="IContext" /> 接口成员时自动向上转型，无需强转。
         /// </para>
         /// </remarks>
         public static T Instance
@@ -279,8 +278,7 @@ namespace Runestone.AesirArchitecture
 
             Initialized = false;
 
-            // 释放后解除单例缓存：下次访问 Instance 将按懒加载语义重建全新上下文，
-            // 而非持续返回容器已清空的"僵尸"实例（此时 GetModel/GetService 会抛出指向性错误的"未注册"异常）
+            // 释放后解除单例缓存，下次访问 Instance 按懒加载语义重建全新上下文（语义详见 Dispose remarks）
             if (ReferenceEquals(_instance, this))
             {
                 _instance = null;

@@ -19,9 +19,6 @@ namespace Runestone.AesirArchitecture
     /// 反射引用，避免硬编码字符串导致的重构断裂。
     /// </para>
     /// <para>
-    /// Model 层持有可写实例（<see cref="IObservableValue{T}" />），View 层通过 <see cref="IReadOnlyObservableValue{T}" /> 只读订阅。
-    /// </para>
-    /// <para>
     /// 值比较使用 <see cref="EqualityComparer{T}" />.Default.Equals，支持值类型和引用类型的正确比较。
     /// </para>
     /// </remarks>

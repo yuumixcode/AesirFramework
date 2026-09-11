@@ -59,8 +59,9 @@ namespace Runestone.AesirArchitecture
         /// 供运行时查询宿主的跨场景持久化决策（如判断引用是否会随场景卸载失效），
         /// 亦供编辑器条件提示（Odin AttributeProcessor 的可见性表达式）复用——
         /// 与 <see cref="DontDestroyOnLoadFieldName" /> 同属编辑器协作锚点。
+        /// 以 <c>new</c> 显式隐藏 <see cref="UnityEngine.Object.DontDestroyOnLoad(Object)" /> 静态方法（有意同名）。
         /// </remarks>
-        public bool DontDestroyOnLoad => dontDestroyOnLoad;
+        public new bool DontDestroyOnLoad => dontDestroyOnLoad;
 
         /// <summary>
         /// 获取全局唯一的架构管理器实例
@@ -90,22 +91,6 @@ namespace Runestone.AesirArchitecture
                 _instance = go.AddComponent<AesirArchitecture>();
                 return _instance;
             }
-        }
-
-        /// <summary>
-        /// 获取或为架构物体添加指定的组件类型
-        /// </summary>
-        /// <typeparam name="T">要获取或添加的组件类型，必须继承自 <c>MonoBehaviour</c></typeparam>
-        /// <returns>架构 GameObject 上已存在或新添加的组件实例</returns>
-        public static T GetOrAddComponent<T>() where T : MonoBehaviour
-        {
-            var component = Instance.GetComponent<T>();
-            if (component == null)
-            {
-                component = Instance.gameObject.AddComponent<T>();
-            }
-
-            return component;
         }
 
         void Awake()
@@ -139,15 +124,27 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
+        /// 获取或为架构物体添加指定的组件类型
+        /// </summary>
+        /// <typeparam name="T">要获取或添加的组件类型，必须继承自 <c>MonoBehaviour</c></typeparam>
+        /// <returns>架构 GameObject 上已存在或新添加的组件实例</returns>
+        public static T GetOrAddComponent<T>() where T : MonoBehaviour
+        {
+            var component = Instance.GetComponent<T>();
+            if (component == null)
+            {
+                component = Instance.gameObject.AddComponent<T>();
+            }
+
+            return component;
+        }
+
+        /// <summary>
         /// 重置静态字段。关闭 Domain Reload 时由 Unity 在子系统注册阶段自动调用，无需手动调用。
         /// </summary>
         /// <remarks>
         /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
         /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
-        /// <para>
-        /// 此前本类依赖 Unity fake-null 机制隐式救援（退出 Play 时对象销毁，<c>_instance != null</c> 自然变 false），
-        /// 属"碰巧正确"而非"按原则正确"——补显式重置使静态重置铁律在框架内无一处例外。
-        /// </para>
         /// </remarks>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()

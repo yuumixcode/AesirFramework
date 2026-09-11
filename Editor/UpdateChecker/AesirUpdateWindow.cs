@@ -14,8 +14,7 @@ namespace Runestone.AesirArchitecture.Editor
     /// 版本检测面向大陆用户做多源兜底（jsDelivr 多域名 → GitHub API → 302 探测，见
     /// <see cref="AesirUpdateService.FetchLatestReleaseSnapshotAsync" />）；unitypackage 一律从
     /// GitHub Release 直链下载。流程：备份 Assets/Runestone → 按清单差集清理残留 → 静默导入 →
-    /// 逐包登记安装清单。实现参考 QFramework PackageKit 的更新链路，差异点见
-    /// <see cref="AesirUpdateService" /> 文档。
+    /// 逐包登记安装清单。
     /// </para>
     /// </summary>
     public class AesirUpdateWindow : EditorWindow
