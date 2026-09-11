@@ -91,13 +91,9 @@ namespace Runestone.AesirArchitecture
     /// 获取 Model 的能力接口
     /// </summary>
     /// <remarks>
-    /// 这是一个标记接口（marker interface），本身不包含任何方法。
-    /// 实际的 <c>GetModel</c> 功能通过 <see cref="CapabilityExtensions.GetModel{T}(ICanGetModel)" /> 扩展方法实现，
-    /// 由 <c>this</c> 上的 <see cref="IContextHolder.Context" /> 属性提供底层支持。
-    /// <para>
-    /// 通过标记接口 + 扩展方法的组合，编译器可以确保只有声明了此能力的类型才能调用 <c>GetModel</c>，
-    /// 从而在编译期实现细粒度的访问控制。
-    /// </para>
+    /// 标记接口（不含方法）——<c>GetModel</c> 能力由
+    /// <see cref="CapabilityExtensions.GetModel{T}(ICanGetModel)" /> 扩展方法提供，
+    /// 仅声明此接口的类型可调用（编译期访问控制，机制详见该扩展类说明）。
     /// </remarks>
     /// <seealso cref="CapabilityExtensions.GetModel{T}(ICanGetModel)" />
     public interface ICanGetModel : IContextHolder { }
@@ -106,13 +102,9 @@ namespace Runestone.AesirArchitecture
     /// 获取 Service 的能力接口
     /// </summary>
     /// <remarks>
-    /// 这是一个标记接口（marker interface），本身不包含任何方法。
-    /// 实际的 <c>GetService</c> 功能通过 <see cref="CapabilityExtensions.GetService{T}(ICanGetService)" /> 扩展方法实现，
-    /// 由 <c>this</c> 上的 <see cref="IContextHolder.Context" /> 属性提供底层支持。
-    /// <para>
-    /// 通过标记接口 + 扩展方法的组合，编译器可以确保只有声明了此能力的类型才能调用 <c>GetService</c>，
-    /// 从而在编译期实现细粒度的访问控制。
-    /// </para>
+    /// 标记接口——<c>GetService</c> 能力由
+    /// <see cref="CapabilityExtensions.GetService{T}(ICanGetService)" /> 扩展方法提供，
+    /// 仅声明此接口的类型可调用（编译期访问控制）。
     /// </remarks>
     /// <seealso cref="CapabilityExtensions.GetService{T}(ICanGetService)" />
     public interface ICanGetService : IContextHolder { }
@@ -121,13 +113,9 @@ namespace Runestone.AesirArchitecture
     /// 执行命令的能力接口
     /// </summary>
     /// <remarks>
-    /// 这是一个标记接口（marker interface），本身不包含任何方法。
-    /// 实际的 <c>ExecuteCommand</c> 功能通过 <see cref="CapabilityExtensions.ExecuteCommand{T}(ICanExecuteCommand, T)" />
-    /// 扩展方法实现。
-    /// <para>
-    /// 通过标记接口 + 扩展方法的组合，编译器可以确保只有声明了此能力的类型才能调用 <c>ExecuteCommand</c>，
-    /// 从而在编译期实现细粒度的访问控制。
-    /// </para>
+    /// 标记接口——<c>ExecuteCommand</c> 能力由
+    /// <see cref="CapabilityExtensions.ExecuteCommand{T}(ICanExecuteCommand, T)" /> 扩展方法提供，
+    /// 仅声明此接口的类型可调用（编译期访问控制）。
     /// </remarks>
     /// <seealso cref="CapabilityExtensions.ExecuteCommand{T}(ICanExecuteCommand, T)" />
     public interface ICanExecuteCommand : IContextHolder { }
@@ -136,13 +124,9 @@ namespace Runestone.AesirArchitecture
     /// 执行查询的能力接口
     /// </summary>
     /// <remarks>
-    /// 这是一个标记接口（marker interface），本身不包含任何方法。
-    /// 实际的 <c>ExecuteQuery</c> 功能通过
-    /// <see cref="CapabilityExtensions.ExecuteQuery{TResult}(ICanExecuteQuery, IQuery{TResult})" /> 扩展方法实现。
-    /// <para>
-    /// 通过标记接口 + 扩展方法的组合，编译器可以确保只有声明了此能力的类型才能调用 <c>ExecuteQuery</c>，
-    /// 从而在编译期实现细粒度的访问控制。
-    /// </para>
+    /// 标记接口——<c>ExecuteQuery</c> 能力由
+    /// <see cref="CapabilityExtensions.ExecuteQuery{TResult}(ICanExecuteQuery, IQuery{TResult})" /> 扩展方法提供，
+    /// 仅声明此接口的类型可调用（编译期访问控制）。
     /// </remarks>
     /// <seealso cref="CapabilityExtensions.ExecuteQuery{TResult}(ICanExecuteQuery, IQuery{TResult})" />
     public interface ICanExecuteQuery : IContextHolder { }

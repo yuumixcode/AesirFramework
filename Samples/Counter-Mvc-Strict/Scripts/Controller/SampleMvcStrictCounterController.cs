@@ -30,6 +30,13 @@ namespace Runestone.AesirArchitecture.Samples.MvcStrict
         IController<SampleMvcStrictCounterContext>
     {
         /// <summary>
+        /// 缓存的加工值查询实例。Query 无内部状态（每次执行经 Context 重新取 Model），
+        /// 实例可跨调用复用——<c>ExecuteQuery</c> 带实例重载不分配新实例，
+        /// 通知回调等高频路径下亦无查询分配。
+        /// </summary>
+        readonly GetRoundedCountQuery _roundedCountQuery = new GetRoundedCountQuery();
+
+        /// <summary>
         /// 计数 +1（发布 Command）。
         /// </summary>
         public void Increase() => this.ExecuteCommand<SampleMvcStrictIncreaseCommand>();
@@ -43,13 +50,6 @@ namespace Runestone.AesirArchitecture.Samples.MvcStrict
         /// 将计数重置为 0（发布 Command）。
         /// </summary>
         public void ResetCounter() => this.ExecuteCommand<SampleMvcStrictResetCommand>();
-
-        /// <summary>
-        /// 缓存的加工值查询实例。Query 无内部状态（每次执行经 Context 重新取 Model），
-        /// 实例可跨调用复用——<c>ExecuteQuery</c> 带实例重载不分配新实例，
-        /// 通知回调等高频路径下亦无查询分配。
-        /// </summary>
-        readonly GetRoundedCountQuery _roundedCountQuery = new GetRoundedCountQuery();
 
         /// <summary>
         /// 查询十位四舍五入后的近似值（原始值不变）。

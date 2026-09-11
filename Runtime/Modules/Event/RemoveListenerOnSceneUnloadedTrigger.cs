@@ -10,12 +10,8 @@ namespace Runestone.AesirArchitecture
     /// <para>挂载在 [Aesir Architecture] GameObject 上，通过 <see cref="Instance" /> 访问。</para>
     /// </summary>
     /// <remarks>
-    /// 作为全局单例挂载在 <c>[Aesir Architecture]</c> GameObject 上，通过 <see cref="Instance" /> 访问。
-    /// <para>
-    /// 按场景句柄（<see cref="Scene.handle" />）分桶管理监听句柄，场景 A 卸载时仅移除场景 A 注册的监听，
-    /// 不会误杀场景 B 的监听。相比按场景名分桶，句柄分桶保证：不同路径下的同名场景各持唯一句柄、互不共享桶；
+    /// 相比按场景名分桶，句柄分桶保证：不同路径下的同名场景各持唯一句柄、互不共享桶；
     /// 场景卸载后重新加载会获得新句柄，不存在旧桶残留。
-    /// </para>
     /// <para>
     /// 通过 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c>
     /// 在每次域加载时重置静态单例字段，确保在编辑器关闭 Domain Reload 时不残留上一次 Play 会话的旧引用。
@@ -72,9 +68,8 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            // 与 AesirArchitecture / MonoLifecycleProxy 单例范式同形：Awake 即写入静态缓存。
-            // 预放置双实例在各自 Awake 期即可完成判重，不再依赖 Instance getter 事后发现
-            // （getter 中的 FindAnyObjectByType 保留为销毁后重发现与执行顺序竞态的兜底路径）
+            // 单例范式同 AesirArchitecture / MonoLifecycleProxy：Awake 即写入静态缓存完成判重；
+            // Instance getter 的 FindAnyObjectByType 仅作销毁后重发现的兜底路径
             _instance = this;
             SceneManager.sceneUnloaded += OnSceneUnloaded;
         }
