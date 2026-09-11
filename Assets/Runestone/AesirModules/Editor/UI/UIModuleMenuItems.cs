@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,32 +29,11 @@ namespace Runestone.AesirModules.Editor
         [MenuItem("Assets/Create/Aesir Modules/UI/Default UICanvasConfig", false, -99)]
         static void CreateUICanvasConfigAsset()
         {
-            const string defaultPath = UIRoot.DefaultCanvasConfigPath;
-            var fileIsExist = File.Exists(defaultPath);
-            if (fileIsExist)
-            {
-                AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
-                    "默认的 UICanvasConfig 已存在，不能重复创建。路径为：" + defaultPath);
-                return;
-            }
-
-            var directoryPath = Path.GetDirectoryName(defaultPath);
-            if (directoryPath != null)
-            {
-                if (!Directory.Exists(directoryPath))
-                {
-                    Directory.CreateDirectory(directoryPath);
-                }
-
-                AssetDatabase.Refresh();
-            }
-
-            var asset = ScriptableObject.CreateInstance<UICanvasConfigSO>();
-            AssetDatabase.CreateAsset(asset, defaultPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            // 幂等确保资产存在（已存在则加载复用），实现与 UIRoot 的 Inspector 按钮共用同一入口，
+            // 不在此处重建目录/资产创建逻辑，避免两份等价实现产生行为漂移
+            UIRoot.EnsureDefaultCanvasConfigAsset();
             AesirModulesDebug.Log(AesirModulesDebug.UIModuleTag,
-                "成功创建默认的 UICanvasConfig 资产，路径为：" + defaultPath);
+                "已确保默认的 UICanvasConfig 资产存在，路径为：" + UIRoot.DefaultCanvasConfigPath);
         }
     }
 }

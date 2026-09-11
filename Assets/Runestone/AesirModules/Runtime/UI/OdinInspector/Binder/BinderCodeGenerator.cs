@@ -40,81 +40,6 @@ namespace Runestone.AesirModules
         internal const string MemberIndent = "    ";
 
         /// <summary>
-        /// 单个绑定单元在代码生成阶段的只读描述。
-        /// <para>
-        /// <see cref="HierarchyPath" /> 为空字符串表示绑定 BinderAssistant 所在物体自身，
-        /// 生成代码将直接调用 <c>GetComponent</c> 而不经过 <c>transform.Find</c>。
-        /// </para>
-        /// </summary>
-        internal readonly struct BindUnit
-        {
-            /// <summary>组件类型完整名称（含命名空间，嵌套类型以 <c>+</c> 连接）。</summary>
-            internal readonly string ComponentFullName;
-
-            /// <summary>生成脚本中的字段名。</summary>
-            internal readonly string FieldName;
-
-            /// <summary>相对于 BinderAssistant 的 <c>transform.Find()</c> 路径；空字符串表示自身。</summary>
-            internal readonly string HierarchyPath;
-
-            internal BindUnit(string componentFullName, string fieldName, string hierarchyPath)
-            {
-                ComponentFullName = componentFullName;
-                FieldName = fieldName;
-                HierarchyPath = hierarchyPath;
-            }
-        }
-
-        /// <summary>
-        /// 一次代码生成的完整配置。
-        /// </summary>
-        internal readonly struct CodeGenConfig
-        {
-            /// <summary>生成脚本所在的命名空间。</summary>
-            internal readonly string Namespace;
-
-            /// <summary>生成的类名（即脚本文件名）。</summary>
-            internal readonly string ScriptName;
-
-            /// <summary>基类完整名称。</summary>
-            internal readonly string BaseTypeFullName;
-
-            /// <summary>发起生成的物体名，仅用于头部注释展示。</summary>
-            internal readonly string SourceObjectName;
-
-            /// <summary>用户额外追加的 using 命名空间。</summary>
-            internal readonly IReadOnlyList<string> CustomNamespaces;
-
-            /// <summary>
-            /// 泛型基类的具体类型参数（逗号分隔）。基类候选不含 <c>&lt;T&gt;</c> 占位时忽略。
-            /// </summary>
-            internal readonly string BaseTypeArguments;
-
-            /// <summary>
-            /// partial 分部类模式下自动维护文件的后缀（含扩展名，如 <c>.designer.cs</c>）。
-            /// 同一脚本增量模式忽略。
-            /// </summary>
-            internal readonly string AutoFileSuffix;
-
-            /// <summary>绑定单元列表。</summary>
-            internal readonly IReadOnlyList<BindUnit> Units;
-
-            internal CodeGenConfig(string targetNamespace, string scriptName, string baseTypeFullName,
-                string baseTypeArguments, string autoFileSuffix, string sourceObjectName,
-                IReadOnlyList<string> customNamespaces, IReadOnlyList<BindUnit> units)
-            {
-                Namespace = targetNamespace;
-                ScriptName = scriptName;
-                BaseTypeFullName = baseTypeFullName;
-                BaseTypeArguments = baseTypeArguments;
-                AutoFileSuffix = autoFileSuffix;
-                SourceObjectName = sourceObjectName;
-                CustomNamespaces = customNamespaces ?? Array.Empty<string>();
-                Units = units ?? Array.Empty<BindUnit>();
-            }
-        }
-
-        /// <summary>
         /// 构建 partial 分部类模式的自动维护脚本 <c>*.generated.cs</c> 全文。
         /// <para>
         /// 内容包含：头注释、按需计算的 using、命名空间与类声明，
@@ -229,8 +154,7 @@ namespace Runestone.AesirModules
             }
 
             builder.AppendLine("/// <summary>");
-            builder.AppendLine("/// 由 Binder 自动生成的绑定部分，与 " + config.ScriptName +
-                               ".cs 中的 partial 合并为同一类。");
+            builder.AppendLine("/// 由 Binder 自动生成的绑定部分，与 " + config.ScriptName + ".cs 中的 partial 合并为同一类。");
             builder.AppendLine("/// </summary>");
             builder.AppendLine("public partial class " + config.ScriptName + " : " +
                                BuildBaseTypeReference(config.BaseTypeFullName, config.BaseTypeArguments) +
@@ -294,7 +218,9 @@ namespace Runestone.AesirModules
         /// </para>
         /// </summary>
         /// <returns>找到并完成替换返回 true；未找到 region 起始或结束标记返回 false。</returns>
-        internal static bool TryReplaceRegion(string fileContent, string regionBlock, out string updatedContent)
+        internal static bool TryReplaceRegion(string fileContent,
+            string regionBlock,
+            out string updatedContent)
         {
             updatedContent = null;
             if (string.IsNullOrEmpty(fileContent))
@@ -318,8 +244,7 @@ namespace Runestone.AesirModules
             var regionLineEnd = endregionIndex + RegionEndMarker.Length;
             var newline = fileContent.Contains("\r\n") ? "\r\n" : "\n";
 
-            updatedContent = fileContent
-                .Remove(regionLineStart, regionLineEnd - regionLineStart)
+            updatedContent = fileContent.Remove(regionLineStart, regionLineEnd - regionLineStart)
                 .Insert(regionLineStart, ApplyIndent(regionBlock, MemberIndent, newline));
 
             return true;
@@ -383,15 +308,19 @@ namespace Runestone.AesirModules
         {
             var typeReference = ToSourceTypeReference(unit.ComponentFullName);
             var isSelf = string.IsNullOrEmpty(unit.HierarchyPath);
-            var lookup = isSelf ? "this.transform" : "transform.Find(\"" + EscapeStringLiteral(unit.HierarchyPath) + "\")";
+            var lookup = isSelf
+                ? "this.transform"
+                : "transform.Find(\"" + EscapeStringLiteral(unit.HierarchyPath) + "\")";
 
             if (typeReference == "UnityEngine.GameObject")
             {
                 return unit.FieldName + " = " + (isSelf ? "gameObject;" : lookup + ".gameObject;");
             }
 
-            return unit.FieldName + " = " + (isSelf ? lookup + ".GetComponent<" + typeReference + ">();"
-                : lookup + ".GetComponent<" + typeReference + ">();");
+            return unit.FieldName + " = " +
+                   (isSelf
+                       ? lookup + ".GetComponent<" + typeReference + ">();"
+                       : lookup + ".GetComponent<" + typeReference + ">();");
         }
 
         /// <summary>
@@ -411,10 +340,8 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 将类型完整名称转换为源代码可用的类型引用：嵌套类型的 <c>+</c> 分隔符替换为 <c>.</c>。
         /// </summary>
-        static string ToSourceTypeReference(string componentFullName)
-        {
-            return (componentFullName ?? "").Replace('+', '.');
-        }
+        static string ToSourceTypeReference(string componentFullName) =>
+            (componentFullName ?? "").Replace('+', '.');
 
         /// <summary>
         /// 按目标缩进与换行风格重排行块（空行保持为空）。
@@ -509,17 +436,16 @@ namespace Runestone.AesirModules
                 return fullName;
             }
 
-            var placeholders = string.Join(",", Enumerable.Range(1, arity).Select(i => "T" + (arity == 1 ? "" : i.ToString())));
+            var placeholders = string.Join(",",
+                Enumerable.Range(1, arity).Select(i => "T" + (arity == 1 ? "" : i.ToString())));
             return fullName.Substring(0, backtickIndex) + "<" + placeholders + ">";
         }
 
         /// <summary>
         /// 基类候选是否含 <c>&lt;T&gt;</c>/<c>&lt;T1,T2&gt;</c> 泛型占位。
         /// </summary>
-        internal static bool HasGenericPlaceholder(string baseType)
-        {
-            return !string.IsNullOrEmpty(baseType) && baseType.Contains('<');
-        }
+        internal static bool HasGenericPlaceholder(string baseType) =>
+            !string.IsNullOrEmpty(baseType) && baseType.Contains('<');
 
         /// <summary>
         /// 基类候选的泛型占位元数（<c>&lt;T&gt;</c> → 1，<c>&lt;T1,T2&gt;</c> → 2），非泛型候选返回 0。
@@ -560,10 +486,8 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 转义字符串字面量中的反斜杠与双引号，保证生成代码合法。
         /// </summary>
-        internal static string EscapeStringLiteral(string value)
-        {
-            return (value ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
-        }
+        internal static string EscapeStringLiteral(string value) =>
+            (value ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
 
         /// <summary>
         /// 是否为合法的 C# 标识符（关键字未做排除，字段名撞关键字由编译报错兜底）。
@@ -613,6 +537,86 @@ namespace Runestone.AesirModules
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 单个绑定单元在代码生成阶段的只读描述。
+        /// <para>
+        /// <see cref="HierarchyPath" /> 为空字符串表示绑定 BinderAssistant 所在物体自身，
+        /// 生成代码将直接调用 <c>GetComponent</c> 而不经过 <c>transform.Find</c>。
+        /// </para>
+        /// </summary>
+        internal readonly struct BindUnit
+        {
+            /// <summary>组件类型完整名称（含命名空间，嵌套类型以 <c>+</c> 连接）。</summary>
+            internal readonly string ComponentFullName;
+
+            /// <summary>生成脚本中的字段名。</summary>
+            internal readonly string FieldName;
+
+            /// <summary>相对于 BinderAssistant 的 <c>transform.Find()</c> 路径；空字符串表示自身。</summary>
+            internal readonly string HierarchyPath;
+
+            internal BindUnit(string componentFullName, string fieldName, string hierarchyPath)
+            {
+                ComponentFullName = componentFullName;
+                FieldName = fieldName;
+                HierarchyPath = hierarchyPath;
+            }
+        }
+
+        /// <summary>
+        /// 一次代码生成的完整配置。
+        /// </summary>
+        internal readonly struct CodeGenConfig
+        {
+            /// <summary>生成脚本所在的命名空间。</summary>
+            internal readonly string Namespace;
+
+            /// <summary>生成的类名（即脚本文件名）。</summary>
+            internal readonly string ScriptName;
+
+            /// <summary>基类完整名称。</summary>
+            internal readonly string BaseTypeFullName;
+
+            /// <summary>发起生成的物体名，仅用于头部注释展示。</summary>
+            internal readonly string SourceObjectName;
+
+            /// <summary>用户额外追加的 using 命名空间。</summary>
+            internal readonly IReadOnlyList<string> CustomNamespaces;
+
+            /// <summary>
+            /// 泛型基类的具体类型参数（逗号分隔）。基类候选不含 <c>&lt;T&gt;</c> 占位时忽略。
+            /// </summary>
+            internal readonly string BaseTypeArguments;
+
+            /// <summary>
+            /// partial 分部类模式下自动维护文件的后缀（含扩展名，如 <c>.designer.cs</c>）。
+            /// 同一脚本增量模式忽略。
+            /// </summary>
+            internal readonly string AutoFileSuffix;
+
+            /// <summary>绑定单元列表。</summary>
+            internal readonly IReadOnlyList<BindUnit> Units;
+
+            internal CodeGenConfig(string targetNamespace,
+                string scriptName,
+                string baseTypeFullName,
+                string baseTypeArguments,
+                string autoFileSuffix,
+                string sourceObjectName,
+                IReadOnlyList<string> customNamespaces,
+                IReadOnlyList<BindUnit> units)
+            {
+                Namespace = targetNamespace;
+                ScriptName = scriptName;
+                BaseTypeFullName = baseTypeFullName;
+                BaseTypeArguments = baseTypeArguments;
+                AutoFileSuffix = autoFileSuffix;
+                SourceObjectName = sourceObjectName;
+                CustomNamespaces = customNamespaces ?? Array.Empty<string>();
+                Units = units ?? Array.Empty<BindUnit>();
+            }
         }
     }
 }

@@ -15,7 +15,18 @@ namespace Runestone.AesirModules
     /// </summary>
     public class BinderEditorSettings : ScriptableSingleton<BinderEditorSettings>
     {
+        const string FallbackNamespace = "Game";
+        const string FallbackSuffix = ".designer.cs";
         static BinderEditorSettings _settings;
+
+        [SerializeField]
+        List<string> partialSuffixes = new List<string> { ".generated.cs", ".designer.cs" };
+
+        [SerializeField]
+        string defaultPartialSuffix = FallbackSuffix;
+
+        [SerializeField]
+        string lastNamespace = FallbackNamespace;
 
         /// <summary>
         /// 实例访问器。标准 Unity 的 ScriptableSingleton 暴露大写 <c>Instance</c>，
@@ -28,28 +39,16 @@ namespace Runestone.AesirModules
                 if (_settings == null)
                 {
                     var baseType = typeof(ScriptableSingleton<BinderEditorSettings>);
-                    var property = baseType.GetProperty("Instance",
-                                       BindingFlags.Public | BindingFlags.Static)
-                                   ?? baseType.GetProperty("instance",
-                                       BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                    var property =
+                        baseType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static) ??
+                        baseType.GetProperty("instance",
+                            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
                     _settings = (BinderEditorSettings)property.GetValue(null);
                 }
 
                 return _settings;
             }
         }
-
-        const string FallbackNamespace = "Game";
-        const string FallbackSuffix = ".designer.cs";
-
-        [SerializeField]
-        List<string> partialSuffixes = new List<string> { ".generated.cs", ".designer.cs" };
-
-        [SerializeField]
-        string defaultPartialSuffix = FallbackSuffix;
-
-        [SerializeField]
-        string lastNamespace = FallbackNamespace;
 
         /// <summary>
         /// partial 分部类模式下自动维护文件的可选后缀列表（含扩展名，如 <c>.designer.cs</c>）。

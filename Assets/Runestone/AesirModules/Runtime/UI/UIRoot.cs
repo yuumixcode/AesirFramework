@@ -66,18 +66,6 @@ namespace Runestone.AesirModules
         bool dontDestroyOnLoad = true;
 
         /// <summary>
-        /// 层级 Canvas 引用表。首次构建时赋值并随场景序列化持久；
-        /// 存在性判定只依赖引用非空（Unity 假 null 即子物体已销毁、需重建），不按物体名查找。
-        /// </summary>
-        /// <remarks>
-        /// Inspector 呈现（仅运行时显示）由 <c>UIRootAttributeProcessor</c> 注入；
-        /// <see cref="HideInInspector" /> 兜底非 Odin 环境的默认 Inspector，运行时代码不持有 Inspector 样式特性。
-        /// </remarks>
-        [SerializeField]
-        [HideInInspector]
-        readonly List<LayerCanvasEntry> _layerCanvases = new List<LayerCanvasEntry>();
-
-        /// <summary>
         /// UI 专用相机引用。首次构建时赋值并随场景序列化持久，后续初始化引用非空即跳过，不按物体名查找。
         /// </summary>
         [SerializeField]
@@ -91,6 +79,16 @@ namespace Runestone.AesirModules
         [SerializeField]
         [HideInInspector]
         EventSystem eventSystem;
+
+        /// <summary>
+        /// 层级 Canvas 引用表。首次构建时赋值并随场景序列化持久；
+        /// 存在性判定只依赖引用非空（Unity 假 null 即子物体已销毁、需重建），不按物体名查找。
+        /// </summary>
+        /// <remarks>
+        /// Inspector 呈现（仅运行时显示）由 <c>UIRootAttributeProcessor</c> 注入；
+        /// <see cref="HideInInspector" /> 兜底非 Odin 环境的默认 Inspector，运行时代码不持有 Inspector 样式特性。
+        /// </remarks>
+        readonly List<LayerCanvasEntry> _layerCanvases = new List<LayerCanvasEntry>();
 
         /// <summary>
         /// 自定义输入模块创建回调。
@@ -163,7 +161,10 @@ namespace Runestone.AesirModules
                     "UIRoot 的 dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" + "必须自行处理多场景叠加（Additive）加载下的生命周期");
             }
 
-            UIModule.Instance.RegisterUIRoot(this);
+            // UIModule 不在此处反向注册（推方向）：
+            // UIModule.EnsureReady 在每次面板操作时经 UIRoot.Instance 惰性发现本实例（拉方向，已可自愈），
+            // 推注册会在编辑器菜单创建 UIRoot 时连带触发 UIModule → [Aesir Modules] 宿主的运行时懒创建链，
+            // 使运行时创建路径的物体被意外固化进场景。
             Initialize();
         }
 
@@ -205,8 +206,7 @@ namespace Runestone.AesirModules
             if (canvas == null)
             {
                 AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
-                    $"UIRoot 缺少 {layer} 层的 Canvas（层引用缺失或对应子物体被删除），" +
-                    "面板将无法挂载到该层，请重建 UIRoot 层级");
+                    $"UIRoot 缺少 {layer} 层的 Canvas（层引用缺失或对应子物体被删除），" + "面板将无法挂载到该层，请重建 UIRoot 层级");
                 return null;
             }
 
@@ -424,37 +424,43 @@ namespace Runestone.AesirModules
             "Assets/Resources/UIConfig_Default/Default_UICanvasConfig.asset";
 
         internal const string CreateCanvasConfigAssetMethodName = nameof(CreateAndLoadCanvasConfigAsset);
-        public void CreateAndLoadCanvasConfigAsset()
+
+        /// <summary>
+        /// 确保默认 UICanvasConfig 资产存在：已存在则直接加载返回，不存在则创建目录与资产。
+        /// 幂等操作，供 Inspector 按钮（<see cref="CreateAndLoadCanvasConfigAsset" />）与
+        /// Assets/Create 菜单（UIModuleMenuItems）共用，避免两份等价实现产生行为漂移。
+        /// </summary>
+        public static UICanvasConfigSO EnsureDefaultCanvasConfigAsset()
         {
             var existing = AssetDatabase.LoadAssetAtPath<UICanvasConfigSO>(DefaultCanvasConfigPath);
             if (existing != null)
             {
-                uiCanvasConfigSO = existing;
-                EditorUtility.SetDirty(this);
-                AesirModulesDebug.Log(AesirModulesDebug.UIModuleTag,
-                    "成功加载默认的 UICanvasConfig 资产到 [UIRoot]，资产路径为：" + DefaultCanvasConfigPath);
-                return;
+                return existing;
             }
 
             var dir = Path.GetDirectoryName(DefaultCanvasConfigPath);
-            if (!Directory.Exists(dir))
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             {
-                if (dir != null)
-                {
-                    Directory.CreateDirectory(dir);
-                }
-
+                Directory.CreateDirectory(dir);
                 AssetDatabase.Refresh();
             }
 
             var config = ScriptableObject.CreateInstance<UICanvasConfigSO>();
             AssetDatabase.CreateAsset(config, DefaultCanvasConfigPath);
             AssetDatabase.SaveAssets();
-            uiCanvasConfigSO = config;
-            EditorUtility.SetDirty(this);
             AssetDatabase.Refresh();
+            return config;
+        }
+
+        /// <summary>
+        /// Inspector 按钮（Odin）：确保默认资产存在并加载到 [UIRoot]（幂等）。
+        /// </summary>
+        public void CreateAndLoadCanvasConfigAsset()
+        {
+            uiCanvasConfigSO = EnsureDefaultCanvasConfigAsset();
+            EditorUtility.SetDirty(this);
             AesirModulesDebug.Log(AesirModulesDebug.UIModuleTag,
-                "成功创建默认的 UICanvasConfig 资产并加载到 [UIRoot]，路径为：" + DefaultCanvasConfigPath);
+                "成功加载默认的 UICanvasConfig 资产到 [UIRoot]，资产路径为：" + DefaultCanvasConfigPath);
         }
 #endif
     }

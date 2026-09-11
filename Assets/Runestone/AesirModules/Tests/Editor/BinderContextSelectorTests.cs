@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using NUnit.Framework;
 using Runestone.AesirArchitecture;
-using Runestone.AesirModules;
 using UnityEngine;
 
 namespace Runestone.AesirModules.Tests.Editor
@@ -9,7 +8,7 @@ namespace Runestone.AesirModules.Tests.Editor
     /// <summary>
     /// 用于验证 Context 下拉选择逻辑的测试 Context（未标注 <see cref="InternalContextAttribute" />，应可选）。
     /// </summary>
-    class BinderSelectableTestContext : AbstractContext<BinderSelectableTestContext>
+    internal class BinderSelectableTestContext : AbstractContext<BinderSelectableTestContext>
     {
         protected override void Configure() { }
     }
@@ -18,7 +17,7 @@ namespace Runestone.AesirModules.Tests.Editor
     /// 被标记为框架内部 Context 的测试用例（应被 Binder Context 下拉排除）。
     /// </summary>
     [InternalContext]
-    class BinderExcludedTestContext : AbstractContext<BinderExcludedTestContext>
+    internal class BinderExcludedTestContext : AbstractContext<BinderExcludedTestContext>
     {
         protected override void Configure() { }
     }
@@ -52,14 +51,19 @@ namespace Runestone.AesirModules.Tests.Editor
             }
 
             // 未标注的测试 Context 可选
-            Assert.That(values, Does.Contain("Runestone.AesirModules.Tests.Editor.BinderSelectableTestContext"));
+            Assert.That(values,
+                Does.Contain("Runestone.AesirModules.Tests.Editor.BinderSelectableTestContext"));
             // 被标注的测试 Context 被排除
-            Assert.That(values, Does.Not.Contain("Runestone.AesirModules.Tests.Editor.BinderExcludedTestContext"));
+            Assert.That(values,
+                Does.Not.Contain("Runestone.AesirModules.Tests.Editor.BinderExcludedTestContext"));
             // Architecture 示例 Context（[InternalContext] 标注）被排除
-            Assert.That(values, Does.Not.Contain("Runestone.AesirArchitecture.Samples.MvcQuick.SampleMvcQuickCounterContext"));
+            Assert.That(values,
+                Does.Not.Contain(
+                    "Runestone.AesirArchitecture.Samples.MvcQuick.SampleMvcQuickCounterContext"));
             // Architecture 测试的嵌套 Context（[InternalContext] 标注）被排除
             Assert.That(values,
-                Does.Not.Contain("Runestone.AesirArchitecture.Tests.Editor.AbstractContextInitializationTests+ThrowingModelContext"));
+                Does.Not.Contain(
+                    "Runestone.AesirArchitecture.Tests.Editor.AbstractContextInitializationTests+ThrowingModelContext"));
         }
     }
 }

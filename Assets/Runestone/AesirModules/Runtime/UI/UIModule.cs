@@ -3,8 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Runestone.AesirArchitecture;
 using UnityEngine;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Runestone.AesirModules
 {
@@ -40,10 +38,16 @@ namespace Runestone.AesirModules
         [SerializeField]
         bool dontDestroyOnLoad = true;
 
-        readonly Dictionary<Type, IUIPanel> _activatedPanelDict = new Dictionary<Type, IUIPanel>();
-        readonly Dictionary<Type, IUIPanel> _deactivatedPanelDict = new Dictionary<Type, IUIPanel>();
+        /// <summary>
+        /// 面板实例注册表，键 = 面板实例的实际类型。
+        /// 激活/停用状态由面板自身的 <see cref="IUIPanel.IsOpen" /> 承担，注册表不重复记录，
+        /// 由此排除多表不一致的可能。Show/Hide/Get 须以同一实际类型调用；
+        /// 以基类类型调用且注册表已存在派生实例时给出键语义诊断（见 <see cref="FindRegisteredRelatedPanelKey" />）。
+        /// </summary>
+        readonly Dictionary<Type, IUIPanel> _panelDict = new Dictionary<Type, IUIPanel>();
+
+        /// <summary>面板预制体注册表，键 = 注册时声明的类型（与实例注册表的实际类型键相互独立）。</summary>
         readonly Dictionary<Type, GameObject> _prefabDict = new Dictionary<Type, GameObject>();
-        readonly Dictionary<Type, IUIPanel> _uiPanelDict = new Dictionary<Type, IUIPanel>();
 
         IUIAssetLoader _loader;
         UIRoot _uiRoot;
@@ -114,15 +118,10 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 替换默认的面板资源加载器。
         /// </summary>
-        /// <param name="loader">自定义加载器（如 Addressables 实现）。</param>
+        /// <param name="loader">自定义加载器。加载契约为同步语义（如同步缓存、Resources）；Addressables 等异步管线需自行预加载后同步返回。</param>
         public void RegisterAssetLoader(IUIAssetLoader loader)
         {
             _loader = loader;
-        }
-
-        public void RegisterUIRoot(UIRoot uiRoot)
-        {
-            _uiRoot = uiRoot;
         }
 
         /// <summary>
@@ -162,7 +161,7 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 打开面板（泛型 + 强类型 payload）。payload 以泛型参数传递，调用侧获得编译期类型约束；
-        /// 面板内部仍经 <see cref="IUIPanel.Show(object)" /> 接收后按需转换。
+        /// 面板内部仍经 <see cref="IUIPanel.Show(object)" /> 接收后按需转换（运行时类型安全仍由面板内转换保证）。
         /// </summary>
         /// <typeparam name="TPanel">面板类型。</typeparam>
         /// <typeparam name="TPayload">payload 类型。</typeparam>
@@ -174,13 +173,17 @@ namespace Runestone.AesirModules
             ShowPanel(typeof(TPanel), payload, path) as TPanel;
 
         /// <summary>
-        /// 打开面板。已存在则置顶并重新 Show；不存在则实例化并驱动生命周期。
+        /// 打开面板。已存在（激活或停用）则置顶并重新 Show；不存在则实例化并驱动生命周期。
         /// <para>
         /// 新面板以停用状态实例化，按 挂层 → <see cref="IUIPanel.Initialize" /> → <see cref="IUIPanel.Show" /> 顺序驱动，
         /// Awake/OnEnable 推迟到 Show 内部激活时才触发，保证 OnEnable 可安全访问 OnInit 之后才有值的引用。
         /// </para>
         /// <para>
-        /// 面板注册以实例的实际类型为键；以基类类型 Show 后，需以实际类型（或面板内 <see cref="AesirBasePanel.HideSelf" />）关闭。
+        /// 面板注册表以实例的实际类型为键：以基类类型调用且注册表已存在派生实例时记录错误并返回 null
+        /// （不会重复实例化）；需以实际类型（或面板内 <see cref="AesirBasePanel.HideSelf" />）操作。
+        /// </para>
+        /// <para>
+        /// 面板所属层的 Canvas 缺失（UIRoot 层级结构性损坏）时记录错误并中止本次显示，不保留半挂载实例。
         /// </para>
         /// </summary>
         /// <param name="panelType">面板类型。</param>
@@ -195,122 +198,123 @@ namespace Runestone.AesirModules
                 return null;
             }
 
-            if (!_uiPanelDict.TryGetValue(panelType, out var uiPanel))
+            if (!_panelDict.TryGetValue(panelType, out var panel))
             {
-                var prefab = ResolvePrefab(panelType, path);
-                if (prefab == null)
+                // 键语义诊断：注册表已存在派生实例时，按实际类型键约定拒绝本次调用，
+                // 防止以基类类型反复 Show 造成重复实例化
+                var relatedKey = FindRegisteredRelatedPanelKey(panelType);
+                if (relatedKey != null)
+                {
+                    AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                        $"面板注册表以实例的实际类型为键：已存在 {relatedKey.Name} 的实例，" +
+                        $"请以实际类型调用 ShowPanel（{panelType.Name} 是其基类或接口）");
+                    return null;
+                }
+
+                panel = InstantiateAndAttach(panelType, path);
+                if (panel == null)
                 {
                     return null;
                 }
 
-                var panelGo = InstantiateInactive(prefab);
-                uiPanel = panelGo.GetComponent<IUIPanel>();
-                if (uiPanel == null)
-                {
-                    AesirModulesDebug.LogError(panelGo, AesirModulesDebug.UIModuleTag,
-                        "预制体[" + prefab.name + "]没有挂载实现了 IUIPanel 的组件");
-                    Destroy(panelGo);
-                    return null;
-                }
-
-                var root = _uiRoot.GetLayerRoot(uiPanel.Layer);
-                if (root != null)
-                {
-                    panelGo.transform.SetParent(root, false);
-                    panelGo.transform.SetAsLastSibling();
-                }
-
-                uiPanel.Initialize();
-                uiPanel.Show(payload);
-                var panelKey = uiPanel.GetType();
-                _uiPanelDict[panelKey] = uiPanel;
-                _activatedPanelDict[panelKey] = uiPanel;
-                return uiPanel;
+                panel.Initialize();
+                panel.Show(payload);
+                _panelDict[panel.GetType()] = panel;
+                return panel;
             }
 
-            var key = uiPanel.GetType();
-            if (_activatedPanelDict.TryGetValue(key, out var activatedPanel) && activatedPanel == uiPanel)
+            // 已存在（激活或停用）：置顶并重新 Show，激活/停用状态由面板自身 IsOpen 记录
+            var root = _uiRoot.GetLayerRoot(panel.Layer);
+            if (root == null)
             {
-                var root = _uiRoot.GetLayerRoot(activatedPanel.Layer);
-                if (root != null && ((MonoBehaviour)activatedPanel).transform.parent != root)
-                {
-                    ((MonoBehaviour)activatedPanel).transform.SetParent(root, false);
-                }
-
-                ((MonoBehaviour)activatedPanel).transform.SetAsLastSibling();
-                activatedPanel.Show(payload);
-                return activatedPanel;
+                // GetLayerRoot 已记录层缺失错误；层级结构性损坏时中止显示，面板保持原状态
+                return null;
             }
 
-            if (_deactivatedPanelDict.TryGetValue(key, out var deactivatedPanel) &&
-                deactivatedPanel == uiPanel)
+            var mono = (MonoBehaviour)panel;
+            if (mono.transform.parent != root)
             {
-                var root = _uiRoot.GetLayerRoot(deactivatedPanel.Layer);
-                if (root != null && ((MonoBehaviour)deactivatedPanel).transform.parent != root)
-                {
-                    ((MonoBehaviour)deactivatedPanel).transform.SetParent(root, false);
-                }
-
-                ((MonoBehaviour)deactivatedPanel).transform.SetAsLastSibling();
-                deactivatedPanel.Show(payload);
-                _deactivatedPanelDict.Remove(key);
-                _activatedPanelDict[key] = deactivatedPanel;
-                return deactivatedPanel;
+                mono.transform.SetParent(root, false);
             }
 
-            AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
-                $"面板 {key.Name} 存在于实例注册表，但既不在激活表也不在停用表，内部状态异常，无法显示");
-            return null;
+            mono.transform.SetAsLastSibling();
+            panel.Show(payload);
+            return panel;
         }
 
         /// <summary>
         /// 关闭面板（泛型）。按 <see cref="IUIPanel.DestroyOnHide" /> 决定销毁或隐藏。
         /// </summary>
         /// <typeparam name="T">面板类型。</typeparam>
-        public void HidePanel<T>() where T : IUIPanel => HidePanel(typeof(T));
+        public void HidePanel<T>() where T : MonoBehaviour, IUIPanel => HidePanel(typeof(T));
 
         /// <summary>
         /// 关闭面板。按 <see cref="IUIPanel.DestroyOnHide" /> 决定销毁或隐藏。
-        /// <para>状态字典以面板实例的实际类型为键，与 <see cref="ShowPanel(Type, object, string)" /> 的注册键保持一致。</para>
+        /// <para>
+        /// 注册表以面板实例的实际类型为键：以基类类型调用且注册表已存在派生实例时记录警告提示键语义；
+        /// 无关联实例时按幂等语义静默返回。已停用（或未显示）的面板重复关闭同样为幂等操作。
+        /// </para>
         /// </summary>
         /// <param name="panelType">面板类型。</param>
         public void HidePanel(Type panelType)
         {
             EnsureReady();
-            if (panelType == null || !_uiPanelDict.TryGetValue(panelType, out var panel))
+            if (panelType == null)
             {
                 return;
             }
 
-            var panelKey = panel.GetType();
-            if (!_activatedPanelDict.TryGetValue(panelKey, out var activated) || activated != panel)
+            if (!_panelDict.TryGetValue(panelType, out var panel))
+            {
+                var relatedKey = FindRegisteredRelatedPanelKey(panelType);
+                if (relatedKey != null)
+                {
+                    AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                        $"未关闭任何面板：注册表以实例的实际类型为键，已存在 {relatedKey.Name} 的实例，" +
+                        $"请以实际类型调用 HidePanel（{panelType.Name} 是其基类或接口）");
+                }
+
+                return;
+            }
+
+            if (!panel.IsOpen)
             {
                 return;
             }
 
-            _activatedPanelDict.Remove(panelKey);
             if (panel.DestroyOnHide)
             {
-                _uiPanelDict.Remove(panelKey);
+                _panelDict.Remove(panelType);
                 panel.DestroyPanel();
             }
             else
             {
                 panel.Hide();
-                _deactivatedPanelDict[panelKey] = panel;
             }
         }
 
+        /// <summary>
+        /// 获取已注册的面板实例。键为面板实例的实际类型；精确未命中时静默返回 null，
+        /// 仅当注册表存在派生实例（疑似以基类类型误查）时记录键语义警告。
+        /// </summary>
+        /// <typeparam name="T">面板类型。</typeparam>
+        /// <returns>面板实例，未注册返回 null。</returns>
         public T GetPanel<T>() where T : MonoBehaviour, IUIPanel
         {
             var panelType = typeof(T);
-            if (_uiPanelDict.TryGetValue(panelType, out var panel))
+            if (_panelDict.TryGetValue(panelType, out var panel))
             {
                 return panel as T;
             }
 
-            AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
-                $"无法获取到 {panelType.Name}。请确保面板已完成实例化。");
+            var relatedKey = FindRegisteredRelatedPanelKey(panelType);
+            if (relatedKey != null)
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                    $"未获取到面板实例：注册表以实例的实际类型为键，已存在 {relatedKey.Name} 的实例，" +
+                    $"请以实际类型调用 GetPanel（{panelType.Name} 是其基类或接口）");
+            }
+
             return null;
         }
 
@@ -346,38 +350,19 @@ namespace Runestone.AesirModules
                 return false;
             }
 
-            if (_uiPanelDict.ContainsKey(panelType))
+            if (_panelDict.ContainsKey(panelType))
             {
                 return true;
             }
 
-            var prefab = ResolvePrefab(panelType, path);
-            if (prefab == null)
+            var panel = InstantiateAndAttach(panelType, path);
+            if (panel == null)
             {
                 return false;
             }
 
-            var panelGo = InstantiateInactive(prefab);
-            var uiPanel = panelGo.GetComponent<IUIPanel>();
-            if (uiPanel == null)
-            {
-                AesirModulesDebug.LogError(panelGo, AesirModulesDebug.UIModuleTag,
-                    "预制体[" + prefab.name + "]没有挂载实现了 IUIPanel 的组件");
-                Destroy(panelGo);
-                return false;
-            }
-
-            var root = _uiRoot.GetLayerRoot(uiPanel.Layer);
-            if (root != null)
-            {
-                panelGo.transform.SetParent(root, false);
-                panelGo.transform.SetAsLastSibling();
-            }
-
-            uiPanel.Initialize();
-            var panelKey = uiPanel.GetType();
-            _uiPanelDict[panelKey] = uiPanel;
-            _deactivatedPanelDict[panelKey] = uiPanel;
+            panel.Initialize();
+            _panelDict[panel.GetType()] = panel;
             return true;
         }
 
@@ -460,28 +445,70 @@ namespace Runestone.AesirModules
             }
 
             var panelKey = panel.GetType();
-            if (_instance._uiPanelDict.TryGetValue(panelKey, out var recorded) && recorded == panel)
+            if (_instance._panelDict.TryGetValue(panelKey, out var recorded) && recorded == panel)
             {
-                _instance._uiPanelDict.Remove(panelKey);
-            }
-
-            if (_instance._activatedPanelDict.TryGetValue(panelKey, out var activated) && activated == panel)
-            {
-                _instance._activatedPanelDict.Remove(panelKey);
-            }
-
-            if (_instance._deactivatedPanelDict.TryGetValue(panelKey, out var deactivated) &&
-                deactivated == panel)
-            {
-                _instance._deactivatedPanelDict.Remove(panelKey);
+                _instance._panelDict.Remove(panelKey);
             }
         }
 
         /// <summary>
-        /// 以停用状态实例化面板预制体：克隆前临时停用源预制体，克隆后立即恢复。
+        /// 以停用状态实例化面板预制体并挂载到所属 UI 层（Show 与 Prewarm 共用）。
+        /// 预制体缺失、未挂载 <see cref="IUIPanel" /> 组件或所属层 Canvas 缺失时记录错误、清理实例并返回 null。
         /// 克隆体创建时不触发 Awake/OnEnable，保证生命周期严格为
         /// 挂层 → <see cref="IUIPanel.Initialize" /> → <see cref="IUIPanel.Show" />，
         /// Awake/OnEnable 推迟到 Show 内部激活时才触发。
+        /// </summary>
+        IUIPanel InstantiateAndAttach(Type panelType, string path)
+        {
+            var prefab = ResolvePrefab(panelType, path);
+            if (prefab == null)
+            {
+                return null;
+            }
+
+            var panelGo = InstantiateInactive(prefab);
+            var panel = panelGo.GetComponent<IUIPanel>();
+            if (panel == null)
+            {
+                AesirModulesDebug.LogError(panelGo, AesirModulesDebug.UIModuleTag,
+                    "预制体[" + prefab.name + "]没有挂载实现了 IUIPanel 的组件");
+                Destroy(panelGo);
+                return null;
+            }
+
+            var root = _uiRoot.GetLayerRoot(panel.Layer);
+            if (root == null)
+            {
+                // GetLayerRoot 已记录层缺失错误；UIRoot 层级结构性损坏时不保留半挂载实例
+                Destroy(panelGo);
+                return null;
+            }
+
+            panelGo.transform.SetParent(root, false);
+            panelGo.transform.SetAsLastSibling();
+            return panel;
+        }
+
+        /// <summary>
+        /// 键语义诊断：查找注册表中以 panelType 为基类或接口的实例键（仅精确未命中时调用）。
+        /// 返回 null 表示注册表无关联实例，调用方按幂等语义静默处理。
+        /// </summary>
+        Type FindRegisteredRelatedPanelKey(Type panelType)
+        {
+            foreach (var key in _panelDict.Keys)
+            {
+                if (key != panelType && panelType.IsAssignableFrom(key))
+                {
+                    return key;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 以停用状态实例化面板预制体：克隆前临时停用源预制体，克隆后立即恢复。
+        /// 克隆体创建时不触发 Awake/OnEnable。
         /// </summary>
         GameObject InstantiateInactive(GameObject prefab)
         {

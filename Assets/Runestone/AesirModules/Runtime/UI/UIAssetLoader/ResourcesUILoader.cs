@@ -22,17 +22,5 @@ namespace Runestone.AesirModules
 
             return prefab;
         }
-
-        /// <summary>
-        /// 释放通过 Resources 加载的预制体资源。
-        /// </summary>
-        /// <param name="prefab">需要释放的预制体引用。</param>
-        public void Unload(GameObject prefab)
-        {
-            if (prefab != null)
-            {
-                Resources.UnloadAsset(prefab);
-            }
-        }
     }
 }
