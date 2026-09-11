@@ -86,7 +86,8 @@ namespace Runestone.AesirModules
                 return;
             }
 
-            HierarchyPath = BinderHierarchyUtility.GetRelativePath(assistant.HierarchyPath, tag.HierarchyPath);
+            HierarchyPath =
+                BinderHierarchyUtility.GetRelativePath(assistant.HierarchyPath, tag.HierarchyPath);
         }
 
         /// <summary>

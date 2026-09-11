@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-using Runestone.AesirArchitecture;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -10,7 +9,7 @@ namespace Runestone.AesirModules
     /// Binder 层级右键菜单快捷入口: 为选中物体快速挂载 <see cref="BinderAssistant" /> 与 <see cref="BinderTag" />，
     /// 免去 Add Component 菜单的层层查找。
     /// </summary>
-    static class BinderMenuItems
+    internal static class BinderMenuItems
     {
         const string MenuRoot = "GameObject/Aesir/";
         const int MenuPriority = 5000;
@@ -31,10 +30,7 @@ namespace Runestone.AesirModules
         }
 
         [MenuItem(MenuRoot + "挂载 BinderAssistant", true)]
-        static bool ValidateAttachAssistant()
-        {
-            return Selection.gameObjects.Length > 0;
-        }
+        static bool ValidateAttachAssistant() => Selection.gameObjects.Length > 0;
 
         [MenuItem(MenuRoot + "添加 BinderTag 标记", false, MenuPriority + 1)]
         static void AttachTag(MenuCommand command)
@@ -52,10 +48,7 @@ namespace Runestone.AesirModules
         }
 
         [MenuItem(MenuRoot + "添加 BinderTag 标记", true)]
-        static bool ValidateAttachTag()
-        {
-            return Selection.gameObjects.Length > 0;
-        }
+        static bool ValidateAttachTag() => Selection.gameObjects.Length > 0;
 
         static void MarkSceneDirty(GameObject gameObject)
         {

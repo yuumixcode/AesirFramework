@@ -7,6 +7,7 @@ using System.Text;
 using Runestone.AesirArchitecture;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -41,14 +42,14 @@ namespace Runestone.AesirModules
     /// 工作流程：
     /// 1. 在需要绑定引用的子物体上添加 <see cref="BinderTag" /> 组件标记（默认绑定 1 个组件），用数量声明要绑定的组件个数。
     /// 2. 在本组件上点击「构建绑定单元」——按标记<b>增量</b>更新 <see cref="BinderInfo" /> 列表
-    ///    （新增缺失单元、刷新已有单元路径、移除标记已删除或数量缩减的单元），每个单元记录
-    ///    组件类型、字段名、绑定路径等配置。
+    /// （新增缺失单元、刷新已有单元路径、移除标记已删除或数量缩减的单元），每个单元记录
+    /// 组件类型、字段名、绑定路径等配置。
     /// 3. 点击「生成脚本」，按生成模式产出代码：
-    ///    - <see cref="BinderScriptMode.PartialClass" />：<c>*.generated.cs</c>（自动维护，整体覆盖）+
-    ///      <c>*.cs</c>（开发者手写业务逻辑的 partial 类，仅首次生成，<b>不会被覆盖</b>）；
-    ///    - <see cref="BinderScriptMode.SameScriptIncrement" />：只替换目标脚本
-    ///      <c>*.cs</c> 内「绑定字段（自动生成）」region 的内容（字段 + <c>BindComponents()</c> 方法），
-    ///      region 外的内容归开发者所有；文件不存在时先创建脚手架。
+    /// - <see cref="BinderScriptMode.PartialClass" />：<c>*.generated.cs</c>（自动维护，整体覆盖）+
+    /// <c>*.cs</c>（开发者手写业务逻辑的 partial 类，仅首次生成，<b>不会被覆盖</b>）；
+    /// - <see cref="BinderScriptMode.SameScriptIncrement" />：只替换目标脚本
+    /// <c>*.cs</c> 内「绑定字段（自动生成）」region 的内容（字段 + <c>BindComponents()</c> 方法），
+    /// region 外的内容归开发者所有；文件不存在时先创建脚手架。
     /// 4. 编译完成后自动把生成脚本挂载到当前 GameObject 并执行一次绑定。
     /// </para>
     /// <para>
@@ -66,11 +67,8 @@ namespace Runestone.AesirModules
         "① 在需要绑定引用的子物体上挂 BinderTag 标记（可通过层级右键菜单「GameObject/Aesir/添加 BinderTag 标记」快速添加），默认绑定 1 个组件，用「绑定组件数量」声明要绑定的组件个数；\n" +
         "② 选中根面板上的 BinderAssistant，点击「构建绑定单元」——按标记增量更新绑定列表（新增缺失单元、刷新已有单元路径、移除失效单元），每个单元记录组件类型、字段名、绑定路径；\n" +
         "③ 点击「生成脚本」——「同一脚本增量」模式（默认）只替换目标脚本内「绑定字段（自动生成）」region 的内容（字段 + BindComponents 方法），region 外归开发者所有，文件不存在时先创建脚手架；「Partial 分部类」模式生成自动维护文件（后缀可选，默认 .designer.cs）与手写 partial 文件（仅首次生成，不会被覆盖）；\n" +
-        "④ 编译完成后自动把生成脚本挂载到当前物体并执行一次绑定。\n" +
-        "\n【自动检查时机】\n" +
-        "「开启自动检查」在以下时机执行：\n" +
-        "① 脚本重编译完成后（每次进入 Play、修改脚本触发编译等都会重编译）；\n" +
-        "② 点击「构建绑定单元」或「检查绑定」按钮时。\n" +
+        "④ 编译完成后自动把生成脚本挂载到当前物体并执行一次绑定。\n" + "\n【自动检查时机】\n" + "「开启自动检查」在以下时机执行：\n" +
+        "① 脚本重编译完成后（每次进入 Play、修改脚本触发编译等都会重编译）；\n" + "② 点击「构建绑定单元」或「检查绑定」按钮时。\n" +
         "注意：在编辑器内移动物体层级不会实时触发检查——路径漂移会在下次重编译或手动点击「检查绑定」时提示。")]
     [DisallowMultipleComponent]
     public class BinderAssistant : AesirMonoBehaviour
@@ -81,18 +79,14 @@ namespace Runestone.AesirModules
         /// <summary>EditorPrefs 键: 待自动挂载的脚本类型完整名称。</summary>
         const string PendingBindTypeKey = "AesirModules.BinderAssistant.PendingBind.TypeFullName";
 
+        /// <summary>已扫描的 AbstractContext 派生类缓存（域重载自动失效）。</summary>
+        static List<ValueDropdownItem<string>> _contextTypeChoicesCache;
+
         [PropertyOrder(-10)]
         [HorizontalGroup("状态")]
         [ToggleLeft]
         [LabelText("开启自动检查")]
         public bool OpenAutoValidate = true;
-
-        [PropertyOrder(-9)]
-        [HorizontalGroup("状态")]
-        [ShowInInspector]
-        [Sirenix.OdinInspector.ReadOnly]
-        [LabelText("当前绑定信息有错误")]
-        public bool HasError { get; private set; }
 
         [FoldoutGroup("生成配置")]
         [LabelText("生成模式")]
@@ -134,13 +128,6 @@ namespace Runestone.AesirModules
         public string PartialSuffix = ".designer.cs";
 
         [FoldoutGroup("生成配置")]
-        [ShowIf(nameof(IsPartialMode))]
-        [LabelText("可选后缀列表（编辑器持久化）")]
-        [ShowInInspector]
-        [OnValueChanged(nameof(SavePartialSuffixes))]
-        public List<string> PartialSuffixList => BinderEditorSettings.Settings.PartialSuffixes;
-
-        [FoldoutGroup("生成配置")]
         [LabelText("目标文件夹: ")]
         [InlineButton(nameof(DefaultFolderPath), "默认")]
         [FolderPath]
@@ -157,6 +144,20 @@ namespace Runestone.AesirModules
 
         /// <summary>最近一次校验的错误明细，供 Inspector 错误提示框展示。</summary>
         List<string> _lastValidationErrors;
+
+        [PropertyOrder(-9)]
+        [HorizontalGroup("状态")]
+        [ShowInInspector]
+        [ReadOnly]
+        [LabelText("当前绑定信息有错误")]
+        public bool HasError { get; private set; }
+
+        [FoldoutGroup("生成配置")]
+        [ShowIf(nameof(IsPartialMode))]
+        [LabelText("可选后缀列表（编辑器持久化）")]
+        [ShowInInspector]
+        [OnValueChanged(nameof(SavePartialSuffixes))]
+        public List<string> PartialSuffixList => BinderEditorSettings.Settings.PartialSuffixes;
 
         /// <summary>
         /// 当前物体在场景层级中的绝对路径
@@ -177,7 +178,8 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 基类候选是否为用户自定义泛型基类（非 Aesir 面板家族的泛型占位），决定「泛型参数」文本框的显示。
         /// </summary>
-        bool IsUserGenericBase => BinderCodeGenerator.HasGenericPlaceholder(BaseType) && !IsAesirGenericPanelBase;
+        bool IsUserGenericBase =>
+            BinderCodeGenerator.HasGenericPlaceholder(BaseType) && !IsAesirGenericPanelBase;
 
         /// <summary>
         /// 生成时实际使用的泛型类型参数: Aesir 泛型面板基类取「Context 类型」下拉，其余取「泛型参数」文本。
@@ -300,9 +302,6 @@ namespace Runestone.AesirModules
             }
         }
 
-        /// <summary>已扫描的 AbstractContext 派生类缓存（域重载自动失效）。</summary>
-        static List<ValueDropdownItem<string>> _contextTypeChoicesCache;
-
         /// <summary>
         /// 「Context 类型」下拉列表: 项目内所有具体的 AbstractContext 派生类（CRTP 闭合类型）。
         /// 被 <see cref="InternalContextAttribute" /> 标记的框架内部 Context（示例 / 测试）不会出现。
@@ -365,7 +364,8 @@ namespace Runestone.AesirModules
             var baseType = type.BaseType;
             while (baseType != null)
             {
-                if (baseType.IsGenericType && baseType.GetGenericTypeDefinition() == typeof(AbstractContext<>))
+                if (baseType.IsGenericType &&
+                    baseType.GetGenericTypeDefinition() == typeof(AbstractContext<>))
                 {
                     return true;
                 }
@@ -438,11 +438,12 @@ namespace Runestone.AesirModules
 
             // 第一步: 刷新已有单元路径并统计每个标记名下的单元数量；
             // 标记已被移除（或物体已销毁）的单元直接删除
-            var unitCountPerTag = new Dictionary<UnityEngine.Object, int>();
+            var unitCountPerTag = new Dictionary<Object, int>();
             for (var i = Units.Count - 1; i >= 0; i--)
             {
                 var unit = Units[i];
-                if (unit.LabelObj && unit.LabelObj.TryGetComponent<BinderTag>(out var tag) && tags.Contains(tag))
+                if (unit.LabelObj && unit.LabelObj.TryGetComponent<BinderTag>(out var tag) &&
+                    tags.Contains(tag))
                 {
                     unit.UpdatePath(this);
                     unitCountPerTag[unit.LabelObj] = unitCountPerTag.GetValueOrDefault(unit.LabelObj) + 1;
@@ -525,7 +526,8 @@ namespace Runestone.AesirModules
             var generatedPath = GeneratedScriptPath;
             var controllerPath = ControllerScriptPath;
 
-            File.WriteAllText(generatedPath, BinderCodeGenerator.BuildGeneratedScript(config), new UTF8Encoding(false));
+            File.WriteAllText(generatedPath, BinderCodeGenerator.BuildGeneratedScript(config),
+                new UTF8Encoding(false));
 
             // Controller 脚本（开发者手写区）仅生成一次，避免覆盖用户业务逻辑
             var controllerCreated = false;
@@ -563,8 +565,8 @@ namespace Runestone.AesirModules
             else
             {
                 var content = File.ReadAllText(scriptPath);
-                if (!BinderCodeGenerator.TryReplaceRegion(content, BinderCodeGenerator.BuildRegionBlock(config),
-                        out var updated))
+                if (!BinderCodeGenerator.TryReplaceRegion(content,
+                        BinderCodeGenerator.BuildRegionBlock(config), out var updated))
                 {
                     AesirModulesDebug.LogError(AesirModulesDebug.ObjectBinderTag,
                         $"{name}: 未在 {scriptPath} 中找到「{BinderCodeGenerator.BindFieldRegionName}」region，" +
@@ -662,9 +664,8 @@ namespace Runestone.AesirModules
                     var arguments = (EffectiveBaseTypeArguments ?? "").Trim();
                     if (arguments.Length == 0)
                     {
-                        errors.Add(
-                            $"泛型基类 \"{BaseType}\" 需填写具体类型参数" +
-                            "（Context 类型需继承 AbstractContext<T>，如 Game.HUDContext）");
+                        errors.Add($"泛型基类 \"{BaseType}\" 需填写具体类型参数" +
+                                   "（Context 类型需继承 AbstractContext<T>，如 Game.HUDContext）");
                     }
                     else if (IsAesirGenericPanelBase)
                     {
@@ -762,24 +763,16 @@ namespace Runestone.AesirModules
             return !HasError;
         }
 
-        BinderCodeGenerator.CodeGenConfig BuildCodeGenConfig()
-        {
-            return new BinderCodeGenerator.CodeGenConfig(
-                TargetNamespace,
-                ScriptName,
+        BinderCodeGenerator.CodeGenConfig BuildCodeGenConfig() =>
+            new BinderCodeGenerator.CodeGenConfig(TargetNamespace, ScriptName,
                 string.IsNullOrEmpty(BaseType) ? typeof(MonoBehaviour).FullName : BaseType,
-                EffectiveBaseTypeArguments,
-                PartialSuffix,
-                name,
-                CustomNamespaces,
-                ToBindUnits());
-        }
+                EffectiveBaseTypeArguments, PartialSuffix, name, CustomNamespaces, ToBindUnits());
 
         List<BinderCodeGenerator.BindUnit> ToBindUnits()
         {
-            return Units
-                .Select(unit => new BinderCodeGenerator.BindUnit(unit.ComponentFullName, unit.FieldName,
-                    unit.HierarchyPath))
+            return Units.Select(unit =>
+                    new BinderCodeGenerator.BindUnit(unit.ComponentFullName, unit.FieldName,
+                        unit.HierarchyPath))
                 .ToList();
         }
 
@@ -791,7 +784,8 @@ namespace Runestone.AesirModules
         [DidReloadScripts]
         static void CheckBinderUnit()
         {
-            var assistants = FindObjectsByType<BinderAssistant>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var assistants =
+                FindObjectsByType<BinderAssistant>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (var assistant in assistants)
             {
                 if (!assistant.OpenAutoValidate)

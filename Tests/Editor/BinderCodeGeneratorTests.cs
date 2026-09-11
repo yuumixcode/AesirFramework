@@ -1,6 +1,6 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using Runestone.AesirModules;
 
 namespace Runestone.AesirModules.Tests.Editor
 {
@@ -10,25 +10,15 @@ namespace Runestone.AesirModules.Tests.Editor
     /// </summary>
     public class BinderCodeGeneratorTests
     {
-        static BinderCodeGenerator.BindUnit Unit(string type, string field, string path)
-        {
-            return new BinderCodeGenerator.BindUnit(type, field, path);
-        }
+        static BinderCodeGenerator.BindUnit Unit(string type, string field, string path) =>
+            new BinderCodeGenerator.BindUnit(type, field, path);
 
         static BinderCodeGenerator.CodeGenConfig Config(List<BinderCodeGenerator.BindUnit> units,
-            string baseType = "Runestone.AesirModules.AesirBasePanel", string baseTypeArguments = null,
-            string autoFileSuffix = ".designer.cs")
-        {
-            return new BinderCodeGenerator.CodeGenConfig(
-                "Game.UI",
-                "BattlePanel",
-                baseType,
-                baseTypeArguments,
-                autoFileSuffix,
-                "BattlePanelRoot",
-                new List<string> { "System" },
-                units);
-        }
+            string baseType = "Runestone.AesirModules.AesirBasePanel",
+            string baseTypeArguments = null,
+            string autoFileSuffix = ".designer.cs") =>
+            new BinderCodeGenerator.CodeGenConfig("Game.UI", "BattlePanel", baseType, baseTypeArguments,
+                autoFileSuffix, "BattlePanelRoot", new List<string> { "System" }, units);
 
         [Test]
         public void BuildGeneratedScript_RegionContainsFieldsAndBindMethod()
@@ -47,10 +37,11 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.That(script, Does.Contain("private UnityEngine.UI.Button playButton;"));
             Assert.That(script, Does.Contain("[UnityEngine.ContextMenu(\"绑定引用\")]"));
             Assert.That(script, Does.Contain("public void BindComponents()"));
-            Assert.That(script, Does.Contain("transform.Find(\"Panel/PlayButton\").GetComponent<UnityEngine.UI.Button>();"));
+            Assert.That(script,
+                Does.Contain("transform.Find(\"Panel/PlayButton\").GetComponent<UnityEngine.UI.Button>();"));
             // BindComponents 方法位于 region 内（#endregion 之前）
-            Assert.That(script.IndexOf("public void BindComponents()", System.StringComparison.Ordinal),
-                Is.LessThan(script.IndexOf("#endregion", System.StringComparison.Ordinal)));
+            Assert.That(script.IndexOf("public void BindComponents()", StringComparison.Ordinal),
+                Is.LessThan(script.IndexOf("#endregion", StringComparison.Ordinal)));
         }
 
         [Test]
@@ -63,17 +54,18 @@ namespace Runestone.AesirModules.Tests.Editor
 
             var script = BinderCodeGenerator.BuildGeneratedScript(Config(units));
 
-            Assert.That(script, Does.Contain(
-                "    [Sirenix.OdinInspector.TitleGroup(\"绑定字段（自动生成）\")]"));
+            Assert.That(script, Does.Contain("    [Sirenix.OdinInspector.TitleGroup(\"绑定字段（自动生成）\")]"));
         }
 
         [Test]
         public void BuildGeneratedScript_ClassHeaderDeclaresBaseTypeAndInterface()
         {
-            var script = BinderCodeGenerator.BuildGeneratedScript(Config(new List<BinderCodeGenerator.BindUnit>()));
+            var script =
+                BinderCodeGenerator.BuildGeneratedScript(Config(new List<BinderCodeGenerator.BindUnit>()));
 
-            Assert.That(script, Does.Contain("public partial class BattlePanel : " +
-                                            "Runestone.AesirModules.AesirBasePanel, Runestone.AesirModules.IComponentBinder"));
+            Assert.That(script,
+                Does.Contain("public partial class BattlePanel : " +
+                             "Runestone.AesirModules.AesirBasePanel, Runestone.AesirModules.IComponentBinder"));
             Assert.That(script, Does.Contain("namespace Game.UI"));
         }
 
@@ -102,7 +94,8 @@ namespace Runestone.AesirModules.Tests.Editor
 
             var script = BinderCodeGenerator.BuildGeneratedScript(Config(units));
 
-            Assert.That(script, Does.Contain("selfTransform = this.transform.GetComponent<UnityEngine.Transform>();"));
+            Assert.That(script,
+                Does.Contain("selfTransform = this.transform.GetComponent<UnityEngine.Transform>();"));
             Assert.That(script, Does.Contain("selfObject = gameObject;"));
             Assert.That(script, Does.Not.Contain("transform.Find"));
         }
@@ -153,8 +146,9 @@ namespace Runestone.AesirModules.Tests.Editor
 
             Assert.That(scaffold, Does.Contain("同一脚本增量"));
             Assert.That(scaffold, Does.Contain("#region 绑定字段（自动生成）"));
-            Assert.That(scaffold, Does.Contain("public partial class BattlePanel : " +
-                                             "Runestone.AesirModules.AesirBasePanel, Runestone.AesirModules.IComponentBinder"));
+            Assert.That(scaffold,
+                Does.Contain("public partial class BattlePanel : " +
+                             "Runestone.AesirModules.AesirBasePanel, Runestone.AesirModules.IComponentBinder"));
             Assert.That(scaffold, Does.Contain("[UnityEngine.SerializeField]"));
             Assert.That(scaffold, Does.Contain("public void BindComponents()"));
         }
@@ -180,19 +174,13 @@ namespace Runestone.AesirModules.Tests.Editor
         [Test]
         public void TryReplaceRegion_ReplacesRegionAndKeepsOutsideContent()
         {
-            var fileContent = "using UnityEngine;\n\nnamespace Game\n{\n    public class MyPanel : MonoBehaviour\n    {\n" +
-                              "        #region 绑定字段（自动生成）\n\n" +
-                              "        [UnityEngine.SerializeField]\n" +
-                              "        private UnityEngine.Transform oldField;\n\n" +
-                              "        [UnityEngine.ContextMenu(\"绑定引用\")]\n" +
-                              "        public void BindComponents()\n" +
-                              "        {\n" +
-                              "        }\n\n" +
-                              "        #endregion\n\n" +
-                              "        public void UserLogic()\n" +
-                              "        {\n" +
-                              "        }\n" +
-                              "    }\n}\n";
+            var fileContent =
+                "using UnityEngine;\n\nnamespace Game\n{\n    public class MyPanel : MonoBehaviour\n    {\n" +
+                "        #region 绑定字段（自动生成）\n\n" + "        [UnityEngine.SerializeField]\n" +
+                "        private UnityEngine.Transform oldField;\n\n" +
+                "        [UnityEngine.ContextMenu(\"绑定引用\")]\n" + "        public void BindComponents()\n" +
+                "        {\n" + "        }\n\n" + "        #endregion\n\n" +
+                "        public void UserLogic()\n" + "        {\n" + "        }\n" + "    }\n}\n";
 
             var units = new List<BinderCodeGenerator.BindUnit>
             {
@@ -213,8 +201,7 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.That(updated, Does.Contain("    #region 绑定字段（自动生成）"));
             Assert.That(updated, Does.Contain("    [UnityEngine.SerializeField]"));
             // 新 region 含 TitleGroup 分组标注（自包含全限定，单参数）
-            Assert.That(updated, Does.Contain(
-                "    [Sirenix.OdinInspector.TitleGroup(\"绑定字段（自动生成）\")]"));
+            Assert.That(updated, Does.Contain("    [Sirenix.OdinInspector.TitleGroup(\"绑定字段（自动生成）\")]"));
         }
 
         [Test]
@@ -246,47 +233,38 @@ namespace Runestone.AesirModules.Tests.Editor
         [TestCase("Panel", "UnityEngine.Transform", ExpectedResult = "panelTransform")]
         [TestCase("Button", "UnityEngine.UI.Button", ExpectedResult = "button")]
         [TestCase("3DText", "UnityEngine.UI.Text", ExpectedResult = "_3DText")]
-        public string ComposeDefaultFieldName_AppendsSuffixWithoutUnderscore(string objectName, string componentFullName)
-        {
-            return BinderCodeGenerator.ComposeDefaultFieldName(objectName, componentFullName);
-        }
+        public string ComposeDefaultFieldName_AppendsSuffixWithoutUnderscore(string objectName,
+            string componentFullName) =>
+            BinderCodeGenerator.ComposeDefaultFieldName(objectName, componentFullName);
 
         [TestCase("Runestone.AesirModules.AesirBasePanelView`1",
             ExpectedResult = "Runestone.AesirModules.AesirBasePanelView<T>")]
         [TestCase("Ns.Pair`2", ExpectedResult = "Ns.Pair<T1,T2>")]
         [TestCase("UnityEngine.MonoBehaviour", ExpectedResult = "UnityEngine.MonoBehaviour")]
-        public string ConvertArityToPlaceholders_ConvertsGenericArity(string fullName)
-        {
-            return BinderCodeGenerator.ConvertArityToPlaceholders(fullName);
-        }
+        public string ConvertArityToPlaceholders_ConvertsGenericArity(string fullName) =>
+            BinderCodeGenerator.ConvertArityToPlaceholders(fullName);
 
         [TestCase("UnityEngine.MonoBehaviour", "Game.X", ExpectedResult = "UnityEngine.MonoBehaviour")]
         [TestCase("Ns.VC<T>", "Game.HUDContext", ExpectedResult = "Ns.VC<Game.HUDContext>")]
         [TestCase("Ns.P<T1,T2>", "A,B", ExpectedResult = "Ns.P<A,B>")]
         [TestCase("Ns.VC<T>", null, ExpectedResult = "Ns.VC<>")]
-        public string BuildBaseTypeReference_SubstitutesGenericArguments(string baseType, string arguments)
-        {
-            return BinderCodeGenerator.BuildBaseTypeReference(baseType, arguments);
-        }
+        public string BuildBaseTypeReference_SubstitutesGenericArguments(string baseType, string arguments) =>
+            BinderCodeGenerator.BuildBaseTypeReference(baseType, arguments);
 
         [TestCase("Ns.VC<T>", ExpectedResult = true)]
         [TestCase("Ns.VC<T1,T2>", ExpectedResult = true)]
         [TestCase("UnityEngine.MonoBehaviour", ExpectedResult = false)]
         [TestCase("", ExpectedResult = false)]
         [TestCase(null, ExpectedResult = false)]
-        public bool HasGenericPlaceholder_ReturnsExpectedResults(string baseType)
-        {
-            return BinderCodeGenerator.HasGenericPlaceholder(baseType);
-        }
+        public bool HasGenericPlaceholder_ReturnsExpectedResults(string baseType) =>
+            BinderCodeGenerator.HasGenericPlaceholder(baseType);
 
         [TestCase("Ns.VC<T>", ExpectedResult = 1)]
         [TestCase("Ns.VC<T1,T2>", ExpectedResult = 2)]
         [TestCase("UnityEngine.MonoBehaviour", ExpectedResult = 0)]
         [TestCase(null, ExpectedResult = 0)]
-        public int GetGenericPlaceholderArity_ReturnsExpectedResults(string baseType)
-        {
-            return BinderCodeGenerator.GetGenericPlaceholderArity(baseType);
-        }
+        public int GetGenericPlaceholderArity_ReturnsExpectedResults(string baseType) =>
+            BinderCodeGenerator.GetGenericPlaceholderArity(baseType);
 
         [Test]
         public void BuildGeneratedScript_GenericBaseSubstitutesArguments()
@@ -299,10 +277,10 @@ namespace Runestone.AesirModules.Tests.Editor
             var script = BinderCodeGenerator.BuildGeneratedScript(Config(units,
                 "Runestone.AesirModules.AesirBasePanelViewController<T>", "Game.HUDContext"));
 
-            Assert.That(script, Does.Contain(
-                "public partial class BattlePanel : " +
-                "Runestone.AesirModules.AesirBasePanelViewController<Game.HUDContext>, " +
-                "Runestone.AesirModules.IComponentBinder"));
+            Assert.That(script,
+                Does.Contain("public partial class BattlePanel : " +
+                             "Runestone.AesirModules.AesirBasePanelViewController<Game.HUDContext>, " +
+                             "Runestone.AesirModules.IComponentBinder"));
             // 占位不允许出现在生成代码中
             Assert.That(script, Does.Not.Contain("<T>"));
         }
@@ -313,10 +291,8 @@ namespace Runestone.AesirModules.Tests.Editor
         [TestCase("a-bc", ExpectedResult = false)]
         [TestCase("", ExpectedResult = false)]
         [TestCase(null, ExpectedResult = false)]
-        public bool IsValidIdentifier_ReturnsExpectedResults(string value)
-        {
-            return BinderCodeGenerator.IsValidIdentifier(value);
-        }
+        public bool IsValidIdentifier_ReturnsExpectedResults(string value) =>
+            BinderCodeGenerator.IsValidIdentifier(value);
 
         [TestCase("Game", ExpectedResult = true)]
         [TestCase("Game.UI.Sub", ExpectedResult = true)]
@@ -325,40 +301,32 @@ namespace Runestone.AesirModules.Tests.Editor
         [TestCase("Game.2UI", ExpectedResult = false)]
         [TestCase("", ExpectedResult = false)]
         [TestCase(null, ExpectedResult = false)]
-        public bool IsValidNamespace_ReturnsExpectedResults(string value)
-        {
-            return BinderCodeGenerator.IsValidNamespace(value);
-        }
+        public bool IsValidNamespace_ReturnsExpectedResults(string value) =>
+            BinderCodeGenerator.IsValidNamespace(value);
 
         [TestCase("PlayButton", ExpectedResult = "playButton")]
         [TestCase("button", ExpectedResult = "button")]
         [TestCase("3DText", ExpectedResult = "_3DText")]
         [TestCase("", ExpectedResult = "element")]
         [TestCase(null, ExpectedResult = "element")]
-        public string ToCamelCase_ReturnsExpectedResults(string name)
-        {
-            return BinderCodeGenerator.ToCamelCase(name);
-        }
+        public string ToCamelCase_ReturnsExpectedResults(string name) =>
+            BinderCodeGenerator.ToCamelCase(name);
 
         [TestCase("UnityEngine.UI.Button", ExpectedResult = "Button")]
         [TestCase("Game.Logic.Outer+Inner", ExpectedResult = "Inner")]
         [TestCase("Transform", ExpectedResult = "Transform")]
         [TestCase("", ExpectedResult = "Component")]
         [TestCase(null, ExpectedResult = "Component")]
-        public string GetTypeShortName_ReturnsExpectedResults(string fullName)
-        {
-            return BinderCodeGenerator.GetTypeShortName(fullName);
-        }
+        public string GetTypeShortName_ReturnsExpectedResults(string fullName) =>
+            BinderCodeGenerator.GetTypeShortName(fullName);
 
         [TestCase("UnityEngine.UI.Button", ExpectedResult = "UnityEngine.UI")]
         [TestCase("Game.Logic.Outer+Inner", ExpectedResult = "Game.Logic")]
         [TestCase("Transform", ExpectedResult = "")]
         [TestCase("", ExpectedResult = "")]
         [TestCase(null, ExpectedResult = "")]
-        public string GetTypeNamespace_ReturnsExpectedResults(string fullName)
-        {
-            return BinderCodeGenerator.GetTypeNamespace(fullName);
-        }
+        public string GetTypeNamespace_ReturnsExpectedResults(string fullName) =>
+            BinderCodeGenerator.GetTypeNamespace(fullName);
 
         [Test]
         public void TryFindDuplicateFieldName_DetectsDuplicates()
@@ -369,7 +337,8 @@ namespace Runestone.AesirModules.Tests.Editor
                 Unit("UnityEngine.Transform", "same", "B")
             };
 
-            Assert.That(BinderCodeGenerator.TryFindDuplicateFieldName(duplicated, out var duplicate), Is.True);
+            Assert.That(BinderCodeGenerator.TryFindDuplicateFieldName(duplicated, out var duplicate),
+                Is.True);
             Assert.That(duplicate, Is.EqualTo("same"));
 
             var unique = new List<BinderCodeGenerator.BindUnit>
