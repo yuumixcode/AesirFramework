@@ -1,0 +1,17 @@
+{
+    "name": "Runestone.AesirModules.Samples.Audio.BasicUsage",
+    "rootNamespace": "Runestone.AesirModules.Samples.Audio.BasicUsage",
+    "references": [
+        "Runestone.AesirModules",
+        "Runestone.AesirArchitecture"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
