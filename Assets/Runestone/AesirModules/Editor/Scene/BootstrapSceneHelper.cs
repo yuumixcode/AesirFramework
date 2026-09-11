@@ -16,9 +16,9 @@ namespace Runestone.AesirModules.Editor
     public static class BootstrapSceneHelper
     {
         /// <summary>
-        /// 预设的启动场景名称数组（单一事实来源：与运行时 SceneModule 共用 <see cref="SceneModule.PresetBootstrapSceneNames" />）
+        /// 预设的启动场景名称列表（单一事实来源：与运行时 SceneModule 共用 <see cref="SceneModule.PresetBootstrapSceneNames" />）
         /// </summary>
-        static readonly string[] PresetBootstrapSceneNames = SceneModule.PresetBootstrapSceneNames;
+        static readonly string[] PresetBootstrapSceneNames = SceneModule.PresetBootstrapSceneNames.ToArray();
 
         /// <summary>
         /// 静态构造函数配合 [InitializeOnLoad] 特性，在编译后立刻执行一次。
@@ -55,7 +55,10 @@ namespace Runestone.AesirModules.Editor
             {
                 for (var j = 0; j < PresetBootstrapSceneNames.Length; j++)
                 {
-                    if (Path.GetFileNameWithoutExtension(scenes[i].path) != PresetBootstrapSceneNames[j])
+                    // FindAssets/GetSceneByName 均为大小写不敏感匹配，此处保持一致，
+                    // 否则 "bootstrap.unity" 会被 "Bootstrap" 预设漏检
+                    if (!string.Equals(Path.GetFileNameWithoutExtension(scenes[i].path),
+                            PresetBootstrapSceneNames[j], StringComparison.OrdinalIgnoreCase))
                     {
                         continue;
                     }
@@ -90,34 +93,33 @@ namespace Runestone.AesirModules.Editor
             }
             else
             {
-                var guids = Array.Empty<string>();
-
+                // 每个预设名独立做"FindAssets → 精确文件名过滤"：FindAssets 是大小写不敏感的
+                // 子串匹配（Foo_Bootstrapper 也会命中 Bootstrapper），命中子串但精确过滤
+                // 落空时必须继续尝试下一个预设名，不能提前断定——否则项目里只有小写
+                // bootstrap.unity 时会被先命中的子串结果吞掉真实启动场景的注册
+                var path = "";
                 for (var i = 0; i < PresetBootstrapSceneNames.Length; i++)
                 {
-                    guids = AssetDatabase.FindAssets($"{PresetBootstrapSceneNames[i]} t:Scene");
-                    if (guids.Length > 0)
+                    var presetName = PresetBootstrapSceneNames[i];
+                    var guids = AssetDatabase.FindAssets($"{presetName} t:Scene");
+                    foreach (var guid in guids)
                     {
-                        currentBootstrapSceneName = PresetBootstrapSceneNames[i];
+                        var assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                        if (!string.Equals(Path.GetFileNameWithoutExtension(assetPath), presetName,
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        path = assetPath;
+                        currentBootstrapSceneName = presetName;
                         break;
                     }
-                }
 
-                if (guids.Length <= 0)
-                {
-                    return;
-                }
-
-                var path = "";
-                foreach (var guid in guids)
-                {
-                    var assetPath = AssetDatabase.GUIDToAssetPath(guid);
-                    if (Path.GetFileNameWithoutExtension(assetPath) != currentBootstrapSceneName)
+                    if (!string.IsNullOrEmpty(path))
                     {
-                        continue;
+                        break;
                     }
-
-                    path = assetPath;
-                    break;
                 }
 
                 if (string.IsNullOrEmpty(path))

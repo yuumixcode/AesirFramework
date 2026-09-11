@@ -19,12 +19,12 @@ namespace Runestone.AesirModules.Editor
             settings = SceneEditorSettings.instance;
         }
 
-        [MenuItem("Tools/场景管理方案设置窗口")]
+        [MenuItem("Tools/Aesir/Scene Editor Settings")]
         static void Open()
         {
             var window = GetWindow<SceneManagerWindow>();
             window.position = GUIHelper.GetEditorWindowRect().AlignCenterXY(500f, 600f);
-            window.titleContent = new GUIContent("场景管理方案设置窗口");
+            window.titleContent = new GUIContent("Scene Editor Settings");
             window.Show();
         }
     }

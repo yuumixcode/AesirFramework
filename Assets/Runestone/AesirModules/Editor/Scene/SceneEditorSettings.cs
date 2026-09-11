@@ -4,7 +4,9 @@ using FilePathAttribute = UnityEditor.FilePathAttribute;
 
 namespace Runestone.AesirModules.Editor
 {
-    [FilePath("ProjectEditorSettings/SceneEditorSettings.asset", FilePathAttribute.Location.ProjectFolder)]
+    // 遵循项目约定：ScriptableSingleton 设置资产统一放 ScriptableSingleton/ 前缀目录（已被 .gitignore 覆盖）
+    [FilePath("ScriptableSingleton/AesirModules/SceneEditorSettings.asset",
+        FilePathAttribute.Location.ProjectFolder)]
     public class SceneEditorSettings : ScriptableSingleton<SceneEditorSettings>
     {
         string _bootstrapperScenePath;

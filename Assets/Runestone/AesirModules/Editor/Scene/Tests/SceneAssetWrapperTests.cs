@@ -3,8 +3,6 @@ using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Runestone.AesirModules.Tests.Editor
 {
@@ -13,14 +11,14 @@ namespace Runestone.AesirModules.Tests.Editor
     /// GUID 自愈、BuildSettings 三态与防重复添加、Addressables 桥接行为（经 mock 注册）。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 涉及 EditorBuildSettings.scenes 的用例在 SetUp 保存、TearDown 恢复，保证不污染工程配置。
-    /// </para>
-    /// <para>
-    /// Addressables 相关用例按 <see cref="SceneAssetWrapper.AddressablesSupportEnabled" /> 自适应：
-    /// 本仓库默认未安装 Addressables 包（SupportEnabled == false 的路径可被确定性验证）；
-    /// 安装了包的环境下自动跳过不适用的用例，并补充验证 SupportEnabled == true 的路径。
-    /// </para>
+    ///     <para>
+    ///     涉及 EditorBuildSettings.scenes 的用例在 SetUp 保存、TearDown 恢复，保证不污染工程配置。
+    ///     </para>
+    ///     <para>
+    ///     Addressables 相关用例按 <see cref="SceneAssetWrapper.AddressablesSupportEnabled" /> 自适应：
+    ///     本仓库默认未安装 Addressables 包（SupportEnabled == false 的路径可被确定性验证）；
+    ///     安装了包的环境下自动跳过不适用的用例，并补充验证 SupportEnabled == true 的路径。
+    ///     </para>
     /// </remarks>
     public class SceneAssetWrapperTests
     {
@@ -88,8 +86,7 @@ namespace Runestone.AesirModules.Tests.Editor
         static void SetBuildScenes(params (string path, bool enabled)[] scenes)
         {
             EditorBuildSettings.scenes = scenes
-                .Select(s => new EditorBuildSettingsScene(s.path, s.enabled))
-                .ToArray();
+                .Select(s => new EditorBuildSettingsScene(s.path, s.enabled)).ToArray();
         }
 
         static EditorBuildSettingsScene FindBuildScene(string path)
@@ -157,14 +154,15 @@ namespace Runestone.AesirModules.Tests.Editor
         public void FromScenePath_NullOrEmpty_ThrowsCreationException()
         {
             Assert.Throws<SceneAssetWrapperCreationException>(() => SceneAssetWrapper.FromScenePath(null));
-            Assert.Throws<SceneAssetWrapperCreationException>(() => SceneAssetWrapper.FromScenePath(string.Empty));
+            Assert.Throws<SceneAssetWrapperCreationException>(() =>
+                SceneAssetWrapper.FromScenePath(string.Empty));
         }
 
         [Test]
         public void FromScenePath_NonExistentPath_ThrowsCreationException()
         {
-            Assert.Throws<SceneAssetWrapperCreationException>(
-                () => SceneAssetWrapper.FromScenePath("Assets/Not/Exists/Fake.unity"));
+            Assert.Throws<SceneAssetWrapperCreationException>(() =>
+                SceneAssetWrapper.FromScenePath("Assets/Not/Exists/Fake.unity"));
         }
 
         [Test]
@@ -358,8 +356,7 @@ namespace Runestone.AesirModules.Tests.Editor
         public void FakeBridge_LiveMarksAddressable()
         {
             SceneAssetWrapperAddressablesBridge.Register(
-                path => path == SampleScenePath ? "my-address" : null,
-                path => "made-address");
+                path => path == SampleScenePath ? "my-address" : null, path => "made-address");
             SetBuildScenes();
             var wrapper = SceneAssetWrapper.FromScenePath(SampleScenePath);
 
@@ -372,8 +369,7 @@ namespace Runestone.AesirModules.Tests.Editor
         public void FakeBridge_Unregistered_FallsBackToCachedAddressData()
         {
             SceneAssetWrapperAddressablesBridge.Register(
-                path => path == SampleScenePath ? "my-address" : null,
-                path => "made-address");
+                path => path == SampleScenePath ? "my-address" : null, path => "made-address");
             SetBuildScenes();
             var wrapper = SceneAssetWrapper.FromScenePath(SampleScenePath);
             Assert.IsTrue(wrapper.IsAddressable);
@@ -388,8 +384,7 @@ namespace Runestone.AesirModules.Tests.Editor
         [Test]
         public void MakeAddressable_UpdatesCachedAddress()
         {
-            SceneAssetWrapperAddressablesBridge.Register(
-                path => path == SampleScenePath ? "already" : null,
+            SceneAssetWrapperAddressablesBridge.Register(path => path == SampleScenePath ? "already" : null,
                 path => "made-address");
             SetBuildScenes();
 
