@@ -3,7 +3,7 @@
   "displayName": "Aesir Modules",
   "version": "0.19.0",
   "unity": "2022.3",
-  "description": "Aesir 功能模块包。UI 框架（Manager-of-Managers 单例模式、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（反射绑定、特性标记静态订阅、发布-订阅解耦）。",
+  "description": "Aesir 功能模块包。UI 框架（Manager-of-Managers 单例模式、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（双轨订阅、订阅者过滤器精确投递、死引用清理、SO 资产化）+ 音频模块（SFX 轮询播放、BGM 淡入淡出、三通道音量持久化）。",
   "keywords": [
     "ui",
     "modules",
@@ -26,6 +26,21 @@
       "displayName": "Event Module - Key Press",
       "description": "事件模块 V1 基本发布-订阅示例：按键发布事件、[AesirListener] 静态订阅。",
       "path": "Samples~/Events/01_KeyPress"
+    },
+    {
+      "displayName": "Event Module - Filters",
+      "description": "订阅者过滤器示例：Space 发布 WithTag+InsideCollider2D 双重过滤的警报、R 发布 OnlySelf 家族命令，场景内置对照组直观呈现精确投递。",
+      "path": "Samples~/Events/02_Filters"
+    },
+    {
+      "displayName": "Event Module - SO Asset",
+      "description": "SO 资产化示例：AesirEventArgsSO 资产配置事件（SubclassSelector 下拉）、UnityEventOnAesirEvent 桥接组件零代码串联 UnityEvent 回调。",
+      "path": "Samples~/Events/03_SOAsset"
+    },
+    {
+      "displayName": "Audio Module - Basic Usage",
+      "description": "音频模块基础用法示例：SFX 播放（含音调抖动）、BGM 淡入淡出切歌、三通道音量与静音持久化。",
+      "path": "Samples~/Audio/01_BasicUsage"
     }
   ]
 }

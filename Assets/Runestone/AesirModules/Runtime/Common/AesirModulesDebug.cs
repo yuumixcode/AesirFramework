@@ -11,6 +11,7 @@ namespace Runestone.AesirModules
         public const string ObjectBinderTag = "[ObjectBinder]";
         public const string AesirModulesTag = "[AesirModules]";
         public const string EventModuleTag = "[EventModule]";
+        public const string AudioModuleTag = "[AudioModule]";
 
         static string GetColoredTag(Tags tagCategory, string tag)
         {
