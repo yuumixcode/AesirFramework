@@ -59,10 +59,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             var context = UnregisterContext.Instance;
 
-            Assert.DoesNotThrow(() => context.UnregisterModel<NeverRegisteredModel>(),
-                "未注册类型注销应为幂等无操作");
-            Assert.DoesNotThrow(() => context.UnregisterService<NeverRegisteredService>(),
-                "未注册类型注销应为幂等无操作");
+            Assert.DoesNotThrow(() => context.UnregisterModel<NeverRegisteredModel>(), "未注册类型注销应为幂等无操作");
+            Assert.DoesNotThrow(() => context.UnregisterService<NeverRegisteredService>(), "未注册类型注销应为幂等无操作");
             Assert.AreEqual(0, CountingModel.DisposeCount, "幂等无操作不应触发任何 Dispose");
             Assert.IsTrue(context.Initialized, "无操作不应影响上下文状态");
             AesirArchitectureDebug.LogTestInfo("Unregister: 未注册类型静默无操作（幂等）");
@@ -85,8 +83,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             }
 
             // 初始注册顺序 CountingModel → OtherModel；摘除 CountingModel 后再注册追加到末尾
-            CollectionAssert.AreEqual(
-                new[] { typeof(OtherModel), typeof(CountingModel) }, order,
+            CollectionAssert.AreEqual(new[] { typeof(OtherModel), typeof(CountingModel) }, order,
                 "注销后再注册应追加到注册顺序末尾，OtherModel 相对顺序保持不变");
             AesirArchitectureDebug.LogTestInfo("UnregisterModel: 再注册按新插入语义追加到末尾");
         }
@@ -104,8 +101,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreEqual(1, CountingService.DisposeCount, "被摘除的 Service 应被 Dispose 恰好 1 次");
             Assert.Throws<InvalidOperationException>(() => context.GetService<CountingService>(),
                 "摘除后 GetService 应抛未注册异常");
-            Assert.DoesNotThrow(() => _ = context.GetModel<CountingModel>(),
-                "注销 Service 不应影响其余模块的注册与获取");
+            Assert.DoesNotThrow(() => _ = context.GetModel<CountingModel>(), "注销 Service 不应影响其余模块的注册与获取");
             AesirArchitectureDebug.LogTestInfo("UnregisterService: 摘除即释放 + 其余模块不受影响");
         }
 
@@ -121,8 +117,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             context.Dispose();
 
-            Assert.AreEqual(0, CountingModel.DisposeCount,
-                "已摘除的实例不应在上下文 Dispose 时被二次释放");
+            Assert.AreEqual(0, CountingModel.DisposeCount, "已摘除的实例不应在上下文 Dispose 时被二次释放");
             AesirArchitectureDebug.LogTestInfo("UnregisterModel: 上下文 Dispose 不二次释放已摘除实例");
         }
 

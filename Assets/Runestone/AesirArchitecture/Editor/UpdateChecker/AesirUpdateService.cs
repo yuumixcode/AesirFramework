@@ -24,10 +24,9 @@ namespace Runestone.AesirArchitecture.Editor
     /// <see cref="FetchLatestReleaseSnapshotAsync" />。
     /// </para>
     /// <para>
-    /// 更新流程与 QFramework PackageKit 同构：远程版本源（此处为 GitHub Releases 而非自建服务器）
-    /// → 本地版本记录（此处直接读取包内 package.json）→ 下载 .unitypackage → 先删后导。
-    /// 相比 QF 的两处增强：更新前自动备份（用户可能修改过代码）；残留清理按"上次安装清单 − 新版清单"
-    /// 精确差集，不误伤用户新增文件。
+    /// 更新流程：检测远程版本 → 对比本地版本（直接读取包内 package.json）→ 更新前自动备份
+    /// （用户可能修改过代码）→ 按"上次安装清单 − 新版清单"精确差集清理残留（不误伤用户新增文件）→
+    /// 下载 .unitypackage → 静默导入 → 逐包登记安装清单。
     /// </para>
     /// </summary>
     public static class AesirUpdateService

@@ -313,9 +313,7 @@ namespace Runestone.AesirArchitecture
         /// PlayerLoop 子系统 type 标识，在 PostLateUpdate 之后执行
         /// </summary>
         /// <remarks>
-        /// 此空结构体仅作为 <c>PlayerLoopSystem.type</c> 的类型标识使用，
-        /// 让 <c>PlayerLoopUtility.ContainsSystem&lt;T&gt;</c> 能够检测自定义子系统是否已注入，
-        /// 避免重复注入。不包含任何运行时逻辑。
+        /// 与 <see cref="AesirArchitectureScriptRunBeforeUpdate" /> 同构的空类型标识，不包含任何运行时逻辑。
         /// </remarks>
         struct AesirArchitectureScriptRunAfterUpdate { }
 

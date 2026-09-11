@@ -40,9 +40,8 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
         /// <param name="attributes">该属性节点当前已附加的特性列表，处理器可向其中添加新特性</param>
         public override void ProcessSelfAttributes(InspectorProperty property, List<Attribute> attributes)
         {
-            attributes.Add(
-                new InfoBoxAttribute(HostDontDestroyOnLoadDisabledWarning, InfoMessageType.Warning,
-                    HostDontDestroyOnLoadDisabledExpression));
+            attributes.Add(new InfoBoxAttribute(HostDontDestroyOnLoadDisabledWarning, InfoMessageType.Warning,
+                HostDontDestroyOnLoadDisabledExpression));
         }
     }
 }

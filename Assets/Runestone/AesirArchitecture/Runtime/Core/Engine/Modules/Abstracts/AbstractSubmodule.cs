@@ -38,9 +38,8 @@ namespace Runestone.AesirArchitecture
         /// 释放资源，触发 <see cref="OnDispose" />
         /// </summary>
         /// <remarks>
-        /// 先调用 <see cref="OnDispose" /> 执行子类清理逻辑，随后将上下文引用置为 <c>null</c>，
-        /// 断开与模块体系的连接以避免后续误用已释放的上下文；
-        /// 同时将 <see cref="Initialized" /> 重置为 <c>false</c>——已释放的模块不再自称已初始化。
+        /// 先调用 <see cref="OnDispose" /> 执行子类清理逻辑，随后断开上下文引用并将
+        /// <see cref="Initialized" /> 重置为 <c>false</c>（重置语义见该属性说明）。
         /// </remarks>
         public void Dispose()
         {

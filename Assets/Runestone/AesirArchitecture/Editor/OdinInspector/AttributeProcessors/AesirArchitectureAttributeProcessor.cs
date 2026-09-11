@@ -29,9 +29,8 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
         /// <summary>
         /// DDOL 关闭时的多场景叠加风险提醒文案（类级 Warning 信息框内容，仅关闭时显示）。
         /// </summary>
-        const string DontDestroyOnLoadDisabledWarning =
-            "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" +
-            "必须自行处理多场景叠加（Additive）加载下的生命周期（与运行时提醒日志口径一致）";
+        const string DontDestroyOnLoadDisabledWarning = "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" +
+                                                        "必须自行处理多场景叠加（Additive）加载下的生命周期（与运行时提醒日志口径一致）";
 
         /// <summary>
         /// 处理类自身的特性，添加描述信息框与 DDOL 关闭警告信息框
