@@ -13,15 +13,18 @@ namespace Runestone.AesirModules
     /// [AesirListener(typeof(OnKeyPressed))]
     /// private void OnKeyPressed() { ... }
     /// 
-    /// [AesirListener(SubscriberPriority.Essential)]
+    /// [AesirListener(SubscriberPriority.First)]
     /// private void OnKeyPressed(OnKeyPressed e) { ... }
     /// 
-    /// [AesirListener(typeof(OnKeyPressed), SubscriberPriority.Cleanup)]
-    /// private void OnKeyPressedCleanup() { ... }
+    /// [AesirListener(typeof(OnKeyPressed), SubscriberPriority.Last)]
+    /// private void OnKeyPressedLast() { ... }
     /// </code>
     /// </para>
+    /// <para>
+    /// AllowMultiple = true：同一方法可标注多个 <c>[AesirListener]</c> 监听多种事件类型。
+    /// </para>
     /// </summary>
-    [AttributeUsage(AttributeTargets.Method)]
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     public class AesirListenerAttribute : Attribute
     {
         /// <summary>
@@ -71,7 +74,7 @@ namespace Runestone.AesirModules
         public Type EventType { get; set; }
 
         /// <summary>
-        /// 订阅优先级。决定订阅者在分阶段分发中的执行阶段。
+        /// 订阅优先级。决定订阅者在分发中的执行顺序。
         /// 默认 <see cref="SubscriberPriority.High" />。
         /// </summary>
         public SubscriberPriority Priority { get; set; } = SubscriberPriority.High;

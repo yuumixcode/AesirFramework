@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using Runestone.AesirArchitecture;
@@ -14,8 +15,13 @@ namespace Runestone.AesirModules
     /// <see cref="AddListener{TEventArgs}(object, Action{TEventArgs})" /> 实现 Script 订阅，
     /// 通过 <see cref="InvokeEvent{TEventArgs}" /> 分发事件。
     /// <para>
-    /// 支持 5 档优先级排序分发与双轨订阅共存。两种订阅分别存储于独立注册表，
+    /// 支持 4 档优先级排序分发与双轨订阅共存。两种订阅分别存储于独立注册表，
     /// 分发时合并并按优先级排序。
+    /// </para>
+    /// <para>
+    /// 分发期可靠性：自动检测并清理已销毁的 Unity 对象订阅者（死引用）；
+    /// 支持 <see cref="AesirEventArgs.WithFilter" /> 声明的订阅者过滤器实现精确投递；
+    /// 可通过 <c>executionMsLimit</c> 开启分发耗时告警。
     /// </para>
     /// <para>
     /// 作为 <see cref="AesirModules" /> 的子物体存在，由 <see cref="AesirModules.GetOrAddChild{T}" /> 懒加载创建。
@@ -33,6 +39,31 @@ namespace Runestone.AesirModules
         public static void InvokeEvent<TEventArgs>(object sender, TEventArgs eventArgs)
             where TEventArgs : AesirEventArgs =>
             Instance.RaiseEvent(sender, eventArgs);
+
+        #endregion
+
+        #region 可靠性与性能监控
+
+        /// <summary>
+        /// 分发耗时告警阈值（毫秒）。0 = 关闭性能监控。
+        /// <para>
+        /// 分发耗时超过该值时输出 Warning 日志（含事件名、耗时与订阅者数量）。
+        /// 预放置实例可在 Inspector 中调整；运行时创建的实例使用默认值 0。
+        /// </para>
+        /// </summary>
+        [SerializeField]
+        float executionMsLimit;
+
+        /// <summary>
+        /// 本轮分发收集到的死绑定（订阅者已销毁）。循环外统一移除，避免遍历时修改注册表列表；
+        /// 复用实例列表保持稳态零分配。
+        /// </summary>
+        readonly List<BindingInfo> _deadBindings = new List<BindingInfo>();
+
+        /// <summary>
+        /// 分发耗时测量。静态复用实例，避免每次分发分配 <see cref="Stopwatch" />。
+        /// </summary>
+        static readonly Stopwatch _dispatchStopwatch = new Stopwatch();
 
         #endregion
 
@@ -69,6 +100,14 @@ namespace Runestone.AesirModules
                 return;
             }
 
+            // 过滤器在循环前取一次引用；无过滤器时为 null，跳过检查保持零开销
+            var filters = eventArgs.FilterList;
+            var measureExecution = executionMsLimit > 0f;
+            if (measureExecution)
+            {
+                _dispatchStopwatch.Restart();
+            }
+
             // 只在有多个来源时才合并 + 排序；单来源直接用原列表
             List<BindingInfo> sorted;
             if (attrCount == 0)
@@ -101,11 +140,18 @@ namespace Runestone.AesirModules
                 var binding = sorted[i];
                 if (AesirEventUtility.IsObjectUnityNull(binding.Subscriber))
                 {
+                    // 已销毁订阅者：收集到循环外统一移除，避免遍历时修改注册表列表
+                    _deadBindings.Add(binding);
                     continue;
                 }
 
                 try
                 {
+                    if (filters != null && !PassFilters(filters, eventArgs, binding))
+                    {
+                        continue;
+                    }
+
                     binding.Invoke(_invokeArgs);
                 }
                 catch (TargetInvocationException ex)
@@ -120,6 +166,62 @@ namespace Runestone.AesirModules
                     AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag, $"事件分发异常：{ex.Message}");
                 }
             }
+
+            if (_deadBindings.Count > 0)
+            {
+                RemoveDeadBindings(eventArgs.GetType().Name);
+            }
+
+            if (measureExecution)
+            {
+                _dispatchStopwatch.Stop();
+                var elapsedMs = _dispatchStopwatch.Elapsed.TotalMilliseconds;
+                if (elapsedMs > executionMsLimit)
+                {
+                    AesirModulesDebug.LogWarning(AesirModulesDebug.EventModuleTag,
+                        $"事件 {eventArgs.GetType().Name} 分发耗时 {elapsedMs:F2}ms（{count} 个订阅者），" +
+                        $"超过阈值 {executionMsLimit}ms。");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 逐个执行过滤器检查，任一过滤器不通过即拦截该订阅者。
+        /// 接收具体 <see cref="List{T}" /> 避免接口枚举装箱分配。
+        /// </summary>
+        static bool PassFilters(List<ISubscriberFilter> filters,
+            AesirEventArgs eventArgs,
+            BindingInfo binding)
+        {
+            for (var i = 0; i < filters.Count; i++)
+            {
+                if (!filters[i].ShouldReceive(eventArgs, binding.Subscriber, binding.Priority))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 从双注册表移除本轮分发收集到的已销毁订阅者绑定，并输出告警提示检查退订遗漏。
+        /// 日志为 UNITY_EDITOR 条件调用，玩家构建中静默清理。
+        /// </summary>
+        /// <param name="eventName">事件名，用于日志定位。</param>
+        void RemoveDeadBindings(string eventName)
+        {
+            for (var i = 0; i < _deadBindings.Count; i++)
+            {
+                var dead = _deadBindings[i];
+                RemoveFromRegistry(AttributeBindings, dead);
+                RemoveFromRegistry(DynamicBindings, dead);
+            }
+
+            AesirModulesDebug.LogWarning(AesirModulesDebug.EventModuleTag,
+                $"事件 {eventName}：已清理 {_deadBindings.Count} 个已销毁订阅者的绑定，" +
+                "请检查是否遗漏退订（建议 OnDisable 中 RemoveListener 或 Dispose 句柄）。");
+            _deadBindings.Clear();
         }
 
         #endregion
