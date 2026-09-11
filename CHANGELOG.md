@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+### 规划中
+
+- ScriptableObject 可视化配置层
+- Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
+- 运行时集合（RuntimeSet）
+
+## [0.20.0] - 2026-09-11
+
 ### Added
 
 - **《设计变更记录》文档（`Documentation/设计变更记录.md`，`Documentation~` 镜像同步）** — 按设计点收录已废弃机制（Context 事件总线体系、ModelReplaced/ServiceReplaced、120 帧自愈轮询、初始化失败回滚、监听异常吞噬、BeforeFixedUpdate、GenericLocator.Global/GetRegistry、Interface→Instance 更名、DDOL 标志组合、fake-null 隐式重置）与设计来源（QFramework / Odin Inspector / Aesir Inspector / Cysharp.ObservableCollections），附命名演进速查表；源码注释此后只描述当前行为，历史演进统一收录于此
@@ -77,14 +85,6 @@
 ### Fixed
 
 - **示例场景无法运行（0.14.0 起回归）** — 示例程序集从 Editor-only（`includePlatforms`）改为运行时程序集 + 示例脚本整文件 `#if UNITY_EDITOR` 包裹：Editor-only asmdef 的 MonoBehaviour 被 Unity 判定为"编辑器脚本"、禁止挂载场景物体，导致全部示例场景组件 Missing Script；重构后编辑器内正常编译、挂载与 Play Mode 运行，玩家构建仍整体剔除（示例类型 0 入包）
-
-## [Unreleased]
-
-### 规划中
-
-- ScriptableObject 可视化配置层
-- Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
-- 运行时集合（RuntimeSet）
 
 ## [0.16.2] - 2026-09-06
 
