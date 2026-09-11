@@ -9,14 +9,10 @@ namespace Runestone.AesirModules
     public class SceneAssetWrapperCreationException : SceneAssetWrapperException
     {
         /// <summary>使用指定错误描述初始化。</summary>
-        public SceneAssetWrapperCreationException(string message) : base(message)
-        {
-        }
+        public SceneAssetWrapperCreationException(string message) : base(message) { }
 
         /// <summary>使用指定错误描述与内部异常初始化。</summary>
         public SceneAssetWrapperCreationException(string message, Exception innerException) : base(message,
-            innerException)
-        {
-        }
+            innerException) { }
     }
 }

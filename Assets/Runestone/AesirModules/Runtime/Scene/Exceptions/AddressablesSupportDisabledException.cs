@@ -10,10 +10,8 @@ namespace Runestone.AesirModules
     public class AddressablesSupportDisabledException : SceneAssetWrapperException
     {
         /// <summary>使用固定的修复指引初始化。</summary>
-        public AddressablesSupportDisabledException()
-            : base("当前项目未安装 Addressables 包（com.unity.addressables），无法使用 Address 相关功能。" +
-                   "\n安装后无需任何代码改动即可直接生效（相关 API 始终可见，遵循最小惊讶原则）。")
-        {
-        }
+        public AddressablesSupportDisabledException() : base(
+            "当前项目未安装 Addressables 包（com.unity.addressables），无法使用 Address 相关功能。" +
+            "\n安装后无需任何代码改动即可直接生效（相关 API 始终可见，遵循最小惊讶原则）。") { }
     }
 }

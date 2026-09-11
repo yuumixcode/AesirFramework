@@ -16,6 +16,6 @@ namespace Runestone.AesirModules
         Empty,
 
         /// <summary>场景未加入 BuildSettings（或被禁用），且没有 Addressable 备选加载途径。</summary>
-        NotInBuild,
+        NotInBuild
     }
 }

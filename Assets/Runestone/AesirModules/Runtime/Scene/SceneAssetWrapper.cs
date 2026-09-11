@@ -15,23 +15,29 @@ namespace Runestone.AesirModules
     /// <para>
     /// 设计要点：
     /// <list type="number">
-    /// <item>
-    /// 编辑器侧以 <see cref="SceneAsset" /> 对象引用为数据源，每次访问自动同步路径、GUID、
-    /// Addressables 地址三个缓存字段；场景移动/重命名由 Unity 的对象引用机制自动重定向，
-    /// 对象引用意外丢失时用序列化的 GUID 自愈路径。
-    /// </item>
-    /// <item>运行时侧不依赖任何编辑器 API 与 Addressables 程序集，直接使用序列化的纯字符串数据。</item>
-    /// <item>
-    /// 遵循最小惊讶原则：Addressables 相关 API 在未安装 Addressables 包时依旧可见、可编译，
-    /// 卸载包不会导致任何编译错误；运行期访问 <see cref="Address" /> 会抛出
-    /// <see cref="AddressablesSupportDisabledException" />。
-    /// </item>
-    /// <item>
-    /// 校验语义对位 Eflatun.SceneReference：先查 <see cref="State" /> /
-    /// <see cref="UnsafeReason" />，或直接用 <see cref="TryGetScenePath" /> 等 TryGet 家族；
-    /// 未分配场景的访问器按 fail-fast 约定抛 <see cref="EmptySceneAssetWrapperException" />。
-    /// </item>
+    ///     <item>
+    ///     编辑器侧以 <see cref="SceneAsset" /> 对象引用为数据源，每次访问自动同步路径、GUID、
+    ///     Addressables 地址三个缓存字段；场景移动/重命名由 Unity 的对象引用机制自动重定向，
+    ///     对象引用意外丢失时用序列化的 GUID 自愈路径。
+    ///     </item>
+    ///     <item>运行时侧不依赖任何编辑器 API 与 Addressables 程序集，直接使用序列化的纯字符串数据。</item>
+    ///     <item>
+    ///     遵循最小惊讶原则：Addressables 相关 API 在未安装 Addressables 包时依旧可见、可编译，
+    ///     卸载包不会导致任何编译错误；运行期访问 <see cref="Address" /> 会抛出
+    ///     <see cref="AddressablesSupportDisabledException" />。
+    ///     </item>
+    ///     <item>
+    ///     校验语义对位 Eflatun.SceneReference：先查 <see cref="State" /> /
+    ///     <see cref="UnsafeReason" />，或直接用 <see cref="TryGetScenePath" /> 等 TryGet 家族；
+    ///     未分配场景的访问器按 fail-fast 约定抛 <see cref="EmptySceneAssetWrapperException" />。
+    ///     </item>
     /// </list>
+    /// </para>
+    /// <para>
+    /// <b>Odin Inspector 边界</b>：Inspector 拖拽赋值、三态着色与一键修复按钮等面板效果
+    /// 依赖 Odin Inspector（经 AttributeProcessor 注入）。未安装 Odin 时仅保证 API 可用——
+    /// 用 <see cref="FromScenePath" /> 构造、<see cref="SceneAsset" /> 代码赋值（仅编辑器）
+    /// 与 TryGet 家族完成全部操作，面板不支持。
     /// </para>
     /// </summary>
     [Serializable]
@@ -61,9 +67,7 @@ namespace Runestone.AesirModules
         string sceneAddress = string.Empty;
 
         /// <summary>创建一个空引用（未分配任何场景）的包装器。永不抛异常。</summary>
-        public SceneAssetWrapper()
-        {
-        }
+        public SceneAssetWrapper() { }
 
         #region 校验属性
 
@@ -376,8 +380,11 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// 尝试获取 Addressables 地址。与 <see cref="Address" /> 一致，
-        /// 项目未安装 Addressables 包时抛 <see cref="AddressablesSupportDisabledException" />。
+        /// 尝试获取 Addressables 地址。空引用或场景不可寻址时返回 false、不抛异常；
+        /// 与 <see cref="Address" /> 的差异：Address 对空引用抛
+        /// <see cref="EmptySceneAssetWrapperException" />、对非 Addressable 场景抛
+        /// <see cref="SceneNotAddressableException" />，本方法一律返回 false。
+        /// 项目未安装 Addressables 包时两者一致，均抛 <see cref="AddressablesSupportDisabledException" />。
         /// </summary>
         /// <exception cref="AddressablesSupportDisabledException">项目未安装 Addressables 包。</exception>
         public bool TryGetAddress(out string address)
@@ -410,8 +417,7 @@ namespace Runestone.AesirModules
         {
             if (string.IsNullOrEmpty(scenePath))
             {
-                throw new SceneAssetWrapperCreationException(
-                    $"场景路径为空：'{scenePath}'。请提供有效场景的资产路径。");
+                throw new SceneAssetWrapperCreationException($"场景路径为空：'{scenePath}'。请提供有效场景的资产路径。");
             }
 
 #if UNITY_EDITOR
@@ -484,6 +490,7 @@ namespace Runestone.AesirModules
         #endregion
 
 #if UNITY_EDITOR
+
         #region 编辑器：数据源与同步
 
         internal const string SceneAssetPropertyName = nameof(SceneAsset);
@@ -587,10 +594,16 @@ namespace Runestone.AesirModules
         /// <summary>是否显示"在 BuildSettings 中启用"修复按钮。</summary>
         public bool CanEnableInBuild => DisabledInBuildSettings && !IsAddressable;
 
+        /// <summary>
+        /// 场景引用已悬空：SceneAsset 对象引用丢失但路径缓存仍在（场景被移动/删除或引用断链）。
+        /// Inspector 中以红色提示，可通过重新拖拽场景或右键菜单 Reset Scene 修复。
+        /// </summary>
+        public bool IsDangling =>
+            sceneAsset == null && !string.IsNullOrEmpty(scenePath);
+
         /// <summary>是否显示"加入 Addressables"修复按钮（需要安装 Addressables 包且场景当前不可寻址）。</summary>
         public bool CanMakeAddressable =>
-            sceneAsset != null &&
-            SceneAssetWrapperAddressablesBridge.IsAvailable &&
+            sceneAsset != null && SceneAssetWrapperAddressablesBridge.IsAvailable &&
             SceneAssetWrapperAddressablesBridge.GetAddressHandler(scenePath) == null;
 
         /// <summary>
@@ -610,8 +623,8 @@ namespace Runestone.AesirModules
                 sceneGuid = AssetDatabase.AssetPathToGUID(assetPath);
                 if (SceneAssetWrapperAddressablesBridge.IsAvailable)
                 {
-                    sceneAddress =
-                        SceneAssetWrapperAddressablesBridge.GetAddressHandler(assetPath) ?? string.Empty;
+                    sceneAddress = SceneAssetWrapperAddressablesBridge.GetAddressHandler(assetPath) ??
+                                   string.Empty;
                 }
             }
             else if (!string.IsNullOrEmpty(sceneGuid))
@@ -756,9 +769,8 @@ namespace Runestone.AesirModules
                 return new Color(0.13f, 0.72f, 0.93f);
             }
 
-            if (sceneAsset == null && !string.IsNullOrEmpty(scenePath))
+            if (IsDangling)
             {
-                // SceneAsset 引用丢失但路径仍在（场景被删除或 GUID 断链）
                 return Color.red;
             }
 
@@ -776,6 +788,7 @@ namespace Runestone.AesirModules
         }
 
         #endregion
+
 #endif
     }
 }
