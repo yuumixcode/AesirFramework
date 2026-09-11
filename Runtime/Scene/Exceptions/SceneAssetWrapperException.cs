@@ -8,19 +8,13 @@ namespace Runestone.AesirModules
     public class SceneAssetWrapperException : InvalidOperationException
     {
         /// <summary>使用默认错误的描述初始化。</summary>
-        public SceneAssetWrapperException()
-        {
-        }
+        public SceneAssetWrapperException() { }
 
         /// <summary>使用指定错误描述初始化。</summary>
-        public SceneAssetWrapperException(string message) : base(message)
-        {
-        }
+        public SceneAssetWrapperException(string message) : base(message) { }
 
         /// <summary>使用指定错误描述与内部异常初始化。</summary>
         public SceneAssetWrapperException(string message, Exception innerException) : base(message,
-            innerException)
-        {
-        }
+            innerException) { }
     }
 }
