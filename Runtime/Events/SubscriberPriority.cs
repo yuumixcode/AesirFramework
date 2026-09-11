@@ -1,10 +1,10 @@
 namespace Runestone.AesirModules
 {
     /// <summary>
-    /// 事件订阅者优先级。5 档排序：Essential → High → Medium → Low → Cleanup。
+    /// 事件订阅者优先级。4 档排序：First → High → Medium → Last。
     /// <para>
     /// High 为 Attribute 订阅（<c>[AesirListener]</c>）默认值，Medium 为 Script 订阅（<c>AddListener&lt;T&gt;</c>）默认值。
-    /// Essential / Low / Cleanup 用于自定义特定方法的触发时机（前/后/最后）。
+    /// First / Last 用于自定义特定方法的触发时机（最前/最后）。
     /// </para>
     /// </summary>
     public enum SubscriberPriority
