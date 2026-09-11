@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.19.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.19.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.20.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.20.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.19.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.20.0）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.19.0）
+## Aesir Architecture（0.20.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -141,7 +141,7 @@
 
 ---
 
-## Aesir Modules（0.19.0）
+## Aesir Modules（0.20.0）
 
 ### UI 框架
 
@@ -420,7 +420,7 @@ Unity -batchmode -projectPath . -testPlatform editmode -runTests \
 ### 分支策略
 
 - `main` — 开发主线
-- 版本分支 `AesirArchitecture-v0.19.0` / `AesirModules-v0.19.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
+- 版本分支 `AesirArchitecture-v0.20.0` / `AesirModules-v0.20.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
 
 ---
 
@@ -545,6 +545,7 @@ undefined
 
 - [2026-09-11 13:06:21] [2026-09-11 13:15] [project] 【本条目覆盖 2026-09-11 10:18:53 "RAM ScriptDocGenerator 全模块锐评完成"条目，其待修清单已处置，勿再当待办】RAM ScriptDocGenerator 锐评清单已基本修复完毕（2026-09-11，按用户指令逐项修复，工作树未提交、与 Events/Scene/UI 并行会话改动同存）。已落地：**P0 全部 8 项**（事件/方法阈值 <=0、常量表 ||、属性 flag 守卫、引号转义、EOL 保持+//// 判定、Front Matter 无闭合返回 false、StartsWith、ReflectionUtility 去 catch）；**P1 部分**（IParameterData[] Parameters 参数链、六种 XML 标签全链路到数据类、Zensical 说明列全渲染+删 80 行字符串反解析、删 UITK 窗口；**未做：Default 生成器引擎合并**）；**P2 全部**（OnEnable 只清分析态、程序集下拉过滤、Odin 原生 Toast+文案、调试检查模式 debugInspectionMode 默认关 + NonSerialized+ShowInInspector 仅调试渲染 + 程序集条件 Warning InfoBox `@$value.ShowAssemblyDebugWarning` 三参构造、默认输出目录项目根 ScriptDocGenerator/（.gitignore 已登记）、Summary 工具 Remove 确认/无变化跳过/批量单次 Refresh）；**P3 全部**（中英 README/模块文档语义与测试表修正、Zensical 章节、死代码清理）。**Summary 工具新语义（用户裁决 A）**：[Summary] 特性为权威源——Sync 特性存在时回写 XML 对齐、无特性回退 XML 生成；Replace 特性优先；拼接实参不可解析按无特性回退。新增 DefaultScriptingAPIOutputTests（4）+ XmlSummaryToolTests 新语义 7 用例（总 25）。**验证状态**：我的改动 refresh 0 错 0 警；EditMode 510 pass/7 fail 中 6 fail 属并行 UI 会话 UIModuleTests、1 fail 是 DLL 陈旧（编译管线被并行 Scene 会话 SceneModuleTests 19 个编译错误冻结，我的 rename 用例与新增测试未进 DLL）；新语义经反射探针全部直接验证通过（条件矩阵 False/True/False、OnEnable 保留配置/清分析态、Odin ShowToast 签名 public 匹配、Preprocessor Replace 行为）。**Why:** Scene 会话修复后需重跑测试确认全绿；P1 引擎合并未做。**How to apply:** 剩余项=①Scene 修复后重跑 refresh+测试；②Default 生成器重写为 AppendMemberSection 配置（578→~80 行）；③文档站 API 页重生成吃进 Zensical 新说明列。踩坑：并行会话占编辑器时 exec_editor_script 排队/超时/结果丢失，反射探针比等测试全绿可靠；Unity 同项目不能双开 batchmode（项目锁）；TestRunnerApi 多次 Execute 会互相取消（单次 Execute 带全部程序集名）。
 - [2026-09-11 15:04:04] [project] 【团结 2022.3.62 EditMode 测试方法论大坑位汇总（UI 会话实测，两小时排障代价）】① AesirModulesDebug 富文本前缀日志（<color> 标签）+多行 Destroy 错误——**LogAssert.Expect 纯字符串参数完全匹配不上，必须 new Regex(子串)**；但 Event 会话同款 Regex 用例通过而 UI 用例始终 Unhandled 的"玄学"另有真因（见④）。② 本引擎 LogAssert.ignoreFailingMessages 的 setter **自身会打 Log 级调试日志 "\nIgnoreFailingMessages:true/false"**——对日志做 IsEmpty 断言会误踩，改为过滤 LogType.Log 级别。③ EditMode 中 UIModule 的 Destroy 调用被引擎拒绝（"Destroy may not be called from edit mode" Error 但 no-op）——用例需 LogAssert/CaptureLogs 捕获该 Error，且被中止的克隆体悬在世界空间根（不在 UIRoot 子树，TearDown 连带销毁不可达）须 FindObjectsByType 扫描登记清理。④ **域重载锁死（本次最大坑）**：exec_editor_script 客户端超时被杀的 TestRunnerApi run 会遗留下未配对的 LockReloadAssemblies——此后磁盘 DLL 更新（python 字节级 UTF-16 搜断言文本可证实）但**域永不重载**，RequestScriptReload/CompilationPipeline.RequestScriptCompilation(CleanBuildCache)/touch 全部无效，测试永远跑旧代码且症状与"LogAssert 不匹配"高度相似（诊断关键：反射探测域内类型是否含新方法 + 比对堆栈行号）；解法=反射调 EditorApplication.UnlockReloadAssemblies()（私有静态，多解两次无害）+ 重新 RequestScriptReload + 激活编辑器（进程名是 **Tuanjie** 不是 Unity！osascript activate "Unity" 静默无效，须 `tell application "Tuanjie" to activate`，可用 System Events frontmost 验证）→ 落地标志是 custom_tools_reloaded 通知。⑤ TestRunnerApi.RegisterCallbacks **跨 submission 持久累积且不随域重载清理由 Bridge 重建**——历史回调会在每轮 run 里全部触发（日志混流多份 [PROBE-RESULT] 类前缀是已注销会话的遗留回调，非当前 run 结果），读测试结果只信当轮回调前缀与 RunFinished 汇总数字。⑥ TestRunnerApi 每次新建实例应 UnregisterCallbacks（团结签名 RegisterCallbacks/UnregisterCallbacks）防泄漏。**How to apply:** 跑测试发现"改了代码结果永远一样"时：先 python 字节级查磁盘 DLL 是否含新断言文本（区分"编译没跑"vs"域没重载"）→ 反射探测域内方法 → UnlockReloadAssemblies+RequestScriptReload+activate Tuanjie → 等 custom_tools_reloaded → 反射复验 → 再跑。UI 测试的 CaptureLogs 自捕获模式（logMessageReceived+ignoreFailingMessages 抑制）是日志断言的稳妥范式，UIModuleTests.cs 可复制。
+- [2026-09-11 15:36:44] [project] 2026-09-11 各会话工作树改动已分 7 批全部提交（de3a23e..9b1493f，未推送）：①RAA 注释口径整理+锐评收尾+设计变更记录 ②RAM Events 分发增强+SO 资产化 ③RAM Audio 新模块 ④RAM Scene 锐评修复 ⑤RAM UI 锐评修复 ⑥RAM ScriptDocGenerator 锐评修复 ⑦汇总文档+杂项（README/CHANGELOG/package.json/CODELY.md/asmdef 格式化/Bridge registry 化）。**Why:** 多个旧条目写"工作树未提交"已过时；且 RAA 批含用户 Rider 格式化 pass（无法与锐评修复拆分，commit 消息已注明叠加）。**How to apply:** 后续会话引用 Events/Audio/Scene/UI/SDG/RAA 锐评相关条目时，"工作树未提交"表述视为已提交；两包 CHANGELOG/README 仍为 [Unreleased] 状态，版本号未 bump（0.19.0 已发，下版待用户定）。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
