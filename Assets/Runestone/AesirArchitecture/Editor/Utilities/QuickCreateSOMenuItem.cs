@@ -9,18 +9,13 @@ namespace Runestone.AesirArchitecture.Editor
     /// <summary>
     /// 右键快捷生成 ScriptableObject 资源文件。
     /// <para>
-    /// 复刻自 Aesir Inspector 的同名工具（<c>Runestone.AesirInspector.Editor.QuickCreateSOMenuItem</c>）。
-    /// 当项目同时安装 Aesir Inspector（即存在 <c>AESIR_INSPECTOR</c> 宏定义）时本类整体不参与编译，
-    /// 由 Aesir Inspector 版本提供该菜单，避免重复菜单项与功能分裂。
+    /// 项目同时安装 Aesir Inspector（独立包，写入 <c>AESIR_INSPECTOR</c> 宏）时本类整体不参与编译，
+    /// 由其提供同名菜单，避免重复菜单项。
     /// </para>
     /// </summary>
     /// <remarks>
-    /// 条件编译的失效机制依赖 Aesir Inspector 的 <c>EnsureAesirInspectorDefine</c> 在编辑器加载时自动写入
-    /// <c>AESIR_INSPECTOR</c> 宏定义；未安装 Aesir Inspector 时该宏不存在，本类生效。
-    /// <para>
     /// 菜单优先级 80：实测 <c>Assets/Create/C# Script</c> 与 <c>Assets/Create/2D</c> 同为 81，
     /// 同段按注册顺序紧邻，无法用整数优先级插在两者之间；80 使该项位于 Folder（18）与 C# Script（81）之间。
-    /// </para>
     /// </remarks>
     public static class QuickCreateSOMenuItem
     {

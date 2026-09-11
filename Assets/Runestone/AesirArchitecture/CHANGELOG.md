@@ -5,6 +5,20 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- **《设计变更记录》文档（`Documentation/设计变更记录.md`，`Documentation~` 镜像同步）** — 按设计点收录已废弃机制（Context 事件总线体系、ModelReplaced/ServiceReplaced、120 帧自愈轮询、初始化失败回滚、监听异常吞噬、BeforeFixedUpdate、GenericLocator.Global/GetRegistry、Interface→Instance 更名、DDOL 标志组合、fake-null 隐式重置）与设计来源（QFramework / Odin Inspector / Aesir Inspector / Cysharp.ObservableCollections），附命名演进速查表；源码注释此后只描述当前行为，历史演进统一收录于此
+
+### Changed
+
+- **注释精简（12 文件，净 −44 行）** — 移除源码注释中的废弃设计历史叙述（`AbstractContext.Instance` 的更名史、`AesirArchitecture.ResetStatics` 的 fake-null 演进史、`QuickCreateSOMenuItem` 的 Aesir Inspector 复刻细节、`ScriptingSymbolUtility` 的 Odin 来源、包内更新器的 QFramework PackageKit 对比段）；重复注释去重（4 个能力标记接口 remarks、4 个 Execute 扩展方法 remarks、`RemoveListenerOnSceneUnloadedTrigger` 单例说明、`AesirArchitecturePlayerLoop` 注入点标识、`AbstractContext.Dispose` 双重注释、`ObservableValue` 类级重复段）
+
+### Fixed
+
+- **`AesirArchitecture.DontDestroyOnLoad` 补 `new` 修饰符** — 显式隐藏 `UnityEngine.Object.DontDestroyOnLoad(Object)` 静态方法，消除 0.19.0 引入该属性时遗留的 CS0108 编译警告（行为不变）
+
 ## [0.19.0] - 2026-09-11
 
 ### Added

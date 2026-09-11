@@ -80,9 +80,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="self">调用方实例，必须已持有有效的上下文引用</param>
         /// <param name="command">要执行的命令实例</param>
         /// <remarks>
-        /// 命令在执行前会通过 <see cref="ICanSetContext.SetContext" /> 注入当前上下文引用，
-        /// 使其具备 <c>GetModel</c> / <c>GetService</c> 等能力，
-        /// 从而可以在 <c>Execute</c> 方法内部访问已注册的模块。
+        /// 执行前经 <see cref="ICanSetContext.SetContext" /> 注入当前上下文，
+        /// 使命令在 <c>Execute</c> 内部具备 <c>GetModel</c> / <c>GetService</c> 能力。
         /// </remarks>
         public static void ExecuteCommand<T>(this ICanExecuteCommand self, T command) where T : ICommand
         {
@@ -99,9 +98,8 @@ namespace Runestone.AesirArchitecture
         /// </typeparam>
         /// <param name="self">调用方实例，必须已持有有效的上下文引用</param>
         /// <remarks>
-        /// 命令在执行前会通过 <see cref="ICanSetContext.SetContext" /> 注入当前上下文引用，
-        /// 使其具备 <c>GetModel</c> / <c>GetService</c> 等能力，
-        /// 从而可以在 <c>Execute</c> 方法内部访问已注册的模块。
+        /// 执行前经 <see cref="ICanSetContext.SetContext" /> 注入当前上下文，
+        /// 使命令在 <c>Execute</c> 内部具备 <c>GetModel</c> / <c>GetService</c> 能力。
         /// </remarks>
         public static void ExecuteCommand<T>(this ICanExecuteCommand self) where T : ICommand, new()
         {
@@ -118,9 +116,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="query">要执行的查询实例</param>
         /// <returns>查询执行结果</returns>
         /// <remarks>
-        /// 查询在执行前会通过 <see cref="ICanSetContext.SetContext" /> 注入当前上下文引用，
-        /// 使其具备 <c>GetModel</c> / <c>GetService</c> 等能力，
-        /// 从而可以在 <c>Execute</c> 方法内部访问已注册的模块。
+        /// 执行前经 <see cref="ICanSetContext.SetContext" /> 注入当前上下文，
+        /// 使查询在 <c>Execute</c> 内部具备 <c>GetModel</c> / <c>GetService</c> 能力。
         /// </remarks>
         public static TResult ExecuteQuery<TResult>(this ICanExecuteQuery self, IQuery<TResult> query)
         {
@@ -139,9 +136,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="self">调用方实例，必须已持有有效的上下文引用</param>
         /// <returns>查询执行结果</returns>
         /// <remarks>
-        /// 查询在执行前会通过 <see cref="ICanSetContext.SetContext" /> 注入当前上下文引用，
-        /// 使其具备 <c>GetModel</c> / <c>GetService</c> 等能力，
-        /// 从而可以在 <c>Execute</c> 方法内部访问已注册的模块。
+        /// 执行前经 <see cref="ICanSetContext.SetContext" /> 注入当前上下文，
+        /// 使查询在 <c>Execute</c> 内部具备 <c>GetModel</c> / <c>GetService</c> 能力。
         /// </remarks>
         public static TResult ExecuteQuery<TQuery, TResult>(this ICanExecuteQuery self)
             where TQuery : IQuery<TResult>, new()

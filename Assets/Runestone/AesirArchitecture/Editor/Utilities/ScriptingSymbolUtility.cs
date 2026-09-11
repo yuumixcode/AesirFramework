@@ -8,7 +8,6 @@ namespace Runestone.AesirArchitecture.Editor
     /// <summary>
     /// 脚本宏定义工具，用于管理 <see cref="PlayerSettings" /> 中的 Scripting Define Symbols。
     /// <para>
-    /// 参考 Odin Inspector 的 <c>EnsureOdinInspectorDefine</c> 实现，
     /// 遍历所有构建目标（排除 Unknown 和 Dedicated Server），提供幂等的宏定义符号添加/移除能力。
     /// </para>
     /// </summary>
