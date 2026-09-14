@@ -23,6 +23,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 - **MVC-first architecture** — `IController` + `ICommand` command pattern + `IQuery<TResult>` query pattern (CQRS); Controller is the primary MVC entry point that directly modifies Model. `IPresenter` (MVP) is an optional pattern for stricter Model-View separation
 - **Native PlayerLoop lifecycle** — Inject custom subsystems into Unity's PlayerLoop via `AesirArchitecturePlayerLoop`, providing `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour
+- **Frame-granularity time scheduling** — `AesirScheduler` pure C# static API (`Delay(seconds, callback)` / `NextFrame(callback)`), settled by the PlayerLoop BeforeUpdate hook — a legitimate delayed-execution primitive for Models / Services / Commands that have no coroutine access
 - **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` / `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, etc.) — expose only what you need
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
@@ -39,7 +40,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 ### Via UPM (Git URL)
 
-Install via UPM with a Git URL pinned to the 0.16.2 version branch (the branch root is the package content):
+Install via UPM with a Git URL pinned to the 0.20.0 version branch (the branch root is the package content):
 
 ```
 https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.20.0
@@ -59,7 +60,7 @@ Copy this package directory into your project's `Packages/` folder.
 
 ### unitypackage Import
 
-Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated in one click via the Unity menu `Tools → Aesir → Check for Updates` — the **in-package updater**: version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); it backs up `Assets/Runestone` before updating, then removes stale entries by the exact diff of "previous install manifest − new manifest" without touching user-added files.
+Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated in one click via the Unity menu `Tools → Aesir → Check for Updates` — the **in-package updater**: version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); the window shows the changelog between your local version and the remote version, asks for confirmation and backs up `Assets/Runestone` before updating, then removes stale entries by the exact diff of "previous install manifest − new manifest" without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
 > Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
 
@@ -155,7 +156,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## Samples
 
-The package provides 10 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
+The package provides 11 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
 
 ### MVC family (View subscribes itself)
 
@@ -182,6 +183,7 @@ The package provides 10 importable samples (Package Manager → Aesir Architectu
 | `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
 | `ObservableCollections` | ObservableList / ObservableDictionary / ObservableHashSet change-event usage: subscribe to Added / Removed / Replaced / Updated / Cleared, trigger mutations and set operations via ContextMenu | None |
 | `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
+| `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); toggles controlled via the settings window (`Tools → Aesir → Architecture → Samples`) | None |
 
 ### Hands-on sample
 
@@ -283,14 +285,16 @@ cn.runestone.aesir.architecture/
 │   │   ├── ScriptingSymbolUtility.cs
 │   │   └── QuickCreateSOMenuItem.cs          # Context-menu quick SO creation (yields to Aesir Inspector when present)
 │   ├── UpdateChecker/                        # In-package updater (Tools → Aesir → Check for Updates)
-│   │   ├── AesirUpdateService.cs             # Stateless toolkit: install scanning, multi-source version check, manifest diff, backup
-│   │   └── AesirUpdateWindow.cs              # Updater window
+│   │   ├── AesirUpdateService.cs             # Stateless toolkit: install scanning, multi-source version check, manifest diff, backup, changelog parsing, update execution
+│   │   └── AesirUpdateWindow.cs              # Updater window (IMGUI fallback; menu entry, routes to the Odin window when Odin is installed)
 │   └── OdinInspector/            # Odin Inspector integration (optional)
 │       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef
-│       └── AttributeProcessors/
-│           ├── AesirArchitectureAttributeProcessor.cs
-│           ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
-│           └── ObservableValueAttributeProcessor.cs
+│       ├── AttributeProcessors/
+│       │   ├── AesirArchitectureAttributeProcessor.cs
+│       │   ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
+│       │   └── ObservableValueAttributeProcessor.cs
+│       └── UpdateChecker/
+│           └── AesirUpdateWindowOdin.cs      # Updater window (Odin-based UI)
 ├── Tests/
 │   ├── Runtime/
 │   │   └── Runestone.AesirArchitecture.Tests.asmdef
@@ -321,6 +325,7 @@ cn.runestone.aesir.architecture/
 - **Event bus / EventChannel** — Cross-module communication uses GetModel + ObservableValue subscriptions, or direct MiniEvent references
 - **Multiple Context instances** — `AbstractContext<T>` is a CRTP generic singleton, one instance per concrete context type; model multi-save / multi-room scenarios at the business layer
 - **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
+- **Full-featured time scheduling** — `AesirScheduler` is intentionally narrowed to frame-granularity one-shot tasks (`Delay` / `NextFrame`): no cancellation handles, no pause/resume, no precise timing, no coroutine equivalent; use coroutines or third-party libraries at the business layer when you need more
 - **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
 - **Full observable-collection suite** — Only `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` with the most common Added / Removed / Replaced / Updated / Cleared notifications are provided; Move, Sort, synchronized views, R3 integration, and other advanced capabilities are out of scope — use [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) when you need them
 - **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
