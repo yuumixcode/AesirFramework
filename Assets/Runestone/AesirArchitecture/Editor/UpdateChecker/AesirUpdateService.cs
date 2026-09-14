@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -24,8 +26,10 @@ namespace Runestone.AesirArchitecture.Editor
     /// <see cref="FetchLatestReleaseSnapshotAsync" />。
     /// </para>
     /// <para>
-    /// 更新流程：检测远程版本 → 对比本地版本（直接读取包内 package.json）→ 更新前自动备份
-    /// （用户可能修改过代码）→ 按"上次安装清单 − 新版清单"精确差集清理残留（不误伤用户新增文件）→
+    /// 更新流程：检测远程版本 → 对比本地版本（直接读取包内 package.json）→ 拉取并展示「本地 → 远程」
+    /// 更新日志（<see cref="BuildChangelogDigestAsync" />）→ 确认框二次确认（
+    /// <see cref="BuildUpdateConfirmation" />）→ 更新前自动备份（用户可能修改过代码）→
+    /// 按"上次安装清单 − 新版清单"精确差集清理残留（不误伤用户新增文件）→
     /// 下载 .unitypackage → 静默导入 → 逐包登记安装清单。
     /// </para>
     /// </summary>
@@ -83,8 +87,16 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>unitypackage 下载超时（秒）——大文件慢速连接，给足余量。</summary>
         public const int DownloadTimeoutSeconds = 120;
 
+        /// <summary>包内 CHANGELOG 文件名（Keep a Changelog 格式）。</summary>
+        public const string ChangelogFileName = "CHANGELOG.md";
+
         /// <summary>package.json 中 Aesir 包 id 的公共前缀。</summary>
         const string PackageIdPrefix = "cn.runestone.aesir.";
+
+        /// <summary>
+        /// GitHub Raw 内容地址前缀（CHANGELOG 拉取的兜底源；大陆可达性不如 jsDelivr，排在最后）。
+        /// </summary>
+        public static readonly string GitHubRawUrlBase = $"https://raw.githubusercontent.com/{RepoPath}";
 
         #endregion
 
@@ -114,7 +126,9 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>
         /// 一次成功检测的结果快照：来源 + tag +（可能缺失的）清单。
         /// unitypackage 下载地址按命名约定从 tag 构造，不依赖 API 的资产列表。
+        /// <para>标记 <see cref="SerializableAttribute" /> — 编辑器窗口字段持有快照时可跨域重载保留。</para>
         /// </summary>
+        [Serializable]
         public sealed class ReleaseSnapshot
         {
             /// <summary>版本与清单信息；302 重定向路径只有 tag，此字段为 null（更新时跳过残留清理）。</summary>
@@ -164,6 +178,7 @@ namespace Runestone.AesirArchitecture.Editor
         }
 
         /// <summary>扫描到的本地已安装包。</summary>
+        [Serializable]
         public sealed class InstalledPackage
         {
             /// <summary>包目录的 Assets 相对路径（如 Assets/Runestone/AesirArchitecture）。</summary>
@@ -301,13 +316,26 @@ namespace Runestone.AesirArchitecture.Editor
         #region 版本比较
 
         /// <summary>
+        /// 取全部待更新包（本地版本低于远程版本），按包 id 排序保证依赖顺序（Architecture 先于 Modules）。
+        /// 远程版本为空时返回空列表。
+        /// </summary>
+        public static List<InstalledPackage> ComputeOutdatedPackages(List<InstalledPackage> packages,
+            string remoteVersion) =>
+            string.IsNullOrEmpty(remoteVersion)
+                ? new List<InstalledPackage>()
+                : packages
+                    .Where(p => CompareVersion(p.Version, remoteVersion) < 0)
+                    .OrderBy(p => p.PackageId, StringComparer.Ordinal).ToList();
+
+        /// <summary>
         /// 比较两个语义化版本号（允许 v/V 前缀，缺省段按 0 处理）。
+        /// 数字段相同时正式版高于预发布版（<c>1.0.0-rc1 &lt; 1.0.0</c>），两侧均为预发布按标识文本排序。
         /// 返回值：a &lt; b 为负，相等为 0，a &gt; b 为正。
         /// </summary>
         public static int CompareVersion(string a, string b)
         {
-            var partsA = SplitVersion(a);
-            var partsB = SplitVersion(b);
+            var partsA = SplitVersion(a, out var prereleaseA);
+            var partsB = SplitVersion(b, out var prereleaseB);
             for (var i = 0; i < 3; i++)
             {
                 var cmp = partsA[i].CompareTo(partsB[i]);
@@ -317,18 +345,43 @@ namespace Runestone.AesirArchitecture.Editor
                 }
             }
 
-            return 0;
+            if (prereleaseA == prereleaseB)
+            {
+                return 0;
+            }
+
+            // SemVer：预发布版的优先级低于同号正式版（否则装过 rc 后正式版会被误判为"已是最新"）
+            if (prereleaseA == null)
+            {
+                return 1;
+            }
+
+            if (prereleaseB == null)
+            {
+                return -1;
+            }
+
+            return string.CompareOrdinal(prereleaseA, prereleaseB);
         }
 
-        static int[] SplitVersion(string version)
+        static int[] SplitVersion(string version, out string prerelease)
         {
             var result = new int[3];
+            prerelease = null;
             if (string.IsNullOrEmpty(version))
             {
                 return result;
             }
 
-            var segments = version.TrimStart('v', 'V').Split('.');
+            var core = version.TrimStart('v', 'V');
+            var dashIndex = core.IndexOf('-');
+            if (dashIndex >= 0)
+            {
+                prerelease = core.Substring(dashIndex + 1);
+                core = core.Substring(0, dashIndex);
+            }
+
+            var segments = core.Split('.');
             for (var i = 0; i < result.Length && i < segments.Length; i++)
             {
                 int.TryParse(segments[i], out result[i]);
@@ -510,6 +563,273 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             return request.downloadHandler.data;
+        }
+
+        #endregion
+
+        #region 更新日志（CHANGELOG）
+
+        /// <summary>
+        /// CHANGELOG 中的一个版本段落（Keep a Changelog 格式的 <c>## [x.y.z] - 日期</c> 小节）。
+        /// </summary>
+        [Serializable]
+        public sealed class ChangelogSection
+        {
+            /// <summary>版本号（如 0.21.0，无 v 前缀）。</summary>
+            public string Version;
+
+            /// <summary>发布日期（标题行 <c>-</c> 后的文本，可为空）。</summary>
+            public string Date;
+
+            /// <summary>段落正文（不含标题行；已剔除首尾空行与 <c>---</c> 分隔线）。</summary>
+            public string Content;
+        }
+
+        /// <summary>CHANGELOG 版本段落标题行：<c>## [0.21.0] - 2026-09-13</c>（日期可缺省）。</summary>
+        static readonly Regex ChangelogHeaderRegex =
+            new Regex(@"^##\s+\[([^\]]+)\]\s*(?:-\s*(.+?))?\s*$", RegexOptions.Compiled);
+
+        /// <summary>版本号形态判定：纯数字点分段（Unreleased 等非版本标题据此排除）。</summary>
+        static readonly Regex VersionNumberRegex = new Regex(@"^\d+(\.\d+)*$", RegexOptions.Compiled);
+
+        /// <summary>
+        /// 解析 Keep a Changelog 格式的 markdown，按 <c>## [x.y.z]</c> 切分版本段落（保持文件原顺序：新 → 旧）。
+        /// <para>
+        /// 非版本标题（<c>## [Unreleased]</c>、<c>## 当前版本</c> 等）不产生段落；遇到任意其他二级标题即结束当前段落。
+        /// 输入为空或异常时返回空列表。
+        /// </para>
+        /// </summary>
+        public static List<ChangelogSection> ParseChangelogSections(string markdown)
+        {
+            var sections = new List<ChangelogSection>();
+            if (string.IsNullOrEmpty(markdown))
+            {
+                return sections;
+            }
+
+            ChangelogSection current = null;
+            var contentLines = new List<string>();
+            using var reader = new StringReader(markdown);
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                var match = ChangelogHeaderRegex.Match(line);
+                if (match.Success)
+                {
+                    FlushSection();
+                    var version = match.Groups[1].Value.Trim();
+                    if (VersionNumberRegex.IsMatch(version))
+                    {
+                        current = new ChangelogSection
+                        {
+                            Version = version,
+                            Date = match.Groups[2].Success ? match.Groups[2].Value.Trim() : ""
+                        };
+                        contentLines.Clear();
+                    }
+
+                    continue;
+                }
+
+                // 其他二级标题（如"## 当前版本"）结束当前版本段落
+                if (line.StartsWith("## ", StringComparison.Ordinal))
+                {
+                    FlushSection();
+                    continue;
+                }
+
+                if (current != null)
+                {
+                    contentLines.Add(line);
+                }
+            }
+
+            FlushSection();
+            return sections;
+
+            void FlushSection()
+            {
+                if (current == null)
+                {
+                    return;
+                }
+
+                var start = 0;
+                var end = contentLines.Count;
+                while (start < end && IsBlankOrRule(contentLines[start]))
+                {
+                    start++;
+                }
+
+                while (end > start && IsBlankOrRule(contentLines[end - 1]))
+                {
+                    end--;
+                }
+
+                current.Content = string.Join("\n", contentLines.GetRange(start, end - start));
+                sections.Add(current);
+                current = null;
+            }
+        }
+
+        static bool IsBlankOrRule(string line) =>
+            string.IsNullOrWhiteSpace(line) || line.Trim() == "---";
+
+        /// <summary>
+        /// 从段落列表中筛出位于 (localVersion, remoteVersion] 区间的版本段落（保持原顺序：新 → 旧）。
+        /// <paramref name="remoteVersion" /> 为空时不设上限。
+        /// </summary>
+        public static List<ChangelogSection> CollectNewerSections(
+            IReadOnlyList<ChangelogSection> sections, string localVersion, string remoteVersion)
+        {
+            var result = new List<ChangelogSection>();
+            if (sections == null)
+            {
+                return result;
+            }
+
+            foreach (var section in sections)
+            {
+                if (CompareVersion(section.Version, localVersion) <= 0)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(remoteVersion) &&
+                    CompareVersion(section.Version, remoteVersion) > 0)
+                {
+                    continue;
+                }
+
+                result.Add(section);
+            }
+
+            return result;
+        }
+
+        /// <summary>将版本段落渲染回可读的 markdown 文本（标题行 + 正文，段落间空行分隔）。</summary>
+        public static string RenderChangelogText(IReadOnlyList<ChangelogSection> sections)
+        {
+            if (sections == null || sections.Count == 0)
+            {
+                return "";
+            }
+
+            var builder = new StringBuilder();
+            foreach (var section in sections)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append('\n');
+                }
+
+                builder.Append("## [").Append(section.Version).Append(']');
+                if (!string.IsNullOrEmpty(section.Date))
+                {
+                    builder.Append(" - ").Append(section.Date);
+                }
+
+                builder.Append("\n\n").Append(section.Content).Append('\n');
+            }
+
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// 拉取指定 Release 版本的包内 CHANGELOG.md（jsDelivr 多域名 → GitHub Raw 兜底，首个成功即返回）。
+        /// 全部失败时抛出含各源错误明细的异常。
+        /// </summary>
+        public static async Task<string> FetchPackageChangelogAsync(string tag, string packageDirName)
+        {
+            var relativePath = $"{InstallRootRelativePath}/{packageDirName}/{ChangelogFileName}";
+            var errors = new List<string>();
+
+            foreach (var domain in JsDelivrDomains)
+            {
+                try
+                {
+                    return await GetTextAsync($"https://{domain}/gh/{RepoPath}@{tag}/{relativePath}",
+                        JsDelivrCheckTimeoutSeconds);
+                }
+                catch (Exception e)
+                {
+                    errors.Add($"jsDelivr ({domain}): {e.Message}");
+                }
+            }
+
+            try
+            {
+                return await GetTextAsync($"{GitHubRawUrlBase}/{tag}/{relativePath}",
+                    GitHubCheckTimeoutSeconds);
+            }
+            catch (Exception e)
+            {
+                errors.Add($"GitHub Raw: {e.Message}");
+            }
+
+            throw new Exception("更新日志拉取失败：\n" + string.Join("\n", errors));
+        }
+
+        /// <summary>读取本地包内 CHANGELOG.md 全文；文件不存在返回 null。</summary>
+        public static string LoadLocalChangelog(string packageAssetsPath)
+        {
+            var path = ToAbsolutePath(packageAssetsPath + "/" + ChangelogFileName);
+            return File.Exists(path) ? File.ReadAllText(path) : null;
+        }
+
+        /// <summary>
+        /// 生成「本地版本 → 远程版本」的更新日志摘要文本（每包一节，按传入顺序）。
+        /// <para>
+        /// 远程优先：按 tag 拉取包内 CHANGELOG.md 并提取比本地新的段落；远程拉取失败时回退本地包内
+        /// CHANGELOG 的最新段落并标注来源。日志属辅助信息，任何单包失败不影响其余包与其摘要输出。
+        /// </para>
+        /// </summary>
+        public static async Task<string> BuildChangelogDigestAsync(string remoteTag,
+            IReadOnlyList<InstalledPackage> outdatedPackages)
+        {
+            var builder = new StringBuilder();
+            foreach (var pkg in outdatedPackages)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append('\n');
+                }
+
+                builder.Append("【").Append(pkg.DirName).Append("】v").Append(pkg.Version)
+                    .Append(" → ").Append(remoteTag).Append('\n');
+
+                string remoteMarkdown = null;
+                try
+                {
+                    remoteMarkdown = await FetchPackageChangelogAsync(remoteTag, pkg.DirName);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[Aesir Updater] {pkg.DirName} 远程更新日志拉取失败，回退本地日志。\n{e.Message}");
+                }
+
+                if (remoteMarkdown != null)
+                {
+                    var sections =
+                        CollectNewerSections(ParseChangelogSections(remoteMarkdown), pkg.Version, remoteTag);
+                    builder.Append(sections.Count > 0 ? RenderChangelogText(sections) : "（无新增版本段落）\n");
+                }
+                else
+                {
+                    var localSections = ParseChangelogSections(LoadLocalChangelog(pkg.AssetsPath));
+                    if (localSections.Count > 0)
+                    {
+                        builder.Append("（远程日志拉取失败，以下为本地包内最新段落）\n\n")
+                            .Append(RenderChangelogText(new List<ChangelogSection> { localSections[0] }));
+                    }
+                    else
+                    {
+                        builder.Append("（更新日志不可用：远程拉取失败，本地包内无 CHANGELOG.md）\n");
+                    }
+                }
+            }
+
+            return builder.ToString();
         }
 
         #endregion
@@ -744,6 +1064,133 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 Directory.Delete(dirs[i], true);
             }
+        }
+
+        #endregion
+
+        #region 更新执行
+
+        /// <summary>当前项目根目录是否存在 .git（若是 AesirFramework 开发仓库，执行更新会覆盖本地源码）。</summary>
+        public static bool IsGitRepository() => Directory.Exists(ToAbsolutePath(".git"));
+
+        /// <summary>
+        /// 构建更新前的确认框文本：逐包列示「本地 v旧 → 远程新」，附备份与覆盖说明；
+        /// <paramref name="isGitRepository" /> 为 true 时追加开发仓库警告。
+        /// </summary>
+        public static string BuildUpdateConfirmation(IReadOnlyList<InstalledPackage> targets,
+            string remoteVersion, bool isGitRepository)
+        {
+            var builder = new StringBuilder();
+            builder.Append("即将更新以下包：\n\n");
+            foreach (var pkg in targets)
+            {
+                builder.Append("    ").Append(pkg.DirName)
+                    .Append("：v").Append(pkg.Version).Append(" → ").Append(remoteVersion).Append('\n');
+            }
+
+            builder.Append('\n')
+                .Append("更新前自动备份 ").Append(InstallRootRelativePath).Append(" 至 ")
+                .Append(BackupDirName).Append("/（保留最近 ").Append(BackupKeepCount).Append(" 份）。\n")
+                .Append("包目录内的本地修改将被 Release 内容覆盖，可从备份还原。");
+
+            if (isGitRepository)
+            {
+                builder.Append(
+                    "\n\n⚠ 检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，更新会覆盖本地源码，强烈建议取消。");
+            }
+
+            builder.Append("\n\n确认开始更新？");
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// 执行更新：整体备份 → 逐包（下载 → 按清单差集清残留 → 静默导入 → 登记安装清单）。
+        /// 返回备份目录的绝对路径（无安装源时备份为 null）。
+        /// </summary>
+        /// <param name="snapshot">检测结果快照；<see cref="ReleaseSnapshot.Info" /> 同时承载新清单，
+        /// 302 重定向降级路径无清单，残留清理自动跳过。</param>
+        /// <param name="targets">待更新包列表，须已按依赖顺序排列（Architecture 先于 Modules）。</param>
+        /// <param name="onProgress">进度回调（阶段描述 + 0~1 进度）。</param>
+        public static async Task<string> UpdatePackagesAsync(ReleaseSnapshot snapshot,
+            IReadOnlyList<InstalledPackage> targets, Action<string, float> onProgress)
+        {
+            // 1. 整体备份（一次，覆盖本次全部导入）
+            onProgress?.Invoke("备份 Assets/Runestone ...", 0.05f);
+            var backupPath = BackupRunestone($"{DateTime.Now:yyyyMMdd-HHmmss}_v{GetMaxVersion(targets)}");
+
+            var localManifest = LoadLocalManifest();
+
+            // 2. 逐包下载导入（targets 已按依赖顺序排列）
+            for (var i = 0; i < targets.Count; i++)
+            {
+                var pkg = targets[i];
+                var assetUrl = snapshot.GetUnityPackageUrl(pkg.DirName);
+                var assetName = $"{pkg.DirName}-v{snapshot.Tag.TrimStart('v')}.unitypackage";
+
+                var progressBase = 0.1f + 0.8f * i / targets.Count;
+                var progressSpan = 0.8f / targets.Count;
+                onProgress?.Invoke($"[{pkg.DirName}] 下载 {assetName} ...", progressBase);
+                var bytes = await DownloadBytesAsync(assetUrl,
+                    p => onProgress?.Invoke($"[{pkg.DirName}] 下载 {assetName} ...",
+                        progressBase + progressSpan * p));
+
+                var tempDir = ToAbsolutePath("Temp/AesirUpdate");
+                Directory.CreateDirectory(tempDir);
+                var tempFile = Path.Combine(tempDir, assetName);
+                File.WriteAllBytes(tempFile, bytes);
+
+                onProgress?.Invoke($"[{pkg.DirName}] 导入 {assetName} ...", progressBase + progressSpan * 0.95f);
+                AssetDatabase.ImportPackage(tempFile, false);
+                File.Delete(tempFile);
+
+                // 导入后先校验再清理：包目录缺失说明导入静默失败（unitypackage 损坏等），
+                // 此时跳过残留清理与清单登记（旧清单保留，下次更新的差集依据不丢失），并告警指向备份
+                var newEntry = snapshot.Info?.GetPackage(pkg.DirName);
+                if (!Directory.Exists(ToAbsolutePath(pkg.AssetsPath)))
+                {
+                    Debug.LogError($"[Aesir Updater] {pkg.DirName}: 导入后未找到包目录 {pkg.AssetsPath}，" +
+                                   $"导入可能已失败。本次未执行残留清理，请从备份恢复：{backupPath}");
+                    continue;
+                }
+
+                // 残留清理：仅当本次检测带清单且本地存在上次安装清单时有明确删除依据。
+                // 清理在导入成功之后执行——导入失败不会造成"旧文件已删、新文件未进"的双失局面
+                if (newEntry != null)
+                {
+                    var stale = ComputeStaleFiles(
+                        localManifest?.GetPackage(pkg.DirName)?.files, newEntry.files, pkg.AssetsPath);
+                    var deleted = DeleteStaleEntries(stale);
+                    PruneEmptyDirectories(pkg.AssetsPath);
+                    if (deleted > 0)
+                    {
+                        Debug.Log($"[Aesir Updater] {pkg.DirName}: 清理 {deleted} 个残留条目");
+                    }
+                }
+
+                // 3. 逐包登记新清单：更新中途域重载时，已导入包的状态保证正确落盘
+                if (newEntry != null)
+                {
+                    localManifest = MergePackageEntry(localManifest, newEntry);
+                    SaveLocalManifest(localManifest);
+                }
+            }
+
+            return backupPath;
+        }
+
+        /// <summary>取包列表中的最高版本号（两包版本由 CI 强制一致，此处仍按最高取值兜底）。</summary>
+        static string GetMaxVersion(IEnumerable<InstalledPackage> packages)
+        {
+            string max = null;
+            foreach (var pkg in packages)
+            {
+                if (max == null || CompareVersion(pkg.Version, max) > 0)
+                {
+                    max = pkg.Version;
+                }
+            }
+
+            return max ?? "0.0.0";
         }
 
         #endregion
