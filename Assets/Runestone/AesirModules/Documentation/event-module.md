@@ -1,16 +1,14 @@
 # 事件模块（Event Module）
 
-> ⚠️ **实验性模块**：尚未在实际项目中验证，API 可能调整。
-
 ## 概述
 
 事件模块提供基于双轨订阅的事件系统，实现业务模块间的发布-订阅解耦。
 
 - **Attribute 订阅**：`[AesirListener]` 特性标记方法，`AddListener(obj)` 反射扫描注册
 - **Script 订阅**：`AddListener<T>(obj, callback)` 动态注册 Lambda 委托，返回 `AutoRemoveListenerHandle`
-- 两种订阅共存于独立注册表，分发时合并并按 4 档优先级排序执行
+- 两种订阅共存于独立注册表，分发时合并进迭代快照，按 4 档优先级稳定排序执行（同档按注册顺序）
 - **订阅者过滤器**：`WithFilter` 链式声明"只让特定范围的订阅者收到"（精确投递）
-- **分发期可靠性**：自动清理已销毁订阅者（死引用）；可选分发耗时告警
+- **分发期可靠性**：快照迭代（回调内退订/注册不影响本趟分发）、支持重入发布（回调内可安全再发布事件）、自动清理已销毁订阅者（死引用）；可选分发耗时告警
 - **SO 资产化**：`AesirEventArgsSO` 让事件可保存为 .asset 资源，`UnityEventOnAesirEvent` 桥接 Inspector UnityEvent
 
 > **注意**：`AesirEventArgs` 是事件参数载体（类似 `EventArgs`），本身不持有监听者。订阅管理由 `EventModule` 的双注册表负责。这与 `MiniEvent`（自身持有 `Action` 列表的自包含事件）在设计定位上不同。
@@ -89,6 +87,7 @@ public abstract class BindingInfo
     public string BindingKey { get; protected set; }
     public object Subscriber { get; protected set; }
     public SubscriberPriority Priority { get; protected set; }
+    public long InsertionIndex { get; internal set; }  // 注册顺序号（同优先级稳定排序的次键）
     public abstract void Invoke(object[] args = null);
 }
 ```
@@ -211,7 +210,7 @@ new OnTick().WithFilter(new WithPriority(SubscriberPriority.Medium)).Invoke(this
 
 | 过滤器 | 语义 |
 |--------|------|
-| `WithTag(tag)` | 仅 Tag 匹配的订阅者收到 |
+| `WithTag(tag)` | 仅 Tag 匹配的订阅者收到（tag 须非 null 非空串，构造期 fail-fast 抛出） |
 | `WithPriority(priority)` | 仅绑定在指定优先级档位的订阅者收到 |
 | `SameSceneAsEmitter` | 仅与发布者同场景的订阅者收到（适配多场景叠加加载） |
 | `OnlySelf` | 仅发布者自身/子树/父级链上的订阅者收到 |
@@ -259,11 +258,18 @@ DynamicBindings (Dictionary<string, List<BindingInfo>>)
 
 RaiseEvent:
   1. 从两个注册表取订阅者列表
-  2. 合并（仅在两个注册表都有数据时才创建新 List）
-  3. 按优先级排序（count > 1 才排序）
-  4. 逐订阅者：死引用检查 → 过滤器检查 → 调用（复用 object[] 参数数组）
-  5. 循环外：移除本轮收集的死绑定；超阈值输出耗时告警
+  2. 合并进迭代快照（顶层复用迭代缓冲区；重入层使用独立局部列表）
+  3. 按优先级稳定排序（Priority 主键 + InsertionIndex 注册序次键；count > 1 才排序）
+  4. 逐订阅者：死引用检查 → 过滤器检查 → 调用（顶层复用 object[] 参数数组）
+  5. 循环外：移除本轮收集的死绑定；超阈值输出耗时告警（仅顶层分发计时）
 ```
+
+### 快照迭代与重入安全
+
+分发循环基于注册表快照执行，两个语义由此保证：
+
+- **回调内退订/注册不影响本趟分发**——订阅者回调内 `RemoveListener` / 句柄 `Dispose` / 新增订阅，只修改注册表本身，本趟迭代仍按快照执行完毕（退订的订阅者本趟仍会收到，新增的订阅者从下趟开始收到），不会出现"退订后续订阅者导致跳过一个"的索引位移。
+- **回调内可安全同步发布事件（重入）**——订阅者回调内再发布任何事件（同型或异型），重入层使用独立的局部迭代列表、局部参数数组与局部死绑定收集，外层循环继续时剩余订阅者仍收到正确的外层事件参数。重入层不再复用顶层的共享缓冲区，代价是重入层每次分发一次小的局部分配。
 
 ### 死引用清理
 
@@ -275,7 +281,7 @@ RaiseEvent:
 
 ### 性能模型（冷/热路径）
 
-反射只发生在**冷路径**（注册期，一次性成本），**热路径**（分发期）零反射、稳态零分配：
+反射只发生在**冷路径**（注册期，一次性成本），**热路径**（分发期）零反射、零字符串分配、零装箱、零闭包捕获；顶层分发零列表分配（迭代缓冲区 Clear 复用），重入层除外（见"快照迭代与重入安全"）：
 
 **冷路径（`AddListener` / `Bind`，每次订阅/退订）**：
 
@@ -294,16 +300,17 @@ RaiseEvent:
 | 绑定键查询（Type→string 缓存后；原生 `AssemblyQualifiedName` 拼接每次 ~1µs + 新分配字符串） | ~20ns 字典查询，零分配 |
 | 1000 订阅者单次发布（含死引用检查、过滤器检查、排序、调用） | ~571µs |
 
-热路径复用 `object[]` 参数数组、死绑定收集列表与静态 `Stopwatch`；过滤器列表懒分配（未声明过滤器时为 null，零开销）。
+顶层热路径复用迭代缓冲区、`object[]` 参数数组、死绑定收集列表与静态 `Stopwatch`（Clear 保留容量，稳态零分配）；过滤器列表懒分配（未声明过滤器时为 null，零开销）。`List.Sort` 的比较器包装为每次排序一次小分配（订阅者 ≥ 2 才触发）；重入层使用局部列表与局部数组，每次重入分发分配一个小的局部列表。
 
 **性能回归测试**（`Tests/Editor/EventModuleTests.cs`，防止优化退化）：
 
 - `GetEventBindingKey_Cached_SameStringInstancePerType` — 同类型键复用同一字符串实例（引用同一性断言，锁定热路径零字符串分配）
 - `CompiledDelegate_InvokeIsFasterThanReflectionInvoke` — 20 万次迭代对比计时，断言编译委托快于 `MethodInfo.Invoke`
+- `Dispatch_ThousandSubscribers_CompletesWithinGenerousBudget` — 1000 订阅者单次分发的信息性软门槛（实测约 0.6ms，门槛放大千倍仅作量级回归防线，CI 波动不脆）
 
 ### 性能监控
 
-`executionMsLimit`（毫秒，默认 0 = 关闭）为分发耗时告警阈值。开启后单次分发超过阈值输出 Warning（含事件名、耗时与订阅者数量）。计时复用静态 `Stopwatch`，零稳态分配。分发为同步非重入设计：订阅者回调内再次发布事件不受计时与参数数组复用保护（约定不在回调内同步发布事件）。
+`executionMsLimit`（毫秒，默认 0 = 关闭）为分发耗时告警阈值。开启后单次分发超过阈值输出 Warning（含事件名、耗时与订阅者数量）。计时复用静态 `Stopwatch`，零稳态分配；**仅顶层分发计时**——重入层不计时，避免嵌套分发的 Restart/Stop 互相破坏计时。分发支持重入，语义见"快照迭代与重入安全"。
 
 ### 退订
 

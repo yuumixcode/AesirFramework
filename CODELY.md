@@ -16,8 +16,8 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.20.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.20.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 实验性事件模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.20.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.20.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
@@ -45,7 +45,7 @@
 
 | 角色 | 接口 | 能力 | 说明 |
 |------|------|------|------|
-| **Model** | `IModel` → `AbstractModel` | GetModel, GetService | 数据层；仅通过 Command 写入 |
+| **Model** | `IModel` → `AbstractModel` | GetModel | 数据层；仅通过 Command 写入 |
 | **Service** | `IService` → `AbstractService` | GetModel, GetService | 跨模块协调；不能执行 Command/Query |
 | **View** | `IView` | GetModel, GetService | 只读访问；不能执行 Command |
 | **Controller** | `IController` | GetModel, GetService, ExecuteCommand, ExecuteQuery | MVC 模式入口（推荐） |
@@ -73,6 +73,7 @@
 - **`MonoLifecycleProxy`** — 生命周期代理，将 Unity 原生回调统一为可订阅的 MiniEvent；调用期增删监听为**快照语义**（`_invoking` 标志 + `_pendingChanges` 挂起队列，趟末按发生顺序应用，对齐原生多播委托）
 - **`GenericLocator<T>`** — 类型键控的服务定位器（保序注册/查询）
 - **`AesirArchitecturePlayerLoop`** — PlayerLoop 注入；`EnsureInjected()` 公开 API + `Register` 期自动检测
+- **`AesirScheduler`** — 帧粒度时间调度原语（纯 C# 静态 API：`Delay`/`NextFrame`），经 PlayerLoop BeforeUpdate 钩子结算；有意收窄：帧粒度精度、游戏时间（timeScale）、一次性任务无句柄/取消/暂停/不池化、仅主线程、稳态零分配、RIOLM 类内重置
 - **`ResetStaticsAssistant`** — 仅服务泛型类的静态重置（泛型类 RIOLM 被 Unity 静默跳过）
 
 ### 渐进式示例家族（六档）
@@ -99,6 +100,7 @@
 - **事件总线 / EventChannel** — 不做；跨模块通信使用互相 GetModel + ObservableValue 订阅，或直接引用 MiniEvent
 - **Context 多实例** — 不做；CRTP 泛型单例，多存档/多房间在业务层建模
 - **Command/Query 池化、async、Undo/Redo** — 不做；保持同步、无缓存
+- **时间调度的完整形态** — 不做；`AesirScheduler` 有意收窄为帧粒度一次性任务（无取消句柄/暂停/精确计时）
 - **View 生命周期脚手架** — 不做；面板生命周期由 Aesir Modules 的 UIModule 负责
 - **线程安全** — 不做；仅保证主线程使用
 - **监听回调不应抛异常** — 框架约定（fail-fast），异常直接向上传播由 Unity 记日志
@@ -119,12 +121,14 @@
 
 ### 包内更新器（Editor）
 
-- **`AesirUpdateService` / `AesirUpdateWindow`** — 位于 `Editor/UpdateChecker/`（`Runestone.AesirArchitecture.Editor` 程序集），菜单 `Tools/Aesir/Check for Updates`
+- **`AesirUpdateService` / `AesirUpdateWindow`（IMGUI 兜底）/ `AesirUpdateWindowOdin`（Odin 版）** — 服务与兜底窗口位于 `Editor/UpdateChecker/`（`Runestone.AesirArchitecture.Editor` 程序集），Odin 窗口位于 `Editor/OdinInspector/UpdateChecker/`（Odin 编辑器程序集，ODIN_INSPECTOR 条件编译）；菜单 `Tools/Aesir/Check for Updates` 经 `AesirUpdateWindow.OdinWindowOpener` 静态委托路由：Odin 程序集经 [InitializeOnLoadMethod] 注册打开方式，未装 Odin 时落回 IMGUI 兜底窗口，两版共用全部服务逻辑
 - 面向"代码导入 Assets/Runestone（非 UPM）"的用户：扫描 `Assets/Runestone/*/package.json` 识别本地安装；版本检测三级兜底（首个成功即返回）：① jsDelivr 多域名（cdn/testingcf/gcore/fastly，5s 超时）拉取仓库内 `.github/update-info.json`（大陆友好、无限流；分支引用 CDN 缓存最长约 12 小时）② GitHub Releases API（未认证 60 次/时/IP，按出口 IP 计数）③ GitHub releases/latest 的 302 Location 探测（完全绕开 API 限流）。unitypackage 下载始终走 GitHub Release 直链（jsDelivr 不代理 Release 资产）
-- 更新流程：下载 `<包目录名>-v<版本>.unitypackage`（Release 资产命名约定）→ 自动备份 `Assets/Runestone` 到项目根 `.aesir-backup/`（时间戳前缀命名保证排序即时间序，保留最近 3 份）→ 按"上次安装清单 − 新版清单"差集删除残留条目（仅限本包目录内，无历史清单则跳过，不误伤用户新增文件）→ `AssetDatabase.ImportPackage` 静默导入 → 逐包合并登记 `.aesir/installed-manifest.json`（更新中途域重载时已导入包的状态保证正确落盘）
+- 更新流程：确认框二次确认（`BuildUpdateConfirmation` 逐包列示「本地 v旧 → 远程新」+ 备份与覆盖说明，检测到 `.git` 追加开发仓库警告）→ 下载 `<包目录名>-v<版本>.unitypackage`（Release 资产命名约定）→ 自动备份 `Assets/Runestone` 到项目根 `.aesir-backup/`（时间戳前缀命名保证排序即时间序，保留最近 3 份）→ 按"上次安装清单 − 新版清单"差集删除残留条目（仅限本包目录内，无历史清单则跳过，不误伤用户新增文件）→ `AssetDatabase.ImportPackage` 静默导入 → 逐包合并登记 `.aesir/installed-manifest.json`（更新中途域重载时已导入包的状态保证正确落盘）；执行逻辑下沉 `AesirUpdateService.UpdatePackagesAsync`（带进度回调，双窗口共用）
+- 更新日志：检测成功后按远程 tag 拉取包内 `CHANGELOG.md`（jsDelivr 多域名 → GitHub Raw 兜底，`FetchPackageChangelogAsync`），提取「本地 → 远程」区间的版本段落显示在窗口面板（`BuildChangelogDigestAsync`）；远程拉取失败回退本地包内 CHANGELOG 最新段落并标注来源
+- 结构要点：远程版本 / 检测结果 / 更新日志为窗口序列化字段（更新导入触发域重载后内容不丢）；Odin 窗口行视图模型仅在状态变化时重建并预计算显示文本与颜色，IMGUI 窗口缓存过期包列表与 `.git` 检测 —— OnGUI 期间零 LINQ、零磁盘 IO
 - CI（auto-release.yml）发版后把 `update-info.json`（version/tag + 各包文件清单，`build_unitypackage.py --update-info` 生成，数组结构兼容 JsonUtility）以 `[skip ci]` 提交回 main 供 jsDelivr 拉取；Release 资产仅 3 个 unitypackage。302 探测降级路径无清单 → 更新时自动跳过残留清理
-- 设计边界：UPM（Git URL）安装的副本不在管辖内（不在 Assets 下，扫描不到），请用 Package Manager 更新；开发仓库（存在 `.git`）窗口显示警告勿更新——Release 内容会覆盖本地源码；实现参考 QFramework PackageKit（版本记录随包走 + 先删后导），增强点为自动备份与精确差集清理
-- EditMode 单测：`Tests/Editor/AesirUpdateServiceTests.cs`（版本比较 / package.json 解析 / 清单差集 / 残留删除与空目录回收 / 备份裁剪 / 清单 JSON / Release 资产定位）
+- 设计边界：UPM（Git URL）安装的副本不在管辖内（不在 Assets 下，扫描不到），请用 Package Manager 更新；开发仓库（存在 `.git`）窗口显示警告且确认框追加警示勿更新——Release 内容会覆盖本地源码；实现参考 QFramework PackageKit（版本记录随包走 + 先删后导），增强点为自动备份与精确差集清理
+- EditMode 单测：`Tests/Editor/AesirUpdateServiceTests.cs`（版本比较 / package.json 解析 / 清单差集 / 残留删除与空目录回收 / 备份裁剪 / 清单 JSON / Release 资产定位 / CHANGELOG 解析·区间筛选·渲染 / 确认框文本）
 
 ### Odin Inspector 集成
 
@@ -157,7 +161,7 @@
 - **`BinderAssistant` / `BinderTag`** — UI 元素组件绑定系统（OdinInspector 程序集）
 - **`SceneModule`** — 场景管理模块
 
-### 事件模块（实验性）
+### 事件模块
 
 - EventModule V2：EventModule 直接继承 AesirMonoBehaviour；双注册表分离（AttributeBindings + DynamicBindings）
 - `BindingInfo` 基类仅含 BindingKey/Subscriber/Priority + 抽象 `Invoke()`；`StaticBindingInfo` 持有 MethodInfo + 表达式树编译委托；`DynamicBindingInfo<T>` 持有 `Action<T>` 直接委托；Script 订阅返回 `AutoRemoveListenerHandle`
@@ -169,6 +173,12 @@
 - 系统事件（元事件）与 DefaultChannel 暂缓（依赖编辑器工具链）；单实例合并不实施（Awake 已销毁重复实例，订阅均经 Instance 单一通道）
 - 设计文档位于 Docs/AesirModules/EventModule/（私有仓库 Aesir-Docs：Feature-Roadmap.md / Sample-Plan.md）
 - EditMode 测试：Tests/Editor/EventModuleTests.cs（19 用例，含过滤器/死引用清理/性能监控/SO/多特性订阅）
+
+### 音频模块
+
+- `AudioModule` — 全静态门面（经 `AesirModules.GetOrAddChild<T>()` 创建 MonoBehaviour 单例）：SFX 用 N 个独占 AudioSource 轮询（默认 8，等效池化、每播音调/音量独立）；BGM 专用 loop 源 + 独立淡变系数协程淡入淡出（unscaledDeltaTime）；三通道音量乘法链 + PlayerPrefs 持久化（键前缀 `AudioConfigSO` 可配）
+- 设计边界：不做 3D（原生 PlayClipAtPoint 替代）/ AudioMixer / 每音效 Stop / 播完回调
+- 示例：`Samples/Audio/01_BasicUsage`（OnGUI 面板 + 自包含 wav + 场景 SampleForAudioBasic）
 
 ### DDOL 机制
 
@@ -219,7 +229,7 @@
 | `Runestone.AesirArchitecture.Samples.PlaneWarMono` | Samples/PlaneWar/Scripts/Mono/ | 运行时 + #if UNITY_EDITOR |
 | `Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor` | Samples/PlaneWar/Editor/ | 场景引用一键修复菜单 |
 
-### Aesir Modules（8 个 asmdef + 4 个 asmref）
+### Aesir Modules（9 个 asmdef + 7 个 asmref）
 
 > 标准 Unity 自定义包根结构：包根两级目录 `Runtime/` 与 `Editor/`，功能模块以子目录形式存在于对应层级（如 `Runtime/UI/`、`Editor/UI/`），模块间零依赖；删除模块 = 删 `Runtime/<模块>/` 与 `Editor/<模块>/`。核心程序集锚点在层根，层内模块主代码自动汇入；细分程序集锚点在 `Common/` 下，模块专属代码（`OdinInspector/`、`Addressables/` 子目录）经 Assembly Definition Reference（asmref）汇入。
 
@@ -232,6 +242,8 @@
 | `Runestone.AesirModules.Editor.Addressables` | Editor/Common/Addressables/ | Addressables 胶水（AESIR_MODULES_ADDRESSABLES）；Editor/Scene/Addressables/ 经 asmref 汇入 |
 | `Runestone.AesirModules.InputSystem` | Runtime/UI/InputSystem/ | UIRoot 输入模块替换（ENABLE_INPUT_SYSTEM，独立可选） |
 | `Runestone.AesirModules.Scene.Tests` | Editor/Scene/Tests/ | Scene 模块 EditMode 测试（UNITY_INCLUDE_TESTS） |
+| `Runestone.AesirModules.Tests` | Tests/（根） | 包级 EditMode 测试（Binder/EventModule/Audio/UIModule/ScriptDocGenerator；引用 core+Odin，Editor-only + UNITY_INCLUDE_TESTS） |
+| `Runestone.AesirModules.Tests.Runtime` | Tests/Runtime/ | 包级 PlayMode 测试（SceneModule 真实加载成功路径 4 用例 + TestScenes 最小场景资产；含 UnityEditor 运行时登记 BuildSettings，仅编辑器编译） |
 | `Runestone.AesirModules.Samples.Events.KeyPress` | Samples/Events/01_KeyPress/ | 运行时 + #if UNITY_EDITOR |
 
 ---
@@ -253,6 +265,7 @@
 | SampleForPlaneWarMono | `Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Scene/` | PlaneWar 纵版射击（Mono 版）示例 |
 | SampleForEventFilters | `Assets/Runestone/AesirModules/Samples/Events/02_Filters/Scene/` | 事件模块订阅者过滤器对照示例 |
 | SampleForEventSOAsset | `Assets/Runestone/AesirModules/Samples/Events/03_SOAsset/Scene/` | 事件模块 SO 资产化 + UnityEvent 桥接示例 |
+| SampleForAudioBasic | `Assets/Runestone/AesirModules/Samples/Audio/01_BasicUsage/Scene/` | 音频模块基础用法（OnGUI 面板）示例 |
 
 > 示例场景均在包内 `Samples/` 目录（`Samples~/` 为镜像）；Git URL 安装的项目经 Package Manager 导入后位于 `Assets/Samples/<包名>/<版本>/`。
 
@@ -272,12 +285,14 @@
 8. **ObservableCollections（可观察集合）** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` 使用示例：订阅 Added / Removed / Replaced / Updated / Cleared 事件，ContextMenu 触发增删改查与集合运算；命名空间 `Runestone.AesirArchitecture.Samples.ObservableCollections`
 9. **MiniEvent** — `MiniEvent` 和 `MiniEvent<T>` 使用示例（无参/单参事件）
 10. **PlaneWar（Mono 版）** — 纵版射击飞机大战实战示例：得分 HUD、三型敌机、重开流程；命名空间 `Runestone.AesirArchitecture.Samples.PlaneWarMono`，`Tools → Aesir → PlaneWar → Fix Scene References` 一键修复引用；RAA 版（Scripts/Raa）待编写
+11. **RuntimeInitializeLoadType（初始化时机）** — 五个 `RuntimeInitializeLoadType` 阶段触发顺序演示（SubsystemRegistration → AfterAssembliesLoaded → BeforeSplashScreen → BeforeSceneLoad → AfterSceneLoad），开关经设置窗口控制（`Tools → Aesir → Architecture → Samples/RuntimeInitializeLoadType`）；纯编辑器程序集（Editor-only asmdef），已登记 package.json samples
 
 ### Aesir Modules（包内 `Samples/Events/`）
 
 1. **Event Module - Key Press** — 事件模块基本发布-订阅示例：按键发布事件、`[AesirListener]` 静态订阅
 2. **Event Module - Filters（过滤器）** — `02_Filters`：Space 发布 `WithTag("Player")`+`InsideCollider2D` 双重过滤警报、R 发布 `OnlySelf` 家族命令；场景 `SampleForEventFilters.unity` 内置圈内/圈外/无标签、家族/无关多组对照组 + uGUI HUD 接收日志（跨平台中文字体）；命名空间 `Runestone.AesirModules.Samples.Events.Filters`
 3. **Event Module - SO Asset（SO 资产化）** — `03_SOAsset`：`ScoreEventAsset.asset`（AesirEventArgsSO + managedReference 指向 ScoreChangedEvent，NewScore=100）+ 场景 `SampleForEventSOAsset.unity` 演示 `UnityEventOnAesirEvent` 桥接组件零代码串联 UnityEvent 回调（On Raised 持久绑定 ScoreBulb.Flash）+ ScorePublisher 代码订阅同事件展示双消费方式；命名空间 `Runestone.AesirModules.Samples.Events.SOAsset`
+4. **Audio Module - Basic Usage（基础用法）** — `01_BasicUsage`：OnGUI 面板演示 SFX 轮询播放、BGM 淡入淡出切换与三通道音量/静音持久化；场景 `SampleForAudioBasic.unity`；命名空间 `Runestone.AesirModules.Samples.Audio.BasicUsage`
 
 ---
 
@@ -317,7 +332,7 @@ AesirFramework/
 │   │   │   │   └── Common/            # AesirArchitecture 单例、Debug、ResetStaticsAssistant
 │   │   │   ├── Editor/                # 定义符号管理、QuickCreateSO、包内更新器、Odin AttributeProcessors
 │   │   │   ├── Tests/                 # Editor 110 个 + Runtime PlayMode 测试
-│   │   │   ├── Samples/               # 示例（编写主位，10 个，构建剔除）
+│   │   │   ├── Samples/               # 示例（编写主位，11 个，构建剔除）
 │   │   │   ├── Samples~/              # 示例发布镜像（Package Manager 按需导入）
 │   │   │   ├── Documentation/         # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
 │   │   │   └── Documentation~/        # 文档镜像（Git URL 安装隐藏副本，无 .meta）
@@ -326,7 +341,7 @@ AesirFramework/
 │   │       │   ├── Common/            # 共享基础 + Odin 运行时锚点（OdinInspector/）
 │   │       │   ├── UI/                # UIModule、UIRoot 等（InputSystem/ 独立程序集、OdinInspector/ Binder 经 asmref）
 │   │       │   ├── Scene/             # SceneModule、SceneAssetWrapper（含 Exceptions/）
-│   │       │   ├── Events/            # 实验性事件模块（含 Component/）
+│   │       │   ├── Events/            # 事件模块（含 Component/）
 │   │       │   └── ScriptDocGenerator/ # 脚本文档生成模块（OdinInspector/ 经 asmref 汇入 Odin 程序集）
 │   │       ├── Editor/                # 核心编辑器锚点（Runestone.AesirModules.Editor.asmdef）
 │   │       │   ├── Common/            # Odin 编辑器锚点（OdinInspector/）+ Addressables 胶水锚点（Addressables/）
@@ -516,7 +531,7 @@ undefined
 - [2026-09-06 12:21:57] [project] Bridge unity_editor.refresh 的场景污染坑（2026-09-06，团结 2022.3.62 实测）：refresh 在编译域重载前会执行 CompilationHelper.EnsureScenesSavedBeforeReload → EditorSceneManager.SaveScene，把当前打开场景（含未清理的测试对象）写盘。**How to apply:** 编辑器 E2E 测试若向已打开场景注入临时对象，必须保证每次 refresh 前对象已删除；refresh 后用 git diff 核实场景文件。另注意两个坑：①无编译发生时 refresh 不触发保存，内存干净但磁盘仍是旧快照，需 exec_editor_script 强制 EditorSceneManager.SaveScene；②GenerateCode 类内部调用 AssetDatabase.Refresh() 并未立即触发编译（编译推迟到下一次 unity_editor.refresh），DidReloadScripts 挂载流程实际在显式 refresh 后执行。
 - [2026-09-06 13:52:12] [project] Binder 功能组织定稿（2026-09-06 用户裁决）：Binder 全部收录于 Odin 程序集（Runtime/UI/OdinInspector/Binder/，含 BinderBaseTypeAttribute）——原因：其类型选择器（组件/基类 ValueDropdown）强依赖 Odin Inspector，已写入三份包 README。联动变化：①BinderBaseTypeAttribute 从核心程序集迁回 Odin 程序集，核心三个面板基类（AesirBasePanel/View<T>/ViewController<T>）不再标注（核心无法反向引用 Odin asmdef）；②面板家族改由 BinderAssistant.GetBaseTypes 经 typeof 内置预选（泛型以 <T> 占位），[BinderBaseType] 仅用于用户自定义基类（需引用 Runestone.AesirModules.OdinInspector，autoReferenced 对 Assembly-CSharp 生效）；③Binder 单元测试从 Editor/UI/OdinInspector/Binder/Tests/ 迁至包根 Tests/Editor/，asmdef 改名 Runestone.AesirModules.Tests（引用 core+Odin，Editor-only + UNITY_INCLUDE_TESTS），BinderCodeGenerator 的 InternalsVisibleTo 已联动改名。**How to apply:** CODELY.md「程序集定义」表需用户手动补 Runestone.AesirModules.Tests 行；后续包级测试（非 Scene 模块）放 Tests/Editor/。
 - [2026-09-06 14:50:48] [project] 单程序集编译失败会静默冻结整个编译管线（2026-09-06 HUDPanel 泛型占位案例实测，团结 2022.3.62）：任一程序集编译失败（如 Assembly-CSharp 里自动生成文件含非法基类占位 <T>）→ 域不重载，**所有程序集停留在旧版本**——磁盘源码已更新但反射探测不到新成员（AddComponent 后报 "Could not find field"）、TestRunnerApi 跑的是旧测试（用例数不变是关键线索）、仅 Console 显示那个无关文件的错误。另：exec_editor_script 的 Roslyn 脚本程序集不在 InternalsVisibleTo 名单内，探针访问 internal 类型/成员必须全反射（先 Type.GetType 到目标程序集再 GetMethod/Field，BindingFlags 显式 Public|NonPublic）。**How to apply:** refresh 后若新代码"没生效"，先查 Console 是否有其他程序集（尤其用户生成文件/Assembly-CSharp）的编译错误，修复阻塞源文件本身即可恢复；验证新代码是否真正加载用反射探测新成员存在性，勿信测试通过即加载成功。
-- [2026-09-06 16:14:34] [project] 团结引擎 ScriptableSingleton API 差异（2026-09-06 BinderEditorSettings 实测）：团结引擎 2022.3.62 的 UnityEditor.ScriptableSingleton&lt;T&gt; 实例属性是**小写 instance**（标准 Unity 为大写 Instance），代码直接写 .Instance 会报 CS0117。**How to apply:** 需要双引擎兼容时用反射封装（GetProperty("Instance") ?? GetProperty("instance")，Public|Static + NonPublic 兜底），缓存后使用；参考 BinderEditorSettings.Settings。另：Odin 类级 DetailedInfoBox 只能放一个（两个会抛 InvalidOperationException: The state 'ShowDetailedMessage' already exists on '$ROOT'）——多个说明合并进一个 box 分节展示。
+- [2026-09-06 16:14:34] [project] 【2026-09-13 用户纠正：本条目原结论错误】UnityEditor.ScriptableSingleton&lt;T&gt; 的实例属性 **instance 小写是 Unity 原生 API 设计**，标准 Unity 与团结引擎均为小写——并非团结特有差异。当年写 .Instance 报 CS0117 是因为两引擎都只有小写属性。**How to apply:** 直接用 .instance 即可（Scene 模块 SceneEditorSettings.instance 9 处直用为正确范式）；BinderEditorSettings 的反射双探测封装保留但非必需，新代码勿再照抄该反射。（原条目其余内容仍有效：）Odin 类级 DetailedInfoBox 只能放一个（两个会抛 InvalidOperationException: The state 'ShowDetailedMessage' already exists on '$ROOT'）——多个说明合并进一个 box 分节展示。
 - [2026-09-06 18:27:52] [project] SerializedMonoBehaviour 反射修改会被 Odin 序列化数据在域重载后覆盖（2026-09-06 HUD ContextTypeName 两次丢失实测）：对 SerializedMonoBehaviour 派生组件用反射 FieldInfo.SetValue + SetDirty 修改 public 字段，场景保存写入 Unity YAML 键，但域重载时 Odin 用自身序列化数据恢复字段（覆盖 YAML 键值）→ 修改"丢失"。**How to apply:** 编辑器脚本修改 SerializedMonoBehaviour 组件字段必须走 SerializedObject（FindProperty + ApplyModifiedProperties）+ SetDirty + SaveScene；验证修改存活需跨一次 refresh（域重载）后重新检查。另：Modules 测试 asmdef 用 overrideReferences:true 时 Sirenix 预编译 DLL 也被屏蔽——测试引用 BinderAssistant（SerializedMonoBehaviour 链）需在 precompiledReferences 显式列出 Sirenix.OdinInspector.Attributes / Sirenix.Serialization / Sirenix.Serialization.Config / Sirenix.Utilities（nunit 之外）。
 - [2026-09-06 20:37:02] AesirFramework 公开文档站（yuumixcode/AesirFramework-Docs，gh-cli 创建）：Zensical 静态站 + GitHub Pages（deploy.yml，build_type=workflow，CI= pip install zensical + build --strict），线上 https://yuumixcode.github.io/AesirFramework-Docs/。本地源位于 /Users/yuumix/Projects/Unity/AesirFramework/AesirFramework-Docs（**已按用户要求移入主项目根、与 Assets 同级**，主仓 .gitignore 已加 /AesirFramework-Docs/ 排除）。2026-09-06 已完成正式内容填充：基于两包 README 与 Documentation/ 核查（概览/快速开始/特性/兼容性×2 包 + FAQ/support，版本口径 0.17.0），后续内容同步仍以包内 README 为事实基线；提交风格 docs: 中文单行主题。**Why:** 用户要公开官方文档站，与私有 Aesir-Docs（开发文档）并存。**How to apply:** 文档站改动进该仓库（勿混入 Aesir-Docs）；本地构建用 ~/.local/bin/zensical（pipx 安装，PEP 668 禁止 pip 系统级安装，bin 目录需显式加 PATH）；git 身份用 zeriying@gmail.com（全局默认 yuumixcode@foxmail.com，新仓库需按品牌惯例覆盖）。
 - [2026-09-11 10:13:22] [project] SubscriberPriority 实际只有 4 档（First/High/Medium/Last，代码 Assets/Runestone/AesirModules/Runtime/Events/SubscriberPriority.cs），High=Attribute 订阅默认、Medium=Script 订阅默认。**Why:** 2026-09-08 写文档站时实测源码确认；旧记忆与包内 Documentation/event-module.md 的"5 档 Essential→High→Medium→Low→Cleanup"均为过时描述（枚举 XML 注释头也误写 5 档），AesirFramework-Docs 已按 4 档修正。**How to apply:** 涉及事件模块优先级的文档/代码一律以 4 档为准；CODELY.md 正文与包内 event-module.md 的"5 档"表述已于 2026-09-11 全量修正（含中英 README 与源码 XML 注释），勿再当待办。
@@ -546,6 +561,13 @@ undefined
 - [2026-09-11 13:06:21] [2026-09-11 13:15] [project] 【本条目覆盖 2026-09-11 10:18:53 "RAM ScriptDocGenerator 全模块锐评完成"条目，其待修清单已处置，勿再当待办】RAM ScriptDocGenerator 锐评清单已基本修复完毕（2026-09-11，按用户指令逐项修复，工作树未提交、与 Events/Scene/UI 并行会话改动同存）。已落地：**P0 全部 8 项**（事件/方法阈值 <=0、常量表 ||、属性 flag 守卫、引号转义、EOL 保持+//// 判定、Front Matter 无闭合返回 false、StartsWith、ReflectionUtility 去 catch）；**P1 部分**（IParameterData[] Parameters 参数链、六种 XML 标签全链路到数据类、Zensical 说明列全渲染+删 80 行字符串反解析、删 UITK 窗口；**未做：Default 生成器引擎合并**）；**P2 全部**（OnEnable 只清分析态、程序集下拉过滤、Odin 原生 Toast+文案、调试检查模式 debugInspectionMode 默认关 + NonSerialized+ShowInInspector 仅调试渲染 + 程序集条件 Warning InfoBox `@$value.ShowAssemblyDebugWarning` 三参构造、默认输出目录项目根 ScriptDocGenerator/（.gitignore 已登记）、Summary 工具 Remove 确认/无变化跳过/批量单次 Refresh）；**P3 全部**（中英 README/模块文档语义与测试表修正、Zensical 章节、死代码清理）。**Summary 工具新语义（用户裁决 A）**：[Summary] 特性为权威源——Sync 特性存在时回写 XML 对齐、无特性回退 XML 生成；Replace 特性优先；拼接实参不可解析按无特性回退。新增 DefaultScriptingAPIOutputTests（4）+ XmlSummaryToolTests 新语义 7 用例（总 25）。**验证状态**：我的改动 refresh 0 错 0 警；EditMode 510 pass/7 fail 中 6 fail 属并行 UI 会话 UIModuleTests、1 fail 是 DLL 陈旧（编译管线被并行 Scene 会话 SceneModuleTests 19 个编译错误冻结，我的 rename 用例与新增测试未进 DLL）；新语义经反射探针全部直接验证通过（条件矩阵 False/True/False、OnEnable 保留配置/清分析态、Odin ShowToast 签名 public 匹配、Preprocessor Replace 行为）。**Why:** Scene 会话修复后需重跑测试确认全绿；P1 引擎合并未做。**How to apply:** 剩余项=①Scene 修复后重跑 refresh+测试；②Default 生成器重写为 AppendMemberSection 配置（578→~80 行）；③文档站 API 页重生成吃进 Zensical 新说明列。踩坑：并行会话占编辑器时 exec_editor_script 排队/超时/结果丢失，反射探针比等测试全绿可靠；Unity 同项目不能双开 batchmode（项目锁）；TestRunnerApi 多次 Execute 会互相取消（单次 Execute 带全部程序集名）。
 - [2026-09-11 15:04:04] [project] 【团结 2022.3.62 EditMode 测试方法论大坑位汇总（UI 会话实测，两小时排障代价）】① AesirModulesDebug 富文本前缀日志（<color> 标签）+多行 Destroy 错误——**LogAssert.Expect 纯字符串参数完全匹配不上，必须 new Regex(子串)**；但 Event 会话同款 Regex 用例通过而 UI 用例始终 Unhandled 的"玄学"另有真因（见④）。② 本引擎 LogAssert.ignoreFailingMessages 的 setter **自身会打 Log 级调试日志 "\nIgnoreFailingMessages:true/false"**——对日志做 IsEmpty 断言会误踩，改为过滤 LogType.Log 级别。③ EditMode 中 UIModule 的 Destroy 调用被引擎拒绝（"Destroy may not be called from edit mode" Error 但 no-op）——用例需 LogAssert/CaptureLogs 捕获该 Error，且被中止的克隆体悬在世界空间根（不在 UIRoot 子树，TearDown 连带销毁不可达）须 FindObjectsByType 扫描登记清理。④ **域重载锁死（本次最大坑）**：exec_editor_script 客户端超时被杀的 TestRunnerApi run 会遗留下未配对的 LockReloadAssemblies——此后磁盘 DLL 更新（python 字节级 UTF-16 搜断言文本可证实）但**域永不重载**，RequestScriptReload/CompilationPipeline.RequestScriptCompilation(CleanBuildCache)/touch 全部无效，测试永远跑旧代码且症状与"LogAssert 不匹配"高度相似（诊断关键：反射探测域内类型是否含新方法 + 比对堆栈行号）；解法=反射调 EditorApplication.UnlockReloadAssemblies()（私有静态，多解两次无害）+ 重新 RequestScriptReload + 激活编辑器（进程名是 **Tuanjie** 不是 Unity！osascript activate "Unity" 静默无效，须 `tell application "Tuanjie" to activate`，可用 System Events frontmost 验证）→ 落地标志是 custom_tools_reloaded 通知。⑤ TestRunnerApi.RegisterCallbacks **跨 submission 持久累积且不随域重载清理由 Bridge 重建**——历史回调会在每轮 run 里全部触发（日志混流多份 [PROBE-RESULT] 类前缀是已注销会话的遗留回调，非当前 run 结果），读测试结果只信当轮回调前缀与 RunFinished 汇总数字。⑥ TestRunnerApi 每次新建实例应 UnregisterCallbacks（团结签名 RegisterCallbacks/UnregisterCallbacks）防泄漏。**How to apply:** 跑测试发现"改了代码结果永远一样"时：先 python 字节级查磁盘 DLL 是否含新断言文本（区分"编译没跑"vs"域没重载"）→ 反射探测域内方法 → UnlockReloadAssemblies+RequestScriptReload+activate Tuanjie → 等 custom_tools_reloaded → 反射复验 → 再跑。UI 测试的 CaptureLogs 自捕获模式（logMessageReceived+ignoreFailingMessages 抑制）是日志断言的稳妥范式，UIModuleTests.cs 可复制。
 - [2026-09-11 15:36:44] [project] 2026-09-11 各会话工作树改动已分 7 批全部提交（de3a23e..9b1493f，未推送）：①RAA 注释口径整理+锐评收尾+设计变更记录 ②RAM Events 分发增强+SO 资产化 ③RAM Audio 新模块 ④RAM Scene 锐评修复 ⑤RAM UI 锐评修复 ⑥RAM ScriptDocGenerator 锐评修复 ⑦汇总文档+杂项（README/CHANGELOG/package.json/CODELY.md/asmdef 格式化/Bridge registry 化）。**Why:** 多个旧条目写"工作树未提交"已过时；且 RAA 批含用户 Rider 格式化 pass（无法与锐评修复拆分，commit 消息已注明叠加）。**How to apply:** 后续会话引用 Events/Audio/Scene/UI/SDG/RAA 锐评相关条目时，"工作树未提交"表述视为已提交；两包 CHANGELOG/README 仍为 [Unreleased] 状态，版本号未 bump（0.19.0 已发，下版待用户定）。
+- [2026-09-11 15:49:02] [project] 0.20.0 发版文档同步完成（2026-09-11，主仓 commit f00f1c2 未推送；文档站另提交 61ebf06/8223635）。本轮修复三处历史发版遗漏：①根 CHANGELOG"当前版本"表格与固定分支名 0.19.0 发版时漏更（停 0.18.0）；②文档站版本口径 0.19.0 发版时漏更（停 0.18.0）——文档站不在 aesir-version-sync 清单内；③RAA CHANGELOG 在 0.17.0/0.16.2 之间卡着历史错位 [Unreleased] 段（已清除，规划项并入顶部新 Unreleased；RAM"规划中"段同款迁移）。**Why:** 下次发版照此清单逐项核对可避免重复踩漏。**How to apply:** 发版同步清单 = git grep 旧版本号（排除历史段/update-info.json/记忆条目区）+ 两包 package.json + 两包中英 README×4 + 根 README×2 + 根 CHANGELOG 表格与分支名 + CODELY.md 正文（python 限定记忆节前行范围）+ 文档站（index/changelog/两 getting-started/compatibility，独立仓库 zeriying@gmail.com 身份 + zensical build --strict 验证）。推送后 CI 生成 AesirArchitecture-v0.20.0 / AesirModules-v0.20.0 分支，删除旧版本分支。
+- [2026-09-11 17:08:27] [project] 文档站 Scripting API 目录已迁至 docs/architecture/scripting-api/（2026-09-11 用户重生成 96 页=旧 83 类+13 个 Editor 命名空间页，按命名空间子目录 Runestone/AesirArchitecture[/Editor[/OdinInspector]] 组织；覆盖 2026-09-10 11:33 条目中的 docs/architecture/api/ 旧路径）。生成器只产类型页，索引/导航是会话内 ad-hoc 脚本（未入库），本次重写并验证的规则备下次复用：①scripting-api/index.md 命名空间索引——每页 note 块取种类/命名空间/程序集，`## 声明` 代码块后首段为 summary，>90 字符截断为 88+"…"（旧索引实测规则）；按命名空间 H2 → 种类 H3（类/结构体/接口/枚举/委托）分组，显示名（{T}→<T>）小写排序，表格用 <div class="api-summary-table" markdown="1"> 包裹，链接为相对路径 <Runestone/AesirArchitecture/X.md>；②zensical.toml 导航块——"命名空间参考" index 条目 + 3 个嵌套命名空间分组，组内按文件名排序。api.css 无路径引用（纯类选择器+CSS 变量），目录改名无需改 CSS。**Why:** 下次 API 重生成（0.19.0 新 API 已入页）照此规则几分钟复刻，勿重新逆向旧索引推导。**How to apply:** 改完 grep "architecture/api/" 归零 + zensical build --strict（~/.local/bin/zensical）+ 验证 site/architecture/scripting-api/index.html；本次已提交 cd9cd93 并连同用户 61ebf06/8223635 推送。nav 分组的语义基准=程序集（2026-09-11 用户裁决"维持现状"：当前命名空间与程序集 1:1 同名故结构与按程序集划分一致；未来重生成若出现命名空间≠程序集，分组应改用页面"程序集"字段）。
+- [2026-09-11 17:28:54] [project] 文档站 RAA/RAM 介绍页已对齐 0.20.0（2026-09-11，ddd79a9，14 文件 +314/−74）：新增 modules/audio.md（SFX 轮询/BGM 淡入淡出/三通道持久化，已入 nav）；events.md 重写（过滤器/SO 资产化/死引用清理/性能模型热路径数据）；scene.md 重写（SetActiveScene/场景事件广播/onProgress 0.9 归一化/Bootstrap 编辑器 opt-in 分工，GetTotalLoadingProgress 已删）；ui.md 补键语义三件套/OnClose-OnDestroy 分界/同步加载契约/删 IUIAssetLoader.Unload；RAA 侧修正 Model 能力=仅 GetModel（README 能力矩阵为准）、示例 10 个、MiniEvent 零分配补 (Invoke 路径) 限定。**Why:** 下次 API/模块变更后做文档站同步时，基线自此为 0.20.0，勿再按 0.18 旧页推断。**How to apply:** ①文档站页面正文用半角标点（逗号/括号），与主仓 README 全角不同——从 README 拷贝内容需转标点并匹配站内口吻；②ScriptDocGenerator 在文档站仅 features 一节提及、无专页（Odin 工具受众窄，如用户要求再建）；③验证流程=zensical build --strict + 产物 grep 关键新词。
+- [2026-09-14 01:24:40] [project] 全仓锐评《02-优化方案》批次 1-5 已于 2026-09-14 全部落地（工作树未提交，混有前一Session的更新器增强改动；Docs 锐评文档 2cbff8f 已提交）：批次1 P1 全修（Events 重入保护+_iterationBuffer 快照+InsertionIndex 稳定排序、Audio RIOLM/PlayBgm 淡出续接/pitch 钳制[0.01,3]、SDG 实体解码/多成员归属 fail-closed、UI 注册时序前移）；批次2 P2 全修（更新器 SemVer 预发布比较/单包入口移除/清理移导入后+目录校验、Scene 卸载快照+IsValid、WithTag 空串、Audio ApplyConfig 副作用+示例滑条拖动结束落键、SDG G2-G5+MemberGrouper 引擎合并 582→343）；批次3 全补（Zensical 7 用例、Audio 协程 EditMode MoveNext、UI 生命周期 4、RAA 工具类/更新器 19→32、ViewAndTriggerTests、清单往返、Attribute 轨死引用、软门槛；B3-10 降级为 Docs/AesirFramework/全仓锐评/03 手动验证清单；B3-4 新建 RAM 首个 PlayMode 程序集）；批次4 文档全同步（J2 samples 11 示例、event-module.md 重入语义+摘帽+零分配收敛、两包 CHANGELOG [Unreleased] 全量收录、文档站 3183a06/7a83c90）；批次5 AesirScheduler 立项（Delay/NextFrame，BeforeUpdate 懒注册，BornFrame 守卫+两段式出队后投递，9 用例）；P3 精选 R1/R2/V1/G1/T1-T3 全修。**验证基线（2026-09-14 终版）：EditMode 612/610 passed/0 failed/2 skip（Addressables 自适应）；PlayMode 21/21 全绿（RAA 17 + RAM Scene 4，batchmode 批跑）——PlayMode 批跑时 [Order]（NUnit OrderAttribute）在 UTF 1.1.33 实测生效（执行顺序 XML 证实），场景套件 Single 用例必须 [Order] 末位（其留下唯一已加载场景，先跑令后续对同路径重复叠加产生双实例）。**实测坑位：①batchmode `-runTests` 与 `-quit` 互斥（带 -quit 测试静默不跑、退出码 0）；②`-logFile` 勿放项目 Temp/（干净退出时整目录被删）；③新建 RAM PlayMode 测试程序集需 Sirenix×4 precompiledReferences（SerializedMonoBehaviour 链同 Runestone.AesirModules.Tests 先例，仅 nunit 会 CS0012）；④PlayMode 场景测试模式：最小 .unity=SampleScene 头 124 行骨架+空 SceneRoots（手写 meta，场景是 DefaultImporter）+ **[InitializeOnLoadMethod] 编辑模式域加载期登记 BuildSettings enabled 条目**——PlayMode 内写 EditorBuildSettings.scenes 不被运行中 SceneManager 采纳（实测报 "not added to build settings"）；**disabled 条目同样拒绝运行时加载（第二次实测推翻"编辑器可加载 disabled"假设），只能登记 enabled**——BuildSettings 属项目设置不随包分发，unitypackage 消费者不受影响，仅开发仓玩家构建含两个空测试场景；Single 加载会卸载测试运行器场景，靠 asmdef 字母序（Architecture.Tests 先于 Modules.Tests.Runtime）+ 防御性 TearDown（测试场景仅在 sceneCount>1 时卸载，避免"卸载最后一个场景"错误）；⑤batchmode PlayMode 帧耗时远短于 fixedDeltaTime，等 FixedUpdate 的用例须按 realtimeSinceStartup 时间窗等待而非固定帧数（30 帧内物理步可能零触发）；⑥已 Destroy 组件过帧后访问 .gameObject 抛 MissingReferenceException——清理宿主须在 Destroy 前捕获 GO 引用。**How to apply:** 后续会话提"锐评/优化方案"时视为全部处置完毕勿再当待办；两包 CHANGELOG [Unreleased] 已写好（含 AesirScheduler 与 PlayMode 套件），发版 bump 0.20.1/0.21.0 由用户定夺。
+
+
+
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。

@@ -7,6 +7,29 @@
 
 ## [Unreleased]
 
+### Added
+
+- **包内更新器：更新日志面板** — 检查更新后自动按远程 tag 拉取包内 `CHANGELOG.md`（jsDelivr 多域名 → GitHub Raw 兜底），提取「本地版本 → 远程版本」之间的版本段落展示在窗口面板上；远程拉取失败时回退展示本地包内 CHANGELOG 的最新段落并标注来源
+- **包内更新器：更新前确认框** — 逐包列示「本地 v旧 → 远程新」版本变化、备份位置与覆盖说明（检测到 `.git` 目录时追加开发仓库警告），防止误操作直接覆盖本地修改
+- **`AesirScheduler` 帧粒度时间调度原语** — 纯 C# 静态 API（`Delay(seconds, callback)` / `NextFrame(callback)`），经 `AesirArchitecturePlayerLoop` BeforeUpdate 钩子结算（首次使用自动注册），为无协程能力的 Model / Service / Command 提供合法延时手段；有意收窄：帧粒度精度（任务最早下一帧执行）、游戏时间（受 `timeScale` 影响）、一次性任务无句柄/取消/暂停/不池化、仅主线程、稳态零分配；新增 `Tests/Editor/AesirSchedulerTests.cs`（9 用例：帧粒度语义、同帧守卫、调度序、回调内再调度快照语义、懒注册钩子、RIOLM 重置）
+- **package.json samples 登记 `RuntimeInitializeLoadType` 示例** — 项目结构树早已列出该示例目录、`Samples~` 已有镜像，但 samples 数组未登记导致 UPM 用户在 Package Manager 的 Samples 页看不到导入项；现三方口径统一（共 11 个可导入示例），README（中英）示例计数与工具类示例表同步补行
+- **测试扩充（全仓锐评盲区补齐）** — 新增 `ViewAndTriggerTests`（View / MonoViewController 基类的 Context 绑定 + RemoveListenerOnDestroy / OnDisableTrigger / SceneUnloadedTrigger 触发器族句柄清理——两轮锐评点名的零测试带）、`ScriptingSymbolUtilityTests`、`QuickCreateSOMenuItemTests`；`AesirUpdateServiceTests` 19→32（预发布版本比较矩阵、CHANGELOG 解析与区间筛选、更新确认框文本、安装清单落盘往返、过期包列表排序与版本边界）；`MiniEventTests` 补 `RemoveListener` 精确移除用例（5→7）；Editor 程序集新增 `AssemblyInfo.cs`（internal 逻辑对 EditMode 测试程序集开放）
+- **PlayMode 测试卫生改进** — `UnityEngineObjectCheckNullTests` 拆分合并断言（逐条件独立断言，失败可定位）并连带销毁宿主 GameObject（不再残留空物体污染后续用例场景）；`RemoveListenerOnSceneUnloadedTriggerTests` 的 TearDown 改 `[UnityTearDown]` 协程等待 `UnloadSceneAsync` 完成（不再依赖场景异名侥幸规避同域复跑碰撞）；`ContextReplacementWarningTests` 首次注册否定断言改为全量 Warning 捕获（实现侧改警告文案不再绿着放行）
+
+### Changed
+
+- **包内更新器：新增 Odin Inspector 界面** — Odin 版窗口 `AesirUpdateWindowOdin`（`Editor/OdinInspector/UpdateChecker/`，汇入 `Runestone.AesirArchitecture.Editor.OdinInspector` 程序集）：状态着色的包列表、下载进度条、更新日志折叠区；安装 Odin 时菜单自动打开 Odin 窗口（经 `AesirUpdateWindow.OdinWindowOpener` 静态委托注册路由，域重载后自动重注册），未安装时回退 IMGUI 兜底窗口，两版窗口共用全部服务逻辑
+- **包内更新器：逻辑下沉与绘制期零开销** — 更新执行流程下沉为 `AesirUpdateService.UpdatePackagesAsync`（双窗口共用）；远程版本 / 检测结果 / 更新日志改为序列化字段（更新导入触发域重载后窗口内容不丢失）；Odin 窗口行视图模型仅在状态变化时重建并重算显示文本，IMGUI 窗口缓存过期包列表与 `.git` 检测结果，OnGUI 期间消除每帧 LINQ 与磁盘 IO
+- **脏排序只重排脏列表** — `MonoLifecycleProxy.EnsureSorted` 与 `AesirArchitecturePlayerLoop.EnsureSorted` 此前任一注册即全量重排所有事件/阶段的监听列表；现按事件/阶段粒度追踪脏项（复用列表去重登记），只重排发生注册的列表，且跳过单元素列表的排序分配
+
+### Fixed
+
+- **包内更新器：预发布版本比较** — `CompareVersion` 此前把 `0.15.0-rc1` 与 `0.15.0` 判为相等（预发布标识被静默吞掉），装过预发布版的用户对同号正式版永远显示"已是最新"；现按 SemVer 语义比较——同号正式版高于预发布，两侧均为预发布时按标识文本排序
+- **包内更新器：移除单包"更新到 X"入口** — Modules 依赖 Architecture 且两包同 Release 发布，单独更新一包会造成包间版本撕裂；从入口杜绝，统一走工具栏「全部更新」
+- **包内更新器：残留清理移到导入成功之后** — 此前"先删后导"，`ImportPackage` 静默失败（unitypackage 损坏等）时旧文件已删、新文件未进；现导入后先校验包目录存在再执行差集清理，导入失败时跳过清理与清单登记（旧清单保留为下次差集依据）并告警指向备份目录
+- **QuickCreateSOMenuItem：脚本名恰为 "SO" 时不再产生空资源名** — 尾部 "SO" 后缀裁剪增加长度守卫，保留原名
+- **DDOL 根物体保护三单例同形** — `AesirArchitecture.Awake` 与 `UIRoot.Awake` 此前无条件调用 `DontDestroyOnLoad`（预放置为子物体时引擎仅打警告且 DDOL 无效）；现与 `UIModule` 范式统一：仅根物体调用，预放置为子物体时跟随宿主决策（类/字段 XML 文档同步标注）
+
 ### 规划中
 
 - ScriptableObject 可视化配置层

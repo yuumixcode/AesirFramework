@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an experimental event module, audio management, scene management tooling, and a script documentation generator.
+Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an event module, audio management, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.20.0-blue.svg)](../CHANGELOG.md)
@@ -16,7 +16,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 | Module | Status | Description |
 |------|------|------|
 | UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + pluggable asset loading |
-| Event | ⚠️ Experimental | `EventModule` dual-track subscription (Attribute + Script) + 4 priority levels + expression-tree optimization + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization. Not yet validated in a production project |
+| Event | Implemented | `EventModule` dual-track subscription (Attribute + Script) + 4 priority levels with stable sorting + snapshot/re-entrant-safe dispatch + expression-tree optimization + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization |
 | Audio | Implemented | `AudioModule` singleton (minimal 2D audio facade) + SFX round-robin exclusive sources + BGM crossfade + 3-channel volume/mute persistence |
 | Scene | Implemented | `SceneModule` scene load/additive/unload/activate + scene lifecycle events + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Editor Settings) |
 | ScriptDocGenerator | Implemented (requires Odin) | Reflection-based C# type analysis generating structured API docs (incremental, preserves hand-written content) + Summary tool (syncs XML `<summary>` and the `[Summary]` attribute, attribute-first) |
@@ -79,7 +79,7 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 | `AesirBasePanelView<T>` | Component | MVP-mode panel view base: inherits `AesirBasePanel` and binds to a Context type (`IView`), accessing Models / Services via the Context |
 | `AesirBasePanelViewController<T>` | Component | MVC-mode panel controller base: inherits `AesirBasePanel` and binds to a Context type (`IController`), accessing Models / Services via the Context and executing Commands / Queries |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | Pluggable asset loading contract and default implementation (Resources folder). The contract is **synchronous**: suitable for Resources, synchronous caches and similar pipelines; async pipelines such as Addressables must be preloaded and returned synchronously |
-| `UICanvasConfigSO` | Component | Unified Canvas config asset (a default asset can be created from the Create menu) |
+| `UICanvasConfigSO` | Asset | Unified Canvas config asset (a default asset can be created from the Create menu) |
 | `UILayer` | Engine | Layer enum: Background / Normal / Popup / Top |
 
 ### Quick Start
@@ -158,11 +158,9 @@ See [Documentation/ui-module.md](./ui-module.md) for the detailed module documen
 
 ## Event Module
 
-> ⚠️ **Experimental module**: not yet validated in a production project; APIs may change.
+An event system based on dual-track subscription. Attribute subscription marks methods with the `[AesirListener]` attribute; Script subscription registers lambda delegates dynamically via `AddListener<T>`. Both kinds coexist in the same dispatch flow with stable sorting across 4 priority levels (registration order within the same level).
 
-An event system based on dual-track subscription. Attribute subscription marks methods with the `[AesirListener]` attribute; Script subscription registers lambda delegates dynamically via `AddListener<T>`. Both kinds coexist in the same dispatch flow, sorted by 4 priority levels.
-
-Dispatch is built in with subscriber filters (precise delivery: tag / priority tier / same scene / Collider2D bounds / same hierarchy family), automatic dead-reference cleanup, and an optional execution-time warning. SO assetization (`AesirEventArgsSO`) plus a UnityEvent bridge component let non-programmers configure events in the Inspector.
+Dispatch iterates over a registry snapshot — unsubscribing/subscribing inside a callback only affects later dispatches; re-entrant publishing inside a callback uses an isolated buffer so event arguments never overwrite each other. Built-in subscriber filters (precise delivery: tag / priority tier / same scene / Collider2D bounds / same hierarchy family), automatic dead-reference cleanup, and an optional execution-time warning. SO assetization (`AesirEventArgsSO`) plus a UnityEvent bridge component let non-programmers configure events in the Inspector.
 
 ### Core Types
 
@@ -285,7 +283,7 @@ myEventArgsSO.Raise();
 private void OnKeyPressed() { ... }
 ```
 
-> **Design boundaries**: dispatch is synchronous and non-reentrant (do not publish events synchronously inside subscriber callbacks); destroyed subscribers left unsubscribed are auto-cleaned during dispatch (dead-reference cleanup); system events (meta events) and channel labels depend on the editor toolchain and will be designed together with it. See [event-module.md](./event-module.md) for details.
+> **Design boundaries**: dispatch iterates over a registry snapshot and is re-entrant safe (publishing events synchronously inside subscriber callbacks is safe; arguments never overwrite each other); destroyed subscribers left unsubscribed are auto-cleaned during dispatch (dead-reference cleanup); system events (meta events) and channel labels depend on the editor toolchain and will be designed together with it. See [event-module.md](./event-module.md) for details.
 
 ### Directory Structure
 
@@ -446,7 +444,7 @@ Editor/Scene/                      # joins the core editor assembly (layer-root 
 ├── SceneManagerWindow.cs          # Scene Editor Settings window (Tools/Aesir/Scene Editor Settings)
 ├── BootstrapSceneHelper.cs        # Bootstrap scene registration tool (off by default)
 ├── SceneEditorSettings.cs         # Editor persisted settings
-├── Tests/                         # EditMode tests (SceneAssetWrapper 27 cases + SceneModule 20 cases)
+├── Tests/                         # EditMode tests (SceneAssetWrapper 27 cases + SceneModule 20 cases); real load success paths covered by the PlayMode suite in the package-root Tests/Runtime
 ├── OdinInspector/                 # SceneAssetWrapper Processor (joined via asmref)
 └── Addressables/                  # Addressables glue implementation (joined via asmref)
 ```

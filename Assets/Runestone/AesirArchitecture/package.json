@@ -67,6 +67,11 @@
       "displayName": "PlaneWar（Mono 版）",
       "description": "纵版射击飞机大战实战示例（Mono 版）：自包含素材、得分 HUD、三型敌机与重开流程，演示 MiniEvent、ObservableValue 与 MonoLifecycleProxy 在真实玩法中的组合运用。",
       "path": "Samples~/PlaneWar"
+    },
+    {
+      "displayName": "RuntimeInitializeLoadType（初始化时机）",
+      "description": "RuntimeInitializeLoadType 初始化时机示例：在 SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad 五个阶段输出日志演示执行顺序，触发开关由设置窗口控制（Tools → Aesir → Architecture → Samples → RuntimeInitializeLoadType）。",
+      "path": "Samples~/RuntimeInitializeLoadType"
     }
   ]
 }

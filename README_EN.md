@@ -18,7 +18,7 @@
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
 | **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.20.0` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + ⚠️ Experimental Event Module | `cn.runestone.aesir.modules` | `0.20.0` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.20.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -34,7 +34,7 @@ The framework uses **capability interface composition** — each role exposes on
 
 | Role | Interface | Capabilities | Responsibility |
 |------|-----------|--------------|----------------|
-| **Model** | `IModel` → `AbstractModel` | GetModel, GetService | Data layer; holds `ObservableValue<T>`, modifications only via write methods |
+| **Model** | `IModel` → `AbstractModel` | GetModel | Data layer; holds `ObservableValue<T>`, modifications only via write methods |
 | **Service** | `IService` → `AbstractService` | GetModel, GetService | Cross-module coordination; may write Models directly, cannot execute Command/Query |
 | **View** | `IView` | GetModel, GetService (read-only) | Presentation; subscribes to Model notifications for refresh |
 | **Controller** | `IController` | GetModel, GetService, **ExecuteCommand**, **ExecuteQuery** | MVC entry point (recommended) |
@@ -76,7 +76,7 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 
 ## 🧱 Aesir Modules (RAM) — Functional Module Package
 
-**RAM is the functional module collection built on top of Architecture**, currently providing a UI framework and an experimental event module, plus scene management tooling.
+**RAM is the functional module collection built on top of Architecture**, currently providing a UI framework, an event module, an audio module, a scene module, and a script documentation generator (requires Odin).
 
 ### UI Framework
 
@@ -88,9 +88,9 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 - **Binder component binding (Odin optional)** — `BinderAssistant` / `BinderTag` auto-bind UI elements to panel scripts
 - **Input System adaptation** — A separate assembly automatically swaps in `InputSystemUIInputModule` when the Input System is enabled
 
-### Event Module (⚠️ Experimental)
+### Event Module
 
-A dual-track subscription event system: `[AesirListener]` attribute-based static subscription + `AddListener<T>` dynamic lambda subscription, coexisting in one dispatch flow sorted by 5 priority levels; static bindings use expression-tree-compiled delegates to optimize reflection overhead. **Not yet validated in a production project; APIs may change.**
+A dual-track subscription event system: `[AesirListener]` attribute-based static subscription + `AddListener<T>` dynamic lambda subscription, coexisting in one dispatch flow with stable sorting across 4 priority levels; static bindings use expression-tree-compiled delegates to optimize reflection overhead, with subscriber filters, dead-reference cleanup, and SO-asset publishing support.
 
 ### Scene Module & Editor Tools
 
@@ -146,7 +146,7 @@ Download the matching unitypackage from [GitHub Releases](https://github.com/yuu
 | `AesirModules-v<version>.unitypackage` | Aesir Modules only (no dependencies; import Architecture yourself) |
 | `AesirFramework-v<version>.unitypackage` | Both packages combined |
 
-Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for one-click "detect new version → auto backup → diff-based stale cleanup → silent import". Version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); via CDN, a new release may take up to ~12 hours to be detected.
+Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for one-click "detect new version → review changelog → confirm → auto backup → diff-based stale cleanup → silent import" (Odin-based UI when Odin Inspector is installed). Version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); via CDN, a new release may take up to ~12 hours to be detected.
 
 > Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
 

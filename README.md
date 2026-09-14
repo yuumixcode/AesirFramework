@@ -18,7 +18,7 @@
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
 | **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.20.0` |
-| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ ⚠️ 实验性事件模块 | `cn.runestone.aesir.modules` | `0.20.0` |
+| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.20.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
 
@@ -34,7 +34,7 @@
 
 | 角色 | 接口 | 能力 | 职责 |
 |------|------|------|------|
-| **Model** | `IModel` → `AbstractModel` | GetModel, GetService | 数据层；持有 `ObservableValue<T>`，修改必经写方法 |
+| **Model** | `IModel` → `AbstractModel` | GetModel | 数据层；持有 `ObservableValue<T>`，修改必经写方法 |
 | **Service** | `IService` → `AbstractService` | GetModel, GetService | 跨模块协调；可直写 Model，不能执行 Command/Query |
 | **View** | `IView` | GetModel, GetService（只读） | 表现层；自订阅 Model 通知刷新 |
 | **Controller** | `IController` | GetModel, GetService, **ExecuteCommand**, **ExecuteQuery** | MVC 模式入口（推荐） |
@@ -76,7 +76,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 ## 🧱 Aesir Modules（RAM）——功能模块包
 
-**RAM 是 Architecture 之上的功能模块集合**，当前提供 UI 框架与实验性事件模块，并附带场景管理工具。
+**RAM 是 Architecture 之上的功能模块集合**，当前提供 UI 框架、事件模块、音频模块、场景模块与脚本文档生成工具（需 Odin）。
 
 ### UI 框架
 
@@ -88,9 +88,9 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 - **Binder 组件绑定（Odin 可选）** — `BinderAssistant` / `BinderTag` 将 UI 元素自动绑定到面板脚本
 - **Input System 适配** — 独立程序集在启用 Input System 时自动以 `InputSystemUIInputModule` 替换默认输入模块
 
-### 事件模块（⚠️ 实验性）
+### 事件模块
 
-双轨订阅事件系统：`[AesirListener]` 特性静态订阅 + `AddListener<T>` 动态 Lambda 订阅，共存于同一分发流程，按 5 档优先级排序执行；静态绑定经表达式树编译委托优化反射开销。**尚未在实际项目中验证，API 可能调整。**
+双轨订阅事件系统：`[AesirListener]` 特性静态订阅 + `AddListener<T>` 动态 Lambda 订阅，共存于同一分发流程，按 4 档优先级稳定排序执行；静态绑定经表达式树编译委托优化反射开销，支持订阅者过滤器、死引用清理与 SO 资产化。
 
 ### 场景模块与编辑器工具
 
@@ -146,7 +146,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | `AesirModules-v<版本>.unitypackage` | 仅 Aesir Modules（不含依赖，需自行导入 Architecture） |
 | `AesirFramework-v<版本>.unitypackage` | 两包合并 |
 
-以此方式安装的包装在 `Assets/Runestone/` 下（代码可改），**更新无需手动重新下载**：Unity 菜单 `Tools → Aesir → Check for Updates` 打开包内更新器，一键完成"检测新版本 → 自动备份 → 差集清理残留 → 静默导入"。版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测）；经 CDN 检测，最新发布最长约 12 小时后才会被检测到。
+以此方式安装的包装在 `Assets/Runestone/` 下（代码可改），**更新无需手动重新下载**：Unity 菜单 `Tools → Aesir → Check for Updates` 打开包内更新器，一键完成"检测新版本 → 查看更新日志 → 确认后自动备份 → 差集清理残留 → 静默导入"（安装 Odin Inspector 时更新器为 Odin 界面）。版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测）；经 CDN 检测，最新发布最长约 12 小时后才会被检测到。
 
 > 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
 
