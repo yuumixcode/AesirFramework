@@ -7,6 +7,14 @@
 
 ## [Unreleased]
 
+### 规划中
+
+- ScriptableObject 可视化配置层
+- Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
+- 运行时集合（RuntimeSet）
+
+## [0.21.0] - 2026-09-14
+
 ### Added
 
 - **包内更新器：更新日志面板** — 检查更新后自动按远程 tag 拉取包内 `CHANGELOG.md`（jsDelivr 多域名 → GitHub Raw 兜底），提取「本地版本 → 远程版本」之间的版本段落展示在窗口面板上；远程拉取失败时回退展示本地包内 CHANGELOG 的最新段落并标注来源
@@ -29,12 +37,6 @@
 - **包内更新器：残留清理移到导入成功之后** — 此前"先删后导"，`ImportPackage` 静默失败（unitypackage 损坏等）时旧文件已删、新文件未进；现导入后先校验包目录存在再执行差集清理，导入失败时跳过清理与清单登记（旧清单保留为下次差集依据）并告警指向备份目录
 - **QuickCreateSOMenuItem：脚本名恰为 "SO" 时不再产生空资源名** — 尾部 "SO" 后缀裁剪增加长度守卫，保留原名
 - **DDOL 根物体保护三单例同形** — `AesirArchitecture.Awake` 与 `UIRoot.Awake` 此前无条件调用 `DontDestroyOnLoad`（预放置为子物体时引擎仅打警告且 DDOL 无效）；现与 `UIModule` 范式统一：仅根物体调用，预放置为子物体时跟随宿主决策（类/字段 XML 文档同步标注）
-
-### 规划中
-
-- ScriptableObject 可视化配置层
-- Editor 工具链（SO Inspector / MVP 脚手架 / 模块可视化）
-- 运行时集合（RuntimeSet）
 
 ## [0.20.0] - 2026-09-11
 
