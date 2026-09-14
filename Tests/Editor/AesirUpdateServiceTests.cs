@@ -67,6 +67,23 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.Greater(AesirUpdateService.CompareVersion("1.0.0", "0.99.99"), 0);
         }
 
+        [Test]
+        public void CompareVersion_Prerelease_LowerThanRelease()
+        {
+            // SemVer：预发布版低于同号正式版（装过 rc 后正式版必须被判为更新）
+            Assert.Less(AesirUpdateService.CompareVersion("0.15.0-rc1", "0.15.0"), 0);
+            Assert.Greater(AesirUpdateService.CompareVersion("0.15.0", "0.15.0-rc1"), 0);
+            Assert.Less(AesirUpdateService.CompareVersion("v0.16.0-alpha", "0.16.0"), 0);
+
+            // 预发布号仍按数字段优先比较
+            Assert.Less(AesirUpdateService.CompareVersion("0.15.0-rc1", "0.16.0"), 0);
+            Assert.Greater(AesirUpdateService.CompareVersion("0.16.0-alpha", "0.15.99"), 0);
+
+            // 两侧均为预发布：按标识文本排序
+            Assert.Less(AesirUpdateService.CompareVersion("0.15.0-alpha", "0.15.0-beta"), 0);
+            Assert.AreEqual(0, AesirUpdateService.CompareVersion("0.15.0-rc1", "0.15.0-rc1"));
+        }
+
         #endregion
 
         #region package.json 解析
@@ -363,6 +380,301 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             StringAssert.AreEqualIgnoringCase(
                 "https://github.com/yuumixcode/AesirFramework/releases/download/v0.15.0/AesirModules-v0.15.0.unitypackage",
                 snapshot.GetUnityPackageUrl("AesirModules"));
+        }
+
+        #endregion
+
+        #region 更新日志（CHANGELOG 解析 / 筛选 / 渲染 / 摘要）
+
+        /// <summary>与仓库内包 CHANGELOG 同构的样例文本（含 Unreleased、分隔线与空行干扰）。</summary>
+        const string SampleChangelog = @"
+# Changelog
+
+本项目的所有重要变更均会记录在此文件中。
+
+## [Unreleased]
+
+### 规划中
+
+- 某个规划项
+
+## [0.21.0] - 2026-09-13
+
+### Added
+
+- 新功能甲
+- 新功能乙
+
+### Fixed
+
+- 修复丙
+
+---
+
+## [0.20.0] - 2026-09-11
+
+### Changed
+
+- 变更丁
+
+## [0.19.0]
+
+### Fixed
+
+- 修复戊
+";
+
+        [Test]
+        public void ParseChangelogSections_ParsesVersionDateAndContentInOrder()
+        {
+            var sections = AesirUpdateService.ParseChangelogSections(SampleChangelog);
+
+            Assert.AreEqual(3, sections.Count);
+            Assert.AreEqual("0.21.0", sections[0].Version);
+            Assert.AreEqual("2026-09-13", sections[0].Date);
+            StringAssert.Contains("### Added", sections[0].Content);
+            StringAssert.Contains("- 新功能乙", sections[0].Content);
+            StringAssert.Contains("- 修复丙", sections[0].Content);
+
+            Assert.AreEqual("0.20.0", sections[1].Version);
+            StringAssert.Contains("- 变更丁", sections[1].Content);
+
+            // 日期可缺省
+            Assert.AreEqual("0.19.0", sections[2].Version);
+            Assert.IsEmpty(sections[2].Date);
+        }
+
+        [Test]
+        public void ParseChangelogSections_SkipsNonVersionHeadersAndCleansContent()
+        {
+            var sections = AesirUpdateService.ParseChangelogSections(SampleChangelog);
+
+            // Unreleased 不产生段落；段落正文不越过下一个版本标题
+            Assert.IsFalse(sections.Exists(s => s.Version.Contains("Unreleased")));
+            StringAssert.DoesNotContain("规划中", sections[0].Content);
+            StringAssert.DoesNotContain("0.20.0", sections[0].Content);
+            // 首尾空行与 --- 分隔线被剔除
+            StringAssert.DoesNotContain("---", sections[0].Content);
+            Assert.IsFalse(sections[0].Content.StartsWith("\n"));
+            Assert.IsFalse(sections[0].Content.EndsWith("\n"));
+        }
+
+        [Test]
+        public void ParseChangelogSections_OtherLevel2HeaderEndsCurrentSection()
+        {
+            // 根聚合 CHANGELOG 中的「## 当前版本 / Current Version」不属于任何版本段落
+            const string markdown = "## [0.21.0] - 2026-09-13\n\n- 新功能甲\n\n" +
+                                    "## 当前版本 / Current Version\n\n| 表格 |\n\n" +
+                                    "## [0.20.0] - 2026-09-11\n\n- 变更丁\n";
+
+            var sections = AesirUpdateService.ParseChangelogSections(markdown);
+
+            Assert.AreEqual(2, sections.Count);
+            StringAssert.DoesNotContain("当前版本", sections[0].Content);
+            StringAssert.DoesNotContain("表格", sections[0].Content);
+        }
+
+        [Test]
+        public void ParseChangelogSections_NullOrEmptyReturnsEmpty()
+        {
+            Assert.IsEmpty(AesirUpdateService.ParseChangelogSections(null));
+            Assert.IsEmpty(AesirUpdateService.ParseChangelogSections(""));
+            Assert.IsEmpty(AesirUpdateService.ParseChangelogSections("# 只有标题\n- 无版本段落\n"));
+        }
+
+        [Test]
+        public void CollectNewerSections_FiltersByLocalAndRemoteRange()
+        {
+            var sections = AesirUpdateService.ParseChangelogSections(SampleChangelog);
+
+            // 本地 0.20.0 → 远程 v0.21.0（tag 带 v 前缀）：只剩 0.21.0
+            var newer = AesirUpdateService.CollectNewerSections(sections, "0.20.0", "v0.21.0");
+            Assert.AreEqual(1, newer.Count);
+            Assert.AreEqual("0.21.0", newer[0].Version);
+
+            // 本地已是最新 → 空
+            Assert.IsEmpty(AesirUpdateService.CollectNewerSections(sections, "0.21.0", "0.21.0"));
+
+            // 远程不设上限：本地 0.19.0 → 0.20.0 与 0.21.0（保持新 → 旧顺序）
+            var all = AesirUpdateService.CollectNewerSections(sections, "0.19.0", null);
+            Assert.AreEqual(2, all.Count);
+            Assert.AreEqual("0.21.0", all[0].Version);
+            Assert.AreEqual("0.20.0", all[1].Version);
+
+            // 上限裁剪：本地 0.18.0、远程 0.20.0 → 不含 0.21.0
+            var capped = AesirUpdateService.CollectNewerSections(sections, "0.18.0", "0.20.0");
+            Assert.AreEqual(2, capped.Count);
+            Assert.IsFalse(capped.Exists(s => s.Version == "0.21.0"));
+        }
+
+        [Test]
+        public void RenderChangelogText_RestoresHeadersAndContent()
+        {
+            var sections = AesirUpdateService.ParseChangelogSections(SampleChangelog);
+            var rendered = AesirUpdateService.RenderChangelogText(
+                AesirUpdateService.CollectNewerSections(sections, "0.20.0", "0.21.0"));
+
+            StringAssert.Contains("## [0.21.0] - 2026-09-13", rendered);
+            StringAssert.Contains("- 新功能甲", rendered);
+            StringAssert.DoesNotContain("0.19.0", rendered);
+
+            Assert.IsEmpty(AesirUpdateService.RenderChangelogText(null));
+            Assert.IsEmpty(AesirUpdateService.RenderChangelogText(
+                new System.Collections.Generic.List<AesirUpdateService.ChangelogSection>()));
+        }
+
+        [Test]
+        public void LoadLocalChangelog_ReadsFileOrReturnsNull()
+        {
+            var pkgRel = Rel(Path.Combine(_testRoot, "Pkg"));
+            Assert.IsNull(AesirUpdateService.LoadLocalChangelog(pkgRel));
+
+            Directory.CreateDirectory(Path.Combine(_testRoot, "Pkg"));
+            File.WriteAllText(Path.Combine(_testRoot, "Pkg", "CHANGELOG.md"), "# Changelog\n内容");
+            Assert.AreEqual("# Changelog\n内容", AesirUpdateService.LoadLocalChangelog(pkgRel));
+        }
+
+        #endregion
+
+        #region 更新确认框文本
+
+        [Test]
+        public void BuildUpdateConfirmation_ListsTargetsAndBackupNotice()
+        {
+            var targets = new[]
+            {
+                new AesirUpdateService.InstalledPackage { DirName = "AesirArchitecture", Version = "0.20.0" },
+                new AesirUpdateService.InstalledPackage { DirName = "AesirModules", Version = "0.19.0" }
+            };
+
+            var message = AesirUpdateService.BuildUpdateConfirmation(targets, "v0.21.0", false);
+
+            StringAssert.Contains("AesirArchitecture", message);
+            StringAssert.Contains("v0.20.0 → v0.21.0", message);
+            StringAssert.Contains("v0.19.0 → v0.21.0", message);
+            StringAssert.Contains(AesirUpdateService.BackupDirName, message);
+            StringAssert.Contains("确认开始更新？", message);
+            // 非 git 仓库不带开发仓库警告
+            StringAssert.DoesNotContain(".git", message);
+        }
+
+        [Test]
+        public void BuildUpdateConfirmation_GitRepositoryAppendsWarning()
+        {
+            var targets = new[]
+            {
+                new AesirUpdateService.InstalledPackage { DirName = "AesirArchitecture", Version = "0.20.0" }
+            };
+
+            var message = AesirUpdateService.BuildUpdateConfirmation(targets, "v0.21.0", true);
+
+            StringAssert.Contains(".git", message);
+            StringAssert.Contains("开发仓库", message);
+        }
+
+        #endregion
+
+        #region 待更新包计算
+
+        static AesirUpdateService.InstalledPackage Pkg(string dirName, string packageId, string version) =>
+            new AesirUpdateService.InstalledPackage
+            {
+                DirName = dirName, PackageId = packageId, Version = version,
+                AssetsPath = "Assets/Runestone/" + dirName
+            };
+
+        [Test]
+        public void ComputeOutdatedPackages_SortsByDependencyOrder()
+        {
+            // Modules 在输入中排前——输出必须 Architecture 在前（依赖顺序）
+            var packages = new System.Collections.Generic.List<AesirUpdateService.InstalledPackage>
+            {
+                Pkg("AesirModules", "cn.runestone.aesir.modules", "0.19.0"),
+                Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.19.0")
+            };
+
+            var outdated = AesirUpdateService.ComputeOutdatedPackages(packages, "0.20.0");
+
+            Assert.AreEqual(2, outdated.Count);
+            Assert.AreEqual("cn.runestone.aesir.architecture", outdated[0].PackageId,
+                "Architecture 必须先于 Modules（依赖顺序）");
+            Assert.AreEqual("cn.runestone.aesir.modules", outdated[1].PackageId);
+        }
+
+        [Test]
+        public void ComputeOutdatedPackages_VersionBoundaries()
+        {
+            var packages = new System.Collections.Generic.List<AesirUpdateService.InstalledPackage>
+            {
+                Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.20.0"),
+                Pkg("AesirModules", "cn.runestone.aesir.modules", "0.19.0")
+            };
+
+            // 本地 == 远程：不算待更新；本地 > 远程：不算待更新；空远程：空列表
+            Assert.AreEqual(1, AesirUpdateService.ComputeOutdatedPackages(packages, "0.20.0").Count,
+                "仅低于远程的包计入");
+            Assert.AreEqual(0, AesirUpdateService.ComputeOutdatedPackages(packages, "0.19.0").Count);
+            Assert.AreEqual(0, AesirUpdateService.ComputeOutdatedPackages(packages, null).Count);
+            Assert.AreEqual(0, AesirUpdateService.ComputeOutdatedPackages(packages, "").Count);
+        }
+
+        #endregion
+
+        #region 清单落盘往返
+
+        [Test]
+        public void SaveAndLoadLocalManifest_RoundTrips()
+        {
+            var stateAbs = AesirUpdateService.ToAbsolutePath(AesirUpdateService.StateFilePath);
+            var stateDirAbs = AesirUpdateService.ToAbsolutePath(AesirUpdateService.StateDirName);
+            var hadOriginal = File.Exists(stateAbs);
+            var original = hadOriginal ? File.ReadAllText(stateAbs) : null;
+
+            try
+            {
+                var manifest = new AesirUpdateService.FilesManifest
+                {
+                    packages = new[]
+                    {
+                        new AesirUpdateService.FilesManifest.PackageEntry
+                        {
+                            name = "AesirArchitecture",
+                            version = "0.20.0",
+                            files = new[]
+                            {
+                                "Assets/Runestone/AesirArchitecture/a.cs",
+                                "Assets/Runestone/AesirArchitecture/b.cs"
+                            }
+                        }
+                    }
+                };
+                AesirUpdateService.SaveLocalManifest(manifest);
+
+                var loaded = AesirUpdateService.LoadLocalManifest();
+                Assert.IsNotNull(loaded, "写入后应能读回清单");
+                Assert.AreEqual(1, loaded.packages.Length);
+                Assert.AreEqual("AesirArchitecture", loaded.packages[0].name);
+                Assert.AreEqual("0.20.0", loaded.packages[0].version);
+                Assert.AreEqual(2, loaded.packages[0].files.Length);
+                Assert.AreEqual("Assets/Runestone/AesirArchitecture/a.cs", loaded.packages[0].files[0]);
+            }
+            finally
+            {
+                // 恢复测试前的真实状态文件（项目状态不受测试污染）
+                if (hadOriginal)
+                {
+                    File.WriteAllText(stateAbs, original);
+                }
+                else if (File.Exists(stateAbs))
+                {
+                    File.Delete(stateAbs);
+                    if (Directory.Exists(stateDirAbs) &&
+                        !System.Linq.Enumerable.Any(Directory.EnumerateFileSystemEntries(stateDirAbs)))
+                    {
+                        Directory.Delete(stateDirAbs);
+                    }
+                }
+            }
         }
 
         #endregion
