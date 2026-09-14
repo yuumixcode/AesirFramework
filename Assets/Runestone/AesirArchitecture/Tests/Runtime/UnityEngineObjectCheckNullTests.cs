@@ -48,7 +48,9 @@ namespace Runestone.AesirArchitecture.Tests
             var hasNoNativeCounterpart = temp == null;
             AesirArchitectureDebug.LogTestInfo("C# 引用不为 null: " + hasCsharpReference);
             AesirArchitectureDebug.LogTestInfo("C++ Native Counterpart 为 null: " + hasNoNativeCounterpart);
-            Assert.IsTrue(hasCsharpReference && hasNoNativeCounterpart);
+            // 逐条件断言：合并断言失败时无法定位是哪个语义分支不成立
+            Assert.IsTrue(hasCsharpReference, "直接 new 的对象 C# 引用应存在（is not null 为 true）");
+            Assert.IsTrue(hasNoNativeCounterpart, "直接 new 的对象无 native counterpart（== null 应为 true）");
             AesirArchitectureDebug.LogTestInfo(
                 "NewUnityEngineObject 测试结果: 直接 new 的 C# 对象 is not null 为 true，== null 也为 true（无 native counterpart）");
             yield return null;
@@ -78,6 +80,9 @@ namespace Runestone.AesirArchitecture.Tests
         {
             var managedMonoBehaviour = new GameObject("ManagedMonoBehaviour")
                 .AddComponent<UnityEngineObjectTempMonoBehaviour>();
+            // 宿主物体引用须在 Destroy 组件前捕获：组件销毁并过帧后，其原生指针已失效，
+            // 再访问 .gameObject 会抛 MissingReferenceException（无法经已销毁组件回溯宿主）
+            var hostGameObject = managedMonoBehaviour.gameObject;
             var hasCsharpReferenceBefore = managedMonoBehaviour is not null;
             var hasNativeCounterpartBefore = managedMonoBehaviour != null;
             AesirArchitectureDebug.LogTestInfo("在 Mono 物体对象未执行 Destroy 之前，C# 引用不为 null: " +
@@ -92,10 +97,15 @@ namespace Runestone.AesirArchitecture.Tests
                                                hasCsharpReferenceAfter);
             AesirArchitectureDebug.LogTestInfo(
                 "在 Mono 物体对象执行 Object.Destroy 之后，C++ Native Counterpart 为 null: " + isNativeDestroyed);
-            Assert.IsTrue(hasCsharpReferenceBefore && hasNativeCounterpartBefore && hasCsharpReferenceAfter &&
-                          isNativeDestroyed);
+            // 逐条件断言：合并断言失败时无法定位是哪个语义分支不成立
+            Assert.IsTrue(hasCsharpReferenceBefore, "Destroy 前 C# 引用应存在（is not null）");
+            Assert.IsTrue(hasNativeCounterpartBefore, "Destroy 前 native counterpart 应存在（!= null）");
+            Assert.IsTrue(hasCsharpReferenceAfter, "Destroy 后 C# 引用应仍存在（is not null）");
+            Assert.IsTrue(isNativeDestroyed, "Destroy 后 native counterpart 应已销毁（== null）");
             AesirArchitectureDebug.LogTestInfo(
                 "DestroyMonoBehaviour 测试结果: Destroy 后 C# 引用仍存在（is not null），但 == null 为 true（native counterpart 已销毁）");
+            // 只 Destroy 组件会残留空 GameObject 污染后续测试场景，连带销毁宿主物体
+            Object.Destroy(hostGameObject);
             yield return null;
         }
 
@@ -143,13 +153,16 @@ namespace Runestone.AesirArchitecture.Tests
             var isNativeAlive = leaked != null;
             AesirArchitectureDebug.LogTestInfo("C# 引用置 null 后（未 Destroy）: native 对象仍存活: " + isNativeAlive);
             yield return null;
-            Assert.IsTrue(csharpReferenceIsNull && isNativeAlive);
+            // 逐条件断言：合并断言失败时无法定位是哪个语义分支不成立
+            Assert.IsTrue(csharpReferenceIsNull, "丢弃 C# 引用后 is null 应为 true");
+            Assert.IsTrue(isNativeAlive, "未 Destroy 时 native 对象应仍存活（FindObjectsOfTypeAll 可找到）");
             AesirArchitectureDebug.LogTestInfo(
                 "SetReferenceNullWithoutDestroy 测试结果: 仅丢弃 C# 引用不会触发 native 对象的销毁，必须显式调用 Object.Destroy");
             yield return null;
             if (leaked != null)
             {
-                Object.Destroy(leaked);
+                // 只 Destroy 组件会残留空 GameObject 污染后续测试场景，连带销毁宿主物体
+                Object.Destroy(leaked.gameObject);
             }
         }
 

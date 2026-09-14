@@ -38,8 +38,9 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 验证首次注册 Model / Service 时不输出动态替换警告。
         /// </summary>
         /// <remarks>
-        /// 通过 <see cref="Application.logMessageReceived" /> 捕获测试期间全部 Warning，
-        /// 断言其中不含动态替换提示（替换警告属误报——首次注册无旧实例可替换）。
+        /// 通过 <see cref="Application.logMessageReceived" /> 捕获测试期间**全部** Warning 并断言为零——
+        /// 首次注册按契约应完全无警告；若按关键词过滤（如 "动态替换"）做否定断言，
+        /// 实现侧改换警告文案后过滤器会静默放行，断言退化为绿着放行（弱否定）。
         /// </remarks>
         [Test]
         public void Register_FirstRegistration_DoesNotLogReplacementWarning()
@@ -58,12 +59,13 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 Application.logMessageReceived -= Capture;
             }
 
-            Assert.IsEmpty(warnings, "首次注册不应输出动态替换警告");
+            Assert.IsEmpty(warnings, "首次注册不应输出任何 Warning（含动态替换提示）；实际捕获：" +
+                                     (warnings.Count > 0 ? string.Join(" | ", warnings) : "无"));
             AesirArchitectureDebug.LogTestInfo("Register(首次注册): Model/Service 均无动态替换警告");
 
             void Capture(string condition, string stackTrace, LogType type)
             {
-                if (type == LogType.Warning && condition.Contains("动态替换"))
+                if (type == LogType.Warning)
                 {
                     warnings.Add(condition);
                 }

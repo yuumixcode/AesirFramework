@@ -37,19 +37,31 @@ namespace Runestone.AesirArchitecture.Editor
                     continue;
                 }
 
-                var scriptClass = script.GetClass();
-                if (scriptClass == null)
-                {
-                    continue;
-                }
-
-                if (!scriptClass.IsAbstract && scriptClass.IsSubclassOf(typeof(ScriptableObject)))
+                if (IsCreatableSoClass(script.GetClass()))
                 {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        /// <summary>类型是否可创建 SO 资源（非抽象且继承 ScriptableObject）。</summary>
+        internal static bool IsCreatableSoClass(System.Type type) =>
+            type != null && !type.IsAbstract && type.IsSubclassOf(typeof(ScriptableObject));
+
+        /// <summary>
+        /// 生成 SO 资源的默认显示名：去掉尾部 "SO" 后缀；
+        /// 脚本名恰好为 "SO" 时保留原名（避免产生空资源名）。
+        /// </summary>
+        internal static string GetDefaultAssetName(string scriptName)
+        {
+            if (scriptName.EndsWith("SO") && scriptName.Length > 2)
+            {
+                return scriptName[..^2];
+            }
+
+            return scriptName;
         }
 
         [MenuItem(MenuName, false, 80)]
@@ -76,11 +88,7 @@ namespace Runestone.AesirArchitecture.Editor
 
             var instance = ScriptableObject.CreateInstance(script.GetClass());
 
-            var defaultName = script.name;
-            if (defaultName.EndsWith("SO"))
-            {
-                defaultName = defaultName[..^2];
-            }
+            var defaultName = GetDefaultAssetName(script.name);
 
             ProjectWindowUtil.CreateAsset(instance, $"{defaultName}.asset");
             Selection.activeObject = instance;
@@ -98,26 +106,18 @@ namespace Runestone.AesirArchitecture.Editor
                 }
 
                 var scriptClass = script.GetClass();
-                if (scriptClass == null)
-                {
-                    continue;
-                }
-
-                if (!scriptClass.IsSubclassOf(typeof(ScriptableObject)) || scriptClass.IsAbstract)
+                if (!IsCreatableSoClass(scriptClass))
                 {
                     continue;
                 }
 
                 if (Path.GetExtension(objAssetPath) != "")
                 {
-                    objAssetPath = Path.GetDirectoryName(objAssetPath);
+                    // GetDirectoryName 在 Windows 返回反斜杠——归一化为 Unity 资产路径分隔符
+                    objAssetPath = Path.GetDirectoryName(objAssetPath)?.Replace('\\', '/');
                 }
 
-                var defaultName = script.name;
-                if (defaultName.EndsWith("SO"))
-                {
-                    defaultName = defaultName[..^2];
-                }
+                var defaultName = GetDefaultAssetName(script.name);
 
                 var assetPath = AssetDatabase.GenerateUniqueAssetPath($"{objAssetPath}/{defaultName}.asset");
                 AssetDatabase.CreateAsset(ScriptableObject.CreateInstance(scriptClass), assetPath);
