@@ -41,6 +41,9 @@ namespace Runestone.AesirModules
         {
             if (eventArgs == null)
             {
+                // 早退路径显式归零句柄：不依赖 OnDisable 处 Dispose 的内部空安全，
+                // 保证"句柄仅在成功订阅后非默认"的不变量对本组件自身也成立
+                _handle = default;
                 AesirModulesDebug.LogWarning(this, AesirModulesDebug.EventModuleTag, "未配置事件参数类型，本组件不监听任何事件。");
                 return;
             }
