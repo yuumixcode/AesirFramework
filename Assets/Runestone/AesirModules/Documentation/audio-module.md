@@ -104,9 +104,10 @@ public class AudioUsageExample : MonoBehaviour
 AudioModule.PlayBgm(sceneB, fadeSeconds: 1.5f);
 ```
 
-设置菜单中的音量滑条（设置即生效、即持久化）：
+设置菜单中的音量滑条。注意音量 setter 每次赋值都会写一次 PlayerPrefs——连续拖动的滑条请在**拖动结束时**写入（uGUI 经 `onPointerUp` 时机，OnGUI 见包内示例），避免逐帧落键：
 
 ```csharp
+// 拖动结束回调中一次性写入（设置即生效、即持久化）
 AudioModule.MasterVolume = masterSlider.value;
 AudioModule.BgmVolume = bgmSlider.value;
 AudioModule.SfxVolume = sfxSlider.value;
@@ -114,10 +115,11 @@ AudioModule.SfxVolume = sfxSlider.value;
 
 ## 内部机制
 
-- **音源布局**：BGM 专用 loop 源 1 个 + SFX 独占源 N 个，全部为 AudioModule 同物体的 `AudioSource` 组件，Awake 懒创建（编辑器与测试环境由首次 API 调用兜底创建）。`playOnAwake` 恒为 false。
+- **音源布局**：BGM 专用 loop 源 1 个 + SFX 独占源 N 个，全部为 AudioModule 同物体的 `AudioSource` 组件，Awake 期一次性创建完毕（模块未创建时由首次 API 调用兜底创建，创建后同样在 Awake 中建源）。`playOnAwake` 恒为 false。
 - **SFX 轮询**：每次播放取下一个独占源（游标循环），源在播时直接前进——全忙即抢占最旧（轮询序即分配序）。每源记录局部音量，通道音量更新时按 `通道 × 总 × 局部` 重算，不冲掉 `volume` 参数。
 - **淡入淡出**：`_bgmFadeFactor`（0-1）独立于音量链，协程只修改该系数——淡变期间调整音量无写冲突；连续切歌时新协程从当前系数续接，无跳变。淡出与淡入各占 `fadeSeconds`；BGM 未在播放时（首次播放 / 停止后重播）跳过淡出段直接从 0 淡入，不空等淡出时长。淡变基于 unscaled 时间，`PauseAll` 暂停期间淡变继续推进，恢复后音量自洽。
-- **持久化**：键为 `<prefsKey>.MasterVolume` 等 6 个；写键不调用 `PlayerPrefs.Save()`（Unity 在退出时自动保存）。
+- **持久化**：键为 `<prefsKey>.MasterVolume` 等 6 个；写键不调用 `PlayerPrefs.Save()`（Unity 在退出时自动保存）。音量 setter 每次赋值即写键——高频场景（滑条连续拖动）请拖动结束后一次性写入，见快速开始。
+- **音调钳制**：`PlaySfx` 的最终音调钳制到 `[0.01, 3]`——`pitch` 与 `pitchJitter` 任意组合都不会产生负音调（Unity 负 pitch 为反向播放）与无声（pitch = 0 静音）。
 
 ## 设计边界（极简取舍）
 
@@ -128,10 +130,12 @@ AudioModule.SfxVolume = sfxSlider.value;
 | 每音效独立 Stop / 播完回调 | `PlaySfx` 为 fire-and-forget；回调需求请使用 MiniEvent |
 | 每秒上百次的高密度 SFX 池调优 | 8 源轮询已满足绝大多数场景；更高密度建议直接评估原生方案 |
 | AudioListener 管理 | 调用方保证场景有恰好一个 Listener（相机默认自带） |
-| 负 `pitchJitter` 防御 | 参数约定非负，误用不设防（极简原则） |
+| 负 `pitchJitter` 防御 | 参数约定非负；即便误用，最终音调已钳制到 `[0.01, 3]`（见内部机制），只会听感异常不会反播 |
+| NaN `fadeSeconds` 防御 | 参数约定合法数值；NaN 会污染淡变系数使音量链全 NaN，误用不设防（极简原则） |
+| 轮询抢占的瞬态爆音 | 全忙抢占最旧音源热切换 clip 有可闻爆音；在意瞬态噪声请降低触发密度或自建音源做包络 |
 
 ## 示例
 
 包内 `Samples/Audio/01_BasicUsage/`（Package Manager → Samples 导入副本位于 `Samples~/Audio/01_BasicUsage`）：
 
-**Audio Module - Basic Usage** — OnGUI 面板驱动全部 API：SFX 播放（含音调抖动）、BGM 立即播放与 1.5 秒淡入淡出切换、淡出停止、暂停恢复、三通道音量滑条与静音开关、`CurrentBgm` 状态显示。音频资源为程序化生成的自包含 wav。
+**Audio Module - Basic Usage** — OnGUI 面板驱动全部 API：SFX 播放（含音调抖动）、BGM 立即播放与 1.5 秒淡入淡出切换、淡出停止、暂停恢复、三通道音量滑条（演示拖动结束落键）与静音开关、`CurrentBgm` 状态显示。音频资源为程序化生成的自包含 wav。

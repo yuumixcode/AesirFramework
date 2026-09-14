@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、实验性事件模块、音频管理、场景管理工具与脚本文档生成工具。
+Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、事件模块、音频管理、场景管理工具与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.20.0-blue.svg)](./CHANGELOG.md)
@@ -16,7 +16,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 | 模块 | 状态 | 说明 |
 |------|------|------|
 | UI | 已实现 | `UIModule` 单例（Manager of Managers）+ `UIRoot` 四层 Canvas + 面板生命周期 + 可插拔资源加载 |
-| Event | ⚠️ 实验性 | `EventModule` 双轨订阅（Attribute + Script）+ 4 档优先级 + 表达式树优化 + 订阅者过滤器（精确投递）+ 死引用清理 + SO 资产化。尚未在实际项目中验证 |
+| Event | 已实现 | `EventModule` 双轨订阅（Attribute + Script）+ 4 档优先级稳定排序 + 快照与重入安全分发 + 表达式树优化 + 订阅者过滤器（精确投递）+ 死引用清理 + SO 资产化 |
 | Audio | 已实现 | `AudioModule` 单例（2D 音频极简门面）+ SFX 独占音源轮询 + BGM 淡入淡出 + 三通道音量/静音持久化 |
 | Scene | 已实现 | `SceneModule` 场景加载/叠加/卸载/激活场景切换 + 场景事件广播 + `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Editor Settings） |
 | ScriptDocGenerator | 已实现（需 Odin） | 反射分析 C# 类型生成结构化 API 文档（增量保留手写内容）+ Summary 工具（XML `<summary>` 与 `[Summary]` 特性同步，特性优先） |
@@ -79,7 +79,7 @@ UPM 会自动解析 `package.json` 的 `dependencies` 字段，拉取 Aesir Arch
 | `AesirBasePanelView<T>` | Component | MVP 模式面板视图基类：继承 `AesirBasePanel` 并按 Context 类型绑定（`IView`），经 Context 访问 Model / Service |
 | `AesirBasePanelViewController<T>` | Component | MVC 模式面板控制器基类：继承 `AesirBasePanel` 并按 Context 类型绑定（`IController`），经 Context 访问 Model / Service 并可执行 Command / Query |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | 可插拔资源加载契约与默认实现（Resources 目录）。加载契约为**同步语义**：适用于 Resources、同步缓存等管线；Addressables 等异步管线需自行预加载后同步返回 |
-| `UICanvasConfigSO` | Component | Canvas 统一配置资产（可经 Create 菜单创建默认资产） |
+| `UICanvasConfigSO` | Asset | Canvas 统一配置资产（可经 Create 菜单创建默认资产） |
 | `UILayer` | Engine | 层级枚举：Background / Normal / Popup / Top |
 
 ### 快速开始
@@ -158,11 +158,9 @@ Editor/UI/                         # 汇入核心编辑器程序集（层根锚�
 
 ## 事件模块
 
-> ⚠️ **实验性模块**：尚未在实际项目中验证，API 可能调整。
+基于双轨订阅的事件系统。Attribute 订阅通过 `[AesirListener]` 特性标记方法，Script 订阅通过 `AddListener<T>` 动态注册 Lambda 委托。两种订阅共存于同一分发流程，按 4 档优先级稳定排序执行（同档按注册顺序）。
 
-基于双轨订阅的事件系统。Attribute 订阅通过 `[AesirListener]` 特性标记方法，Script 订阅通过 `AddListener<T>` 动态注册 Lambda 委托。两种订阅共存于同一分发流程，按 4 档优先级排序执行。
-
-分发期内置订阅者过滤器（精确投递：Tag / 优先级 / 同场景 / Collider2D 范围 / 同家族）、死引用自动清理与可选的耗时告警；支持 SO 资产化（`AesirEventArgsSO`）与 UnityEvent 桥接组件，非程序员可在 Inspector 配置事件。
+分发基于注册表快照迭代——回调内退订/注册只影响后续分发；回调内同步发布事件（重入）使用独立缓冲区，参数互不覆写。内置订阅者过滤器（精确投递：Tag / 优先级 / 同场景 / Collider2D 范围 / 同家族）、死引用自动清理与可选的耗时告警；支持 SO 资产化（`AesirEventArgsSO`）与 UnityEvent 桥接组件，非程序员可在 Inspector 配置事件。
 
 ### 核心类型
 
@@ -285,7 +283,7 @@ myEventArgsSO.Raise();
 private void OnKeyPressed() { ... }
 ```
 
-> **设计边界**：分发为同步非重入设计（约定不在订阅者回调内同步发布事件）；遗漏退订的已销毁订阅者由分发期死引用清理自动兜底；系统事件（元事件）与频道标签依赖编辑器工具链，待工具链立项后一并设计。详见 [Documentation/event-module.md](./Documentation/event-module.md)。
+> **设计边界**：分发基于注册表快照迭代且支持重入（订阅者回调内可安全同步发布事件，参数互不覆写）；遗漏退订的已销毁订阅者由分发期死引用清理自动兜底；系统事件（元事件）与频道标签依赖编辑器工具链，待工具链立项后一并设计。详见 [Documentation/event-module.md](./Documentation/event-module.md)。
 
 ### 目录结构
 
@@ -440,7 +438,7 @@ Editor/Scene/                      # 汇入核心编辑器程序集（层根锚�
 ├── SceneManagerWindow.cs          # Scene Editor Settings 设置窗口（Tools/Aesir/Scene Editor Settings）
 ├── BootstrapSceneHelper.cs        # Bootstrapper 场景搜集注册工具（默认关闭）
 ├── SceneEditorSettings.cs         # 编辑器持久化设置
-├── Tests/                         # EditMode 测试（SceneAssetWrapper 27 用例 + SceneModule 20 用例）
+├── Tests/                         # EditMode 测试（SceneAssetWrapper 27 用例 + SceneModule 20 用例）；真实加载成功路径另见包根 Tests/Runtime 的 PlayMode 用例
 ├── OdinInspector/                 # SceneAssetWrapper Processor（经 asmref 汇入）
 └── Addressables/                  # Addressables 胶水实现（经 asmref 汇入）
 ```

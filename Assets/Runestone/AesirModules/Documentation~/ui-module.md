@@ -90,6 +90,6 @@ public interface IUIAssetLoader
 
 ## 测试与维护
 
-- 面板生命周期状态机由 `Tests/Editor/UI/UIModuleTests.cs` 锁定（13 用例：三路 Show、Hide 双分叉、Prewarm 幂等、键语义诊断、RemovePanelRecord 反清理、缺层中止、生命周期顺序）；
-- Binder 代码生成器另有 18 用例（`BinderCodeGeneratorTests` 等）；
+- 面板生命周期状态机由 `Tests/Editor/UI/UIModuleTests.cs` 锁定（17 用例：三路 Show、Hide 双分叉、Prewarm 幂等、键语义诊断、RemovePanelRecord 反清理、缺层中止、生命周期顺序、注册时序（OnShow 内递归 Show 不重复实例化、OnShow 抛异常不泄漏）、Awake/OnEnable 推迟到 Show 激活的生命周期契约）；
+- Binder 代码生成器另有 20 用例（`BinderCodeGeneratorTests` 14 + `BinderContextSelectorTests` 1 + `BinderHierarchyUtilityTests` 5）；
 - 修改 UIModule 状态机或 UIRoot 层级构建逻辑时，先跑对应 EditMode 测试。
