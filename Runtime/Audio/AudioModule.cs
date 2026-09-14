@@ -42,7 +42,7 @@ namespace Runestone.AesirModules
         /// <param name="clip">音频片段。</param>
         /// <param name="volume">本次播放的局部音量（0-1），与 SFX 通道音量、总音量相乘生效。</param>
         /// <param name="pitch">本次播放的基准音调。</param>
-        /// <param name="pitchJitter">音调随机抖动幅度（非负）：最终音调在 [pitch - jitter, pitch + jitter] 内随机，用于脚步/射击等防止机械感。</param>
+        /// <param name="pitchJitter">音调随机抖动幅度（非负）：最终音调在 [pitch - jitter, pitch + jitter] 内随机并钳制到 [0.01, 3]（不会反播），用于脚步/射击等防止机械感。</param>
         public static void PlaySfx(AudioClip clip,
             float volume = 1f,
             float pitch = 1f,
@@ -63,7 +63,9 @@ namespace Runestone.AesirModules
 
             m._sfxLocalVolumes[index] = Mathf.Clamp01(volume);
             source.clip = clip;
-            source.pitch = pitch + Random.Range(-pitchJitter, pitchJitter);
+            // 钳制到 [0.01, 3]：pitch - jitter < 0 会产生负音调（Unity 负 pitch 为反向播放），
+            // 下限取 0.01 而非 0（pitch = 0 在 Unity 中音源无声）
+            source.pitch = Mathf.Clamp(pitch + Random.Range(-pitchJitter, pitchJitter), 0.01f, 3f);
             source.volume = m._sfxVolume * m._masterVolume * m._sfxLocalVolumes[index];
             source.Play();
         }
@@ -75,6 +77,11 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 替换运行时配置并重新载入音量（持久化值优先于配置默认值）。
         /// 传入 null 恢复为代码默认配置。预放置实例调用会改写序列化的资产引用。
+        /// <para>
+        /// 副作用声明：本方法会先将三通道音量与静音全部重置为配置默认值（无配置时为代码默认值），
+        /// 再读持久化键——<c>persistVolumes=false</c> 或持久化键缺失时，
+        /// 运行中经 API 设置的音量/静音状态会被重置，请在意图明确的配置切换时机调用。
+        /// </para>
         /// </summary>
         /// <param name="config">新配置资产（可为 null）。</param>
         public static void ApplyConfig(AudioConfigSO config)
@@ -214,12 +221,31 @@ namespace Runestone.AesirModules
             }
         }
 
+        /// <summary>
+        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// </summary>
+        /// <remarks>
+        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
+        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
+        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
+        /// <c>FindAnyObjectByType</c> 兜底重发现。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            _instance = null;
+        }
+
         #endregion
 
         #region 公开 API — BGM
 
         /// <summary>
-        /// 播放背景音乐（循环）。正在播放同一片段时幂等返回——跨场景重复触发不打断音乐。
+        /// 播放背景音乐（循环）。同曲稳定播放（无进行中的淡变）时幂等返回——跨场景重复触发不打断音乐。
+        /// <para>
+        /// 淡变进行中调用同曲：取消淡变并从当前系数续接淡回全音量（不重新播放）——
+        /// 覆盖 <see cref="StopBgm" /> 淡出途中反悔、切歌淡出途中回到旧曲两个场景。
+        /// </para>
         /// </summary>
         /// <param name="clip">音频片段。</param>
         /// <param name="fadeSeconds">
@@ -235,9 +261,29 @@ namespace Runestone.AesirModules
 
             var m = Ready();
 
-            // 同曲正在播放 → 幂等返回（重复进入场景不打断音乐）
-            if (m._bgmSource.clip == clip && m._bgmSource.isPlaying)
+            var sameClipPlaying = m._bgmSource.clip == clip && m._bgmSource.isPlaying;
+
+            // 同曲稳定播放（无进行中的淡变）→ 幂等返回（重复进入场景不打断音乐）
+            if (sameClipPlaying && m._bgmFadeRoutine == null)
             {
+                return;
+            }
+
+            // 同曲但淡变进行中（StopBgm 淡出途中 / 切歌淡出途中反悔）：
+            // 取消淡变、从当前系数续接淡回 1，不重新播放（"别停、继续放"）
+            if (sameClipPlaying)
+            {
+                if (fadeSeconds <= 0f)
+                {
+                    m.StopBgmFade();
+                    m._bgmFadeFactor = 1f;
+                    m.ApplyVolumes();
+                }
+                else
+                {
+                    m.StartBgmFade(m.FadeBgmRoutine(1f, fadeSeconds));
+                }
+
                 return;
             }
 
