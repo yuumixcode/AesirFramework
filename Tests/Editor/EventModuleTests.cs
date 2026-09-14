@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using NUnit.Framework;
+using Runestone.AesirArchitecture;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -137,10 +138,17 @@ namespace Runestone.AesirModules.Tests.Editor
         }
 
         [Test]
-        public void WithFilter_NullFilter_ThrowsArgumentNullException()
+        public void WithTag_NullFilter_ThrowsArgumentNullException()
         {
             Assert.Throws<ArgumentNullException>(() => new TestEventArgs().WithFilter(null));
             Assert.Throws<ArgumentNullException>(() => new TestEventArgs().WithFilters(null));
+        }
+
+        [Test]
+        public void WithTag_EmptyTag_ThrowsArgumentException()
+        {
+            // CompareTag("") 语义无意义——按 fail-fast 在构造期拒绝，而非留到分发期被隔离捕获
+            Assert.Throws<ArgumentException>(() => new WithTag(""));
         }
 
         [Test]
@@ -331,6 +339,29 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.IsFalse(_module.DynamicBindings.ContainsKey(key));
         }
 
+        class AttrDeadSubscriber : MonoBehaviour
+        {
+            [AesirListener(typeof(TestEventArgs))]
+            void OnTest(TestEventArgs e) { }
+        }
+
+        [Test]
+        public void DeadSubscriber_AttributeTrack_IsRemovedFromRegistry()
+        {
+            var subscriber = NewGameObject("AttrDead").AddComponent<AttrDeadSubscriber>();
+            EventModule.AddListener(subscriber);
+
+            var key = AesirEventUtility.GetEventBindingKey<TestEventArgs>();
+            Assert.IsTrue(_module.AttributeBindings.ContainsKey(key), "前置：Attribute 轨应有绑定");
+
+            Object.DestroyImmediate(subscriber.gameObject);
+
+            LogAssert.Expect(LogType.Warning, new Regex("已清理 1 个已销毁订阅者"));
+            new TestEventArgs().Invoke(_module.gameObject);
+
+            Assert.IsFalse(_module.AttributeBindings.ContainsKey(key), "Attribute 轨死绑定应被清理");
+        }
+
         #endregion
 
         #region 性能监控
@@ -365,6 +396,24 @@ namespace Runestone.AesirModules.Tests.Editor
             new TestEventArgs().Invoke(_module.gameObject);
 
             Assert.AreEqual(1, hits);
+        }
+
+        [Test]
+        public void Dispatch_ThousandSubscribers_CompletesWithinGenerousBudget()
+        {
+            var go = NewGameObject("Perf");
+            for (var i = 0; i < 1000; i++)
+            {
+                EventModule.AddListener<TestEventArgs>(go, e => { });
+            }
+
+            var stopwatch = Stopwatch.StartNew();
+            new TestEventArgs().Invoke(_module.gameObject);
+            stopwatch.Stop();
+
+            // 信息性软门槛：实测约 0.6ms，门槛放大千倍仅作量级回归防线（CI 波动不脆）
+            Assert.Less(stopwatch.Elapsed.TotalMilliseconds, 2000,
+                $"1000 订阅者单次分发耗时不应出现量级回退（实际 {stopwatch.Elapsed.TotalMilliseconds:F2}ms）");
         }
 
         #endregion
@@ -524,6 +573,196 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.AreEqual(1, subscriber.Hits, "未显式指定类型时应从方法首参推断事件类型");
 
             EventModule.RemoveListener(subscriber);
+        }
+
+        #endregion
+
+        #region 重入分发（回调内同步发布事件）
+
+        [Test]
+        public void ReentrantDispatch_DifferentEventType_OuterRemainingSubscribersReceiveOuterArgs()
+        {
+            var publisher = NewGameObject("ReentrantPublisher");
+            var innerHits = 0;
+            var outerHits = 0;
+            EventModule.AddListener<TestArgsA>(publisher, e => innerHits++);
+
+            // 先注册者回调内发布异型事件；后注册者必须仍收到外层 TestEventArgs
+            EventModule.AddListener<TestEventArgs>(publisher, e =>
+            {
+                new TestArgsA().Invoke(_module.gameObject);
+            });
+            EventModule.AddListener<TestEventArgs>(_module.gameObject, e => outerHits++);
+
+            new TestEventArgs().Invoke(_module.gameObject);
+
+            Assert.AreEqual(1, innerHits, "内层事件应被正常分发");
+            Assert.AreEqual(1, outerHits, "重入覆写共享参数数组时此处为 0（外层参数被内层替换）");
+        }
+
+        [Test]
+        public void ReentrantDispatch_SameEventType_OuterSenderPreserved()
+        {
+            var publisher = NewGameObject("SameTypePublisher");
+            var receivedSenders = new List<object>();
+            var depth = 0;
+            EventModule.AddListener<TestEventArgs>(publisher, e =>
+            {
+                depth++;
+                if (depth == 1)
+                {
+                    // 内层再发一次同型事件（不同发布者），depth 守卫防无限递归
+                    new TestEventArgs().Invoke(_module.gameObject);
+                }
+            });
+            EventModule.AddListener<TestEventArgs>(_module.gameObject, e => receivedSenders.Add(e.Sender));
+
+            var outerSender = NewGameObject("OuterSender");
+            new TestEventArgs().Invoke(outerSender);
+
+            Assert.AreEqual(2, receivedSenders.Count, "外层与内层各命中一次");
+            Assert.AreSame(_module.gameObject, receivedSenders[0], "首次命中来自内层分发");
+            Assert.AreSame(outerSender, receivedSenders[1],
+                "外层继续分发的订阅者应收到外层事件参数（重入覆写时此处会变成内层发布者）");
+        }
+
+        [Test]
+        public void ReentrantDispatch_ThreeLevels_EachLevelReceivesOwnArgs()
+        {
+            var go = NewGameObject("ThreeLevel");
+            var tail = NewGameObject("Tail");
+            var received = new List<AesirEventArgs>();
+            var tailReceived = new List<AesirEventArgs>();
+            var argsOuter = new TestEventArgs();
+            var argsMid = new TestArgsA();
+            var argsInner = new TestArgsB();
+
+            EventModule.AddListener<TestArgsB>(go, e => received.Add(e));
+            EventModule.AddListener<TestArgsA>(go, e =>
+            {
+                received.Add(e);
+                argsInner.Invoke(_module.gameObject);
+            });
+            EventModule.AddListener<TestEventArgs>(go, e =>
+            {
+                received.Add(e);
+                argsMid.Invoke(_module.gameObject);
+            });
+
+            // 每层各挂一个"尾随"订阅者：重入覆写时尾随者收到的会是错误层的参数
+            EventModule.AddListener<TestArgsA>(tail, e => tailReceived.Add(e));
+            EventModule.AddListener<TestEventArgs>(tail, e => tailReceived.Add(e));
+
+            argsOuter.Invoke(_module.gameObject);
+
+            Assert.AreEqual(3, received.Count);
+            Assert.AreSame(argsOuter, received[0]);
+            Assert.AreSame(argsMid, received[1]);
+            Assert.AreSame(argsInner, received[2]);
+            Assert.AreEqual(2, tailReceived.Count, "两个尾随订阅者都应被命中");
+            // 尾随订阅者的命中顺序：内层分发（argsMid）先于外层循环继续（argsOuter）
+            Assert.AreSame(argsMid, tailReceived[0]);
+            Assert.AreSame(argsOuter, tailReceived[1]);
+        }
+
+        #endregion
+
+        #region 快照语义（分发中退订/注册）
+
+        [Test]
+        public void UnsubscribeDuringDispatch_SnapshotSemantics_LaterSubscribersStillReceive()
+        {
+            var go = NewGameObject("Unsub");
+            var first = 0;
+            var second = 0;
+            var third = 0;
+            var secondHandle = default(AutoRemoveListenerHandle);
+            EventModule.AddListener<TestEventArgs>(go, e =>
+            {
+                first++;
+                secondHandle.Dispose();
+            });
+            secondHandle = EventModule.AddListener<TestEventArgs>(go, e => second++);
+            EventModule.AddListener<TestEventArgs>(go, e => third++);
+
+            new TestEventArgs().Invoke(_module.gameObject);
+
+            Assert.AreEqual(1, first);
+            Assert.AreEqual(1, second, "快照语义（对齐原生多播委托）：本趟已开始，被移除的监听仍执行一次");
+            Assert.AreEqual(1, third, "退订后续订阅者不应导致其被跳过或迭代越界");
+
+            // 第二次分发：退订已生效
+            new TestEventArgs().Invoke(_module.gameObject);
+            Assert.AreEqual(2, first);
+            Assert.AreEqual(1, second, "第二趟起退订生效");
+            Assert.AreEqual(2, third);
+        }
+
+        [Test]
+        public void RegisterDuringDispatch_NewSubscriberNotCalledThisRound()
+        {
+            var go = NewGameObject("Reg");
+            var lateHits = 0;
+            EventModule.AddListener<TestEventArgs>(go, e =>
+            {
+                EventModule.AddListener<TestEventArgs>(go, _ => lateHits++);
+            });
+
+            new TestEventArgs().Invoke(_module.gameObject);
+            Assert.AreEqual(0, lateHits, "分发中新增的订阅者本趟不应生效（快照语义）");
+
+            new TestEventArgs().Invoke(_module.gameObject);
+            Assert.AreEqual(1, lateHits, "下一趟起新增订阅者正常生效");
+        }
+
+        #endregion
+
+        #region 稳定排序（Priority 主键 + 注册序号次键）
+
+        [Test]
+        public void Dispatch_SamePriority_ExecutesInRegistrationOrder()
+        {
+            var go = NewGameObject("Order");
+            var order = new List<int>();
+            EventModule.AddListener<TestEventArgs>(go, e => order.Add(1));
+            EventModule.AddListener<TestEventArgs>(go, e => order.Add(2));
+            EventModule.AddListener<TestEventArgs>(go, e => order.Add(3));
+
+            new TestEventArgs().Invoke(_module.gameObject);
+
+            Assert.AreEqual(new[] { 1, 2, 3 }, order.ToArray(), "同优先级应按注册顺序稳定执行");
+        }
+
+        class CrossTrackAttrSubscriber
+        {
+            readonly List<string> _calls;
+
+            public CrossTrackAttrSubscriber(List<string> calls) => _calls = calls;
+
+            [AesirListener(typeof(TestEventArgs), SubscriberPriority.High)]
+            void OnHigh(TestEventArgs e) => _calls.Add("attr-high");
+
+            [AesirListener(typeof(TestEventArgs), SubscriberPriority.Last)]
+            void OnLast(TestEventArgs e) => _calls.Add("attr-last");
+        }
+
+        [Test]
+        public void Dispatch_CrossTrack_FullPriorityOrder()
+        {
+            var calls = new List<string>();
+            var attrSubscriber = new CrossTrackAttrSubscriber(calls);
+            EventModule.AddListener(attrSubscriber);
+
+            var go = NewGameObject("Dyn");
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("dyn-first"), SubscriberPriority.First);
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("dyn-medium"), SubscriberPriority.Medium);
+
+            new TestEventArgs().Invoke(_module.gameObject);
+
+            Assert.AreEqual(new[] { "dyn-first", "attr-high", "dyn-medium", "attr-last" },
+                calls.ToArray(), "Attribute+Dynamic 合并后应按 First→High→Medium→Last 全序执行");
+
+            EventModule.RemoveListener(attrSubscriber);
         }
 
         #endregion

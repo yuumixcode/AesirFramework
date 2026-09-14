@@ -24,6 +24,12 @@ namespace Runestone.AesirModules
     /// 可通过 <c>executionMsLimit</c> 开启分发耗时告警。
     /// </para>
     /// <para>
+    /// <b>快照语义与重入安全</b>：每趟分发基于注册表快照迭代——回调内退订/注册只影响后续分发，
+    /// 不干扰本趟；回调内同步发布事件（重入）使用独立的迭代缓冲区与参数数组，
+    /// 外层分发不受覆写影响。性能计时（executionMsLimit）仅对顶层分发生效。
+    /// 排序为 Priority 主键 + 注册序号次键的稳定排序，同优先级按注册顺序执行。
+    /// </para>
+    /// <para>
     /// 作为 <see cref="AesirModules" /> 的子物体存在，由 <see cref="AesirModules.GetOrAddChild{T}" /> 懒加载创建。
     /// </para>
     /// </summary>
@@ -102,74 +108,96 @@ namespace Runestone.AesirModules
 
             // 过滤器在循环前取一次引用；无过滤器时为 null，跳过检查保持零开销
             var filters = eventArgs.FilterList;
-            var measureExecution = executionMsLimit > 0f;
+
+            // 重入（订阅者回调内同步发布事件）时：性能计时只对顶层分发生效，
+            // 避免内层 Restart/Stop 破坏外层计时
+            var reentrant = _dispatchDepth > 0;
+            var measureExecution = !reentrant && executionMsLimit > 0f;
             if (measureExecution)
             {
                 _dispatchStopwatch.Restart();
             }
 
-            // 只在有多个来源时才合并 + 排序；单来源直接用原列表
-            List<BindingInfo> sorted;
-            if (attrCount == 0)
+            // 快照语义：合并两个注册表到迭代缓冲区后再遍历。
+            // 回调内退订/注册只修改注册表本身，本趟迭代基于快照执行完毕，
+            // 不会出现"退订后续订阅者导致跳过一个"的索引位移。
+            // 顶层分发复用 _iterationBuffer（Clear 保留容量，稳态零分配）；
+            // 重入分发使用独立局部列表，不覆写顶层正在迭代的缓冲区。
+            var sorted = reentrant ? new List<BindingInfo>(totalCount) : _iterationBuffer;
+            if (attrList != null)
             {
-                sorted = dynList;
-            }
-            else if (dynCount == 0)
-            {
-                sorted = attrList;
-            }
-            else
-            {
-                sorted = new List<BindingInfo>(totalCount);
                 sorted.AddRange(attrList);
+            }
+
+            if (dynList != null)
+            {
                 sorted.AddRange(dynList);
             }
 
-            // count <= 1 时跳过排序
+            // count <= 1 时跳过排序；Priority 为主键、InsertionIndex 为次键的稳定排序，
+            // 同优先级按注册顺序执行（对齐 RAA HookEntry 范式）
             if (sorted.Count > 1)
             {
-                sorted.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+                sorted.Sort((a, b) =>
+                {
+                    var res = a.Priority.CompareTo(b.Priority);
+                    return res != 0 ? res : a.InsertionIndex.CompareTo(b.InsertionIndex);
+                });
             }
 
-            // 复用 _invokeArgs 避免每次循环都 new object[]
-            _invokeArgs[0] = eventArgs;
+            // 重入分发使用独立的参数数组与死绑定收集，避免覆写顶层共享状态
+            var invokeArgs = reentrant ? new object[1] : _invokeArgs;
+            var deadBindings = reentrant ? new List<BindingInfo>() : _deadBindings;
+            invokeArgs[0] = eventArgs;
 
+            _dispatchDepth++;
             var count = sorted.Count;
-            for (var i = 0; i < count; i++)
+            try
             {
-                var binding = sorted[i];
-                if (AesirEventUtility.IsObjectUnityNull(binding.Subscriber))
+                for (var i = 0; i < count; i++)
                 {
-                    // 已销毁订阅者：收集到循环外统一移除，避免遍历时修改注册表列表
-                    _deadBindings.Add(binding);
-                    continue;
-                }
-
-                try
-                {
-                    if (filters != null && !PassFilters(filters, eventArgs, binding))
+                    var binding = sorted[i];
+                    if (AesirEventUtility.IsObjectUnityNull(binding.Subscriber))
                     {
+                        // 已销毁订阅者：收集到循环外统一移除，避免遍历时修改注册表列表
+                        deadBindings.Add(binding);
                         continue;
                     }
 
-                    binding.Invoke(_invokeArgs);
+                    try
+                    {
+                        if (filters != null && !PassFilters(filters, eventArgs, binding))
+                        {
+                            continue;
+                        }
+
+                        binding.Invoke(invokeArgs);
+                    }
+                    catch (TargetInvocationException ex)
+                    {
+                        AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag,
+                            $"订阅者 {binding.Subscriber} 处理事件 " +
+                            $"{AesirEventUtility.GetEventName<TEventArgs>()} 时出错：" +
+                            $"{ex.InnerException?.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag, $"事件分发异常：{ex.Message}");
+                    }
                 }
-                catch (TargetInvocationException ex)
+            }
+            finally
+            {
+                _dispatchDepth--;
+                if (!reentrant)
                 {
-                    AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag,
-                        $"订阅者 {binding.Subscriber} 处理事件 " +
-                        $"{AesirEventUtility.GetEventName<TEventArgs>()} 时出错：" +
-                        $"{ex.InnerException?.Message}");
-                }
-                catch (Exception ex)
-                {
-                    AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag, $"事件分发异常：{ex.Message}");
+                    _iterationBuffer.Clear();
                 }
             }
 
-            if (_deadBindings.Count > 0)
+            if (deadBindings.Count > 0)
             {
-                RemoveDeadBindings(eventArgs.GetType().Name);
+                RemoveDeadBindings(deadBindings, eventArgs.GetType().Name);
             }
 
             if (measureExecution)
@@ -208,20 +236,21 @@ namespace Runestone.AesirModules
         /// 从双注册表移除本轮分发收集到的已销毁订阅者绑定，并输出告警提示检查退订遗漏。
         /// 日志为 UNITY_EDITOR 条件调用，玩家构建中静默清理。
         /// </summary>
+        /// <param name="deadBindings">本轮分发收集到的死绑定列表，移除后清空（复用列表保留容量）。</param>
         /// <param name="eventName">事件名，用于日志定位。</param>
-        void RemoveDeadBindings(string eventName)
+        void RemoveDeadBindings(List<BindingInfo> deadBindings, string eventName)
         {
-            for (var i = 0; i < _deadBindings.Count; i++)
+            for (var i = 0; i < deadBindings.Count; i++)
             {
-                var dead = _deadBindings[i];
+                var dead = deadBindings[i];
                 RemoveFromRegistry(AttributeBindings, dead);
                 RemoveFromRegistry(DynamicBindings, dead);
             }
 
             AesirModulesDebug.LogWarning(AesirModulesDebug.EventModuleTag,
-                $"事件 {eventName}：已清理 {_deadBindings.Count} 个已销毁订阅者的绑定，" +
+                $"事件 {eventName}：已清理 {deadBindings.Count} 个已销毁订阅者的绑定，" +
                 "请检查是否遗漏退订（建议 OnDisable 中 RemoveListener 或 Dispose 句柄）。");
-            _deadBindings.Clear();
+            deadBindings.Clear();
         }
 
         #endregion
@@ -294,9 +323,29 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 复用的参数数组，避免每次分发都分配 object[]。
-        /// EventModule 是单例，分发是同步的（非重入），所以单个实例字段即可。
+        /// 仅顶层分发（<see cref="_dispatchDepth" /> 为 0）使用；
+        /// 重入分发使用独立局部数组，避免覆写顶层正在使用的参数。
         /// </summary>
         readonly object[] _invokeArgs = new object[1];
+
+        /// <summary>
+        /// 分发深度计数。0 = 顶层分发；&gt; 0 = 订阅者回调内同步发布事件（重入）。
+        /// 重入分发改用独立的局部迭代缓冲区/参数数组/死绑定收集，不触碰顶层共享状态。
+        /// </summary>
+        int _dispatchDepth;
+
+        /// <summary>
+        /// 顶层分发复用的迭代缓冲区。分发基于注册表快照迭代：
+        /// 订阅者回调内退订/注册只改注册表，不影响本趟迭代（本趟仍按快照执行完毕）。
+        /// <see cref="List{T}.Clear" /> 保留容量，稳态零分配。
+        /// </summary>
+        readonly List<BindingInfo> _iterationBuffer = new List<BindingInfo>();
+
+        /// <summary>
+        /// 注册顺序自增序号源。注册时分配给 <see cref="BindingInfo.InsertionIndex" />，
+        /// 跨双注册表全局递增，使合并排序的次键在全序上有定义。
+        /// </summary>
+        long _nextInsertionIndex;
 
         #endregion
 
@@ -506,7 +555,7 @@ namespace Runestone.AesirModules
 
         #region 注册表通用操作
 
-        static void AddToRegistry(Dictionary<string, List<BindingInfo>> registry, BindingInfo info)
+        void AddToRegistry(Dictionary<string, List<BindingInfo>> registry, BindingInfo info)
         {
             if (string.IsNullOrEmpty(info.BindingKey))
             {
@@ -519,6 +568,8 @@ namespace Runestone.AesirModules
                 registry[info.BindingKey] = list;
             }
 
+            // 注册顺序次键：跨双注册表全局递增，同优先级排序按注册顺序稳定执行
+            info.InsertionIndex = _nextInsertionIndex++;
             list.Add(info);
         }
 
