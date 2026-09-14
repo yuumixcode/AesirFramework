@@ -38,7 +38,9 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             EventType = eventInfo.EventHandlerType;
             EventTypeName = EventType.GetReadableTypeName();
             EventTypeFullName = EventType.GetReadableTypeName(true);
-            IsStatic = eventInfo.GetAddMethod(true).IsStatic;
+            // 非常规事件可能缺少 add 访问器（如仅 remove 的元数据事件）——回退 remove 访问器判定
+            IsStatic = eventInfo.GetAddMethod(true)?.IsStatic ??
+                       eventInfo.GetRemoveMethod(true)?.IsStatic ?? false;
             MemberType = eventInfo.MemberType;
             MemberTypeName = MemberType.ToString();
             AccessModifier = eventInfo.GetEventAccessModifierType();
