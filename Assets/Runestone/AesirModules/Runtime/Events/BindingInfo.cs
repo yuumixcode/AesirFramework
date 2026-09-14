@@ -14,6 +14,13 @@ namespace Runestone.AesirModules
         public object Subscriber { get; protected set; }
         public SubscriberPriority Priority { get; protected set; }
 
+        /// <summary>
+        /// 注册顺序自增序号。由 <see cref="EventModule" /> 在注册时分配，
+        /// 作为同优先级排序的次键（对齐 RAA <c>HookEntry</c> 范式），
+        /// 保证相同 <see cref="Priority" /> 的订阅者按注册顺序稳定执行。
+        /// </summary>
+        public long InsertionIndex { get; internal set; }
+
         public abstract void Invoke(object[] args = null);
     }
 

@@ -17,7 +17,22 @@ namespace Runestone.AesirModules
         /// 创建 Tag 过滤器。
         /// </summary>
         /// <param name="tag">目标 Tag，须已在 TagManager 中定义，否则 CompareTag 会抛异常并被分发隔离捕获。</param>
-        public WithTag(string tag) => _tag = tag ?? throw new ArgumentNullException(nameof(tag));
+        /// <exception cref="ArgumentNullException">tag 为 null 时抛出。</exception>
+        /// <exception cref="ArgumentException">tag 为空串时抛出（CompareTag("") 语义无意义，按 fail-fast 在发布期拒绝）。</exception>
+        public WithTag(string tag)
+        {
+            if (tag == null)
+            {
+                throw new ArgumentNullException(nameof(tag));
+            }
+
+            if (tag.Length == 0)
+            {
+                throw new ArgumentException("Tag 不能为空串。", nameof(tag));
+            }
+
+            _tag = tag;
+        }
 
         public bool ShouldReceive(AesirEventArgs eventArgs, object subscriber, SubscriberPriority priority) =>
             AesirEventUtility.TryGetGameObject(subscriber, out var gameObject) && gameObject.CompareTag(_tag);
