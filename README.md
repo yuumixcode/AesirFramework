@@ -23,6 +23,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 - **MVC 优先架构** — `IController` + `ICommand` 命令模式 + `IQuery<TResult>` 查询模式（CQRS），Controller 作为 MVC 的核心入口直接修改 Model；`IPresenter`（MVP）作为可选的严格 Model-View 隔离模式
 - **PlayerLoop 原生生命周期** — 通过 `AesirArchitecturePlayerLoop` 将自定义子系统注入 Unity PlayerLoop，提供 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour
+- **帧粒度时间调度** — `AesirScheduler` 纯 C# 静态 API（`Delay(seconds, callback)` / `NextFrame(callback)`），经 PlayerLoop BeforeUpdate 钩子结算，为无协程能力的 Model / Service / Command 提供合法的延时执行手段
 - **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand` 等能力标记接口组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`，按需暴露能力
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
@@ -59,7 +60,7 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 
 ### unitypackage 导入
 
-从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**一键检查并更新：版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测），更新前自动备份 `Assets/Runestone`，并按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件。
+从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**一键检查并更新：版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测），窗口内直接展示「本地 → 远程」更新日志，更新前弹出确认框并自动备份 `Assets/Runestone`，再按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件；安装 Odin Inspector 时更新器为 Odin 界面。
 
 > 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
 
@@ -155,7 +156,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## 示例（Samples）
 
-包内提供 10 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
+包内提供 11 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
 
 ### MVC 系列（View 自订阅刷新）
 
@@ -182,6 +183,7 @@ this.ExecuteCommand<AddScoreCommand>();
 | `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
 | `ObservableCollections` | ObservableList / ObservableDictionary / ObservableHashSet 变更事件用法：订阅 Added / Removed / Replaced / Updated / Cleared，经 ContextMenu 触发增删改查与集合运算 | 无 |
 | `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
+| `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示，开关经设置窗口控制（`Tools → Aesir → Architecture → Samples`） | 无 |
 
 ### 实战示例
 
@@ -284,14 +286,16 @@ cn.runestone.aesir.architecture/
 │   │   ├── ScriptingSymbolUtility.cs
 │   │   └── QuickCreateSOMenuItem.cs          # 右键快捷创建 SO（Aesir Inspector 存在时自动让位）
 │   ├── UpdateChecker/                        # 包内更新器（Tools → Aesir → Check for Updates）
-│   │   ├── AesirUpdateService.cs             # 无状态工具集：扫描安装、多源版本检测、清单差集、备份
-│   │   └── AesirUpdateWindow.cs              # 更新窗口
+│   │   ├── AesirUpdateService.cs             # 无状态工具集：扫描安装、多源版本检测、清单差集、备份、CHANGELOG 解析、更新执行
+│   │   └── AesirUpdateWindow.cs              # 更新窗口（IMGUI 兜底；菜单入口，装 Odin 时路由到 Odin 版）
 │   └── OdinInspector/            # Odin Inspector 集成（可选）
 │       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef
-│       └── AttributeProcessors/
-│           ├── AesirArchitectureAttributeProcessor.cs
-│           ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
-│           └── ObservableValueAttributeProcessor.cs
+│       ├── AttributeProcessors/
+│       │   ├── AesirArchitectureAttributeProcessor.cs
+│       │   ├── RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.cs
+│       │   └── ObservableValueAttributeProcessor.cs
+│       └── UpdateChecker/
+│           └── AesirUpdateWindowOdin.cs      # 更新窗口（Odin 版）
 ├── Tests/
 │   ├── Runtime/
 │   │   └── Runestone.AesirArchitecture.Tests.asmdef
@@ -322,6 +326,7 @@ cn.runestone.aesir.architecture/
 - **事件总线 / EventChannel** — 跨模块通信使用互相 GetModel + ObservableValue 订阅，或直接引用 MiniEvent
 - **Context 多实例** — `AbstractContext<T>` 为 CRTP 泛型单例，每个具体上下文类型全局仅一份；多存档、多房间等场景请在业务层建模
 - **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
+- **时间调度的完整形态** — `AesirScheduler` 有意收窄为帧粒度的一次性任务（`Delay` / `NextFrame`）：不做取消句柄、暂停/恢复、精确计时、协程等价物；需要完整调度能力时请在业务层使用协程或第三方库
 - **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
 - **集合可观察全家桶** — 可观察集合仅提供 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 与最常用的 Added / Removed / Replaced / Updated / Cleared 变更；Move、Sort、同步视图、R3 集成等高级能力不做，需要时推荐使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
