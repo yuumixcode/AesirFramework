@@ -495,5 +495,121 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         }
 
         #endregion
+
+        #region 注册时序（递归 Show / 回调异常 / 生命周期推迟）
+
+        /// <summary>OnShow 内递归 Show 同类型面板的测试面板。</summary>
+        internal class RecursiveShowPanel : AesirBasePanel
+        {
+            public static bool RecursiveCallDone;
+
+            protected override void OnShow(object payload)
+            {
+                base.OnShow(payload);
+                if (!RecursiveCallDone)
+                {
+                    RecursiveCallDone = true;
+                    // OnShow 内递归 Show 同类型：注册时序前移后应命中自身而非重复实例化
+                    UIModule.Instance.ShowPanel<RecursiveShowPanel>();
+                }
+            }
+        }
+
+        /// <summary>OnShow 抛异常的测试面板。</summary>
+        internal class ThrowOnShowPanel : AesirBasePanel
+        {
+            protected override void OnShow(object payload)
+            {
+                base.OnShow(payload);
+                throw new InvalidOperationException("OnShow boom");
+            }
+        }
+
+        /// <summary>记录 OnInit 时物体激活状态的测试面板。</summary>
+        internal class LifecycleStatePanel : AesirBasePanel
+        {
+            public static bool ActiveSelfDuringInit;
+
+            protected override void OnInit() => ActiveSelfDuringInit = gameObject.activeSelf;
+        }
+
+        /// <summary>预热路径用的同款记录面板（独立类型避免与 Show 路径共享注册键）。</summary>
+        internal class LifecyclePrewarmPanel : AesirBasePanel
+        {
+            public static bool ActiveSelfDuringInit;
+
+            protected override void OnInit() => ActiveSelfDuringInit = gameObject.activeSelf;
+        }
+
+        [Test]
+        public void ShowPanel_RecursiveShowInsideOnShow_DoesNotDuplicate()
+        {
+            RecursiveShowPanel.RecursiveCallDone = false;
+            var module = CreateModule();
+            TrackUIRoot();
+            var prefabGo = NewGameObject("RecursivePrefab");
+            prefabGo.AddComponent<RecursiveShowPanel>();
+            module.RegisterPanelPrefab<RecursiveShowPanel>(prefabGo);
+
+            var panel = module.ShowPanel<RecursiveShowPanel>();
+
+            Assert.IsNotNull(panel);
+            Assert.AreSame(panel, module.GetPanel<RecursiveShowPanel>(),
+                "OnShow 内递归 Show 应命中同一个已注册实例（注册先于回调，旧实现会重复实例化）");
+        }
+
+        [Test]
+        public void ShowPanel_OnShowThrows_PanelStaysRegisteredAndCanHide()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+            var prefabGo = NewGameObject("ThrowPrefab");
+            prefabGo.AddComponent<ThrowOnShowPanel>();
+            module.RegisterPanelPrefab<ThrowOnShowPanel>(prefabGo);
+
+            Assert.Throws<InvalidOperationException>(() => module.ShowPanel<ThrowOnShowPanel>());
+
+            var panel = module.GetPanel<ThrowOnShowPanel>();
+            Assert.IsNotNull(panel, "OnShow 抛异常后面板应已注册（旧实现永不注册，实例泄漏）");
+            SetDestroyOnHide(panel, false);
+            Assert.DoesNotThrow(() => module.HidePanel<ThrowOnShowPanel>(), "已注册面板应可正常关闭");
+        }
+
+        [Test]
+        public void ShowPanel_PanelInactiveUntilShow_LifecycleDeferred()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+            var prefabGo = NewGameObject("LifecyclePrefab");
+            prefabGo.AddComponent<LifecycleStatePanel>();
+            module.RegisterPanelPrefab<LifecycleStatePanel>(prefabGo);
+
+            var panel = module.ShowPanel<LifecycleStatePanel>();
+
+            Assert.IsFalse(LifecycleStatePanel.ActiveSelfDuringInit,
+                "OnInit 执行时面板物体应为停用状态（Awake/OnEnable 推迟到 Show 激活才触发）");
+            Assert.IsTrue(panel.gameObject.activeSelf, "Show 完成后面板物体应已激活");
+        }
+
+        [Test]
+        public void PrewarmPanel_PanelStaysInactiveUntilFirstShow()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+            var prefabGo = NewGameObject("LifecyclePrewarmPrefab");
+            prefabGo.AddComponent<LifecyclePrewarmPanel>();
+            module.RegisterPanelPrefab<LifecyclePrewarmPanel>(prefabGo);
+
+            Assert.IsTrue(module.PrewarmPanel<LifecyclePrewarmPanel>());
+
+            var panel = module.GetPanel<LifecyclePrewarmPanel>();
+            Assert.IsFalse(LifecyclePrewarmPanel.ActiveSelfDuringInit, "预热期 OnInit 时物体应为停用状态");
+            Assert.IsFalse(panel.gameObject.activeSelf, "预热后面板物体应保持停用（Awake/OnEnable 未触发）");
+
+            module.ShowPanel<LifecyclePrewarmPanel>();
+            Assert.IsTrue(panel.gameObject.activeSelf, "首次 Show 才激活面板物体");
+        }
+
+        #endregion
     }
 }

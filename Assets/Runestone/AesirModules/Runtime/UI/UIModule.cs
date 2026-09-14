@@ -217,9 +217,11 @@ namespace Runestone.AesirModules
                     return null;
                 }
 
+                // 注册先于生命周期回调：OnInit/OnShow 内递归 Show/Get 同类型可命中自身；
+                // 回调抛异常时面板已注册，可正常 Hide/Get（不会因未注册而泄漏）
+                _panelDict[panel.GetType()] = panel;
                 panel.Initialize();
                 panel.Show(payload);
-                _panelDict[panel.GetType()] = panel;
                 return panel;
             }
 
@@ -231,7 +233,16 @@ namespace Runestone.AesirModules
                 return null;
             }
 
-            var mono = (MonoBehaviour)panel;
+            // IUIPanel 约定实现须为 MonoBehaviour（泛型入口已约束 MonoBehaviour, IUIPanel；
+            // 非泛型路径在此兜底，硬强转会把契约矛盾暴露成 InvalidCastException）
+            var mono = panel as MonoBehaviour;
+            if (mono == null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"面板 {panel.GetType().Name} 不是 MonoBehaviour，无法执行挂层与置顶");
+                return null;
+            }
+
             if (mono.transform.parent != root)
             {
                 mono.transform.SetParent(root, false);
@@ -361,8 +372,9 @@ namespace Runestone.AesirModules
                 return false;
             }
 
-            panel.Initialize();
+            // 注册先于 Initialize（与 ShowPanel 同一时序约定）：OnInit 内可命中自身，异常不泄漏
             _panelDict[panel.GetType()] = panel;
+            panel.Initialize();
             return true;
         }
 
@@ -513,18 +525,21 @@ namespace Runestone.AesirModules
         GameObject InstantiateInactive(GameObject prefab)
         {
             var wasActive = prefab.activeSelf;
-            if (wasActive)
+            if (!wasActive)
             {
-                prefab.SetActive(false);
+                return Instantiate(prefab);
             }
 
-            var clone = Instantiate(prefab);
-            if (wasActive)
+            prefab.SetActive(false);
+            try
             {
+                return Instantiate(prefab);
+            }
+            finally
+            {
+                // Instantiate 抛异常也必须恢复源预制体的激活状态
                 prefab.SetActive(true);
             }
-
-            return clone;
         }
 
         void EnsureReady()
@@ -535,10 +550,22 @@ namespace Runestone.AesirModules
             }
         }
 
+        /// <summary>经 path 加载的来源路径记录（仅 path 加载的条目），用于"换路径被静默忽略"的诊断。</summary>
+        readonly Dictionary<Type, string> _prefabSourcePaths = new Dictionary<Type, string>();
+
         GameObject ResolvePrefab(Type panelType, string path)
         {
             if (_prefabDict.TryGetValue(panelType, out var prefab))
             {
+                // 已按 path A 加载并缓存后，再以 path B 调用：缓存命中使换路径静默失效——给出诊断
+                if (path != null && _prefabSourcePaths.TryGetValue(panelType, out var usedPath) &&
+                    usedPath != path)
+                {
+                    AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                        $"面板 {panelType.Name} 的预制体已按 path（{usedPath}）加载并缓存，" +
+                        $"本次传入的 path（{path}）被忽略");
+                }
+
                 return prefab;
             }
 
@@ -548,6 +575,7 @@ namespace Runestone.AesirModules
                 if (prefab != null)
                 {
                     _prefabDict[panelType] = prefab;
+                    _prefabSourcePaths[panelType] = path;
                     return prefab;
                 }
             }

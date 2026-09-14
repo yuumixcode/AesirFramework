@@ -61,6 +61,13 @@ namespace Runestone.AesirModules
         readonly List<string> _addedScenePaths = new List<string>();
 
         /// <summary>
+        /// UnloadAll 迭代快照缓冲区（复用，Clear 保留容量）。
+        /// 广播期间监听者嵌套加载/卸载只改 <see cref="_addedScenePaths" />，不干扰本趟快照迭代；
+        /// 每个场景卸载成功即同步移出追踪，批量卸载期间 <see cref="AddedScenePaths" /> 始终反映真实状态。
+        /// </summary>
+        readonly List<string> _unloadSnapshotBuffer = new List<string>();
+
+        /// <summary>
         /// 启动场景引用（编辑器 BootstrapSceneHelper 的工作流之外，供用户代码读取路径/名称自行编排启动流程）。
         /// </summary>
         public SceneAssetWrapper BootstrapSceneAssetWrapper => bootstrapScene;
@@ -382,7 +389,16 @@ namespace Runestone.AesirModules
             {
                 // Single 加载已卸载全部旧场景，叠加追踪随之失效——加载成功后才清空（失败时保留旧追踪）
                 _addedScenePaths.Clear();
-                SceneManager.SetActiveScene(LastLoadedScene);
+                if (LastLoadedScene.IsValid())
+                {
+                    SceneManager.SetActiveScene(LastLoadedScene);
+                }
+                else
+                {
+                    // 路径大小写/归一化差异时 GetSceneByPath 可能取回无效 Scene——记录错误而非抛异常
+                    AesirModulesDebug.LogError(AesirModulesDebug.SceneModuleTag,
+                        $"场景加载完成但未能按路径取回有效场景，跳过激活: {scenePath}");
+                }
             }
             else if (!_addedScenePaths.Contains(scenePath))
             {
@@ -419,23 +435,37 @@ namespace Runestone.AesirModules
 
         IEnumerator UnloadAllAddedScenesInternal(Action onAllUnloaded)
         {
-            for (var i = 0; i < _addedScenePaths.Count; i++)
+            // 遍历快照：广播期间监听者可能嵌套加载/卸载（修改 _addedScenePaths），
+            // 基于快照迭代不被干扰；广播期间新叠加的场景不在本趟卸载范围内
+            var snapshot = _unloadSnapshotBuffer;
+            snapshot.AddRange(_addedScenePaths);
+            try
             {
-                var scenePath = _addedScenePaths[i];
-                var op = SceneManager.UnloadSceneAsync(scenePath);
-                if (op == null)
+                for (var i = 0; i < snapshot.Count; i++)
                 {
-                    // 单个场景已被外部卸载（或不存在）时跳过，不影响其余场景
-                    AesirModulesDebug.LogWarning(AesirModulesDebug.SceneModuleTag,
-                        $"场景卸载失败或场景不存在，已跳过: {scenePath}");
-                    continue;
-                }
+                    var scenePath = snapshot[i];
+                    var op = SceneManager.UnloadSceneAsync(scenePath);
+                    if (op == null)
+                    {
+                        // 单个场景已被外部卸载（或不存在）时跳过，不影响其余场景；
+                        // 不存在的场景同步移出追踪（追踪残留属陈旧状态）
+                        AesirModulesDebug.LogWarning(AesirModulesDebug.SceneModuleTag,
+                            $"场景卸载失败或场景不存在，已跳过: {scenePath}");
+                        _addedScenePaths.RemoveAll(p => p == scenePath);
+                        continue;
+                    }
 
-                yield return op;
-                SceneUnloadedEvent.Invoke(scenePath);
+                    yield return op;
+                    // 每卸一个即移出追踪：批量卸载期间 AddedScenePaths 始终反映真实状态
+                    _addedScenePaths.RemoveAll(p => p == scenePath);
+                    SceneUnloadedEvent.Invoke(scenePath);
+                }
+            }
+            finally
+            {
+                snapshot.Clear();
             }
 
-            _addedScenePaths.Clear();
             onAllUnloaded?.Invoke();
         }
 
