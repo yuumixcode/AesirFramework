@@ -1,5 +1,8 @@
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Runestone.AesirModules.ScriptDocGenerator.Editor;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 {
@@ -197,7 +200,8 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void SpecialCharsSummary_SyncHandlesCorrectly()
         {
-            // summary 含双引号：生成的特性文本必须转义，否则是非法 C#
+            // summary 含双引号：生成的特性文本必须转义，否则是非法 C#；
+            // XML 实体（&lt;para&gt;）进特性前解码为字面文本（双重转义修复）
             ProcessAndAssert(SpecialCharsCode, XmlSummaryTool.ProcessMode.SyncSummary,
                 @"using Runestone.AesirModules.ScriptDocGenerator;
 using System;
@@ -210,7 +214,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
     /// <para>aaa</para>
     /// </summary>
     /// <remarks>AAAAA</remarks>>
-    [Summary(""成员 \"" Summary 注释 ???? &lt;para&gt;aaa&lt;/para&gt; aaa"")]
+    [Summary(""成员 \"" Summary 注释 ???? <para>aaa</para> aaa"")]
     [Obsolete(""临时方法"")] public struct TestStructSummary { }
 }
 ");
@@ -226,7 +230,7 @@ using System;
 namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 {
     /// <remarks>AAAAA</remarks>>
-    [Summary(""成员 \"" Summary 注释 ???? &lt;para&gt;aaa&lt;/para&gt; aaa"")]
+    [Summary(""成员 \"" Summary 注释 ???? <para>aaa</para> aaa"")]
     [Obsolete(""临时方法"")] public struct TestStructSummary { }
 }
 ");
@@ -663,6 +667,181 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
                 .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
             StringAssert.Contains("[Summary(\"XML 权威文本\")]", result);
             Assert.IsFalse(result.Contains(@"""前半"" + ""后半"""), "拼接特性无法解析时应在移除后重新生成（RemovedFirst 以宽松匹配删除）");
+        }
+
+        #endregion
+
+        #region XML 实体解码（双重转义修复）
+
+        const string EntitySummaryCode = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>使用 List&lt;T&gt; 与 &amp; 符号的注释</summary>
+    public class TestEntitySummary { }
+}
+";
+
+        [Test]
+        public void EntityInSummary_DecodedBeforeAttributeGeneration()
+        {
+            var result = new XmlSummaryTool(EntitySummaryCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("[Summary(\"使用 List<T> 与 & 符号的注释\")]", result);
+            Assert.IsFalse(result.Contains("&amp;lt;"), "实体不应被双重转义（&lt; → 特性 → &amp;lt;）");
+        }
+
+        [Test]
+        public void EntityInSummary_SyncIsIdempotentAcrossRuns()
+        {
+            var first = new XmlSummaryTool(EntitySummaryCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            var second = new XmlSummaryTool(first).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            Assert.AreEqual(first, second, "第二次 Sync 应为空操作（特性文本与 XML 实体解码后一致）");
+        }
+
+        #endregion
+
+        #region Sync 幂等（空白压缩对称）
+
+        [Test]
+        public void SyncAttributeWhitespaceDifference_DoesNotRewrite()
+        {
+            // 特性与 XML 仅空白差异时不应触发回写（非幂等修复：比较前两侧同等压缩）
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>hello world</summary>
+    [Summary(""hello  world"")]
+    public class TestWhitespace { }
+}
+";
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("/// <summary>hello world</summary>", result);
+            StringAssert.Contains("[Summary(\"hello  world\")]", result);
+        }
+
+        #endregion
+
+        #region 多成员代码块特性归属（fail-closed 跳过）
+
+        const string NonFirstMemberAttrCode = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>首成员的注释</summary>
+    public class First { }
+
+    [Summary(""次成员的特性"")]
+    public class Second { }
+}
+";
+
+        [Test]
+        public void NonFirstMemberAttribute_SyncSkipsBlockWithWarning()
+        {
+            LogAssert.Expect(LogType.Warning, new Regex("无法安全判断归属"));
+            var result = new XmlSummaryTool(NonFirstMemberAttrCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("[Summary(\"次成员的特性\")]", result);
+            Assert.IsFalse(result.Contains("[Summary(\"首成员的注释\")]"),
+                "非首成员持特性时不应把次成员内容错注到块头");
+        }
+
+        [Test]
+        public void NonFirstMemberAttribute_ReplaceSkipsBlockWithWarning()
+        {
+            LogAssert.Expect(LogType.Warning, new Regex("无法安全判断归属"));
+            var result = new XmlSummaryTool(NonFirstMemberAttrCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.ReplaceSummary);
+            StringAssert.Contains("[Summary(\"次成员的特性\")]", result);
+            StringAssert.Contains("/// <summary>首成员的注释</summary>", result);
+        }
+
+        [Test]
+        public void NonFirstMemberAttribute_RemoveSkipsBlockWithWarning()
+        {
+            LogAssert.Expect(LogType.Warning, new Regex("无法安全判断归属"));
+            var result = new XmlSummaryTool(NonFirstMemberAttrCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.RemoveSummary);
+            StringAssert.Contains("[Summary(\"次成员的特性\")]", result);
+        }
+
+        const string BothMembersAttrCode = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>首成员的注释</summary>
+    [Summary(""首成员的特性"")]
+    public class FirstA { }
+
+    [Summary(""次成员的特性"")]
+    public class SecondA { }
+}
+";
+
+        [Test]
+        public void BothMembersHaveAttribute_SyncSkipsWholeBlock()
+        {
+            // 保守语义：块内任何非首成员持特性即整块跳过——即使首成员特性可判定，
+            // 也避免 Remove 路径误删次成员特性（fail-closed，用户手动拆分后再处理）
+            LogAssert.Expect(LogType.Warning, new Regex("无法安全判断归属"));
+            var result = new XmlSummaryTool(BothMembersAttrCode).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("[Summary(\"首成员的特性\")]", result);
+            StringAssert.Contains("[Summary(\"次成员的特性\")]", result);
+            StringAssert.Contains("/// <summary>首成员的注释</summary>", result);
+        }
+
+        [Test]
+        public void FirstMemberAttributeWithNestedMemberAttribute_SyncSkips()
+        {
+            // 嵌套成员持特性同样判为非首成员（此前会被误认为类本身的特性）
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>类的注释</summary>
+    public class Outer
+    {
+        [Summary(""嵌套方法的特性"")]
+        public void Nested() { }
+    }
+}
+";
+            LogAssert.Expect(LogType.Warning, new Regex("无法安全判断归属"));
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("[Summary(\"嵌套方法的特性\")]", result);
+            Assert.IsFalse(result.Contains("[Summary(\"类的注释\")]"), "嵌套成员的特性不应被错注到类上");
+        }
+
+        #endregion
+
+        #region Remove 模式 header 区清理
+
+        [Test]
+        public void RemoveMode_HeaderAttribute_IsStripped()
+        {
+            // 首个 XML 注释之前（header 区）的 [Summary] 此前永不被清理
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+[Summary(""头部类的特性"")]
+public class HeaderClass { }
+";
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.RemoveSummary);
+            Assert.IsFalse(result.Contains("[Summary("), "header 区的 [Summary] 应被 Remove 模式清理");
+            StringAssert.Contains("public class HeaderClass { }", result);
         }
 
         #endregion

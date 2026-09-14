@@ -75,6 +75,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         public string GetProcessedSourceScript(ProcessMode processMode)
         {
             if (processMode == ProcessMode.RemoveSummary &&
+                !HasSummaryAttribute(HeaderScript) &&
                 !xmlCodeParts.Any(p => HasSummaryAttribute(p.code)))
             {
                 return sourceScriptText;
@@ -134,12 +135,15 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         string GetProcessedHeaderScript(ProcessMode processMode)
         {
             var headerScript = HeaderScript;
-            // using 仅在可能写入 [Summary] 特性的模式下注入；Remove 模式特性只减不增
             if (processMode == ProcessMode.RemoveSummary)
             {
-                return headerScript;
+                // Remove 模式特性只减不增：header 区（首个 XML 注释之前）的 [Summary] 同样清理
+                return Regex.Replace(headerScript,
+                    @"(?m)(?:^|\s)\s*\[Summary\(""(?<content>[\s\S]*?)""\)\]", "",
+                    RegexOptions.Multiline);
             }
 
+            // using 仅在可能写入 [Summary] 特性的模式下注入
             var match = Regex.Match(headerScript, @"namespace\s+([\w.]+)");
             if (match.Success)
             {

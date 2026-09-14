@@ -27,9 +27,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     {
         static readonly string ConfigName = typeof(ZensicalScriptingAPISettingsSO).GetNiceFullName();
 
-        static readonly MemberGroup[] GroupOrder =
-            { MemberGroup.Constant, MemberGroup.Declared, MemberGroup.Inherited, MemberGroup.Operator };
-
         static readonly Regex AnchorSanitizeRegex =
             new Regex("[^a-z0-9\\u4e00-\\u9fff]+", RegexOptions.Compiled);
 
@@ -222,22 +219,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return;
             }
 
-            var apiMembers = members.Where(m => m.IsApiMember()).ToList();
-            if (apiMembers.Count == 0)
-            {
-                return;
-            }
-
-            var groups = new List<(MemberGroup Group, List<IDerivedMemberData> Items)>();
-            foreach (var group in GroupOrder)
-            {
-                var items = apiMembers.Where(m => groupSelector(m) == group).ToList();
-                if (items.Count > 0)
-                {
-                    groups.Add((group, items));
-                }
-            }
-
+            // 分组核心与 Default 生成器共享（API 过滤 → 分组 → 固定顺序）
+            var groups = MemberGrouper.GroupApiMembers(members, groupSelector);
             if (groups.Count == 0)
             {
                 return;
@@ -251,7 +234,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             {
                 if (showGroupLabel)
                 {
-                    sb.AppendLine($"**{GetGroupLabel(group)}{title}**");
+                    sb.AppendLine($"**{MemberGrouper.GetGroupLabel(group)}{title}**");
                     sb.AppendLine();
                 }
 
@@ -448,16 +431,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             sb.AppendLine();
         }
 
-        static string GetGroupLabel(MemberGroup group) =>
-            group switch
-            {
-                MemberGroup.Constant => "常量",
-                MemberGroup.Declared => "声明的",
-                MemberGroup.Inherited => "继承的",
-                MemberGroup.Operator => "运算符",
-                _ => string.Empty
-            };
-
         /// <summary>
         /// 成员的概览展示名：方法/构造方法带参数类型列表（区分重载），其余用名称
         /// </summary>
@@ -495,14 +468,5 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static string EscapeTableCell(string text) =>
             string.IsNullOrWhiteSpace(text) ? "—" : text.Replace("\r", " ").Replace("\n", " ").Trim();
-
-        enum MemberGroup
-        {
-            None = 0,
-            Constant,
-            Declared,
-            Inherited,
-            Operator
-        }
     }
 }

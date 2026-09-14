@@ -8,6 +8,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     /// <summary>
     /// 默认中文 API 文档生成设置
     /// </summary>
+    /// <remarks>
+    /// 纯 Markdown 输出（无 Front Matter / 无 div 包裹 / 无锚点详情）。
+    /// 成员章节的分组核心（API 过滤 → 常量/声明/继承/运算符分组 → 固定顺序）与
+    /// Zensical 生成器共享 <see cref="MemberGrouper" />，本类只声明各章节的表头、
+    /// 列形与名称选择器（每节约 10 行配置），不再手写三旗标探测循环。
+    /// </remarks>
     public class DefaultScriptingAPISettingsSO : DocGeneratorSettingsSO
     {
         static readonly string ConfigName = typeof(DefaultScriptingAPISettingsSO).GetNiceFullName();
@@ -88,6 +94,47 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             return sb;
         }
 
+        /// <summary>
+        /// 向分组表格追加成员行：两列（名称 | 注释）或三列（追加声明类型列）。
+        /// </summary>
+        static void AppendRow(StringBuilder sb,
+            IDerivedMemberData member,
+            string signature,
+            bool withDeclaringType)
+        {
+            member.TryAsIMemberData(out var memberData);
+            var row = $"| `{signature}` | {memberData.SummaryAttributeValue} |";
+            if (withDeclaringType)
+            {
+                row += $" `{memberData.DeclaringType}` |";
+            }
+
+            sb.AppendLine(row);
+        }
+
+        /// <summary>
+        /// 输出一个分组的完整表格（三级标题 + 表头 + 成员行）。
+        /// </summary>
+        static void AppendGroupTable(StringBuilder sb,
+            string sectionTitle,
+            string tableHeader,
+            string tableSeparator,
+            System.Collections.Generic.List<IDerivedMemberData> items,
+            System.Func<IDerivedMemberData, string> signatureSelector,
+            bool withDeclaringType)
+        {
+            sb.AppendLine(sectionTitle);
+            sb.AppendLine();
+            sb.AppendLine(tableHeader);
+            sb.AppendLine(tableSeparator);
+            foreach (var member in items)
+            {
+                AppendRow(sb, member, signatureSelector(member), withDeclaringType);
+            }
+
+            sb.AppendLine();
+        }
+
         static StringBuilder CreateConstructorsContent(IConstructorData[] constructorDataArray)
         {
             var sb = new StringBuilder();
@@ -120,98 +167,34 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static StringBuilder CreateEventsContent(IEventData[] eventDataArray)
         {
+            var groups = MemberGrouper.GroupApiMembers(
+                eventDataArray.Cast<IDerivedMemberData>(),
+                member =>
+                {
+                    member.TryAsIMemberData(out var memberData);
+                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+                });
             var sb = new StringBuilder();
-            if (eventDataArray.Length <= 0)
-            {
-                return sb;
-            }
-
-            var hasAPI = false;
-            var hasInheritedAndApiEvent = false;
-            var hasNoInheritedAndApiEvent = false;
-
-            foreach (var eventData in eventDataArray)
-            {
-                if (hasAPI && hasNoInheritedAndApiEvent && hasInheritedAndApiEvent)
-                {
-                    break;
-                }
-
-                eventData.TryAsIMemberData(out var memberData);
-                if (!hasAPI && eventData.IsApiMember())
-                {
-                    hasAPI = true;
-                }
-
-                if (!eventData.IsApiMember())
-                {
-                    continue;
-                }
-
-                if (hasInheritedAndApiEvent && hasNoInheritedAndApiEvent)
-                {
-                    continue;
-                }
-
-                if (memberData.IsFromInheritance)
-                {
-                    hasInheritedAndApiEvent = true;
-                }
-                else
-                {
-                    hasNoInheritedAndApiEvent = true;
-                }
-            }
-
-            if (!hasAPI)
+            if (groups.Count == 0)
             {
                 return sb;
             }
 
             sb.AppendLine("## 事件");
             sb.AppendLine();
-            if (hasNoInheritedAndApiEvent)
+            foreach (var (group, items) in groups)
             {
-                sb.AppendLine("### 声明的事件");
-                sb.AppendLine();
-                sb.AppendLine("| 事件名称 | 注释 |");
-                sb.AppendLine("| :--- | :--- | ");
-                foreach (var eventData in eventDataArray)
+                if (group == MemberGroup.Declared)
                 {
-                    eventData.TryAsIMemberData(out var memberData);
-                    if (!eventData.IsApiMember() || memberData.IsFromInheritance)
-                    {
-                        continue;
-                    }
-
-                    sb.AppendLine($"| `{eventData.Signature}` | {memberData.SummaryAttributeValue} |");
+                    AppendGroupTable(sb, "### 声明的事件", "| 事件名称 | 注释 |", "| :--- | :--- | ",
+                        items, member => ((IEventData)member).Signature, false);
                 }
-
-                sb.AppendLine();
-            }
-
-            if (!hasInheritedAndApiEvent)
-            {
-                return sb;
-            }
-
-            sb.AppendLine("### 继承的事件");
-            sb.AppendLine();
-            sb.AppendLine("| 事件签名 | 注释 | 声明事件的类 |");
-            sb.AppendLine("| :--- | :--- | :--- |");
-            foreach (var eventData in eventDataArray)
-            {
-                eventData.TryAsIMemberData(out var memberData);
-                if (!eventData.IsApiMember() || !memberData.IsFromInheritance)
+                else
                 {
-                    continue;
+                    AppendGroupTable(sb, "### 继承的事件", "| 事件签名 | 注释 | 声明事件的类 |",
+                        "| :--- | :--- | :--- |", items, member => ((IEventData)member).Signature, true);
                 }
-
-                sb.AppendLine(
-                    $"| `{eventData.Signature}` | {memberData.SummaryAttributeValue} | `{memberData.DeclaringType}` |");
             }
-
-            sb.AppendLine();
 
             return sb;
         }
@@ -219,60 +202,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         static StringBuilder CreateMethodsContent(IMethodData[] methodDataArray)
         {
             var sb = new StringBuilder();
-            if (methodDataArray.Length <= 0)
-            {
-                return sb;
-            }
-
-            var hasApiMember = false;
-            var hasOperatorAndApiMethod = false;
-            var hasInheritAndNoOperatorAndApiMethod = false;
-            var hasNoInheritAndNoOperatorAndApiMethod = false;
-            foreach (var methodData in methodDataArray)
-            {
-                if (hasApiMember && hasNoInheritAndNoOperatorAndApiMethod &&
-                    hasInheritAndNoOperatorAndApiMethod && hasOperatorAndApiMethod)
-                {
-                    break;
-                }
-
-                if (!hasApiMember && methodData.IsApiMember())
-                {
-                    hasApiMember = true;
-                }
-
-                if (!methodData.IsApiMember())
-                {
-                    continue;
-                }
-
-                if (!hasOperatorAndApiMethod && methodData.IsOperator)
-                {
-                    hasOperatorAndApiMethod = true;
-                }
-
-                if (methodData.IsOperator)
-                {
-                    continue;
-                }
-
-                if (hasNoInheritAndNoOperatorAndApiMethod && hasInheritAndNoOperatorAndApiMethod)
-                {
-                    continue;
-                }
-
-                methodData.TryAsIMemberData(out var memberData);
-                if (memberData.IsFromInheritance)
-                {
-                    hasInheritAndNoOperatorAndApiMethod = true;
-                }
-                else
-                {
-                    hasNoInheritAndNoOperatorAndApiMethod = true;
-                }
-            }
-
-            if (!hasApiMember)
+            var apiMethods = methodDataArray.Where(m => m.IsApiMember()).ToList();
+            if (apiMethods.Count == 0)
             {
                 return sb;
             }
@@ -283,297 +214,127 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             sb.AppendLine();
             sb.AppendLine("| 方法完整签名 |");
             sb.AppendLine("| :--- | ");
-            foreach (var methodData in methodDataArray)
+            foreach (var methodData in apiMethods)
             {
-                if (!methodData.IsApiMember())
-                {
-                    continue;
-                }
-
                 sb.AppendLine($"| `{methodData.Signature}` |");
             }
 
             sb.AppendLine();
-            if (hasNoInheritAndNoOperatorAndApiMethod)
-            {
-                sb.AppendLine("### 声明的普通方法");
-                sb.AppendLine();
-                sb.AppendLine("| 普通方法名称 | 注释 |");
-                sb.AppendLine("| :--- | :--- | ");
-                var filteredMethodDataArray = methodDataArray.Where(m =>
-                    m.IsApiMember() && !m.IsOperator && m.TryAsIMemberData(out var memberData) &&
-                    !memberData.IsFromInheritance);
-                foreach (var methodData in filteredMethodDataArray)
+
+            var groups = MemberGrouper.GroupApiMembers(
+                apiMethods.Cast<IDerivedMemberData>(),
+                member =>
                 {
-                    methodData.TryAsIMemberData(out var memberData);
-                    sb.AppendLine(
-                        $"| `{methodData.SignatureWithoutParameters}` | {memberData.SummaryAttributeValue} |");
-                }
+                    var methodData = (IMethodData)member;
+                    if (methodData.IsOperator)
+                    {
+                        return MemberGroup.Operator;
+                    }
 
-                sb.AppendLine();
-            }
+                    member.TryAsIMemberData(out var memberData);
+                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+                });
 
-            if (hasInheritAndNoOperatorAndApiMethod)
+            foreach (var (group, items) in groups)
             {
-                sb.AppendLine("### 继承的普通方法");
-                sb.AppendLine();
-                sb.AppendLine("| 普通方法名称 | 注释 | 声明方法的类 |");
-                sb.AppendLine("| :--- | :--- | :--- |");
-                var filteredMethodDataArray = methodDataArray.Where(m =>
-                    m.IsApiMember() && !m.IsOperator && m.TryAsIMemberData(out var memberData) &&
-                    memberData.IsFromInheritance);
-                foreach (var methodData in filteredMethodDataArray)
+                switch (group)
                 {
-                    methodData.TryAsIMemberData(out var memberData);
-                    sb.AppendLine(
-                        $"| `{methodData.SignatureWithoutParameters}` | {memberData.SummaryAttributeValue} | `{memberData.DeclaringType}` |");
+                    case MemberGroup.Declared:
+                        AppendGroupTable(sb, "### 声明的普通方法", "| 普通方法名称 | 注释 |",
+                            "| :--- | :--- | ", items,
+                            member => ((IMethodData)member).SignatureWithoutParameters, false);
+                        break;
+                    case MemberGroup.Inherited:
+                        AppendGroupTable(sb, "### 继承的普通方法", "| 普通方法名称 | 注释 | 声明方法的类 |",
+                            "| :--- | :--- | :--- |", items,
+                            member => ((IMethodData)member).SignatureWithoutParameters, true);
+                        break;
+                    case MemberGroup.Operator:
+                        AppendGroupTable(sb, "### 运算符特殊方法", "| 方法签名 | 注释 | 声明方法的类 |",
+                            "| :--- | :--- | :--- |", items, member => ((IMethodData)member).Signature, true);
+                        break;
                 }
-
-                sb.AppendLine();
             }
 
-            if (!hasOperatorAndApiMethod)
-            {
-                return sb;
-            }
-
-            sb.AppendLine("### 运算符特殊方法");
-            sb.AppendLine();
-            sb.AppendLine("| 方法签名 | 注释 | 声明方法的类 |");
-            sb.AppendLine("| :--- | :--- | :--- |");
-            var filteredOperators = methodDataArray.Where(m => m.IsApiMember() && m.IsOperator);
-            foreach (var methodData in filteredOperators)
-            {
-                methodData.TryAsIMemberData(out var memberData);
-                sb.AppendLine(
-                    $"| `{methodData.Signature}` | {memberData.SummaryAttributeValue} | `{memberData.DeclaringType}` |");
-            }
-
-            sb.AppendLine();
             return sb;
         }
 
         static StringBuilder CreatePropertiesContent(IPropertyData[] propertyDataArray)
         {
+            var groups = MemberGrouper.GroupApiMembers(
+                propertyDataArray.Cast<IDerivedMemberData>(),
+                member =>
+                {
+                    member.TryAsIMemberData(out var memberData);
+                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+                });
             var sb = new StringBuilder();
-            if (propertyDataArray.Length <= 0)
-            {
-                return sb;
-            }
-
-            var hasAPI = false;
-            var hasInheritedAndApiProperty = false;
-            var hasNoInheritedAndApiProperty = false;
-
-            foreach (var propertyData in propertyDataArray)
-            {
-                if (hasAPI && hasNoInheritedAndApiProperty && hasInheritedAndApiProperty)
-                {
-                    break;
-                }
-
-                if (!propertyData.IsApiMember())
-                {
-                    continue;
-                }
-
-                if (!hasAPI && propertyData.IsApiMember())
-                {
-                    hasAPI = true;
-                }
-
-                propertyData.TryAsIMemberData(out var memberData);
-                if (hasInheritedAndApiProperty && hasNoInheritedAndApiProperty)
-                {
-                    continue;
-                }
-
-                if (memberData.IsFromInheritance)
-                {
-                    hasInheritedAndApiProperty = true;
-                }
-                else
-                {
-                    hasNoInheritedAndApiProperty = true;
-                }
-            }
-
-            if (!hasAPI)
+            if (groups.Count == 0)
             {
                 return sb;
             }
 
             sb.AppendLine("## 属性");
             sb.AppendLine();
-            if (hasNoInheritedAndApiProperty)
+            foreach (var (group, items) in groups)
             {
-                sb.AppendLine("### 声明的属性");
-                sb.AppendLine();
-                sb.AppendLine("| 属性签名 | 注释 |");
-                sb.AppendLine("| :--- | :--- |");
-                foreach (var propertyData in propertyDataArray)
+                if (group == MemberGroup.Declared)
                 {
-                    propertyData.TryAsIMemberData(out var memberData);
-                    if (!propertyData.IsApiMember() || memberData.IsFromInheritance)
-                    {
-                        continue;
-                    }
-
-                    sb.AppendLine($"| `{propertyData.Signature}` | {memberData.SummaryAttributeValue} |");
+                    AppendGroupTable(sb, "### 声明的属性", "| 属性签名 | 注释 |", "| :--- | :--- |",
+                        items, member => ((IPropertyData)member).Signature, false);
                 }
-
-                sb.AppendLine();
-            }
-
-            if (!hasInheritedAndApiProperty)
-            {
-                return sb;
-            }
-
-            sb.AppendLine("### 继承的属性");
-            sb.AppendLine();
-            sb.AppendLine("| 属性签名 | 注释 | 声明属性的类 | ");
-            sb.AppendLine("| :--- | :--- | :--- |");
-            foreach (var propertyData in propertyDataArray)
-            {
-                propertyData.TryAsIMemberData(out var memberData);
-                if (!propertyData.IsApiMember() || !memberData.IsFromInheritance)
+                else
                 {
-                    continue;
+                    AppendGroupTable(sb, "### 继承的属性", "| 属性签名 | 注释 | 声明属性的类 | ",
+                        "| :--- | :--- | :--- |", items, member => ((IPropertyData)member).Signature,
+                        true);
                 }
-
-                sb.AppendLine(
-                    $"| `{propertyData.Signature}` | {memberData.SummaryAttributeValue} | `{memberData.DeclaringType}` |");
             }
-
-            sb.AppendLine();
 
             return sb;
         }
 
         static StringBuilder CreateFieldsContent(IFieldData[] fieldDataArray)
         {
+            var groups = MemberGrouper.GroupApiMembers(
+                fieldDataArray.Cast<IDerivedMemberData>(),
+                member =>
+                {
+                    var fieldData = (IFieldData)member;
+                    if (fieldData.IsConstant)
+                    {
+                        return MemberGroup.Constant;
+                    }
+
+                    member.TryAsIMemberData(out var memberData);
+                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+                });
             var sb = new StringBuilder();
-            if (fieldDataArray.Length <= 0)
-            {
-                return sb;
-            }
-
-            var hasAPI = false;
-            var hasConstAndApiField = false;
-            var hasNoConstAndNoInheritedAndApiField = false;
-            var hasNoConstAndInheritedAndApiField = false;
-
-            foreach (var fieldData in fieldDataArray)
-            {
-                if (hasAPI && hasConstAndApiField && hasNoConstAndNoInheritedAndApiField &&
-                    hasNoConstAndInheritedAndApiField)
-                {
-                    break;
-                }
-
-                if (!hasAPI && fieldData.IsApiMember())
-                {
-                    hasAPI = true;
-                }
-
-                if (!fieldData.IsApiMember())
-                {
-                    continue;
-                }
-
-                if (!hasConstAndApiField && fieldData.IsConstant)
-                {
-                    hasConstAndApiField = true;
-                }
-
-                if (fieldData.IsConstant)
-                {
-                    continue;
-                }
-
-                if (hasNoConstAndNoInheritedAndApiField && hasNoConstAndInheritedAndApiField)
-                {
-                    continue;
-                }
-
-                fieldData.TryAsIMemberData(out var memberData);
-                if (memberData.IsFromInheritance)
-                {
-                    hasNoConstAndInheritedAndApiField = true;
-                }
-                else
-                {
-                    hasNoConstAndNoInheritedAndApiField = true;
-                }
-            }
-
-            if (!hasAPI)
+            if (groups.Count == 0)
             {
                 return sb;
             }
 
             sb.AppendLine("## 字段");
             sb.AppendLine();
-            if (hasConstAndApiField)
+            foreach (var (group, items) in groups)
             {
-                sb.AppendLine("### 常量字段");
-                sb.AppendLine();
-                sb.AppendLine("| 字段完整签名 | 注释 |");
-                sb.AppendLine("| :--- | :--- |");
-                foreach (var fieldData in fieldDataArray)
+                switch (group)
                 {
-                    fieldData.TryAsIMemberData(out var memberData);
-                    if (!fieldData.IsApiMember() || !fieldData.IsConstant)
-                    {
-                        continue;
-                    }
-
-                    sb.AppendLine($"| `{fieldData.Signature}` | {memberData.SummaryAttributeValue} |");
+                    case MemberGroup.Constant:
+                        AppendGroupTable(sb, "### 常量字段", "| 字段完整签名 | 注释 |", "| :--- | :--- |",
+                            items, member => ((IFieldData)member).Signature, false);
+                        break;
+                    case MemberGroup.Declared:
+                        AppendGroupTable(sb, "### 声明的普通字段", "| 字段名称 | 注释 | ",
+                            "| :--- | :--- | ", items, member => ((IFieldData)member).Signature, false);
+                        break;
+                    case MemberGroup.Inherited:
+                        AppendGroupTable(sb, "### 继承的普通字段", "| 字段名称 | 注释 | 声明字段的类 |",
+                            "| :--- | :--- | :--- |", items, member => ((IFieldData)member).Signature,
+                            true);
+                        break;
                 }
-
-                sb.AppendLine();
-            }
-
-            if (hasNoConstAndNoInheritedAndApiField)
-            {
-                sb.AppendLine("### 声明的普通字段");
-                sb.AppendLine();
-                sb.AppendLine("| 字段名称 | 注释 | ");
-                sb.AppendLine("| :--- | :--- | ");
-                foreach (var fieldData in fieldDataArray)
-                {
-                    fieldData.TryAsIMemberData(out var memberData);
-                    if (!fieldData.IsApiMember() || memberData.IsFromInheritance || fieldData.IsConstant)
-                    {
-                        continue;
-                    }
-
-                    sb.AppendLine($"| `{fieldData.Signature}` | {memberData.SummaryAttributeValue} |");
-                }
-
-                sb.AppendLine();
-            }
-
-            if (hasNoConstAndInheritedAndApiField)
-            {
-                sb.AppendLine("### 继承的普通字段");
-                sb.AppendLine();
-                sb.AppendLine("| 字段名称 | 注释 | 声明字段的类 |");
-                sb.AppendLine("| :--- | :--- | :--- |");
-                foreach (var fieldData in fieldDataArray)
-                {
-                    fieldData.TryAsIMemberData(out var memberData);
-                    if (!fieldData.IsApiMember() || !memberData.IsFromInheritance || fieldData.IsConstant)
-                    {
-                        continue;
-                    }
-
-                    sb.AppendLine(
-                        $"| `{fieldData.Signature}` | {memberData.SummaryAttributeValue} | `{memberData.DeclaringType}` |");
-                }
-
-                sb.AppendLine();
             }
 
             return sb;

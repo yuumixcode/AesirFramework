@@ -135,9 +135,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 .Select(c => DataFactory.CreateConstructorData(c))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedMethodsData = type.GetRuntimeMethods()
-                .Where(x =>
-                    x != null && !x.Name.StartsWith("add_") && !x.Name.StartsWith("remove_") &&
-                    !x.Name.StartsWith("get_") && !x.Name.StartsWith("set_"))
+                .Where(x => x != null && !IsSyntheticAccessor(x))
                 .Select(m => DataFactory.CreateMethodData(m))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedEventsData = type.GetRuntimeEvents().Select(e => DataFactory.CreateEventData(e))
@@ -145,12 +143,52 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             RuntimeReflectedPropertiesData = type.GetRuntimeProperties()
                 .Select(p => DataFactory.CreatePropertyData(p))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
+            // GetUserDefinedFields 已过滤合成字段（IsSpecialName 与 backing field），
+            // 此处不再重复过滤——单一真源，过滤条件变更只改一处
             RuntimeReflectedFieldsData = type.GetUserDefinedFields()
-                .Where(f =>
-                    f != null && !f.IsSpecialName && !f.Name.Contains("k__BackingField") &&
-                    !f.Name.Contains("__BackingField")).Select(f => DataFactory.CreateFieldData(f))
+                .Select(f => DataFactory.CreateFieldData(f))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedMethodsData = MarkOverloadMethod(RuntimeReflectedMethodsData);
+        }
+
+        /// <summary>
+        /// 合成访问器判定：仅过滤事件/属性真正对应的 add_/remove_/get_/set_ 方法
+        /// （IsSpecialName + 声明类型存在同名事件/属性）。
+        /// 替代名称前缀过滤——用户以同名前缀命名的普通方法（如 <c>get_Thing()</c>）不再被误杀。
+        /// </summary>
+        static bool IsSyntheticAccessor(MethodInfo method)
+        {
+            if (!method.IsSpecialName)
+            {
+                return false;
+            }
+
+            var name = method.Name;
+            var declaring = method.DeclaringType;
+            if (declaring == null)
+            {
+                return false;
+            }
+
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic |
+                                       BindingFlags.Instance | BindingFlags.Static |
+                                       BindingFlags.DeclaredOnly;
+            if (name.StartsWith("add_"))
+            {
+                return declaring.GetEvent(name.Substring(4), flags) != null;
+            }
+
+            if (name.StartsWith("remove_"))
+            {
+                return declaring.GetEvent(name.Substring(7), flags) != null;
+            }
+
+            if (name.StartsWith("get_") || name.StartsWith("set_"))
+            {
+                return declaring.GetProperty(name.Substring(4), flags) != null;
+            }
+
+            return false;
         }
 
         static string GetTypeFullSignature(Type type, string accessModifierName, TypeCategory category)

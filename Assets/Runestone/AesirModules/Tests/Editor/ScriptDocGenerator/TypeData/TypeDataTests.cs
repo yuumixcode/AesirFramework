@@ -193,5 +193,42 @@ System.IConvertible", typeData.FullDeclarationWithAttributes);
         class NestedClass { }
 
         #endregion
+
+        #region 合成访问器过滤（IsSyntheticAccessor）
+
+        class AccessorFilterFixture
+        {
+            public event TestDelegate SomethingHappened;
+
+            public int Value { get; set; }
+
+            /// <summary>用户以访问器前缀命名的普通方法——不应被误滤。</summary>
+            public void get_Thing() { }
+
+            /// <summary>用户以访问器前缀命名的普通方法——不应被误滤。</summary>
+            public void add_Item() { }
+
+            protected void Raise() => SomethingHappened?.Invoke();
+        }
+
+        [Test]
+        public void SyntheticAccessors_Filtered_UserPrefixMethodsKept()
+        {
+            var typeData = new TypeData(typeof(AccessorFilterFixture));
+            var signatures = new List<string>();
+            foreach (var method in typeData.RuntimeReflectedMethodsData)
+            {
+                signatures.Add(method.Signature);
+            }
+
+            Assert.IsFalse(signatures.Exists(s => s.Contains("add_SomethingHappened")), "事件 add 访问器应被过滤");
+            Assert.IsFalse(signatures.Exists(s => s.Contains("remove_SomethingHappened")), "事件 remove 访问器应被过滤");
+            Assert.IsFalse(signatures.Exists(s => s.Contains("get_Value")), "属性 get 访问器应被过滤");
+            Assert.IsFalse(signatures.Exists(s => s.Contains("set_Value")), "属性 set 访问器应被过滤");
+            Assert.IsTrue(signatures.Exists(s => s.Contains("get_Thing")), "用户普通方法 get_Thing 不应被名称前缀误杀");
+            Assert.IsTrue(signatures.Exists(s => s.Contains("add_Item")), "用户普通方法 add_Item 不应被名称前缀误杀");
+        }
+
+        #endregion
     }
 }

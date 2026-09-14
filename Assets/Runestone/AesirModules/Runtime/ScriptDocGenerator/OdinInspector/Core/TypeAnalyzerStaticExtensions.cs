@@ -228,6 +228,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// <summary>
         /// 获取类型的种类
         /// </summary>
+        /// <remarks>
+        /// record class 与 record struct 统一映射 <see cref="TypeCategory.Record" />（枚举有意不拆分，
+        /// 避免文档种类分组出现两种 record 条目）；两者的区分在签名生成层完成——
+        /// <see cref="IsRecordStruct" /> 为真时签名追加 "struct " 前缀（"record struct Foo"）。
+        /// </remarks>
         public static TypeCategory GetTypeCategory(this Type type)
         {
             if (type.IsDelegate())
@@ -344,6 +349,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// <summary>
         /// 判断指定类型是否为 record（包括 record class 和 record struct）
         /// </summary>
+        /// <remarks>
+        /// 检测依据：编译器为所有 record 生成的合成方法 <c>&lt;Clone&gt;$</c>（C# 9 起的 Roslyn 契约，
+        /// record class 与 record struct 均携带）。反射层无 "IsRecord" 原生 API，此为社区通行判定；
+        /// 代价是绑定编译器实现细节——若未来编译器改变合成方法命名，此处会整体失判（表现为 record 被归类为普通 class/struct，无崩溃）。
+        /// </remarks>
         public static bool IsRecord(this Type type)
         {
             if (type == null)
