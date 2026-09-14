@@ -279,6 +279,10 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.IsTrue(allUnloaded, "空追踪列表应立即回调 onAllUnloaded");
         }
 
+        // 注：UnloadAll 的快照语义与逐项移出追踪依赖真实 UnloadSceneAsync，
+        // EditMode 下 SceneManager.UnloadSceneAsync 直接抛 InvalidOperationException（仅 PlayMode 可用），
+        // 该路径的用例归入 PlayMode 成功路径覆盖（见全仓锐评 02-优化方案 B3-4）。
+
         #endregion
 
         #region SetActiveScene
