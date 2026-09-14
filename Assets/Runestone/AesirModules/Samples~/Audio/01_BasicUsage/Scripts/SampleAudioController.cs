@@ -1,6 +1,5 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using System;
-using Runestone.AesirModules;
 using UnityEngine;
 
 namespace Runestone.AesirModules.Samples.Audio.BasicUsage
@@ -16,6 +15,15 @@ namespace Runestone.AesirModules.Samples.Audio.BasicUsage
     [AddComponentMenu("")]
     public class SampleAudioController : MonoBehaviour
     {
+        static readonly string[] FontCandidates =
+        {
+            "Microsoft YaHei", // Windows 简体中文
+            "Microsoft YaHei UI",
+            "PingFang SC",      // macOS 简体中文
+            "Noto Sans CJK SC", // Linux / 跨平台
+            "WenQuanYi Zen Hei" // 部分 Linux 发行版
+        };
+
         /// <summary>背景音乐 A（程序化生成的琶音循环）。</summary>
         [SerializeField]
         AudioClip bgmA;
@@ -32,17 +40,21 @@ namespace Runestone.AesirModules.Samples.Audio.BasicUsage
         [SerializeField]
         AudioClip sfxJitter;
 
-        static readonly string[] FontCandidates =
-        {
-            "Microsoft YaHei", // Windows 简体中文
-            "Microsoft YaHei UI",
-            "PingFang SC", // macOS 简体中文
-            "Noto Sans CJK SC", // Linux / 跨平台
-            "WenQuanYi Zen Hei" // 部分 Linux 发行版
-        };
+        /// <summary>音量滑条本地显示值是否已从模块初始化（首次绘制时同步一次）。</summary>
+        bool _volumeSliderInitialized;
+
+        /// <summary>总音量滑条的本地显示值——拖动结束才写入模块（setter 每次赋值即落 PlayerPrefs，逐帧写入属误用）。</summary>
+        float _masterVolumeSlider = 1f;
+
+        /// <summary>BGM 通道音量滑条的本地显示值（写入时机同上）。</summary>
+        float _bgmVolumeSlider = 1f;
+
+        /// <summary>音效通道音量滑条的本地显示值（写入时机同上）。</summary>
+        float _sfxVolumeSlider = 1f;
+
+        Font _dynamicFont;
 
         Rect _panelRect = new Rect(16, 16, 380, 560);
-        Font _dynamicFont;
 
         void Awake()
         {
@@ -84,15 +96,16 @@ namespace Runestone.AesirModules.Samples.Audio.BasicUsage
 
             if (GUILayout.Button("切到 BGM B（1.5 秒淡入淡出）"))
             {
-                AudioModule.PlayBgm(bgmB, fadeSeconds: 1.5f);
+                AudioModule.PlayBgm(bgmB, 1.5f);
             }
 
             if (GUILayout.Button("停止 BGM（0.8 秒淡出）"))
             {
-                AudioModule.StopBgm(fadeSeconds: 0.8f);
+                AudioModule.StopBgm(0.8f);
             }
 
-            GUILayout.Label($"当前 BGM：{(AudioModule.CurrentBgm ? AudioModule.CurrentBgm.name : "无")}（正在播放：{AudioModule.IsBgmPlaying}）");
+            GUILayout.Label(
+                $"当前 BGM：{(AudioModule.CurrentBgm ? AudioModule.CurrentBgm.name : "无")}（正在播放：{AudioModule.IsBgmPlaying}）");
 
             DrawTitle("暂停");
 
@@ -108,14 +121,32 @@ namespace Runestone.AesirModules.Samples.Audio.BasicUsage
 
             DrawTitle("音量");
 
-            GUILayout.Label($"总音量：{AudioModule.MasterVolume:F2}");
-            AudioModule.MasterVolume = GUILayout.HorizontalSlider(AudioModule.MasterVolume, 0f, 1f);
+            if (!_volumeSliderInitialized)
+            {
+                // 首次绘制时从模块同步当前值；此后滑条只改本地显示值，鼠标松开才写入模块
+                _volumeSliderInitialized = true;
+                _masterVolumeSlider = AudioModule.MasterVolume;
+                _bgmVolumeSlider = AudioModule.BgmVolume;
+                _sfxVolumeSlider = AudioModule.SfxVolume;
+            }
 
-            GUILayout.Label($"BGM 音量：{AudioModule.BgmVolume:F2}");
-            AudioModule.BgmVolume = GUILayout.HorizontalSlider(AudioModule.BgmVolume, 0f, 1f);
+            GUILayout.Label($"总音量：{_masterVolumeSlider:F2}（松开鼠标生效）");
+            _masterVolumeSlider = GUILayout.HorizontalSlider(_masterVolumeSlider, 0f, 1f);
 
-            GUILayout.Label($"音效音量：{AudioModule.SfxVolume:F2}");
-            AudioModule.SfxVolume = GUILayout.HorizontalSlider(AudioModule.SfxVolume, 0f, 1f);
+            GUILayout.Label($"BGM 音量：{_bgmVolumeSlider:F2}");
+            _bgmVolumeSlider = GUILayout.HorizontalSlider(_bgmVolumeSlider, 0f, 1f);
+
+            GUILayout.Label($"音效音量：{_sfxVolumeSlider:F2}");
+            _sfxVolumeSlider = GUILayout.HorizontalSlider(_sfxVolumeSlider, 0f, 1f);
+
+            if (Event.current.rawType == EventType.MouseUp)
+            {
+                // 音量 setter 每次赋值都会写 PlayerPrefs——拖动中只改本地值，
+                // 鼠标松开一次性写入，避免逐帧落键（rawType 可越过控件对事件的 Use() 标记）
+                AudioModule.MasterVolume = _masterVolumeSlider;
+                AudioModule.BgmVolume = _bgmVolumeSlider;
+                AudioModule.SfxVolume = _sfxVolumeSlider;
+            }
 
             DrawTitle("静音");
 
@@ -123,7 +154,7 @@ namespace Runestone.AesirModules.Samples.Audio.BasicUsage
             AudioModule.BgmMute = GUILayout.Toggle(AudioModule.BgmMute, "BGM 静音");
             AudioModule.SfxMute = GUILayout.Toggle(AudioModule.SfxMute, "音效静音");
 
-            GUILayout.Label("音量与静音自动经 PlayerPrefs 持久化，重新 Play 后仍保留。");
+            GUILayout.Label("音量滑条拖动结束才写入（避免逐帧写 PlayerPrefs）；静音开关即时生效。二者均自动持久化，重新 Play 后仍保留。");
 
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
         }

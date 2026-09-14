@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -604,6 +605,232 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
 
             // 1 个 BGM 源 + 1 个 SFX 源
             Assert.AreEqual(2, module.GetComponents<AudioSource>().Length);
+        }
+
+        #endregion
+
+        #region 静态重置（RIOLM 铁律）
+
+        [Test]
+        public void ResetStatics_ClearsSingletonInstance()
+        {
+            var module = CreateModule();
+            Assert.AreSame(module, AudioModule.Instance);
+
+            var reset = typeof(AudioModule).GetMethod("ResetStatics",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsNotNull(reset, "AudioModule 应按框架铁律在类内声明 RIOLM ResetStatics（非泛型单例类内自重置）");
+            reset.Invoke(null, null);
+
+            var field = typeof(AudioModule).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsNull(field.GetValue(null), "ResetStatics 应清空静态单例引用");
+
+            // 场景中的预放置实例仍在，Instance 经 FindAnyObjectByType 兜底重发现
+            Assert.AreSame(module, AudioModule.Instance);
+        }
+
+        #endregion
+
+        #region BGM 淡变语义（取消淡出 / 反悔切歌）
+
+        static readonly BindingFlags PrivateInstance = BindingFlags.NonPublic | BindingFlags.Instance;
+
+        static object GetPrivateField(AudioModule module, string fieldName)
+        {
+            var field = typeof(AudioModule).GetField(fieldName, PrivateInstance);
+            Assert.IsNotNull(field, "未找到私有字段：" + fieldName);
+            return field.GetValue(module);
+        }
+
+        [Test]
+        public void PlayBgm_DuringStopFadeOut_CancelsFadeAndContinues()
+        {
+            var module = CreateModule();
+            var bgmSource = GetBgmSource(module);
+            var clip = NewClip("Bgm");
+
+            AudioModule.PlayBgm(clip);
+            Assert.IsTrue(bgmSource.isPlaying, "前置：BGM 应在播放");
+
+            AudioModule.StopBgm(2f);
+            var routineBefore = GetPrivateField(module, "_bgmFadeRoutine");
+            Assert.IsNotNull(routineBefore, "前置：淡出协程应在进行");
+
+            AudioModule.PlayBgm(clip, 0.5f);
+
+            Assert.IsTrue(bgmSource.isPlaying, "淡出中 PlayBgm(同曲) 不应停掉音乐");
+            Assert.AreSame(clip, bgmSource.clip);
+            Assert.AreNotSame(routineBefore, GetPrivateField(module, "_bgmFadeRoutine"),
+                "淡出协程应被取消并替换为续接淡入（旧实现幂等误伤：淡出继续走到停止）");
+            Assert.AreEqual(1f, (float)GetPrivateField(module, "_bgmFadeFactor"), 1e-4f,
+                "续接淡入首步后系数应回到 1");
+        }
+
+        [Test]
+        public void PlayBgm_DuringSwitchFadeOut_ReturnToOldClip_CancelsSwitch()
+        {
+            var module = CreateModule();
+            var bgmSource = GetBgmSource(module);
+            var clipA = NewClip("BgmA");
+            var clipB = NewClip("BgmB");
+
+            AudioModule.PlayBgm(clipA);
+            Assert.IsTrue(bgmSource.isPlaying);
+
+            // 切歌：淡出 A 阶段（协程进行中，片段尚未切换）
+            AudioModule.PlayBgm(clipB, 2f);
+            Assert.AreSame(clipA, bgmSource.clip, "前置：淡出阶段片段未切换");
+            var routineBefore = GetPrivateField(module, "_bgmFadeRoutine");
+            Assert.IsNotNull(routineBefore, "前置：切歌协程应在进行");
+
+            // 反悔：回到旧曲 A
+            AudioModule.PlayBgm(clipA, 0.5f);
+
+            Assert.IsTrue(bgmSource.isPlaying);
+            Assert.AreSame(clipA, bgmSource.clip, "反悔回到旧曲应取消切歌，片段保持 A");
+            Assert.AreNotSame(routineBefore, GetPrivateField(module, "_bgmFadeRoutine"),
+                "切歌协程应被取消并替换");
+            Assert.AreEqual(1f, (float)GetPrivateField(module, "_bgmFadeFactor"), 1e-4f);
+        }
+
+        [Test]
+        public void PlayBgm_StablePlayback_SameClip_IsIdempotent()
+        {
+            var module = CreateModule();
+            var bgmSource = GetBgmSource(module);
+            var clip = NewClip("Bgm");
+
+            AudioModule.PlayBgm(clip);
+            var routineBefore = GetPrivateField(module, "_bgmFadeRoutine");
+
+            // 稳定播放（无淡变）下同曲幂等：不产生新协程、不重新播放
+            AudioModule.PlayBgm(clip, 1f);
+
+            Assert.AreSame(routineBefore, GetPrivateField(module, "_bgmFadeRoutine"),
+                "稳定播放的同曲调用应幂等返回，不触碰淡变状态");
+            Assert.AreSame(clip, bgmSource.clip);
+        }
+
+        #endregion
+
+        #region BGM 淡变协程（MoveNext 驱动）
+
+        static IEnumerator StartPrivateRoutine(AudioModule module, string methodName, params object[] args)
+        {
+            var method = typeof(AudioModule).GetMethod(methodName, PrivateInstance);
+            Assert.IsNotNull(method, "未找到私有方法：" + methodName);
+            return (IEnumerator)method.Invoke(module, args);
+        }
+
+        static void SetPrivateField(AudioModule module, string fieldName, object value)
+        {
+            var field = typeof(AudioModule).GetField(fieldName, PrivateInstance);
+            Assert.IsNotNull(field, "未找到私有字段：" + fieldName);
+            field.SetValue(module, value);
+        }
+
+        // 协程驱动约定：fadeSeconds 取 1e-6（dt>0 时一步到达目标系数）；
+        // batchmode 下 unscaledDeltaTime 可能为 0（时间冻结），相位推进经反射注入目标系数驱动——
+        // 两种环境下断言的"先淡后换 / 精确退出"顺序语义一致
+        const float InstantFade = 1e-6f;
+
+        [Test]
+        public void SwitchBgmRoutine_FirstPlay_SkipsFadeOutAndFadesIn()
+        {
+            var module = CreateModule();
+            var bgmSource = GetBgmSource(module);
+            var clip = NewClip("Bgm");
+
+            var routine = StartPrivateRoutine(module, "SwitchBgmRoutine", clip, InstantFade);
+
+            // 首播（isPlaying=false）：跳过淡出段，系数置 0 直接换片播放
+            routine.MoveNext();
+            Assert.AreSame(clip, bgmSource.clip, "首播应直接换片");
+            Assert.IsTrue(bgmSource.isPlaying, "首播应立即播放");
+
+            // 淡入段结束：注入目标系数驱动相位（batchmode dt 可能为 0）
+            SetPrivateField(module, "_bgmFadeFactor", 1f);
+            Assert.IsFalse(routine.MoveNext(), "到达目标系数后协程应精确退出");
+        }
+
+        [Test]
+        public void SwitchBgmRoutine_SecondPlay_FadesOutThenSwitchesClip()
+        {
+            var module = CreateModule();
+            var bgmSource = GetBgmSource(module);
+            var clipA = NewClip("BgmA");
+            var clipB = NewClip("BgmB");
+
+            AudioModule.PlayBgm(clipA);
+            Assert.IsTrue(bgmSource.isPlaying);
+
+            var routine = StartPrivateRoutine(module, "SwitchBgmRoutine", clipB, InstantFade);
+
+            // 淡出段：片段保持旧曲（先淡后换的顺序锁定）
+            routine.MoveNext();
+            Assert.AreSame(clipA, bgmSource.clip, "淡出阶段片段应保持旧曲");
+
+            // 淡出完成 → 换片播放
+            SetPrivateField(module, "_bgmFadeFactor", 0f);
+            routine.MoveNext();
+            Assert.AreSame(clipB, bgmSource.clip, "淡出完成后才换片");
+            Assert.IsTrue(bgmSource.isPlaying);
+
+            // 淡入段结束
+            SetPrivateField(module, "_bgmFadeFactor", 1f);
+            Assert.IsFalse(routine.MoveNext(), "协程应精确退出");
+        }
+
+        [Test]
+        public void StopBgmRoutine_FadesOutThenStops()
+        {
+            var module = CreateModule();
+            var bgmSource = GetBgmSource(module);
+            var clip = NewClip("Bgm");
+
+            AudioModule.PlayBgm(clip);
+            Assert.IsTrue(bgmSource.isPlaying);
+
+            var routine = StartPrivateRoutine(module, "StopBgmRoutine", InstantFade);
+
+            routine.MoveNext();
+            Assert.IsTrue(bgmSource.isPlaying, "淡出期间仍在播放");
+
+            SetPrivateField(module, "_bgmFadeFactor", 0f);
+            Assert.IsFalse(routine.MoveNext(), "淡出完成后协程应结束");
+            Assert.IsFalse(bgmSource.isPlaying, "淡出完成后停止播放");
+            Assert.AreSame(clip, bgmSource.clip, "停止后片段保留");
+        }
+
+        #endregion
+
+        #region SFX — pitch 钳制
+
+        [Test]
+        public void PlaySfx_PitchClamped_NeverNegativeOrOverMax()
+        {
+            var module = CreateModule();
+            var sfxSources = GetSfxSources(module);
+            var clip = NewClip("Clip");
+
+            // pitch - jitter 可低至 -0.1：旧实现会产生负音调（反向播放）
+            for (var i = 0; i < 100; i++)
+            {
+                AudioModule.PlaySfx(clip, 1f, 0.5f, 0.6f);
+            }
+
+            // pitch + jitter 可高至 3.4
+            for (var i = 0; i < 100; i++)
+            {
+                AudioModule.PlaySfx(clip, 1f, 2.9f, 0.5f);
+            }
+
+            foreach (var source in sfxSources)
+            {
+                Assert.GreaterOrEqual(source.pitch, 0.01f - 1e-4f,
+                    "pitch-jitter<0 应钳制到 0.01（负 pitch 在 Unity 为反向播放）");
+                Assert.LessOrEqual(source.pitch, 3f + 1e-4f, "pitch+jitter 应钳制到 3");
+            }
         }
 
         #endregion
