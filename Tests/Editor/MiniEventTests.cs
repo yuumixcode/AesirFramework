@@ -121,5 +121,47 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreEqual(0, evt.GetListeners().Length, "Dispose 后监听者列表应为空");
             AesirArchitectureDebug.LogTestInfo("MiniEvent Dispose: 清空所有监听引用");
         }
+
+        /// <summary>
+        /// 验证 RemoveListener 精确移除指定监听者（其余不受影响）。
+        /// </summary>
+        [Test]
+        public void MiniEvent_RemoveListener_RemovesOnlyTarget()
+        {
+            var evt = new MiniEvent();
+            var countA = 0;
+            var countB = 0;
+
+            void ListenerA() => countA++;
+            void ListenerB() => countB++;
+            evt.AddListener(ListenerA);
+            evt.AddListener(ListenerB);
+
+            evt.RemoveListener(ListenerA);
+            evt.Invoke();
+
+            Assert.AreEqual(0, countA, "被移除的监听者不应再被通知");
+            Assert.AreEqual(1, countB, "其余监听者不受影响");
+            AesirArchitectureDebug.LogTestInfo("MiniEvent RemoveListener: 精确移除指定监听者");
+        }
+
+        /// <summary>
+        /// 验证 GetListeners 返回当前委托调用列表（含空事件语义）。
+        /// </summary>
+        [Test]
+        public void MiniEvent_GetListeners_ReflectsCurrentSubscribers()
+        {
+            var evt = new MiniEvent<int>();
+            Assert.AreEqual(0, evt.GetListeners().Length, "空事件应返回空数组");
+
+            void Listener(int x) { }
+            evt.AddListener(Listener);
+            evt.AddListener(Listener);
+            Assert.AreEqual(2, evt.GetListeners().Length, "同一委托重复订阅按多播计两个");
+
+            evt.RemoveListener(Listener);
+            Assert.AreEqual(1, evt.GetListeners().Length, "多播移除一个后剩余一个");
+            AesirArchitectureDebug.LogTestInfo("MiniEvent GetListeners: 反映当前订阅数量");
+        }
     }
 }
