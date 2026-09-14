@@ -73,6 +73,10 @@ namespace Runestone.AesirArchitecture
         static bool _sortDirty;
         static long _nextInsertionIndex;
 
+        /// <summary>待重排的阶段列表（与 <see cref="_sortDirty" /> 配合：只重排发生注册的阶段，不碰其余列表）。</summary>
+        static readonly List<AesirArchitectureLifecyclePhase> DirtyPhases =
+            new List<AesirArchitectureLifecyclePhase>();
+
         /// <summary>
         /// 自动初始化：在域加载时将自定义子系统注入 PlayerLoop
         /// </summary>
@@ -192,6 +196,7 @@ namespace Runestone.AesirArchitecture
         {
             Hooks.Clear();
             PendingCommands.Clear();
+            DirtyPhases.Clear();
             _sortDirty = false;
             _nextInsertionIndex = 0;
         }
@@ -222,7 +227,7 @@ namespace Runestone.AesirArchitecture
 
             list.Add(new HookEntry
                 { Callback = callback, Order = order, InsertionIndex = _nextInsertionIndex++ });
-            _sortDirty = true;
+            MarkDirty(phase);
         }
 
         static void RemoveHook(AesirArchitectureLifecyclePhase phase, Action callback)
@@ -252,6 +257,18 @@ namespace Runestone.AesirArchitecture
             PendingCommands.Clear();
         }
 
+        /// <summary>
+        /// 标记指定阶段的回调列表待重排（去重登记，避免同一阶段重复占位）。
+        /// </summary>
+        static void MarkDirty(AesirArchitectureLifecyclePhase phase)
+        {
+            _sortDirty = true;
+            if (!DirtyPhases.Contains(phase))
+            {
+                DirtyPhases.Add(phase);
+            }
+        }
+
         static void EnsureSorted()
         {
             if (!_sortDirty)
@@ -259,15 +276,20 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            foreach (var kvp in Hooks)
+            // 只重排脏列表：注册只影响对应阶段的列表，其余阶段保持已排序状态不动
+            for (var i = 0; i < DirtyPhases.Count; i++)
             {
-                kvp.Value.Sort((a, b) =>
+                if (Hooks.TryGetValue(DirtyPhases[i], out var list) && list.Count > 1)
                 {
-                    var res = a.Order.CompareTo(b.Order);
-                    return res != 0 ? res : a.InsertionIndex.CompareTo(b.InsertionIndex);
-                });
+                    list.Sort((a, b) =>
+                    {
+                        var res = a.Order.CompareTo(b.Order);
+                        return res != 0 ? res : a.InsertionIndex.CompareTo(b.InsertionIndex);
+                    });
+                }
             }
 
+            DirtyPhases.Clear();
             _sortDirty = false;
         }
 

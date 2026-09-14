@@ -330,9 +330,12 @@ namespace Runestone.AesirArchitecture.Tests
                 "LateUpdate", "AfterUpdate"
             };
 
-            // 等待最多 30 帧捕获至少一个包含 FixedUpdate 的完整帧
+            // 按真实时间等待（而非帧数）捕获至少一个含 FixedUpdate 的完整帧：
+            // batchmode 下帧耗时远短于 fixedDeltaTime（0.02s），固定帧数窗口（如 30 帧）内
+            // 物理步可能一次都不触发；FixedUpdate 按 50Hz 实时步进，时间窗口内必有多个物理帧
             var found = false;
-            for (var i = 0; i < 30; i++)
+            var deadline = Time.realtimeSinceStartup + 5f;
+            while (!found && Time.realtimeSinceStartup < deadline)
             {
                 yield return null;
 

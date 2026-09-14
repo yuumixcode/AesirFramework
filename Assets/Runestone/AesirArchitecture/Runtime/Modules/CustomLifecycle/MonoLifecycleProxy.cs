@@ -59,6 +59,9 @@ namespace Runestone.AesirArchitecture
         bool _playerLoopRegistered;
         bool _sortDirty;
 
+        /// <summary>待重排的事件列表（与 <see cref="_sortDirty" /> 配合：只重排发生增删的事件，不碰其余列表）。</summary>
+        readonly List<MonoLifecycleEvent> _dirtyEvents = new List<MonoLifecycleEvent>();
+
         void Update()
         {
             InvokeEvent(MonoLifecycleEvent.Update);
@@ -179,7 +182,7 @@ namespace Runestone.AesirArchitecture
             else
             {
                 GetOrCreateList(evt).Add(entry);
-                _sortDirty = true;
+                MarkDirty(evt);
             }
 
             return new AutoRemoveListenerHandle(() => RemoveListener(evt, callback));
@@ -302,6 +305,7 @@ namespace Runestone.AesirArchitecture
         {
             _sortedListeners.Clear();
             _pendingChanges.Clear();
+            _dirtyEvents.Clear();
             _sortDirty = false;
         }
 
@@ -355,7 +359,7 @@ namespace Runestone.AesirArchitecture
                 if (change.IsAdd)
                 {
                     GetOrCreateList(change.Event).Add(change.Entry);
-                    _sortDirty = true;
+                    MarkDirty(change.Event);
                 }
                 else
                 {
@@ -366,6 +370,18 @@ namespace Runestone.AesirArchitecture
             _pendingChanges.Clear();
         }
 
+        /// <summary>
+        /// 标记指定事件的监听列表待重排（去重登记，避免同一事件重复占位）。
+        /// </summary>
+        void MarkDirty(MonoLifecycleEvent evt)
+        {
+            _sortDirty = true;
+            if (!_dirtyEvents.Contains(evt))
+            {
+                _dirtyEvents.Add(evt);
+            }
+        }
+
         void EnsureSorted()
         {
             if (!_sortDirty)
@@ -373,15 +389,20 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            foreach (var kvp in _sortedListeners)
+            // 只重排脏列表：注册/退订只影响对应事件的列表，其余事件列表保持已排序状态不动
+            for (var i = 0; i < _dirtyEvents.Count; i++)
             {
-                kvp.Value.Sort((a, b) =>
+                if (_sortedListeners.TryGetValue(_dirtyEvents[i], out var list) && list.Count > 1)
                 {
-                    var res = a.Order.CompareTo(b.Order);
-                    return res != 0 ? res : a.InsertionIndex.CompareTo(b.InsertionIndex);
-                });
+                    list.Sort((a, b) =>
+                    {
+                        var res = a.Order.CompareTo(b.Order);
+                        return res != 0 ? res : a.InsertionIndex.CompareTo(b.InsertionIndex);
+                    });
+                }
             }
 
+            _dirtyEvents.Clear();
             _sortDirty = false;
         }
 
