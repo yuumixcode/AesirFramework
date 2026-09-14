@@ -7,6 +7,35 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **事件模块：重入分发覆写共享参数数组** — 分发是同步的，订阅者回调内再发布任何事件（同型或异型）时，内层 `RaiseEvent` 覆写共享参数数组，外层循环继续时剩余订阅者收到内层事件参数（编译委托抛 InvalidCastException 被吞成错误日志、动态绑定打"参数类型不匹配"）；现重入层使用独立局部参数数组、局部迭代列表与局部死绑定收集，外层分发不受干扰；性能计时仅对顶层分发生效（重入层不计时，避免嵌套 Restart/Stop 互相破坏计时）
+- **事件模块：分发中退订跳过订阅者** — 分发改为注册表快照迭代（顶层复用迭代缓冲区，Clear 保留容量稳态零分配）：回调内退订/注册只修改注册表本身，本趟按快照执行完毕，不再出现"退订后续订阅者导致跳过一个"的索引位移（退订者本趟仍收到、新订阅者从下趟生效）
+- **事件模块：`WithTag` 构造拒绝 null 与空串** — `CompareTag("")` 语义无意义，按 fail-fast 在构造期抛 `ArgumentNullException` / `ArgumentException`
+- **音频模块：补 `ResetStatics` 静态重置** — 非泛型单例按框架铁律在类内声明 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 自重置（`AudioModule` 是 RAM 中唯一漏掉的单例），Disable Domain Reload 下异常中断不再残留 `_instance` 引用
+- **音频模块：`PlayBgm` 幂等条件修正（淡出误伤）** — 此前 `StopBgm` 淡出进行中再 `PlayBgm(同曲)` 被幂等检查吞掉、淡出协程继续走到 Stop；现幂等早退追加"无进行中淡变协程"条件，淡出中重播同曲取消淡出并从当前系数续接（与连续切歌续接语义一致）
+- **音频模块：`PlaySfx` 音调钳制到 [0.01, 3]** — `pitch` 与 `pitchJitter` 任意组合不再产生负音调（Unity 负 pitch 为反向播放）；下限取 0.01 而非 0（pitch = 0 时音源无声）
+- **UI 模块：`ShowPanel` / `PrewarmPanel` 注册时序前移** — 注册表登记提前到 `Initialize()` 之前：`OnShow` 抛异常不再产生"激活但永不注册"的泄漏面板，`OnInit` / `OnShow` 内 `GetPanel<自身>()` 与递归 `ShowPanel` 同类型不再重复实例化
+- **UI 模块：非泛型路径与预制体处理边界** — re-show 路径 `(MonoBehaviour)panel` 硬强转改 `as` + 判空报错（非 MonoBehaviour 的 IUIPanel 实现二次 Show 不再抛 InvalidCastException）；`InstantiateInactive` 恢复源预制体 `activeSelf` 增加 try/finally（Instantiate 抛异常不再留下被翻转的源预制体）；`RegisterPrefab` 同类型换路径调用时输出诊断警告（此前静默沿用旧路径）
+- **场景模块：`UnloadAllAddedScenes` 快照迭代与 Single 成功路径校验** — 卸载广播期间监听者嵌套加载/卸载不再干扰本趟迭代（快照缓冲区复用，Clear 保留容量）；Single 加载成功后 `SetActiveScene` 前校验 `Scene.IsValid()`，无效场景记录错误不再抛异常
+- **脚本文档生成：XML 实体双重转义** — `<summary>` 含 `List&lt;T&gt;` 等实体时，Summary 工具提取不解码、回写再转义，产生 `List&amp;lt;T&amp;gt;` 错误输出；现提取后解码实体、回写前再转义（两步互逆），含泛型实体的文档不再高频踩中
+- **脚本文档生成：多成员代码块的 [Summary] 错删/错注** — 一个 `code` 块含多个成员时，工具按"整块 = 第一个成员"处理会删错/注错特性；现按"XML 注释结束后紧邻的首个成员声明"做归属分析，检测到非首成员持有 `[Summary]` 时 Sync/Replace/Remove 三模式均跳过该块并告警（fail-closed，不乱改用户代码）
+- **脚本文档生成：杂项修复** — Remove 模式补 header 区（首个 XML 注释之前）的 `[Summary]` 清理；Sync 幂等比较前两侧同等空白压缩（仅空白差异不再触发无意义回写）；`EventData` 的 `GetAddMethod` 补空守卫（仅 remove 访问器的非常规事件不再 NPE）；合成方法过滤从名称前缀启发式改为 `IsSpecialName` + 声明类型存在同名事件/属性的精确判定（用户合法命名的 `get_Thing()` 普通方法不再被误杀）；`RemovedSummaryXml` 清除摘要删除后残留的孤儿空 `///` 行（只清剩余注释区首尾，标签间段落排版保留）；字段合成过滤收敛到 `GetUserDefinedFields` 单一真源（`TypeData` 不再重复过滤）；record 判定（`<Clone>$` 合成方法）与 record class/struct 统一映射 `TypeCategory.Record` 的设计边界以注释声明
+- **UnityEventOnAesirEvent：未配置事件参数的早退路径显式归零句柄** — 不再依赖 `Dispose` 内部空安全，"句柄仅在成功订阅后非默认"的不变量对组件自身成立
+
+### Changed
+
+- **事件模块：优先级稳定排序** — 排序比较器以 `Priority` 为主键、注册顺序号 `BindingInfo.InsertionIndex` 为次键（对齐 RAA PlayerLoop 钩子排序范式）；同优先级订阅者的相对顺序从"无契约"收紧为"按注册顺序执行"
+- **事件模块：摘除"实验性"标注** — 0.20.0 已具备订阅者过滤器、SO 资产化、性能模型与测试覆盖，分发正确性三缺陷（重入/快照/稳定排序）修复后，README 与模块文档删除"实验性"帽子
+- **事件模块：文档口径重写** — 删除"约定不在回调内同步发布事件"的免责声明，改写为"快照迭代与重入安全"语义说明；"热路径稳态零分配"收敛为精确口径（零字符串分配/零装箱/零闭包；顶层分发零列表分配，排序比较器包装与重入层局部分配除外）
+- **脚本文档生成：Default 生成器引擎合并** — `DefaultScriptingAPISettingsSO` 四个成员节各自重复的"三旗标探测 + 表头/行发射"收敛到与 Zensical 生成器共享的 `MemberGrouper` 分组引擎（常量 → 声明 → 继承 → 运算符），582 → 343 行，分组语义两生成器单源化；Default 输出格式经护栏测试锁定保持不变
+
+### Added
+
+- **测试扩充（全仓锐评盲区补齐）** — `EventModuleTests` 22→32（重入分发三层嵌套、快照退订/注册语义、同优先级注册序、Attribute+Dynamic 跨轨全序、Attribute 轨死引用清理、`WithTag` 空串/null、千订阅者信息性软门槛）；`AudioModuleTests` 30→38（`ResetStatics` 重置、淡出中 `PlayBgm` 续接与幂等、`SwitchBgm`/`StopBgm` 协程手动驱动、pitch 钳制边界）；`UIModuleTests` 13→17（OnShow 内递归 Show 不重复实例化、OnShow 抛异常不泄漏、Awake/OnEnable 推迟到 Show 激活的生命周期契约）；`XmlSummaryToolTests` 25→34（实体解码 roundtrip、多成员块矩阵）；`TypeDataTests` 补合成方法过滤用例；新增 `ZensicalScriptingAPIOutputTests`（7 用例，锁定 Front Matter/分组/详情链接——Default 引擎合并的前置护栏）
+- **场景模块 PlayMode 测试套件（RAM 首个 PlayMode 程序集）** — 新增 `Tests/Runtime/`（`Runestone.AesirModules.Tests.Runtime`）覆盖 SceneModule 真实加载成功路径：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪与激活场景不变、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义（P2-S1 修复锁定）；测试场景为 `TestScenes/` 两个最小 .unity，经 `[InitializeOnLoadMethod]` 在编辑模式域加载期登记为 BuildSettings enabled 条目（PlayMode 内写登记表不被运行中的场景管理器采纳，disabled 条目运行时不可加载——均实测；BuildSettings 不随包分发，消费者不受影响）；Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）
+- **音频模块：音量滑条"拖动结束落键"示范** — 音量 setter 每次赋值即写 PlayerPrefs，连续拖动逐帧落键属误用；模块文档补"拖动结束写入"指引，包内示例滑条改为鼠标松开一次性写入（`Samples~` 镜像同步）
+
 ### 规划中
 
 - 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
