@@ -15,10 +15,10 @@ namespace Runestone.AesirArchitecture
     /// 预放置本物体仅在使用上述宿主挂载型组件时才有必要。
     /// <para>
     /// 是否加入 DontDestroyOnLoad 场景由序列化字段 <see cref="dontDestroyOnLoad" /> 统一控制，
-    /// 场景预放置与运行时创建两种来源共用同一份决策：
+    /// 场景预放置与运行时创建两种来源共用同一份决策（预放置为子物体时本字段不参与判断，DDOL 跟随宿主）：
     /// <list type="bullet">
     ///     <item>
-    ///     <b>默认（勾选）</b>：实例在 <c>Awake</c> 时加入 DontDestroyOnLoad 场景，跨场景持久存在。
+    ///     <b>默认（勾选）</b>：根物体实例在 <c>Awake</c> 时加入 DontDestroyOnLoad 场景，跨场景持久存在。
     ///     </item>
     ///     <item>
     ///     <b>取消勾选</b>：实例保留在所在场景、随场景卸载销毁——必须自行处理多场景叠加（Additive）加载下的
@@ -33,7 +33,7 @@ namespace Runestone.AesirArchitecture
         static AesirArchitecture _instance;
 
         /// <summary>
-        /// 是否将本物体加入 DontDestroyOnLoad 场景。
+        /// 是否将本物体加入 DontDestroyOnLoad 场景（仅根物体生效；预放置为子物体时本字段不参与判断，DDOL 跟随宿主）。
         /// </summary>
         /// <remarks>
         /// 默认 true（跨场景持久）。设为 false 时实例保留在所在场景、随场景卸载销毁，
@@ -104,14 +104,16 @@ namespace Runestone.AesirArchitecture
 
             _instance = this;
 
-            if (dontDestroyOnLoad)
-            {
-                DontDestroyOnLoad(gameObject);
-            }
-            else
+            if (!dontDestroyOnLoad)
             {
                 AesirArchitectureDebug.LogWarning("dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" +
                                                   "必须自行处理多场景叠加（Additive）加载下的生命周期");
+            }
+            else if (transform.root == transform)
+            {
+                // 仅根物体可加入 DDOL 场景；预放置为子物体时本字段不参与判断，DDOL 跟随宿主
+                // （引擎对非根物体调用 DontDestroyOnLoad 只输出警告且不生效），与 UIModule / UIRoot 范式同形
+                DontDestroyOnLoad(gameObject);
             }
         }
 

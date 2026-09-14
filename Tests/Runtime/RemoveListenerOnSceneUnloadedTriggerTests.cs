@@ -44,18 +44,19 @@ namespace Runestone.AesirArchitecture.Tests
         }
 
         /// <summary>
-        /// 尽力卸载测试创建的场景并恢复原活动场景，确保测试间隔离
+        /// 卸载测试创建的场景并等待卸载完成，恢复原活动场景，确保测试间隔离
         /// </summary>
         /// <remarks>
-        /// 使用 <c>UnloadSceneAsync</c> 触发卸载（无需等待完成），即使断言失败也尽力清理，
-        /// 避免残留场景影响后续测试的场景创建（<c>CreateScene</c> 要求场景名在已加载场景中唯一）。
+        /// 使用 <c>[UnityTearDown]</c>（协程版 TearDown）等待 <c>UnloadSceneAsync</c> 完成——
+        /// 不等待完成时，同域重跑可能因场景名仍被占用而抛异常（<c>CreateScene</c> 要求场景名在已加载场景中唯一），
+        /// 此前靠 A/B/C 异名规避了同域顺序复跑的碰撞，不等待仍属侥幸。即使断言失败也尽力清理。
         /// </remarks>
-        [TearDown]
-        public void TearDown()
+        [UnityTearDown]
+        public IEnumerator TearDown()
         {
-            UnloadIfLoaded("AesirBucketSceneA");
-            UnloadIfLoaded("AesirBucketSceneB");
-            UnloadIfLoaded("AesirBucketSceneC");
+            yield return UnloadIfLoaded("AesirBucketSceneA");
+            yield return UnloadIfLoaded("AesirBucketSceneB");
+            yield return UnloadIfLoaded("AesirBucketSceneC");
             SceneManager.SetActiveScene(_originalActiveScene);
         }
 
@@ -131,16 +132,16 @@ namespace Runestone.AesirArchitecture.Tests
         }
 
         /// <summary>
-        /// 若指定名称的场景仍处于加载状态则触发卸载（不等待完成）
+        /// 若指定名称的场景仍处于加载状态则卸载并等待完成
         /// </summary>
-        static void UnloadIfLoaded(string sceneName)
+        static IEnumerator UnloadIfLoaded(string sceneName)
         {
             for (var i = 0; i < SceneManager.sceneCount; i++)
             {
                 var scene = SceneManager.GetSceneAt(i);
                 if (scene.name == sceneName && scene.isLoaded)
                 {
-                    SceneManager.UnloadSceneAsync(scene);
+                    yield return SceneManager.UnloadSceneAsync(scene);
                 }
             }
         }
