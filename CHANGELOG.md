@@ -34,8 +34,6 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [0.21.0] - 2026-09-14
 
-> 本版为《全仓锐评》优化方案（批次 1-5）的集中落地：修复两包全部 P1/P2 级正确性缺陷，补齐测试盲区，事件模块摘除"实验性"标注，并新增 `AesirScheduler` 时间调度原语。验证基线：EditMode 612/610 通过、PlayMode 21/21 全绿（batchmode）。
-
 ---
 
 ### [architecture] Aesir Architecture
