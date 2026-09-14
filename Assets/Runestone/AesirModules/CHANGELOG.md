@@ -7,6 +7,12 @@
 
 ## [Unreleased]
 
+### 规划中
+
+- 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
+
+## [0.21.0] - 2026-09-14
+
 ### Fixed
 
 - **事件模块：重入分发覆写共享参数数组** — 分发是同步的，订阅者回调内再发布任何事件（同型或异型）时，内层 `RaiseEvent` 覆写共享参数数组，外层循环继续时剩余订阅者收到内层事件参数（编译委托抛 InvalidCastException 被吞成错误日志、动态绑定打"参数类型不匹配"）；现重入层使用独立局部参数数组、局部迭代列表与局部死绑定收集，外层分发不受干扰；性能计时仅对顶层分发生效（重入层不计时，避免嵌套 Restart/Stop 互相破坏计时）
@@ -35,10 +41,6 @@
 - **测试扩充（全仓锐评盲区补齐）** — `EventModuleTests` 22→32（重入分发三层嵌套、快照退订/注册语义、同优先级注册序、Attribute+Dynamic 跨轨全序、Attribute 轨死引用清理、`WithTag` 空串/null、千订阅者信息性软门槛）；`AudioModuleTests` 30→38（`ResetStatics` 重置、淡出中 `PlayBgm` 续接与幂等、`SwitchBgm`/`StopBgm` 协程手动驱动、pitch 钳制边界）；`UIModuleTests` 13→17（OnShow 内递归 Show 不重复实例化、OnShow 抛异常不泄漏、Awake/OnEnable 推迟到 Show 激活的生命周期契约）；`XmlSummaryToolTests` 25→34（实体解码 roundtrip、多成员块矩阵）；`TypeDataTests` 补合成方法过滤用例；新增 `ZensicalScriptingAPIOutputTests`（7 用例，锁定 Front Matter/分组/详情链接——Default 引擎合并的前置护栏）
 - **场景模块 PlayMode 测试套件（RAM 首个 PlayMode 程序集）** — 新增 `Tests/Runtime/`（`Runestone.AesirModules.Tests.Runtime`）覆盖 SceneModule 真实加载成功路径：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪与激活场景不变、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义（P2-S1 修复锁定）；测试场景为 `TestScenes/` 两个最小 .unity，经 `[InitializeOnLoadMethod]` 在编辑模式域加载期登记为 BuildSettings enabled 条目（PlayMode 内写登记表不被运行中的场景管理器采纳，disabled 条目运行时不可加载——均实测；BuildSettings 不随包分发，消费者不受影响）；Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）
 - **音频模块：音量滑条"拖动结束落键"示范** — 音量 setter 每次赋值即写 PlayerPrefs，连续拖动逐帧落键属误用；模块文档补"拖动结束写入"指引，包内示例滑条改为鼠标松开一次性写入（`Samples~` 镜像同步）
-
-### 规划中
-
-- 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
 
 ## [0.20.0] - 2026-09-11
 

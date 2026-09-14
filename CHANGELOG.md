@@ -20,15 +20,74 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.20.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.20.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.21.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.21.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.20.0` / `#AesirModules-v0.20.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.21.0` / `#AesirModules-v0.21.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.21.0] - 2026-09-14
+
+> 本版为《全仓锐评》优化方案（批次 1-5）的集中落地：修复两包全部 P1/P2 级正确性缺陷，补齐测试盲区，事件模块摘除"实验性"标注，并新增 `AesirScheduler` 时间调度原语。验证基线：EditMode 612/610 通过、PlayMode 21/21 全绿（batchmode）。
+
+---
+
+### [architecture] Aesir Architecture
+
+
+### Added
+
+- **包内更新器：Odin Inspector 界面、更新日志面板与更新前确认框** — Odin 版窗口 `AesirUpdateWindowOdin` 与 IMGUI 兜底窗口共用全部服务逻辑（菜单经静态委托路由，装 Odin 自动打开 Odin 窗口）；检查更新后按远程 tag 拉取包内 `CHANGELOG.md` 提取「本地 → 远程」区间段落展示在面板（jsDelivr 多域名 → GitHub Raw 兜底，失败回退本地最新段落）；更新前弹确认框逐包列示版本变化/备份位置/覆盖说明（检测到 `.git` 追加开发仓库警告）
+- **`AesirScheduler` 帧粒度时间调度原语** — 纯 C# 静态 API（`Delay(seconds, callback)` / `NextFrame(callback)`），经 PlayerLoop BeforeUpdate 钩子结算（首次使用自动注册），为无协程能力的 Model / Service / Command 提供合法延时手段；有意收窄：帧粒度精度、游戏时间（受 `timeScale` 影响）、一次性任务无句柄/取消/暂停/不池化、仅主线程、稳态零分配；新增 `AesirSchedulerTests`（9 用例）
+- **package.json samples 登记 `RuntimeInitializeLoadType` 示例** — 结构树早已列出但 samples 数组未登记，UPM 用户此前在 Package Manager 看不到该导入项；现三方口径统一（共 11 个可导入示例）
+- **测试扩充（全仓锐评盲区补齐）** — 新增 `ViewAndTriggerTests`（View / MonoViewController 基类 Context 绑定 + RemoveListener 触发器族——两轮锐评点名的零测试带）、`ScriptingSymbolUtilityTests`、`QuickCreateSOMenuItemTests`；`AesirUpdateServiceTests` 19→32；`MiniEventTests` 补 `RemoveListener` 精确移除用例；Editor 程序集新增 `AssemblyInfo.cs`（internal 逻辑对 EditMode 测试开放）
+
+### Changed
+
+- **包内更新器：逻辑下沉与绘制期零开销** — 更新执行流程下沉为 `AesirUpdateService.UpdatePackagesAsync`（双窗口共用）；检测结果/更新日志改序列化字段（域重载后窗口内容不丢）；Odin 行视图模型仅状态变化时重建，IMGUI 消除 OnGUI 期间 LINQ 与磁盘 IO
+- **脏排序只重排脏列表** — `MonoLifecycleProxy` 与 `AesirArchitecturePlayerLoop` 的 `EnsureSorted` 此前任一注册即全量重排所有列表；现按事件/阶段粒度追踪脏项，只重排发生注册的列表并跳过单元素排序
+
+### Fixed
+
+- **包内更新器：预发布版本比较** — `CompareVersion` 此前把 `0.15.0-rc1` 与 `0.15.0` 判等（预发布标识被吞），装过 rc 的用户对正式版永显"已是最新"；现按 SemVer 比较
+- **包内更新器：移除单包"更新到 X"入口** — Modules 依赖 Architecture 且两包同 Release 发布，单包更新造成版本撕裂；统一走「全部更新」
+- **包内更新器：残留清理移到导入成功之后** — 此前"先删后导"，`ImportPackage` 静默失败时旧文件已删新文件未进；现导入后校验包目录再清理，失败时跳过清理并告警指向备份
+- **QuickCreateSOMenuItem：脚本名恰为 "SO" 时不再产生空资源名** — 后缀裁剪增加长度守卫
+- **DDOL 根物体保护三单例同形** — `AesirArchitecture.Awake` 与 `UIRoot.Awake` 此前无条件调用 `DontDestroyOnLoad`（预放置为子物体时引擎仅打警告且无效）；现与 `UIModule` 范式统一：仅根物体调用，子物体跟随宿主
+- **PlayMode 测试卫生** — `UnityEngineObjectCheckNullTests` 拆分合并断言并连带销毁宿主 GameObject；`RemoveListenerOnSceneUnloadedTriggerTests` 改 `[UnityTearDown]` 等待卸载完成；`ContextReplacementWarningTests` 否定断言改全量 Warning 捕获；`AllFrameEvents` 等待改真实时间窗（batchmode 兼容）
+
+---
+
+### [modules] Aesir Modules
+
+
+### Added
+
+- **场景模块 PlayMode 测试套件（RAM 首个 PlayMode 程序集）** — 新增 `Tests/Runtime/`（`Runestone.AesirModules.Tests.Runtime`）覆盖 SceneModule 真实加载成功路径：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义；测试场景经 `[InitializeOnLoadMethod]` 编辑模式域加载期登记 BuildSettings
+- **音频模块：音量滑条"拖动结束落键"示范** — 音量 setter 每次赋值即写 PlayerPrefs，连续拖动逐帧落键属误用；模块文档补指引，包内示例滑条改鼠标松开一次性写入（`Samples~` 镜像同步）
+- **测试扩充（全仓锐评盲区补齐）** — `EventModuleTests` 22→32（重入三层嵌套、快照退订/注册、跨轨全序、Attribute 轨死引用、`WithTag` 空串/null、千订阅者软门槛）；`AudioModuleTests` 30→38（RIOLM、淡出续接/幂等、协程驱动、pitch 钳制）；`UIModuleTests` 13→17（递归 Show、OnShow 异常、生命周期契约）；`XmlSummaryToolTests` 25→34；新增 `ZensicalScriptingAPIOutputTests`（7 用例，引擎合并护栏）
+
+### Changed
+
+- **事件模块：优先级稳定排序** — 排序以 `Priority` 为主键、注册序号 `InsertionIndex` 为次键；同优先级订阅者从"无契约"收紧为"按注册顺序执行"
+- **事件模块：摘除"实验性"标注** — 分发正确性三缺陷（重入/快照/稳定排序）修复后，README 与模块文档删除"实验性"帽子；"约定不在回调内同步发布事件"免责声明改写为快照迭代与重入安全语义说明；"热路径稳态零分配"收敛为精确口径（零字符串分配/零装箱/零闭包，顶层零列表分配）
+- **脚本文档生成：Default 生成器引擎合并** — 四成员节收敛到与 Zensical 共享的 `MemberGrouper` 分组引擎（582→343 行），分组语义两生成器单源化；Default 输出格式护栏测试锁定不变
+
+### Fixed
+
+- **事件模块：重入分发覆写共享参数数组（全仓最严重单点缺陷）** — 订阅者回调内再发布事件（同型或异型）时，内层覆写共享参数数组，外层剩余订阅者收到内层事件参数（编译委托抛异常被吞成错误日志）；现重入层使用独立局部参数数组/迭代列表/死绑定收集，外层分发不受干扰；性能计时仅顶层生效
+- **事件模块：分发中退订跳过订阅者** — 分发改注册表快照迭代（顶层复用缓冲区稳态零分配），回调内退订/注册不再干扰本趟
+- **事件模块：`WithTag` 构造拒绝 null 与空串**（fail-fast）；**UnityEventOnAesirEvent 早退路径显式归零句柄**
+- **音频模块**：类内补 `ResetStatics` 静态重置（RAM 唯一漏掉的单例铁律）；`PlayBgm` 幂等条件追加"无进行中淡变协程"（淡出中重播同曲取消淡出并续接，不再被幂等吞掉）；`PlaySfx` 音调钳制 `[0.01, 3]`（pitch 与 jitter 任意组合不再反播）
+- **UI 模块**：`ShowPanel` / `PrewarmPanel` 注册时序前移（`OnShow` 抛异常不泄漏、递归 Show 不重复实例化）；re-show 强转改 `as` + 判空报错；`InstantiateInactive` try/finally 恢复源预制体；`RegisterPrefab` 换路径诊断警告
+- **场景模块**：`UnloadAllAddedScenes` 快照迭代（广播期间嵌套加载/卸载不干扰本趟）；Single 成功路径 `SetActiveScene` 前校验 `Scene.IsValid()`
+- **脚本文档生成**：XML 实体解码（含泛型实体文档不再双重转义）；多成员代码块归属分析 + 非首成员持 `[Summary]` 时跳过告警（fail-closed）；Remove 模式补 header 区清理；Sync 幂等空白压缩；`EventData` 空守卫；合成方法过滤改 `IsSpecialName` 精确判定；孤儿空 `///` 行清理；字段过滤收敛单一真源
 
 ---
 
