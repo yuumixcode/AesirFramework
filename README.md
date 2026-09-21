@@ -59,7 +59,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 ### 核心机制速览
 
 - **`ObservableValue<T>` 响应式属性** — Model 持有可写实例，View 经 `IReadOnlyObservableValue<T>` 只读订阅；`AddListenerAndInvoke` 订阅即同步初始值
-- **可观察集合家族** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` 提供 Added / Removed / Replaced / Updated / Cleared 变更通知，与 ObservableValue 同一套读写分离与事件模式
+- **可观察集合家族（全量复刻 ObservableCollections）** — 九种集合 + `CollectionChanged` 全语义通知（含 Move / Sort / Reverse / 批量）+ 同步视图（过滤器 / 可写视图 / `INotifyCollectionChanged` 绑定层）+ 可选 R3 响应式扩展 + Odin 调试面板；既有 Added / Removed / Replaced / Updated / Cleared 轻量事件保留，既有代码零迁移
 - **`MiniEvent` / `MiniEvent<T>`** — 零分配轻量事件（直接多播调用，原生 C# fail-fast 语义）；返回 `AutoRemoveListenerHandle` 自动清理，支持随 GameObject 销毁 / 场景卸载自动注销
 - **PlayerLoop 原生生命周期** — `AesirArchitecturePlayerLoop` 注入 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour；第三方 SDK 覆盖 PlayerLoop 后 `EnsureInjected()` 自愈
 - **DDOL 显式决策** — 根单例的 `dontDestroyOnLoad` 序列化字段统一控制预放置 / 运行时两种来源（默认跨场景持久；关闭时随场景卸载销毁，Inspector 警告 + 运行时提醒，多场景叠加加载自行处理）
@@ -324,7 +324,7 @@ Copyright (c) 2026 Yuumix
 ## 🔗 推荐链接
 
 - **Aesir Inspector** — 独立公开仓库，专门面向 [Odin Inspector](https://odininspector.com/) 开发者的学习工具包：[yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
-- **ObservableCollections** — Cysharp 出品的高性能可观察集合与同步视图库（MIT）。Aesir Architecture 的 Observable 集合家族保持极简，Move / Sort / 同步视图 / R3 集成等高级能力推荐直接使用：[Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- **ObservableCollections** — Cysharp 出品的高性能可观察集合与同步视图库（MIT）。Aesir Architecture 已将其**全量复刻**进包内（九种集合 / `CollectionChanged` / 同步视图 / R3 扩展 / Odin 调试面板，见 `Documentation/observable-collections.md`），无需再额外引入；如需与上游逐行对照或使用 NuGet 生态，仍可访问：[Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **Eflatun.SceneReference** — 强类型、可靠的 Unity 场景引用方案（MIT）。Aesir Modules Scene 模块的 `SceneAssetWrapper` 吸收了其功能设计（GUID 锚点自愈、状态机校验、`TryGet` 安全读取家族等）：[starikcetin/Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
 - **Vertical 2D Shooting（Goldmetal）** — 韩国 Goldmetal 基础教程 BE4 配套的纵版射击 2D 素材包（标注 Goldmetal 出处即可自由使用，含商用）。Aesir Architecture 的 PlaneWar 示例内含该素材的自包含拷贝：[Goldmetal Studio](https://www.goldmetal.co.kr)
 - **作者主页**: [yuumixcode](https://github.com/yuumixcode)
