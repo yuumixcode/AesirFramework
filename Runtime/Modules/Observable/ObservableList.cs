@@ -27,21 +27,20 @@ namespace Runestone.AesirArchitecture
     /// <see cref="IEnumerable{T}" /> 接口遍历会装箱一次枚举器（与 BCL <see cref="List{T}" /> 行为一致）。
     /// </para>
     /// <para>
-    /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />（含 Move / Sort / Reverse）
-    /// 与 <see cref="IObservableCollection{T}.CreateView{TView}" /> 同步视图，对齐 Cysharp.ObservableCollections 语义。
+    /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />（含 Move / Sort / Reverse），
+    /// 对齐 Cysharp.ObservableCollections 语义。
     /// </para>
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableList{T}" />
     /// <seealso cref="IObservableList{T}" />
     [Serializable]
-    public sealed partial class ObservableList<T> : IObservableList<T>
+    public sealed class ObservableList<T> : IObservableList<T>
     {
         [SerializeField]
         List<T> items = new List<T>();
 
         /// <summary>
-        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁，
-        /// 同步视图（<see cref="ISynchronizedView{T, TView}" />）依赖它保证视图与集合一致。
+        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁。
         /// </summary>
         public object SyncRoot { get; } = new object();
 
@@ -69,7 +68,6 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         public ObservableList()
         {
-            ObservableCollectionRegistry.Register(this);
         }
 
         /// <summary>
@@ -78,7 +76,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="capacity">初始容量。</param>
         public ObservableList(int capacity)
         {
-            ObservableCollectionRegistry.Register(this);
             items = new List<T>(capacity);
         }
 
@@ -88,7 +85,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="initialItems">初始元素序列。</param>
         public ObservableList(IEnumerable<T> initialItems)
         {
-            ObservableCollectionRegistry.Register(this);
             if (initialItems != null)
             {
                 items.AddRange(initialItems);

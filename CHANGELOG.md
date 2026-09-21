@@ -9,18 +9,19 @@
 
 ### Added
 
-- **可观察集合全量复刻（Cysharp.ObservableCollections，MIT）** — 按上游代码逻辑移植完整可观察集合体系，命名空间与部分命名按本项目规范改写、语法降级至 Unity 2022.3（C# 9），归属与差异见包根 `Third Party Notices.md` 与 `Documentation/observable-collections.md`：
-  - **集合家族** — 新增 `ObservableQueue<T>`、`ObservableStack<T>`、`ObservableRingBuffer<T>`、`ObservableFixedSizeRingBuffer<T>`、`RingBuffer<T>`、`AlternateIndexList<T>`；`ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 就地升级（既有 API 全部保留）
-  - **`CollectionChanged` 全语义通知** — `IObservableCollection<T>`（`CollectionChanged` + `SyncRoot` + `CreateView`）；`in` 参数 + `readonly ref struct` 载荷零分配；批量操作（`AddRange` / `InsertRange` / `RemoveRange`）单次通知并携带 `ReadOnlySpan<T>`；`Sort` / `Reverse` 以 `Reset` + `SortOperation<T>` 通知；`Move` 通知
-  - **同步视图体系** — `ISynchronizedView<T, TView>` / `IWritableSynchronizedView<T, TView>` / `ISynchronizedViewList<TView>`；过滤器 `ISynchronizedViewFilter<T, TView>` + `AttachFilter` / `ResetFilter`；`ViewChanged` / `RejectedViewChanged` / `CollectionStateChanged` 事件；`CreateWritableView` 回写源集合
-  - **`INotifyCollectionChanged` 绑定层** — `ToViewList` / `ToNotifyCollectionChanged`（含 `ICollectionEventDispatcher` 线程派发）/ `ToNotifyCollectionChangedSlim`，供 XAML 类平台绑定
-  - **R3 响应式扩展（可选程序集）** — 新程序集 `Runestone.AesirArchitecture.R3`（`AESIR_R3` 守卫，未安装 R3 时整体不参与编译）：集合侧 `ObserveChanged` / `ObserveAdd` / `ObserveRemove` / `ObserveReplace` / `ObserveMove` / `ObserveReset` / `ObserveClear` / `ObserveReverse` / `ObserveSort` / `ObserveCountChanged` 与字典专属扩展，视图侧同名扩展 + `ObserveRejected`；`EnsureAesirR3Define` 自动检测 R3 程序集并维护宏
-  - **Odin 调试面板（可选）** — `Tools/Aesir/Observable Collections` 集合浏览器窗口（类型 / 元素数 / 变更订阅数 / 轻量监听数 / 关联视图数 / 元素预览，支持过滤与自动刷新）+ Inspector 内联摘要面板；运行时侧 `ObservableCollectionRegistry` 弱引用登记表，登记调用经 `[Conditional("UNITY_EDITOR")]` 在玩家构建中整体移除（零开销）
-- **上游测试套件移植** — 9 个 `*ParityTests` 文件（列表 / 字典 / 集合 / 队列 / 栈 / 环形缓冲区 / 交替索引 / 绑定层 / R3 扩展，共 34 用例）；`ObservableCollectionRegistryTests`（登记 / 注销 / 弱引用清理，6 用例）
+- **可观察集合升级为 Cysharp.ObservableCollections 轻量内置子集（MIT）** — 按上游代码逻辑移植高频部分，命名空间与命名按本项目规范改写、语法降级至 Unity 2022.3（C# 9），归属见包根 `Third Party Notices.md`、差异清单见 `Documentation/observable-collections.md`：
+  - **新增 `ObservableQueue<T>`**；`ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 就地升级（既有 API 全部保留）
+  - **`CollectionChanged` 全语义通知** — `IObservableCollection<T>`（`CollectionChanged` + `SyncRoot`）；`in` 参数 + `readonly ref struct` 载荷零分配；批量操作（`AddRange` / `InsertRange` / `RemoveRange`）单次通知并携带 `ReadOnlySpan<T>`；`Sort` / `Reverse` 以 `Reset` + `SortOperation<T>` 通知；`Move` 通知
+  - **Odin Inspector 内联调试面板（可选）** — Inspector 中集合字段上方显示元素数 / `CollectionChanged` 订阅数 / 轻量事件监听数 / 元素预览，其下保留默认绘制；未安装 Odin 时不参与编译
+- **上游测试移植与语义回归** — `ObservableListParityTests`（列表写操作结果与 BCL `ObservableCollection<T>` 对齐，移植自上游测试套件）+ `ObservableCollectionChangedTests`（`CollectionChanged` 上游语义 18 用例：每次写操作通知 / 批量单次通知 / Move / Sort / Reverse / Clear / 字典与集合的 -1 索引）
 
 ### Changed
 
-- **可观察集合文档口径升级** — README（中英）与包内文档从「轻量四事件」改为「ObservableCollections 全量复刻」，删除「高级能力请用上游」的旧建议；新增 `Documentation/observable-collections.md` 模块文档（集合家族 / 两轨通知 / 同步视图 / R3 / Odin 面板 / 与上游差异清单 / 注意事项）
+- **可观察集合文档口径升级** — README（中英）与包内文档从「轻量四事件」改为「ObservableCollections 轻量内置子集」，明确「重度能力用上游、两套不混用」；新增 `Documentation/observable-collections.md`（定位 / 两轨通知 / Odin 面板 / 与上游关系与差异 / 注意事项）
+
+### 明确不做（引导上游）
+
+- 同步视图与过滤器（`ISynchronizedView<T, TView>` / `CreateView` / `AttachFilter`）、R3 响应式集成、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged`（WPF/XAML）绑定层、可写视图回写、`ToViewList` / `ToNotifyCollectionChanged` —— 需要时直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 
 ### 规划中
 

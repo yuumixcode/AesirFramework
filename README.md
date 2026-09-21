@@ -28,7 +28,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
 - **ObservableValue 响应式属性** — 快捷档 Model 直接暴露可写 `ObservableValue<T>`（表现层直改值）；标准档起收窄为 `IReadOnlyObservableValue<out T>` 只读接口 + 写方法；严格档再做接口注册 + Command 写入
-- **可观察集合（ObservableCollections 全量复刻）** — 九种集合（List / Dictionary / HashSet / Queue / Stack / RingBuffer / FixedSizeRingBuffer / RingBuffer / AlternateIndexList）+ `CollectionChanged` 全语义通知（含 Move / Sort / Reverse / 批量）+ 同步视图（过滤器 / 可写视图 / `INotifyCollectionChanged` 绑定层）+ 可选 R3 响应式扩展 + Odin 调试面板；同时保留项目既有的 Added / Removed / Replaced / Updated / Cleared 轻量事件，既有代码零迁移。详见[可观察集合](#可观察集合observablecollections-全量复刻)
+- **可观察集合（ObservableCollections 轻量内置子集）** — 四种高频集合（List / Dictionary / HashSet / Queue）+ `CollectionChanged` 全语义通知（含 Move / Sort / Reverse / 批量）+ Odin 内联调试面板；同时保留项目既有的 Added / Removed / Replaced / Updated / Cleared 轻量事件，既有代码零迁移。重度能力（同步视图 / R3 / 环形缓冲 / XAML 绑定等）用上游库。详见[可观察集合](#可观察集合observablecollections-轻量内置子集)
 - **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换 Model 的调试模式
 - **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule` 基类，消除代码重复
 - **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，按注册顺序保序
@@ -181,7 +181,7 @@ this.ExecuteCommand<AddScoreCommand>();
 | 示例 | 说明 | 依赖 |
 |------|------|------|
 | `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
-| `ObservableCollections` | 可观察集合全家桶用法：轻量事件与 `CollectionChanged` 双轨通知、同步视图 + 过滤器 + 排序同步、队列 / 栈 / 环形缓冲区，经 ContextMenu 触发增删改查与集合运算 | 无 |
+| `ObservableCollections` | 可观察集合用法：轻量事件与 `CollectionChanged` 双轨通知、队列，经 ContextMenu 触发增删改查与集合运算 | 无 |
 | `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
 | `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示，开关经设置窗口控制（`Tools → Aesir → Architecture → Samples`） | 无 |
 
@@ -191,11 +191,11 @@ this.ExecuteCommand<AddScoreCommand>();
 |------|------|------|
 | `PlaneWar` | 纵版射击飞机大战（Mono 版）：自包含素材的完整小游戏，演示 MiniEvent、ObservableValue 与 MonoLifecycleProxy 在真实玩法中的组合运用 | 无 |
 
-## 可观察集合（ObservableCollections 全量复刻）
+## 可观察集合（ObservableCollections 轻量内置子集）
 
-> 本模块是 [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT）的**全量复刻**——集合语义、同步视图体系、通知载荷结构、R3 扩展方法集均按其代码逻辑移植，并按本项目规范改写命名空间与部分命名，适配 Unity 2022.3（C# 9）。完整说明与差异清单见 [`Documentation/observable-collections.md`](Documentation/observable-collections.md)。
+> 本模块的 `CollectionChanged` 通知语义与通知载荷结构**移植自** [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT）——按上游代码逻辑改写为本项目命名空间与命名规范，适配 Unity 2022.3（C# 9）。本模块是上游的**高频子集**（面向独立游戏的精简定位），不是全量复刻；完整说明见 [`Documentation/observable-collections.md`](Documentation/observable-collections.md)。
 
-**集合家族**：`ObservableList<T>`、`ObservableDictionary<TKey, TValue>`、`ObservableHashSet<T>`、`ObservableQueue<T>`、`ObservableStack<T>`、`ObservableRingBuffer<T>`、`ObservableFixedSizeRingBuffer<T>`、`RingBuffer<T>`、`AlternateIndexList<T>`，统一实现 `IObservableCollection<T>`（`CollectionChanged` + `SyncRoot` + `CreateView`）。
+**集合家族**：`ObservableList<T>`、`ObservableDictionary<TKey, TValue>`、`ObservableHashSet<T>`、`ObservableQueue<T>`，统一实现 `IObservableCollection<T>`（`CollectionChanged` + `SyncRoot`）。
 
 **两轨通知**：
 
@@ -207,23 +207,9 @@ list.CollectionChanged += (in NotifyCollectionChangedEventArgs<int> e) => { /* e
 list.AddAddedListener(e => { }).Dispose();
 ```
 
-**同步视图**：把元素一次性变换为表现对象并随集合自动同步，支持过滤器与排序联动。
+**可选增强**：安装 Odin Inspector 后，集合字段在 Inspector 中显示内联摘要（元素数 / 订阅数 / 元素预览）。未安装时该面板不参与编译，纯代码 API 照常可用。
 
-```csharp
-var view = list.CreateView(x => Instantiate(prefab, root).GetComponent<Row>());
-view.AttachFilter(x => x.Score > 0);   // 过滤视图（Count 为过滤后数量）
-list.Sort();                            // Sort / Reverse 会同步重排视图
-view.Dispose();                         // 必须 Dispose（解除订阅）
-```
-
-**可选增强**：
-
-| 能力 | 前置条件 | 说明 |
-|------|----------|------|
-| R3 响应式扩展 | 项目存在 `R3` 程序集（宏 `AESIR_R3` 自动检测） | `ObserveAdd` / `ObserveRemove` / `ObserveChanged` / `ObserveSort` … 集合与视图两侧同名扩展 |
-| Odin 调试面板 | Odin Inspector（宏 `ODIN_INSPECTOR`） | 菜单 `Tools/Aesir/Observable Collections` 集合浏览器 + Inspector 内联摘要与元素预览 |
-
-两者均为**可选**：未安装时对应程序集整体不参与编译，纯代码 API 照常可用。
+**重度需求用上游**：同步视图与过滤器、R3 响应式集成、环形缓冲区 / 栈 / 交替索引列表、WPF 类平台的 `INotifyCollectionChanged` 绑定、可写视图回写——直接使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（两套体系不混用）。
 
 ## 架构总览
 
@@ -303,8 +289,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent 零分配事件（Invoke 路径） + 自动移除监听触发器
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
-│   │   ├── Observable/            # ObservableValue + 可观察集合全家桶（九种集合 / CollectionChanged / 同步视图 / 调试注册表）
-│   │   ├── R3/                    # R3 响应式扩展（可选程序集，AESIR_R3 守卫）
+│   │   ├── Observable/            # ObservableValue + 可观察集合（四种集合 / CollectionChanged）
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # 框架基础设施
 │   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
@@ -363,7 +348,7 @@ cn.runestone.aesir.architecture/
 - **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
 - **时间调度的完整形态** — `AesirScheduler` 有意收窄为帧粒度的一次性任务（`Delay` / `NextFrame`）：不做取消句柄、暂停/恢复、精确计时、协程等价物；需要完整调度能力时请在业务层使用协程或第三方库
 - **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
-- **集合可观察全家桶** — 已**全量复刻** [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根 `Third Party Notices.md`）：九种集合、`CollectionChanged` 全语义、同步视图与过滤器、`INotifyCollectionChanged` 绑定层、R3 响应式扩展、Odin 调试面板均内置；与上游的差异（C# 9 语法降级、`Unsafe` 快路径替换、命名规范）逐条列在 `Documentation/observable-collections.md`
+- **集合可观察全家桶** — 内置 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根 `Third Party Notices.md`）的**高频子集**：四种集合 + `CollectionChanged` 全语义。同步视图与过滤器、R3 响应式、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged` 绑定层、可写视图**不做**——需要时直接使用上游库（两套体系不混用，详见 `Documentation/observable-collections.md`）
 - **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
 
 ### 编写约定（违反时 fail-fast 报错，框架不做兜底）
@@ -395,7 +380,7 @@ cn.runestone.aesir.architecture/
 - [x] 命令模式（同步）
 - [x] 查询模式（CQRS 读操作）
 - [x] ObservableValue 响应式属性
-- [x] 可观察集合（ObservableCollections 全量复刻：九种集合 / 同步视图 / R3 扩展 / Odin 调试面板）
+- [x] 可观察集合（ObservableCollections 轻量内置子集：四种集合 / Odin 内联面板）
 - [x] GenericLocator 泛型定位器
 - [x] AbstractSubmodule 统一子模块生命周期
 - [x] 运行时错误日志（替代前置依赖校验）

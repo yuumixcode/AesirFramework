@@ -14,7 +14,7 @@ namespace Runestone.AesirArchitecture
     /// <para>
     /// 提供两轨通知：轻量事件（Added / Removed / Replaced / Cleared）与
     /// <see cref="IObservableCollection{T}.CollectionChanged" />（对齐 Cysharp.ObservableCollections 语义，
-    /// 含 Move / Sort / Reverse 与 Range 批量通知）。同步视图与 R3 集成基于后者构建。
+    /// 含 Move / Sort / Reverse 与 Range 批量通知）。
     /// </para>
     /// </remarks>
     /// <seealso cref="IObservableList{T}" />
