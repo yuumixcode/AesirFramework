@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using Runestone.AesirArchitecture.Internal;
 
 namespace Runestone.AesirArchitecture
 {
@@ -30,14 +32,14 @@ namespace Runestone.AesirArchitecture
     /// <see cref="IEnumerable{T}" /> 接口遍历会装箱一次枚举器（与 BCL <see cref="HashSet{T}" /> 行为一致）。
     /// </para>
     /// <para>
-    /// 需要同步视图、R3 集成等高级能力时，建议使用完整方案
-    /// <a href="https://github.com/Cysharp/ObservableCollections">Cysharp.ObservableCollections</a>。
+    /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />
+    /// （对齐 Cysharp.ObservableCollections 语义），同步视图与 R3 集成基于后者构建。
     /// </para>
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableHashSet{T}" />
     /// <seealso cref="IObservableHashSet{T}" />
     [Serializable]
-    public sealed class ObservableHashSet<T> : IObservableHashSet<T>
+    public sealed partial class ObservableHashSet<T> : IObservableHashSet<T>
     {
         readonly MiniEvent<T> _addedEvent = new MiniEvent<T>();
         readonly MiniEvent _clearedEvent = new MiniEvent();
@@ -46,15 +48,35 @@ namespace Runestone.AesirArchitecture
         HashSet<T> set = new HashSet<T>();
 
         /// <summary>
+        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁，
+        /// 同步视图（<see cref="ISynchronizedView{T, TView}" />）依赖它保证视图与集合一致。
+        /// </summary>
+        public object SyncRoot { get; } = new object();
+
+        /// <summary>
+        /// 集合变更事件，语义与 Cysharp.ObservableCollections 的 <c>IObservableCollection&lt;T&gt;.CollectionChanged</c> 一致：
+        /// 实际发生增删时通知，批量操作（<see cref="AddRange(IEnumerable{T})" /> 等）通知单次批量事件。
+        /// 集合无索引概念，事件的索引参数固定为 -1。
+        /// </summary>
+        public event NotifyCollectionChangedEventHandler<T> CollectionChanged;
+
+        /// <summary>
         /// 默认构造，创建空集合。
         /// </summary>
-        public ObservableHashSet() { }
+        public ObservableHashSet()
+        {
+            ObservableCollectionRegistry.Register(this);
+        }
 
         /// <summary>
         /// 指定初始容量构造，避免批量添加时的多次扩容（rehash）。
         /// </summary>
         /// <param name="capacity">初始容量。</param>
-        public ObservableHashSet(int capacity) => set = new HashSet<T>(capacity);
+        public ObservableHashSet(int capacity)
+        {
+            ObservableCollectionRegistry.Register(this);
+            set = new HashSet<T>(capacity);
+        }
 
         /// <summary>
         /// 指定初始元素构造。初始元素不触发 Added 事件（语义同反序列化填充）。
@@ -62,6 +84,7 @@ namespace Runestone.AesirArchitecture
         /// <param name="initialItems">初始元素序列。</param>
         public ObservableHashSet(IEnumerable<T> initialItems)
         {
+            ObservableCollectionRegistry.Register(this);
             if (initialItems != null)
             {
                 set = new HashSet<T>(initialItems);
@@ -69,9 +92,60 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
+        /// 指定元素比较器构造。
+        /// </summary>
+        /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
+        public ObservableHashSet(IEqualityComparer<T> comparer)
+        {
+            ObservableCollectionRegistry.Register(this);
+            set = new HashSet<T>(comparer);
+        }
+
+        /// <summary>
+        /// 指定初始容量与元素比较器构造。
+        /// </summary>
+        /// <param name="capacity">初始容量。</param>
+        /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
+        public ObservableHashSet(int capacity, IEqualityComparer<T> comparer)
+        {
+            ObservableCollectionRegistry.Register(this);
+            set = new HashSet<T>(capacity, comparer);
+        }
+
+        /// <summary>
+        /// 指定初始元素与元素比较器构造。初始元素不触发事件。
+        /// </summary>
+        /// <param name="initialItems">初始元素序列。</param>
+        /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
+        public ObservableHashSet(IEnumerable<T> initialItems, IEqualityComparer<T> comparer)
+        {
+            ObservableCollectionRegistry.Register(this);
+            set = new HashSet<T>(comparer);
+
+            if (initialItems != null)
+            {
+                set.UnionWith(initialItems);
+            }
+        }
+
+        /// <summary>
         /// 元素数量。
         /// </summary>
-        public int Count => set.Count;
+        public int Count
+        {
+            get
+            {
+                lock (SyncRoot)
+                {
+                    return set.Count;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 内部 <see cref="HashSet{T}" /> 使用的元素比较器。
+        /// </summary>
+        public IEqualityComparer<T> Comparer => set.Comparer;
 
         /// <summary>
         /// 固定返回 <c>false</c>，该集合可写。
@@ -85,13 +159,161 @@ namespace Runestone.AesirArchitecture
         /// <returns>新添加返回 <c>true</c>；元素已存在时不触发事件，返回 <c>false</c>。</returns>
         public bool Add(T item)
         {
-            if (!set.Add(item))
+            lock (SyncRoot)
             {
-                return false;
+                if (!set.Add(item))
+                {
+                    return false;
+                }
+
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(item, -1));
+                _addedEvent.Invoke(item);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// 批量添加元素序列，触发单次批量 Added 通知（仅包含实际新增的元素）。
+        /// </summary>
+        /// <param name="itemsToAdd">要添加的元素序列。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出。</exception>
+        public void AddRange(IEnumerable<T> itemsToAdd)
+        {
+            if (itemsToAdd == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToAdd));
             }
 
-            _addedEvent.Invoke(item);
-            return true;
+            lock (SyncRoot)
+            {
+                if (!itemsToAdd.TryGetNonEnumeratedCount(out var capacity))
+                {
+                    capacity = 4;
+                }
+
+                using (var added = new ResizableArray<T>(capacity))
+                {
+                    foreach (var item in itemsToAdd)
+                    {
+                        if (set.Add(item))
+                        {
+                            added.Add(item);
+                            _addedEvent.Invoke(item);
+                        }
+                    }
+
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(added.Span, -1));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 批量添加元素数组，触发单次批量 Added 通知（仅包含实际新增的元素）。
+        /// </summary>
+        /// <param name="itemsToAdd">要添加的元素数组。</param>
+        public void AddRange(T[] itemsToAdd) => AddRange(itemsToAdd.AsSpan());
+
+        /// <summary>
+        /// 批量添加元素（只读跨度重载），触发单次批量 Added 通知（仅包含实际新增的元素）。
+        /// </summary>
+        /// <param name="itemsToAdd">要添加的元素只读跨度。</param>
+        public void AddRange(ReadOnlySpan<T> itemsToAdd)
+        {
+            lock (SyncRoot)
+            {
+                using (var added = new ResizableArray<T>(itemsToAdd.Length))
+                {
+                    foreach (var item in itemsToAdd)
+                    {
+                        if (set.Add(item))
+                        {
+                            added.Add(item);
+                            _addedEvent.Invoke(item);
+                        }
+                    }
+
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(added.Span, -1));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 批量移除元素序列，触发单次批量 Removed 通知（仅包含实际被移除的元素）。
+        /// </summary>
+        /// <param name="itemsToRemove">要移除的元素序列。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToRemove" /> 为 null 时抛出。</exception>
+        public void RemoveRange(IEnumerable<T> itemsToRemove)
+        {
+            if (itemsToRemove == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToRemove));
+            }
+
+            lock (SyncRoot)
+            {
+                if (!itemsToRemove.TryGetNonEnumeratedCount(out var capacity))
+                {
+                    capacity = 4;
+                }
+
+                using (var removed = new ResizableArray<T>(capacity))
+                {
+                    foreach (var item in itemsToRemove)
+                    {
+                        if (set.Remove(item))
+                        {
+                            removed.Add(item);
+                            _removedEvent.Invoke(item);
+                        }
+                    }
+
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Remove(removed.Span, -1));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 批量移除元素数组，触发单次批量 Removed 通知（仅包含实际被移除的元素）。
+        /// </summary>
+        /// <param name="itemsToRemove">要移除的元素数组。</param>
+        public void RemoveRange(T[] itemsToRemove) => RemoveRange(itemsToRemove.AsSpan());
+
+        /// <summary>
+        /// 批量移除元素（只读跨度重载），触发单次批量 Removed 通知（仅包含实际被移除的元素）。
+        /// </summary>
+        /// <param name="itemsToRemove">要移除的元素只读跨度。</param>
+        public void RemoveRange(ReadOnlySpan<T> itemsToRemove)
+        {
+            lock (SyncRoot)
+            {
+                using (var removed = new ResizableArray<T>(itemsToRemove.Length))
+                {
+                    foreach (var item in itemsToRemove)
+                    {
+                        if (set.Remove(item))
+                        {
+                            removed.Add(item);
+                            _removedEvent.Invoke(item);
+                        }
+                    }
+
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Remove(removed.Span, -1));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 按键取回集合中实际存储的等值元素（用于取回引用类型元素本身）。
+        /// </summary>
+        /// <param name="equalValue">用于比较的元素。</param>
+        /// <param name="actualValue">集合中实际存储的等值元素。</param>
+        /// <returns>集合中存在等值元素返回 <c>true</c>，否则返回 <c>false</c>。</returns>
+        public bool TryGetValue(T equalValue, [MaybeNullWhen(false)] out T actualValue)
+        {
+            lock (SyncRoot)
+            {
+                return set.TryGetValue(equalValue, out actualValue);
+            }
         }
 
         void ICollection<T>.Add(T item) => Add(item);
@@ -103,13 +325,17 @@ namespace Runestone.AesirArchitecture
         /// <returns>找到并移除返回 <c>true</c>；元素不存在时不触发事件，返回 <c>false</c>。</returns>
         public bool Remove(T item)
         {
-            if (!set.Remove(item))
+            lock (SyncRoot)
             {
-                return false;
-            }
+                if (!set.Remove(item))
+                {
+                    return false;
+                }
 
-            _removedEvent.Invoke(item);
-            return true;
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Remove(item, -1));
+                _removedEvent.Invoke(item);
+                return true;
+            }
         }
 
         /// <summary>
@@ -117,13 +343,18 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         public void Clear()
         {
-            if (set.Count == 0)
+            lock (SyncRoot)
             {
-                return;
-            }
+                var hadItems = set.Count > 0;
+                set.Clear();
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Reset());
 
-            set.Clear();
-            _clearedEvent.Invoke();
+                // 轻量事件保留"空集合不通知"语义，与 CollectionChanged 并存
+                if (hadItems)
+                {
+                    _clearedEvent.Invoke();
+                }
+            }
         }
 
         /// <summary>

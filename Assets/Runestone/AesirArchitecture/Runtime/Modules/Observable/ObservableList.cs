@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Runestone.AesirArchitecture.Internal;
 using UnityEngine;
 
 namespace Runestone.AesirArchitecture
@@ -26,17 +27,31 @@ namespace Runestone.AesirArchitecture
     /// <see cref="IEnumerable{T}" /> 接口遍历会装箱一次枚举器（与 BCL <see cref="List{T}" /> 行为一致）。
     /// </para>
     /// <para>
-    /// 需要 Move、Sort、SynchronizedView、R3 集成等高级能力时，建议使用完整方案
-    /// <a href="https://github.com/Cysharp/ObservableCollections">Cysharp.ObservableCollections</a>。
+    /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />（含 Move / Sort / Reverse）
+    /// 与 <see cref="IObservableCollection{T}.CreateView{TView}" /> 同步视图，对齐 Cysharp.ObservableCollections 语义。
     /// </para>
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableList{T}" />
     /// <seealso cref="IObservableList{T}" />
     [Serializable]
-    public sealed class ObservableList<T> : IObservableList<T>
+    public sealed partial class ObservableList<T> : IObservableList<T>
     {
         [SerializeField]
         List<T> items = new List<T>();
+
+        /// <summary>
+        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁，
+        /// 同步视图（<see cref="ISynchronizedView{T, TView}" />）依赖它保证视图与集合一致。
+        /// </summary>
+        public object SyncRoot { get; } = new object();
+
+        /// <summary>
+        /// 集合变更事件，语义与 Cysharp.ObservableCollections 的 <c>IObservableCollection&lt;T&gt;.CollectionChanged</c> 一致：
+        /// 每次写操作都通知（含赋相同值的索引器写入、空列表的 <see cref="Clear" />），
+        /// Range 操作通知单次批量事件，<see cref="Sort()" /> / <see cref="Reverse()" /> 以
+        /// <see cref="NotifyCollectionChangedAction.Reset" /> 携带 <see cref="SortOperation{T}" /> 通知。
+        /// </summary>
+        public event NotifyCollectionChangedEventHandler<T> CollectionChanged;
 
         readonly MiniEvent<CollectionAddEventArgs<T>>
             _addedEvent = new MiniEvent<CollectionAddEventArgs<T>>();
@@ -52,13 +67,20 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 默认构造，创建空列表。
         /// </summary>
-        public ObservableList() { }
+        public ObservableList()
+        {
+            ObservableCollectionRegistry.Register(this);
+        }
 
         /// <summary>
         /// 指定初始容量构造，避免批量添加时的多次数组扩容。
         /// </summary>
         /// <param name="capacity">初始容量。</param>
-        public ObservableList(int capacity) => items = new List<T>(capacity);
+        public ObservableList(int capacity)
+        {
+            ObservableCollectionRegistry.Register(this);
+            items = new List<T>(capacity);
+        }
 
         /// <summary>
         /// 指定初始元素构造。初始元素不触发 Added 事件（语义同反序列化填充）。
@@ -66,6 +88,7 @@ namespace Runestone.AesirArchitecture
         /// <param name="initialItems">初始元素序列。</param>
         public ObservableList(IEnumerable<T> initialItems)
         {
+            ObservableCollectionRegistry.Register(this);
             if (initialItems != null)
             {
                 items.AddRange(initialItems);
@@ -75,7 +98,16 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 元素数量。
         /// </summary>
-        public int Count => items.Count;
+        public int Count
+        {
+            get
+            {
+                lock (SyncRoot)
+                {
+                    return items.Count;
+                }
+            }
+        }
 
         /// <summary>
         /// 固定返回 <c>false</c>，该集合可写。
@@ -89,17 +121,27 @@ namespace Runestone.AesirArchitecture
         /// <remarks>使用 <see cref="EqualityComparer{T}" />.Default 判断值是否变化，仅在变化时触发事件。</remarks>
         public T this[int index]
         {
-            get => items[index];
+            get
+            {
+                lock (SyncRoot)
+                {
+                    return items[index];
+                }
+            }
             set
             {
-                var oldItem = items[index];
-                if (EqualityComparer<T>.Default.Equals(oldItem, value))
+                lock (SyncRoot)
                 {
-                    return;
-                }
+                    var oldItem = items[index];
+                    items[index] = value;
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Replace(value, oldItem, index, index));
 
-                items[index] = value;
-                _replacedEvent.Invoke(new CollectionReplaceEventArgs<T>(index, oldItem, value));
+                    // 轻量事件保留"值相同不通知"语义，与 CollectionChanged 并存
+                    if (!EqualityComparer<T>.Default.Equals(oldItem, value))
+                    {
+                        _replacedEvent.Invoke(new CollectionReplaceEventArgs<T>(index, oldItem, value));
+                    }
+                }
             }
         }
 
@@ -109,8 +151,53 @@ namespace Runestone.AesirArchitecture
         /// <param name="item">要添加的元素。</param>
         public void Add(T item)
         {
-            items.Add(item);
-            _addedEvent.Invoke(new CollectionAddEventArgs<T>(items.Count - 1, item));
+            lock (SyncRoot)
+            {
+                var index = items.Count;
+                items.Add(item);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(item, index));
+                _addedEvent.Invoke(new CollectionAddEventArgs<T>(index, item));
+            }
+        }
+
+        /// <summary>
+        /// 批量添加数组元素，触发单次批量 Added 通知（轻量事件逐项通知）。
+        /// </summary>
+        /// <param name="itemsToAdd">要添加的元素数组。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出。</exception>
+        public void AddRange(T[] itemsToAdd)
+        {
+            if (itemsToAdd == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToAdd));
+            }
+
+            lock (SyncRoot)
+            {
+                var index = items.Count;
+                items.AddRange(itemsToAdd);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(itemsToAdd, index));
+                NotifyAddedPerItem(index);
+            }
+        }
+
+        /// <summary>
+        /// 批量添加元素（只读跨度重载），触发单次批量 Added 通知（轻量事件逐项通知）。
+        /// </summary>
+        /// <param name="itemsToAdd">要添加的元素只读跨度。</param>
+        public void AddRange(ReadOnlySpan<T> itemsToAdd)
+        {
+            lock (SyncRoot)
+            {
+                var index = items.Count;
+                foreach (var item in itemsToAdd)
+                {
+                    items.Add(item);
+                }
+
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(itemsToAdd, index));
+                NotifyAddedPerItem(index);
+            }
         }
 
         /// <summary>
@@ -128,9 +215,16 @@ namespace Runestone.AesirArchitecture
                 throw new ArgumentNullException(nameof(itemsToAdd));
             }
 
-            foreach (var item in itemsToAdd)
+            lock (SyncRoot)
             {
-                Add(item);
+                var index = items.Count;
+                using (var clone = new CloneCollection<T>(itemsToAdd))
+                {
+                    // 先整体拷贝再插入，避免枚举过程中集合被修改
+                    items.AddRange(clone.AsEnumerable());
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(clone.Span, index));
+                    NotifyAddedPerItem(index);
+                }
             }
         }
 
@@ -141,8 +235,77 @@ namespace Runestone.AesirArchitecture
         /// <param name="item">要插入的元素。</param>
         public void Insert(int index, T item)
         {
-            items.Insert(index, item);
-            _addedEvent.Invoke(new CollectionAddEventArgs<T>(index, item));
+            lock (SyncRoot)
+            {
+                items.Insert(index, item);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(item, index));
+                _addedEvent.Invoke(new CollectionAddEventArgs<T>(index, item));
+            }
+        }
+
+        /// <summary>
+        /// 在指定索引插入数组元素，触发单次批量 Added 通知（轻量事件逐项通知）。
+        /// </summary>
+        /// <param name="index">插入位置索引。</param>
+        /// <param name="itemsToInsert">要插入的元素数组。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToInsert" /> 为 null 时抛出。</exception>
+        public void InsertRange(int index, T[] itemsToInsert)
+        {
+            if (itemsToInsert == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToInsert));
+            }
+
+            lock (SyncRoot)
+            {
+                items.InsertRange(index, itemsToInsert);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(itemsToInsert, index));
+                NotifyInsertedPerItem(index, itemsToInsert.Length);
+            }
+        }
+
+        /// <summary>
+        /// 在指定索引插入元素序列，触发单次批量 Added 通知（轻量事件逐项通知）。
+        /// </summary>
+        /// <param name="index">插入位置索引。</param>
+        /// <param name="itemsToInsert">要插入的元素序列。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToInsert" /> 为 null 时抛出。</exception>
+        public void InsertRange(int index, IEnumerable<T> itemsToInsert)
+        {
+            if (itemsToInsert == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToInsert));
+            }
+
+            lock (SyncRoot)
+            {
+                using (var clone = new CloneCollection<T>(itemsToInsert))
+                {
+                    items.InsertRange(index, clone.AsEnumerable());
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(clone.Span, index));
+                    NotifyInsertedPerItem(index, clone.Span.Length);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 在指定索引插入元素（只读跨度重载），触发单次批量 Added 通知（轻量事件逐项通知）。
+        /// </summary>
+        /// <param name="index">插入位置索引。</param>
+        /// <param name="itemsToInsert">要插入的元素只读跨度。</param>
+        public void InsertRange(int index, ReadOnlySpan<T> itemsToInsert)
+        {
+            lock (SyncRoot)
+            {
+                var cursor = index;
+                foreach (var item in itemsToInsert)
+                {
+                    items.Insert(cursor++, item);
+                }
+
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Add(itemsToInsert, index));
+                NotifyInsertedPerItem(index, itemsToInsert.Length);
+            }
         }
 
         /// <summary>
@@ -168,9 +331,148 @@ namespace Runestone.AesirArchitecture
         /// <param name="index">要移除元素的索引。</param>
         public void RemoveAt(int index)
         {
-            var item = items[index];
-            items.RemoveAt(index);
-            _removedEvent.Invoke(new CollectionRemoveEventArgs<T>(index, item));
+            lock (SyncRoot)
+            {
+                var item = items[index];
+                items.RemoveAt(index);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Remove(item, index));
+                _removedEvent.Invoke(new CollectionRemoveEventArgs<T>(index, item));
+            }
+        }
+
+        /// <summary>
+        /// 从指定索引移除指定数量的元素，触发单次批量 Removed 通知（轻量事件逐项通知）。
+        /// </summary>
+        /// <param name="index">起始索引。</param>
+        /// <param name="count">移除数量。</param>
+        public void RemoveRange(int index, int count)
+        {
+            if (count == 0)
+            {
+                return;
+            }
+
+            lock (SyncRoot)
+            {
+                // 先拷贝被移除区间再移除：通知需要按原始顺序携带被移除元素
+                using (var clone = new CloneCollection<T>(items, index, count))
+                {
+                    items.RemoveRange(index, count);
+                    CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Remove(clone.Span, index));
+
+                    for (var i = 0; i < count; i++)
+                    {
+                        _removedEvent.Invoke(new CollectionRemoveEventArgs<T>(index + i, clone.Span[i]));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 把元素从 <paramref name="oldIndex" /> 移动到 <paramref name="newIndex" />，触发 Move 通知。
+        /// </summary>
+        /// <param name="oldIndex">元素当前索引。</param>
+        /// <param name="newIndex">目标索引。</param>
+        /// <remarks>轻量事件无 Move 语义，按"先 Removed 后 Added"两次通知表达。</remarks>
+        public void Move(int oldIndex, int newIndex)
+        {
+            lock (SyncRoot)
+            {
+                var movedItem = items[oldIndex];
+                items.RemoveAt(oldIndex);
+                items.Insert(newIndex, movedItem);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Move(movedItem, newIndex, oldIndex));
+                _removedEvent.Invoke(new CollectionRemoveEventArgs<T>(oldIndex, movedItem));
+                _addedEvent.Invoke(new CollectionAddEventArgs<T>(newIndex, movedItem));
+            }
+        }
+
+        /// <summary>
+        /// 对全表排序，以 Reset + <see cref="SortOperation{T}.IsSort" /> 通知。
+        /// </summary>
+        /// <remarks>轻量事件无排序语义，不触发。</remarks>
+        public void Sort()
+        {
+            lock (SyncRoot)
+            {
+                items.Sort();
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Sort(0, items.Count, null));
+            }
+        }
+
+        /// <summary>
+        /// 使用指定比较器对全表排序，以 Reset + <see cref="SortOperation{T}.IsSort" /> 通知。
+        /// </summary>
+        /// <param name="comparer">元素比较器。</param>
+        public void Sort(IComparer<T> comparer)
+        {
+            lock (SyncRoot)
+            {
+                items.Sort(comparer);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Sort(0, items.Count, comparer));
+            }
+        }
+
+        /// <summary>
+        /// 对指定区间排序，以 Reset + <see cref="SortOperation{T}.IsSort" /> 通知。
+        /// </summary>
+        /// <param name="index">区间起始索引。</param>
+        /// <param name="count">区间长度。</param>
+        /// <param name="comparer">元素比较器。</param>
+        public void Sort(int index, int count, IComparer<T> comparer)
+        {
+            lock (SyncRoot)
+            {
+                items.Sort(index, count, comparer);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Sort(index, count, comparer));
+            }
+        }
+
+        /// <summary>
+        /// 反转全表，以 Reset + <see cref="SortOperation{T}.IsReverse" /> 通知。
+        /// </summary>
+        public void Reverse()
+        {
+            lock (SyncRoot)
+            {
+                items.Reverse();
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Reverse(0, items.Count));
+            }
+        }
+
+        /// <summary>
+        /// 反转指定区间，以 Reset + <see cref="SortOperation{T}.IsReverse" /> 通知。
+        /// </summary>
+        /// <param name="index">区间起始索引。</param>
+        /// <param name="count">区间长度。</param>
+        public void Reverse(int index, int count)
+        {
+            lock (SyncRoot)
+            {
+                items.Reverse(index, count);
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Reverse(index, count));
+            }
+        }
+
+        /// <summary>
+        /// 对每个元素执行指定操作。
+        /// </summary>
+        /// <param name="action">对每个元素执行的操作。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="action" /> 为 null 时抛出。</exception>
+        public void ForEach(Action<T> action)
+        {
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            lock (SyncRoot)
+            {
+                foreach (var item in items)
+                {
+                    action(item);
+                }
+            }
         }
 
         /// <summary>
@@ -178,13 +480,18 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         public void Clear()
         {
-            if (items.Count == 0)
+            lock (SyncRoot)
             {
-                return;
-            }
+                var hadItems = items.Count > 0;
+                items.Clear();
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<T>.Reset());
 
-            items.Clear();
-            _clearedEvent.Invoke();
+                // 轻量事件保留"空列表不通知"语义，与 CollectionChanged 并存
+                if (hadItems)
+                {
+                    _clearedEvent.Invoke();
+                }
+            }
         }
 
         /// <summary>
@@ -249,6 +556,31 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <returns>元素枚举器。</returns>
         public Enumerator GetEnumerator() => new Enumerator(items.GetEnumerator());
+
+        /// <summary>
+        /// 从指定索引开始，对新增区间的每个元素触发轻量 Added 事件（保持既有"逐项通知"语义）。
+        /// </summary>
+        /// <param name="startIndex">新增区间的起始索引。</param>
+        void NotifyAddedPerItem(int startIndex)
+        {
+            for (var i = startIndex; i < items.Count; i++)
+            {
+                _addedEvent.Invoke(new CollectionAddEventArgs<T>(i, items[i]));
+            }
+        }
+
+        /// <summary>
+        /// 对插入区间的每个元素触发轻量 Added 事件（保持既有"逐项通知"语义）。
+        /// </summary>
+        /// <param name="index">插入位置索引。</param>
+        /// <param name="count">插入元素数量。</param>
+        void NotifyInsertedPerItem(int index, int count)
+        {
+            for (var i = index; i < index + count; i++)
+            {
+                _addedEvent.Invoke(new CollectionAddEventArgs<T>(i, items[i]));
+            }
+        }
 
         /// <summary>
         /// 清空所有事件监听。

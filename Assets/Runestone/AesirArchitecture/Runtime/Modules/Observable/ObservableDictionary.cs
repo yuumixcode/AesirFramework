@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Runestone.AesirArchitecture.Internal;
 
 namespace Runestone.AesirArchitecture
 {
@@ -25,14 +26,14 @@ namespace Runestone.AesirArchitecture
     /// <see cref="IEnumerable{T}" /> 接口遍历会装箱一次枚举器（与 BCL <see cref="Dictionary{TKey, TValue}" /> 行为一致）。
     /// </para>
     /// <para>
-    /// 需要同步视图、R3 集成等高级能力时，建议使用完整方案
-    /// <a href="https://github.com/Cysharp/ObservableCollections">Cysharp.ObservableCollections</a>。
+    /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />
+    /// （对齐 Cysharp.ObservableCollections 语义），同步视图与 R3 集成基于后者构建。
     /// </para>
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableDictionary{TKey, TValue}" />
     /// <seealso cref="IObservableDictionary{TKey, TValue}" />
     [Serializable]
-    public sealed class ObservableDictionary<TKey, TValue> : IObservableDictionary<TKey, TValue>
+    public sealed partial class ObservableDictionary<TKey, TValue> : IObservableDictionary<TKey, TValue>
     {
         readonly MiniEvent<KeyValuePair<TKey, TValue>> _addedEvent =
             new MiniEvent<KeyValuePair<TKey, TValue>>();
@@ -48,15 +49,35 @@ namespace Runestone.AesirArchitecture
         Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
 
         /// <summary>
+        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁，
+        /// 同步视图（<see cref="ISynchronizedView{T, TView}" />）依赖它保证视图与集合一致。
+        /// </summary>
+        public object SyncRoot { get; } = new object();
+
+        /// <summary>
+        /// 集合变更事件，语义与 Cysharp.ObservableCollections 的 <c>IObservableCollection&lt;T&gt;.CollectionChanged</c> 一致：
+        /// 每次写操作都通知（含为已存在的键赋相同值、空字典的 <see cref="Clear" />）。
+        /// 字典无索引概念，事件的索引参数固定为 -1。
+        /// </summary>
+        public event NotifyCollectionChangedEventHandler<KeyValuePair<TKey, TValue>> CollectionChanged;
+
+        /// <summary>
         /// 默认构造，创建空字典。
         /// </summary>
-        public ObservableDictionary() { }
+        public ObservableDictionary()
+        {
+            ObservableCollectionRegistry.Register(this);
+        }
 
         /// <summary>
         /// 指定初始容量构造，避免批量添加时的多次扩容（rehash）。
         /// </summary>
         /// <param name="capacity">初始容量。</param>
-        public ObservableDictionary(int capacity) => dictionary = new Dictionary<TKey, TValue>(capacity);
+        public ObservableDictionary(int capacity)
+        {
+            ObservableCollectionRegistry.Register(this);
+            dictionary = new Dictionary<TKey, TValue>(capacity);
+        }
 
         /// <summary>
         /// 指定初始键值构造。初始键值不触发 Added 事件（语义同反序列化填充）。
@@ -64,6 +85,51 @@ namespace Runestone.AesirArchitecture
         /// <param name="initialItems">初始键值序列。</param>
         public ObservableDictionary(IEnumerable<KeyValuePair<TKey, TValue>> initialItems)
         {
+            ObservableCollectionRegistry.Register(this);
+            if (initialItems == null)
+            {
+                return;
+            }
+
+            foreach (var pair in initialItems)
+            {
+                dictionary.Add(pair.Key, pair.Value);
+            }
+        }
+
+        /// <summary>
+        /// 指定键比较器构造。
+        /// </summary>
+        /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
+        public ObservableDictionary(IEqualityComparer<TKey> comparer)
+        {
+            ObservableCollectionRegistry.Register(this);
+            dictionary = new Dictionary<TKey, TValue>(comparer);
+        }
+
+        /// <summary>
+        /// 指定初始容量与键比较器构造。
+        /// </summary>
+        /// <param name="capacity">初始容量。</param>
+        /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
+        public ObservableDictionary(int capacity, IEqualityComparer<TKey> comparer)
+        {
+            ObservableCollectionRegistry.Register(this);
+            dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
+        }
+
+        /// <summary>
+        /// 指定初始键值与键比较器构造。初始键值不触发事件。
+        /// </summary>
+        /// <param name="initialItems">初始键值序列。</param>
+        /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
+        public ObservableDictionary(
+            IEnumerable<KeyValuePair<TKey, TValue>> initialItems,
+            IEqualityComparer<TKey> comparer)
+        {
+            ObservableCollectionRegistry.Register(this);
+            dictionary = new Dictionary<TKey, TValue>(comparer);
+
             if (initialItems == null)
             {
                 return;
@@ -78,7 +144,21 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 键值对数量。
         /// </summary>
-        public int Count => dictionary.Count;
+        public int Count
+        {
+            get
+            {
+                lock (SyncRoot)
+                {
+                    return dictionary.Count;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 内部 <see cref="Dictionary{TKey, TValue}" /> 使用的键比较器。
+        /// </summary>
+        public IEqualityComparer<TKey> Comparer => dictionary.Comparer;
 
         /// <summary>
         /// 固定返回 <c>false</c>，该集合可写。
@@ -106,20 +186,33 @@ namespace Runestone.AesirArchitecture
             get => dictionary[key];
             set
             {
-                if (dictionary.TryGetValue(key, out var oldValue))
+                lock (SyncRoot)
                 {
-                    if (EqualityComparer<TValue>.Default.Equals(oldValue, value))
+                    if (dictionary.TryGetValue(key, out var oldValue))
                     {
-                        return;
-                    }
+                        dictionary[key] = value;
+                        CollectionChanged?.Invoke(
+                            NotifyCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Replace(
+                                new KeyValuePair<TKey, TValue>(key, value),
+                                new KeyValuePair<TKey, TValue>(key, oldValue),
+                                -1,
+                                -1));
 
-                    dictionary[key] = value;
-                    _updatedEvent.Invoke(new DictionaryUpdateEventArgs<TKey, TValue>(key, oldValue, value));
-                }
-                else
-                {
-                    dictionary[key] = value;
-                    _addedEvent.Invoke(new KeyValuePair<TKey, TValue>(key, value));
+                        // 轻量事件保留"值相同不通知"语义，与 CollectionChanged 并存
+                        if (!EqualityComparer<TValue>.Default.Equals(oldValue, value))
+                        {
+                            _updatedEvent.Invoke(new DictionaryUpdateEventArgs<TKey, TValue>(key, oldValue, value));
+                        }
+                    }
+                    else
+                    {
+                        dictionary[key] = value;
+                        CollectionChanged?.Invoke(
+                            NotifyCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Add(
+                                new KeyValuePair<TKey, TValue>(key, value),
+                                -1));
+                        _addedEvent.Invoke(new KeyValuePair<TKey, TValue>(key, value));
+                    }
                 }
             }
         }
@@ -131,8 +224,15 @@ namespace Runestone.AesirArchitecture
         /// <param name="value">值。</param>
         public void Add(TKey key, TValue value)
         {
-            dictionary.Add(key, value);
-            _addedEvent.Invoke(new KeyValuePair<TKey, TValue>(key, value));
+            lock (SyncRoot)
+            {
+                dictionary.Add(key, value);
+                CollectionChanged?.Invoke(
+                    NotifyCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Add(
+                        new KeyValuePair<TKey, TValue>(key, value),
+                        -1));
+                _addedEvent.Invoke(new KeyValuePair<TKey, TValue>(key, value));
+            }
         }
 
         /// <summary>
@@ -172,13 +272,20 @@ namespace Runestone.AesirArchitecture
         /// <remarks>使用 <see cref="Dictionary{TKey, TValue}.Remove(TKey, out TValue)" /> 在移除的同时取回旧值，单次哈希查找。</remarks>
         public bool Remove(TKey key)
         {
-            if (!dictionary.Remove(key, out var value))
+            lock (SyncRoot)
             {
-                return false;
-            }
+                if (!dictionary.Remove(key, out var value))
+                {
+                    return false;
+                }
 
-            _removedEvent.Invoke(new KeyValuePair<TKey, TValue>(key, value));
-            return true;
+                CollectionChanged?.Invoke(
+                    NotifyCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Remove(
+                        new KeyValuePair<TKey, TValue>(key, value),
+                        -1));
+                _removedEvent.Invoke(new KeyValuePair<TKey, TValue>(key, value));
+                return true;
+            }
         }
 
         /// <summary>
@@ -189,15 +296,22 @@ namespace Runestone.AesirArchitecture
         /// <remarks>不复用 <see cref="Remove(TKey)" />——其按键删除不校验值；此处先验证键值对完全匹配再移除，避免误删同键不同值。</remarks>
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            if (!dictionary.TryGetValue(item.Key, out var value) ||
-                !EqualityComparer<TValue>.Default.Equals(value, item.Value))
+            lock (SyncRoot)
             {
-                return false;
-            }
+                if (!dictionary.TryGetValue(item.Key, out var value) ||
+                    !EqualityComparer<TValue>.Default.Equals(value, item.Value))
+                {
+                    return false;
+                }
 
-            dictionary.Remove(item.Key);
-            _removedEvent.Invoke(new KeyValuePair<TKey, TValue>(item.Key, value));
-            return true;
+                dictionary.Remove(item.Key);
+                CollectionChanged?.Invoke(
+                    NotifyCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Remove(
+                        new KeyValuePair<TKey, TValue>(item.Key, value),
+                        -1));
+                _removedEvent.Invoke(new KeyValuePair<TKey, TValue>(item.Key, value));
+                return true;
+            }
         }
 
         /// <summary>
@@ -205,13 +319,18 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         public void Clear()
         {
-            if (dictionary.Count == 0)
+            lock (SyncRoot)
             {
-                return;
-            }
+                var hadItems = dictionary.Count > 0;
+                dictionary.Clear();
+                CollectionChanged?.Invoke(NotifyCollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Reset());
 
-            dictionary.Clear();
-            _clearedEvent.Invoke();
+                // 轻量事件保留"空字典不通知"语义，与 CollectionChanged 并存
+                if (hadItems)
+                {
+                    _clearedEvent.Invoke();
+                }
+            }
         }
 
         /// <summary>

@@ -12,14 +12,14 @@ namespace Runestone.AesirArchitecture
     /// 事件语义与 <see cref="MiniEvent{T}" /> 一致：回调触发时集合已处于变更后的状态；
     /// 监听者抛异常按原生 C# 事件 fail-fast 向上传播，监听回调不应抛异常属框架约定。
     /// <para>
-    /// 变更通知仅覆盖游戏 UI 绑定最常用的四种：Added / Removed / Replaced / Cleared。
-    /// 需要 Move、Sort、SynchronizedView、R3 集成等高级能力时，建议使用完整方案
-    /// <a href="https://github.com/Cysharp/ObservableCollections">Cysharp.ObservableCollections</a>。
+    /// 提供两轨通知：轻量事件（Added / Removed / Replaced / Cleared）与
+    /// <see cref="IObservableCollection{T}.CollectionChanged" />（对齐 Cysharp.ObservableCollections 语义，
+    /// 含 Move / Sort / Reverse 与 Range 批量通知）。同步视图与 R3 集成基于后者构建。
     /// </para>
     /// </remarks>
     /// <seealso cref="IObservableList{T}" />
     /// <seealso cref="ObservableList{T}" />
-    public interface IReadOnlyObservableList<T> : IReadOnlyList<T>
+    public interface IReadOnlyObservableList<T> : IReadOnlyList<T>, IObservableCollection<T>
     {
         /// <summary>
         /// 添加元素监听者。回调参数包含新元素及其索引。

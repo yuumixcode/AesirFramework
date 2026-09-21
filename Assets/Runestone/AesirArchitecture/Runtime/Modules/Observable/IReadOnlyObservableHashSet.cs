@@ -12,9 +12,9 @@ namespace Runestone.AesirArchitecture
     /// 事件语义与 <see cref="MiniEvent{T}" /> 一致：回调触发时集合已处于变更后的状态；
     /// 监听者抛异常按原生 C# 事件 fail-fast 向上传播，监听回调不应抛异常属框架约定。
     /// <para>
-    /// 变更通知仅覆盖最常用的三种：Added / Removed / Cleared。集合没有索引与键，
-    /// 也就没有 Replaced / Updated 语义；需要同步视图、R3 集成等高级能力时，建议使用完整方案
-    /// <a href="https://github.com/Cysharp/ObservableCollections">Cysharp.ObservableCollections</a>。
+    /// 轻量事件覆盖最常用的三种：Added / Removed / Cleared（集合没有索引与键，故无 Replaced / Updated 语义）；
+    /// 另提供 <see cref="IObservableCollection{T}.CollectionChanged" />（对齐 Cysharp.ObservableCollections 语义），
+    /// 同步视图与 R3 集成基于后者构建。
     /// </para>
     /// <para>
     /// .NET Standard 2.1 无 <c>IReadOnlySet&lt;T&gt;</c>（.NET 5 才引入），只读侧无法继承只读集合契约，
@@ -23,7 +23,7 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     /// <seealso cref="IObservableHashSet{T}" />
     /// <seealso cref="ObservableHashSet{T}" />
-    public interface IReadOnlyObservableHashSet<T> : IReadOnlyCollection<T>
+    public interface IReadOnlyObservableHashSet<T> : IReadOnlyCollection<T>, IObservableCollection<T>
     {
         /// <summary>
         /// 判断是否包含指定元素。
