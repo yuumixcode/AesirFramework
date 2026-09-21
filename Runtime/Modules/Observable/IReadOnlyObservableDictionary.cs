@@ -14,13 +14,14 @@ namespace Runestone.AesirArchitecture
     /// 监听者抛异常按原生 C# 事件 fail-fast 向上传播，监听回调不应抛异常属框架约定。
     /// <para>
     /// 变更通知仅覆盖最常用的四种：Added / Removed / Updated / Cleared。
-    /// 需要同步视图、R3 集成等高级能力时，建议使用完整方案
-    /// <a href="https://github.com/Cysharp/ObservableCollections">Cysharp.ObservableCollections</a>。
+    /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />
+    /// （对齐 Cysharp.ObservableCollections 语义），同步视图与 R3 集成基于后者构建。
     /// </para>
     /// </remarks>
     /// <seealso cref="IObservableDictionary{TKey, TValue}" />
     /// <seealso cref="ObservableDictionary{TKey, TValue}" />
-    public interface IReadOnlyObservableDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>
+    public interface IReadOnlyObservableDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>,
+        IObservableCollection<KeyValuePair<TKey, TValue>>
     {
         /// <summary>
         /// 添加键值监听者。回调参数为新增的键值对。
