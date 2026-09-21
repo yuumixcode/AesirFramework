@@ -27,13 +27,13 @@ namespace Runestone.AesirArchitecture
     /// </para>
     /// <para>
     /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />
-    /// （对齐 Cysharp.ObservableCollections 语义），同步视图与 R3 集成基于后者构建。
+    /// （对齐 Cysharp.ObservableCollections 语义）。
     /// </para>
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableDictionary{TKey, TValue}" />
     /// <seealso cref="IObservableDictionary{TKey, TValue}" />
     [Serializable]
-    public sealed partial class ObservableDictionary<TKey, TValue> : IObservableDictionary<TKey, TValue>
+    public sealed class ObservableDictionary<TKey, TValue> : IObservableDictionary<TKey, TValue>
     {
         readonly MiniEvent<KeyValuePair<TKey, TValue>> _addedEvent =
             new MiniEvent<KeyValuePair<TKey, TValue>>();
@@ -49,8 +49,7 @@ namespace Runestone.AesirArchitecture
         Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
 
         /// <summary>
-        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁，
-        /// 同步视图（<see cref="ISynchronizedView{T, TView}" />）依赖它保证视图与集合一致。
+        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁。
         /// </summary>
         public object SyncRoot { get; } = new object();
 
@@ -66,7 +65,6 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         public ObservableDictionary()
         {
-            ObservableCollectionRegistry.Register(this);
         }
 
         /// <summary>
@@ -75,7 +73,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="capacity">初始容量。</param>
         public ObservableDictionary(int capacity)
         {
-            ObservableCollectionRegistry.Register(this);
             dictionary = new Dictionary<TKey, TValue>(capacity);
         }
 
@@ -85,7 +82,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="initialItems">初始键值序列。</param>
         public ObservableDictionary(IEnumerable<KeyValuePair<TKey, TValue>> initialItems)
         {
-            ObservableCollectionRegistry.Register(this);
             if (initialItems == null)
             {
                 return;
@@ -103,7 +99,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
         public ObservableDictionary(IEqualityComparer<TKey> comparer)
         {
-            ObservableCollectionRegistry.Register(this);
             dictionary = new Dictionary<TKey, TValue>(comparer);
         }
 
@@ -114,7 +109,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
         public ObservableDictionary(int capacity, IEqualityComparer<TKey> comparer)
         {
-            ObservableCollectionRegistry.Register(this);
             dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
         }
 
@@ -127,7 +121,6 @@ namespace Runestone.AesirArchitecture
             IEnumerable<KeyValuePair<TKey, TValue>> initialItems,
             IEqualityComparer<TKey> comparer)
         {
-            ObservableCollectionRegistry.Register(this);
             dictionary = new Dictionary<TKey, TValue>(comparer);
 
             if (initialItems == null)

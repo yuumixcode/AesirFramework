@@ -33,13 +33,13 @@ namespace Runestone.AesirArchitecture
     /// </para>
     /// <para>
     /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />
-    /// （对齐 Cysharp.ObservableCollections 语义），同步视图与 R3 集成基于后者构建。
+    /// （对齐 Cysharp.ObservableCollections 语义）。
     /// </para>
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableHashSet{T}" />
     /// <seealso cref="IObservableHashSet{T}" />
     [Serializable]
-    public sealed partial class ObservableHashSet<T> : IObservableHashSet<T>
+    public sealed class ObservableHashSet<T> : IObservableHashSet<T>
     {
         readonly MiniEvent<T> _addedEvent = new MiniEvent<T>();
         readonly MiniEvent _clearedEvent = new MiniEvent();
@@ -48,8 +48,7 @@ namespace Runestone.AesirArchitecture
         HashSet<T> set = new HashSet<T>();
 
         /// <summary>
-        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁，
-        /// 同步视图（<see cref="ISynchronizedView{T, TView}" />）依赖它保证视图与集合一致。
+        /// 同步根对象。所有写操作与 <see cref="CollectionChanged" /> 分发均在此对象上加锁。
         /// </summary>
         public object SyncRoot { get; } = new object();
 
@@ -65,7 +64,6 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         public ObservableHashSet()
         {
-            ObservableCollectionRegistry.Register(this);
         }
 
         /// <summary>
@@ -74,7 +72,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="capacity">初始容量。</param>
         public ObservableHashSet(int capacity)
         {
-            ObservableCollectionRegistry.Register(this);
             set = new HashSet<T>(capacity);
         }
 
@@ -84,7 +81,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="initialItems">初始元素序列。</param>
         public ObservableHashSet(IEnumerable<T> initialItems)
         {
-            ObservableCollectionRegistry.Register(this);
             if (initialItems != null)
             {
                 set = new HashSet<T>(initialItems);
@@ -97,7 +93,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
         public ObservableHashSet(IEqualityComparer<T> comparer)
         {
-            ObservableCollectionRegistry.Register(this);
             set = new HashSet<T>(comparer);
         }
 
@@ -108,7 +103,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
         public ObservableHashSet(int capacity, IEqualityComparer<T> comparer)
         {
-            ObservableCollectionRegistry.Register(this);
             set = new HashSet<T>(capacity, comparer);
         }
 
@@ -119,7 +113,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
         public ObservableHashSet(IEnumerable<T> initialItems, IEqualityComparer<T> comparer)
         {
-            ObservableCollectionRegistry.Register(this);
             set = new HashSet<T>(comparer);
 
             if (initialItems != null)

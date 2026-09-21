@@ -15,7 +15,7 @@ namespace Runestone.AesirArchitecture
     /// <para>
     /// 变更通知仅覆盖最常用的四种：Added / Removed / Updated / Cleared。
     /// 除轻量事件外还提供 <see cref="IObservableCollection{T}.CollectionChanged" />
-    /// （对齐 Cysharp.ObservableCollections 语义），同步视图与 R3 集成基于后者构建。
+    /// （对齐 Cysharp.ObservableCollections 语义）。
     /// </para>
     /// </remarks>
     /// <seealso cref="IObservableDictionary{TKey, TValue}" />

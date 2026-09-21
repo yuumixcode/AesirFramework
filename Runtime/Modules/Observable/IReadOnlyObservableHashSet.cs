@@ -13,8 +13,7 @@ namespace Runestone.AesirArchitecture
     /// 监听者抛异常按原生 C# 事件 fail-fast 向上传播，监听回调不应抛异常属框架约定。
     /// <para>
     /// 轻量事件覆盖最常用的三种：Added / Removed / Cleared（集合没有索引与键，故无 Replaced / Updated 语义）；
-    /// 另提供 <see cref="IObservableCollection{T}.CollectionChanged" />（对齐 Cysharp.ObservableCollections 语义），
-    /// 同步视图与 R3 集成基于后者构建。
+    /// 另提供 <see cref="IObservableCollection{T}.CollectionChanged" />（对齐 Cysharp.ObservableCollections 语义）。
     /// </para>
     /// <para>
     /// .NET Standard 2.1 无 <c>IReadOnlySet&lt;T&gt;</c>（.NET 5 才引入），只读侧无法继承只读集合契约，

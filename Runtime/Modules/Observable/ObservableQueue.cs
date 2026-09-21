@@ -11,26 +11,23 @@ using System.Linq;
 
 namespace Runestone.AesirArchitecture
 {
-    public partial class ObservableQueue<T> : IReadOnlyCollection<T>, IObservableCollection<T>
+    public class ObservableQueue<T> : IReadOnlyCollection<T>, IObservableCollection<T>
     {
         readonly Queue<T> queue;
         public object SyncRoot { get; } = new object();
 
         public ObservableQueue()
         {
-            ObservableCollectionRegistry.Register(this);
             this.queue = new Queue<T>();
         }
 
         public ObservableQueue(int capacity)
         {
-            ObservableCollectionRegistry.Register(this);
             this.queue = new Queue<T>(capacity);
         }
 
         public ObservableQueue(IEnumerable<T> collection)
         {
-            ObservableCollectionRegistry.Register(this);
             this.queue = new Queue<T>(collection);
         }
 
