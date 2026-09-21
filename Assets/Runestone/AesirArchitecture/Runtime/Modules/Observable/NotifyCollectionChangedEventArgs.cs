@@ -123,11 +123,6 @@ namespace Runestone.AesirArchitecture
             return new NotifyCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Replace, true, newItem: newItem, oldItem: oldItem, newStartingIndex: newStartingIndex, oldStartingIndex: oldStartingIndex);
         }
 
-        public static NotifyCollectionChangedEventArgs<T> Replace(ReadOnlySpan<T> newItems, ReadOnlySpan<T> oldItems, int newStartingIndex, int oldStartingIndex)
-        {
-            return new NotifyCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Replace, false, newItems: newItems, oldItems: oldItems, newStartingIndex: newStartingIndex, oldStartingIndex: oldStartingIndex);
-        }
-
         public static NotifyCollectionChangedEventArgs<T> Move(T changedItem, int newStartingIndex, int oldStartingIndex)
         {
             return new NotifyCollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Move, true, oldItem: changedItem, newItem: changedItem, newStartingIndex: newStartingIndex, oldStartingIndex: oldStartingIndex);

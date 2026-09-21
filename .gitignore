@@ -38,9 +38,6 @@
 /[Aa]ssets/Plugins/Sirenix/
 /[Aa]ssets/Plugins/Sirenix.meta
 
-# Cysharp R3（第三方库，MIT，可选集成；经 NuGet 获取，不分发）
-/[Aa]ssets/Plugins/R3/
-/[Aa]ssets/Plugins/R3.meta
 
 # Visual Studio cache directory
 .vs/

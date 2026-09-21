@@ -1,7 +1,5 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using System.Collections.Specialized;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace Runestone.AesirArchitecture.Samples.ObservableCollections
@@ -10,8 +8,6 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
     /// ObservableList&lt;T&gt; 演示组件（背包场景）。
     /// <para>同时演示两轨通知：轻量事件（Added / Removed / Replaced / Cleared）与 <c>CollectionChanged</c>
     /// （含 Move / Sort / Reverse / 批量操作）。</para>
-    /// <para>另演示同步视图：<c>CreateView</c> 把每个道具一次性变换为「展示名」并随集合自动同步，
-    /// 附带过滤器（只显示带「精炼」前缀的道具）与 Sort / Reverse 联动。</para>
     /// <para>轻量事件语义：写操作完成后才触发事件——回调中读到的已是变更后的集合；无变更的操作不触发事件
     /// （Remove 不存在的元素、Clear 空列表、索引器赋相同值）。<c>CollectionChanged</c> 则每次写操作都通知。</para>
     /// </summary>
@@ -19,20 +15,13 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
     {
         readonly ObservableList<string> _inventory = new ObservableList<string>();
 
-        ISynchronizedView<string, string> _view;
-
         AutoRemoveListenerHandle _addedSub, _removedSub, _replacedSub, _clearedSub;
 
         int _itemCounter;
 
-        bool _filterAttached;
-
         void Start()
         {
             _inventory.AddRange(new[] { "木剑", "皮甲", "红药水" });
-
-            // 同步视图：变换只调用一次，之后随集合增删自动同步（真实项目里此处通常 Instantiate 一个列表项预制体）
-            _view = _inventory.CreateView(item => $"【{item}】");
         }
 
         void OnEnable()
@@ -56,13 +45,6 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             _clearedSub.Dispose();
 
             _inventory.CollectionChanged -= OnCollectionChanged;
-        }
-
-        void OnDestroy()
-        {
-            // 视图必须释放：它与集合之间是事件订阅关系
-            _view?.Dispose();
-            _view = null;
         }
 
         /// <summary>
@@ -153,39 +135,17 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             DumpItems();
         }
 
-        [ContextMenu("Sort：按名称排序（视图同步重排）")]
+        [ContextMenu("Sort：按名称排序")]
         void SortItems()
         {
             _inventory.Sort();
             DumpItems();
         }
 
-        [ContextMenu("Reverse：反转（视图同步重排）")]
+        [ContextMenu("Reverse：反转")]
         void ReverseItems()
         {
             _inventory.Reverse();
-            DumpItems();
-        }
-
-        [ContextMenu("视图：切换过滤器（只显示「精炼」前缀道具）")]
-        void ToggleFilter()
-        {
-            if (_view == null)
-            {
-                Debug.LogWarning("[List] 视图未创建");
-                return;
-            }
-
-            _filterAttached = !_filterAttached;
-            if (_filterAttached)
-            {
-                _view.AttachFilter(item => item.StartsWith("精炼"));
-            }
-            else
-            {
-                _view.ResetFilter();
-            }
-
             DumpItems();
         }
 
@@ -245,12 +205,6 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
         void DumpItems()
         {
             Debug.Log($"[List] 当前背包：[{string.Join(", ", _inventory)}]");
-
-            if (_view != null)
-            {
-                var views = _view.Select(v => v).ToList();
-                Debug.Log($"[List] 视图（过滤后 {_view.Count} / 全部 {_view.UnfilteredCount}）：[{string.Join(", ", views)}]");
-            }
         }
     }
 }
