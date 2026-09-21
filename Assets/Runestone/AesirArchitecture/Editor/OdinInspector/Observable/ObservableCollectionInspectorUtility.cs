@@ -7,124 +7,18 @@ using System.Text;
 namespace Runestone.AesirArchitecture.Editor
 {
     /// <summary>
-    /// 可观察集合调试面板的反射工具 —— 在编辑器侧读取集合与同步视图的运行时状态。
+    /// 可观察集合调试面板的反射工具 —— 在编辑器侧读取集合的运行时状态。
     /// </summary>
     /// <remarks>
     /// 面板是调试工具而非热路径，这里统一用反射读取（无需运行时程序集暴露调试接口，
-    /// 集合的公开 API 面保持与上游一致）。读取结果按需缓存 <see cref="Type" /> 级元数据。
+    /// 集合的公开 API 面保持与上游一致）。
     /// </remarks>
     internal static class ObservableCollectionInspectorUtility
     {
         #region 常量
 
         /// <summary>元素预览的最大条目数。</summary>
-        internal const int PreviewItemLimit = 32;
-
-        #endregion
-
-        #region 集合类型识别
-
-        /// <summary>
-        /// 判断类型是否为受支持的可观察集合（含同步视图）。
-        /// </summary>
-        /// <param name="type">待判断类型。</param>
-        /// <returns>是受支持类型返回 <c>true</c>。</returns>
-        internal static bool IsSupported(object value)
-        {
-            if (value == null)
-            {
-                return false;
-            }
-
-            var type = value.GetType();
-            if (type.IsGenericType)
-            {
-                var definition = type.GetGenericTypeDefinition();
-                if (definition == typeof(ObservableList<>)
-                    || definition == typeof(ObservableDictionary<,>)
-                    || definition == typeof(ObservableHashSet<>)
-                    || definition == typeof(ObservableQueue<>)
-                    || definition == typeof(ObservableStack<>)
-                    || definition == typeof(ObservableRingBuffer<>)
-                    || definition == typeof(ObservableFixedSizeRingBuffer<>)
-                    || definition == typeof(RingBuffer<>)
-                    || definition == typeof(AlternateIndexList<>))
-                {
-                    return true;
-                }
-            }
-
-            return value is IEnumerable;
-        }
-
-        /// <summary>
-        /// 判断给定实例是否为可观察集合（而非同步视图或普通集合）。
-        /// </summary>
-        /// <param name="value">待判断实例。</param>
-        /// <returns>是可观察集合返回 <c>true</c>。</returns>
-        internal static bool IsObservableCollection(object value)
-        {
-            if (value == null)
-            {
-                return false;
-            }
-
-            var type = value.GetType();
-            if (!type.IsGenericType)
-            {
-                return false;
-            }
-
-            var definition = type.GetGenericTypeDefinition();
-            return definition == typeof(ObservableList<>)
-                   || definition == typeof(ObservableDictionary<,>)
-                   || definition == typeof(ObservableHashSet<>)
-                   || definition == typeof(ObservableQueue<>)
-                   || definition == typeof(ObservableStack<>)
-                   || definition == typeof(ObservableRingBuffer<>)
-                   || definition == typeof(ObservableFixedSizeRingBuffer<>);
-        }
-
-        /// <summary>
-        /// 取得类型的简短显示名（泛型参数以 &lt;T&gt; 形式折叠）。
-        /// </summary>
-        /// <param name="type">目标类型。</param>
-        /// <returns>简短类型名。</returns>
-        internal static string GetDisplayTypeName(Type type)
-        {
-            if (type == null)
-            {
-                return "<null>";
-            }
-
-            if (!type.IsGenericType)
-            {
-                return type.Name;
-            }
-
-            var name = type.Name;
-            var tick = name.IndexOf('`');
-            if (tick >= 0)
-            {
-                name = name.Substring(0, tick);
-            }
-
-            var builder = new StringBuilder(name);
-            builder.Append('<');
-            var arguments = type.GetGenericArguments();
-            for (var i = 0; i < arguments.Length; i++)
-            {
-                if (i > 0)
-                {
-                    builder.Append(", ");
-                }
-
-                builder.Append(arguments[i].Name);
-            }
-
-            builder.Append('>');
-            return builder.ToString();
-        }
+        internal const int PreviewItemLimit = 24;
 
         #endregion
 
@@ -136,14 +30,6 @@ namespace Runestone.AesirArchitecture.Editor
         /// <param name="target">目标实例。</param>
         /// <returns>元素数量；无法读取时返回 -1。</returns>
         internal static int GetCount(object target) => TryReadInt(target, "Count", out var value) ? value : -1;
-
-        /// <summary>
-        /// 读取未过滤的元素数量（同步视图）。
-        /// </summary>
-        /// <param name="target">同步视图实例。</param>
-        /// <returns>未过滤数量；无法读取时返回 -1。</returns>
-        internal static int GetUnfilteredCount(object target) =>
-            TryReadInt(target, "UnfilteredCount", out var value) ? value : -1;
 
         /// <summary>
         /// 读取 <c>CollectionChanged</c> 的订阅者数量（读取事件背后字段的调用列表）。
@@ -180,31 +66,12 @@ namespace Runestone.AesirArchitecture.Editor
                 return 0;
             }
 
-            var total = 0;
             var type = collection.GetType();
-            total += GetMiniEventListenerCount(type, collection, "_addedEvent");
-            total += GetMiniEventListenerCount(type, collection, "_removedEvent");
-            total += GetMiniEventListenerCount(type, collection, "_replacedEvent");
-            total += GetMiniEventListenerCount(type, collection, "_updatedEvent");
-            total += GetMiniEventListenerCount(type, collection, "_clearedEvent");
-            return total;
-        }
-
-        /// <summary>
-        /// 读取同步视图的过滤器描述。
-        /// </summary>
-        /// <param name="view">同步视图实例。</param>
-        /// <returns>过滤器类型名；未附加过滤器时返回「无」。</returns>
-        internal static string GetFilterDescription(object view)
-        {
-            if (view == null)
-            {
-                return "无";
-            }
-
-            var property = view.GetType().GetProperty("Filter", BindingFlags.Instance | BindingFlags.Public);
-            var filter = property?.GetValue(view);
-            return filter == null ? "无" : GetDisplayTypeName(filter.GetType());
+            return GetMiniEventListenerCount(type, collection, "_addedEvent")
+                   + GetMiniEventListenerCount(type, collection, "_removedEvent")
+                   + GetMiniEventListenerCount(type, collection, "_replacedEvent")
+                   + GetMiniEventListenerCount(type, collection, "_updatedEvent")
+                   + GetMiniEventListenerCount(type, collection, "_clearedEvent");
         }
 
         /// <summary>
@@ -254,26 +121,6 @@ namespace Runestone.AesirArchitecture.Editor
             return builder.ToString();
         }
 
-        /// <summary>
-        /// 统计某集合关联的同步视图数量。
-        /// </summary>
-        /// <param name="source">源集合实例。</param>
-        /// <param name="views">「源集合 → 视图」对列表。</param>
-        /// <returns>关联的视图数量。</returns>
-        internal static int CountViewsOf(object source, IReadOnlyList<(object Source, object View)> views)
-        {
-            var count = 0;
-            for (var i = 0; i < views.Count; i++)
-            {
-                if (ReferenceEquals(views[i].Source, source))
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
         #endregion
 
         #region 私有实现
@@ -295,12 +142,7 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             var getListeners = miniEvent.GetType().GetMethod("GetListeners", BindingFlags.Instance | BindingFlags.Public);
-            if (getListeners?.Invoke(miniEvent, null) is Delegate[] listeners)
-            {
-                return listeners.Length;
-            }
-
-            return 0;
+            return getListeners?.Invoke(miniEvent, null) is Delegate[] listeners ? listeners.Length : 0;
         }
 
         /// <summary>

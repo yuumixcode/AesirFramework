@@ -28,7 +28,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
 - **`ObservableValue<T>` reactive property** — Quick tier: Model exposes writable `ObservableValue<T>` directly (presentation writes directly); Standard tier onward: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods; Strict tier: interface registration + Command writes on top
-- **Observable collections (full port of ObservableCollections)** — nine collections (List / Dictionary / HashSet / Queue / Stack / RingBuffer / FixedSizeRingBuffer / AlternateIndexList), full `CollectionChanged` semantics (Move / Sort / Reverse / range notifications), synchronized views (filters / writable views / `INotifyCollectionChanged` binding layer), optional R3 reactive extensions, and an Odin debug panel; the existing Added / Removed / Replaced / Updated / Cleared lightweight events are preserved, so existing code needs no migration. See [Observable Collections](#observable-collections-full-port-of-observablecollections)
+- **Observable collections (a lean built-in subset of ObservableCollections)** — four high-frequency collections (List / Dictionary / HashSet / Queue), full `CollectionChanged` semantics (Move / Sort / Reverse / range notifications), and an inline Odin debug panel; the existing Added / Removed / Replaced / Updated / Cleared lightweight events are preserved, so existing code needs no migration. For heavy features (synchronized views / R3 / ring buffers / XAML binding) use the upstream library. See [Observable Collections](#observable-collections-a-lean-built-in-subset-of-observablecollections)
 - **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
 - **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, preserving registration order
@@ -181,7 +181,7 @@ The package provides 11 importable samples (Package Manager → Aesir Architectu
 | Sample | Description | Dependency |
 |------|------|------|
 | `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
-| `ObservableCollections` | The whole observable-collection family: dual-track notifications (lightweight events + `CollectionChanged`), synchronized views with filters and sort/reverse sync, queues / stacks / ring buffers, mutations and set operations triggered via ContextMenu | None |
+| `ObservableCollections` | Observable collections: dual-track notifications (lightweight events + `CollectionChanged`), queue, mutations and set operations triggered via ContextMenu | None |
 | `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
 | `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); toggles controlled via the settings window (`Tools → Aesir → Architecture → Samples`) | None |
 
@@ -191,11 +191,11 @@ The package provides 11 importable samples (Package Manager → Aesir Architectu
 |------|------|------|
 | `PlaneWar` | Vertical shooter "Plane War" (Mono version): a complete self-contained mini-game demonstrating how MiniEvent, ObservableValue, and MonoLifecycleProxy combine in real gameplay | None |
 
-## Observable Collections (full port of ObservableCollections)
+## Observable Collections (a lean built-in subset of ObservableCollections)
 
-> This module is a **full port** of [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) — collection semantics, the synchronized-view system, notification payload shapes and the R3 extension set are ported from its code logic, with namespaces and some names rewritten to this project's conventions and the syntax downgraded to Unity 2022.3 (C# 9). Full details and the deviation list live in [`Documentation/observable-collections.md`](observable-collections.md).
+> The `CollectionChanged` semantics and the notification payload shapes are **ported from** [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) — rewritten to this project's namespaces and naming conventions and downgraded to Unity 2022.3 (C# 9). This module is a **high-frequency subset** of upstream (a lean, indie-game-oriented scope), not a full port. Full details live in [`Documentation/observable-collections.md`](observable-collections.md).
 
-**Collection family**: `ObservableList<T>`, `ObservableDictionary<TKey, TValue>`, `ObservableHashSet<T>`, `ObservableQueue<T>`, `ObservableStack<T>`, `ObservableRingBuffer<T>`, `ObservableFixedSizeRingBuffer<T>`, `RingBuffer<T>`, `AlternateIndexList<T>` — all implementing `IObservableCollection<T>` (`CollectionChanged` + `SyncRoot` + `CreateView`).
+**Collection family**: `ObservableList<T>`, `ObservableDictionary<TKey, TValue>`, `ObservableHashSet<T>`, `ObservableQueue<T>` — all implementing `IObservableCollection<T>` (`CollectionChanged` + `SyncRoot`).
 
 **Two notification tracks**:
 
@@ -207,23 +207,9 @@ list.CollectionChanged += (in NotifyCollectionChangedEventArgs<int> e) => { /* e
 list.AddAddedListener(e => { }).Dispose();
 ```
 
-**Synchronized views**: transform each element once into a presentation object and keep it in sync automatically, with filter and sort support.
+**Optional enhancement**: with Odin Inspector installed, collection fields show an inline summary in the Inspector (element count / subscriber count / element preview). Without Odin the panel is excluded from compilation and the plain-code API keeps working.
 
-```csharp
-var view = list.CreateView(x => Instantiate(prefab, root).GetComponent<Row>());
-view.AttachFilter(x => x.Score > 0);   // filtered view (Count is the filtered count)
-list.Sort();                            // Sort / Reverse reorder the view too
-view.Dispose();                         // must be disposed (unsubscribes)
-```
-
-**Optional enhancements**:
-
-| Capability | Prerequisite | Notes |
-|------------|--------------|-------|
-| R3 reactive extensions | The `R3` assembly present in the project (`AESIR_R3` is detected automatically) | `ObserveAdd` / `ObserveRemove` / `ObserveChanged` / `ObserveSort` … on both collections and views |
-| Odin debug panel | Odin Inspector (`ODIN_INSPECTOR`) | `Tools/Aesir/Observable Collections` browser window plus an inline Inspector summary with element preview |
-
-Both are **optional**: without them the corresponding assembly is excluded from compilation entirely and the plain-code API keeps working.
+**Heavy needs go upstream**: synchronized views and filters, R3 reactive integration, ring buffers / stacks / alternate index list, `INotifyCollectionChanged` (WPF-style) binding, writable views — use [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) directly (the two are not meant to be mixed).
 
 ## Architecture Overview
 
@@ -302,8 +288,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent zero-alloc events (Invoke path) + auto-remove triggers
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy lifecycle proxy
 │   │   ├── Locator/               # GenericLocator type-keyed locator
-│   │   ├── Observable/            # ObservableValue + the observable-collection family (nine collections / CollectionChanged / synchronized views / debug registry)
-│   │   ├── R3/                    # R3 reactive extensions (optional assembly, AESIR_R3 guarded)
+│   │   ├── Observable/            # ObservableValue + observable collections (four collections / CollectionChanged)
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # Framework infrastructure
 │   │   ├── AesirArchitecture.cs   # Framework MonoBehaviour singleton entry
@@ -362,7 +347,7 @@ cn.runestone.aesir.architecture/
 - **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
 - **Full-featured time scheduling** — `AesirScheduler` is intentionally narrowed to frame-granularity one-shot tasks (`Delay` / `NextFrame`): no cancellation handles, no pause/resume, no precise timing, no coroutine equivalent; use coroutines or third-party libraries at the business layer when you need more
 - **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
-- **Full observable-collection suite** — [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see `Third Party Notices.md`) is now **fully ported**: nine collections, full `CollectionChanged` semantics, synchronized views with filters, the `INotifyCollectionChanged` binding layer, R3 reactive extensions and the Odin debug panel all ship in-package; deviations from upstream (C# 9 syntax downgrades, `Unsafe` fast-path replacements, naming conventions) are itemized in `Documentation/observable-collections.md`
+- **Full observable-collection suite** — a **high-frequency subset** of [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see `Third Party Notices.md`) ships in-package: four collections, full `CollectionChanged` semantics. Synchronized views with filters, R3 reactive extensions, ring buffers / stacks / alternate index list, the `INotifyCollectionChanged` binding layer and writable views are **not** provided — use the upstream library for those (the two are not meant to be mixed; see `Documentation/observable-collections.md`)
 - **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
 
 ### Coding Conventions (violations fail fast; the framework does not compensate)
@@ -399,7 +384,7 @@ cn.runestone.aesir.architecture/
 - [x] Runtime error logging (replacing pre-flight validation)
 - [x] Engine layer decoupled from Component layer (pure C#)
 - [x] Domain Reload safety
-- [x] Observable collection family (full port of ObservableCollections: nine collections / synchronized views / R3 extensions / Odin debug panel)
+- [x] Observable collection family (lean built-in subset of ObservableCollections: four collections / inline Odin panel)
 - [x] In-package updater (Aesir Updater)
 - [ ] ScriptableObject visualization config layer
 - [ ] Editor toolchain (SO Inspector / MVP scaffold / module visualization)
