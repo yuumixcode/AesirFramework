@@ -10,8 +10,7 @@ namespace Runestone.AesirArchitecture.Editor
     /// 可观察集合调试面板的反射工具 —— 在编辑器侧读取集合的运行时状态。
     /// </summary>
     /// <remarks>
-    /// 面板是调试工具而非热路径，这里统一用反射读取（无需运行时程序集暴露调试接口，
-    /// 集合的公开 API 面保持与上游一致）。
+    /// 面板是调试工具而非热路径，这里统一用反射读取（无需运行时程序集暴露调试接口）。
     /// </remarks>
     internal static class ObservableCollectionInspectorUtility
     {
@@ -32,46 +31,19 @@ namespace Runestone.AesirArchitecture.Editor
         internal static int GetCount(object target) => TryReadInt(target, "Count", out var value) ? value : -1;
 
         /// <summary>
-        /// 读取 <c>CollectionChanged</c> 的订阅者数量（读取事件背后字段的调用列表）。
+        /// 读取变更事件的监听者数量（读取内部 <see cref="MiniEvent{T}" /> 字段的监听列表）。
         /// </summary>
         /// <param name="collection">可观察集合实例。</param>
-        /// <returns>订阅者数量；无订阅或非可观察集合返回 0。</returns>
-        internal static int GetCollectionChangedSubscriberCount(object collection)
+        /// <returns>监听者数量；无监听或非可观察集合返回 0。</returns>
+        /// <remarks>单轨通知后四种集合的变更事件统一由名为 <c>_changedEvent</c> 的 MiniEvent 字段持有。</remarks>
+        internal static int GetChangedListenerCount(object collection)
         {
             if (collection == null)
             {
                 return 0;
             }
 
-            var field = collection.GetType().GetField(
-                "CollectionChanged",
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-            return field?.GetValue(collection) is Delegate handler ? handler.GetInvocationList().Length : 0;
-        }
-
-        /// <summary>
-        /// 读取轻量事件监听者总数（Added / Removed / Replaced(Updated) / Cleared 四轨之和）。
-        /// </summary>
-        /// <param name="collection">可观察集合实例。</param>
-        /// <returns>监听者总数。</returns>
-        /// <remarks>
-        /// 轻量事件由 <c>MiniEvent</c> 字段持有，字段名为 <c>_addedEvent</c> / <c>_removedEvent</c> /
-        /// <c>_replacedEvent</c> / <c>_updatedEvent</c> / <c>_clearedEvent</c>。
-        /// </remarks>
-        internal static int GetLightEventListenerCount(object collection)
-        {
-            if (collection == null)
-            {
-                return 0;
-            }
-
-            var type = collection.GetType();
-            return GetMiniEventListenerCount(type, collection, "_addedEvent")
-                   + GetMiniEventListenerCount(type, collection, "_removedEvent")
-                   + GetMiniEventListenerCount(type, collection, "_replacedEvent")
-                   + GetMiniEventListenerCount(type, collection, "_updatedEvent")
-                   + GetMiniEventListenerCount(type, collection, "_clearedEvent");
+            return GetMiniEventListenerCount(collection.GetType(), collection, "_changedEvent");
         }
 
         /// <summary>

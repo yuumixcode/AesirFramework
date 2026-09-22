@@ -30,11 +30,11 @@ namespace Runestone.AesirArchitecture
         new T this[int index] { get; set; }
 
         /// <summary>
-        /// 批量添加元素。逐项添加并逐项触发 Added 事件。
+        /// 批量添加元素。逐项添加并逐项触发 Add 通知。
         /// </summary>
         /// <param name="items">要添加的元素序列。</param>
         /// <remarks>
-        /// 每添加一项触发一次 Added；如需"整体刷新一次通知"的语义，可先 <see cref="ICollection{T}.Clear" /> 再逐项
+        /// 每添加一项触发一次 Add 通知；如需"整体刷新一次通知"的语义，可先 <see cref="ICollection{T}.Clear" /> 再逐项
         /// <see cref="ICollection{T}.Add" />。
         /// </remarks>
         void AddRange(IEnumerable<T> items);

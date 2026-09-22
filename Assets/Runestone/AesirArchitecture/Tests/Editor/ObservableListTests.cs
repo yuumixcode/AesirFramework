@@ -1,15 +1,16 @@
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using NUnit.Framework;
 
 namespace Runestone.AesirArchitecture.Tests.Editor
 {
     /// <summary>
-    /// 验证 <see cref="ObservableList{T}" /> 的增删改清空事件与无变更跳过行为。
+    /// 验证 <see cref="ObservableList{T}" /> 的单轨变更通知（Add / Remove / Replace / Move / Reset）与无变更跳过行为。
     /// </summary>
     /// <remarks>
     ///     <para>
     ///     ObservableList 是 Model 层向 View 层暴露只读订阅的可观察列表载体，
-    ///     写操作完成后才触发事件（回调中集合已是变更后状态）是其核心契约。
+    ///     写操作完成后才触发通知（回调中集合已是变更后状态）是其核心契约。
     ///     </para>
     ///     <para>纯 C# 逻辑，EditMode 即可运行。</para>
     /// </remarks>
@@ -17,122 +18,149 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     public class ObservableListTests
     {
         /// <summary>
-        /// 验证 Add 与 Insert 触发 Added 事件且索引、元素正确，回调中集合已含新元素。
+        /// 验证 Add 与 Insert 触发 Add 通知且索引、元素正确，回调中集合已含新元素。
         /// </summary>
         [Test]
-        public void Add_And_Insert_FireAddedEventWithCorrectIndex()
+        public void Add_And_Insert_FireAddWithCorrectIndex()
         {
             var list = new ObservableList<string>();
-            var received = new List<CollectionAddEventArgs<string>>();
+            var received = new List<CollectionChangedEventArgs<string>>();
 
-            list.AddAddedListener(received.Add);
+            list.AddListener(received.Add);
             list.Add("a");
             list.Insert(0, "b");
 
-            Assert.AreEqual(2, received.Count, "两次写操作应各触发一次 Added");
-            Assert.AreEqual(0, received[0].Index, "Add 的索引应为末尾");
-            Assert.AreEqual("a", received[0].Item);
-            Assert.AreEqual(0, received[1].Index, "Insert 的索引应为插入位置");
-            Assert.AreEqual("b", received[1].Item);
+            Assert.AreEqual(2, received.Count, "两次写操作应各触发一次 Add 通知");
+            Assert.AreEqual(NotifyCollectionChangedAction.Add, received[0].Action);
+            Assert.AreEqual(0, received[0].NewStartingIndex, "Add 的索引应为末尾");
+            Assert.AreEqual("a", received[0].NewItem);
+            Assert.AreEqual(NotifyCollectionChangedAction.Add, received[1].Action);
+            Assert.AreEqual(0, received[1].NewStartingIndex, "Insert 的索引应为插入位置");
+            Assert.AreEqual("b", received[1].NewItem);
             Assert.AreEqual(2, list.Count, "回调结束后集合应包含全部元素");
             AesirArchitectureDebug.LogTestInfo("Add/Insert: 索引与元素正确");
         }
 
         /// <summary>
-        /// 验证 Remove 与 RemoveAt 触发 Removed 事件且参数为移除前的索引与元素。
+        /// 验证 Remove 与 RemoveAt 触发 Remove 通知且参数为移除前的索引与元素。
         /// </summary>
         [Test]
-        public void Remove_And_RemoveAt_FireRemovedEventWithPreRemovalState()
+        public void Remove_And_RemoveAt_FireRemoveWithPreRemovalState()
         {
             var list = new ObservableList<int> { 10, 20, 30 };
-            var received = new List<CollectionRemoveEventArgs<int>>();
+            var received = new List<CollectionChangedEventArgs<int>>();
 
-            list.AddRemovedListener(received.Add);
+            list.AddListener(received.Add);
             Assert.IsTrue(list.Remove(20), "移除存在的元素应返回 true");
             list.RemoveAt(1);
 
-            Assert.AreEqual(2, received.Count, "两次移除应各触发一次 Removed");
-            Assert.AreEqual(1, received[0].Index, "Remove 的索引应为元素移除前位置");
-            Assert.AreEqual(20, received[0].Item);
-            Assert.AreEqual(1, received[1].Index, "RemoveAt 的索引应为元素移除前位置");
-            Assert.AreEqual(30, received[1].Item);
+            Assert.AreEqual(2, received.Count, "两次移除应各触发一次 Remove 通知");
+            Assert.AreEqual(NotifyCollectionChangedAction.Remove, received[0].Action);
+            Assert.AreEqual(1, received[0].OldStartingIndex, "Remove 的索引应为元素移除前位置");
+            Assert.AreEqual(20, received[0].OldItem);
+            Assert.AreEqual(NotifyCollectionChangedAction.Remove, received[1].Action);
+            Assert.AreEqual(1, received[1].OldStartingIndex, "RemoveAt 的索引应为元素移除前位置");
+            Assert.AreEqual(30, received[1].OldItem);
             AesirArchitectureDebug.LogTestInfo("Remove/RemoveAt: 参数为移除前状态");
         }
 
         /// <summary>
-        /// 验证索引器赋不同值触发 Replaced 事件（含旧项与新项），赋相同值不触发。
+        /// 验证索引器赋不同值触发 Replace 通知（含旧项与新项），赋相同值不触发。
         /// </summary>
         [Test]
         public void Indexer_DifferentValue_Replaces_SameValue_Skips()
         {
             var list = new ObservableList<string> { "old" };
-            var received = new List<CollectionReplaceEventArgs<string>>();
+            var received = new List<CollectionChangedEventArgs<string>>();
 
-            list.AddReplacedListener(received.Add);
+            list.AddListener(received.Add);
             list[0] = "old";
-            Assert.AreEqual(0, received.Count, "赋相同值不应触发 Replaced");
+            Assert.AreEqual(0, received.Count, "赋相同值不应触发通知");
 
             list[0] = "new";
-            Assert.AreEqual(1, received.Count, "赋不同值应触发一次 Replaced");
-            Assert.AreEqual(0, received[0].Index);
+            Assert.AreEqual(1, received.Count, "赋不同值应触发一次 Replace 通知");
+            Assert.AreEqual(NotifyCollectionChangedAction.Replace, received[0].Action);
+            Assert.AreEqual(0, received[0].NewStartingIndex);
             Assert.AreEqual("old", received[0].OldItem);
             Assert.AreEqual("new", received[0].NewItem);
             AesirArchitectureDebug.LogTestInfo("索引器替换: 相同值跳过，不同值通知含新旧项");
         }
 
         /// <summary>
-        /// 验证非空列表 Clear 触发 Cleared，空列表 Clear 不触发。
+        /// 验证非空列表 Clear 触发 Reset，空列表 Clear 不触发。
         /// </summary>
         [Test]
-        public void Clear_FiresOnlyWhenNotEmpty()
+        public void Clear_FiresResetOnlyWhenNotEmpty()
         {
             var list = new ObservableList<int> { 1, 2 };
-            var count = 0;
+            var received = new List<CollectionChangedEventArgs<int>>();
 
-            list.AddClearedListener(() => count++);
-
-            list.Clear();
-            Assert.AreEqual(1, count, "非空列表清空应触发一次 Cleared");
+            list.AddListener(received.Add);
 
             list.Clear();
-            Assert.AreEqual(1, count, "空列表清空不应触发 Cleared");
-            AesirArchitectureDebug.LogTestInfo("Clear: 仅非空清空触发");
+            Assert.AreEqual(1, received.Count, "非空列表清空应触发一次 Reset");
+            Assert.AreEqual(NotifyCollectionChangedAction.Reset, received[0].Action);
+
+            list.Clear();
+            Assert.AreEqual(1, received.Count, "空列表清空不应触发通知");
+            AesirArchitectureDebug.LogTestInfo("Clear: 仅非空清空触发 Reset");
         }
 
         /// <summary>
-        /// 验证无变更操作不触发事件：Remove 不存在的元素返回 false。
+        /// 验证无变更操作不触发通知：Remove 不存在的元素返回 false。
         /// </summary>
         [Test]
         public void Remove_MissingItem_ReturnsFalseWithoutEvent()
         {
             var list = new ObservableList<int> { 1 };
-            var received = new List<CollectionRemoveEventArgs<int>>();
+            var received = new List<CollectionChangedEventArgs<int>>();
 
-            list.AddRemovedListener(received.Add);
+            list.AddListener(received.Add);
             Assert.IsFalse(list.Remove(99), "移除不存在的元素应返回 false");
-            Assert.AreEqual(0, received.Count, "移除不存在的元素不应触发 Removed");
+            Assert.AreEqual(0, received.Count, "移除不存在的元素不应触发通知");
             Assert.AreEqual(1, list.Count, "集合内容不应变化");
             AesirArchitectureDebug.LogTestInfo("Remove 缺失项: 返回 false 且不触发");
         }
 
         /// <summary>
-        /// 验证 AddRange 逐项触发 Added 事件且索引递增。
+        /// 验证 AddRange 逐项触发 Add 通知且索引递增。
         /// </summary>
         [Test]
-        public void AddRange_FiresAddedPerItem()
+        public void AddRange_FiresAddPerItem()
         {
             var list = new ObservableList<int>();
-            var received = new List<CollectionAddEventArgs<int>>();
+            var received = new List<CollectionChangedEventArgs<int>>();
 
-            list.AddAddedListener(received.Add);
+            list.AddListener(received.Add);
             list.AddRange(new[] { 7, 8, 9 });
 
-            Assert.AreEqual(3, received.Count, "AddRange 应逐项触发 Added");
-            Assert.AreEqual(0, received[0].Index);
-            Assert.AreEqual(7, received[0].Item);
-            Assert.AreEqual(2, received[2].Index);
-            Assert.AreEqual(9, received[2].Item);
-            AesirArchitectureDebug.LogTestInfo("AddRange: 逐项触发 Added");
+            Assert.AreEqual(3, received.Count, "AddRange 应逐项触发 Add 通知");
+            Assert.AreEqual(0, received[0].NewStartingIndex);
+            Assert.AreEqual(7, received[0].NewItem);
+            Assert.AreEqual(2, received[2].NewStartingIndex);
+            Assert.AreEqual(9, received[2].NewItem);
+            AesirArchitectureDebug.LogTestInfo("AddRange: 逐项触发 Add");
+        }
+
+        /// <summary>
+        /// 验证 Move 触发单次 Move 通知（不是 Remove + Add 两次），载荷含两个索引。
+        /// </summary>
+        [Test]
+        public void Move_FiresSingleMoveEvent()
+        {
+            var list = new ObservableList<int> { 10, 20, 30 };
+            var received = new List<CollectionChangedEventArgs<int>>();
+
+            list.AddListener(received.Add);
+            list.Move(0, 2);
+
+            Assert.AreEqual(1, received.Count, "Move 应触发单次 Move 通知");
+            Assert.AreEqual(NotifyCollectionChangedAction.Move, received[0].Action);
+            Assert.AreEqual(10, received[0].NewItem);
+            Assert.AreEqual(10, received[0].OldItem);
+            Assert.AreEqual(2, received[0].NewStartingIndex);
+            Assert.AreEqual(0, received[0].OldStartingIndex);
+            AesirArchitectureDebug.LogTestInfo("Move: 单次 Move 通知含两个索引");
         }
 
         /// <summary>
@@ -142,39 +170,39 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void HandleDispose_And_ClearListeners_StopNotifications()
         {
             var list = new ObservableList<int>();
-            var addCount = 0;
+            var callCount = 0;
 
-            void OnAdded(CollectionAddEventArgs<int> _)
+            void OnChanged(CollectionChangedEventArgs<int> _)
             {
-                addCount++;
+                callCount++;
             }
 
-            var handle = list.AddAddedListener(OnAdded);
+            var handle = list.AddListener(OnChanged);
             list.Add(1);
-            Assert.AreEqual(1, addCount, "移除前应正常收到通知");
+            Assert.AreEqual(1, callCount, "移除前应正常收到通知");
 
             handle.Dispose();
             list.Add(2);
-            Assert.AreEqual(1, addCount, "句柄 Dispose 后不应再收到通知");
+            Assert.AreEqual(1, callCount, "句柄 Dispose 后不应再收到通知");
 
-            list.AddAddedListener(OnAdded);
+            list.AddListener(OnChanged);
             list.ClearListeners();
             list.Add(3);
-            Assert.AreEqual(1, addCount, "ClearListeners 清空全部监听后不应再收到通知");
+            Assert.AreEqual(1, callCount, "ClearListeners 清空全部监听后不应再收到通知");
             AesirArchitectureDebug.LogTestInfo("句柄/ClearListeners: 正确停止通知");
         }
 
         /// <summary>
-        /// 验证带初始元素构造不触发任何事件，且枚举与只读访问可用。
+        /// 验证带初始元素构造不触发任何通知，且枚举与只读访问可用。
         /// </summary>
         [Test]
         public void Constructor_WithInitialItems_NoEvents()
         {
-            var addCount = 0;
+            var callCount = 0;
             var list = new ObservableList<int>(new[] { 4, 5 });
-            list.AddAddedListener(_ => addCount++);
+            list.AddListener(_ => callCount++);
 
-            Assert.AreEqual(0, addCount, "初始元素构造不应触发 Added");
+            Assert.AreEqual(0, callCount, "初始元素构造不应触发通知");
             Assert.AreEqual(2, list.Count);
             Assert.AreEqual(5, list[1]);
 
@@ -185,7 +213,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             }
 
             CollectionAssert.AreEqual(new[] { 4, 5 }, enumerated, "枚举应按序返回全部元素");
-            AesirArchitectureDebug.LogTestInfo("初始构造: 不触发事件且可枚举");
+            AesirArchitectureDebug.LogTestInfo("初始构造: 不触发通知且可枚举");
         }
 
         /// <summary>

@@ -10,8 +10,7 @@ namespace Runestone.AesirArchitecture.Editor
     /// </summary>
     /// <remarks>
     /// <para>
-    /// 调试信息经反射读取（<see cref="ObservableCollectionInspectorUtility" />），
-    /// 集合的公开 API 面与上游 Cysharp.ObservableCollections 保持一致。
+    /// 调试信息经反射读取（<see cref="ObservableCollectionInspectorUtility" />）。
     /// 未安装 Odin Inspector 时本文件整体不参与编译，纯代码 API 不受影响。
     /// </para>
     /// <para>
@@ -22,7 +21,7 @@ namespace Runestone.AesirArchitecture.Editor
     internal static class ObservableCollectionDrawerHelper
     {
         /// <summary>
-        /// 绘制集合摘要（元素数 / 订阅者）与元素预览。
+        /// 绘制集合摘要（元素数 / 变更监听者）与元素预览。
         /// </summary>
         /// <param name="collection">集合实例；为 null 时不绘制。</param>
         internal static void DrawSummary(object collection)
@@ -35,8 +34,7 @@ namespace Runestone.AesirArchitecture.Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField(
                 $"元素 {ObservableCollectionInspectorUtility.GetCount(collection)}"
-                + $"　|　CollectionChanged 订阅 {ObservableCollectionInspectorUtility.GetCollectionChangedSubscriberCount(collection)}"
-                + $"　|　轻量事件监听 {ObservableCollectionInspectorUtility.GetLightEventListenerCount(collection)}",
+                + $"　|　变更监听 {ObservableCollectionInspectorUtility.GetChangedListenerCount(collection)}",
                 EditorStyles.miniLabel);
             EditorGUILayout.LabelField(
                 ObservableCollectionInspectorUtility.GetItemPreview(collection),
