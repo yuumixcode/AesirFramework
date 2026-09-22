@@ -13,7 +13,7 @@
       }
     },
     "cn.tuanjie.codely.bridge": {
-      "version": "file:../.codely.packages/cn.tuanjie.codely.bridge@1.0.85-5dac11d4",
+      "version": "file:../.codely.packages/cn.tuanjie.codely.bridge@1.0.85-47f31100",
       "depth": 0,
       "source": "local",
       "dependencies": {

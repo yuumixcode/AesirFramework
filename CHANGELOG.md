@@ -20,15 +20,47 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.21.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.21.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.22.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.22.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.21.0` / `#AesirModules-v0.21.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.22.0` / `#AesirModules-v0.22.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.22.0] - 2026-09-22
+
+---
+
+### [architecture] Aesir Architecture
+
+**Added**
+
+- **可观察集合升级为 ObservableCollections 轻量内置子集（参考 Cysharp/ObservableCollections，MIT）** — 新增 `ObservableQueue<T>`；`ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 就地升级，统一单轨变更通知 `AddListener` / `RemoveListener`：`MiniEvent<T>` 承载（Invoke 零分配）、载荷为普通只读结构体 `CollectionChangedEventArgs<T>`、返回 `AutoRemoveListenerHandle`（支持 using / Dispose / 绑定 Unity 生命周期自动移除）；语义：无变更的写操作不通知、批量操作逐项通知、字典值更新以 Replace 表达（旧值在 `OldItem`）、`Move` 单事件、`Sort` / `Reverse` / `Clear` 统一 `Reset`；Odin Inspector 内联调试面板（可选）；与上游库可在同一项目共存（程序集 / 包名 / 命名空间三层隔离，同名类型经命名空间别名消歧）
+- 单轨通知测试回归（含句柄绑定 GameObject OnDisable 自动移除的集成用例），RAA Editor EditMode 186 用例全绿
+
+**Changed**
+
+- **可观察集合移除内部加锁与 `SyncRoot`** — 4 个集合共 51 处 `lock (SyncRoot)` 删除；Monitor 同线程可重入，主线程模型下零收益且制造线程安全错觉；集合边界统一为「仅主线程使用」
+- 中英 README 与 `Documentation/observable-collections.md` 对齐单轨通知与上游共存口径
+
+**Removed（破坏性变更）**
+
+- 轻量事件 API 全套：`AddAddedListener` / `AddRemovedListener` / `AddReplacedListener` / `AddUpdatedListener` / `AddClearedListener` 与对应 `Remove*` 方法、`CollectionAddEventArgs<T>` / `CollectionRemoveEventArgs<T>` / `CollectionReplaceEventArgs<T>` / `DictionaryUpdateEventArgs<TKey, TValue>`——语义并入单轨事件（迁移：改订阅 `AddListener`，按 `e.Action` 分流）
+- 原生 `CollectionChanged` 事件、`NotifyCollectionChangedEventHandler<T>`、`NotifyCollectionChangedEventArgs<T>`（`readonly ref struct`，含 Span 载荷）与 `SortOperation<T>`——原生 event 订阅无法返回句柄绑定 Unity 生命周期，ref struct 载荷与 `MiniEvent<T>` 承载冲突
+- Internal：`ResizableArray<T>`（逐项化后无消费者）
+
+---
+
+### [modules] Aesir Modules
+
+**Changed**
+
+- 与 Aesir Architecture 0.22.0 版本同步发布，本包无功能变更
 
 ---
 
