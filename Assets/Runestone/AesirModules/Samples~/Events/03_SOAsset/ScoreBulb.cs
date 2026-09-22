@@ -1,7 +1,7 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
+using System;
 using UnityEngine;
 using UnityEngine.UI;
-using Runestone.AesirModules;
 
 namespace Runestone.AesirModules.Samples.Events.SOAsset
 {
@@ -13,17 +13,19 @@ namespace Runestone.AesirModules.Samples.Events.SOAsset
     [AddComponentMenu("")]
     public class ScoreBulb : MonoBehaviour
     {
-        /// <summary>收到事件后的反馈颜色。</summary>
-        [SerializeField] Color flashColor = Color.yellow;
+        static readonly int ColorId = Shader.PropertyToID("_BaseColor");
 
-        Renderer _renderer;
-        MaterialPropertyBlock _propertyBlock;
+        /// <summary>收到事件后的反馈颜色。</summary>
+        [SerializeField]
+        Color flashColor = Color.yellow;
+
         Vector3 _baseScale;
         float _bounceTimer;
-        int _receiveCount;
         Text _counterLabel;
+        MaterialPropertyBlock _propertyBlock;
+        int _receiveCount;
 
-        static readonly int ColorId = Shader.PropertyToID("_BaseColor");
+        Renderer _renderer;
 
         void Awake()
         {
@@ -109,7 +111,7 @@ namespace Runestone.AesirModules.Samples.Events.SOAsset
             {
                 foreach (var installedName in installedFonts)
                 {
-                    if (installedName.IndexOf(candidate, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (installedName.IndexOf(candidate, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         return Font.CreateDynamicFontFromOSFont(installedName, 24);
                     }

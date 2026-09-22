@@ -1,6 +1,5 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using UnityEngine;
-using Runestone.AesirModules;
 
 namespace Runestone.AesirModules.Samples.Events.SOAsset
 {
@@ -17,7 +16,8 @@ namespace Runestone.AesirModules.Samples.Events.SOAsset
     public class ScorePublisher : MonoBehaviour
     {
         /// <summary>要触发的事件资产（Inspector 指定，本示例为 ScoreEventAsset）。</summary>
-        [SerializeField] AesirEventArgsSO scoreEventAsset;
+        [SerializeField]
+        AesirEventArgsSO scoreEventAsset;
 
         void Update()
         {
@@ -26,6 +26,9 @@ namespace Runestone.AesirModules.Samples.Events.SOAsset
                 PublishScore();
             }
         }
+
+        void OnEnable() => EventModule.AddListener(this);
+        void OnDisable() => EventModule.RemoveListener(this);
 
         /// <summary>
         /// 触发 Inspector 配置的事件资产（Space 的行为；公开方法便于教学与自动化验证）。
@@ -40,9 +43,6 @@ namespace Runestone.AesirModules.Samples.Events.SOAsset
 
             scoreEventAsset.Raise();
         }
-
-        void OnEnable() => EventModule.AddListener(this);
-        void OnDisable() => EventModule.RemoveListener(this);
 
         /// <summary>
         /// 代码订阅同一事件：可读取资产配置的载荷字段。

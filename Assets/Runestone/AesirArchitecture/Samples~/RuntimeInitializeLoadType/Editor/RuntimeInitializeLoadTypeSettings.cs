@@ -13,13 +13,13 @@ namespace Runestone.AesirArchitecture.Samples
     public class RuntimeInitializeLoadTypeSettings : ScriptableSingleton<RuntimeInitializeLoadTypeSettings>
     {
         const string ProjectFilePath = "ScriptableSingleton/AesirArchitecture/Samples";
-
-        bool _executeOnSubsystemRegistration;
         bool _executeOnAfterAssembliesLoaded;
+
+        bool _executeOnAfterSceneLoad;
         bool _executeOnBeforeSceneLoad;
         bool _executeOnBeforeSplashScreen;
 
-        bool _executeOnAfterSceneLoad;
+        bool _executeOnSubsystemRegistration;
 
         [Title("是否输出对应时机的日志")]
         [ShowInInspector]

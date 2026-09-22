@@ -31,8 +31,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
                 Debug.Log($"[Dictionary] Removed → [{pair.Key}] = {pair.Value}（当前 {_stats.Count} 项）"));
             _updatedSub = _stats.AddUpdatedListener(evt =>
                 Debug.Log($"[Dictionary] Updated → [{evt.Key}]：{evt.OldValue} → {evt.NewValue}"));
-            _clearedSub = _stats.AddClearedListener(
-                () => Debug.Log("[Dictionary] Cleared → 属性表已清空"));
+            _clearedSub = _stats.AddClearedListener(() => Debug.Log("[Dictionary] Cleared → 属性表已清空"));
         }
 
         void OnDisable()
@@ -66,7 +65,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
         [ContextMenu("索引器：赋相同值（不触发事件）")]
         void AssignSameValue()
         {
-            if (!_stats.TryGetValue("攻击力", out int attack))
+            if (!_stats.TryGetValue("攻击力", out var attack))
             {
                 Debug.LogWarning("[Dictionary] 键「攻击力」不存在，先运行 Play Mode 或「索引器：新增键」");
                 return;
@@ -86,7 +85,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
         [ContextMenu("Remove：移除键")]
         void RemoveKey()
         {
-            bool removed = _stats.Remove("生命上限");
+            var removed = _stats.Remove("生命上限");
             Debug.Log($"[Dictionary] Remove(\"生命上限\") → 返回 {removed}");
             DumpStats();
         }
@@ -94,7 +93,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
         [ContextMenu("TryGetValue：查询键")]
         void QueryKey()
         {
-            if (_stats.TryGetValue("攻击力", out int value))
+            if (_stats.TryGetValue("攻击力", out var value))
             {
                 Debug.Log($"[Dictionary] TryGetValue(\"攻击力\") → {value}");
             }
