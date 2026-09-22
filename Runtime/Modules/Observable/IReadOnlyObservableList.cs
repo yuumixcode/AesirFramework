@@ -12,65 +12,13 @@ namespace Runestone.AesirArchitecture
     /// 事件语义与 <see cref="MiniEvent{T}" /> 一致：回调触发时集合已处于变更后的状态；
     /// 监听者抛异常按原生 C# 事件 fail-fast 向上传播，监听回调不应抛异常属框架约定。
     /// <para>
-    /// 提供两轨通知：轻量事件（Added / Removed / Replaced / Cleared）与
-    /// <see cref="IObservableCollection{T}.CollectionChanged" />（对齐 Cysharp.ObservableCollections 语义，
-    /// 含 Move / Sort / Reverse 与 Range 批量通知）。
+    /// 变更通知为单一事件（<see cref="IObservableCollection{T}.AddListener" />），载荷 <see cref="CollectionChangedEventArgs{T}" />：
+    /// 批量操作逐项通知、Sort / Reverse / Clear 以 Reset 通知、无变更的写操作不通知。
     /// </para>
     /// </remarks>
     /// <seealso cref="IObservableList{T}" />
     /// <seealso cref="ObservableList{T}" />
     public interface IReadOnlyObservableList<T> : IReadOnlyList<T>, IObservableCollection<T>
     {
-        /// <summary>
-        /// 添加元素监听者。回调参数包含新元素及其索引。
-        /// </summary>
-        /// <param name="callback">元素添加时调用的回调函数。</param>
-        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle" />，释放后自动移除监听，避免手动管理生命周期。</returns>
-        AutoRemoveListenerHandle AddAddedListener(Action<CollectionAddEventArgs<T>> callback);
-
-        /// <summary>
-        /// 移除元素添加监听者。
-        /// </summary>
-        /// <param name="callback">先前通过 <see cref="AddAddedListener" /> 注册的回调函数。</param>
-        void RemoveAddedListener(Action<CollectionAddEventArgs<T>> callback);
-
-        /// <summary>
-        /// 添加元素移除监听者。回调参数包含被移除元素及其移除前所在索引。
-        /// </summary>
-        /// <param name="callback">元素移除时调用的回调函数。</param>
-        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle" />，释放后自动移除监听。</returns>
-        AutoRemoveListenerHandle AddRemovedListener(Action<CollectionRemoveEventArgs<T>> callback);
-
-        /// <summary>
-        /// 移除元素移除监听者。
-        /// </summary>
-        /// <param name="callback">先前通过 <see cref="AddRemovedListener" /> 注册的回调函数。</param>
-        void RemoveRemovedListener(Action<CollectionRemoveEventArgs<T>> callback);
-
-        /// <summary>
-        /// 添加元素替换监听者。索引器赋值且新旧值不同时触发，回调参数包含索引、旧项与新项。
-        /// </summary>
-        /// <param name="callback">元素替换时调用的回调函数。</param>
-        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle" />，释放后自动移除监听。</returns>
-        AutoRemoveListenerHandle AddReplacedListener(Action<CollectionReplaceEventArgs<T>> callback);
-
-        /// <summary>
-        /// 移除元素替换监听者。
-        /// </summary>
-        /// <param name="callback">先前通过 <see cref="AddReplacedListener" /> 注册的回调函数。</param>
-        void RemoveReplacedListener(Action<CollectionReplaceEventArgs<T>> callback);
-
-        /// <summary>
-        /// 添加清空监听者。集合被清空且清空前非空时触发。
-        /// </summary>
-        /// <param name="callback">集合清空时调用的回调函数。</param>
-        /// <returns>返回一个 <see cref="AutoRemoveListenerHandle" />，释放后自动移除监听。</returns>
-        AutoRemoveListenerHandle AddClearedListener(Action callback);
-
-        /// <summary>
-        /// 移除清空监听者。
-        /// </summary>
-        /// <param name="callback">先前通过 <see cref="AddClearedListener" /> 注册的回调函数。</param>
-        void RemoveClearedListener(Action callback);
     }
 }

@@ -1,4 +1,6 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using UnityEngine;
 
@@ -6,15 +8,16 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 {
     /// <summary>
     /// ObservableDictionary&lt;TKey, TValue&gt; 演示组件（角色属性表场景）。
-    /// <para>订阅 Added / Removed / Updated / Cleared 四类变更事件，通过 ContextMenu 触发读写，在 Console 观察事件日志。</para>
-    /// <para>索引器语义：为不存在的键赋值触发 Added；为已有键赋新值触发 Updated（参数含旧值）；赋相同值不触发事件。</para>
+    /// <para>单轨订阅 <c>AddListener</c>：载荷为 <see cref="CollectionChangedEventArgs{T}" />（<c>T</c> = 键值对），
+    /// 按 <c>Action</c> 区分新增（Add）/ 移除（Remove）/ 值更新（Replace，旧值在 OldItem）/ 清空（Reset）。</para>
+    /// <para>索引器语义：为不存在的键赋值触发 Add；为已有键赋新值触发 Replace；赋相同值不触发通知。</para>
     /// <para>Add 语义：键已存在时抛 <see cref="System.ArgumentException" />（fail-fast），示例中重复触发该菜单可直接观察到异常。</para>
     /// </summary>
     public sealed class ObservableDictionarySample : MonoBehaviour
     {
         readonly ObservableDictionary<string, int> _stats = new ObservableDictionary<string, int>();
 
-        AutoRemoveListenerHandle _addedSub, _removedSub, _updatedSub, _clearedSub;
+        AutoRemoveListenerHandle _subscription;
 
         void Start()
         {
@@ -25,31 +28,45 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 
         void OnEnable()
         {
-            _addedSub = _stats.AddAddedListener(pair =>
-                Debug.Log($"[Dictionary] Added → [{pair.Key}] = {pair.Value}（当前 {_stats.Count} 项）"));
-            _removedSub = _stats.AddRemovedListener(pair =>
-                Debug.Log($"[Dictionary] Removed → [{pair.Key}] = {pair.Value}（当前 {_stats.Count} 项）"));
-            _updatedSub = _stats.AddUpdatedListener(evt =>
-                Debug.Log($"[Dictionary] Updated → [{evt.Key}]：{evt.OldValue} → {evt.NewValue}"));
-            _clearedSub = _stats.AddClearedListener(() => Debug.Log("[Dictionary] Cleared → 属性表已清空"));
+            _subscription = _stats.AddListener(OnStatsChanged);
         }
 
         void OnDisable()
         {
-            _addedSub.Dispose();
-            _removedSub.Dispose();
-            _updatedSub.Dispose();
-            _clearedSub.Dispose();
+            _subscription.Dispose();
         }
 
-        [ContextMenu("索引器：新增键（触发 Added）")]
+        /// <summary>
+        /// 单轨回调：按 <see cref="CollectionChangedEventArgs{T}.Action" /> 区分变更类型，
+        /// 载荷 <c>NewItem</c> / <c>OldItem</c> 为变更后的 / 变更前的键值对（字典无索引，载荷索引固定 -1）。
+        /// </summary>
+        void OnStatsChanged(CollectionChangedEventArgs<KeyValuePair<string, int>> e)
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    Debug.Log($"[Dictionary] Add → [{e.NewItem.Key}] = {e.NewItem.Value}（当前 {_stats.Count} 项）");
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    Debug.Log($"[Dictionary] Remove → [{e.OldItem.Key}] = {e.OldItem.Value}（当前 {_stats.Count} 项）");
+                    break;
+                case NotifyCollectionChangedAction.Replace:
+                    Debug.Log($"[Dictionary] Replace → [{e.NewItem.Key}]：{e.OldItem.Value} → {e.NewItem.Value}");
+                    break;
+                case NotifyCollectionChangedAction.Reset:
+                    Debug.Log("[Dictionary] Reset → 属性表已清空");
+                    break;
+            }
+        }
+
+        [ContextMenu("索引器：新增键（触发 Add）")]
         void AddKeyViaIndexer()
         {
             _stats["防御力"] = 5;
             DumpStats();
         }
 
-        [ContextMenu("索引器：更新已有键（触发 Updated）")]
+        [ContextMenu("索引器：更新已有键（触发 Replace）")]
         void UpdateExistingKey()
         {
             if (!_stats.ContainsKey("攻击力"))
@@ -62,7 +79,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             DumpStats();
         }
 
-        [ContextMenu("索引器：赋相同值（不触发事件）")]
+        [ContextMenu("索引器：赋相同值（不触发通知）")]
         void AssignSameValue()
         {
             if (!_stats.TryGetValue("攻击力", out var attack))
@@ -72,7 +89,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             }
 
             _stats["攻击力"] = attack;
-            Debug.Log("[Dictionary] 索引器赋相同值 → 值未变化，事件未触发");
+            Debug.Log("[Dictionary] 索引器赋相同值 → 值未变化，通知未触发");
         }
 
         [ContextMenu("Add：新增键（重复键抛异常）")]
@@ -103,7 +120,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             }
         }
 
-        [ContextMenu("Clear：清空属性表")]
+        [ContextMenu("Clear：清空属性表（Reset 通知）")]
         void ClearStats()
         {
             _stats.Clear();

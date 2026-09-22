@@ -9,15 +9,23 @@
 
 ### Added
 
-- **可观察集合升级为 Cysharp.ObservableCollections 轻量内置子集（MIT）** — 按上游代码逻辑移植高频部分，命名空间与命名按本项目规范改写、语法降级至 Unity 2022.3（C# 9），归属见包根 `Third Party Notices.md`、差异清单见 `Documentation/observable-collections.md`：
-  - **新增 `ObservableQueue<T>`**；`ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 就地升级（既有 API 全部保留）
-  - **`CollectionChanged` 全语义通知** — `IObservableCollection<T>`（`CollectionChanged` + `SyncRoot`）；`in` 参数 + `readonly ref struct` 载荷零分配；批量操作（`AddRange` / `InsertRange` / `RemoveRange`）单次通知并携带 `ReadOnlySpan<T>`；`Sort` / `Reverse` 以 `Reset` + `SortOperation<T>` 通知；`Move` 通知
-  - **Odin Inspector 内联调试面板（可选）** — Inspector 中集合字段上方显示元素数 / `CollectionChanged` 订阅数 / 轻量事件监听数 / 元素预览，其下保留默认绘制；未安装 Odin 时不参与编译
-- **上游测试移植与语义回归** — `ObservableListParityTests`（列表写操作结果与 BCL `ObservableCollection<T>` 对齐，移植自上游测试套件）+ `ObservableCollectionChangedTests`（`CollectionChanged` 上游语义 18 用例：每次写操作通知 / 批量单次通知 / Move / Sort / Reverse / Clear / 字典与集合的 -1 索引）
+- **可观察集合升级为 ObservableCollections 轻量内置子集（参考 Cysharp/ObservableCollections，MIT）** — 集合类型命名参考上游便于对照文档，通知语义为本项目自有约定（单轨，与上游不一致）；与上游库可在同一项目**共存**（程序集 / UPM 包名 / 命名空间三层隔离，同文件双 `using` 同名类型需别名，详见 `Documentation/observable-collections.md`「与上游共存」），归属见包根 `Third Party Notices.md`、差异清单见同文档：
+  - **新增 `ObservableQueue<T>`**；`ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 就地升级
+  - **单轨变更通知 `AddListener` / `RemoveListener`** — `IObservableCollection<T>` 统一契约；`MiniEvent<T>` 承载（Invoke 零分配），载荷为普通只读结构体 `CollectionChangedEventArgs<T>`（可存集合与闭包）；返回 `AutoRemoveListenerHandle`，支持 using 作用域清理与 `RemoveListenerExtensions` 生命周期绑定（OnDestroy / OnDisable / 场景卸载自动移除监听）
+  - **通知语义**：无变更的写操作不通知（赋相同值 / Remove 不存在元素 / Clear 空集合 / Add 重复元素）；批量操作（`AddRange` / `InsertRange` / `RemoveRange` / 集合代数运算）逐项通知；字典值更新以 `Replace` 表达（旧值在 `OldItem`）；`Move` 为单次 `Move` 事件；`Sort` / `Reverse` / `Clear` 统一 `Reset`（无附加字段，少于 2 个元素的重排不通知）；无索引集合（字典 / HashSet）索引固定 -1
+  - **Odin Inspector 内联调试面板（可选）** — Inspector 中集合字段上方显示元素数 / 变更监听数 / 元素预览，其下保留默认绘制；未安装 Odin 时不参与编译
+- **单轨通知测试回归** — `ObservableListParityTests`（列表写操作结果与 BCL `ObservableCollection<T>` 对齐）+ `ObservableCollectionChangedTests`（单轨语义：无变更不通知 / 批量逐项 / Move / Reset / -1 索引 / 句柄与 ClearListeners / 句柄绑定 GameObject OnDisable 自动移除）+ 三个集合测试文件的轻量事件用例全部改写为单轨断言
 
 ### Changed
 
-- **可观察集合文档口径升级** — README（中英）与包内文档从「轻量四事件」改为「ObservableCollections 轻量内置子集」，明确「重度能力用上游、两套不混用」；新增 `Documentation/observable-collections.md`（定位 / 两轨通知 / Odin 面板 / 与上游关系与差异 / 注意事项）
+- **可观察集合移除内部加锁与 `SyncRoot`** — 4 个集合共 51 处 `lock (SyncRoot)` 与 `IObservableCollection<T>.SyncRoot` 成员一并删除（含 `ObservableQueue.GetEnumerator` 把 `yield return` 包在 `lock` 内的写法）。理由：`Monitor` 同线程可重入，Unity 主线程模型下对正确性零贡献，只增加每次读写的开销与每实例一个 `object` 分配；且原实现仅 `Count` / 索引器加锁，`Contains` / `IndexOf` / `CopyTo` / 枚举器均未加锁，反而制造「线程安全」错觉。集合线程边界现统一为「仅主线程使用」。
+- **可观察集合文档口径升级** — README（中英）与包内文档改为「ObservableCollections 轻量内置子集 + 单轨通知」，明确「重度能力用上游、两套不混用」；`Documentation/observable-collections.md` 更新（定位 / 单轨通知 / Odin 面板 / 与上游关系与差异 / 注意事项）
+
+### Removed（破坏性变更）
+
+- **轻量事件 API 全套移除** — `AddAddedListener` / `AddRemovedListener` / `AddReplacedListener` / `AddUpdatedListener` / `AddClearedListener` 及对应 `Remove*` 方法、`CollectionAddEventArgs<T>` / `CollectionRemoveEventArgs<T>` / `CollectionReplaceEventArgs<T>` / `DictionaryUpdateEventArgs<TKey, TValue>` 载荷。原轻量事件语义（无变化不通知、AddRange 逐项）已并入单轨事件；迁移方式：改订阅 `AddListener(Action<CollectionChangedEventArgs<T>>)`，按 `e.Action` 分流（字典 Updated → Replace，旧值在 `e.OldItem`）
+- **原生 `CollectionChanged` 事件与上游对齐载荷移除** — `event NotifyCollectionChangedEventHandler<T> CollectionChanged`、`NotifyCollectionChangedEventArgs<T>`（`readonly ref struct`，含 `IsSingleItem` / `NewItems` / `OldItems` Span 载荷）、`SortOperation<T>` 及其哨兵比较器。原「每写必通知 / 批量单次 Span 通知 / SortOperation 细节」语义不再保留（理由：原生 event 订阅无法返回句柄、不能绑定 Unity 生命周期自动清理；ref struct 载荷与 MiniEvent 承载冲突；SortOperation 对初学者是概念负担）。迁移方式见 `Documentation/observable-collections.md` 第三节
+- **Internal：`ResizableArray<T>` 移除** — 批量操作改为逐项通知后无消费者
 
 ### 明确不做（引导上游）
 

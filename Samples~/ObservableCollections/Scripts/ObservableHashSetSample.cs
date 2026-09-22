@@ -1,19 +1,21 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
+using System.Collections.Specialized;
 using UnityEngine;
 
 namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 {
     /// <summary>
     /// ObservableHashSet&lt;T&gt; 演示组件（在线玩家场景）。
-    /// <para>订阅 Added / Removed / Cleared 三类变更事件，通过 ContextMenu 触发增删与集合代数运算，在 Console 观察事件日志。</para>
-    /// <para>无变更的操作不触发事件：Add 重复元素、Remove 不存在的元素、Clear 空集合。</para>
-    /// <para>UnionWith / ExceptWith 逐项复用 Add / Remove，仅对实际变更的元素逐项触发事件。</para>
+    /// <para>单轨订阅 <c>AddListener</c>：按 <see cref="CollectionChangedEventArgs{T}.Action" /> 区分
+    /// 上线（Add）/ 下线（Remove）/ 清空（Reset）；集合无索引，载荷索引固定 -1。</para>
+    /// <para>无变更的操作不触发通知：Add 重复元素、Remove 不存在的元素、Clear 空集合。</para>
+    /// <para>UnionWith / ExceptWith 逐项复用 Add / Remove，仅对实际变更的元素逐项触发通知。</para>
     /// </summary>
     public sealed class ObservableHashSetSample : MonoBehaviour
     {
         readonly ObservableHashSet<string> _onlinePlayers = new ObservableHashSet<string>();
 
-        AutoRemoveListenerHandle _addedSub, _removedSub, _clearedSub;
+        AutoRemoveListenerHandle _subscription;
 
         string _lastNameAdded;
 
@@ -28,18 +30,31 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 
         void OnEnable()
         {
-            _addedSub = _onlinePlayers.AddAddedListener(player =>
-                Debug.Log($"[HashSet] Added → {player} 上线（当前 {_onlinePlayers.Count} 人）"));
-            _removedSub = _onlinePlayers.AddRemovedListener(player =>
-                Debug.Log($"[HashSet] Removed → {player} 下线（当前 {_onlinePlayers.Count} 人）"));
-            _clearedSub = _onlinePlayers.AddClearedListener(() => Debug.Log("[HashSet] Cleared → 在线列表已清空"));
+            _subscription = _onlinePlayers.AddListener(OnPlayersChanged);
         }
 
         void OnDisable()
         {
-            _addedSub.Dispose();
-            _removedSub.Dispose();
-            _clearedSub.Dispose();
+            _subscription.Dispose();
+        }
+
+        /// <summary>
+        /// 单轨回调：按 <see cref="CollectionChangedEventArgs{T}.Action" /> 区分变更类型。
+        /// </summary>
+        void OnPlayersChanged(CollectionChangedEventArgs<string> e)
+        {
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    Debug.Log($"[HashSet] Add → {e.NewItem} 上线（当前 {_onlinePlayers.Count} 人）");
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    Debug.Log($"[HashSet] Remove → {e.OldItem} 下线（当前 {_onlinePlayers.Count} 人）");
+                    break;
+                case NotifyCollectionChangedAction.Reset:
+                    Debug.Log("[HashSet] Reset → 在线列表已清空");
+                    break;
+            }
         }
 
         [ContextMenu("Add：玩家上线")]
@@ -50,7 +65,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             DumpPlayers();
         }
 
-        [ContextMenu("Add 重复玩家（不触发事件）")]
+        [ContextMenu("Add 重复玩家（不触发通知）")]
         void AddDuplicatePlayer()
         {
             if (_lastNameAdded == null)
@@ -60,7 +75,7 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             }
 
             var added = _onlinePlayers.Add(_lastNameAdded);
-            Debug.Log($"[HashSet] Add(\"{_lastNameAdded}\")（重复）→ 返回 {added}，事件未触发");
+            Debug.Log($"[HashSet] Add(\"{_lastNameAdded}\")（重复）→ 返回 {added}，通知未触发");
         }
 
         [ContextMenu("Remove：刚上线的玩家下线")]
@@ -75,28 +90,28 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             DumpPlayers();
         }
 
-        [ContextMenu("Remove 不存在的玩家（不触发事件）")]
+        [ContextMenu("Remove 不存在的玩家（不触发通知）")]
         void RemoveMissingPlayer()
         {
             var removed = _onlinePlayers.Remove("不在线的玩家");
-            Debug.Log($"[HashSet] Remove(\"不在线的玩家\") → 返回 {removed}，事件未触发");
+            Debug.Log($"[HashSet] Remove(\"不在线的玩家\") → 返回 {removed}，通知未触发");
         }
 
-        [ContextMenu("UnionWith：批量上线（并集）")]
+        [ContextMenu("UnionWith：批量上线（并集，逐项通知）")]
         void UnionPlayers()
         {
             _onlinePlayers.UnionWith(new[] { "Alice", "Bob" });
             DumpPlayers();
         }
 
-        [ContextMenu("ExceptWith：批量下线（差集）")]
+        [ContextMenu("ExceptWith：批量下线（差集，逐项通知）")]
         void ExceptPlayers()
         {
             _onlinePlayers.ExceptWith(new[] { "Alice", "Bob" });
             DumpPlayers();
         }
 
-        [ContextMenu("Clear：清空在线列表")]
+        [ContextMenu("Clear：清空在线列表（Reset 通知）")]
         void ClearPlayers()
         {
             _onlinePlayers.Clear();
