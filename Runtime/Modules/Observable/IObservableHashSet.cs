@@ -8,9 +8,9 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <typeparam name="T">元素类型</typeparam>
     /// <remarks>
-    /// 集合代数操作（UnionWith / ExceptWith / IntersectWith / SymmetricExceptWith）逐项触发 Added / Removed 事件。
-    /// 所有写操作完成后才触发对应事件，监听者回调中读取到的集合已是变更后的状态。
-    /// 无变更的操作不触发事件：Add 重复元素、Remove 不存在的元素、Clear 空集合。
+    /// 集合代数操作（UnionWith / ExceptWith / IntersectWith / SymmetricExceptWith）逐项触发 Add / Remove 通知。
+    /// 所有写操作完成后才触发对应通知，监听者回调中读取到的集合已是变更后的状态。
+    /// 无变更的操作不触发通知：Add 重复元素、Remove 不存在的元素、Clear 空集合。
     /// </remarks>
     /// <seealso cref="IReadOnlyObservableHashSet{T}" />
     /// <seealso cref="ObservableHashSet{T}" />

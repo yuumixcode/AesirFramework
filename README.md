@@ -28,7 +28,7 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
 - **ObservableValue 响应式属性** — 快捷档 Model 直接暴露可写 `ObservableValue<T>`（表现层直改值）；标准档起收窄为 `IReadOnlyObservableValue<out T>` 只读接口 + 写方法；严格档再做接口注册 + Command 写入
-- **可观察集合（ObservableCollections 轻量内置子集）** — 四种高频集合（List / Dictionary / HashSet / Queue）+ `CollectionChanged` 全语义通知（含 Move / Sort / Reverse / 批量）+ Odin 内联调试面板；同时保留项目既有的 Added / Removed / Replaced / Updated / Cleared 轻量事件，既有代码零迁移。重度能力（同步视图 / R3 / 环形缓冲 / XAML 绑定等）用上游库。详见[可观察集合](#可观察集合observablecollections-轻量内置子集)
+- **可观察集合（ObservableCollections 轻量内置子集）** — 四种高频集合（List / Dictionary / HashSet / Queue）+ 单轨变更通知 `AddListener`（无变更不通知、批量逐项、Sort / Reverse / Clear 走 Reset、Move 单事件）+ 监听句柄可绑定 Unity 生命周期自动移除 + Odin 内联调试面板。重度能力（同步视图 / R3 / 环形缓冲 / XAML 绑定等）用上游库。详见[可观察集合](#可观察集合observablecollections-轻量内置子集)
 - **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换 Model 的调试模式
 - **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule` 基类，消除代码重复
 - **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，按注册顺序保序
@@ -181,7 +181,7 @@ this.ExecuteCommand<AddScoreCommand>();
 | 示例 | 说明 | 依赖 |
 |------|------|------|
 | `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
-| `ObservableCollections` | 可观察集合用法：轻量事件与 `CollectionChanged` 双轨通知、队列，经 ContextMenu 触发增删改查与集合运算 | 无 |
+| `ObservableCollections` | 可观察集合用法：单轨变更通知、队列，经 ContextMenu 触发增删改查与集合运算 | 无 |
 | `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
 | `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示，开关经设置窗口控制（`Tools → Aesir → Architecture → Samples`） | 无 |
 
@@ -193,23 +193,35 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## 可观察集合（ObservableCollections 轻量内置子集）
 
-> 本模块的 `CollectionChanged` 通知语义与通知载荷结构**移植自** [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT）——按上游代码逻辑改写为本项目命名空间与命名规范，适配 Unity 2022.3（C# 9）。本模块是上游的**高频子集**（面向独立游戏的精简定位），不是全量复刻；完整说明见 [`Documentation/observable-collections.md`](Documentation/observable-collections.md)。
+> 本模块的集合类型命名参考 [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT），便于对照上游文档。本模块是上游的**高频子集**（面向独立游戏的精简定位），不是全量复刻；变更通知为本项目自有约定（单轨事件，**与上游语义不一致**）。完整说明见 [`Documentation/observable-collections.md`](Documentation/observable-collections.md)。
 
-**集合家族**：`ObservableList<T>`、`ObservableDictionary<TKey, TValue>`、`ObservableHashSet<T>`、`ObservableQueue<T>`，统一实现 `IObservableCollection<T>`（`CollectionChanged` + `SyncRoot`）。
+**集合家族**：`ObservableList<T>`、`ObservableDictionary<TKey, TValue>`、`ObservableHashSet<T>`、`ObservableQueue<T>`，统一实现 `IObservableCollection<T>`（`AddListener` / `RemoveListener`）。
 
-**两轨通知**：
+**单轨变更通知**：
 
 ```csharp
-// 轨 1：CollectionChanged（上游语义，每次写操作都通知；批量操作单次通知；Sort/Reverse 走 Reset）
-list.CollectionChanged += (in NotifyCollectionChangedEventArgs<int> e) => { /* e.Action / e.NewItems / e.SortOperation */ };
-
-// 轨 2：轻量事件（项目既有 API，无变化不通知；AddRange 逐项通知）
-list.AddAddedListener(e => { }).Dispose();
+// 单一变更事件（MiniEvent 承载，Invoke 零分配；载荷为普通只读结构体，可存集合）
+var handle = list.AddListener(e =>
+{
+    switch (e.Action)
+    {
+        case NotifyCollectionChangedAction.Add:     // e.NewItem / e.NewStartingIndex
+        case NotifyCollectionChangedAction.Replace: // e.NewItem + e.OldItem（旧值）
+        case NotifyCollectionChangedAction.Reset:   // Clear / Sort / Reverse，按重建视图处理
+            break;
+    }
+});
+handle.Dispose(); // 或绑定 Unity 生命周期自动移除
+list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 ```
 
-**可选增强**：安装 Odin Inspector 后，集合字段在 Inspector 中显示内联摘要（元素数 / 订阅数 / 元素预览）。未安装时该面板不参与编译，纯代码 API 照常可用。
+**通知语义**：无变更的写操作不通知（赋相同值 / Remove 不存在元素 / Clear 空集合）；批量操作逐项通知；字典值更新以 Replace 表达（旧值在 OldItem）；`Move` 为单次 Move 事件。
+
+**可选增强**：安装 Odin Inspector 后，集合字段在 Inspector 中显示内联摘要（元素数 / 变更监听数 / 元素预览）。未安装时该面板不参与编译，纯代码 API 照常可用。
 
 **重度需求用上游**：同步视图与过滤器、R3 响应式集成、环形缓冲区 / 栈 / 交替索引列表、WPF 类平台的 `INotifyCollectionChanged` 绑定、可写视图回写——直接使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（两套体系不混用）。
+
+**可与上游共存**：程序集、UPM 包名与命名空间三层完全隔离，同一项目可同时安装两库（程序集 `ObservableCollections` vs `Runestone.AesirArchitecture`）；同一源文件同时 `using` 两个命名空间并裸引用同名类型（四种集合与三个接口）时会产生 CS0104，用命名空间别名或完全限定名解决。详见 `Documentation/observable-collections.md` 的「与上游共存」。
 
 ## 架构总览
 
@@ -289,7 +301,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent 零分配事件（Invoke 路径） + 自动移除监听触发器
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
-│   │   ├── Observable/            # ObservableValue + 可观察集合（四种集合 / CollectionChanged）
+│   │   ├── Observable/            # ObservableValue + 可观察集合（四种集合 / 单轨变更通知）
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # 框架基础设施
 │   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
@@ -348,7 +360,7 @@ cn.runestone.aesir.architecture/
 - **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
 - **时间调度的完整形态** — `AesirScheduler` 有意收窄为帧粒度的一次性任务（`Delay` / `NextFrame`）：不做取消句柄、暂停/恢复、精确计时、协程等价物；需要完整调度能力时请在业务层使用协程或第三方库
 - **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
-- **集合可观察全家桶** — 内置 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根 `Third Party Notices.md`）的**高频子集**：四种集合 + `CollectionChanged` 全语义。同步视图与过滤器、R3 响应式、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged` 绑定层、可写视图**不做**——需要时直接使用上游库（两套体系不混用，详见 `Documentation/observable-collections.md`）
+- **集合可观察全家桶** — 内置 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根 `Third Party Notices.md`）的**高频子集**：四种集合 + 单轨变更通知。同步视图与过滤器、R3 响应式、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged` 绑定层、可写视图**不做**——需要时直接使用上游库（两套体系不混用，详见 `Documentation/observable-collections.md`）
 - **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
 
 ### 编写约定（违反时 fail-fast 报错，框架不做兜底）

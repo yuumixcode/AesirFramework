@@ -28,7 +28,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
 - **`ObservableValue<T>` reactive property** — Quick tier: Model exposes writable `ObservableValue<T>` directly (presentation writes directly); Standard tier onward: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods; Strict tier: interface registration + Command writes on top
-- **Observable collections (a lean built-in subset of ObservableCollections)** — four high-frequency collections (List / Dictionary / HashSet / Queue), full `CollectionChanged` semantics (Move / Sort / Reverse / range notifications), and an inline Odin debug panel; the existing Added / Removed / Replaced / Updated / Cleared lightweight events are preserved, so existing code needs no migration. For heavy features (synchronized views / R3 / ring buffers / XAML binding) use the upstream library. See [Observable Collections](#observable-collections-a-lean-built-in-subset-of-observablecollections)
+- **Observable collections (a lean built-in subset of ObservableCollections)** — four high-frequency collections (List / Dictionary / HashSet / Queue), a single-track change notification `AddListener` (no-ops stay silent, range operations notify per item, Sort / Reverse / Clear go through Reset, Move is a single event), listener handles that can bind to Unity lifecycle for auto-removal, and an inline Odin debug panel. For heavy features (synchronized views / R3 / ring buffers / XAML binding) use the upstream library. See [Observable Collections](#observable-collections-a-lean-built-in-subset-of-observablecollections)
 - **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
 - **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, preserving registration order
@@ -181,7 +181,7 @@ The package provides 11 importable samples (Package Manager → Aesir Architectu
 | Sample | Description | Dependency |
 |------|------|------|
 | `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
-| `ObservableCollections` | Observable collections: dual-track notifications (lightweight events + `CollectionChanged`), queue, mutations and set operations triggered via ContextMenu | None |
+| `ObservableCollections` | Observable collections: single-track change notifications, queue, mutations and set operations triggered via ContextMenu | None |
 | `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
 | `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); toggles controlled via the settings window (`Tools → Aesir → Architecture → Samples`) | None |
 
@@ -193,23 +193,35 @@ The package provides 11 importable samples (Package Manager → Aesir Architectu
 
 ## Observable Collections (a lean built-in subset of ObservableCollections)
 
-> The `CollectionChanged` semantics and the notification payload shapes are **ported from** [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) — rewritten to this project's namespaces and naming conventions and downgraded to Unity 2022.3 (C# 9). This module is a **high-frequency subset** of upstream (a lean, indie-game-oriented scope), not a full port. Full details live in [`Documentation/observable-collections.md`](observable-collections.md).
+> The collection type names reference [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) so upstream documentation stays easy to compare against. This module is a **high-frequency subset** of upstream (a lean, indie-game-oriented scope), not a full port; the change notification is this project's own convention (a single-track event, **not aligned with upstream semantics**). Full details live in [`Documentation/observable-collections.md`](observable-collections.md).
 
-**Collection family**: `ObservableList<T>`, `ObservableDictionary<TKey, TValue>`, `ObservableHashSet<T>`, `ObservableQueue<T>` — all implementing `IObservableCollection<T>` (`CollectionChanged` + `SyncRoot`).
+**Collection family**: `ObservableList<T>`, `ObservableDictionary<TKey, TValue>`, `ObservableHashSet<T>`, `ObservableQueue<T>` — all implementing `IObservableCollection<T>` (`AddListener` / `RemoveListener`).
 
-**Two notification tracks**:
+**Single-track change notification**:
 
 ```csharp
-// Track 1: CollectionChanged (upstream semantics — every write notifies; range operations notify once; Sort/Reverse go through Reset)
-list.CollectionChanged += (in NotifyCollectionChangedEventArgs<int> e) => { /* e.Action / e.NewItems / e.SortOperation */ };
-
-// Track 2: lightweight events (the project's pre-existing API — no-ops do not notify; AddRange notifies per item)
-list.AddAddedListener(e => { }).Dispose();
+// One change event (carried by MiniEvent — zero allocation on Invoke; the payload is a plain readonly struct you can store anywhere)
+var handle = list.AddListener(e =>
+{
+    switch (e.Action)
+    {
+        case NotifyCollectionChangedAction.Add:     // e.NewItem / e.NewStartingIndex
+        case NotifyCollectionChangedAction.Replace: // e.NewItem + e.OldItem (the old value)
+        case NotifyCollectionChangedAction.Reset:   // Clear / Sort / Reverse — treat as "rebuild the view"
+            break;
+    }
+});
+handle.Dispose(); // or bind to the Unity lifecycle for auto-removal
+list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 ```
 
-**Optional enhancement**: with Odin Inspector installed, collection fields show an inline summary in the Inspector (element count / subscriber count / element preview). Without Odin the panel is excluded from compilation and the plain-code API keeps working.
+**Notification semantics**: no-ops stay silent (same-value assignment / removing a missing item / clearing an empty collection); range operations notify per item; dictionary value updates surface as Replace (old value in OldItem); `Move` is a single Move event.
+
+**Optional enhancement**: with Odin Inspector installed, collection fields show an inline summary in the Inspector (element count / listener count / element preview). Without Odin the panel is excluded from compilation and the plain-code API keeps working.
 
 **Heavy needs go upstream**: synchronized views and filters, R3 reactive integration, ring buffers / stacks / alternate index list, `INotifyCollectionChanged` (WPF-style) binding, writable views — use [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) directly (the two are not meant to be mixed).
+
+**Coexists with upstream**: assembly, UPM package name and namespace are fully isolated on three layers, so both libraries can be installed in the same project (assembly `ObservableCollections` vs `Runestone.AesirArchitecture`); when a single source file `using`s both namespaces and references a same-named type bare (the four collections and three interfaces), CS0104 occurs — resolve with a using alias or full qualification. See "Coexisting with upstream" in `Documentation/observable-collections.md`.
 
 ## Architecture Overview
 
@@ -288,7 +300,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── Event/                 # MiniEvent zero-alloc events (Invoke path) + auto-remove triggers
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy lifecycle proxy
 │   │   ├── Locator/               # GenericLocator type-keyed locator
-│   │   ├── Observable/            # ObservableValue + observable collections (four collections / CollectionChanged)
+│   │   ├── Observable/            # ObservableValue + observable collections (four collections / single-track change notification)
 │   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
 │   ├── Common/                    # Framework infrastructure
 │   │   ├── AesirArchitecture.cs   # Framework MonoBehaviour singleton entry
@@ -347,7 +359,7 @@ cn.runestone.aesir.architecture/
 - **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
 - **Full-featured time scheduling** — `AesirScheduler` is intentionally narrowed to frame-granularity one-shot tasks (`Delay` / `NextFrame`): no cancellation handles, no pause/resume, no precise timing, no coroutine equivalent; use coroutines or third-party libraries at the business layer when you need more
 - **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
-- **Full observable-collection suite** — a **high-frequency subset** of [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see `Third Party Notices.md`) ships in-package: four collections, full `CollectionChanged` semantics. Synchronized views with filters, R3 reactive extensions, ring buffers / stacks / alternate index list, the `INotifyCollectionChanged` binding layer and writable views are **not** provided — use the upstream library for those (the two are not meant to be mixed; see `Documentation/observable-collections.md`)
+- **Full observable-collection suite** — a **high-frequency subset** of [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see `Third Party Notices.md`) ships in-package: four collections with a single-track change notification. Synchronized views with filters, R3 reactive extensions, ring buffers / stacks / alternate index list, the `INotifyCollectionChanged` binding layer and writable views are **not** provided — use the upstream library for those (the two are not meant to be mixed; see `Documentation/observable-collections.md`)
 - **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
 
 ### Coding Conventions (violations fail fast; the framework does not compensate)
