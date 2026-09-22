@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.21.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.21.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.22.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.22.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.21.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.22.0）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.21.0）
+## Aesir Architecture（0.22.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -146,7 +146,7 @@
 
 ---
 
-## Aesir Modules（0.21.0）
+## Aesir Modules（0.22.0）
 
 ### UI 框架
 
@@ -436,7 +436,7 @@ Unity -batchmode -projectPath . -testPlatform editmode -runTests \
 ### 分支策略
 
 - `main` — 开发主线
-- 版本分支 `AesirArchitecture-v0.21.0` / `AesirModules-v0.21.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
+- 版本分支 `AesirArchitecture-v0.22.0` / `AesirModules-v0.22.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
 
 ---
 
@@ -574,7 +574,8 @@ undefined
 - [2026-09-21 19:41:13] 可观察集合测试现状与已知仓库不一致（2026-09-21，commit 82df5f8）：①删除上游移植测试后发现 `CollectionChanged` 此前**零覆盖**——旧 ObservableListParityTests 只通过视图间接断言列表内容、从未断言事件；已补 `ObservableCollectionChangedTests`（18 用例；载荷是 `readonly ref struct` 无法存进集合，用嵌套 `Capture<T>` 就地抄录字段）+ `ObservableListParityTests` 改为与 BCL `ObservableCollection<T>` 逐项对齐（Range 操作逐项施加同一变更后比对）。②验证基线：refresh 0 错 0 警、EditMode 629 passed / 0 failed / 2 skipped。③已知未修不一致：`Samples/ObservableCollections` 与 `Samples~/ObservableCollections` 历史漂移——场景文件（Samples~ 版无 Camera、fileID 不同）与 ObservableDictionarySample / ObservableHashSetSample（`var` vs 显式类型、换行差异）不一致，且两份都已提交入库。**How to apply:** 改集合语义时以上述两个测试文件为回归基线、新增集合沿用 `Capture<T>` 模式；做 sync-samples 前先决定以哪份示例为准。
 - [2026-09-22 10:23:48] 【覆盖 19:41:13 条目的第③点「已知未修不一致」——该漂移已修复】Samples 与 Samples~ 已全量统一（commit d203755，2026-09-21，未推送）：两包逐字节一致；补齐 Samples~ 顶层 12 个目录级 .meta（0.14.0 起遗漏）；package.json 15 条 samples 清单与两处目录一一对应。**统一流程**：逐文件 diff 判断方向（**不要凭「主位为准」硬覆盖**——本次发现主位反而是错的一侧）→ 对每个示例目录 `rsync -a --delete Samples/X/ Samples~/X/` → 补齐 `Samples/*.meta` 到 `Samples~/*.meta`。**两处历史回退已修正**：①`9188839` 把 AesirModules 的 3 个 BinderTag + `MenuProbe` 探针对象 + HUD 上的 BinderCodeGenerator（TargetNamespace=Game / ScriptName=HUDPanel）污染写进 PlaneWar 场景——Architecture 无 Modules 依赖，独立安装时这些组件是 Missing Script；②`4bbe260` 把 PlaneWar GameManager 的 `int _score` / `bool _isGameOver` 改回自动属性（违反「MonoBehaviour 运行状态字段一律用显式非序列化字段」铁律）。另：GraphicRaycaster Blocking Mask 在本仓示例场景的惯例值是 `m_Bits: 55`（非默认 4294967295）；`.codely-cli/skills/sync-samples/` 技能内容已过时（仍指向已删除的 `Assets/Samples`）。**How to apply:** 后续示例改动照上述流程；PlaneWar 场景再出现 BinderTag / BinderCodeGenerator / MenuProbe 即为污染；验证基线 refresh 0 错 0 警 + EditMode 629/0/2 + PlaneWar 运行时冒烟（4s 敌机 5/子弹 5、10s 得分 710）。
 - [2026-09-22 10:46:19] 可观察集合去锁定稿（2026-09-22 用户裁决「只删锁 + SyncRoot 一并删除」，工作树未提交）：4 个集合共 51 处 `lock (SyncRoot)` 与 `IObservableCollection<T>.SyncRoot` 成员全删（含 ObservableQueue.GetEnumerator 把 yield return 包在 lock 内的写法）。理由：Monitor 同线程可重入，Unity 主线程模型下对正确性零贡献，只增加读写开销与每实例一个 object 分配；原实现只有 Count/索引器加锁，Contains/IndexOf/CopyTo/枚举器全裸，属半吊子加锁、制造线程安全错觉。文档口径改为「集合内部不加锁，仅约定主线程使用」（observable-collections.md 差异表新增「线程同步」行 + 注意事项改写；中英 README 的 `CollectionChanged` + `SyncRoot` 同步去掉）。**双轨通知（CollectionChanged + 轻量事件）本次保留**——用户只选了删锁，收敛单轨未做。验证基线：refresh 0 错 0 警；RAA Editor 程序集 168 passed/0 failed；6 个 Observable* 夹具 62 passed/0 failed。**Why:** 用户以「精简、减少学习负担」为标准否决单线程下无收益的防御性代码。**How to apply:** 后续不要再给集合加回内部锁；若继续精简，待用户决定是否收敛为单轨 CollectionChanged（影响 5 个 MiniEvent 字段、CollectionEventArgs.cs 136 行、32 处测试引用、15 处示例/文档引用）。
-- [2026-09-22 13:00:39] [project] 可观察集合已收敛为单轨通知（2026-09-22，覆盖 2026-09-21 18:29:16/19:41:07 条目的「双轨通知」裁决、2026-09-22 10:46:19 条目的「待用户决定是否收敛」）：用户裁决「融合两个事件轨道，不要求与上游一致，既有 API 可改」。最终形态：①订阅面 = IObservableCollection<T>.AddListener/RemoveListener（MiniEvent<CollectionChangedEventArgs<T>> 承载，返回 AutoRemoveListenerHandle，支持 using/Dispose/RemoveListenerExtensions 生命周期绑定——这是合并动机：原生 event 订阅接不了 RemoveListenerWhenGameObjectOnDisable）；②载荷 = 普通只读结构体 CollectionChangedEventArgs<T>（Action/NewItem/OldItem/NewStartingIndex/OldStartingIndex + Add/Remove/Replace/Move/Reset 工厂；原 NotifyCollectionChangedEventArgs.cs 文件改名保 GUID），字典 T=KeyValuePair；③语义 = 无变更不通知（赋相同值/Remove 缺失/Clear 空集合/HashSet 加重复）、批量操作逐项通知（AddRange/InsertRange/RemoveRange/集合代数）、字典值更新为 Replace（旧值在 OldItem）、Move 单次事件、Sort/Reverse/Clear 统一 Reset（List 的 <2 元素重排不通知）、无索引集合索引 -1、写后通知 fail-fast。**删除**：CollectionEventArgs.cs（4 个轻量载荷）、NotifyCollectionChangedEventHandler<T>、SortOperation<T>+哨兵、全部 AddXxxListener/RemoveXxxListener 方法、ResizableArray.cs（逐项化后无消费者；TryGetNonEnumeratedCount 因 CloneCollection 仍用而保留）；Odin 工具收敛为 GetChangedListenerCount 读 _changedEvent 字段。**Why:** 双轨要记两套语义、文档打补丁、每个写操作双分发；原生 event + ref struct 载荷与 MiniEvent 承载互斥。**How to apply:** 后续集合改动以 Documentation/observable-collections.md 单轨语义节为权威口径；文档（observable-collections.md/中英 README/CHANGELOG [Unreleased] Removed 节/CODELY.md 正文三处）与 Samples~ 均已同步（sync-samples 无漂移）；验证基线 refresh 0 错 0 警 + RAA Editor EditMode 186/186 + Play 冒烟（Add/Move/赋相同值静默/Sort+Clear→Reset 全对，经自动移除句柄订阅）；工作树未提交（与同日删锁改动同存）。实测坑：①TestRunnerApi.Execute 返回 executionId 字符串（非 bool）——非空即已启动，误判失败会提前退订回调收不到结果；ITestResultAdactor 无 TestCaseCount（Pass+Fail+Skip+Inconclusive 求和），ResultState 是字符串非枚举；②ObservableList.Clear 不可复用 NotifyReset 的 Count<2 守卫（清空后 Count=0 恒静默）——Clear 必须判空后直发 Reset，该 bug 曾致 2 用例失败。
+- [2026-09-22 16:00:15] [project] 可观察集合已收敛为单轨通知（2026-09-22，覆盖 2026-09-21 18:29:16/19:41:07 条目的「双轨通知」裁决、2026-09-22 10:46:19 条目的「待用户决定是否收敛」）：用户裁决「融合两个事件轨道，不要求与上游一致，既有 API 可改」。最终形态：①订阅面 = IObservableCollection<T>.AddListener/RemoveListener（MiniEvent<CollectionChangedEventArgs<T>> 承载，返回 AutoRemoveListenerHandle，支持 using/Dispose/RemoveListenerExtensions 生命周期绑定——这是合并动机：原生 event 订阅接不了 RemoveListenerWhenGameObjectOnDisable）；②载荷 = 普通只读结构体 CollectionChangedEventArgs<T>（Action/NewItem/OldItem/NewStartingIndex/OldStartingIndex + Add/Remove/Replace/Move/Reset 工厂；原 NotifyCollectionChangedEventArgs.cs 文件改名保 GUID），字典 T=KeyValuePair；③语义 = 无变更不通知（赋相同值/Remove 缺失/Clear 空集合/HashSet 加重复）、批量操作逐项通知（AddRange/InsertRange/RemoveRange/集合代数）、字典值更新为 Replace（旧值在 OldItem）、Move 单次事件、Sort/Reverse/Clear 统一 Reset（List 的 <2 元素重排不通知）、无索引集合索引 -1、写后通知 fail-fast。**删除**：CollectionEventArgs.cs（4 个轻量载荷）、NotifyCollectionChangedEventHandler<T>、SortOperation<T>+哨兵、全部 AddXxxListener/RemoveXxxListener 方法、ResizableArray.cs（逐项化后无消费者；TryGetNonEnumeratedCount 因 CloneCollection 仍用而保留）；Odin 工具收敛为 GetChangedListenerCount 读 _changedEvent 字段。**Why:** 双轨要记两套语义、文档打补丁、每个写操作双分发；原生 event + ref struct 载荷与 MiniEvent 承载互斥。**How to apply:** 后续集合改动以 Documentation/observable-collections.md 单轨语义节为权威口径；文档（observable-collections.md/中英 README/CHANGELOG [Unreleased] Removed 节/CODELY.md 正文三处）与 Samples~ 均已同步（sync-samples 无漂移）；验证基线 refresh 0 错 0 警 + RAA Editor EditMode 186/186 + Play 冒烟（Add/Move/赋相同值静默/Sort+Clear→Reset 全对，经自动移除句柄订阅）。**共存核查结论（2026-09-22，对照上游 3.3.4 源码）**：可共存、命名无需改动——7 个跨库同名公开类型（四集合 + IObservableCollection<T> + IReadOnlyObservableList/Dictionary）全部被命名空间隔离（ObservableCollections vs Runestone.AesirArchitecture），程序集/UPM 包名亦不同；上游 Shims/CollectionExtensions（AddRange(ReadOnlySpan)/TryGetNonEnumeratedCount）与双方 CloneCollection<T> 均 internal 跨程序集不可见；NotifyCollectionChangedAction 是双方共享的 BCL 枚举；唯一文档化风险 = 同文件双 using 裸引用同名类型的 CS0104（用别名解决），已写入 observable-collections.md「与上游共存」节 + 中英 README。**提交状态**：主仓本地提交 d6b702e（36 文件，未推送，含同日删锁改动）；文档站四页（observable/modules/features/samples）单轨口径+共存说明已推送 c80384c（zeriying 身份，zensical build --strict 通过）。实测坑：①TestRunnerApi.Execute 返回 executionId 字符串（非 bool）——非空即已启动，误判失败会提前退订回调收不到结果；ITestResultAdaptor 无 TestCaseCount（Pass+Fail+Skip+Inconclusive 求和），ResultState 是字符串非枚举；②ObservableList.Clear 不可复用 NotifyReset 的 Count<2 守卫（清空后 Count=0 恒静默）——Clear 必须判空后直发 Reset，该 bug 曾致 2 用例失败。
+- [2026-09-22 16:42:22] [project] 文档站新增可观察集合专页（2026-09-22，commit 28d655d 已推送）：docs/architecture/observable-collections.md——集合家族表（Link 到 scripting-api 既有页；ObservableQueue 无 API 页不挂链接）、单轨变更通知（Action 载荷表 + 语义要点）、句柄生命周期（using/Dispose/Unity 生命周期三方式）、设计边界（不加锁/重入/批量收敛/Odin 可选）、与上游的关系 {#upstream}（需求对照 + 共存保证 + CS0104 别名）；observable.md 集合节瘦身为摘要+跳转、modules.md 尾部链接改指专页、index.md 继续阅读加行、zensical.toml nav 在「响应式与事件」后加「可观察集合」条目。**同步清理 4 个已删类型的 API 页**（CollectionAddEventArgs/CollectionRemoveEventArgs/CollectionReplaceEventArgs/DictionaryUpdateEventArgs 的 .md + nav 行 + scripting-api/index.md 行）——下次 Unity 会话重生成 Scripting API 时需注意：ObservableQueue/ObservableHashSet 的 IReadOnly 侧等 0.21.0 后新类型仍缺页，CollectionChangedEventArgs<T> 是新类型也无页，届时按 2026-09-11 17:08 条目的索引/导航生成规则补齐；现存 ObservableList{T}.md 等页面内容仍是轻量事件旧口径（生成器只产结构不改旧叙述），重生成前站内以 observable-collections.md 为权威。**Why:** 用户要求为文档站补充 Observable Collections 文档；死类型页会误导读者。**How to apply:** 文档站新增页三件套=md+nav+index 继续阅读行；页内锚点一律英文 {#id}（中文 slugify 坑再次踩实：build --strict 会拦）。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
