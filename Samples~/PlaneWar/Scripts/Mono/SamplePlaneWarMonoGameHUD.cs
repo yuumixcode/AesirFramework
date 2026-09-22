@@ -22,7 +22,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         /// </summary>
         static readonly string[] FontCandidates =
         {
-            "Microsoft YaHei",  // Windows 简体中文
+            "Microsoft YaHei", // Windows 简体中文
             "Microsoft YaHei UI",
             "PingFang SC",      // macOS 简体中文
             "Noto Sans CJK SC", // Linux / 跨平台
@@ -78,8 +78,8 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         /// </summary>
         static Font CreateSystemFont()
         {
-            string[] available = Font.GetOSInstalledFontNames();
-            foreach (string candidate in FontCandidates)
+            var available = Font.GetOSInstalledFontNames();
+            foreach (var candidate in FontCandidates)
             {
                 if (Array.Exists(available,
                         name => string.Equals(name, candidate, StringComparison.OrdinalIgnoreCase)))

@@ -25,14 +25,14 @@ namespace Runestone.AesirArchitecture.Samples.MvpStrict
     public sealed class SampleMvpStrictCounterPresenter : ISampleMvpStrictCounterPresenter,
         IPresenter<SampleMvpStrictCounterContext>
     {
-        readonly ISampleMvpStrictCounterView _view;
-
         /// <summary>
         /// 缓存的读值查询实例。Query 无内部状态（每次执行经 Context 重新取 Model），
         /// 实例可跨调用复用——<c>ExecuteQuery</c> 带实例重载不分配新实例，
         /// 每次按钮回调的"写后读"路径亦无查询分配。
         /// </summary>
         readonly GetCounterValueQuery _getCounterValueQuery = new GetCounterValueQuery();
+
+        readonly ISampleMvpStrictCounterView _view;
 
         /// <summary>
         /// 创建 Presenter 并订阅 View 的用户输入事件。
