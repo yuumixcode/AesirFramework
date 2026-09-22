@@ -51,7 +51,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
                 return;
             }
 
-            if (other.TryGetComponent<SamplePlaneWarMonoPlayer>(out SamplePlaneWarMonoPlayer player))
+            if (other.TryGetComponent(out SamplePlaneWarMonoPlayer player))
             {
                 Destroy(player.gameObject);
                 SamplePlaneWarMonoGameManager.Instance.SetGameOver();

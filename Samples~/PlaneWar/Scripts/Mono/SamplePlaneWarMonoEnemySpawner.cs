@@ -67,8 +67,8 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
 
         void Spawn()
         {
-            SamplePlaneWarMonoEnemy prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
-            float x = Random.Range(-spawnHalfWidth, spawnHalfWidth);
+            var prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+            var x = Random.Range(-spawnHalfWidth, spawnHalfWidth);
             Instantiate(prefab, new Vector3(x, spawnY, 0f), Quaternion.identity);
         }
     }

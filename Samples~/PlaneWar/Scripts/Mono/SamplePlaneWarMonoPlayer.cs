@@ -62,12 +62,10 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         void Move()
         {
             // 归一化保证斜向移动不快于正向
-            Vector3 direction = new Vector3(
-                Input.GetAxisRaw("Horizontal"),
-                Input.GetAxisRaw("Vertical"),
-                0f).normalized;
+            var direction = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), 0f)
+                .normalized;
 
-            Vector3 position = transform.position + direction * (moveSpeed * Time.deltaTime);
+            var position = transform.position + direction * (moveSpeed * Time.deltaTime);
             position.x = Mathf.Clamp(position.x, -moveBounds.x, moveBounds.x);
             position.y = Mathf.Clamp(position.y, -moveBounds.y, moveBounds.y);
             transform.position = position;
