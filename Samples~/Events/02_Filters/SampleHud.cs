@@ -1,4 +1,5 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,11 +15,11 @@ namespace Runestone.AesirModules.Samples.Events.Filters
     {
         const int MaxLines = 12;
 
-        /// <summary>全局单例入口（场景中预放置一个即可）。</summary>
-        public static SampleHud Instance { get; private set; }
-
         readonly Queue<string> _lines = new Queue<string>(MaxLines);
         Text _text;
+
+        /// <summary>全局单例入口（场景中预放置一个即可）。</summary>
+        public static SampleHud Instance { get; private set; }
 
         void Awake()
         {
@@ -34,8 +35,7 @@ namespace Runestone.AesirModules.Samples.Events.Filters
             canvasGo.transform.SetParent(transform, false);
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvasGo.AddComponent<UnityEngine.UI.CanvasScaler>().uiScaleMode =
-                CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            canvasGo.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
 
             var textGo = new GameObject("LogText");
             textGo.transform.SetParent(canvasGo.transform, false);
@@ -97,7 +97,7 @@ namespace Runestone.AesirModules.Samples.Events.Filters
             {
                 foreach (var installedName in installedFonts)
                 {
-                    if (installedName.IndexOf(candidate, System.StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (installedName.IndexOf(candidate, StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         return Font.CreateDynamicFontFromOSFont(installedName, 22);
                     }
