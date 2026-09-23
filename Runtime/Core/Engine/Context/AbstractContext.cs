@@ -132,7 +132,7 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 注销 Model：按类型键摘除注册并释放被摘除的实例。
+        /// 注销 Model：按类型键摘除注册并释放被摘除的实例（测试/调试用途，收窄为 internal）。
         /// </summary>
         /// <typeparam name="TModel">要注销的 Model 类型，必须与注册时的类型参数一致</typeparam>
         /// <remarks>
@@ -140,7 +140,7 @@ namespace Runestone.AesirArchitecture
         /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
         /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
         /// </remarks>
-        public void UnregisterModel<TModel>() where TModel : class, IModel
+        internal void UnregisterModel<TModel>() where TModel : class, IModel
         {
             if (_modelLocator.TryGet<TModel>(out var existing))
             {
@@ -179,7 +179,7 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 注销 Service：按类型键摘除注册并释放被摘除的实例。
+        /// 注销 Service：按类型键摘除注册并释放被摘除的实例（测试/调试用途，收窄为 internal）。
         /// </summary>
         /// <typeparam name="TService">要注销的 Service 类型，必须与注册时的类型参数一致</typeparam>
         /// <remarks>
@@ -187,7 +187,7 @@ namespace Runestone.AesirArchitecture
         /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
         /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
         /// </remarks>
-        public void UnregisterService<TService>() where TService : class, IService
+        internal void UnregisterService<TService>() where TService : class, IService
         {
             if (_serviceLocator.TryGet<TService>(out var existing))
             {
@@ -289,13 +289,13 @@ namespace Runestone.AesirArchitecture
         /// 获取所有已注册的 Model 列表
         /// </summary>
         /// <returns>所有已注册 Model 实例的集合；若无注册则返回空集合</returns>
-        public IEnumerable<IModel> GetAllModels() => _modelLocator.GetAll();
+        internal IEnumerable<IModel> GetAllModels() => _modelLocator.GetAll();
 
         /// <summary>
         /// 获取所有已注册的 Service 列表
         /// </summary>
         /// <returns>所有已注册 Service 实例的集合；若无注册则返回空集合</returns>
-        public IEnumerable<IService> GetAllServices() => _serviceLocator.GetAll();
+        internal IEnumerable<IService> GetAllServices() => _serviceLocator.GetAll();
 
         /// <summary>
         /// 动态替换已注册模块时输出 Warning，提醒事件订阅关系不会自动迁移。
