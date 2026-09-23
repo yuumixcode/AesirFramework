@@ -5,6 +5,52 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+> 本批为第二轮全仓锐评（`Docs/AesirFramework/全仓锐评/04/05`）修复与极简收敛批次，
+> 含破坏性变更（见 Removed / Renamed 节），发版时应 bump minor（0.23.0）。
+
+### Added
+
+- **`ObservableQueue<T>` 专属测试** — `Tests/Editor/ObservableQueueTests.cs`（8 用例：入队 Add 队尾索引 / 出队 Remove 索引 0 / 空队列静默 / Clear 语义 / DequeueRange 半程状态 / 构造 null 容忍 / 枚举器按序与版本检查 / 句柄与 ClearListeners），补齐四集合专属测试的最后缺口
+- **AesirScheduler NaN 用例** — `Delay(float.NaN)` 任务永不到期（DueTime 传播 NaN，任何模拟时间都不满足到期比较），锁定「不设防、永不触发」契约
+
+### Changed
+
+- **AesirScheduler：NaN 延时语义与文档对齐** — `DueTime = Time.time + Math.Max(seconds, 0f)`：NaN 原样传播即永不到期（此前 `seconds > 0f ? seconds : 0f` 会把 NaN 折叠为 0，任务下一帧就触发，与 XML 文档「永不触发」相反）
+- **`ObservableList<T>.Move` 同索引零变化不通知** — `oldIndex == newIndex` 早退，对齐「无变更的操作不通知」口径
+- **`MiniEvent` / `MiniEvent<T>`：`AddListener` null 守卫** — null 监听者按框架约定抛 `ArgumentNullException`（与 `AesirScheduler` / `AesirArchitecturePlayerLoop` 的回调入口一致）
+- **`ObservableQueue<T>` 结构补齐对齐其余三集合** — `sealed` + `[Serializable]`、`IEnumerable` 构造对 null 容忍为空集合、结构体枚举器（替换 yield 迭代器，foreach 具体类型零分配）补全 XML 注释；移除该文件独有的 `#nullable enable` 对齐家族风格
+- **文档方向性失实修正** — 根 `README.md` / `README_EN.md`「核心机制速览」与 `Documentation/设计变更记录.md` 中三处仍描述 0.21 双轨事件形态（宣称已删除的轻量事件「保留、零迁移」）的段落改写为单轨口径；`设计变更记录.md` 补记第 11 条「可观察集合双轨事件体系（0.22.0 收敛单轨）」
+
+### Fixed
+
+- **`Tests/Editor` asmdef 笔误** — `allowAnyCode` 更正为 `allowUnsafeCode`（无效字段被 Unity 忽略，行为恰好无害，属笔误修正）
+
+### Removed（破坏性变更）
+
+> 本节为「Aesir Architecture 保持极简」定位裁决（2026-09-23）的收敛落地：低频公开面移除并引导上游，调试/测试专用面收窄 internal（经 `InternalsVisibleTo` 对测试程序集保持可见）。
+
+- **`ObservableHashSet<T>` 集合代数全套（10 方法）** — `UnionWith` / `ExceptWith` / `IntersectWith` / `SymmetricExceptWith` / `IsSubsetOf` / `IsProperSubsetOf` / `IsSupersetOf` / `IsProperSupersetOf` / `Overlaps` / `SetEquals`；`IObservableHashSet<T>` 不再继承 `ISet<T>`（改为 `ICollection<T>`，写侧契约不变）。集合代数对独立游戏属低频能力，需要时使用内部 `HashSet<T>` 或上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- **`ObservableList<T>` 区间重载** — `Sort(int index, int count, IComparer<T>)` / `Reverse(int index, int count)`（整表 `Sort()` / `Sort(IComparer<T>)` / `Reverse()` 保留）
+- **`ReadOnlySpan<T>` 批量重载** — `ObservableList.AddRange(ReadOnlySpan<T>)` / `InsertRange(int, ReadOnlySpan<T>)`、`ObservableHashSet.AddRange(ReadOnlySpan<T>)` / `RemoveRange(ReadOnlySpan<T>)`、`ObservableQueue.EnqueueRange(ReadOnlySpan<T>)`（Span 是库作者面，`T[]` 与 `IEnumerable<T>` 双轨保留）；HashSet 的 `T[]` 批量方法顺带补 null 守卫（与序列重载的 `ArgumentNullException` 语义一致）
+- **构造器收敛** — `ObservableDictionary` 移除 `ObservableDictionary(int capacity)` / `(int capacity, IEqualityComparer<TKey>)` / `(IEnumerable<KeyValuePair<TKey,TValue>>, IEqualityComparer<TKey>)`（保留 默认 / 初始键值 / 键比较器 三个）；`ObservableHashSet` 移除 `(int capacity, IEqualityComparer<T>)` / `(IEnumerable<T>, IEqualityComparer<T>)`（保留 默认 / 初始元素 / 比较器 三个）
+- **`ObservableValue<T>.SetValue(T)` 别名** — 与 `Value` setter 完全同义，两个名字做一件事徒增概念负担；`IObservableValue<T>` 接口成员同步删除
+- **调试 / 测试专用面收窄 internal**（消费者不可见，测试程序集经 `InternalsVisibleTo` 照常使用）：
+  - `IContext` 删除 `UnregisterModel` / `UnregisterService` / `GetAllModels` / `GetAllServices` 四成员；`AbstractContext<T>` 对应方法收窄 internal
+  - `IGenericLocator<T>` 删除 `IsRegistered` / `Clear` / `GetByType` / `GetAllEntries` 四成员；`GenericLocator<T>` 对应实现收窄 internal
+  - `MiniEvent.GetListeners()` / `MiniEvent<T>.GetListeners()` 收窄 internal（Odin 内联调试面板经反射读取已同步适配 NonPublic）
+  - `AesirArchitecturePlayerLoop.Reset()` / `GetHookCount()`、`PlayerLoopUtility.GetCurrentPlayerLoopDescription()` 收窄 internal
+- **`Tests/Editor/ObservableHashSetTests` 集合代数用例随删**（6 用例）；`ObservableDictionaryTests` 容量构造用例随删
+
+### Renamed（破坏性变更）
+
+- **`ObservableValue<T>.Clear()` → `ClearListeners()`** — 命名对齐可观察集合家族：`Clear` 在集合上清元素、在 Value 上清监听者，同名分裂语义易误读
+
+### 明确不做（引导上游）
+
+- `ObservableHashSet<T>` 集合代数（并 / 交 / 差 / 子集判定）——低频，直接使用内部 `HashSet<T>` 或上游 Cysharp.ObservableCollections
+
 ## [0.22.0] - 2026-09-22
 
 ### Added
