@@ -139,21 +139,6 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 批量添加元素（只读跨度重载），逐项触发 Add 通知。
-        /// </summary>
-        /// <param name="itemsToAdd">要添加的元素只读跨度。</param>
-        public void AddRange(ReadOnlySpan<T> itemsToAdd)
-        {
-            var index = items.Count;
-            foreach (var item in itemsToAdd)
-            {
-                items.Add(item);
-            }
-
-            NotifyAddedRange(itemsToAdd, index);
-        }
-
-        /// <summary>
         /// 批量添加元素。逐项添加并逐项触发 Add 通知。
         /// </summary>
         /// <param name="itemsToAdd">要添加的元素序列。</param>
@@ -226,22 +211,6 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 在指定索引插入元素（只读跨度重载），逐项触发 Add 通知。
-        /// </summary>
-        /// <param name="index">插入位置索引。</param>
-        /// <param name="itemsToInsert">要插入的元素只读跨度。</param>
-        public void InsertRange(int index, ReadOnlySpan<T> itemsToInsert)
-        {
-            var cursor = index;
-            foreach (var item in itemsToInsert)
-            {
-                items.Insert(cursor++, item);
-            }
-
-            NotifyAddedRange(itemsToInsert, index);
-        }
-
-        /// <summary>
         /// 移除第一个匹配元素，成功时触发 Remove 通知。
         /// </summary>
         /// <param name="item">要移除的元素。</param>
@@ -299,6 +268,12 @@ namespace Runestone.AesirArchitecture
         /// <param name="newIndex">目标索引。</param>
         public void Move(int oldIndex, int newIndex)
         {
+            // 同索引为零变化操作，不通知（与「无变更的操作不通知」口径一致）
+            if (oldIndex == newIndex)
+            {
+                return;
+            }
+
             var movedItem = items[oldIndex];
             items.RemoveAt(oldIndex);
             items.Insert(newIndex, movedItem);
@@ -325,34 +300,11 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 对指定区间排序，以 Reset 通知（区间少于 2 个元素时排序无变化，不通知）。
-        /// </summary>
-        /// <param name="index">区间起始索引。</param>
-        /// <param name="count">区间长度。</param>
-        /// <param name="comparer">元素比较器。</param>
-        public void Sort(int index, int count, IComparer<T> comparer)
-        {
-            items.Sort(index, count, comparer);
-            NotifyReset();
-        }
-
-        /// <summary>
         /// 反转全表，以 Reset 通知（少于 2 个元素时反转无变化，不通知）。
         /// </summary>
         public void Reverse()
         {
             items.Reverse();
-            NotifyReset();
-        }
-
-        /// <summary>
-        /// 反转指定区间，以 Reset 通知（区间少于 2 个元素时反转无变化，不通知）。
-        /// </summary>
-        /// <param name="index">区间起始索引。</param>
-        /// <param name="count">区间长度。</param>
-        public void Reverse(int index, int count)
-        {
-            items.Reverse(index, count);
             NotifyReset();
         }
 

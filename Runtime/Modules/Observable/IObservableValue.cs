@@ -30,11 +30,5 @@ namespace Runestone.AesirArchitecture
         /// <param name="value">要设置的新值。</param>
         /// <remarks>不触发任何变更通知。适用于反序列化或批量更新场景——先静默设值，再统一调用 <see cref="InvokeEvent" /> 触发通知，避免中间状态触发多次回调。</remarks>
         void SetValueSilently(T value);
-
-        /// <summary>
-        /// 设置值。语义等价于 <see cref="Value" /> 的 setter，便于以方法形式调用。
-        /// </summary>
-        /// <param name="value">要设置的新值。</param>
-        void SetValue(T value);
     }
 }
