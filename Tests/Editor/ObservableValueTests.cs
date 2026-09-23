@@ -126,10 +126,10 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreEqual(1, count, "句柄 Dispose 后不应再收到通知");
 
             observable.AddListener(Callback);
-            observable.Clear();
+            observable.ClearListeners();
             observable.Value = 3;
-            Assert.AreEqual(1, count, "Clear 清空所有监听后不应再收到通知");
-            AesirArchitectureDebug.LogTestInfo("RemoveListener/Clear: 正确停止通知");
+            Assert.AreEqual(1, count, "ClearListeners 清空所有监听后不应再收到通知");
+            AesirArchitectureDebug.LogTestInfo("RemoveListener/ClearListeners: 正确停止通知");
         }
 
         /// <summary>

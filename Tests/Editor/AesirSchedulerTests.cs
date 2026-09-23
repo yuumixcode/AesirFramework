@@ -61,6 +61,23 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
+        /// 验证：NaN 延时不设防且<b>永不回落为下一帧触发</b>——DueTime 传播 NaN，
+        /// 任何 currentTime 的 <c>&lt;=</c> 比较为 false，任务永不到期（与 XML 文档一致）。
+        /// </summary>
+        [Test]
+        public void Delay_NaN_NeverFires_EvenAtMaxTime()
+        {
+            var fired = 0;
+            AesirScheduler.Delay(float.NaN, () => fired++);
+            Assert.AreEqual(1, AesirScheduler.PendingCount, "NaN 任务应正常入队");
+
+            AesirScheduler.Tick(Time.time, Time.frameCount + 1);
+            AesirScheduler.Tick(float.MaxValue, Time.frameCount + 1000);
+            Assert.AreEqual(1, AesirScheduler.PendingCount, "NaN 的 DueTime 永不满足到期比较，任务应留在队列");
+            Assert.AreEqual(0, fired, "NaN 任务在任何模拟时间下都不应触发");
+        }
+
+        /// <summary>
         /// 验证：帧号推进且时间到达后任务触发一次，后续帧不重复触发。
         /// </summary>
         [Test]
