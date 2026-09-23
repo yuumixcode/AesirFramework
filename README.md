@@ -184,18 +184,37 @@ https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModu
 
 > 选一个你感兴趣的子包深入看，下面只是"嗅觉测试"。
 
-### Aesir Architecture — 3 行起一个 Context
+### 5 分钟跑通第一个示例（第一次接触从这里开始）
+
+1. 装包后打开 **Package Manager → Aesir Architecture → Samples → 导入 Counter-Mvc-Quick**（第一课，快捷档）
+2. 打开 `Samples/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity`
+3. 按 **Play**，点面板上的按钮——数字变化就是框架的完整闭环：View 点击 → Controller 写 Model → `ObservableValue` 通知 → View 刷新
+
+### Aesir Architecture — 最小五概念（其余概念用到再学）
+
+跑通第一个示例只需要这五个概念：
+
+| 概念 | 一句话 |
+|------|--------|
+| **Context** | 模块容器——`Configure()` 里注册 Model / Service，`Instance` 全局访问 |
+| **Model** | 数据层——持有 `ObservableValue`（响应式属性），只能被写入命令修改 |
+| **ObservableValue** | 值变了自动通知订阅者的属性（View 只读订阅） |
+| **View** | MonoBehaviour 面板——订阅 Model 刷新显示 |
+| **Controller** | 业务入口——`ExecuteCommand` 写 Model |
 
 ```csharp
 using Runestone.AesirArchitecture;
 
+// 第一课（快捷档）：具体类直接注册，最少概念跑通数据流
 public class CounterContext : AbstractContext<CounterContext>
 {
-    protected override void Configure() => RegisterModel<ICounterModel>(new CounterModel());
+    protected override void Configure() => RegisterModel(new CounterModel());
 }
 ```
 
-View 订阅刷新、Controller 发布 Command 的完整三课路径，见包内 README 与 6 个计数器示例（Package Manager → Samples）。
+标准档（Model 只读暴露 + 写方法）与严格档（接口注册 + Command 写 + Query 读）逐课递进，见包内 README 与 6 个计数器示例（Package Manager → Samples）——View 与 Controller 的分层、每档只加一个新概念，课与课之间可直接对照源码。
+
+> **注意**：示例脚本整体包在 `#if UNITY_EDITOR` 内（编辑器内正常编译运行，玩家构建自动剔除）——请勿把示例脚本抄进运行时程序集。
 
 完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md)（English）。
 
