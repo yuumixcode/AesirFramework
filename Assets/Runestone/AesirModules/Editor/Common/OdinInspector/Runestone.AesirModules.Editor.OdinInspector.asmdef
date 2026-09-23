@@ -15,8 +15,7 @@
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [
-    "ODIN_INSPECTOR",
-    "AESIR_ARCHITECTURE"
+    "ODIN_INSPECTOR"
   ],
   "versionDefines": [],
   "noEngineReferences": false
