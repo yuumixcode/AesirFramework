@@ -290,7 +290,8 @@ namespace Runestone.AesirModules
         {
             if (_instance != null && _instance != this)
             {
-                Destroy(gameObject);
+                // 重复实例只销毁自身组件，避免连带销毁宿主整树（对齐 RAA 先例）
+                Destroy(this);
                 return;
             }
 

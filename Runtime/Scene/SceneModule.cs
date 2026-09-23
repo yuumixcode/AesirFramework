@@ -68,6 +68,13 @@ namespace Runestone.AesirModules
         readonly List<string> _unloadSnapshotBuffer = new List<string>();
 
         /// <summary>
+        /// 批量卸载重入深度。<see cref="SceneUnloadedEvent" /> 的监听者回调内再调 UnloadAllAddedScenes 时，
+        /// 内层改用局部快照迭代——复用缓冲是单实例资源，两层协程共用同一 List 会让内层 finally Clear
+        /// 清空外层正在迭代的列表（外层提前退出、剩余场景漏卸而 onAllUnloaded 仍误报完成）。
+        /// </summary>
+        int _unloadDepth;
+
+        /// <summary>
         /// 启动场景引用（编辑器 BootstrapSceneHelper 的工作流之外，供用户代码读取路径/名称自行编排启动流程）。
         /// </summary>
         public SceneAssetWrapper BootstrapSceneAssetWrapper => bootstrapScene;
@@ -435,12 +442,14 @@ namespace Runestone.AesirModules
 
         IEnumerator UnloadAllAddedScenesInternal(Action onAllUnloaded)
         {
-            // 遍历快照：广播期间监听者可能嵌套加载/卸载（修改 _addedScenePaths），
-            // 基于快照迭代不被干扰；广播期间新叠加的场景不在本趟卸载范围内
-            var snapshot = _unloadSnapshotBuffer;
-            snapshot.AddRange(_addedScenePaths);
+            // 重入保护：嵌套调用（卸载事件监听者内再卸载全部）改用局部快照，不碰复用缓冲
+            var snapshot = _unloadDepth > 0 ? new List<string>() : _unloadSnapshotBuffer;
+            _unloadDepth++;
             try
             {
+                // 遍历快照：广播期间监听者可能嵌套加载/卸载（修改 _addedScenePaths），
+                // 基于快照迭代不被干扰；广播期间新叠加的场景不在本趟卸载范围内
+                snapshot.AddRange(_addedScenePaths);
                 for (var i = 0; i < snapshot.Count; i++)
                 {
                     var scenePath = snapshot[i];
@@ -464,6 +473,7 @@ namespace Runestone.AesirModules
             finally
             {
                 snapshot.Clear();
+                _unloadDepth--;
             }
 
             onAllUnloaded?.Invoke();
