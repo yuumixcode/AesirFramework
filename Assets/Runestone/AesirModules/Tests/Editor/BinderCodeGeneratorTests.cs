@@ -113,6 +113,50 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.That(script, Does.Contain("transform.Find(\"Pa\\\"th\\\\A\")"));
         }
 
+        /// <summary>
+        /// 验证同一物体上多个同类型组件：首个单元保持 <c>GetComponent&lt;T&gt;()</c> 零开销，
+        /// 后续单元按出现序号生成 <c>GetComponents&lt;T&gt;()[n]</c>——统一 GetComponent 会让两个单元解析到同一实例。
+        /// </summary>
+        [Test]
+        public void BuildGeneratedScript_SameTypeUnits_IndexedByOccurrence()
+        {
+            var units = new List<BinderCodeGenerator.BindUnit>
+            {
+                Unit("UnityEngine.UI.Button", "confirmButton", "Panel/Buttons"),
+                Unit("UnityEngine.UI.Button", "cancelButton", "Panel/Buttons")
+            };
+
+            var script = BinderCodeGenerator.BuildGeneratedScript(Config(units));
+
+            Assert.That(script,
+                Does.Contain("confirmButton = transform.Find(\"Panel/Buttons\").GetComponent<UnityEngine.UI.Button>();"),
+                "首个同类型单元应保持 GetComponent 零开销");
+            Assert.That(script,
+                Does.Contain(
+                    "cancelButton = transform.Find(\"Panel/Buttons\").GetComponents<UnityEngine.UI.Button>()[1];"),
+                "第二个同类型单元应按序号取 GetComponents[1]");
+        }
+
+        /// <summary>
+        /// 验证绑定自身（路径为空）时同类型多单元同样按序号取——self 与子路径共享同一序号规则。
+        /// </summary>
+        [Test]
+        public void BuildGeneratedScript_SelfPathSameTypeUnits_IndexedByOccurrence()
+        {
+            var units = new List<BinderCodeGenerator.BindUnit>
+            {
+                Unit("UnityEngine.UI.Image", "firstImage", ""),
+                Unit("UnityEngine.UI.Image", "secondImage", "")
+            };
+
+            var script = BinderCodeGenerator.BuildGeneratedScript(Config(units));
+
+            Assert.That(script,
+                Does.Contain("firstImage = this.transform.GetComponent<UnityEngine.UI.Image>();"));
+            Assert.That(script,
+                Does.Contain("secondImage = this.transform.GetComponents<UnityEngine.UI.Image>()[1];"));
+        }
+
         [Test]
         public void BuildGeneratedScript_UsingsContainTypeNamespacesAndCustom()
         {
