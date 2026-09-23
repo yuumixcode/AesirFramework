@@ -306,7 +306,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// </summary>
         public string GetSummaryAttributeText(string content)
         {
-            var indent = Regex.Match(xml, @"^\s*").Value;
+            // 缩进取行首空白但不含换行（\s 含 \n，xml 以空行开头时会得到跨行"缩进"导致注入行错位）
+            var indent = Regex.Match(xml, @"^[ \t]*").Value;
             return indent + "[Summary(\"" + EscapeSummaryText(content) + "\")]\n";
         }
 
