@@ -184,18 +184,35 @@ Add only the sub-packages you need — **when installing only Aesir Modules**, U
 
 > Pick the sub-package you're most interested in for the full guide. Below is a "smell test" only.
 
-### Aesir Architecture — A Context in 3 Lines
+### Run Your First Sample in 5 Minutes (Start Here)
+
+1. After installing, open **Package Manager → Aesir Architecture → Samples → import Counter-Mvc-Quick** (lesson 1, Quick tier)
+2. Open `Samples/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity`
+3. Press **Play** and click the panel buttons — the counter changing is the framework's complete loop: View click → Controller writes Model → `ObservableValue` notifies → View refreshes
+
+### Aesir Architecture — Five Minimal Concepts (Learn the Rest When You Need It)
+
+| Concept | In one sentence |
+|---------|-----------------|
+| **Context** | Module container — register Models/Services in `Configure()`, access via `Instance` |
+| **Model** | Data layer — holds `ObservableValue` reactive properties; only write commands modify it |
+| **ObservableValue** | A property that auto-notifies subscribers when its value changes (Views subscribe read-only) |
+| **View** | A MonoBehaviour panel — subscribes to the Model and refreshes |
+| **Controller** | Business entry point — writes the Model via `ExecuteCommand` |
 
 ```csharp
 using Runestone.AesirArchitecture;
 
+// Lesson 1 (Quick tier): register the concrete class directly — fewest concepts to get data flowing
 public class CounterContext : AbstractContext<CounterContext>
 {
-    protected override void Configure() => RegisterModel<ICounterModel>(new CounterModel());
+    protected override void Configure() => RegisterModel(new CounterModel());
 }
 ```
 
-For the full three-lesson path — View subscription refresh, Controller command dispatch — see the package README and the 6 counter samples (Package Manager → Samples).
+The Standard tier (read-only Model exposure + write methods) and Strict tier (interface registration + Command writes + Query reads) progress one concept at a time — see the package README and the 6 counter samples (Package Manager → Samples); source code between tiers maps one-to-one.
+
+> **Note**: sample scripts are wrapped in `#if UNITY_EDITOR` (compiled in-editor, stripped from player builds) — do not copy sample scripts into runtime assemblies.
 
 Full guide: [`Assets/Runestone/AesirArchitecture/Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文).
 
