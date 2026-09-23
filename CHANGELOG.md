@@ -20,15 +20,58 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.22.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.22.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.23.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.23.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.22.0` / `#AesirModules-v0.22.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.23.0` / `#AesirModules-v0.23.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.23.0] - 2026-09-23
+
+---
+
+### [architecture] Aesir Architecture
+
+> 本批为全仓锐评修复与「Aesir Architecture 保持极简」定位收敛，含破坏性变更（详见包内 CHANGELOG 的 [0.23.0] 段）。
+
+**Added**
+
+- `ObservableQueue<T>` 专属测试（8 用例，补齐四集合专属测试的最后缺口）；AesirScheduler NaN 延时回归用例
+
+**Changed**
+
+- AesirScheduler NaN 延时语义与文档对齐（`Math.Max` 传播 NaN = 永不触发）；`ObservableList<T>.Move` 同索引零变化不通知；`MiniEvent` / `MiniEvent<T>` 的 AddListener 补 null 守卫；`ObservableQueue<T>` 结构补齐对齐其余三集合（sealed / `[Serializable]` / 结构体枚举器 / 构造 null 容忍）；根 README 双轨失实宣称改单轨口径、测试数与示例计数修正、快速开始改版为最小五概念快车道
+
+**Removed（破坏性变更）**
+
+- `ObservableHashSet<T>` 集合代数全套 10 方法（`IObservableHashSet<T>` 不再继承 `ISet<T>`，改继承 `ICollection<T>`——需要时用内部 `HashSet<T>` 或上游 Cysharp.ObservableCollections）；`ObservableList<T>` 区间 Sort / Reverse 重载；ReadOnlySpan 批量重载 ×5（保留 `T[]` 与 `IEnumerable<T>` 双轨）；Dictionary / HashSet 构造器收敛至「默认 / 初始元素 / 比较器」三个；`ObservableValue<T>.SetValue` 别名（含接口成员）
+- 调试 / 测试专用面收窄 internal：`IContext` 删除 `UnregisterModel` / `UnregisterService` / `GetAllModels` / `GetAllServices`，`IGenericLocator<T>` 删除 `IsRegistered` / `Clear` / `GetByType` / `GetAllEntries`，`MiniEvent.GetListeners` / `AesirArchitecturePlayerLoop.Reset` / `GetHookCount` / `PlayerLoopUtility.GetCurrentPlayerLoopDescription` 等（测试程序集经 InternalsVisibleTo 照常使用）
+- （Renamed）`ObservableValue<T>.Clear()` → `ClearListeners()`——命名对齐集合家族语义
+
+---
+
+### [modules] Aesir Modules
+
+**Added**
+
+- Binder 代码生成器同类型多组件测试 ×2（按出现序号取 `GetComponents<T>()[n]`）；SceneModule 批量卸载重入 PlayMode 回归 ×1（内外两层各自完整完成）
+
+**Fixed**
+
+- Binder 三处 P1：Missing 脚本组件空引用（GetComponents 返回 null 元素未过滤）、增量模式自动挂载静默失效（类型全名改从目标文件实际命名空间解析）、同类型多组件错绑（统一 GetComponent 解析到同一实例）；partial 模式生成文件头时间戳移除（恢复重生成幂等）
+- SceneModule 批量卸载重入洞（复用快照缓冲被嵌套调用 Clear 截断外层迭代）；UIModule / AudioModule / EventModule 重复实例销毁粒度统一为 `Destroy(this)`（不再连带销毁宿主整树）；UIModule.PrewarmPanel 补键语义守卫
+- 三个测试 asmdef 补 `ODIN_INSPECTOR` 装配守卫（无 Odin 消费者环境启用 Test Framework 即编译失败，与装配承诺矛盾）；Editor 侧 Odin asmdef 移除 `AESIR_ARCHITECTURE` 守卫口径统一
+- SDG：`XmlCodePart` 缩进正则不含换行；SourceScanner 显式接口实现的文档键错配修复（裸名会错配同类型同名公开成员，改 fail-closed 告警跳过）
+
+**Changed**
+
+- 更新器双窗口编排上提共享控制器 `AesirUpdateController`（检测 / 日志 / 更新执行 / 忙碌门禁只此一份，消除 ~200 行双真源）；ui-module.md 补 Binder 两条边界声明（仅编辑期构建、生成产物使用 Odin 特性）
 
 ---
 

@@ -5,10 +5,9 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.23.0] - 2026-09-23
 
-> 本批为第二轮全仓锐评（`Docs/AesirFramework/全仓锐评/04/05`）修复与极简收敛批次，
-> 含破坏性变更（见 Removed / Renamed 节），发版时应 bump minor（0.23.0）。
+> 本批为全仓锐评修复与极简收敛批次，含破坏性变更（见 Removed / Renamed 节）。
 
 ### Added
 
