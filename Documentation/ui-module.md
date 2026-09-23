@@ -86,6 +86,8 @@ public interface IUIAssetLoader
 - **层级体系封闭**：`UILayer` 固定四层，层序基准硬编码；加层需改框架源码。四层对教学/中小项目已足够。
 - **无 per-panel Canvas**：同层多面板共享层 Canvas（同图集合批友好）；代价是同层穿插打断 batch、无独立 sortingOrder。需要动画隔离/独立渲染请在面板预制体内加子 Canvas。同层内顺序仅由 Show 顺序决定。
 - **主相机需自行排除 UI 层**：UICamera 只渲染 UI(5)+TransparentFX(1)，主游戏相机若含 UI 层会重复渲染。
+- **Binder 仅服务编辑期构建**：绑定在「生成脚本 → 编译后自动挂载」时经 `BindComponents()` 完成并写入 prefab 序列化数据；运行时 `AddComponent` 动态创建的面板不做自动绑定（无运行时重绑兜底）。
+- **Binder 生成产物使用 Odin 特性**：生成字段的分组展示（`TitleGroup`）与 `IComponentBinder` 接口位于 Odin 程序集——使用 Binder 的前提是项目已安装 Odin Inspector（与 UI 模块核心「Odin 可选」的边界不同，Binder 全家桶整体在 Odin 程序集内）。
 - **不做**：面板导航栈/返回、全局模态遮罩管理、异步加载接口、层扩展配置、per-panel Canvas 选项。
 
 ## 测试与维护

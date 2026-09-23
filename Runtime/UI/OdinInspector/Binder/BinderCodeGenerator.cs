@@ -54,7 +54,6 @@ namespace Runestone.AesirModules
                 "",
                 "面板对象: " + config.SourceObjectName,
                 "绑定数量: " + config.Units.Count,
-                "生成时间: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 "",
                 "使用说明:",
                 "1. 业务逻辑写在同目录的 " + config.ScriptName + ".cs（partial 类，仅首次生成，重新生成不会覆盖）",
@@ -198,9 +197,16 @@ namespace Runestone.AesirModules
             builder.AppendLine("[UnityEngine.ContextMenu(\"绑定引用\")]");
             builder.AppendLine("public void BindComponents()");
             builder.AppendLine("{");
+            // 同一物体上存在多个同类型组件时，按单元出现顺序依次取 GetComponents<T>()[n]，
+            // 首个单元保持 GetComponent<T>() 零开销；键 = 层级路径 + 组件类型
+            var occurrenceByTarget = new Dictionary<string, int>();
             foreach (var unit in config.Units)
             {
-                builder.AppendLine("    " + BuildBindStatement(unit));
+                var key = (string.IsNullOrEmpty(unit.HierarchyPath) ? "self" : unit.HierarchyPath) +
+                          "|" + unit.ComponentFullName;
+                var occurrenceIndex = occurrenceByTarget.TryGetValue(key, out var count) ? count : 0;
+                occurrenceByTarget[key] = occurrenceIndex + 1;
+                builder.AppendLine("    " + BuildBindStatement(unit, occurrenceIndex));
             }
 
             builder.AppendLine("}");
@@ -302,9 +308,11 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 生成单条绑定赋值语句。GameObject 类型取 <c>.gameObject</c>，其余 <c>GetComponent</c>；
-        /// 路径为空（绑定自身）时跳过 <c>transform.Find</c>。
+        /// 路径为空（绑定自身）时跳过 <c>transform.Find</c>；
+        /// 同一物体上多个同类型组件时，第 n 个单元（<paramref name="occurrenceIndex" /> &gt; 0）按序号取
+        /// <c>GetComponents&lt;T&gt;()[n]</c>——统一 <c>GetComponent</c> 会让两个同类型单元解析到同一实例。
         /// </summary>
-        static string BuildBindStatement(BindUnit unit)
+        static string BuildBindStatement(BindUnit unit, int occurrenceIndex)
         {
             var typeReference = ToSourceTypeReference(unit.ComponentFullName);
             var isSelf = string.IsNullOrEmpty(unit.HierarchyPath);
@@ -317,10 +325,9 @@ namespace Runestone.AesirModules
                 return unit.FieldName + " = " + (isSelf ? "gameObject;" : lookup + ".gameObject;");
             }
 
-            return unit.FieldName + " = " +
-                   (isSelf
-                       ? lookup + ".GetComponent<" + typeReference + ">();"
-                       : lookup + ".GetComponent<" + typeReference + ">();");
+            return unit.FieldName + " = " + (occurrenceIndex > 0
+                ? lookup + ".GetComponents<" + typeReference + ">()[" + occurrenceIndex + "];"
+                : lookup + ".GetComponent<" + typeReference + ">();");
         }
 
         /// <summary>
