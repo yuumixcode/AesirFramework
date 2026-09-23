@@ -7,6 +7,30 @@
 
 ## [Unreleased]
 
+> 本批为第二轮全仓锐评（`Docs/AesirFramework/全仓锐评/04/05`）修复批次。
+
+### Added
+
+- **Binder 代码生成器同类型多组件测试** — `BinderCodeGeneratorTests` 新增 2 用例：同一物体多个同类型组件时首个单元保持 `GetComponent<T>()` 零开销、后续单元按出现序号生成 `GetComponents<T>()[n]`（含绑定自身路径），锁定错绑修复
+- **SceneModule 批量卸载重入回归（PlayMode）** — `SceneModulePlayModeTests` 新增用例：卸载广播的监听者回调内再调 `UnloadAllAddedScenes`，内外两层各自完整完成、全部场景卸载、追踪清空（修复前内层 `Clear` 会截断外层迭代导致漏卸 + 误报完成）
+
+### Fixed
+
+- **BinderTag：Missing 脚本组件导致空引用** — `GetComponents<Component>()` 对 Missing MonoBehaviour 返回含 null 的数组，`Types` 属性的 `is not BinderTag` 放行 null 后在 `GetType()` 抛 NRE（绑定入口对缺脚本物体必炸）；现过滤 `null or BinderTag`
+- **BinderAssistant：增量模式自动挂载静默失效** — 类型全名此前直接拼 UI 配置的 `TargetNamespace`，而增量模式下目标文件已存在时该字段不校验也不写回，开发者事后改过 namespace 即错位 → 编译后类型解析失败、自动挂载静默丢失；现从目标文件实际声明的命名空间解析（文件不存在 / 未声明时回退 UI 配置）
+- **BinderCodeGenerator：同类型多组件错绑** — 生成代码统一 `GetComponent<T>()` 取首个命中，同物体两个同类型单元会解析到同一实例（宣称支持多组件绑定却静默错绑）；现按单元出现序号生成 `GetComponents<T>()[n]`；顺带删除 `BuildBindStatement` 中两支完全相同的 `isSelf` 死分支
+- **BinderCodeGenerator：partial 模式重生成非幂等** — 生成文件头部的 `DateTime.Now` 时间戳在每次重新生成时产生 diff（partial 模式整体覆盖）；移除该时间戳行恢复幂等（增量模式 region 本就无时间戳）
+- **SceneModule：批量卸载重入洞** — `_unloadSnapshotBuffer` 为实例级复用缓冲且无重入保护：卸载广播的监听者回调内再调 `UnloadAllAddedScenes` 时，两层协程迭代同一 List，内层 `finally Clear` 清空外层正在迭代的列表 → 外层提前退出、剩余场景漏卸而 `onAllUnloaded` 误报完成；现照 EventModule 范式加重入深度计数，重入层改用局部快照
+- **UIModule / AudioModule / EventModule：重复实例销毁粒度** — Awake 重复实例处理由 `Destroy(gameObject)` 改为 `Destroy(this)`（对齐 SceneModule 与 RAA 先例）：组件级模块运行时创建于 `[Aesir Modules]` 宿主下，`Destroy(gameObject)` 会连带销毁宿主整树与其他模块；宿主 `AesirModules` 自身（根物体）保持 `Destroy(gameObject)`
+- **UIModule：`PrewarmPanel` 缺键语义守卫** — 以基类类型 Prewarm 时可重复实例化并覆盖 `_panelDict` 键、泄漏旧实例；现补 `FindRegisteredRelatedPanelKey` 守卫（与 `ShowPanel` 三处同款诊断）
+- **SDG：`XmlCodePart.GetSummaryAttributeText` 缩进正则** — `^\s*` 含换行，xml 块以空行开头时得到跨行「缩进」导致注入行错位；改为 `^[ \t]*`
+
+### Changed
+
+- **装配守卫补齐** — `Runestone.AesirModules.Tests` / `Runestone.AesirModules.Tests.Runtime` / `Runestone.AesirModules.Scene.Tests` 三个测试 asmdef 的 `defineConstraints` 追加 `ODIN_INSPECTOR`（此前硬列 4 个 Sirenix DLL 并引用 Odin 程序集却无守卫——无 Odin 消费者环境启用 Test Framework 即编译失败，与「装了自动出现、卸了整体消失」承诺矛盾；对齐 RAA Tests/Runtime 范本）
+- **Odin 守卫口径统一** — `Runestone.AesirModules.Editor.OdinInspector` 的 `defineConstraints` 移除 `AESIR_ARCHITECTURE`（与 Runtime 侧 Odin 程序集对齐，同守 `ODIN_INSPECTOR`；宏确保器维护的宏不参与装配语义，消除「半套 Odin」的口径缝隙）
+- **`ui-module.md` 补两条边界声明** — 「Binder 仅服务编辑期构建」（运行时 AddComponent 创建的面板不做自动绑定，无运行时重绑兜底）与「Binder 生成产物使用 Odin 特性」（使用 Binder 的前提为已安装 Odin Inspector）
+
 ### 规划中
 
 - 对象池扩展（当前用隐藏复用，必要时增加 UIForm 对象池）
