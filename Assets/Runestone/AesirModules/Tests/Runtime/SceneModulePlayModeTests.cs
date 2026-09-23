@@ -25,7 +25,8 @@ namespace Runestone.AesirModules.Tests.Runtime
     ///     <para>
     ///     覆盖：Single 成功回调与事件顺序（进度 1.0 归一化 → SceneLoadedEvent → onCompleted）、
     ///     Single 后激活场景切换与叠加追踪清空、模块 DDOL 存活、Additive 追踪与激活场景不变、
-    ///     UnloadAllAddedScenes 全量卸载与追踪清空、广播期间嵌套叠加不在本趟卸载范围（快照迭代语义）。
+    ///     UnloadAllAddedScenes 全量卸载与追踪清空、广播期间嵌套叠加不在本趟卸载范围（快照迭代语义）、
+    ///     广播期间嵌套 UnloadAllAddedScenes 重入保护（内外两层各自完整完成）。
     ///     </para>
     /// </remarks>
     /// <seealso cref="SceneModule" />
@@ -286,6 +287,56 @@ namespace Runestone.AesirModules.Tests.Runtime
                 "广播期间新叠加的 B 不应在本趟被卸载（快照语义）");
             Assert.AreEqual(1, module.AddedScenePaths.Count, "B 应正常入追踪");
             Assert.AreEqual(SceneBPath, module.AddedScenePaths[0], "追踪中应只剩 B");
+        }
+
+        /// <summary>
+        /// 批量卸载重入保护（第二轮全仓锐评 P2-1 修复锁定）：卸载广播的监听者回调内再调
+        /// UnloadAllAddedScenes（嵌套卸载全部）时，内层改用局部快照迭代——
+        /// 修复前内层与外层共用复用快照缓冲，内层 finally Clear 会清空外层正在迭代的列表，
+        /// 外层提前退出、剩余场景漏卸而 onAllUnloaded 仍误报完成。修复后内外两层各自完整完成。
+        /// </summary>
+        [Order(3)]
+        [UnityTest]
+        public IEnumerator UnloadAllAddedScenes_ReentrantUnloadDuringBroadcast_BothBatchesComplete()
+        {
+            var module = SceneModule.Instance;
+            var aLoaded = false;
+            var bLoaded = false;
+            module.LoadSceneAdditive(SceneAPath, onCompleted: () => aLoaded = true);
+            module.LoadSceneAdditive(SceneBPath, onCompleted: () => bLoaded = true);
+            yield return WaitUntil(() => aLoaded && bLoaded, "两个叠加场景应在超时前加载完成");
+
+            var outerCompleted = false;
+            var innerCompleted = false;
+            var reentryTriggered = false;
+            var handle = module.SceneUnloadedEvent.AddListener(path =>
+            {
+                if (reentryTriggered)
+                {
+                    return;
+                }
+
+                // 收到首个卸载广播（外层迭代中）时嵌套再调 UnloadAllAddedScenes
+                reentryTriggered = true;
+                module.UnloadAllAddedScenes(() => innerCompleted = true);
+            });
+
+            try
+            {
+                module.UnloadAllAddedScenes(() => outerCompleted = true);
+                yield return WaitUntil(() => outerCompleted && innerCompleted, "内外两层批量卸载均应在超时前完成");
+            }
+            finally
+            {
+                handle.Dispose();
+            }
+
+            Assert.IsTrue(reentryTriggered, "前置：广播期间应触发嵌套卸载");
+            Assert.IsTrue(outerCompleted, "外层 onAllUnloaded 应正常完成（不被内层 Clear 截断）");
+            Assert.IsTrue(innerCompleted, "内层 onAllUnloaded 应正常完成");
+            Assert.AreEqual(0, module.AddedScenePaths.Count, "全部场景应被卸载、追踪清空");
+            Assert.IsFalse(SceneManager.GetSceneByPath(SceneAPath).isLoaded, "A 应已卸载");
+            Assert.IsFalse(SceneManager.GetSceneByPath(SceneBPath).isLoaded, "B 应已卸载（修复前会漏卸）");
         }
 
         /// <summary>
