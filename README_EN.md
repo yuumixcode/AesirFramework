@@ -54,12 +54,12 @@ RAA's most distinctive feature is **tiered progression** — from the minimal co
 | **Lesson 2 · Standard** | Read-only exposure + write methods | Controller calls write methods | Presenter calls write methods |
 | **Lesson 3 · Strict** | Interface registration + read-only + write methods | Command writes + Query processed reads | Command writes + Query reads |
 
-Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + ObservableValue / ObservableCollections / MiniEvent / PlaneWar hands-on samples, importable lesson by lesson.
+Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + five hands-on/advanced samples (ObservableValue / ObservableCollections / MiniEvent / PlaneWar / RuntimeInitializeLoadType), importable lesson by lesson (start from Counter-Mvc-Quick if this is your first contact).
 
 ### Core Mechanics at a Glance
 
 - **`ObservableValue<T>` reactive property** — Models hold writable instances; Views subscribe read-only via `IReadOnlyObservableValue<T>`; `AddListenerAndInvoke` synchronizes the initial value on subscription
-- **Observable collection family** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` provide Added / Removed / Replaced / Updated / Cleared change notifications, following the same read-write separation and event pattern as ObservableValue
+- **Observable collection family** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` / `ObservableQueue<T>` expose a single-track change notification API: `AddListener(Action<CollectionChangedEventArgs<T>>)` covering Add / Remove / Replace / Move / Reset semantics (no notification on no-op writes, per-item notification for batch operations, Sort / Reverse / Clear collapse to Reset)
 - **`MiniEvent` / `MiniEvent<T>`** — Zero-allocation lightweight events (direct multicast invocation, native C# fail-fast semantics); returns `AutoRemoveListenerHandle` for automatic cleanup, with auto-unsubscribe on GameObject destroy / scene unload
 - **Native PlayerLoop lifecycle** — `AesirArchitecturePlayerLoop` injects `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour; `EnsureInjected()` self-heals after third-party SDKs rewrite the PlayerLoop
 - **Explicit DDOL decision** — Root singletons expose a serialized `dontDestroyOnLoad` field governing both pre-placed and runtime-created instances (persistent by default; when disabled the instance dies with its scene — Inspector warning + runtime reminder, additive multi-scene loading is up to you)
@@ -263,7 +263,7 @@ AesirFramework/                            # this repo
 
 ## ✅ Quality & CI
 
-- **Tests** — 100 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, and more; CLI usage below in [Development Setup](#️-development-setup)
+- **Tests** — 650+ EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
 - **CI (GitHub Actions)** —
   - `auto-release.yml`: every push to `main` publishes a GitHub Release (three unitypackages plus the update-info.json / files-manifest used by the in-package updater)
   - `auto-publish-branches.yml`: per-package subtree split generating `AesirArchitecture-v<version>` / `AesirModules-v<version>` pinned branches
