@@ -55,41 +55,15 @@ namespace Runestone.AesirArchitecture
         bool TryGet<TItem>(out TItem instance) where TItem : class, T;
 
         /// <summary>
-        /// 判断指定类型是否已注册。
-        /// </summary>
-        /// <typeparam name="TItem">要检查的实例类型，必须为 <typeparamref name="T" /> 的子类型。</typeparam>
-        /// <returns>已注册则返回 <c>true</c>；否则返回 <c>false</c>。</returns>
-        bool IsRegistered<TItem>() where TItem : class, T;
-
-        /// <summary>
         /// 注销指定类型的注册。
         /// </summary>
         /// <typeparam name="TItem">要注销的实例类型，必须为 <typeparamref name="T" /> 的子类型。</typeparam>
         void Unregister<TItem>() where TItem : class, T;
 
         /// <summary>
-        /// 清空所有已注册的实例。
-        /// </summary>
-        void Clear();
-
-        /// <summary>
-        /// 按 <see cref="Type" /> 获取已注册的实例，不存在则返回 null。
-        /// <para>用于依赖项校验等需要运行时 Type 查询的场景。</para>
-        /// </summary>
-        /// <param name="type">要查询的 <see cref="Type" />，作为注册键。</param>
-        /// <returns>已注册的实例；若未注册则返回 <c>null</c>。</returns>
-        T GetByType(Type type);
-
-        /// <summary>
         /// 按注册顺序获取所有已注册的实例。
         /// </summary>
         /// <returns>所有已注册实例的 <see cref="IEnumerable{T}" /> 集合，不含类型键，按注册顺序排列。</returns>
         IEnumerable<T> GetAll();
-
-        /// <summary>
-        /// 获取所有已注册键值对（仅供异常路径的近失识别使用）。
-        /// </summary>
-        /// <returns>已注册键与实例的 <see cref="KeyValuePair{TKey,TValue}" /> 集合。</returns>
-        IEnumerable<KeyValuePair<Type, T>> GetAllEntries();
     }
 }

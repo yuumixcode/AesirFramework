@@ -37,20 +37,6 @@ namespace Runestone.AesirArchitecture
         void RegisterService<T>(T service) where T : class, IService;
 
         /// <summary>
-        /// 注销 Model
-        /// </summary>
-        /// <typeparam name="T">要注销的 Model 类型，必须与注册时的类型参数一致</typeparam>
-        /// <remarks>被摘除的实例会被 Dispose，其上的订阅不会迁移；未注册时静默无操作（幂等）。</remarks>
-        void UnregisterModel<T>() where T : class, IModel;
-
-        /// <summary>
-        /// 注销 Service
-        /// </summary>
-        /// <typeparam name="T">要注销的 Service 类型，必须与注册时的类型参数一致</typeparam>
-        /// <remarks>被摘除的实例会被 Dispose，其上的订阅不会迁移；未注册时静默无操作（幂等）。</remarks>
-        void UnregisterService<T>() where T : class, IService;
-
-        /// <summary>
         /// 获取已注册的 Model
         /// </summary>
         /// <typeparam name="T">要获取的 Model 类型，必须为引用类型并实现 <see cref="IModel" /></typeparam>
@@ -69,17 +55,5 @@ namespace Runestone.AesirArchitecture
         /// 目标 Service 未注册时抛出，提示提前调用 <c>RegisterService&lt;T&gt;()</c>
         /// </exception>
         T GetService<T>() where T : class, IService;
-
-        /// <summary>
-        /// 获取所有已注册的 Model 列表
-        /// </summary>
-        /// <returns>所有已注册 Model 实例的集合；若无注册则返回空集合</returns>
-        IEnumerable<IModel> GetAllModels();
-
-        /// <summary>
-        /// 获取所有已注册的 Service 列表
-        /// </summary>
-        /// <returns>所有已注册 Service 实例的集合；若无注册则返回空集合</returns>
-        IEnumerable<IService> GetAllServices();
     }
 }
