@@ -1,4 +1,3 @@
-#nullable enable
 using Runestone.AesirArchitecture.Internal;
 using System.Buffers;
 using System.Collections;
@@ -18,8 +17,13 @@ namespace Runestone.AesirArchitecture
     /// 内部组合 <see cref="Queue{T}" /> 存储元素，变更通知经 <see cref="MiniEvent{T}" /> 分发——Invoke 路径零分配。
     /// 变更通知为单一事件（<see cref="AddListener" />）：入队 → Add（索引为队尾位置）、出队 → Remove（索引固定 0）、
     /// Clear → Reset（非空才通知）；批量入队 / 出队逐项通知；无变更的操作（TryDequeue 空队列）不通知。
+    /// <para>
+    /// <c>[Serializable]</c> 标记与类型上的 <c>[SerializeField]</c> 供 Odin 序列化等第三方集成使用——
+    /// Unity 原生不序列化 <see cref="Queue{T}" />，初始元素请经构造函数或 <see cref="EnqueueRange" /> 填充。
+    /// </para>
     /// </remarks>
-    public class ObservableQueue<T> : IReadOnlyCollection<T>, IObservableCollection<T>
+    [Serializable]
+    public sealed class ObservableQueue<T> : IReadOnlyCollection<T>, IObservableCollection<T>
     {
         readonly Queue<T> queue;
 
@@ -38,7 +42,8 @@ namespace Runestone.AesirArchitecture
 
         public ObservableQueue(IEnumerable<T> collection)
         {
-            this.queue = new Queue<T>(collection);
+            // 对齐其余三集合：初始元素为 null 时视为空集合（BCL Queue<T> 构造对 null 抛 ArgumentNullException）
+            this.queue = collection != null ? new Queue<T>(collection) : new Queue<T>();
         }
 
         public int Count
@@ -81,18 +86,6 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <param name="items">要入队的元素数组。</param>
         public void EnqueueRange(T[] items)
-        {
-            foreach (var item in items)
-            {
-                Enqueue(item);
-            }
-        }
-
-        /// <summary>
-        /// 批量入队元素（只读跨度重载），逐项触发 Add 通知。
-        /// </summary>
-        /// <param name="items">要入队的元素只读跨度。</param>
-        public void EnqueueRange(ReadOnlySpan<T> items)
         {
             foreach (var item in items)
             {
@@ -212,17 +205,45 @@ namespace Runestone.AesirArchitecture
             _changedEvent.Dispose();
         }
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            foreach (var item in queue)
-            {
-                yield return item;
-            }
-        }
+        /// <summary>
+        /// 返回遍历元素的结构体枚举器，foreach 具体类型时零分配。
+        /// </summary>
+        /// <returns>元素枚举器。</returns>
+        public Enumerator GetEnumerator() => new Enumerator(queue.GetEnumerator());
 
-        IEnumerator IEnumerable.GetEnumerator()
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => queue.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)queue).GetEnumerator();
+
+        /// <summary>
+        /// 元素枚举器。
+        /// </summary>
+        /// <remarks>
+        /// 结构体枚举器，foreach 具体类型时零分配（与其他三集合一致）。
+        /// 遍历期间修改队列会抛 <see cref="InvalidOperationException" />（继承自内部 <see cref="Queue{T}" /> 枚举器的版本检查，与 BCL 语义一致）。
+        /// </remarks>
+        public struct Enumerator : IEnumerator<T>
         {
-            return GetEnumerator();
+            Queue<T>.Enumerator _inner;
+
+            internal Enumerator(Queue<T>.Enumerator inner) => _inner = inner;
+
+            /// <summary>
+            /// 获取当前位置的元素。
+            /// </summary>
+            public T Current => _inner.Current;
+
+            /// <summary>
+            /// 前进到下一个元素。
+            /// </summary>
+            /// <returns>存在下一个元素返回 <c>true</c>，遍历结束返回 <c>false</c>。</returns>
+            public bool MoveNext() => _inner.MoveNext();
+
+            object IEnumerator.Current => _inner.Current;
+
+            void IEnumerator.Reset() => throw new NotSupportedException();
+
+            void IDisposable.Dispose() { }
         }
     }
 }

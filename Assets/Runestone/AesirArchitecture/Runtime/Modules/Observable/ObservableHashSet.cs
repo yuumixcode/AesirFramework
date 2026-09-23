@@ -23,14 +23,9 @@ namespace Runestone.AesirArchitecture
     /// <para>
     /// 变更通知为单一事件（<see cref="AddListener" />）：写操作完成后才触发，监听者回调中读取到的集合已是变更后的状态；
     /// 无变更的操作不通知（Add 重复元素、Remove 不存在的元素、Clear 空集合）；
-    /// 批量操作（AddRange / RemoveRange / 集合代数操作）逐项通知实际变更的元素；
+    /// 批量操作（AddRange / RemoveRange）逐项通知实际变更的元素；
     /// <see cref="Clear" /> 以 <see cref="NotifyCollectionChangedAction.Reset" /> 通知。
     /// 集合无索引概念，载荷索引固定 -1。
-    /// </para>
-    /// <para>
-    /// 集合代数操作逐项复用 <see cref="Add" /> / <see cref="Remove" />，天然去重；
-    /// IntersectWith / SymmetricExceptWith 需物化参数集合与自身快照（各两次临时分配，低频批量操作可接受），
-    /// SymmetricExceptWith 先触发全部 Remove、再触发全部 Add。
     /// </para>
     /// <para>
     /// 遍历性能：foreach 具体类型走结构体枚举器，零分配；通过 <see cref="IReadOnlyObservableHashSet{T}" /> /
@@ -82,33 +77,6 @@ namespace Runestone.AesirArchitecture
         public ObservableHashSet(IEqualityComparer<T> comparer)
         {
             set = new HashSet<T>(comparer);
-        }
-
-        /// <summary>
-        /// 指定初始容量与元素比较器构造。
-        /// </summary>
-        /// <param name="capacity">初始容量。</param>
-        /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
-        public ObservableHashSet(int capacity, IEqualityComparer<T> comparer)
-        {
-            set = new HashSet<T>(capacity, comparer);
-        }
-
-        /// <summary>
-        /// 指定初始元素与元素比较器构造。初始元素不触发通知。
-        /// </summary>
-        /// <param name="initialItems">初始元素序列。</param>
-        /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
-        public ObservableHashSet(IEnumerable<T> initialItems, IEqualityComparer<T> comparer)
-        {
-            set = new HashSet<T>(comparer);
-
-            if (initialItems == null)
-            {
-                return;
-            }
-
-            set.UnionWith(initialItems);
         }
 
         /// <summary>
@@ -170,14 +138,14 @@ namespace Runestone.AesirArchitecture
         /// 批量添加元素数组，逐项触发 Add 通知（仅实际新增的元素）。
         /// </summary>
         /// <param name="itemsToAdd">要添加的元素数组。</param>
-        public void AddRange(T[] itemsToAdd) => AddRange(itemsToAdd.AsSpan());
-
-        /// <summary>
-        /// 批量添加元素（只读跨度重载），逐项触发 Add 通知（仅实际新增的元素）。
-        /// </summary>
-        /// <param name="itemsToAdd">要添加的元素只读跨度。</param>
-        public void AddRange(ReadOnlySpan<T> itemsToAdd)
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出（与序列重载一致）。</exception>
+        public void AddRange(T[] itemsToAdd)
         {
+            if (itemsToAdd == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToAdd));
+            }
+
             foreach (var item in itemsToAdd)
             {
                 Add(item);
@@ -206,14 +174,14 @@ namespace Runestone.AesirArchitecture
         /// 批量移除元素数组，逐项触发 Remove 通知（仅实际被移除的元素）。
         /// </summary>
         /// <param name="itemsToRemove">要移除的元素数组。</param>
-        public void RemoveRange(T[] itemsToRemove) => RemoveRange(itemsToRemove.AsSpan());
-
-        /// <summary>
-        /// 批量移除元素（只读跨度重载），逐项触发 Remove 通知（仅实际被移除的元素）。
-        /// </summary>
-        /// <param name="itemsToRemove">要移除的元素只读跨度。</param>
-        public void RemoveRange(ReadOnlySpan<T> itemsToRemove)
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToRemove" /> 为 null 时抛出（与序列重载一致）。</exception>
+        public void RemoveRange(T[] itemsToRemove)
         {
+            if (itemsToRemove == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToRemove));
+            }
+
             foreach (var item in itemsToRemove)
             {
                 Remove(item);
@@ -276,137 +244,6 @@ namespace Runestone.AesirArchitecture
         /// <param name="array">目标数组。</param>
         /// <param name="arrayIndex">目标数组起始索引。</param>
         public void CopyTo(T[] array, int arrayIndex) => set.CopyTo(array, arrayIndex);
-
-        /// <summary>
-        /// 并集运算：逐项复用 <see cref="Add" />，仅对实际新增的元素触发 Add 通知。
-        /// </summary>
-        /// <param name="other">另一集合。</param>
-        /// <remarks>逐项 Add 对已存在元素天然跳过，参数含重复项或传入集合自身时均为无变化操作。</remarks>
-        public void UnionWith(IEnumerable<T> other)
-        {
-            foreach (var item in other)
-            {
-                Add(item);
-            }
-        }
-
-        /// <summary>
-        /// 差集运算：逐项复用 <see cref="Remove" />，仅对实际存在的元素触发 Remove 通知。
-        /// </summary>
-        /// <param name="other">要移除的元素集合。</param>
-        /// <remarks>
-        /// 传入集合自身时短路为 <see cref="Clear" />（语义与 BCL <see cref="HashSet{T}" /> 一致）——
-        /// 若无此短路，枚举期间的自移除会抛 <see cref="InvalidOperationException" />。
-        /// </remarks>
-        public void ExceptWith(IEnumerable<T> other)
-        {
-            if (ReferenceEquals(this, other))
-            {
-                Clear();
-                return;
-            }
-
-            foreach (var item in other)
-            {
-                Remove(item);
-            }
-        }
-
-        /// <summary>
-        /// 交集运算：移除不在 <paramref name="other" /> 中的元素，逐项触发 Remove 通知。
-        /// </summary>
-        /// <param name="other">保留元素的比较集合。</param>
-        /// <remarks>
-        /// 先物化 <paramref name="other" /> 与自身快照再逐项移除，避免枚举期间修改自身。
-        /// 传入集合自身时为无变化操作，不触发通知。
-        /// </remarks>
-        public void IntersectWith(IEnumerable<T> other)
-        {
-            var keep = new HashSet<T>(other);
-            var snapshot = new List<T>(set);
-            foreach (var item in snapshot)
-            {
-                if (!keep.Contains(item))
-                {
-                    Remove(item);
-                }
-            }
-        }
-
-        /// <summary>
-        /// 对称差集运算：移除双方共有的元素，添加仅 <paramref name="other" /> 拥有的元素。
-        /// </summary>
-        /// <param name="other">另一集合。</param>
-        /// <remarks>
-        /// 先触发全部 Remove、再触发全部 Add。物化 <paramref name="other" /> 后边扫描边消费，
-        /// 一次遍历同时识别交集（待移除）与差集（待添加）。
-        /// 传入集合自身时短路为 <see cref="Clear" />（语义与 BCL <see cref="HashSet{T}" /> 一致）。
-        /// </remarks>
-        public void SymmetricExceptWith(IEnumerable<T> other)
-        {
-            if (ReferenceEquals(this, other))
-            {
-                Clear();
-                return;
-            }
-
-            var otherSet = new HashSet<T>(other);
-            var snapshot = new List<T>(set);
-            foreach (var item in snapshot)
-            {
-                if (otherSet.Remove(item))
-                {
-                    Remove(item);
-                }
-            }
-
-            foreach (var item in otherSet)
-            {
-                Add(item);
-            }
-        }
-
-        /// <summary>
-        /// 判断当前集合是否为 <paramref name="other" /> 的子集。
-        /// </summary>
-        /// <param name="other">比较集合。</param>
-        /// <returns>是子集返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool IsSubsetOf(IEnumerable<T> other) => set.IsSubsetOf(other);
-
-        /// <summary>
-        /// 判断当前集合是否为 <paramref name="other" /> 的真子集。
-        /// </summary>
-        /// <param name="other">比较集合。</param>
-        /// <returns>是真子集返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool IsProperSubsetOf(IEnumerable<T> other) => set.IsProperSubsetOf(other);
-
-        /// <summary>
-        /// 判断当前集合是否为 <paramref name="other" /> 的超集。
-        /// </summary>
-        /// <param name="other">比较集合。</param>
-        /// <returns>是超集返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool IsSupersetOf(IEnumerable<T> other) => set.IsSupersetOf(other);
-
-        /// <summary>
-        /// 判断当前集合是否为 <paramref name="other" /> 的真超集。
-        /// </summary>
-        /// <param name="other">比较集合。</param>
-        /// <returns>是真超集返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool IsProperSupersetOf(IEnumerable<T> other) => set.IsProperSupersetOf(other);
-
-        /// <summary>
-        /// 判断当前集合与 <paramref name="other" /> 是否存在共同元素。
-        /// </summary>
-        /// <param name="other">比较集合。</param>
-        /// <returns>存在共同元素返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool Overlaps(IEnumerable<T> other) => set.Overlaps(other);
-
-        /// <summary>
-        /// 判断当前集合与 <paramref name="other" /> 是否包含完全相同的元素。
-        /// </summary>
-        /// <param name="other">比较集合。</param>
-        /// <returns>元素相同返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool SetEquals(IEnumerable<T> other) => set.SetEquals(other);
 
         IEnumerator<T> IEnumerable<T>.GetEnumerator() => set.GetEnumerator();
 

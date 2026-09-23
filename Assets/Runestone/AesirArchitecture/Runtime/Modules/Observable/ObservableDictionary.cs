@@ -48,15 +48,6 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 指定初始容量构造，避免批量添加时的多次扩容（rehash）。
-        /// </summary>
-        /// <param name="capacity">初始容量。</param>
-        public ObservableDictionary(int capacity)
-        {
-            dictionary = new Dictionary<TKey, TValue>(capacity);
-        }
-
-        /// <summary>
         /// 指定初始键值构造。初始键值不触发变更通知（语义同反序列化填充）。
         /// </summary>
         /// <param name="initialItems">初始键值序列。</param>
@@ -80,38 +71,6 @@ namespace Runestone.AesirArchitecture
         public ObservableDictionary(IEqualityComparer<TKey> comparer)
         {
             dictionary = new Dictionary<TKey, TValue>(comparer);
-        }
-
-        /// <summary>
-        /// 指定初始容量与键比较器构造。
-        /// </summary>
-        /// <param name="capacity">初始容量。</param>
-        /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
-        public ObservableDictionary(int capacity, IEqualityComparer<TKey> comparer)
-        {
-            dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
-        }
-
-        /// <summary>
-        /// 指定初始键值与键比较器构造。初始键值不触发通知。
-        /// </summary>
-        /// <param name="initialItems">初始键值序列。</param>
-        /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
-        public ObservableDictionary(
-            IEnumerable<KeyValuePair<TKey, TValue>> initialItems,
-            IEqualityComparer<TKey> comparer)
-        {
-            dictionary = new Dictionary<TKey, TValue>(comparer);
-
-            if (initialItems == null)
-            {
-                return;
-            }
-
-            foreach (var pair in initialItems)
-            {
-                dictionary.Add(pair.Key, pair.Value);
-            }
         }
 
         /// <summary>
