@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Utilities;
@@ -15,8 +14,9 @@ namespace Runestone.AesirArchitecture.Editor
     /// Aesir 包更新窗口（Odin Inspector 版）— 检测远程最新版本、展示「本地 → 远程」更新日志、
     /// 确认后一键更新 <see cref="AesirUpdateService.InstallRootRelativePath" /> 下的本地安装包。
     /// <para>
-    /// 全部逻辑（检测 / 下载 / 备份 / 清单 / 日志解析）都在 <see cref="AesirUpdateService" />，
-    /// 本类只做状态持有与交互编排。编辑器加载时经 <see cref="RegisterOpener" /> 把打开方式注册进
+    /// 全部编排逻辑（检测 / 更新日志 / 更新执行 / 忙碌门禁）在共享控制器
+    /// <see cref="AesirUpdateController" /> 中与 IMGUI 兜底窗口共用，本类只做状态序列化、
+    /// 行视图模型与 Odin 特性绘制。编辑器加载时经 <see cref="RegisterOpener" /> 把打开方式注册进
     /// 菜单入口 <see cref="AesirUpdateWindow" />；未安装 Odin Inspector 时本程序集整体不参与编译，
     /// 菜单自动回退到 IMGUI 兜底窗口。
     /// </para>
@@ -71,29 +71,14 @@ namespace Runestone.AesirArchitecture.Editor
 
         #endregion
 
-        #region 序列化状态（跨域重载保留）
+        #region 状态
 
+        /// <summary>更新器状态（序列化载体；编排与写入全部在共享控制器）。</summary>
         [SerializeField, HideInInspector]
-        List<AesirUpdateService.InstalledPackage> _packages = new List<AesirUpdateService.InstalledPackage>();
+        AesirUpdateController.UpdateState _state = new AesirUpdateController.UpdateState();
 
-        [SerializeField, HideInInspector]
-        AesirUpdateService.ReleaseSnapshot _snapshot;
-
-        [SerializeField, HideInInspector]
-        string _remoteVersion;
-
-        [SerializeField, HideInInspector]
-        string _remoteSource;
-
-        #endregion
-
-        #region 会话状态（域重载后重建）
-
-        [HideInInspector]
-        bool _busy;
-
-        [HideInInspector]
-        bool _isGitRepository;
+        /// <summary>共享编排控制器（非序列化，OnEnable 重建并接管 _state）。</summary>
+        AesirUpdateController _controller;
 
         [HideInInspector]
         bool _hasOutdated;
@@ -115,7 +100,7 @@ namespace Runestone.AesirArchitecture.Editor
 
         [HorizontalGroup("Actions"), PropertySpace(8, 0)]
         [Button("检查更新", ButtonSizes.Medium), EnableIf(nameof(NotBusy))]
-        void CheckForUpdatesButton() => CheckForUpdates();
+        void CheckForUpdatesButton() => _controller.CheckForUpdates();
 
         [HorizontalGroup("Actions"), PropertySpace(8, 0)]
         [Button("打开 Releases 页面", ButtonSizes.Medium)]
@@ -124,19 +109,17 @@ namespace Runestone.AesirArchitecture.Editor
         [PropertySpace(4, 0)]
         [Button("$" + nameof(UpdateAllLabel), ButtonSizes.Large), GUIColor(0.45f, 0.85f, 0.45f),
          ShowIf(nameof(HasOutdated)), EnableIf(nameof(NotBusy))]
-        void UpdateAllButton() => RequestUpdate(OutdatedPackages());
+        void UpdateAllButton() => _controller.RequestUpdate(_controller.OutdatedPackages());
 
         [FoldoutGroup("更新日志（本地 → 远程变更）", VisibleIf = nameof(HasChangelog)), PropertySpace(8, 0)]
         [ShowInInspector, HideLabel, MultiLineProperty(14), ReadOnly]
-        [SerializeField]
-        string _changelogText = "";
+        string ChangelogText => _state.ChangelogText;
 
         [ShowInInspector, HideLabel, ProgressBar(0, 1), ShowIf(nameof(Busy)), PropertySpace(8, 0)]
         float _progress01;
 
         [ShowInInspector, HideLabel, DisplayAsString(false), PropertySpace(8, 4)]
-        [SerializeField]
-        string _status = "点击「检查更新」获取远程最新版本。";
+        string StatusText => _state.Status;
 
         #endregion
 
@@ -152,10 +135,6 @@ namespace Runestone.AesirArchitecture.Editor
             /// <summary>对应的本地安装包数据。</summary>
             [HideInInspector]
             public AesirUpdateService.InstalledPackage Model;
-
-            /// <summary>所属窗口（域重载后由窗口绘制前惰性补回）。</summary>
-            [HideInInspector, NonSerialized]
-            public AesirUpdateWindowOdin Window;
 
             /// <summary>状态文本着色。</summary>
             [HideInInspector]
@@ -190,19 +169,17 @@ namespace Runestone.AesirArchitecture.Editor
         protected override void OnEnable()
         {
             base.OnEnable();
-            _isGitRepository = AesirUpdateService.IsGitRepository();
-            Rescan();
+            _controller = new AesirUpdateController(_state, WindowTitle, OnViewChanged,
+                progress01 => _progress01 = progress01);
+            _controller.Initialize();
         }
 
         protected override void DrawEditor(int index)
         {
-            // 域重载后行视图模型的窗口引用丢失（NonSerialized），绘制前惰性补回
-            foreach (var row in _rows)
+            // 域重载后行视图模型的窗口引用若失效，重建（行数据在 OnViewChanged 中保持同步）
+            if (_rows.Count != _state.Packages.Count)
             {
-                if (row.Window == null)
-                {
-                    row.Window = this;
-                }
+                RebuildRows();
             }
 
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
@@ -210,10 +187,9 @@ namespace Runestone.AesirArchitecture.Editor
             EditorGUILayout.EndScrollView();
         }
 
-        /// <summary>重新扫描本地安装（远程信息保留，便于更新导入触发域重载后继续展示）。</summary>
-        void Rescan()
+        /// <summary>状态变化回调（重扫 / 忙碌切换 / 状态文本变更）：重建行视图模型并重绘。</summary>
+        void OnViewChanged()
         {
-            _packages = AesirUpdateService.ScanInstalledPackages();
             RebuildRows();
             Repaint();
         }
@@ -222,30 +198,29 @@ namespace Runestone.AesirArchitecture.Editor
         void RebuildRows()
         {
             _rows.Clear();
-            foreach (var pkg in _packages)
+            foreach (var pkg in _state.Packages)
             {
                 var row = new PackageRow
                 {
                     Model = pkg,
-                    Window = this,
                     Name = pkg.DirName,
                     Local = "本地 v" + pkg.Version
                 };
 
-                if (string.IsNullOrEmpty(_remoteVersion))
+                if (string.IsNullOrEmpty(_state.RemoteVersion))
                 {
                     row.Remote = "远程未检查";
                     row.StatusColor = Color.gray;
                 }
                 else
                 {
-                    var cmp = AesirUpdateService.CompareVersion(pkg.Version, _remoteVersion);
+                    var cmp = AesirUpdateService.CompareVersion(pkg.Version, _state.RemoteVersion);
                     if (cmp < 0)
                     {
-                        row.Remote = $"远程 {_remoteVersion}";
+                        row.Remote = $"远程 {_state.RemoteVersion}";
                         row.StatusColor = OutdatedColor;
                         row.Outdated = true;
-                        row.RemoteVersion = _remoteVersion;
+                        row.RemoteVersion = _state.RemoteVersion;
                     }
                     else if (cmp == 0)
                     {
@@ -267,177 +242,22 @@ namespace Runestone.AesirArchitecture.Editor
 
         #endregion
 
-        #region 检查更新
+        #region 状态判定（Odin 特性绑定）
 
-        async void CheckForUpdates()
-        {
-            if (!BeginBusy())
-            {
-                return;
-            }
+        /// <summary>是否处于忙碌状态（据此禁用更新按钮）。</summary>
+        public bool Busy => _state.Busy;
 
-            try
-            {
-                SetProgress("正在检测远程最新版本 ...", 0.05f);
-                _snapshot = await AesirUpdateService.FetchLatestReleaseSnapshotAsync();
-                _remoteVersion = _snapshot.Tag;
-                _remoteSource = _snapshot.Source;
-                RebuildRows();
+        bool NotBusy => !_state.Busy;
 
-                SetProgress("正在拉取更新日志 ...", 0.3f);
-                await RefreshChangelog();
+        bool IsGitRepository => _state.IsGitRepository;
 
-                SetStatus($"远程最新版本 {_remoteVersion}（来源：{_remoteSource}）。");
-                Debug.Log($"[Aesir Updater] 远程最新版本 {_remoteVersion}（来源：{_remoteSource}）");
-            }
-            catch (Exception e)
-            {
-                _snapshot = null;
-                _remoteVersion = null;
-                _changelogText = "";
-                RebuildRows();
-                SetStatus("检查更新失败：" + e.Message);
-                Debug.LogWarning($"[Aesir Updater] 检查更新失败：{e.Message}\n{e}");
-            }
-            finally
-            {
-                EndBusy();
-            }
-        }
-
-        /// <summary>拉取并生成全部待更新包的更新日志摘要（无待更新包时清空）。</summary>
-        async Task RefreshChangelog()
-        {
-            var outdated = OutdatedPackages();
-            if (_snapshot == null || outdated.Count == 0)
-            {
-                _changelogText = "";
-                return;
-            }
-
-            _changelogText = await AesirUpdateService.BuildChangelogDigestAsync(_snapshot.Tag, outdated);
-        }
-
-        #endregion
-
-        #region 执行更新
-
-        /// <summary>
-        /// 更新入口（「全部更新」按钮）：先弹确认框防误操作，确认后执行
-        /// 备份 → 逐包下载导入 → 登记清单。取消或忙碌中直接返回。
-        /// 两包同 Release 发布且 Modules 依赖 Architecture——任何调用都会被扩展为全部待更新包，
-        /// 从入口杜绝单包更新造成的版本撕裂。
-        /// </summary>
-        public void RequestUpdate(List<AesirUpdateService.InstalledPackage> targets)
-        {
-            if (_busy || _snapshot == null || targets.Count == 0)
-            {
-                return;
-            }
-
-            // 统一扩展为全部待更新包（已按依赖顺序排列），忽略传入的子集
-            targets = OutdatedPackages();
-            if (targets.Count == 0)
-            {
-                return;
-            }
-
-            var confirmed = EditorUtility.DisplayDialog("确认更新",
-                AesirUpdateService.BuildUpdateConfirmation(targets, _remoteVersion, _isGitRepository),
-                "开始更新", "取消");
-            if (!confirmed)
-            {
-                return;
-            }
-
-            UpdatePackages(targets);
-        }
-
-        async void UpdatePackages(List<AesirUpdateService.InstalledPackage> targets)
-        {
-            if (!BeginBusy())
-            {
-                return;
-            }
-
-            try
-            {
-                var backupPath =
-                    await AesirUpdateService.UpdatePackagesAsync(_snapshot, targets, SetProgress);
-                SetStatus($"更新完成（{_remoteVersion}）。备份：{backupPath}");
-                Debug.Log($"[Aesir Updater] {_status}");
-                EditorUtility.DisplayDialog(WindowTitle,
-                    $"已更新到 {_remoteVersion}。\n\n本地修改已备份至：\n{backupPath}", "好");
-            }
-            catch (Exception e)
-            {
-                SetStatus("更新失败：" + e.Message);
-                Debug.LogError($"[Aesir Updater] 更新失败：{e.Message}\n{e}");
-                EditorUtility.DisplayDialog(WindowTitle, _status, "好");
-            }
-            finally
-            {
-                EndBusy();
-                Rescan();
-                // 编译可能在 Refresh 内同步触发域重载；之后的日志不保证执行，重要信息已在其前输出
-                AssetDatabase.Refresh();
-            }
-        }
-
-        #endregion
-
-        #region 状态判定与辅助
-
-        /// <summary>是否处于忙碌状态（行视图模型据此禁用更新按钮）。</summary>
-        public bool Busy => _busy;
-
-        bool NotBusy => !_busy;
-
-        bool IsGitRepository => _isGitRepository;
-
-        bool HasNoPackages => _packages.Count == 0;
+        bool HasNoPackages => _state.Packages.Count == 0;
 
         bool HasOutdated => _hasOutdated;
 
-        bool HasChangelog => !string.IsNullOrEmpty(_changelogText);
+        bool HasChangelog => !string.IsNullOrEmpty(_state.ChangelogText);
 
-        string UpdateAllLabel => $"全部更新到 {_remoteVersion}";
-
-        /// <summary>取全部待更新包（委托 <see cref="AesirUpdateService.ComputeOutdatedPackages" />，按包 id 排序保证依赖顺序）。</summary>
-        List<AesirUpdateService.InstalledPackage> OutdatedPackages() =>
-            AesirUpdateService.ComputeOutdatedPackages(_packages, _remoteVersion);
-
-        bool BeginBusy()
-        {
-            if (_busy)
-            {
-                return false;
-            }
-
-            _busy = true;
-            return true;
-        }
-
-        void EndBusy()
-        {
-            EditorUtility.ClearProgressBar();
-            _busy = false;
-            Repaint();
-        }
-
-        void SetProgress(string message, float progress)
-        {
-            _status = message;
-            _progress01 = Mathf.Clamp01(progress);
-            EditorUtility.DisplayProgressBar(WindowTitle, message, _progress01);
-            Repaint();
-        }
-
-        void SetStatus(string message)
-        {
-            _status = message;
-            Repaint();
-        }
+        string UpdateAllLabel => $"全部更新到 {_state.RemoteVersion}";
 
         #endregion
     }
