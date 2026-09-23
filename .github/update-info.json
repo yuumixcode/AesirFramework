@@ -1,10 +1,10 @@
 {
-  "version": "0.22.0",
-  "tag": "v0.22.0",
+  "version": "0.23.0",
+  "tag": "v0.23.0",
   "packages": [
     {
       "name": "AesirArchitecture",
-      "version": "0.22.0",
+      "version": "0.23.0",
       "files": [
         "Assets/Runestone/AesirArchitecture/CHANGELOG.md",
         "Assets/Runestone/AesirArchitecture/Documentation",
@@ -40,6 +40,7 @@
         "Assets/Runestone/AesirArchitecture/Editor/OdinInspector/UpdateChecker/AesirUpdateWindowOdin.cs",
         "Assets/Runestone/AesirArchitecture/Editor/Runestone.AesirArchitecture.Editor.asmdef",
         "Assets/Runestone/AesirArchitecture/Editor/UpdateChecker",
+        "Assets/Runestone/AesirArchitecture/Editor/UpdateChecker/AesirUpdateController.cs",
         "Assets/Runestone/AesirArchitecture/Editor/UpdateChecker/AesirUpdateService.cs",
         "Assets/Runestone/AesirArchitecture/Editor/UpdateChecker/AesirUpdateWindow.cs",
         "Assets/Runestone/AesirArchitecture/Editor/Utilities",
@@ -310,6 +311,7 @@
         "Assets/Runestone/AesirArchitecture/Tests/Editor/ObservableHashSetTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/ObservableListParityTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/ObservableListTests.cs",
+        "Assets/Runestone/AesirArchitecture/Tests/Editor/ObservableQueueTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/ObservableValueTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/OrderingAndLifecycleTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/QuickCreateSOMenuItemTests.cs",
@@ -327,7 +329,7 @@
     },
     {
       "name": "AesirModules",
-      "version": "0.22.0",
+      "version": "0.23.0",
       "files": [
         "Assets/Runestone/AesirModules/CHANGELOG.md",
         "Assets/Runestone/AesirModules/Documentation",
