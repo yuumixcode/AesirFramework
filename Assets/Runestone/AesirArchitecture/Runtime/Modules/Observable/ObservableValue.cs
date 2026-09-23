@@ -89,15 +89,6 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 设置值。语义等价于 <see cref="Value" /> 的 setter。
-        /// </summary>
-        /// <param name="v">要设置的新值。</param>
-        public void SetValue(T v)
-        {
-            Value = v;
-        }
-
-        /// <summary>
         /// 添加监听者。回调参数为新值。
         /// </summary>
         /// <param name="callback">值变更时调用的回调函数，参数为变更后的新值。</param>
@@ -136,8 +127,11 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 清除所有监听。
         /// </summary>
-        /// <remarks>清除所有监听引用，防止因监听者未释放导致的内存泄漏。</remarks>
-        public void Clear()
+        /// <remarks>
+        /// 清除所有监听引用，防止因监听者未释放导致的内存泄漏。
+        /// 命名对齐可观察集合的 <c>ClearListeners</c>——清除的是监听者而非值本身。
+        /// </remarks>
+        public void ClearListeners()
         {
             _valueChangedEvent.Dispose();
         }
