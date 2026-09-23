@@ -260,6 +260,32 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return genericMethodMatch.Groups[1].Value;
             }
 
+            // 显式接口实现：类型 + 接口名.成员名 + 终止符（如 "void IFoo.Bar()" / "int IFoo.Property { get; }"）。
+            // 必须先于 _memberDeclRegex 与 simpleMatch——后者均不锚定行首，会把 "IFoo.Property" 吞为类型词、
+            // "get" 误当成员名；且裸名 "Bar" 会错配同类型同名公开成员（显式实现与公开同名方法可合法共存）。
+            // 此处保留带点段的限定名，调用方据此告警跳过——源码端拿不到接口的命名空间限定
+            // （反射端 MemberInfo.Name 为 "Ns.IFoo.Bar" 全限定），无法可靠对齐。
+            // 行首锚定 + 类型词前置使 "public int Foo.Bar Baz;"（嵌套类型字段）与 "x = y.z;"（赋值）不受误伤，
+            // 语句调用（"return a.b();"）由方法开头的语句关键字守卫拦截。
+            var explicitImplMatch = Regex.Match(line, @"^\s*[\w<>\[\],\.]+\s+(\w+(?:\.\w+)*)\s*[\({;=]");
+            if (explicitImplMatch.Success && explicitImplMatch.Groups[1].Value.Contains('.'))
+            {
+                var qualified = true;
+                foreach (var part in explicitImplMatch.Groups[1].Value.Split('.'))
+                {
+                    if (!IsValidIdentifier(part))
+                    {
+                        qualified = false;
+                        break;
+                    }
+                }
+
+                if (qualified)
+                {
+                    return explicitImplMatch.Groups[1].Value;
+                }
+            }
+
             // 通用成员声明：修饰符 + 类型 + 成员名 + 终止符（{ ; = ( 之一）
             // 适用于大多数单行声明，如 "public int Count;" "public void Foo() { }"
             // 注意：表达式体 "=> " 中的 = 也会被此正则匹配，因此必须放在泛型方法正则之后
