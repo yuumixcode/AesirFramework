@@ -88,7 +88,9 @@ namespace Runestone.AesirModules
         {
             if (_instance != null && _instance != this)
             {
-                Destroy(gameObject);
+                // 重复实例只销毁自身组件：预放置/运行时创建统一由 Instance 单通道裁决，
+                // Destroy(gameObject) 会连带销毁宿主 [Aesir Modules] 整树与其他模块（对齐 RAA 先例）
+                Destroy(this);
                 return;
             }
 
@@ -364,6 +366,17 @@ namespace Runestone.AesirModules
             if (_panelDict.ContainsKey(panelType))
             {
                 return true;
+            }
+
+            // 键语义诊断：与 ShowPanel 同款——注册表已存在派生实例时拒绝本次预热，
+            // 防止以基类类型 Prewarm 造成重复实例化并覆盖注册表键、泄漏旧实例
+            var relatedKey = FindRegisteredRelatedPanelKey(panelType);
+            if (relatedKey != null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"面板注册表以实例的实际类型为键：已存在 {relatedKey.Name} 的实例，" +
+                    $"请以实际类型调用 PrewarmPanel（{panelType.Name} 是其基类或接口）");
+                return false;
             }
 
             var panel = InstantiateAndAttach(panelType, path);
