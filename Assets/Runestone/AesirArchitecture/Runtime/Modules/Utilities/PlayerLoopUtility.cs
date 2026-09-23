@@ -66,7 +66,7 @@ namespace Runestone.AesirArchitecture
         /// </para>
         /// </summary>
         /// <returns>格式化的 PlayerLoop 描述字符串</returns>
-        public static string GetCurrentPlayerLoopDescription()
+        internal static string GetCurrentPlayerLoopDescription()
         {
             var sb = new StringBuilder();
             var loop = PlayerLoop.GetCurrentPlayerLoop();

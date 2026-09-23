@@ -186,13 +186,13 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 清空所有回调
+        /// 清空所有回调（域加载初始化与测试用）
         /// </summary>
         /// <remarks>
         /// 此方法在 <see cref="Initialize" /> 中调用，确保域重载后清空旧的回调数据和待处理命令，
         /// 防止 Disable Domain Reload 模式下残留的静态状态导致回调重复执行或引用已销毁的对象。
         /// </remarks>
-        public static void Reset()
+        internal static void Reset()
         {
             Hooks.Clear();
             PendingCommands.Clear();
@@ -202,9 +202,9 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 获取指定阶段的已注册回调数量
+        /// 获取指定阶段的已注册回调数量（测试观察用）
         /// </summary>
-        public static int GetHookCount(AesirArchitectureLifecyclePhase phase) =>
+        internal static int GetHookCount(AesirArchitectureLifecyclePhase phase) =>
             Hooks.TryGetValue(phase, out var list) ? list.Count : 0;
 
         /// <summary>

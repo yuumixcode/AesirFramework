@@ -113,11 +113,11 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 检查是否已注册指定类型的实例
+        /// 检查是否已注册指定类型的实例（内部调试与测试用）。
         /// </summary>
         /// <typeparam name="TItem">要检查的实例类型，必须为 <typeparamref name="T" /> 的子类型。</typeparam>
         /// <returns>已注册则返回 <c>true</c>；否则返回 <c>false</c>。</returns>
-        public bool IsRegistered<TItem>() where TItem : class, T =>
+        internal bool IsRegistered<TItem>() where TItem : class, T =>
             _registry.ContainsKey(typeof(TItem));
 
         /// <summary>
@@ -132,20 +132,20 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 清空所有已注册的实例
+        /// 清空所有已注册的实例（内部路径：<see cref="Dispose" /> 与 <see cref="AbstractContext{T}.Dispose" /> 使用）。
         /// </summary>
-        public void Clear()
+        internal void Clear()
         {
             _registry.Clear();
             _insertionOrder.Clear();
         }
 
         /// <summary>
-        /// 按 Type 获取实例（非泛型版本）
+        /// 按 Type 获取实例（非泛型版本，内部路径）
         /// </summary>
         /// <param name="type">要查询的 <see cref="Type" />，作为注册键。</param>
         /// <returns>已注册的实例；若未注册则返回 <c>null</c>。</returns>
-        public T GetByType(Type type) =>
+        internal T GetByType(Type type) =>
             _registry.GetValueOrDefault(type);
 
         /// <summary>
@@ -161,13 +161,13 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 获取所有已注册键值对（仅供异常路径的近失识别使用）
+        /// 获取所有已注册键值对（仅供异常路径的近失识别使用，内部路径）
         /// </summary>
         /// <remarks>
         /// 正常查询请使用 <see cref="Get{TItem}" /> / <see cref="TryGet{TItem}" />。
         /// 此成员仅供 <see cref="AbstractContext{T}" /> 在"未注册"异常路径中遍历已注册条目，
         /// 识别"已注册实例可赋值给查询类型"的近失情况并给出提示；正常路径不产生开销。
         /// </remarks>
-        public IEnumerable<KeyValuePair<Type, T>> GetAllEntries() => _registry;
+        internal IEnumerable<KeyValuePair<Type, T>> GetAllEntries() => _registry;
     }
 }

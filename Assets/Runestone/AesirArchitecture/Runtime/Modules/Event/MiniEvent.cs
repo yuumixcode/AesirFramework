@@ -47,6 +47,11 @@ namespace Runestone.AesirArchitecture
         /// <returns>用于后续自动移除该监听的句柄</returns>
         public AutoRemoveListenerHandle AddListener(Action listener)
         {
+            if (listener == null)
+            {
+                throw new ArgumentNullException(nameof(listener));
+            }
+
             _eventListeners += listener;
             return new AutoRemoveListenerHandle(() => RemoveListener(listener));
         }
@@ -73,7 +78,7 @@ namespace Runestone.AesirArchitecture
         /// 获取当前所有已注册的委托列表
         /// </summary>
         /// <returns>委托数组；无监听者时返回空数组</returns>
-        public Delegate[] GetListeners() =>
+        internal Delegate[] GetListeners() =>
             _eventListeners?.GetInvocationList() ?? Array.Empty<Delegate>();
     }
 
@@ -123,6 +128,11 @@ namespace Runestone.AesirArchitecture
         /// <returns>用于后续自动移除该监听的句柄</returns>
         public AutoRemoveListenerHandle AddListener(Action<T> listener)
         {
+            if (listener == null)
+            {
+                throw new ArgumentNullException(nameof(listener));
+            }
+
             _eventListeners += listener;
             return new AutoRemoveListenerHandle(() => RemoveListener(listener));
         }
@@ -150,7 +160,7 @@ namespace Runestone.AesirArchitecture
         /// 获取当前所有已注册的委托列表
         /// </summary>
         /// <returns>委托数组；无监听者时返回空数组</returns>
-        public Delegate[] GetListeners() =>
+        internal Delegate[] GetListeners() =>
             _eventListeners?.GetInvocationList() ?? Array.Empty<Delegate>();
     }
 }
