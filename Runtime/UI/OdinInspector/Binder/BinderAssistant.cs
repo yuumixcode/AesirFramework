@@ -506,7 +506,7 @@ namespace Runestone.AesirModules
 #if UNITY_EDITOR
                 // 暂存目标物体与脚本类型，编译完成后由 AttachToGameObject 自动挂载并绑定
                 EditorPrefs.SetInt(PendingBindInstanceIdKey, gameObject.GetInstanceID());
-                EditorPrefs.SetString(PendingBindTypeKey, TargetNamespace + "." + ScriptName);
+                EditorPrefs.SetString(PendingBindTypeKey, ResolvePendingBindTypeName());
 
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
@@ -795,6 +795,56 @@ namespace Runestone.AesirModules
 
                 assistant.ValidateBindings();
             }
+        }
+
+        /// <summary>
+        /// 计算自动挂载用的类型全名：增量模式下目标文件已存在时，从文件实际声明的命名空间解析——
+        /// UI 的 <see cref="TargetNamespace" /> 字段可能落后于开发者事后对 namespace 的修改，
+        /// 直接拼 UI 值会导致编译后类型解析失败、自动挂载静默丢失；
+        /// 文件不存在或未声明命名空间时回退 UI 配置。
+        /// </summary>
+        string ResolvePendingBindTypeName()
+        {
+            if (!IsPartialMode && File.Exists(ControllerScriptPath))
+            {
+                var fileNamespace = ExtractNamespaceFromFile(ControllerScriptPath);
+                if (!string.IsNullOrEmpty(fileNamespace))
+                {
+                    return fileNamespace + "." + ScriptName;
+                }
+            }
+
+            return TargetNamespace + "." + ScriptName;
+        }
+
+        /// <summary>
+        /// 从源码文件提取首个命名空间声明（兼容 file-scoped 与块式两种写法）。
+        /// </summary>
+        static string ExtractNamespaceFromFile(string path)
+        {
+            foreach (var line in File.ReadLines(path))
+            {
+                var trimmed = line.TrimStart();
+                if (!trimmed.StartsWith("namespace ", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var declaration = trimmed.Substring("namespace ".Length).TrimEnd();
+                var end = declaration.IndexOfAny(new[] { '{', ';' });
+                if (end >= 0)
+                {
+                    declaration = declaration.Substring(0, end);
+                }
+
+                declaration = declaration.Trim();
+                if (declaration.Length > 0)
+                {
+                    return declaration;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

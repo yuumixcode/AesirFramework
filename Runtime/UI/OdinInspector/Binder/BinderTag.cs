@@ -47,13 +47,14 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 当前物体上可绑定的组件类型集合（含 GameObject 自身）。
-        /// 排除了 <see cref="BinderTag" /> 自身，避免将标记组件纳入绑定选项。
+        /// 排除 Missing 脚本组件（<see cref="GameObject.GetComponents{T}" /> 对其返回 null 元素，
+        /// 放行会在 <c>GetType()</c> 时抛空引用）与 <see cref="BinderTag" /> 自身，避免将标记组件或悬空脚本纳入绑定选项。
         /// </summary>
         public IEnumerable<Type> Types
         {
             get
             {
-                var types = GetComponents<Component>().Where(x => x is not BinderTag).Select(x => x.GetType())
+                var types = GetComponents<Component>().Where(x => x is not (null or BinderTag)).Select(x => x.GetType())
                     .ToList();
                 types.Add(typeof(GameObject));
                 return types;
