@@ -54,12 +54,12 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | **第二课 · 标准档** | 只读暴露 + 写方法 | Controller 直调写方法 | Presenter 直调写方法 |
 | **第三课 · 严格档** | 接口注册 + 只读暴露 + 写方法 | Command 写 + Query 加工读 | Command 写 + Query 读 |
 
-快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / ObservableCollections / MiniEvent / PlaneWar 四个实战示例，逐课可导入。
+快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / ObservableCollections / MiniEvent / PlaneWar / RuntimeInitializeLoadType 五个实战与进阶示例，逐课可导入（第一次接触建议从 Counter-Mvc-Quick 开始）。
 
 ### 核心机制速览
 
 - **`ObservableValue<T>` 响应式属性** — Model 持有可写实例，View 经 `IReadOnlyObservableValue<T>` 只读订阅；`AddListenerAndInvoke` 订阅即同步初始值
-- **可观察集合家族（ObservableCollections 轻量内置子集）** — 四种高频集合（List / Dictionary / HashSet / Queue）+ `CollectionChanged` 全语义通知（含 Move / Sort / Reverse / 批量）+ Odin 内联调试面板；既有 Added / Removed / Replaced / Updated / Cleared 轻量事件保留，既有代码零迁移
+- **可观察集合家族（ObservableCollections 轻量内置子集）** — 四种高频集合（List / Dictionary / HashSet / Queue）+ 单轨变更通知：`AddListener(Action<CollectionChangedEventArgs<T>>)` 覆盖 Add / Remove / Replace / Move / Reset 全语义（无变更不通知、批量操作逐项通知、Sort / Reverse / Clear 统一 Reset）+ Odin 内联调试面板
 - **`MiniEvent` / `MiniEvent<T>`** — 零分配轻量事件（直接多播调用，原生 C# fail-fast 语义）；返回 `AutoRemoveListenerHandle` 自动清理，支持随 GameObject 销毁 / 场景卸载自动注销
 - **PlayerLoop 原生生命周期** — `AesirArchitecturePlayerLoop` 注入 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour；第三方 SDK 覆盖 PlayerLoop 后 `EnsureInjected()` 自愈
 - **DDOL 显式决策** — 根单例的 `dontDestroyOnLoad` 序列化字段统一控制预放置 / 运行时两种来源（默认跨场景持久；关闭时随场景卸载销毁，Inspector 警告 + 运行时提醒，多场景叠加加载自行处理）
@@ -263,7 +263,7 @@ AesirFramework/                            # 你现在看到的仓库
 
 ## ✅ 质量与 CI
 
-- **测试** — EditMode 测试 100 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序等；命令行跑法见[开发环境](#️-开发环境)
+- **测试** — EditMode 测试 650+ 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
 - **CI（GitHub Actions）** —
   - `auto-release.yml`：每次推送 `main` 自动发布 GitHub Release（三个 unitypackage + 更新器所需的 update-info.json / files-manifest）
   - `auto-publish-branches.yml`：按包目录 subtree split 生成 `AesirArchitecture-v<版本>` / `AesirModules-v<版本>` 固定版本分支

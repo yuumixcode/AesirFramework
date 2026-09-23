@@ -2,8 +2,8 @@
 
 用同一套玩法需求分别以两种方式实现，用于对比学习：
 
-- `Scripts/Mono` —— 原生 MonoBehaviour 写法
-- `Scripts/Raa` —— Aesir Architecture（RAA）架构写法（后续补充）
+- `Scripts/Mono` —— 原生 MonoBehaviour 写法（**当前包含的版本**）
+- `Scripts/Raa` —— Aesir Architecture（RAA）架构写法（**规划中，尚未包含**——本示例当前仅含 Mono 版，RAA 版列入路线图后随版本发布）
 
 ## 场景
 
