@@ -5,9 +5,9 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.23.0] - 2026-09-23
 
-> 本批为第二轮全仓锐评（`Docs/AesirFramework/全仓锐评/04/05`）修复批次。
+> 本批为全仓锐评修复批次（与 Aesir Architecture 0.23.0 同步发布；Architecture 侧含可观察集合破坏性变更，升级时请一并阅读其 CHANGELOG 的 Removed / Renamed 节）。
 
 ### Added
 
