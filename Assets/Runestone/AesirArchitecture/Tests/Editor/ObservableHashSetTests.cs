@@ -5,8 +5,8 @@ using NUnit.Framework;
 namespace Runestone.AesirArchitecture.Tests.Editor
 {
     /// <summary>
-    /// 验证 <see cref="ObservableHashSet{T}" /> 的单轨变更通知：增删通知实际变更的元素、集合代数操作逐项通知、
-    /// Clear 走 Reset，以及无变更跳过行为。
+    /// 验证 <see cref="ObservableHashSet{T}" /> 的单轨变更通知：增删通知实际变更的元素、
+    /// 批量操作逐项通知、Clear 走 Reset，以及无变更跳过行为。
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -115,125 +115,6 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreEqual(2, received[0].OldItem);
             CollectionAssert.AreEquivalent(new[] { 1, 3 }, set, "结果应移除存在的 2");
             AesirArchitectureDebug.LogTestInfo("RemoveRange: 仅存在元素逐项触发 Remove");
-        }
-
-        /// <summary>
-        /// 验证 UnionWith 仅对实际新增的元素逐项触发 Add 通知。
-        /// </summary>
-        [Test]
-        public void UnionWith_FiresAddPerNewItem()
-        {
-            var set = new ObservableHashSet<int> { 1 };
-            var received = new List<CollectionChangedEventArgs<int>>();
-
-            set.AddListener(received.Add);
-            set.UnionWith(new[] { 1, 2, 3 });
-
-            Assert.AreEqual(2, received.Count, "已存在的 1 不应触发通知");
-            CollectionAssert.AreEqual(new[] { 2, 3 },
-                new[] { received[0].NewItem, received[1].NewItem }, "Add 应逐项覆盖新增元素");
-            CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, set, "并集结果应包含全部元素");
-            AesirArchitectureDebug.LogTestInfo("UnionWith: 仅新增元素逐项触发 Add");
-        }
-
-        /// <summary>
-        /// 验证 ExceptWith 仅对实际存在的元素逐项触发 Remove 通知。
-        /// </summary>
-        [Test]
-        public void ExceptWith_FiresRemovePerPresentItem()
-        {
-            var set = new ObservableHashSet<int> { 1, 2, 3 };
-            var received = new List<CollectionChangedEventArgs<int>>();
-
-            set.AddListener(received.Add);
-            set.ExceptWith(new[] { 2, 4 });
-
-            Assert.AreEqual(1, received.Count, "不存在的 4 不应触发通知");
-            Assert.AreEqual(2, received[0].OldItem);
-            CollectionAssert.AreEquivalent(new[] { 1, 3 }, set, "差集结果应移除存在的 2");
-            AesirArchitectureDebug.LogTestInfo("ExceptWith: 仅存在元素逐项触发 Remove");
-        }
-
-        /// <summary>
-        /// 验证 ExceptWith 传入集合自身短路为 Clear（BCL 语义），触发一次 Reset 而非逐项 Remove。
-        /// </summary>
-        [Test]
-        public void ExceptWith_Self_BehavesAsClear()
-        {
-            var set = new ObservableHashSet<int> { 1, 2 };
-            var received = new List<CollectionChangedEventArgs<int>>();
-
-            set.AddListener(received.Add);
-            set.ExceptWith(set);
-
-            Assert.AreEqual(0, set.Count, "自差集结果应为空集");
-            Assert.AreEqual(1, received.Count, "自身短路应触发一次 Reset");
-            Assert.AreEqual(NotifyCollectionChangedAction.Reset, received[0].Action, "自身短路不应逐项触发 Remove");
-            AesirArchitectureDebug.LogTestInfo("ExceptWith 自身: 短路为 Clear 且触发 Reset");
-        }
-
-        /// <summary>
-        /// 验证 IntersectWith 移除不在另一集合中的元素并逐项触发 Remove 通知；传入自身为无变化操作。
-        /// </summary>
-        [Test]
-        public void IntersectWith_RemovesItemsNotInOther_SelfNoEvent()
-        {
-            var set = new ObservableHashSet<int> { 1, 2, 3 };
-            var received = new List<CollectionChangedEventArgs<int>>();
-
-            set.AddListener(received.Add);
-            set.IntersectWith(new[] { 2, 3, 4 });
-
-            Assert.AreEqual(1, received.Count, "仅不在交集内的 1 应触发 Remove 通知");
-            Assert.AreEqual(1, received[0].OldItem);
-            CollectionAssert.AreEquivalent(new[] { 2, 3 }, set, "交集结果应仅保留共有元素");
-
-            set.IntersectWith(set);
-            Assert.AreEqual(1, received.Count, "自身交集为无变化操作，不应触发通知");
-            AesirArchitectureDebug.LogTestInfo("IntersectWith: 移除差集元素，自身无变化");
-        }
-
-        /// <summary>
-        /// 验证 SymmetricExceptWith 先触发全部 Remove（交集）、再触发全部 Add（仅另一集合拥有的元素）；
-        /// 传入自身短路为 Clear。
-        /// </summary>
-        [Test]
-        public void SymmetricExceptWith_RemovesIntersectionThenAddsRemainder()
-        {
-            var set = new ObservableHashSet<int> { 1, 2, 3 };
-            var log = new List<(NotifyCollectionChangedAction Action, int Item)>();
-
-            set.AddListener(e => log.Add((e.Action, e.Action == NotifyCollectionChangedAction.Add ? e.NewItem : e.OldItem)));
-            set.SymmetricExceptWith(new[] { 2, 3, 4 });
-
-            Assert.AreEqual(3, log.Count, "移除 2、3 并添加 4 应各触发一次");
-            Assert.AreEqual((NotifyCollectionChangedAction.Remove, 2), log[0]);
-            Assert.AreEqual((NotifyCollectionChangedAction.Remove, 3), log[1]);
-            Assert.AreEqual((NotifyCollectionChangedAction.Add, 4), log[2], "应先触发全部 Remove、再触发全部 Add");
-            CollectionAssert.AreEquivalent(new[] { 1, 4 }, set, "对称差集结果应为 {1, 4}");
-
-            set.SymmetricExceptWith(set);
-            Assert.AreEqual(4, log.Count, "自身对称差集应短路为 Clear");
-            Assert.AreEqual(NotifyCollectionChangedAction.Reset, log[3].Action);
-            Assert.AreEqual(0, set.Count, "自身对称差集结果应为空集");
-            AesirArchitectureDebug.LogTestInfo("SymmetricExceptWith: 先 Remove 后 Add，自身短路 Reset");
-        }
-
-        /// <summary>
-        /// 验证子集/超集/重叠/相等判定委托内部 HashSet 正确执行。
-        /// </summary>
-        [Test]
-        public void QueryOperations_DelegateToInnerSet()
-        {
-            var set = new ObservableHashSet<int> { 1, 2 };
-
-            Assert.IsTrue(set.IsSubsetOf(new[] { 1, 2, 3 }), "应判定为子集");
-            Assert.IsTrue(set.IsProperSubsetOf(new[] { 1, 2, 3 }), "应判定为真子集");
-            Assert.IsTrue(set.IsSupersetOf(new[] { 1 }), "应判定为超集");
-            Assert.IsTrue(set.IsProperSupersetOf(new[] { 1 }), "应判定为真超集");
-            Assert.IsTrue(set.Overlaps(new[] { 2, 5 }), "存在共同元素应判定重叠");
-            Assert.IsTrue(set.SetEquals(new[] { 2, 1 }), "元素相同应判定相等");
-            AesirArchitectureDebug.LogTestInfo("查询操作: 委托内部 HashSet 正确");
         }
 
         /// <summary>
