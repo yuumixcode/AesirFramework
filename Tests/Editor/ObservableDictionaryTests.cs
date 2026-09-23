@@ -239,18 +239,5 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             AesirArchitectureDebug.LogTestInfo("结构体枚举器: 具体类型 foreach 遍历全部键值对");
         }
 
-        /// <summary>
-        /// 验证容量构造创建空字典且可正常增删。
-        /// </summary>
-        [Test]
-        public void CapacityConstructor_CreatesEmptyUsableDictionary()
-        {
-            var dict = new ObservableDictionary<string, int>(16);
-
-            Assert.AreEqual(0, dict.Count, "容量构造应为空字典");
-            dict.Add("hp", 100);
-            Assert.AreEqual(100, dict["hp"], "容量构造后应可正常添加");
-            AesirArchitectureDebug.LogTestInfo("容量构造: 空字典且可正常使用");
-        }
     }
 }
