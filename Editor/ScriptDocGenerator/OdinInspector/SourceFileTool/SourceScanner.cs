@@ -714,6 +714,18 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return;
             }
 
+            // 显式接口实现（成员名带接口限定段，如 "IFoo.Bar"）：反射端 MemberInfo.Name 为接口全限定名
+            // （含命名空间），源码端拿不到该限定无法对齐；且裸名会错配同类型的同名公开成员（可合法共存）。
+            // fail-closed：跳过并告警——该成员的文档请写在接口声明处（接口页会展示）。
+            if (memberName.Contains('.'))
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[ScriptDocGenerator] 检测到显式接口实现成员（" + declText.Trim() +
+                    "）：其 XML 文档无法自动关联（源码端拿不到接口命名空间限定，且裸名可能错配同名公开成员），已跳过。" +
+                    "请把该成员的文档写在接口声明处。");
+                return;
+            }
+
             var isCtor = operatorName == null && !_indexerRegex.IsMatch(declText) &&
                          IsCtorDeclaration(declText, memberName, frame.Name);
 

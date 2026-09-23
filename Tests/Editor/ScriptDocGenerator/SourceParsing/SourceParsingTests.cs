@@ -520,6 +520,39 @@ public class NoNamespaceClass
         }
 
         /// <summary>
+        /// ExtractMemberName 对显式接口实现应返回带接口段的限定名（如 "IFoo.Bar"），
+        /// 而非经简单匹配落到的裸名 "Bar"——显式实现与同类型同名公开成员可合法共存，
+        /// 裸名键会把文档错配给公开成员（ResolveDoc 据限定名告警跳过）。
+        /// </summary>
+        [Test]
+        public void ExtractMemberName_ExplicitInterfaceImplementation_ReturnsQualifiedName()
+        {
+            Assert.AreEqual("IFoo.Bar",
+                SourceFileAnalyzerUtility.ExtractMemberName("void IFoo.Bar()"));
+            Assert.AreEqual("IDisposable.Dispose",
+                SourceFileAnalyzerUtility.ExtractMemberName("void IDisposable.Dispose()"));
+            Assert.AreEqual("IFoo.Property",
+                SourceFileAnalyzerUtility.ExtractMemberName("int IFoo.Property { get; }"));
+            // 全限定显式实现（源码允许写接口全名）
+            Assert.AreEqual("System.IDisposable.Dispose",
+                SourceFileAnalyzerUtility.ExtractMemberName("void System.IDisposable.Dispose()"));
+        }
+
+        /// <summary>
+        /// 显式实现正则不应误伤相似形态：嵌套类型字段声明（"Foo.Bar Baz;"）仍按普通成员提取，
+        /// 语句行（"return a.b();"）仍被语句关键字守卫拦截返回 null。
+        /// </summary>
+        [Test]
+        public void ExtractMemberName_SimilarForms_NotMisidentifiedAsExplicitImpl()
+        {
+            // 嵌套类型字段：类型段 Foo.Bar 后跟空格 + 成员名，显式实现正则不命中，走通用/简单匹配
+            Assert.AreEqual("Baz",
+                SourceFileAnalyzerUtility.ExtractMemberName("public Foo.Bar Baz;"));
+            // 语句行被守卫拦截（不会走到显式实现正则）
+            Assert.IsNull(SourceFileAnalyzerUtility.ExtractMemberName("return a.b();"));
+        }
+
+        /// <summary>
         /// 表达式体泛型方法的 summary 应被正确解析。
         /// 验证从源代码到 summary 字典的完整流程，确保 =>
         /// 不会导致成员名被误提取为约束类型名（如 IModel）。
