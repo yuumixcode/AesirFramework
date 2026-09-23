@@ -138,9 +138,12 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 | 通知语义 | 每次写操作都通知（含无变更写入）、批量操作单次事件、Sort / Reverse 携带 `SortOperation` | 无变更不通知、批量操作逐项通知、Sort / Reverse / Clear 统一 Reset 无附加字段 |
 | 订阅清理 | 事件退订（`-=`）+ `IEvent<T>` 手动管理 | `AutoRemoveListenerHandle`：using / Dispose / Unity 生命周期自动移除 |
 | 同步视图 | `IObservableCollection<T>.CreateView` 全套视图体系 | 不实现（需要时用上游） |
+| HashSet 集合代数 | `ISet<T>` 全套（并 / 交 / 差 / 子集判定） | 不实现（`IObservableHashSet<T>` 不继承 `ISet<T>`，需要时用内部 `HashSet<T>` 或上游） |
+| `ReadOnlySpan<T>` 批量重载 | `AddRange(ReadOnlySpan<T>)` 等 | 不提供（Span 是库作者面；保留 `T[]` 与 `IEnumerable<T>` 双轨） |
+| 区间 Sort / Reverse | `Sort(index, count, comparer)` 等 | 不提供（整表 `Sort()` / `Reverse()` 保留） |
 | `List<T>` 的 span 批量操作 | `Unsafe.As` 改写内部数组 | 逐项追加 / 先物化再插入（`Internal/ListExtensions.cs`）——Unity netstandard2.1 无 `Unsafe` / `CollectionsMarshal`，语义一致，批量插入多一次数组分配 |
 | 语言版本 | C# 12（`record struct` / 主构造器 / file-scoped namespace） | C# 9 等价写法 |
-| `IReadOnlySet<T>` | netstandard2.0 内部 shim | 保留项目既有 `IObservableHashSet<T> : ISet<T>` |
+| `IReadOnlySet<T>` | netstandard2.0 内部 shim | 保留项目既有 `IObservableHashSet<T>`（不继承 `ISet<T>`，见上「HashSet 集合代数」行） |
 | `notnull` 约束 | `where TKey : notnull` / `where T : notnull` | 不添加（避免破坏既有可空元素用法） |
 | 序列化字段 | `readonly List<T> list` | `[SerializeField]`（字段名不变，保留 Inspector 初始元素编辑） |
 | 线程同步 | 内部以 `SyncRoot` 加锁 | 不加锁（仅主线程约定，见「注意事项」） |
