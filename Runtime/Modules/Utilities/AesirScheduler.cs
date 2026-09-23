@@ -85,9 +85,10 @@ namespace Runestone.AesirArchitecture
             }
 
             EnsureRegistered();
+            // Math.Max 对 NaN 返回 NaN（永不到期）——与 XML 文档「NaN 不设防（任务永不触发）」一致；负值 clamp 为 0（下一帧触发）
             Tasks.Add(new ScheduledTask
             {
-                DueTime = Time.time + (seconds > 0f ? seconds : 0f),
+                DueTime = Time.time + Math.Max(seconds, 0f),
                 BornFrame = Time.frameCount,
                 Callback = callback
             });

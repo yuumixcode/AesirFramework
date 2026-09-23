@@ -113,7 +113,8 @@ namespace Runestone.AesirArchitecture.Editor
                 return 0;
             }
 
-            var getListeners = miniEvent.GetType().GetMethod("GetListeners", BindingFlags.Instance | BindingFlags.Public);
+            var getListeners = miniEvent.GetType().GetMethod("GetListeners",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             return getListeners?.Invoke(miniEvent, null) is Delegate[] listeners ? listeners.Length : 0;
         }
 
