@@ -34,6 +34,11 @@ namespace Runestone.AesirArchitecture.Editor
         /// 单个本地安装包的行视图模型。显示文本 / 颜色 / 可更新标记在
         /// <see cref="AesirUpdateWindowOdin.RebuildRows" /> 时一次性算好，绘制期只读。
         /// </summary>
+        /// <remarks>
+        /// 每个显示字段都要标 <c>[EnableGUI]</c>：列表本身是只读属性，Odin 会把它的子项也当作不可编辑，
+        /// 逐个推入 <c>GUI.enabled = false</c> 绘制（父级 <c>[EnableGUI]</c> 管不到子属性各自的绘制作用域），
+        /// 于是行文本被渲染成"禁用灰"。<c>[EnableGUI]</c> 让各字段按可用状态绘制，不可编辑的语义不变。
+        /// </remarks>
         [Serializable]
         public sealed class PackageRow
         {
@@ -54,16 +59,19 @@ namespace Runestone.AesirArchitecture.Editor
             public bool Outdated;
 
             [HorizontalGroup("Row", 0.42f)]
+            [EnableGUI]
             [DisplayAsString(false, 13)]
             [HideLabel]
             public string Name;
 
             [HorizontalGroup("Row", Width = 100)]
+            [EnableGUI]
             [DisplayAsString]
             [HideLabel]
             public string Local;
 
             [HorizontalGroup("Row", Width = 130)]
+            [EnableGUI]
             [DisplayAsString]
             [HideLabel]
             [GUIColor(nameof(StatusColor))]
@@ -71,6 +79,7 @@ namespace Runestone.AesirArchitecture.Editor
 
             /// <summary>待更新提示文本（不提供单包更新按钮——统一走「全部更新」，防版本撕裂）。</summary>
             [HorizontalGroup("Row", Width = 120)]
+            [EnableGUI]
             [DisplayAsString]
             [HideLabel]
             [ShowIf(nameof(Outdated))]
@@ -86,18 +95,27 @@ namespace Runestone.AesirArchitecture.Editor
         const string InfoText = "更新范围：本地安装的 Aesir 包（复制 / unitypackage 导入，默认位置 Assets/Runestone，" +
                                 "可自由移动到项目任意文件夹）。\n" +
                                 "经 Package Manager（Git URL）安装的副本不在本工具管辖内，请使用 Package Manager 更新。\n" +
-                                "版本检测经 CDN，最新发布最长约 12 小时后才会被检测到（可点「打开 Releases 页面」确认）。";
+                                "版本检测按「直连 GitHub → 镜像站 → CDN 中转」顺序兜底，能直连 GitHub 即为 100% 最新；" +
+                                "本次实际线路见下方检测结果。";
 
         const string GitWarningText = "检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，请勿执行更新——Release 内容会覆盖本地源码。";
 
-        /// <summary>未扫到包的提示（显示实际扫描根——经锚点定位，默认 Assets/Runestone）。</summary>
-        static readonly string NoPackageText = $"未在 {AesirUpdateService.PrimaryInstallRoot} 下扫描到 Aesir 包。" +
-                                               "请通过 GitHub Releases 导入 unitypackage 安装，或确认安装目录正确。";
+        /// <summary>
+        /// 未扫到包的提示（显示实际扫描根——经锚点定位，默认 Assets/Runestone）。
+        /// <para>
+        /// 必须是属性而非 <c>static readonly</c> 字段：静态字段初始化器会在 ScriptableObject 构造期
+        /// （以及 <c>[InitializeOnLoadMethod]</c> 触碰类型时）运行，而锚点定位内部调用
+        /// <c>AssetDatabase.GUIDToAssetPath</c>——Unity 禁止在该时机调用，会抛 UnityException
+        /// 让类型初始化失败、窗口绘制中断（实测：窗口开着时域重载必现）。
+        /// </para>
+        /// </summary>
+        static string NoPackageText => $"未在 {AesirUpdateService.PrimaryInstallRoot} 下扫描到 Aesir 包。" +
+                                       "请通过 GitHub Releases 导入 unitypackage 安装，或确认安装目录正确。";
 
         const string HeaderTitleText = "Aesir 包更新器";
 
-        /// <summary>副标题（显示实际扫描根）。</summary>
-        static readonly string HeaderSubtitleText = $"检测并更新 {AesirUpdateService.PrimaryInstallRoot} 下的本地安装包";
+        /// <summary>副标题（显示实际扫描根）。同 <see cref="NoPackageText" />：属性而非静态字段，避开构造期 AssetDatabase 调用。</summary>
+        static string HeaderSubtitleText => $"检测并更新 {AesirUpdateService.PrimaryInstallRoot} 下的本地安装包";
 
         /// <summary>待更新状态的提示色（暖黄）。</summary>
         static readonly Color OutdatedColor = new Color(0.95f, 0.72f, 0.2f);
@@ -165,6 +183,13 @@ namespace Runestone.AesirArchitecture.Editor
         [InfoBox(InfoText)]
         [InfoBox(GitWarningText, InfoMessageType.Warning, VisibleIf = nameof(IsGitRepository))]
         [InfoBox("$" + nameof(NoPackageText), InfoMessageType.Warning, VisibleIf = nameof(HasNoPackages))]
+        [InfoBox("$" + nameof(DetectionSummaryText), InfoMessageType.Info, VisibleIf = nameof(HasDetectionResult))]
+        [InfoBox("$" + nameof(CdnDelayHintText), InfoMessageType.Warning, VisibleIf = nameof(HasCdnDelayHint))]
+        // [EnableGUI] 必须保留：Odin 对不可编辑属性（[ReadOnly] 或只读属性）会推入 GUI.enabled=false，
+        // 于是挂在同一属性链上的 InfoBox、列表标签与行文本统统被渲染成"禁用灰"（用户明确反馈）。
+        // 其 Super 优先级 2.0 高于 InfoBox（Wrapper 10001）与 GUIColor（Super 0.5），因此包在最外层，
+        // 把整条链拉回可用状态——不可编辑的语义不变（仍无法改值）。
+        [EnableGUI]
         [ShowInInspector]
         [ReadOnly]
         [LabelText("本地安装")]
@@ -191,12 +216,23 @@ namespace Runestone.AesirArchitecture.Editor
         void UpdateAllButton() => _controller.RequestUpdate(_controller.OutdatedPackages());
 
         [FoldoutGroup("更新日志（本地 → 远程变更）", VisibleIf = nameof(HasChangelog))]
+        [EnableGUI]
         [PropertySpace(8, 0)]
         [ShowInInspector]
         [HideLabel]
         [MultiLineProperty(14)]
         [ReadOnly]
         string ChangelogText => _state.ChangelogText;
+
+        /// <summary>检测详情（各层尝试记录）——兜底机制可观测，便于定位网络问题。</summary>
+        [FoldoutGroup("检测详情（各层尝试）", VisibleIf = nameof(HasDetectionDetail))]
+        [EnableGUI]
+        [PropertySpace(8, 0)]
+        [ShowInInspector]
+        [HideLabel]
+        [MultiLineProperty(8)]
+        [ReadOnly]
+        string DetectionDetailText => _state.DetectionDetail;
 
         [ShowInInspector]
         [HideLabel]
@@ -206,6 +242,7 @@ namespace Runestone.AesirArchitecture.Editor
         float _progress01;
 
         [ShowInInspector]
+        [EnableGUI]
         [HideLabel]
         [DisplayAsString(false)]
         [PropertySpace(8, 4)]
@@ -319,6 +356,22 @@ namespace Runestone.AesirArchitecture.Editor
         bool HasOutdated { get; set; }
 
         bool HasChangelog => !string.IsNullOrEmpty(_state.ChangelogText);
+
+        bool HasDetectionDetail => !string.IsNullOrEmpty(_state.DetectionDetail);
+
+        /// <summary>是否已有检测结果（据此显示连接状态与获取线路）。</summary>
+        bool HasDetectionResult => _state.Snapshot != null;
+
+        /// <summary>结果是否来自 CDN 中转（据此显示延迟提示）。</summary>
+        bool HasCdnDelayHint => _state.Snapshot != null &&
+                                _state.RemoteRouteKind == AesirUpdateService.ReleaseRouteKind.CdnRelay;
+
+        /// <summary>检测结果摘要（连接状态 + 获取线路）。</summary>
+        string DetectionSummaryText => AesirUpdateService.BuildDetectionSummary(_state.RemoteSource,
+            _state.RemoteRouteKind, _state.GitHubDirectAvailable);
+
+        /// <summary>CDN 中转延迟提示文案。</summary>
+        static string CdnDelayHintText => AesirUpdateService.BuildCdnDelayHintText();
 
         string UpdateAllLabel => $"全部更新到 {_state.RemoteVersion}";
 

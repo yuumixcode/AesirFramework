@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using Runestone.AesirArchitecture.Editor;
 
@@ -441,6 +442,318 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             StringAssert.AreEqualIgnoringCase(
                 "https://github.com/yuumixcode/AesirFramework/releases/download/v0.15.0/AesirModules-v0.15.0.unitypackage",
                 snapshot.GetUnityPackageUrl("AesirModules"));
+        }
+
+        #endregion
+
+        #region 版本检测兜底链路（注入式 fake 源，不触网）
+
+        /// <summary>GitHub Releases API 的最小响应（只关心 tag_name）。</summary>
+        const string ApiResponseJson = @"{ ""tag_name"": ""v0.25.1"" }";
+
+        /// <summary>update-info.json（与本次检测同版本，可被采用）。</summary>
+        const string UpdateInfoCurrentJson =
+            @"{ ""version"": ""0.25.1"", ""tag"": ""v0.25.1"", ""packages"": [] }";
+
+        /// <summary>update-info.json（落后一版——CDN 缓存的典型形态，清单不得被采用）。</summary>
+        const string UpdateInfoStaleJson =
+            @"{ ""version"": ""0.25.0"", ""tag"": ""v0.25.0"", ""packages"": [] }";
+
+        /// <summary>第一层镜像站的 update-info 地址（前缀 + 直连 raw 地址）。</summary>
+        static string FirstMirrorUrl =>
+            AesirUpdateService.GitHubMirrorPrefixes[0] + AesirUpdateService.GitHubRawUpdateInfoUrl;
+
+        /// <summary>第三层 CDN 中转移交的 update-info 地址（首个 jsDelivr 域名）。</summary>
+        static string FirstCdnUrl =>
+            AesirUpdateService.BuildJsDelivrUpdateInfoUrl(AesirUpdateService.JsDelivrDomains[0]);
+
+        /// <summary>按 URL 精确分派的 fake 文本源；未登记的 URL 一律"不可达"（模拟网络失败）。</summary>
+        static Func<string, int, Task<string>> FakeTextSource(Dictionary<string, string> responses) =>
+            (url, _) => responses.TryGetValue(url, out var body)
+                ? Task.FromResult(body)
+                : Task.FromException<string>(new Exception("不可达"));
+
+        /// <summary>永远失败的 fake 文本源。</summary>
+        static Func<string, int, Task<string>> UnreachableTextSource() =>
+            (_, _) => Task.FromException<string>(new Exception("不可达"));
+
+        /// <summary>永远失败的 302 探测。</summary>
+        static Func<Task<string>> UnreachableProbe() =>
+            () => Task.FromException<string>(new Exception("不可达"));
+
+        /// <summary>
+        /// 同步驱动一次检测并返回结果。fake 源返回的均是已完成 Task，管线内无真实等待，
+        /// 故不会阻塞主线程（Unity 自带 nunit 被裁剪，async Task 用例可能被静默忽略成假通过，一律同步写）。
+        /// </summary>
+        static AesirUpdateService.ReleaseCheckResult RunCheck(
+            Func<string, int, Task<string>> fetchTextAsync,
+            Func<Task<string>> probeLatestTagAsync,
+            Func<double> clock = null) =>
+            AesirUpdateService.CheckLatestReleaseAsync(fetchTextAsync, probeLatestTagAsync, clock)
+                .GetAwaiter().GetResult();
+
+        [Test]
+        public void TimeoutBudget_ExpiresAtLimitAndReportsRemaining()
+        {
+            var budget = new AesirUpdateService.TimeoutBudget(10, 100);
+
+            Assert.AreEqual(10, budget.LimitSeconds);
+            Assert.IsFalse(budget.IsExpired(109.9));
+            Assert.IsTrue(budget.IsExpired(110), "到达上限即视为超时");
+            Assert.IsTrue(budget.IsExpired(500));
+            Assert.AreEqual(5, budget.Remaining(105), 1e-6);
+            Assert.AreEqual(0, budget.Remaining(120), 1e-6, "剩余时间不为负");
+        }
+
+        [Test]
+        public void TimeoutConstants_AreBoundedAndConsistent()
+        {
+            Assert.Greater(AesirUpdateService.DetectionTotalTimeoutSeconds,
+                AesirUpdateService.DetectionAttemptTimeoutSeconds,
+                "整轮检测预算必须大于单次尝试超时，否则第一层就可能被整轮预算掐掉");
+            Assert.LessOrEqual(AesirUpdateService.DetectionTotalTimeoutSeconds, 60,
+                "整轮检测预算不应超过一分钟（进度条不能长时间挂着）");
+            Assert.LessOrEqual(AesirUpdateService.DownloadStallTimeoutSeconds,
+                AesirUpdateService.DownloadTimeoutSeconds,
+                "无进展超时不应大于下载总上限");
+        }
+
+        [Test]
+        public void CheckLatestRelease_TotalBudgetExhausted_SkipsEverySourceAndReportsTimeout()
+        {
+            // 预算自首次 clock() 起算：首次返回 0 建立预算，其后一律返回超限值 → 全部源都应被跳过
+            var calls = 0;
+            Func<double> clock = () => calls++ == 0 ? 0d : AesirUpdateService.DetectionTotalTimeoutSeconds + 1;
+
+            Exception caught = null;
+            try
+            {
+                RunCheck(UnreachableTextSource(), UnreachableProbe(), clock);
+            }
+            catch (Exception e)
+            {
+                caught = e;
+            }
+
+            Assert.IsNotNull(caught, "预算耗尽且无源可用时应抛异常");
+            StringAssert.Contains("版本检测超时", caught.Message);
+            StringAssert.Contains("跳过：整轮检测已超时", caught.Message, "被跳过的源应留痕，界面检测详情要能看出为何停下");
+            StringAssert.Contains("GitHub API", caught.Message);
+            StringAssert.Contains("jsDelivr", caught.Message);
+        }
+
+        [Test]
+        public void CheckLatestRelease_BudgetExpiresMidway_SkipsLaterTiers()
+        {
+            var elapsed = 0d;
+            var fetchCount = 0;
+
+            // 第一次拉取（GitHub API）失败后把时钟推过整轮预算 → 后续层应被跳过而非继续请求
+            Task<string> Fetch(string url, int timeoutSeconds)
+            {
+                fetchCount++;
+                elapsed = AesirUpdateService.DetectionTotalTimeoutSeconds + 5;
+                return Task.FromException<string>(new Exception("不可达"));
+            }
+
+            Exception caught = null;
+            try
+            {
+                RunCheck(Fetch, UnreachableProbe(), () => elapsed);
+            }
+            catch (Exception e)
+            {
+                caught = e;
+            }
+
+            Assert.IsNotNull(caught);
+            Assert.AreEqual(1, fetchCount, "预算耗尽后不应再发起新的源请求");
+            StringAssert.Contains("跳过：整轮检测已超时", caught.Message);
+            StringAssert.Contains("版本检测超时", caught.Message);
+        }
+
+        [Test]
+        public void CheckLatestRelease_SuccessWithinBudget_DoesNotReportTimeout()
+        {
+            var result = RunCheck(
+                FakeTextSource(new Dictionary<string, string> { [FirstCdnUrl] = UpdateInfoCurrentJson }),
+                UnreachableProbe(),
+                () => 0d);
+
+            Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.CdnRelay, result.RouteKind);
+            Assert.IsFalse(result.Attempts.Any(a => a.Detail != null && a.Detail.Contains("跳过")),
+                "预算充足时不应出现任何跳过记录");
+        }
+
+        [Test]
+        public void CheckLatestRelease_DirectApiSucceeds_ReportsGitHubDirectAndEnrichesManifest()
+        {
+            var result = RunCheck(
+                FakeTextSource(new Dictionary<string, string>
+                {
+                    [AesirUpdateService.LatestReleaseApiUrl] = ApiResponseJson,
+                    [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoCurrentJson
+                }),
+                UnreachableProbe());
+
+            Assert.AreEqual("v0.25.1", result.Snapshot.Tag);
+            Assert.AreEqual("GitHub API", result.RouteName, "直连层首个成功源应为 GitHub API");
+            Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.GitHubDirect, result.RouteKind);
+            Assert.IsTrue(result.GitHubDirectAvailable, "直连成功即 100% 实时");
+            Assert.IsNotNull(result.Snapshot.Info, "tag-only 结果应补齐文件清单（否则更新会跳过残留清理）");
+            Assert.IsTrue(result.Attempts.Any(a => a.Succeeded && a.Detail.Contains("补齐清单")));
+            Assert.IsFalse(result.Attempts.Any(a => a.Kind == AesirUpdateService.ReleaseRouteKind.CdnRelay),
+                "直连可用时不得落到 CDN 中转");
+        }
+
+        [Test]
+        public void CheckLatestRelease_ApiFails_FallsBackToRedirectProbe()
+        {
+            var result = RunCheck(
+                FakeTextSource(new Dictionary<string, string>
+                {
+                    [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoCurrentJson
+                }),
+                () => Task.FromResult("v0.25.1"));
+
+            Assert.AreEqual("GitHub 重定向", result.RouteName);
+            Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.GitHubDirect, result.RouteKind);
+            Assert.IsTrue(result.GitHubDirectAvailable);
+            Assert.IsTrue(result.Attempts.Any(a => !a.Succeeded && a.Source == "GitHub API"),
+                "失败的尝试也应留痕（界面检测详情要能看到为什么换线路）");
+        }
+
+        [Test]
+        public void CheckLatestRelease_DirectTierFails_FallsBackToMirror()
+        {
+            var result = RunCheck(
+                FakeTextSource(new Dictionary<string, string> { [FirstMirrorUrl] = UpdateInfoCurrentJson }),
+                UnreachableProbe());
+
+            Assert.AreEqual("镜像 " + new Uri(AesirUpdateService.GitHubMirrorPrefixes[0]).Host, result.RouteName);
+            Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.GitHubMirror, result.RouteKind);
+            Assert.IsFalse(result.GitHubDirectAvailable, "直连层全失败时连接状态应为不可用");
+            Assert.IsNotNull(result.Snapshot.Info, "镜像站同样带文件清单");
+        }
+
+        [Test]
+        public void CheckLatestRelease_OnlyCdnSucceeds_ReportsCdnRelay()
+        {
+            var result = RunCheck(
+                FakeTextSource(new Dictionary<string, string> { [FirstCdnUrl] = UpdateInfoCurrentJson }),
+                UnreachableProbe());
+
+            Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.CdnRelay, result.RouteKind);
+            Assert.IsFalse(result.GitHubDirectAvailable);
+            StringAssert.Contains("jsDelivr", result.RouteName);
+            // 兜底顺序：直连三源 + 两个镜像站都在 CDN 之前被尝试过
+            var cdnIndex = result.Attempts.ToList().FindIndex(a => a.Kind == AesirUpdateService.ReleaseRouteKind.CdnRelay);
+            Assert.AreEqual(5, cdnIndex, "CDN 中转必须排在直连三源与两个镜像站之后");
+        }
+
+        [Test]
+        public void CheckLatestRelease_AllSourcesFail_ThrowsListingEveryAttempt()
+        {
+            Exception caught = null;
+            try
+            {
+                RunCheck(UnreachableTextSource(), UnreachableProbe());
+            }
+            catch (Exception e)
+            {
+                caught = e;
+            }
+
+            Assert.IsNotNull(caught, "全部源不可用时应抛出异常");
+            StringAssert.Contains("所有更新源均不可用", caught.Message);
+            StringAssert.Contains("GitHub API", caught.Message);
+            StringAssert.Contains("镜像", caught.Message);
+            StringAssert.Contains("jsDelivr", caught.Message);
+        }
+
+        [Test]
+        public void CheckLatestRelease_TagOnly_RejectsStaleManifest()
+        {
+            var result = RunCheck(
+                FakeTextSource(new Dictionary<string, string>
+                {
+                    [AesirUpdateService.LatestReleaseApiUrl] = ApiResponseJson,
+                    // 直连 raw 仍缓存着旧版本（发布后数分钟内可能出现）
+                    [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoStaleJson
+                }),
+                UnreachableProbe());
+
+            Assert.AreEqual("v0.25.1", result.Snapshot.Tag);
+            Assert.IsNull(result.Snapshot.Info, "版本不一致的清单不得采用（错配清单会误删文件）");
+            Assert.IsTrue(result.Attempts.Any(a => !a.Succeeded && a.Detail.Contains("不一致")),
+                "拒绝陈旧清单应留痕");
+        }
+
+        [Test]
+        public void BuildDetectionSummary_DirectRoute_SaysRealtime()
+        {
+            var summary = AesirUpdateService.BuildDetectionSummary("GitHub API",
+                AesirUpdateService.ReleaseRouteKind.GitHubDirect, true);
+
+            StringAssert.Contains("GitHub 直连：可用", summary);
+            StringAssert.Contains("100% 实时", summary);
+            StringAssert.Contains("获取线路：GitHub API（直连 GitHub）", summary);
+        }
+
+        [Test]
+        public void BuildDetectionSummary_CdnRoute_WarnsFallback()
+        {
+            var summary = AesirUpdateService.BuildDetectionSummary("jsDelivr (cdn.jsdelivr.net)",
+                AesirUpdateService.ReleaseRouteKind.CdnRelay, false);
+
+            StringAssert.Contains("GitHub 直连：不可用", summary);
+            StringAssert.Contains("兜底线路", summary);
+            StringAssert.Contains("获取线路：jsDelivr (cdn.jsdelivr.net)（CDN 中转）", summary);
+        }
+
+        [Test]
+        public void BuildCdnDelayHintText_MentionsHoursAndManualConfirmation()
+        {
+            var hint = AesirUpdateService.BuildCdnDelayHintText();
+
+            StringAssert.Contains("数小时延迟", hint);
+            StringAssert.Contains("12 小时", hint);
+            StringAssert.Contains("Releases 页面", hint);
+        }
+
+        [Test]
+        public void GetRouteKindLabel_MapsEveryKind()
+        {
+            Assert.AreEqual("直连 GitHub",
+                AesirUpdateService.GetRouteKindLabel(AesirUpdateService.ReleaseRouteKind.GitHubDirect));
+            Assert.AreEqual("镜像站",
+                AesirUpdateService.GetRouteKindLabel(AesirUpdateService.ReleaseRouteKind.GitHubMirror));
+            Assert.AreEqual("CDN 中转",
+                AesirUpdateService.GetRouteKindLabel(AesirUpdateService.ReleaseRouteKind.CdnRelay));
+        }
+
+        [Test]
+        public void BuildAttemptsLog_FormatsSuccessAndFailure()
+        {
+            var result = new AesirUpdateService.ReleaseCheckResult
+            {
+                Attempts = new[]
+                {
+                    new AesirUpdateService.DetectionAttempt
+                    {
+                        Source = "GitHub API", Succeeded = false, Detail = "不可达", ElapsedMs = 5001
+                    },
+                    new AesirUpdateService.DetectionAttempt
+                    {
+                        Source = "镜像 ghproxy.net", Succeeded = true, Detail = "v0.25.1", ElapsedMs = 1390
+                    }
+                }
+            };
+
+            var log = result.BuildAttemptsLog();
+            StringAssert.Contains("✗ GitHub API：不可达（5001 ms）", log);
+            StringAssert.Contains("✓ 镜像 ghproxy.net：v0.25.1（1390 ms）", log);
+            Assert.AreEqual("（无尝试记录）", new AesirUpdateService.ReleaseCheckResult().BuildAttemptsLog());
         }
 
         #endregion

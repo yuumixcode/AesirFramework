@@ -22,6 +22,12 @@ namespace Runestone.AesirArchitecture.Editor
     /// </remarks>
     public sealed class AesirUpdateController
     {
+        /// <summary>
+        /// 忙碌标记的 SessionState 键（跨域重载存活）。用途只有一个：域重载后判断上一轮流程是否被打断，
+        /// 据此清理残留进度条与程序集重载锁（见 <see cref="RecoverFromInterruptedRun" />）。
+        /// </summary>
+        const string BusySessionKey = "AesirUpdater.Busy";
+
         readonly Action<float> _progressChanged;
         readonly string _progressTitle;
 
@@ -82,22 +88,31 @@ namespace Runestone.AesirArchitecture.Editor
             try
             {
                 SetProgress("正在检测远程最新版本 ...", 0.05f);
-                State.Snapshot = await AesirUpdateService.FetchLatestReleaseSnapshotAsync();
-                State.RemoteVersion = State.Snapshot.Tag;
-                State.RemoteSource = State.Snapshot.Source;
+                var check = await AesirUpdateService.CheckLatestReleaseAsync();
+                State.Snapshot = check.Snapshot;
+                State.RemoteVersion = check.Snapshot.Tag;
+                State.RemoteSource = check.Snapshot.Source;
+                State.RemoteRouteKind = check.RouteKind;
+                State.GitHubDirectAvailable = check.GitHubDirectAvailable;
+                State.DetectionDetail = check.BuildAttemptsLog();
                 Rescan();
 
                 SetProgress("正在拉取更新日志 ...", 0.3f);
                 await RefreshChangelog();
 
-                SetStatus($"远程最新版本 {State.RemoteVersion}（来源：{State.RemoteSource}）。");
-                Debug.Log($"[Aesir Updater] 远程最新版本 {State.RemoteVersion}（来源：{State.RemoteSource}）");
+                SetStatus($"远程最新版本 {State.RemoteVersion}。" +
+                          AesirUpdateService.BuildRouteText(State.RemoteSource, State.RemoteRouteKind));
+                Debug.Log($"[Aesir Updater] 远程最新版本 {State.RemoteVersion}\n" +
+                          $"{AesirUpdateService.BuildDetectionSummary(State.RemoteSource, State.RemoteRouteKind, State.GitHubDirectAvailable)}\n" +
+                          $"检测详情：\n{State.DetectionDetail}");
             }
             catch (Exception e)
             {
                 State.Snapshot = null;
                 State.RemoteVersion = null;
                 State.ChangelogText = "";
+                State.RemoteSource = "";
+                State.DetectionDetail = "";
                 Rescan();
                 SetStatus("检查更新失败：" + e.Message);
                 Debug.LogWarning($"[Aesir Updater] 检查更新失败：{e.Message}\n{e}");
@@ -160,6 +175,11 @@ namespace Runestone.AesirArchitecture.Editor
                 return;
             }
 
+            // 锁定程序集重载：导入 unitypackage 会带来脚本变更，若中途发生域重载，
+            // 本异步链会随旧域一起消失——第二个包永远等不到、进度条停在上一包的导入文案上，
+            // 而 Busy 是 [NonSerialized]（域重载后重置为 false）会让按钮又能点，交互错乱。
+            // 锁到流程收尾（finally 解锁）→ 全程只在最后重载一次，两个包走完同一条链路。
+            EditorApplication.LockReloadAssemblies();
             try
             {
                 var backupPath =
@@ -177,10 +197,12 @@ namespace Runestone.AesirArchitecture.Editor
             }
             finally
             {
+                // 先收进度条与忙碌标记（此刻仍持有重载锁，收尾不会被域重载打断）
                 EndBusy();
                 Rescan();
-                // 编译可能在 Refresh 内同步触发域重载；之后的日志不保证执行，重要信息已在其前输出
+                // 刷新触发新脚本编译；解锁放在最后，域重载在本流程全部收尾之后才发生
                 AssetDatabase.Refresh();
+                EditorApplication.UnlockReloadAssemblies();
             }
         }
 
@@ -191,7 +213,10 @@ namespace Runestone.AesirArchitecture.Editor
                 return false;
             }
 
+            // 清掉可能残留的进度条（上一轮流程被强杀/超时中断时会留下），再进入忙碌
+            EditorUtility.ClearProgressBar();
             State.Busy = true;
+            SessionState.SetBool(BusySessionKey, true);
             return true;
         }
 
@@ -199,7 +224,27 @@ namespace Runestone.AesirArchitecture.Editor
         {
             EditorUtility.ClearProgressBar();
             State.Busy = false;
+            SessionState.SetBool(BusySessionKey, false);
             _viewChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// 域重载兜底收尾：上一次流程若被域重载/编辑器强杀打断（<see cref="BusySessionKey" /> 标记仍在），
+        /// 这里清掉残留进度条并释放可能残留的程序集重载锁——否则进度条会一直挂在屏幕上（用户实测反馈过）。
+        /// </summary>
+        [InitializeOnLoadMethod]
+        static void RecoverFromInterruptedRun()
+        {
+            if (!SessionState.GetBool(BusySessionKey, false))
+            {
+                return;
+            }
+
+            SessionState.SetBool(BusySessionKey, false);
+            EditorUtility.ClearProgressBar();
+            EditorApplication.UnlockReloadAssemblies();
+            Debug.LogWarning("[Aesir Updater] 上一次更新/检测流程未正常收尾（域重载或编辑器中断），" +
+                             "已清理残留进度条与程序集重载锁。");
         }
 
         void SetProgress(string message, float progress)
@@ -234,8 +279,17 @@ namespace Runestone.AesirArchitecture.Editor
             /// <summary>远程最新版本号。</summary>
             public string RemoteVersion;
 
-            /// <summary>远程版本的检测来源。</summary>
+            /// <summary>远程版本的检测来源（源展示名，如 "GitHub API" / "jsDelivr (cdn.jsdelivr.net)"）。</summary>
             public string RemoteSource;
+
+            /// <summary>检测来源所属线路类别（直连 GitHub / 镜像站 / CDN 中转）。</summary>
+            public AesirUpdateService.ReleaseRouteKind RemoteRouteKind;
+
+            /// <summary>本次检测中直连 GitHub 是否可用（可用即结果 100% 实时）。</summary>
+            public bool GitHubDirectAvailable;
+
+            /// <summary>本次检测各层尝试的可读记录（界面「检测详情」与故障定位用）。</summary>
+            public string DetectionDetail = "";
 
             /// <summary>「本地 → 远程」更新日志摘要。</summary>
             public string ChangelogText = "";
