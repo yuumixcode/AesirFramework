@@ -5,6 +5,11 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.25.0] - 2026-09-25
+
+### Fixed
+
+- **Script Doc Generator 增量重生成产出双 Front Matter** — Zensical 生成器自产 YAML 头后，`ScriptDocGeneratorUtility` 的增量合并逻辑（`TryGetFrontMatter` 拼接）会把旧文件的 Front Matter 再拼一份到新内容前，对已存在文档重生成必然产出双重头部（Zensical 解析失败）；合并逻辑收敛为 `MergeFrontMatterWhenMissing`：新内容自带 Front Matter 时以新生成的为准，不自带（如中文 API 生成器）仍保留旧文件头部。新增 EditMode 回归测试 `FrontMatterMergeTests`（4 用例：自带头部不拼接 / 不自带保留旧头部 / 旧文件无头部原样 / 无闭合不拼回）
 ## [0.24.0] - 2026-09-25
 
 ### Added
