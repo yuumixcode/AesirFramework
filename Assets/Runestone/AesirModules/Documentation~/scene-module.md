@@ -73,6 +73,6 @@ Inspector 三态着色与一键修复（需 Odin）：Addressable 场景青色�
 
 ## 测试与维护
 
-- 数据层与行为层 EditMode 用例位于 `Editor/Scene/Tests/`（`SceneAssetWrapperTests` 27 + `SceneModuleTests` 20，协程经手动 `MoveNext` 驱动模拟）。
-- 真实加载/卸载成功路径由包根 `Tests/Runtime/SceneModulePlayModeTests.cs`（PlayMode 程序集 `Runestone.AesirModules.Tests.Runtime`）覆盖：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义。测试场景为 `TestScenes/` 下两个最小 .unity，经 `[InitializeOnLoadMethod]` 在编辑模式域加载期登记为 BuildSettings enabled 条目（PlayMode 内写登记表不生效、disabled 条目运行时不可加载，均实测；BuildSettings 不随包分发，包消费者不受影响）；Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）。
+- 数据层与行为层 EditMode 用例位于 `Editor/Scene/Tests/`（`SceneAssetWrapperTests` 27 + `SceneModuleTests` 20 + 测试场景卫生守护 1，协程经手动 `MoveNext` 驱动模拟）。测试场景由 SetUp 准备：宿主工程缺失时从包内最小场景夹具（随测试分发）临时复制、TearDown 按“谁创建谁删除”还原（含空目录），测试不依赖宿主工程恰好存在某个场景；涉及的资产路径一律按文件名经 AssetDatabase 定位，不写死 Assets 相对路径。
+- 真实加载/卸载成功路径由包根 `Tests/Runtime/SceneModulePlayModeTests.cs`（PlayMode 程序集 `Runestone.AesirModules.Tests.Runtime`）覆盖：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义。测试场景为 `TestScenes/` 下两个最小 .unity；BuildSettings 登记走 `IPrebuildSetup`（进入 Play 前的编辑模式阶段登记 enabled 条目）与 `IPostBuildCleanup`（退出 Play 后摘除），条目仅存在于本次运行期间——不进玩家构建、不污染宿主工程配置；不能在 PlayMode 内登记（`LoadSceneAsync` 校验的是进入 Play 时固化的构建场景列表）且 disabled 条目运行时不可加载，均实测；域加载另有兜底清扫，回收被强杀运行遗留的条目。Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）。
 - 修改 `SceneModule` 加载/卸载协程或快照缓冲逻辑时，先跑 `Editor/Scene/Tests` EditMode 套件，再跑 `Tests/Runtime` PlayMode 套件。

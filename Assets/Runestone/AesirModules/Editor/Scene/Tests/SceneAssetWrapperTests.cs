@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
@@ -15,6 +16,11 @@ namespace Runestone.AesirModules.Tests.Editor
     ///     涉及 EditorBuildSettings.scenes 的用例在 SetUp 保存、TearDown 恢复，保证不污染工程配置。
     ///     </para>
     ///     <para>
+    ///     测试场景由 SetUp 准备（宿主工程缺失时从包内最小场景夹具临时复制一份，TearDown 按"谁创建谁删除"还原）——
+    ///     测试须能随包进入任意工程，不能假设宿主工程存在某个场景。涉及的资产路径一律按文件名定位，
+    ///     不写死 Assets 相对路径（随包安装形态不同：Assets 安装 / Packages 安装）。
+    ///     </para>
+    ///     <para>
     ///     Addressables 相关用例按 <see cref="SceneAssetWrapper.AddressablesSupportEnabled" /> 自适应：
     ///     本仓库默认未安装 Addressables 包（SupportEnabled == false 的路径可被确定性验证）；
     ///     安装了包的环境下自动跳过不适用的用例，并补充验证 SupportEnabled == true 的路径。
@@ -22,17 +28,42 @@ namespace Runestone.AesirModules.Tests.Editor
     /// </remarks>
     public class SceneAssetWrapperTests
     {
+        /// <summary>
+        /// 测试场景路径。宿主工程可能已有该场景（Unity 默认模板路径），也可能已被删除（消费工程）；
+        /// 测试不得依赖任一情形——缺失时由 <see cref="EnsureTestSceneExists" /> 临时提供。
+        /// </summary>
         const string SampleScenePath = "Assets/Scenes/SampleScene.unity";
-        const string WrapperCsPath = "Assets/Runestone/AesirModules/Runtime/Scene/SceneAssetWrapper.cs";
 
-        /// <summary>本仓库的 BuildSettings 初始状态，TearDown 时恢复。</summary>
+        static string _wrapperCsPath;
+        static string _minimalSceneFixturePath;
+
+        /// <summary>测试前的 BuildSettings 状态，TearDown 时恢复。</summary>
         EditorBuildSettingsScene[] _savedScenes;
+
+        /// <summary>测试场景资产是否由本次 SetUp 创建（宿主工程原本没有时才为 true，TearDown 据此还原）。</summary>
+        bool _createdTestScene;
+
+        /// <summary>本次 SetUp 创建的最高层目录（父级已存在时为 null），TearDown 删除它即回收其下全部新建子目录。</summary>
+        string _createdTestSceneFolder;
+
+        /// <summary>
+        /// SceneAssetWrapper 源码路径，用于取一个"非场景资产"的 GUID。按文件名定位，不写死 Assets 相对路径。
+        /// </summary>
+        static string WrapperCsPath => _wrapperCsPath ??= ResolveAssetPath("SceneAssetWrapper", "MonoScript");
+
+        /// <summary>
+        /// 最小场景夹具路径——复用 PlayMode 场景套件的最小 .unity 夹具（同属包内测试资产，随包分发），
+        /// 作为测试场景的复制源。
+        /// </summary>
+        static string MinimalSceneFixturePath =>
+            _minimalSceneFixturePath ??= ResolveAssetPath("SceneModulePlayTestA", "Scene");
 
         [SetUp]
         public void SetUp()
         {
             _savedScenes = EditorBuildSettings.scenes;
             SceneAssetWrapperAddressablesBridge.Unregister();
+            EnsureTestSceneExists();
         }
 
         [TearDown]
@@ -41,7 +72,84 @@ namespace Runestone.AesirModules.Tests.Editor
             EditorBuildSettings.scenes = _savedScenes;
             SceneAssetWrapperAddressablesBridge.Unregister();
             RestoreRealBridgeIfAvailable();
+            RemoveTestSceneIfCreated();
         }
+
+        #region 测试场景准备 / 还原
+
+        /// <summary>
+        /// 确保测试场景资产存在。宿主工程已有则直接使用（测试全程不写盘）；缺失则从包内最小场景夹具复制一份。
+        /// </summary>
+        /// <remarks>
+        /// 不就地新建场景：编辑器在"当前打开场景未命名且未保存"时拒绝追加式新建
+        /// （<c>InvalidOperationException: Cannot create a new scene additively with an untitled scene unsaved</c>，
+        /// batchmode 与"新建未保存场景"下必现），而 Single 模式新建会关掉宿主当前打开的场景。
+        /// 复制夹具是纯资产操作，不触碰任何已打开场景。
+        /// </remarks>
+        void EnsureTestSceneExists()
+        {
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(SampleScenePath) != null)
+            {
+                return;
+            }
+
+            _createdTestSceneFolder = CreateFolderIfMissing(Path.GetDirectoryName(SampleScenePath).Replace('\\', '/'));
+            AssetDatabase.CopyAsset(MinimalSceneFixturePath, SampleScenePath);
+            _createdTestScene = true;
+        }
+
+        /// <summary>删除本次创建的测试场景（含本次创建的空目录）；宿主工程原有场景一律不动。</summary>
+        void RemoveTestSceneIfCreated()
+        {
+            if (!_createdTestScene)
+            {
+                return;
+            }
+
+            AssetDatabase.DeleteAsset(SampleScenePath);
+            if (_createdTestSceneFolder != null)
+            {
+                AssetDatabase.DeleteAsset(_createdTestSceneFolder);
+            }
+
+            _createdTestScene = false;
+            _createdTestSceneFolder = null;
+        }
+
+        /// <summary>
+        /// 逐级创建资产目录，返回本次创建的最高层目录路径（父级均已存在时返回 null）——
+        /// TearDown 删除该目录即连同其下新建的子目录一并回收，不留空文件夹。
+        /// </summary>
+        static string CreateFolderIfMissing(string folder)
+        {
+            if (AssetDatabase.IsValidFolder(folder))
+            {
+                return null;
+            }
+
+            var parent = Path.GetDirectoryName(folder).Replace('\\', '/');
+            var topmost = CreateFolderIfMissing(parent) ?? folder;
+            AssetDatabase.CreateFolder(parent, Path.GetFileName(folder));
+            return topmost;
+        }
+
+        /// <summary>按文件名在 AssetDatabase 中定位资产（随包安装形态自适应）。</summary>
+        static string ResolveAssetPath(string assetName, string filterType)
+        {
+            foreach (var guid in AssetDatabase.FindAssets($"t:{filterType} {assetName}"))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (string.Equals(Path.GetFileNameWithoutExtension(path), assetName, StringComparison.Ordinal))
+                {
+                    return path;
+                }
+            }
+
+            Assert.Fail($"未找到资产：{assetName}（类型 {filterType}）");
+            return null;
+        }
+
+        #endregion
 
         /// <summary>
         /// 装了 Addressables 包时恢复真实桥注册（SetUp/TearDown 的 Unregister 会把它一并清掉），
@@ -171,7 +279,7 @@ namespace Runestone.AesirModules.Tests.Editor
             var wrapper = SceneAssetWrapper.FromScenePath(SampleScenePath);
 
             Assert.AreEqual(SampleScenePath, wrapper.ScenePath);
-            Assert.AreEqual("SampleScene", wrapper.SceneName);
+            Assert.AreEqual(Path.GetFileNameWithoutExtension(SampleScenePath), wrapper.SceneName);
             Assert.IsFalse(string.IsNullOrEmpty(wrapper.Guid), "编辑器下应解析出场景资产 GUID");
             Assert.IsNotNull(wrapper.SceneAsset, "编辑器下应解析出 SceneAsset 对象引用");
         }
