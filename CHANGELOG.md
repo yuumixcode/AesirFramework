@@ -5,6 +5,9 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.25.0] - 2026-09-25
+
+- **与 Aesir Modules 0.25.0 版本同步发布** — 本包无功能变更；Modules 侧修复 Script Doc Generator 增量重生成的双 Front Matter 缺陷
 ## [0.24.0] - 2026-09-25
 
 ### Added
