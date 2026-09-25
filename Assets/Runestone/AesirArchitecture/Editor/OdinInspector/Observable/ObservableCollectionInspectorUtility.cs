@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
@@ -28,7 +27,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// </summary>
         /// <param name="target">目标实例。</param>
         /// <returns>元素数量；无法读取时返回 -1。</returns>
-        internal static int GetCount(object target) => TryReadInt(target, "Count", out var value) ? value : -1;
+        internal static int GetCount(object target) =>
+            TryReadInt(target, "Count", out var value) ? value : -1;
 
         /// <summary>
         /// 读取变更事件的监听者数量（读取内部 <see cref="MiniEvent{T}" /> 字段的监听列表）。
@@ -141,7 +141,8 @@ namespace Runestone.AesirArchitecture.Editor
                 return true;
             }
 
-            var field = type.GetField(memberName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var field = type.GetField(memberName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (field != null && field.FieldType == typeof(int))
             {
                 value = (int)field.GetValue(target);
