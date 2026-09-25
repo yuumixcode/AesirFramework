@@ -1,0 +1,17 @@
+{
+  "name": "Runestone.AesirModules.Samples.UI.BasicUsage",
+  "rootNamespace": "Runestone.AesirModules.Samples.UI.BasicUsage",
+  "references": [
+    "Runestone.AesirModules",
+    "Runestone.AesirArchitecture"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

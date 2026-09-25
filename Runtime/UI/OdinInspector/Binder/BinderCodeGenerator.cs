@@ -202,8 +202,8 @@ namespace Runestone.AesirModules
             var occurrenceByTarget = new Dictionary<string, int>();
             foreach (var unit in config.Units)
             {
-                var key = (string.IsNullOrEmpty(unit.HierarchyPath) ? "self" : unit.HierarchyPath) +
-                          "|" + unit.ComponentFullName;
+                var key = (string.IsNullOrEmpty(unit.HierarchyPath) ? "self" : unit.HierarchyPath) + "|" +
+                          unit.ComponentFullName;
                 var occurrenceIndex = occurrenceByTarget.TryGetValue(key, out var count) ? count : 0;
                 occurrenceByTarget[key] = occurrenceIndex + 1;
                 builder.AppendLine("    " + BuildBindStatement(unit, occurrenceIndex));
