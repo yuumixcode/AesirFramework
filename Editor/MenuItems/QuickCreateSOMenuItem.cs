@@ -1,4 +1,5 @@
 #if !AESIR_INSPECTOR
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -47,7 +48,7 @@ namespace Runestone.AesirArchitecture.Editor
         }
 
         /// <summary>类型是否可创建 SO 资源（非抽象且继承 ScriptableObject）。</summary>
-        internal static bool IsCreatableSoClass(System.Type type) =>
+        internal static bool IsCreatableSoClass(Type type) =>
             type != null && !type.IsAbstract && type.IsSubclassOf(typeof(ScriptableObject));
 
         /// <summary>
