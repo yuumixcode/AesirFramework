@@ -5,6 +5,23 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.26.0] - 2026-09-25
+
+### Added
+
+- **更新器检测线路可见化** — 检测结果新增线路模型（`ReleaseRouteKind` 直连 GitHub / 镜像站 / CDN 中转 + `DetectionAttempt` 各层尝试记录 + `ReleaseCheckResult`）：窗口显示「GitHub 直连是否可用（可用即版本信息 100% 实时）」与「最终获取线路」，新增「检测详情（各层尝试）」折叠区（含每层耗时与失败原因），结果来自 CDN 中转时额外给出延迟提示（分支缓存最长约 12 小时，可点「打开 Releases 页面」确认）
+
+### Fixed
+
+- **更新/检测缺少超时，进度条可能长时间卡住** — 连接检测与 unitypackage 下载现在都有硬性墙钟上限：单源检测 5 秒、整轮检测 30 秒（超时后不再发起新请求，并在「检测详情」留痕「跳过：整轮检测已超时」）、下载「总时长 120 秒」+「连续 30 秒无进展」双判据（`UnityWebRequest.timeout` 只覆盖"完全无数据"，服务端慢速滴水时不会触发）。任一超时都会中止请求并抛明确异常，上层 `finally` 必定收起进度条
+- **两个包连续更新时流程可能中途断裂（进度条停留 + 按钮提前可点）** — 导入 unitypackage 会带来脚本变更，中途发生的域重载会让异步流程随旧域消失：第二个包等不到、进度条停在上一包的导入文案上，而 `Busy` 因 `[NonSerialized]` 被重置又让按钮可点。现在整段更新流程用 `EditorApplication.LockReloadAssemblies()` 锁住程序集重载（实测能推迟编译后的重载），只在全部收尾（进度条收起、状态落定、`AssetDatabase.Refresh` 之后）解锁一次；导入期间先收起本工具进度条，避免与 Unity 自带导入进度条互相覆盖；另加域重载兜底收尾（`SessionState` 标记 + `[InitializeOnLoadMethod]`）清理被强杀流程残留的进度条与重载锁
+- **Odin 版更新器窗口正文被渲染成「禁用灰」** — Odin 对不可编辑属性（`[ReadOnly]`、只读属性）会推入 `GUI.enabled = false` 绘制，于是挂在同一属性链上的 InfoBox、列表标签、行文本与状态行全部呈禁用态（截图实测文字亮度 ≈128/255，正常正文 ≈196）。修复：只读成员（列表、更新日志、检测详情、状态行）与行视图字段一律标注 `[EnableGUI]`（Odin 官方做法：Super 优先级 2.0 包在最外层，强制按可用状态绘制），不可编辑语义不变；实测行文本亮度 128 → 196
+- **Odin 版更新器窗口在域重载时抛异常（静态初始化器调用 AssetDatabase）** — `NoPackageText` / `HeaderSubtitleText` 原为 `static readonly` 字段，其初始化器在 ScriptableObject 构造期（含 `[InitializeOnLoadMethod]` 触碰类型时）运行，而锚点定位 `AesirAssetPaths` 内部调用 `AssetDatabase.GUIDToAssetPath`——Unity 禁止在该时机调用，导致类型初始化失败、窗口绘制中断（窗口开着时每次域重载必现 `TypeInitializationException` + `GUI Error: You are pushing more GUIClips than you are popping`）。修复：两者改为惰性静态属性
+
+### Changed
+
+- **更新器版本检测改为「直连 GitHub → 镜像站 → CDN 中转」三层兜底（修复新版本检测延迟）** — 此前 jsDelivr CDN 排在首位，其分支缓存最长约 12 小时，刚发布的版本在窗口里仍会显示为旧版本（实测：v0.25.1 发布 3 分钟后窗口仍报 v0.25.0）。现直连层依次尝试 Releases API、`releases/latest` 的 302 探测、仓库内 `update-info.json` 的直连 raw（单源超时 5 秒即落下一层），直连不可用才落镜像站（`ghproxy.net` / `gh-proxy.com`，代理 raw 内容、版本实时），最后才是 CDN 中转；只有 tag 的结果会按同 tag 校验补齐文件清单——拒绝陈旧清单，避免错删文件（`FetchLatestReleaseSnapshotAsync` 保留为等价旧入口）
+
 ## [0.25.1] - 2026-09-25
 
 - **与 Aesir Modules 0.25.1 版本同步发布** — 本包无功能变更；Modules 侧修复场景测试套件把测试场景常驻 `EditorBuildSettings`（随工程配置入库、进玩家构建）与测试无法随包进入实际工程（依赖宿主工程场景与写死的 Assets 相对路径）的问题
