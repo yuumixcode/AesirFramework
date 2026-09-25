@@ -11,7 +11,7 @@
 | `SceneAssetWrapperState` | 引用状态枚举：`Regular`（BuildSettings 途径）/ `Addressable` / `Unsafe` |
 | `SceneAssetWrapperUnsafeReason` | 不安全原因：`Empty` / `NotInBuild` |
 | `SceneAssetWrapperException` 异常族 | 空引用 / 创建失败 / Addressables 未装包 / 不可寻址四类，消息带"修复 / 规避"双指引 |
-| `BootstrapSceneHelper` | 编辑器 Bootstrapper 场景搜集注册工具（默认关闭，`Tools → Aesir → Scene Editor Settings` 开启） |
+| `BootstrapSceneHelper` | 编辑器 Bootstrapper 场景搜集注册工具（默认关闭，`Tools → Aesir → Modules → Scene Editor Settings` 开启） |
 
 ## SceneModule API
 

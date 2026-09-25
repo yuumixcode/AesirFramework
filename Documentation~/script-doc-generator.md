@@ -6,7 +6,7 @@
 
 - **Unity**: 2022.3 或更高版本
 - **命名空间**：Runtime 为 `Runestone.AesirModules.ScriptDocGenerator`，Editor 为 `Runestone.AesirModules.ScriptDocGenerator.Editor`
-- **入口**：`Tools → Aesir → Script Doc Generator` 打开主窗口；Project 窗口右键脚本（`Assets → Script Doc Generator`）可使用全部快捷功能
+- **入口**：`Tools → Aesir → Modules → Script Doc Generator` 打开主窗口；Project 窗口右键脚本（`Assets → Script Doc Generator`）可使用全部快捷功能
 
 ## 1. 脚本文档生成器 (Script Doc Generator)
 
