@@ -5,6 +5,10 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.25.1] - 2026-09-25
+
+- **与 Aesir Modules 0.25.1 版本同步发布** — 本包无功能变更；Modules 侧修复场景测试套件把测试场景常驻 `EditorBuildSettings`（随工程配置入库、进玩家构建）与测试无法随包进入实际工程（依赖宿主工程场景与写死的 Assets 相对路径）的问题
+
 ## [0.25.0] - 2026-09-25
 
 - **与 Aesir Modules 0.25.0 版本同步发布** — 本包无功能变更；Modules 侧修复 Script Doc Generator 增量重生成的双 Front Matter 缺陷
