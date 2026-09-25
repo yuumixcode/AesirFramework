@@ -5,6 +5,28 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.24.0] - 2026-09-25
+
+### Added
+
+- **UI 模块新增 Canvas 根窗口形态（`IUIWindow` / `AesirBaseWindow` 家族）** — 与 Panel（共享层 Canvas 的面板）并列的第二种 UI 形态：窗口预制体根节点自带 Canvas，由 `UIModule` 实例化后直接挂载到 UIRoot 下（不经四层 Canvas），默认 `sortingOrder` 500 恒在面板四层（≤400）之上，多窗口按声明值自治排序。命名规范：类名 = 脚本名 = 预制体名以 `Window` 结尾（`LoadingWindow` 式；按 .NET 命名惯例 `XxxCanvas` 后缀会误导为 `UnityEngine.Canvas` 派生类，故取运行时零占用的 Window）；生命周期与面板同构（`OnInit` / `OnShow` / `OnHide` / `OnClose`，Awake/OnEnable 推迟到首次激活）。静态快捷 API：`UIModule.Open<T>()` / `Close<T>()` / `GetWindow<T>()` / `PrewarmWindow<T>()` / `RegisterWindowPrefab<T>()`（实例侧为 `OpenWindow` / `CloseWindow` 等长名）；挂载时统一接线 UICamera / 渲染模式 / Canvas 缩放配置并递归设置 UI 层，根缺 Canvas 时报错中止、不保留半挂载实例。预制体内部结构约定：`Mask` 子物体为蒙版（Image 全屏拉伸 + 可选 Button），`Content` 子物体为实际 UI 元素容器
+- **窗口蒙版遮罩机制（单遮 / 叠遮）** — `UIModule` 新增序列化配置 `maskMode`（运行时可经 `MaskMode` 属性切换）：单遮 = 全局仅最高层可见窗口的蒙版生效（多窗口叠加透明度不叠加），叠遮 = 各窗口蒙版独立跟随自身打开状态；每次 Open / Close / 销毁后重算，同 sortingOrder 时以后开者居上。蒙版点击经 Button 接线回调 `AesirBaseWindow.OnMaskClicked()`，默认按 `closeOnMaskClick` 决定是否关闭本窗口（子类可覆写自定义行为）；无 `Mask` 子物体的窗口天然不参与遮挡
+- **Binder 支持 Canvas 根窗口感知** — 基类预选下拉新增 `AesirBaseWindow` / `AesirBaseWindowView<T>` / `AesirBaseWindowViewController<T>`；根节点带 Canvas 时默认脚本名后缀为 `Window`（面板根保持 `Panel`）、默认基类直指 `AesirBaseWindow`；物体名已带对应后缀时不再重复拼接（顺带修复 `ScorePanel` 物体生成 `ScorePanelPanel` 的存量双后缀瑕疵）
+- **新增示例 UI Basic Usage（`Samples/UI/01_BasicUsage`）** — 面板与窗口两种形态协作：Normal 层控制面板 + Top 层日志 HUD（跨平台中文动态字体）+ 设置/叠加窗口（蒙版 + 点击蒙版关闭）+ 全屏加载窗口（无蒙版 + payload 自动关闭），支持运行时切换单遮/叠遮对照；已登记 package.json samples（Package Manager Samples 页可导入）
+- **UI 模块窗口与蒙版 EditMode 测试** — `UIModuleWindowTests` 17 用例（挂载接线 / sortingOrder / UI 层递归 / 生命周期契约 / Close 双分叉 / 键语义 / Panel↔Window 跨契约互斥 / 根缺 Canvas 中止 / 反清理 + 蒙版单遮重算 / 同序 tie / 叠遮独立 / 点击蒙版 / 无 Mask 子物体无操作）+ `BinderAssistantWindowTests` 5 用例（默认脚本名后缀 / 默认基类 / 后缀去重 / 基类下拉窗口家族）
+- **缺依赖一键补装（`AesirDependencyInstaller`）** — unitypackage 导入形态下本包存在但 Aesir Architecture 缺失时，新菜单 `Tools/Aesir/Modules/Install Dependencies`（priority 998，Modules 组内第一）确认后经 UPM `Client.Add` 按 Git URL 版本分支自动补装。安装 URL 由本包 package.json 的 `version` 动态拼接（包根经 `[CallerFilePath]` 定位，两包同号发版保证对齐，异常回退内置常量）；RAA 缺失检测覆盖 UPM 注册表（`PackageInfo.GetAllRegisteredPackages`）与 Assets 形态（`AesirPathLookup` 锚点定位包根后按 package.json `name` 字段精确判定，避免依赖键名子串误判）；安装成功收尾经 `SessionState` 标记 + `[InitializeOnLoadMethod]` 跨域重载提示（`Client.Add` 触发的编译域重载会吞静态字段与后续执行，失败则即时弹窗）。配套：本包 package.json 对 RAA 的依赖声明由 semver 版本号（`"0.23.0"`——该包 id 不在 Unity Registry，UPM 无法解析、README「自动拉取依赖」宣称失实）改为 Git URL 版本分支（`#AesirArchitecture-v<版本>`），UPM 安装本包时自动递归拉取 RAA；新增零引用编辑器程序集 `Runestone.AesirModules.Editor.Bootstrap`（references 为空数组：若引用 RAM 核心 / RAA / Odin，缺依赖时菜单自身将不编译）。EditMode 测试 14 用例（URL 拼接 / 锚点路径推导 / 包根判定 / UPM 注册名矩阵 / RAA 在场不显示）
+
+### Changed
+
+- **Script Doc Generator 菜单让出 Tools/Aesir 顶部位并归入 Modules 组** — priority 由 -895 改为 999（顶部位让给 Aesir Architecture 的 Aesir Getting Started，其下有独立分割线）；菜单路径由 `Tools/Aesir/Script Doc Generator` 归位至 `Tools/Aesir/Modules/Script Doc Generator`——两包专属菜单项以 `Tools/Aesir/Architecture/`、`Tools/Aesir/Modules/` 两组子菜单区分；999 决定 Modules 组的组级排序（父菜单 priority 由子项最小值决定），与相邻组差值 ≤ 10 不产生分割线
+- **Scene Editor Settings 菜单归入 Modules 组** — 菜单路径由 `Tools/Aesir/Scene Editor Settings` 归位至 `Tools/Aesir/Modules/Scene Editor Settings`（默认 priority 1000，组内位于 Script Doc Generator 之后）
+- **Odin / Addressables 细分程序集锚点迁至 `Integration/`** — 两者性质为第三方适配/集成而非共享基础设施，锚点由 `Runtime/Common/OdinInspector/`、`Editor/Common/OdinInspector/`、`Editor/Common/Addressables/` 迁至 `Runtime/Integration/OdinInspector/`、`Editor/Integration/OdinInspector/`、`Editor/Integration/Addressables/`（挪空的 `Editor/Common/` 删除；`Runtime/Common/` 保留宿主与调试工具）；各模块内 `OdinInspector/`、`Addressables/` 子目录与 asmref 汇入模式不变，程序集名与相互引用零变化，对 UPM / unitypackage 消费者透明
+- **示例 `KeyPressedEvent` 脚本 `using` 指令移入 `#if UNITY_EDITOR` 内** — 对齐全部示例脚本的统一包裹形态（运行时示例程序集整文件包裹，`#if` 之外不残留 using），由 Aesir Architecture 本批新增的示例脚本守护测试驱动修正；纯规范偏差，该类型本就不参与玩家构建
+
+### Planned（下期候选）
+
+- **SmartShowHide 伪隐藏** — 全屏窗口弹出时自动伪隐藏被其遮挡的全部面板（CanvasGroup 置零、逻辑上仍为显示中、窗口关闭后自动恢复），把不可见面板从渲染管线剔除以省满帧重绘（思路来自 ZMUIFrameWork）；本批未实现，待窗口蒙版机制经实际项目验证后再评估
+
 ## [0.23.0] - 2026-09-23
 
 > 本批为全仓锐评修复批次（与 Aesir Architecture 0.23.0 同步发布；Architecture 侧含可观察集合破坏性变更，升级时请一并阅读其 CHANGELOG 的 Removed / Renamed 节）。
