@@ -37,7 +37,7 @@ namespace Runestone.AesirModules
     }
 
     /// <summary>
-    /// Object Binder 核心组件。挂载在根面板上，统一配置所有要绑定的子组件并一键生成绑定脚本。
+    /// Object Binder 核心组件。挂载在根 UI 物体（面板或 Canvas 根窗口）上，统一配置所有要绑定的子组件并一键生成绑定脚本。
     /// <para>
     /// 工作流程：
     /// 1. 在需要绑定引用的子物体上添加 <see cref="BinderTag" /> 组件标记（默认绑定 1 个组件），用数量声明要绑定的组件个数。
@@ -54,8 +54,10 @@ namespace Runestone.AesirModules
     /// </para>
     /// <para>
     /// 生成脚本的基类可从「基类」下拉中选择：内置 <see cref="MonoBehaviour" />、
-    /// 由 Binder 预选的 Aesir 面板家族（<see cref="AesirBasePanel" />、<c>AesirBasePanelView&lt;T&gt;</c>、
-    /// <c>AesirBasePanelViewController&lt;T&gt;</c>——核心程序集无法反向引用 Odin 程序集标注
+    /// 由 Binder 预选的 Aesir 面板/窗口家族（<see cref="AesirBasePanel" />、<c>AesirBasePanelView&lt;T&gt;</c>、
+    /// <c>AesirBasePanelViewController&lt;T&gt;</c>、<see cref="AesirBaseWindow" />、
+    /// <c>AesirBaseWindowView&lt;T&gt;</c>、<c>AesirBaseWindowViewController&lt;T&gt;</c>——
+    /// 核心程序集无法反向引用 Odin 程序集标注
     /// <see cref="BinderBaseTypeAttribute" />，故经 typeof 直接内置），
     /// 以及所有被 <see cref="BinderBaseTypeAttribute" /> 标记的用户类
     /// （选择 Aesir 泛型面板基类后在「Context 类型」下拉中选择项目内的 AbstractContext 派生类，
@@ -108,7 +110,7 @@ namespace Runestone.AesirModules
         public string BaseType;
 
         [FoldoutGroup("生成配置")]
-        [ShowIf(nameof(IsAesirGenericPanelBase))]
+        [ShowIf(nameof(IsAesirGenericUiBase))]
         [ValueDropdown(nameof(GetContextTypeChoices))]
         [LabelText("Context 类型: ")]
         [InfoBox("$NoContextHint", InfoMessageType.Warning, nameof(NoContextAvailable))]
@@ -168,26 +170,28 @@ namespace Runestone.AesirModules
         bool IsPartialMode => ScriptMode == BinderScriptMode.PartialClass;
 
         /// <summary>
-        /// 基类候选是否为 Aesir 泛型面板基类（AesirBasePanelView&lt;T&gt; / AesirBasePanelViewController&lt;T&gt;），
-        /// 决定「Context 类型」下拉的显示。
+        /// 基类候选是否为 Aesir 泛型 UI 基类（AesirBasePanelView&lt;T&gt; / AesirBasePanelViewController&lt;T&gt; /
+        /// AesirBaseWindowView&lt;T&gt; / AesirBaseWindowViewController&lt;T&gt;），决定「Context 类型」下拉的显示。
         /// </summary>
-        bool IsAesirGenericPanelBase =>
+        bool IsAesirGenericUiBase =>
             BaseType != null && (BaseType.StartsWith("Runestone.AesirModules.AesirBasePanelView<") ||
-                                 BaseType.StartsWith("Runestone.AesirModules.AesirBasePanelViewController<"));
+                                 BaseType.StartsWith("Runestone.AesirModules.AesirBasePanelViewController<") ||
+                                 BaseType.StartsWith("Runestone.AesirModules.AesirBaseWindowView<") ||
+                                 BaseType.StartsWith("Runestone.AesirModules.AesirBaseWindowViewController<"));
 
         /// <summary>
-        /// 基类候选是否为用户自定义泛型基类（非 Aesir 面板家族的泛型占位），决定「泛型参数」文本框的显示。
+        /// 基类候选是否为用户自定义泛型基类（非 Aesir 面板/窗口家族的泛型占位），决定「泛型参数」文本框的显示。
         /// </summary>
         bool IsUserGenericBase =>
-            BinderCodeGenerator.HasGenericPlaceholder(BaseType) && !IsAesirGenericPanelBase;
+            BinderCodeGenerator.HasGenericPlaceholder(BaseType) && !IsAesirGenericUiBase;
 
         /// <summary>
-        /// 生成时实际使用的泛型类型参数: Aesir 泛型面板基类取「Context 类型」下拉，其余取「泛型参数」文本。
+        /// 生成时实际使用的泛型类型参数: Aesir 泛型 UI 基类取「Context 类型」下拉，其余取「泛型参数」文本。
         /// </summary>
-        string EffectiveBaseTypeArguments => IsAesirGenericPanelBase ? ContextTypeName : BaseTypeArguments;
+        string EffectiveBaseTypeArguments => IsAesirGenericUiBase ? ContextTypeName : BaseTypeArguments;
 
         /// <summary>项目中是否不存在 AbstractContext 派生类（用于空列表提示）。</summary>
-        bool NoContextAvailable => IsAesirGenericPanelBase && GetContextTypeChoices().Count == 0;
+        bool NoContextAvailable => IsAesirGenericUiBase && GetContextTypeChoices().Count == 0;
 
         string NoContextHint =>
             "项目中未找到 AbstractContext 派生类。请先创建 Context 类型，例如:\n" +
@@ -213,7 +217,10 @@ namespace Runestone.AesirModules
             ScriptMode = BinderScriptMode.SameScriptIncrement;
 #endif
             DefaultScriptName();
-            BaseType = typeof(MonoBehaviour).FullName;
+            // 根节点为 Canvas（Canvas 根窗口）时默认基类直指 Aesir 窗口基类，面板根保持 MonoBehaviour
+            BaseType = GetComponent<Canvas>() != null
+                ? typeof(AesirBaseWindow).FullName
+                : typeof(MonoBehaviour).FullName;
             DefaultFolderPath();
         }
 
@@ -228,7 +235,12 @@ namespace Runestone.AesirModules
 
         void DefaultScriptName()
         {
-            ScriptName = gameObject.name + "Panel";
+            // 根节点为 Canvas（Canvas 根窗口）时默认 Window 后缀，否则 Panel 后缀；
+            // 物体名已以对应后缀结尾（忽略大小写）时不再重复拼接
+            var suffix = GetComponent<Canvas>() != null ? "Window" : "Panel";
+            ScriptName = gameObject.name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
+                ? gameObject.name
+                : gameObject.name + suffix;
         }
 
         void DefaultFolderPath()
@@ -237,9 +249,11 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// 可选基类下拉列表: 内置 <see cref="MonoBehaviour" />，加上由 Binder 预选的 Aesir 面板家族
+        /// 可选基类下拉列表: 内置 <see cref="MonoBehaviour" />，加上由 Binder 预选的 Aesir 面板/窗口家族
         /// （<see cref="AesirBasePanel" /> / <c>AesirBasePanelView&lt;T&gt;</c> /
-        /// <c>AesirBasePanelViewController&lt;T&gt;</c>——核心程序集无法反向引用 Odin 程序集标注
+        /// <c>AesirBasePanelViewController&lt;T&gt;</c> / <see cref="AesirBaseWindow" /> /
+        /// <c>AesirBaseWindowView&lt;T&gt;</c> / <c>AesirBaseWindowViewController&lt;T&gt;</c>——
+        /// 核心程序集无法反向引用 Odin 程序集标注
         /// <see cref="BinderBaseTypeAttribute" />，故经 typeof 直接内置），
         /// 以及所有被 <see cref="BinderBaseTypeAttribute" /> 标记的 MonoBehaviour 派生类；
         /// 泛型基类以 <c>&lt;T&gt;</c> 占位形式提供，选择后需把占位替换为具体类型参数。
@@ -251,10 +265,13 @@ namespace Runestone.AesirModules
                 new ValueDropdownItem<string>(nameof(MonoBehaviour), typeof(MonoBehaviour).FullName)
             };
 
-            // 框架预选基类（Aesir 面板家族）: Odin 程序集单向引用核心程序集，直接 typeof 引用
+            // 框架预选基类（Aesir 面板/窗口家族）: Odin 程序集单向引用核心程序集，直接 typeof 引用
             AddBaseTypeCandidate(list, typeof(AesirBasePanel));
             AddBaseTypeCandidate(list, typeof(AesirBasePanelView<>));
             AddBaseTypeCandidate(list, typeof(AesirBasePanelViewController<>));
+            AddBaseTypeCandidate(list, typeof(AesirBaseWindow));
+            AddBaseTypeCandidate(list, typeof(AesirBaseWindowView<>));
+            AddBaseTypeCandidate(list, typeof(AesirBaseWindowViewController<>));
 
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
@@ -667,7 +684,7 @@ namespace Runestone.AesirModules
                         errors.Add($"泛型基类 \"{BaseType}\" 需填写具体类型参数" +
                                    "（Context 类型需继承 AbstractContext<T>，如 Game.HUDContext）");
                     }
-                    else if (IsAesirGenericPanelBase)
+                    else if (IsAesirGenericUiBase)
                     {
                         var contextType = ResolveTypeByFullName(arguments);
                         if (contextType == null)

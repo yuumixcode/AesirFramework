@@ -49,6 +49,17 @@ namespace Runestone.AesirModules
         /// <summary>面板预制体注册表，键 = 注册时声明的类型（与实例注册表的实际类型键相互独立）。</summary>
         readonly Dictionary<Type, GameObject> _prefabDict = new Dictionary<Type, GameObject>();
 
+        /// <summary>经 path 加载的来源路径记录（仅 path 加载的条目），用于"换路径被静默忽略"的诊断。</summary>
+        readonly Dictionary<Type, string> _prefabSourcePaths = new Dictionary<Type, string>();
+
+        /// <summary>窗口实例注册表，键 = 窗口实例的实际类型（与面板注册表相互独立，键语义约定一致）。</summary>
+        readonly Dictionary<Type, IUIWindow> _windowDict = new Dictionary<Type, IUIWindow>();
+
+        /// <summary>窗口蒙版调度模式：单遮 = 仅最高层可见窗口的蒙版生效；叠遮 = 各窗口蒙版独立生效。</summary>
+        [Tooltip("窗口蒙版调度模式：单遮 = 仅最高层可见窗口的蒙版生效；叠遮 = 各窗口蒙版独立生效")]
+        [SerializeField]
+        UIMaskMode maskMode = UIMaskMode.Single;
+
         IUIAssetLoader _loader;
         UIRoot _uiRoot;
 
@@ -83,6 +94,19 @@ namespace Runestone.AesirModules
         /// UI 专用相机。正交、depth=1、cullingMask=含 UI 层 (5) 和 TransparentFX 层 (1)。
         /// </summary>
         public Camera UICamera => _uiRoot?.UICamera;
+
+        /// <summary>
+        /// 窗口蒙版调度模式。运行时可切换，切换后立即重算全部窗口蒙版。
+        /// </summary>
+        public UIMaskMode MaskMode
+        {
+            get => maskMode;
+            set
+            {
+                maskMode = value;
+                RefreshWindowMasks();
+            }
+        }
 
         void Awake()
         {
@@ -197,6 +221,14 @@ namespace Runestone.AesirModules
             EnsureReady();
             if (panelType == null)
             {
+                return null;
+            }
+
+            // 跨契约防呆：窗口类型误入面板入口，直接指向正确入口，避免误报"未挂载 IUIPanel 组件"
+            if (typeof(IUIWindow).IsAssignableFrom(panelType))
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"{panelType.Name} 是窗口（实现了 IUIWindow），请使用 OpenWindow / UIModule.Open<T>()");
                 return null;
             }
 
@@ -363,6 +395,14 @@ namespace Runestone.AesirModules
                 return false;
             }
 
+            // 跨契约防呆：窗口类型误入面板入口，直接指向正确入口
+            if (typeof(IUIWindow).IsAssignableFrom(panelType))
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"{panelType.Name} 是窗口（实现了 IUIWindow），请使用 PrewarmWindow / UIModule.PrewarmWindow<T>()");
+                return false;
+            }
+
             if (_panelDict.ContainsKey(panelType))
             {
                 return true;
@@ -456,6 +496,311 @@ namespace Runestone.AesirModules
         public static bool Prewarm<T>(string path = null) where T : MonoBehaviour, IUIPanel =>
             Instance.PrewarmPanel<T>(path);
 
+        // ---------------- 窗口（Canvas 根 UI） ----------------
+
+        /// <summary>
+        /// 打开窗口（泛型）。不存在则实例化并驱动生命周期；已存在则置顶并重新 Show。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        /// <param name="payload">传递给 OnShow 的数据。</param>
+        /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
+        /// <returns>窗口实例，失败返回 null。</returns>
+        public T OpenWindow<T>(object payload = null, string path = null) where T : MonoBehaviour, IUIWindow =>
+            OpenWindow(typeof(T), payload, path) as T;
+
+        /// <summary>
+        /// 打开窗口。不存在（激活或停用）则实例化并驱动生命周期；已存在则置顶并重新 Show。
+        /// <para>
+        /// 新窗口以停用状态实例化，按 挂载 UIRoot → 接线根 Canvas（相机/渲染模式/统一缩放配置/sortingOrder）→
+        /// 递归设 UI 层 → <see cref="IUIWindow.Initialize" /> → <see cref="IUIWindow.Show" /> 顺序驱动；
+        /// Awake/OnEnable 推迟到 Show 内部激活时才触发（与面板同一契约）。
+        /// </para>
+        /// <para>
+        /// 窗口注册表以实例的实际类型为键：以基类类型调用且注册表已存在派生实例时记录错误并返回 null；
+        /// 根节点缺少 Canvas 组件（违反 Canvas 根约定）时记录错误并中止，不保留半挂载实例。
+        /// </para>
+        /// </summary>
+        /// <param name="windowType">窗口类型。</param>
+        /// <param name="payload">传递给 OnShow 的数据。</param>
+        /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
+        /// <returns>窗口实例，失败返回 null。</returns>
+        public IUIWindow OpenWindow(Type windowType, object payload = null, string path = null)
+        {
+            EnsureReady();
+            if (windowType == null)
+            {
+                return null;
+            }
+
+            // 跨契约防呆：面板类型误入窗口入口，直接指向正确入口，避免误报"未挂载 IUIWindow 组件"
+            if (typeof(IUIPanel).IsAssignableFrom(windowType))
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"{windowType.Name} 是面板（实现了 IUIPanel），请使用 ShowPanel / UIModule.Show<T>()");
+                return null;
+            }
+
+            if (!_windowDict.TryGetValue(windowType, out var window))
+            {
+                // 键语义诊断：注册表已存在派生实例时按实际类型键约定拒绝，防止重复实例化
+                var relatedKey = FindRegisteredRelatedWindowKey(windowType);
+                if (relatedKey != null)
+                {
+                    AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                        $"窗口注册表以实例的实际类型为键：已存在 {relatedKey.Name} 的实例，" +
+                        $"请以实际类型调用 OpenWindow（{windowType.Name} 是其基类或接口）");
+                    return null;
+                }
+
+                window = InstantiateWindowAndAttach(windowType, path);
+                if (window == null)
+                {
+                    return null;
+                }
+
+                // 注册先于生命周期回调：OnInit/OnShow 内递归打开同类型窗口可命中自身；
+                // 回调抛异常时窗口已注册，可正常 Close/Get（不会因未注册而泄漏）
+                _windowDict[window.GetType()] = window;
+                window.Initialize();
+                window.Show(payload);
+                RefreshWindowMasks();
+                return window;
+            }
+
+            // 已存在（激活或停用）：置顶并重新 Show，打开/停用状态由窗口自身 IsOpen 记录
+            var mono = window as MonoBehaviour;
+            if (mono == null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"窗口 {window.GetType().Name} 不是 MonoBehaviour，无法执行挂载与置顶");
+                return null;
+            }
+
+            if (mono.transform.parent != _uiRoot.transform)
+            {
+                mono.transform.SetParent(_uiRoot.transform, false);
+            }
+
+            mono.transform.SetAsLastSibling();
+            window.Show(payload);
+            RefreshWindowMasks();
+            return window;
+        }
+
+        /// <summary>
+        /// 关闭窗口（泛型）。按 <see cref="IUIWindow.DestroyOnHide" /> 决定销毁或隐藏。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        public void CloseWindow<T>() where T : MonoBehaviour, IUIWindow => CloseWindow(typeof(T));
+
+        /// <summary>
+        /// 关闭窗口。按 <see cref="IUIWindow.DestroyOnHide" /> 决定销毁或隐藏；
+        /// 键语义与幂等约定与 <see cref="HidePanel(Type)" /> 一致。
+        /// </summary>
+        /// <param name="windowType">窗口类型。</param>
+        public void CloseWindow(Type windowType)
+        {
+            EnsureReady();
+            if (windowType == null)
+            {
+                return;
+            }
+
+            if (typeof(IUIPanel).IsAssignableFrom(windowType))
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"{windowType.Name} 是面板（实现了 IUIPanel），请使用 HidePanel / UIModule.Hide<T>()");
+                return;
+            }
+
+            if (!_windowDict.TryGetValue(windowType, out var window))
+            {
+                var relatedKey = FindRegisteredRelatedWindowKey(windowType);
+                if (relatedKey != null)
+                {
+                    AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                        $"未关闭任何窗口：注册表以实例的实际类型为键，已存在 {relatedKey.Name} 的实例，" +
+                        $"请以实际类型调用 CloseWindow（{windowType.Name} 是其基类或接口）");
+                }
+
+                return;
+            }
+
+            if (!window.IsOpen)
+            {
+                return;
+            }
+
+            if (window.DestroyOnHide)
+            {
+                _windowDict.Remove(windowType);
+                // DestroyWindow → Destroy(gameObject) → OnDestroy → RemoveWindowRecord（键已移除为无操作）+
+                // RefreshWindowMasks，蒙版重算由销毁回调收尾；本分支先行移除键保证注册表一致
+                window.DestroyWindow();
+            }
+            else
+            {
+                window.Hide();
+                RefreshWindowMasks();
+            }
+        }
+
+        /// <summary>
+        /// 获取已注册的窗口实例。键为窗口实例的实际类型；精确未命中时静默返回 null，
+        /// 仅当注册表存在派生实例（疑似以基类类型误查）时记录键语义警告。
+        /// </summary>
+        /// <param name="windowType">窗口类型。</param>
+        /// <returns>窗口实例，未注册返回 null。</returns>
+        public IUIWindow GetWindow(Type windowType)
+        {
+            if (windowType == null)
+            {
+                return null;
+            }
+
+            if (_windowDict.TryGetValue(windowType, out var window))
+            {
+                return window;
+            }
+
+            var relatedKey = FindRegisteredRelatedWindowKey(windowType);
+            if (relatedKey != null)
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                    $"未获取到窗口实例：注册表以实例的实际类型为键，已存在 {relatedKey.Name} 的实例，" +
+                    $"请以实际类型调用 GetWindow（{windowType.Name} 是其基类或接口）");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 预热窗口。预实例化并隐藏窗口，后续 <see cref="OpenWindow(Type, object, string)" /> 直接复用，
+        /// 避免首次打开时的实例化卡顿。
+        /// <para>窗口以停用状态实例化，预热期不触发 Awake/OnEnable，待首次打开时再激活（与面板同一契约）。</para>
+        /// </summary>
+        /// <param name="windowType">窗口类型。</param>
+        /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
+        /// <returns>预热成功或窗口已存在时返回 true。</returns>
+        public bool PrewarmWindow(Type windowType, string path = null)
+        {
+            EnsureReady();
+            if (windowType == null)
+            {
+                return false;
+            }
+
+            // 跨契约防呆：面板类型误入窗口入口，直接指向正确入口
+            if (typeof(IUIPanel).IsAssignableFrom(windowType))
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"{windowType.Name} 是面板（实现了 IUIPanel），请使用 PrewarmPanel / UIModule.Prewarm<T>()");
+                return false;
+            }
+
+            if (_windowDict.ContainsKey(windowType))
+            {
+                return true;
+            }
+
+            // 键语义诊断：与 OpenWindow 同款——注册表已存在派生实例时拒绝本次预热，防止重复实例化
+            var relatedKey = FindRegisteredRelatedWindowKey(windowType);
+            if (relatedKey != null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    $"窗口注册表以实例的实际类型为键：已存在 {relatedKey.Name} 的实例，" +
+                    $"请以实际类型调用 PrewarmWindow（{windowType.Name} 是其基类或接口）");
+                return false;
+            }
+
+            var window = InstantiateWindowAndAttach(windowType, path);
+            if (window == null)
+            {
+                return false;
+            }
+
+            // 注册先于 Initialize（与 OpenWindow 同一时序约定）
+            _windowDict[window.GetType()] = window;
+            window.Initialize();
+            return true;
+        }
+
+        /// <summary>
+        /// 注册窗口类型对应的预制体（与面板共用同一份预制体注册表，类型系统天然分桶）。
+        /// </summary>
+        /// <param name="windowType">窗口类型。</param>
+        /// <param name="prefab">窗口预制体。</param>
+        public void RegisterWindowPrefab(Type windowType, GameObject prefab)
+        {
+            if (windowType == null || prefab == null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    "注册窗口预制体资源到 [UIModule] 中失败：windowType 或 prefab 为空");
+                return;
+            }
+
+            _prefabDict[windowType] = prefab;
+        }
+
+        /// <summary>
+        /// 窗口类型对应的预制体是否已注册（与面板共用同一份预制体注册表）。
+        /// </summary>
+        /// <param name="windowType">窗口类型。</param>
+        public bool ContainWindowPrefabAsset(Type windowType) =>
+            windowType != null && _prefabDict.ContainsKey(windowType);
+
+        // ---------------- 静态快捷（窗口） ----------------
+
+        /// <summary>
+        /// 静态快捷：打开窗口。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        /// <param name="payload">传递给 OnShow 的数据。</param>
+        /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
+        /// <returns>窗口实例，失败返回 null。</returns>
+        public static T Open<T>(object payload = null, string path = null)
+            where T : MonoBehaviour, IUIWindow =>
+            Instance.OpenWindow(typeof(T), payload, path) as T;
+
+        /// <summary>
+        /// 静态快捷：关闭窗口。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        public static void Close<T>() where T : MonoBehaviour, IUIWindow =>
+            Instance.CloseWindow(typeof(T));
+
+        /// <summary>
+        /// 静态快捷：获取已注册的窗口实例。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        /// <returns>窗口实例，未注册返回 null。</returns>
+        public static T GetWindow<T>() where T : MonoBehaviour, IUIWindow =>
+            Instance.GetWindow(typeof(T)) as T;
+
+        /// <summary>
+        /// 静态快捷：预热窗口。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
+        /// <returns>预热成功或窗口已存在时返回 true。</returns>
+        public static bool PrewarmWindow<T>(string path = null) where T : MonoBehaviour, IUIWindow =>
+            Instance.PrewarmWindow(typeof(T), path);
+
+        /// <summary>
+        /// 静态快捷：注册窗口类型对应的预制体。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        /// <param name="prefab">窗口预制体。</param>
+        public static void RegisterWindowPrefab<T>(GameObject prefab) where T : MonoBehaviour, IUIWindow =>
+            Instance.RegisterWindowPrefab(typeof(T), prefab);
+
+        /// <summary>
+        /// 静态快捷：窗口类型对应的预制体是否已注册。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        public static bool ContainWindowPrefab<T>() where T : MonoBehaviour, IUIWindow =>
+            Instance.ContainWindowPrefabAsset(typeof(T));
+
         // ---------------- 内部辅助 ----------------
 
         /// <summary>
@@ -518,11 +863,23 @@ namespace Runestone.AesirModules
         /// 键语义诊断：查找注册表中以 panelType 为基类或接口的实例键（仅精确未命中时调用）。
         /// 返回 null 表示注册表无关联实例，调用方按幂等语义静默处理。
         /// </summary>
-        Type FindRegisteredRelatedPanelKey(Type panelType)
+        Type FindRegisteredRelatedPanelKey(Type panelType) => FindRegisteredRelatedKey(_panelDict, panelType);
+
+        /// <summary>
+        /// 键语义诊断（窗口侧）：查找窗口注册表中以 windowType 为基类或接口的实例键（仅精确未命中时调用）。
+        /// 返回 null 表示注册表无关联实例，调用方按幂等语义静默处理。
+        /// </summary>
+        Type FindRegisteredRelatedWindowKey(Type windowType) => FindRegisteredRelatedKey(_windowDict, windowType);
+
+        /// <summary>
+        /// 键语义诊断通用实现：在注册表中查找以指定类型为基类或接口的实例键（仅精确未命中时调用）。
+        /// 返回 null 表示注册表无关联实例，调用方按幂等语义静默处理。
+        /// </summary>
+        static Type FindRegisteredRelatedKey<TValue>(Dictionary<Type, TValue> dict, Type type)
         {
-            foreach (var key in _panelDict.Keys)
+            foreach (var key in dict.Keys)
             {
-                if (key != panelType && panelType.IsAssignableFrom(key))
+                if (key != type && type.IsAssignableFrom(key))
                 {
                     return key;
                 }
@@ -555,6 +912,138 @@ namespace Runestone.AesirModules
             }
         }
 
+        /// <summary>
+        /// 窗口实例被销毁时反向清理注册表并重算蒙版（由 <see cref="AesirBaseWindow.OnDestroy" /> 调用）。
+        /// 静态入口避免窗口销毁阶段（如场景卸载）触发 <see cref="Instance" /> 的懒创建副作用。
+        /// </summary>
+        internal static void RemoveWindowRecord(IUIWindow window)
+        {
+            if (_instance == null)
+            {
+                return;
+            }
+
+            var windowKey = window.GetType();
+            if (_instance._windowDict.TryGetValue(windowKey, out var recorded) && recorded == window)
+            {
+                _instance._windowDict.Remove(windowKey);
+            }
+
+            _instance.RefreshWindowMasks();
+        }
+
+        /// <summary>
+        /// 以停用状态实例化窗口预制体并挂载到 UIRoot 直下（Open 与 Prewarm 共用）。
+        /// <para>
+        /// 接线：统一应用 UIRoot 的 Canvas 缩放/渲染配置（不动 sortingOrder）、指定 UICamera、
+        /// 应用窗口声明的 sortingOrder（默认 500，恒在面板四层之上），随后递归设置 UI 层——
+        /// 保证从零新建（默认 layer 0）的预制体内容能被 UICamera 渲染。
+        /// </para>
+        /// <para>
+        /// 预制体缺失、未挂载 <see cref="IUIWindow" /> 组件、根节点缺少 Canvas 或 UICamera 缺失时
+        /// 记录错误、清理实例并返回 null，不保留半挂载实例。
+        /// </para>
+        /// </summary>
+        IUIWindow InstantiateWindowAndAttach(Type windowType, string path)
+        {
+            var prefab = ResolvePrefab(windowType, path);
+            if (prefab == null)
+            {
+                return null;
+            }
+
+            var windowGo = InstantiateInactive(prefab);
+            var window = windowGo.GetComponent<IUIWindow>();
+            if (window == null)
+            {
+                AesirModulesDebug.LogError(windowGo, AesirModulesDebug.UIModuleTag,
+                    "预制体[" + prefab.name + "]没有挂载实现了 IUIWindow 的组件");
+                Destroy(windowGo);
+                return null;
+            }
+
+            var canvas = windowGo.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                AesirModulesDebug.LogError(windowGo, AesirModulesDebug.UIModuleTag,
+                    "窗口预制体[" + prefab.name + "]根节点缺少 Canvas 组件（窗口为 Canvas 根 UI，" +
+                    "预制体根节点须自带 Canvas + CanvasScaler + GraphicRaycaster）");
+                Destroy(windowGo);
+                return null;
+            }
+
+            // 挂载到 UIRoot 直下（窗口不经四层 Canvas），置顶保证同 sortingOrder 时后开居上
+            windowGo.transform.SetParent(_uiRoot.transform, false);
+            windowGo.transform.SetAsLastSibling();
+
+            var uiCamera = _uiRoot.UICamera;
+            if (uiCamera == null)
+            {
+                AesirModulesDebug.LogError(windowGo, AesirModulesDebug.UIModuleTag,
+                    "UIRoot 缺少 UICamera，窗口无法接线渲染");
+                Destroy(windowGo);
+                return null;
+            }
+
+            _uiRoot.CanvasConfig.ApplyToCanvas(canvas);
+            canvas.worldCamera = uiCamera;
+            canvas.sortingOrder = window.SortingOrder;
+            UIRoot.SetLayerRecursively(windowGo.transform, UIRoot.UILayerIndex);
+            return window;
+        }
+
+        /// <summary>
+        /// 重算全部窗口的蒙版显隐（每次窗口 Open/Close/销毁后调用）。
+        /// <para>
+        /// 单遮模式：先关闭全部可见窗口的蒙版，再只开启最高层可见窗口的蒙版
+        /// （层级取 <see cref="IUIWindow.SortingOrder" /> 最大者，同值取 UIRoot 下 sibling 位置靠后者），
+        /// 多窗口叠加时透明度不叠加；叠遮模式：各窗口蒙版独立跟随自身 IsOpen。
+        /// 无 Mask 子物体的窗口对 SetMaskVisible 为无操作，天然不参与遮挡。
+        /// </para>
+        /// </summary>
+        void RefreshWindowMasks()
+        {
+            if (maskMode == UIMaskMode.Stacked)
+            {
+                foreach (var pair in _windowDict)
+                {
+                    pair.Value.SetMaskVisible(pair.Value.IsOpen);
+                }
+
+                return;
+            }
+
+            // 单遮模式：先无条件关闭注册表内全部窗口的蒙版（含已隐藏窗口——
+            // 最高层窗口关闭时其蒙版须随之复位，保证「仅最高层可见窗口持有蒙版」不变量跨转换成立），
+            // 再只开启最高层可见窗口的蒙版
+            IUIWindow topWindow = null;
+            var topOrder = 0;
+            var topSiblingIndex = 0;
+            foreach (var pair in _windowDict)
+            {
+                var window = pair.Value;
+                window.SetMaskVisible(false);
+
+                var mono = window as MonoBehaviour;
+                if (mono == null || !window.IsOpen)
+                {
+                    continue;
+                }
+
+                var order = window.SortingOrder;
+                var siblingIndex = mono.transform.GetSiblingIndex();
+                if (topWindow == null || order > topOrder ||
+                    (order == topOrder && siblingIndex > topSiblingIndex))
+                {
+                    topWindow = window;
+                    topOrder = order;
+                    topSiblingIndex = siblingIndex;
+                }
+            }
+
+            topWindow?.SetMaskVisible(true);
+        }
+
         void EnsureReady()
         {
             if (_uiRoot == null)
@@ -562,9 +1051,6 @@ namespace Runestone.AesirModules
                 _uiRoot = UIRoot.Instance;
             }
         }
-
-        /// <summary>经 path 加载的来源路径记录（仅 path 加载的条目），用于"换路径被静默忽略"的诊断。</summary>
-        readonly Dictionary<Type, string> _prefabSourcePaths = new Dictionary<Type, string>();
 
         GameObject ResolvePrefab(Type panelType, string path)
         {
@@ -575,8 +1061,7 @@ namespace Runestone.AesirModules
                     usedPath != path)
                 {
                     AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
-                        $"面板 {panelType.Name} 的预制体已按 path（{usedPath}）加载并缓存，" +
-                        $"本次传入的 path（{path}）被忽略");
+                        $"面板 {panelType.Name} 的预制体已按 path（{usedPath}）加载并缓存，" + $"本次传入的 path（{path}）被忽略");
                 }
 
                 return prefab;
@@ -599,13 +1084,24 @@ namespace Runestone.AesirModules
 
         IEnumerator PrewarmAllInternal(Action onComplete)
         {
-            var panelTypes = new List<Type>(_prefabDict.Keys);
-            for (var i = 0; i < panelTypes.Count; i++)
+            var prefabTypes = new List<Type>(_prefabDict.Keys);
+            for (var i = 0; i < prefabTypes.Count; i++)
             {
-                if (!PrewarmPanel(panelTypes[i]))
+                var prefabType = prefabTypes[i];
+                // 面板与窗口共用预制体注册表，按键类型分派各自的预热入口
+                if (typeof(IUIWindow).IsAssignableFrom(prefabType) &&
+                    !typeof(IUIPanel).IsAssignableFrom(prefabType))
+                {
+                    if (!PrewarmWindow(prefabType))
+                    {
+                        AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                            $"窗口 {prefabType.Name} 预热失败，已跳过");
+                    }
+                }
+                else if (!PrewarmPanel(prefabType))
                 {
                     AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
-                        $"面板 {panelTypes[i].Name} 预热失败，已跳过");
+                        $"面板 {prefabType.Name} 预热失败，已跳过");
                 }
 
                 yield return null;
