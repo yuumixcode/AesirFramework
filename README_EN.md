@@ -17,8 +17,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.25.1` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.25.1` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.26.0` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.26.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -129,10 +129,10 @@ A dual-track subscription event system: `[AesirListener]` attribute-based static
 
 In the Unity Package Manager window, click `+` in the top-left → `Add package from git URL...` and paste the corresponding sub-package URL:
 
-| Sub-Package | Git URL (pinned to 0.25.1) |
+| Sub-Package | Git URL (pinned to 0.26.0) |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.25.1` |
-| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.25.1` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.26.0` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0` |
 
 > Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches.
 
@@ -146,7 +146,7 @@ Download the matching unitypackage from [GitHub Releases](https://github.com/yuu
 | `AesirModules-v<version>.unitypackage` | Aesir Modules only (no dependencies; if Architecture is missing, the menu `Tools → Aesir → Modules → Install Dependencies` installs it in one click) |
 | `AesirFramework-v<version>.unitypackage` | Both packages combined |
 
-Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for one-click "detect new version → review changelog → confirm → auto backup → diff-based stale cleanup → silent import" (Odin-based UI when Odin Inspector is installed). Version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); via CDN, a new release may take up to ~12 hours to be detected.
+Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for one-click "detect new version → review changelog → confirm → auto backup → diff-based stale cleanup → silent import" (Odin-based UI when Odin Inspector is installed). Version detection falls back through three tiers — direct GitHub (Releases API → 302 probe → raw repo content) → GitHub mirrors → CDN relay — with a 5-second per-source timeout before dropping to the next tier. The window reports whether GitHub was reachable this run (direct = 100% up to date) and which route produced the result, warning about multi-hour delays only when the CDN relay was used.
 
 > Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
 
@@ -164,8 +164,8 @@ Add the following to your project's `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.25.1",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.25.1"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.26.0",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0"
   }
 }
 ```

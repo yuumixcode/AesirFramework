@@ -20,15 +20,44 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.25.1** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.25.1** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.26.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.26.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.25.1` / `#AesirModules-v0.25.1`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.26.0` / `#AesirModules-v0.26.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.26.0] - 2026-09-25
+
+---
+
+### [architecture] Aesir Architecture
+
+**Added**
+
+- **更新器检测线路可见化** — 检测结果新增线路模型（`ReleaseRouteKind` 直连 GitHub / 镜像站 / CDN 中转 + `DetectionAttempt` 各层尝试记录 + `ReleaseCheckResult`）：窗口显示「GitHub 直连是否可用（可用即版本信息 100% 实时）」与「最终获取线路」，新增「检测详情（各层尝试）」折叠区（含每层耗时与失败原因），结果来自 CDN 中转时额外给出延迟提示
+
+**Changed**
+
+- **更新器版本检测改为「直连 GitHub → 镜像站 → CDN 中转」三层兜底（修复新版本检测延迟）** — 此前 jsDelivr CDN 排在首位，其分支缓存最长约 12 小时，刚发布的版本在窗口里仍会显示为旧版本（实测：v0.25.1 发布 3 分钟后窗口仍报 v0.25.0）。现直连层依次尝试 Releases API、`releases/latest` 的 302 探测、仓库内 `update-info.json` 的直连 raw（单源超时 5 秒即落下一层），直连不可用才落镜像站（`ghproxy.net` / `gh-proxy.com`，代理 raw 内容、版本实时），最后才是 CDN 中转；只有 tag 的结果会按同 tag 校验补齐文件清单——拒绝陈旧清单，避免错删文件
+
+**Fixed**
+
+- **更新/检测缺少超时，进度条可能长时间卡住** — 连接检测与 unitypackage 下载补齐硬性墙钟上限：单源检测 5 秒、整轮检测 30 秒（超时后不再发起新请求并留痕）、下载「总时长 120 秒 + 连续 30 秒无进展」双判据（`UnityWebRequest.timeout` 只覆盖「完全无数据」，服务端慢速滴水时不会触发）；任一超时都会中止请求并抛明确异常，上层 `finally` 必定收起进度条
+- **两个包连续更新时流程可能中途断裂（进度条停留 + 按钮提前可点）** — 导入 unitypackage 带来的脚本变更会触发域重载，异步流程随旧域消失导致第二个包等不到、进度条停在上一包的导入文案上，而 `Busy` 因 `[NonSerialized]` 被重置又让按钮可点。现整段更新流程用 `EditorApplication.LockReloadAssemblies()` 锁住程序集重载（实测能推迟编译后的重载），只在全部收尾后解锁一次；导入期间先收起本工具进度条避免与 Unity 自带导入条互相覆盖；另加域重载兜底收尾清理被强杀流程残留的进度条与重载锁
+- **Odin 版更新器窗口正文被渲染成「禁用灰」** — Odin 对不可编辑属性（`[ReadOnly]`、只读属性）会推入 `GUI.enabled = false` 绘制，挂在同一属性链上的 InfoBox、列表标签、行文本与状态行全部呈禁用态（实测文字亮度约 128/255，正常约 196）。修复：只读成员与行视图字段一律标注 `[EnableGUI]`（Super 优先级 2.0 包在最外层），不可编辑语义不变；实测行文本亮度 128 → 196
+- **Odin 版更新器窗口在域重载时抛异常（静态初始化器调用 AssetDatabase）** — `NoPackageText` / `HeaderSubtitleText` 原为 `static readonly` 字段，初始化器在 ScriptableObject 构造期运行而锚点定位内部要调 `AssetDatabase.GUIDToAssetPath`，导致类型初始化失败、窗口绘制中断（窗口开着时每次域重载必现）。修复：改为惰性静态属性
+
+---
+
+### [modules] Aesir Modules
+
+- 与 Aesir Architecture 0.26.0 版本同步发布 — 本包无功能变更；Architecture 侧升级包内更新器（检测三层兜底与线路显示、超时补齐、两包连续更新的交互修复）
 
 ---
 
