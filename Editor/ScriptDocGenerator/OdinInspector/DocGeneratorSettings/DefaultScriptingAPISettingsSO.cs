@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -119,8 +121,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             string sectionTitle,
             string tableHeader,
             string tableSeparator,
-            System.Collections.Generic.List<IDerivedMemberData> items,
-            System.Func<IDerivedMemberData, string> signatureSelector,
+            List<IDerivedMemberData> items,
+            Func<IDerivedMemberData, string> signatureSelector,
             bool withDeclaringType)
         {
             sb.AppendLine(sectionTitle);
@@ -167,13 +169,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static StringBuilder CreateEventsContent(IEventData[] eventDataArray)
         {
-            var groups = MemberGrouper.GroupApiMembers(
-                eventDataArray.Cast<IDerivedMemberData>(),
-                member =>
-                {
-                    member.TryAsIMemberData(out var memberData);
-                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
-                });
+            var groups = MemberGrouper.GroupApiMembers(eventDataArray, member =>
+            {
+                member.TryAsIMemberData(out var memberData);
+                return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+            });
             var sb = new StringBuilder();
             if (groups.Count == 0)
             {
@@ -186,13 +186,13 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             {
                 if (group == MemberGroup.Declared)
                 {
-                    AppendGroupTable(sb, "### 声明的事件", "| 事件名称 | 注释 |", "| :--- | :--- | ",
-                        items, member => ((IEventData)member).Signature, false);
+                    AppendGroupTable(sb, "### 声明的事件", "| 事件名称 | 注释 |", "| :--- | :--- | ", items,
+                        member => ((IEventData)member).Signature, false);
                 }
                 else
                 {
-                    AppendGroupTable(sb, "### 继承的事件", "| 事件签名 | 注释 | 声明事件的类 |",
-                        "| :--- | :--- | :--- |", items, member => ((IEventData)member).Signature, true);
+                    AppendGroupTable(sb, "### 继承的事件", "| 事件签名 | 注释 | 声明事件的类 |", "| :--- | :--- | :--- |",
+                        items, member => ((IEventData)member).Signature, true);
                 }
             }
 
@@ -221,27 +221,24 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
             sb.AppendLine();
 
-            var groups = MemberGrouper.GroupApiMembers(
-                apiMethods.Cast<IDerivedMemberData>(),
-                member =>
+            var groups = MemberGrouper.GroupApiMembers(apiMethods, member =>
+            {
+                var methodData = (IMethodData)member;
+                if (methodData.IsOperator)
                 {
-                    var methodData = (IMethodData)member;
-                    if (methodData.IsOperator)
-                    {
-                        return MemberGroup.Operator;
-                    }
+                    return MemberGroup.Operator;
+                }
 
-                    member.TryAsIMemberData(out var memberData);
-                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
-                });
+                member.TryAsIMemberData(out var memberData);
+                return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+            });
 
             foreach (var (group, items) in groups)
             {
                 switch (group)
                 {
                     case MemberGroup.Declared:
-                        AppendGroupTable(sb, "### 声明的普通方法", "| 普通方法名称 | 注释 |",
-                            "| :--- | :--- | ", items,
+                        AppendGroupTable(sb, "### 声明的普通方法", "| 普通方法名称 | 注释 |", "| :--- | :--- | ", items,
                             member => ((IMethodData)member).SignatureWithoutParameters, false);
                         break;
                     case MemberGroup.Inherited:
@@ -261,13 +258,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static StringBuilder CreatePropertiesContent(IPropertyData[] propertyDataArray)
         {
-            var groups = MemberGrouper.GroupApiMembers(
-                propertyDataArray.Cast<IDerivedMemberData>(),
-                member =>
-                {
-                    member.TryAsIMemberData(out var memberData);
-                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
-                });
+            var groups = MemberGrouper.GroupApiMembers(propertyDataArray, member =>
+            {
+                member.TryAsIMemberData(out var memberData);
+                return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+            });
             var sb = new StringBuilder();
             if (groups.Count == 0)
             {
@@ -280,14 +275,13 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             {
                 if (group == MemberGroup.Declared)
                 {
-                    AppendGroupTable(sb, "### 声明的属性", "| 属性签名 | 注释 |", "| :--- | :--- |",
-                        items, member => ((IPropertyData)member).Signature, false);
+                    AppendGroupTable(sb, "### 声明的属性", "| 属性签名 | 注释 |", "| :--- | :--- |", items,
+                        member => ((IPropertyData)member).Signature, false);
                 }
                 else
                 {
-                    AppendGroupTable(sb, "### 继承的属性", "| 属性签名 | 注释 | 声明属性的类 | ",
-                        "| :--- | :--- | :--- |", items, member => ((IPropertyData)member).Signature,
-                        true);
+                    AppendGroupTable(sb, "### 继承的属性", "| 属性签名 | 注释 | 声明属性的类 | ", "| :--- | :--- | :--- |",
+                        items, member => ((IPropertyData)member).Signature, true);
                 }
             }
 
@@ -296,19 +290,17 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static StringBuilder CreateFieldsContent(IFieldData[] fieldDataArray)
         {
-            var groups = MemberGrouper.GroupApiMembers(
-                fieldDataArray.Cast<IDerivedMemberData>(),
-                member =>
+            var groups = MemberGrouper.GroupApiMembers(fieldDataArray, member =>
+            {
+                var fieldData = (IFieldData)member;
+                if (fieldData.IsConstant)
                 {
-                    var fieldData = (IFieldData)member;
-                    if (fieldData.IsConstant)
-                    {
-                        return MemberGroup.Constant;
-                    }
+                    return MemberGroup.Constant;
+                }
 
-                    member.TryAsIMemberData(out var memberData);
-                    return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
-                });
+                member.TryAsIMemberData(out var memberData);
+                return memberData.IsFromInheritance ? MemberGroup.Inherited : MemberGroup.Declared;
+            });
             var sb = new StringBuilder();
             if (groups.Count == 0)
             {
@@ -322,17 +314,16 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 switch (group)
                 {
                     case MemberGroup.Constant:
-                        AppendGroupTable(sb, "### 常量字段", "| 字段完整签名 | 注释 |", "| :--- | :--- |",
-                            items, member => ((IFieldData)member).Signature, false);
+                        AppendGroupTable(sb, "### 常量字段", "| 字段完整签名 | 注释 |", "| :--- | :--- |", items,
+                            member => ((IFieldData)member).Signature, false);
                         break;
                     case MemberGroup.Declared:
-                        AppendGroupTable(sb, "### 声明的普通字段", "| 字段名称 | 注释 | ",
-                            "| :--- | :--- | ", items, member => ((IFieldData)member).Signature, false);
+                        AppendGroupTable(sb, "### 声明的普通字段", "| 字段名称 | 注释 | ", "| :--- | :--- | ", items,
+                            member => ((IFieldData)member).Signature, false);
                         break;
                     case MemberGroup.Inherited:
                         AppendGroupTable(sb, "### 继承的普通字段", "| 字段名称 | 注释 | 声明字段的类 |",
-                            "| :--- | :--- | :--- |", items, member => ((IFieldData)member).Signature,
-                            true);
+                            "| :--- | :--- | :--- |", items, member => ((IFieldData)member).Signature, true);
                         break;
                 }
             }
