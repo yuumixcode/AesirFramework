@@ -20,15 +20,33 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.24.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.24.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.25.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.25.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.24.0` / `#AesirModules-v0.24.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.25.0` / `#AesirModules-v0.25.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.25.0] - 2026-09-25
+
+---
+
+### [modules] Aesir Modules
+
+**Fixed**
+
+- **Script Doc Generator 增量重生成产出双 Front Matter** — Zensical 生成器自产 YAML 头后，`ScriptDocGeneratorUtility` 的增量合并逻辑（`TryGetFrontMatter` 拼接）会把旧文件的 Front Matter 再拼一份到新内容前，对已存在文档重生成必然产出双重头部（Zensical 解析失败）；合并逻辑收敛为 `MergeFrontMatterWhenMissing`：新内容自带 Front Matter 时以新生成的为准，不自带（如中文 API 生成器）仍保留旧文件头部。EditMode 回归测试 4 用例（`FrontMatterMergeTests`）
+
+---
+
+### [architecture] Aesir Architecture
+
+- 与 Aesir Modules 同步发布 0.25.0（版本号对齐，本包无功能变更）
 
 ---
 
