@@ -25,8 +25,6 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Summary("当前数量")]
         public int Count;
 
-        public ZensicalFixture() { }
-
         [Summary("两数相加")]
         public int Add(int a, int b) => a + b;
 

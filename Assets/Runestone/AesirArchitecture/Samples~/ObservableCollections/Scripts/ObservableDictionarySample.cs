@@ -8,8 +8,10 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 {
     /// <summary>
     /// ObservableDictionary&lt;TKey, TValue&gt; 演示组件（角色属性表场景）。
-    /// <para>单轨订阅 <c>AddListener</c>：载荷为 <see cref="CollectionChangedEventArgs{T}" />（<c>T</c> = 键值对），
-    /// 按 <c>Action</c> 区分新增（Add）/ 移除（Remove）/ 值更新（Replace，旧值在 OldItem）/ 清空（Reset）。</para>
+    /// <para>
+    /// 单轨订阅 <c>AddListener</c>：载荷为 <see cref="CollectionChangedEventArgs{T}" />（<c>T</c> = 键值对），
+    /// 按 <c>Action</c> 区分新增（Add）/ 移除（Remove）/ 值更新（Replace，旧值在 OldItem）/ 清空（Reset）。
+    /// </para>
     /// <para>索引器语义：为不存在的键赋值触发 Add；为已有键赋新值触发 Replace；赋相同值不触发通知。</para>
     /// <para>Add 语义：键已存在时抛 <see cref="System.ArgumentException" />（fail-fast），示例中重复触发该菜单可直接观察到异常。</para>
     /// </summary>
@@ -45,13 +47,16 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
-                    Debug.Log($"[Dictionary] Add → [{e.NewItem.Key}] = {e.NewItem.Value}（当前 {_stats.Count} 项）");
+                    Debug.Log(
+                        $"[Dictionary] Add → [{e.NewItem.Key}] = {e.NewItem.Value}（当前 {_stats.Count} 项）");
                     break;
                 case NotifyCollectionChangedAction.Remove:
-                    Debug.Log($"[Dictionary] Remove → [{e.OldItem.Key}] = {e.OldItem.Value}（当前 {_stats.Count} 项）");
+                    Debug.Log(
+                        $"[Dictionary] Remove → [{e.OldItem.Key}] = {e.OldItem.Value}（当前 {_stats.Count} 项）");
                     break;
                 case NotifyCollectionChangedAction.Replace:
-                    Debug.Log($"[Dictionary] Replace → [{e.NewItem.Key}]：{e.OldItem.Value} → {e.NewItem.Value}");
+                    Debug.Log(
+                        $"[Dictionary] Replace → [{e.NewItem.Key}]：{e.OldItem.Value} → {e.NewItem.Value}");
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     Debug.Log("[Dictionary] Reset → 属性表已清空");

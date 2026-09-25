@@ -121,8 +121,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             queue.AddListener(received.Add);
 
             var dest = new int[5];
-            Assert.Throws<InvalidOperationException>(() => queue.DequeueRange(dest),
-                "dest 长度超过队列长度应抛出");
+            Assert.Throws<InvalidOperationException>(() => queue.DequeueRange(dest), "dest 长度超过队列长度应抛出");
 
             Assert.AreEqual(0, queue.Count, "异常前已出队全部 2 个元素（半程状态不回滚）");
             Assert.AreEqual(2, received.Count, "已出队元素的通知已发出（不撤回）");

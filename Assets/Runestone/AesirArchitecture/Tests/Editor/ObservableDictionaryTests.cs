@@ -238,6 +238,5 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             CollectionAssert.AreEquivalent(new[] { 1, 2 }, values, "值应完整");
             AesirArchitectureDebug.LogTestInfo("结构体枚举器: 具体类型 foreach 遍历全部键值对");
         }
-
     }
 }

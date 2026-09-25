@@ -622,8 +622,7 @@ namespace Runestone.AesirModules.Tests.Editor
 
             Assert.AreEqual(2, receivedSenders.Count, "外层与内层各命中一次");
             Assert.AreSame(_module.gameObject, receivedSenders[0], "首次命中来自内层分发");
-            Assert.AreSame(outerSender, receivedSenders[1],
-                "外层继续分发的订阅者应收到外层事件参数（重入覆写时此处会变成内层发布者）");
+            Assert.AreSame(outerSender, receivedSenders[1], "外层继续分发的订阅者应收到外层事件参数（重入覆写时此处会变成内层发布者）");
         }
 
         [Test]
@@ -755,12 +754,13 @@ namespace Runestone.AesirModules.Tests.Editor
 
             var go = NewGameObject("Dyn");
             EventModule.AddListener<TestEventArgs>(go, e => calls.Add("dyn-first"), SubscriberPriority.First);
-            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("dyn-medium"), SubscriberPriority.Medium);
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("dyn-medium"),
+                SubscriberPriority.Medium);
 
             new TestEventArgs().Invoke(_module.gameObject);
 
-            Assert.AreEqual(new[] { "dyn-first", "attr-high", "dyn-medium", "attr-last" },
-                calls.ToArray(), "Attribute+Dynamic 合并后应按 First→High→Medium→Last 全序执行");
+            Assert.AreEqual(new[] { "dyn-first", "attr-high", "dyn-medium", "attr-last" }, calls.ToArray(),
+                "Attribute+Dynamic 合并后应按 First→High→Medium→Last 全序执行");
 
             EventModule.RemoveListener(attrSubscriber);
         }

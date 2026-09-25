@@ -132,24 +132,6 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 注销 Model：按类型键摘除注册并释放被摘除的实例（测试/调试用途，收窄为 internal）。
-        /// </summary>
-        /// <typeparam name="TModel">要注销的 Model 类型，必须与注册时的类型参数一致</typeparam>
-        /// <remarks>
-        /// 与动态替换同属测试/调试用途：被摘除实例经 <see cref="System.IDisposable.Dispose" /> 释放，
-        /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
-        /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
-        /// </remarks>
-        internal void UnregisterModel<TModel>() where TModel : class, IModel
-        {
-            if (_modelLocator.TryGet<TModel>(out var existing))
-            {
-                existing.Dispose();
-                _modelLocator.Unregister<TModel>();
-            }
-        }
-
-        /// <summary>
         /// 注册 Service 并绑定上下文。
         /// <para>若上下文已完成统一初始化，则立即初始化该 Service。若该类型已注册，视为动态替换：输出一条 Warning 日志，旧实例会被 <see cref="Dispose" /> 后再覆盖。</para>
         /// </summary>
@@ -176,24 +158,6 @@ namespace Runestone.AesirArchitecture
             }
 
             service.Initialize();
-        }
-
-        /// <summary>
-        /// 注销 Service：按类型键摘除注册并释放被摘除的实例（测试/调试用途，收窄为 internal）。
-        /// </summary>
-        /// <typeparam name="TService">要注销的 Service 类型，必须与注册时的类型参数一致</typeparam>
-        /// <remarks>
-        /// 与动态替换同属测试/调试用途：被摘除实例经 <see cref="System.IDisposable.Dispose" /> 释放，
-        /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
-        /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
-        /// </remarks>
-        internal void UnregisterService<TService>() where TService : class, IService
-        {
-            if (_serviceLocator.TryGet<TService>(out var existing))
-            {
-                existing.Dispose();
-                _serviceLocator.Unregister<TService>();
-            }
         }
 
         /// <summary>
@@ -282,6 +246,42 @@ namespace Runestone.AesirArchitecture
             if (ReferenceEquals(_instance, this))
             {
                 _instance = null;
+            }
+        }
+
+        /// <summary>
+        /// 注销 Model：按类型键摘除注册并释放被摘除的实例（测试/调试用途，收窄为 internal）。
+        /// </summary>
+        /// <typeparam name="TModel">要注销的 Model 类型，必须与注册时的类型参数一致</typeparam>
+        /// <remarks>
+        /// 与动态替换同属测试/调试用途：被摘除实例经 <see cref="System.IDisposable.Dispose" /> 释放，
+        /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
+        /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
+        /// </remarks>
+        internal void UnregisterModel<TModel>() where TModel : class, IModel
+        {
+            if (_modelLocator.TryGet<TModel>(out var existing))
+            {
+                existing.Dispose();
+                _modelLocator.Unregister<TModel>();
+            }
+        }
+
+        /// <summary>
+        /// 注销 Service：按类型键摘除注册并释放被摘除的实例（测试/调试用途，收窄为 internal）。
+        /// </summary>
+        /// <typeparam name="TService">要注销的 Service 类型，必须与注册时的类型参数一致</typeparam>
+        /// <remarks>
+        /// 与动态替换同属测试/调试用途：被摘除实例经 <see cref="System.IDisposable.Dispose" /> 释放，
+        /// 其上的事件订阅（MiniEvent / ObservableValue 等）不会迁移——已订阅方需自行重新订阅。
+        /// 未注册时静默无操作（幂等）；注销后再次注册按新插入语义追加到注册顺序末尾。
+        /// </remarks>
+        internal void UnregisterService<TService>() where TService : class, IService
+        {
+            if (_serviceLocator.TryGet<TService>(out var existing))
+            {
+                existing.Dispose();
+                _serviceLocator.Unregister<TService>();
             }
         }
 
