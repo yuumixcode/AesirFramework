@@ -5,7 +5,7 @@ using System.Linq;
 namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 {
     /// <summary>成员分组（文档生成共享）：常量 → 声明 → 继承 → 运算符。</summary>
-    enum MemberGroup
+    internal enum MemberGroup
     {
         None = 0,
         Constant,
@@ -19,7 +19,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     /// API 成员过滤 → 按选择器分组 → 按固定顺序（常量 → 声明 → 继承 → 运算符）输出非空分组。
     /// 替代各生成器手写的"三旗标探测循环"（阈值与守卫类的分组错误曾集中于此）。
     /// </summary>
-    static class MemberGrouper
+    internal static class MemberGrouper
     {
         /// <summary>分组的固定输出顺序。</summary>
         public static readonly MemberGroup[] GroupOrder =
