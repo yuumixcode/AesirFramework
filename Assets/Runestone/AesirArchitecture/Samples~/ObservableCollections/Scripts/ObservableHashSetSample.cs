@@ -6,8 +6,10 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 {
     /// <summary>
     /// ObservableHashSet&lt;T&gt; 演示组件（在线玩家场景）。
-    /// <para>单轨订阅 <c>AddListener</c>：按 <see cref="CollectionChangedEventArgs{T}.Action" /> 区分
-    /// 上线（Add）/ 下线（Remove）/ 清空（Reset）；集合无索引，载荷索引固定 -1。</para>
+    /// <para>
+    /// 单轨订阅 <c>AddListener</c>：按 <see cref="CollectionChangedEventArgs{T}.Action" /> 区分
+    /// 上线（Add）/ 下线（Remove）/ 清空（Reset）；集合无索引，载荷索引固定 -1。
+    /// </para>
     /// <para>无变更的操作不触发通知：Add 重复元素、Remove 不存在的元素、Clear 空集合。</para>
     /// <para>AddRange / RemoveRange 逐项复用 Add / Remove，仅对实际变更的元素逐项触发通知。</para>
     /// </summary>
@@ -15,11 +17,11 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
     {
         readonly ObservableHashSet<string> _onlinePlayers = new ObservableHashSet<string>();
 
-        AutoRemoveListenerHandle _subscription;
-
         string _lastNameAdded;
 
         int _playerCounter;
+
+        AutoRemoveListenerHandle _subscription;
 
         void Start()
         {

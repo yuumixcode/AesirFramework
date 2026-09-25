@@ -113,14 +113,6 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 检查是否已注册指定类型的实例（内部调试与测试用）。
-        /// </summary>
-        /// <typeparam name="TItem">要检查的实例类型，必须为 <typeparamref name="T" /> 的子类型。</typeparam>
-        /// <returns>已注册则返回 <c>true</c>；否则返回 <c>false</c>。</returns>
-        internal bool IsRegistered<TItem>() where TItem : class, T =>
-            _registry.ContainsKey(typeof(TItem));
-
-        /// <summary>
         /// 注销指定类型的实例
         /// </summary>
         /// <typeparam name="TItem">要注销的实例类型，必须为 <typeparamref name="T" /> 的子类型。</typeparam>
@@ -130,6 +122,26 @@ namespace Runestone.AesirArchitecture
             _registry.Remove(key);
             _insertionOrder.Remove(key);
         }
+
+        /// <summary>
+        /// 按注册顺序获取所有已注册的实例集合
+        /// </summary>
+        /// <returns>所有已注册实例的 <see cref="IEnumerable{T}" /> 集合，不含类型键，按注册顺序排列。</returns>
+        public IEnumerable<T> GetAll()
+        {
+            foreach (var key in _insertionOrder)
+            {
+                yield return _registry[key];
+            }
+        }
+
+        /// <summary>
+        /// 检查是否已注册指定类型的实例（内部调试与测试用）。
+        /// </summary>
+        /// <typeparam name="TItem">要检查的实例类型，必须为 <typeparamref name="T" /> 的子类型。</typeparam>
+        /// <returns>已注册则返回 <c>true</c>；否则返回 <c>false</c>。</returns>
+        internal bool IsRegistered<TItem>() where TItem : class, T =>
+            _registry.ContainsKey(typeof(TItem));
 
         /// <summary>
         /// 清空所有已注册的实例（内部路径：<see cref="Dispose" /> 与 <see cref="AbstractContext{T}.Dispose" /> 使用）。
@@ -147,18 +159,6 @@ namespace Runestone.AesirArchitecture
         /// <returns>已注册的实例；若未注册则返回 <c>null</c>。</returns>
         internal T GetByType(Type type) =>
             _registry.GetValueOrDefault(type);
-
-        /// <summary>
-        /// 按注册顺序获取所有已注册的实例集合
-        /// </summary>
-        /// <returns>所有已注册实例的 <see cref="IEnumerable{T}" /> 集合，不含类型键，按注册顺序排列。</returns>
-        public IEnumerable<T> GetAll()
-        {
-            foreach (var key in _insertionOrder)
-            {
-                yield return _registry[key];
-            }
-        }
 
         /// <summary>
         /// 获取所有已注册键值对（仅供异常路径的近失识别使用，内部路径）

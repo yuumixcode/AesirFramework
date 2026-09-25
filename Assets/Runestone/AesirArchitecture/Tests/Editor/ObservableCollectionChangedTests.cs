@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -15,19 +16,6 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// </remarks>
     public class ObservableCollectionChangedTests
     {
-        /// <summary>全量抄录事件载荷的订阅者。</summary>
-        sealed class Capture<T>
-        {
-            public int Calls;
-            public List<CollectionChangedEventArgs<T>> Events { get; } = new List<CollectionChangedEventArgs<T>>();
-
-            public void OnChanged(CollectionChangedEventArgs<T> e)
-            {
-                Calls++;
-                Events.Add(e);
-            }
-        }
-
         // ---------- ObservableList<T> ----------
 
         [Test]
@@ -474,7 +462,10 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var list = new ObservableList<int>();
             var calls = 0;
 
-            void OnChanged(CollectionChangedEventArgs<int> _) => calls++;
+            void OnChanged(CollectionChangedEventArgs<int> _)
+            {
+                calls++;
+            }
 
             list.AddListener(OnChanged);
             list.Add(1);
@@ -516,9 +507,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 var trigger = gameObject.GetComponent<RemoveListenerOnDisableTrigger>();
                 Assert.IsNotNull(trigger, "扩展方法应自动挂载触发器组件");
 
-                trigger.GetType()
-                    .GetMethod("OnDisable", System.Reflection.BindingFlags.Instance |
-                        System.Reflection.BindingFlags.NonPublic)!
+                trigger.GetType().GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic)!
                     .Invoke(trigger, null);
 
                 list.Add(2);
@@ -527,6 +516,21 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             finally
             {
                 Object.DestroyImmediate(gameObject);
+            }
+        }
+
+        /// <summary>全量抄录事件载荷的订阅者。</summary>
+        sealed class Capture<T>
+        {
+            public int Calls;
+
+            public List<CollectionChangedEventArgs<T>> Events { get; } =
+                new List<CollectionChangedEventArgs<T>>();
+
+            public void OnChanged(CollectionChangedEventArgs<T> e)
+            {
+                Calls++;
+                Events.Add(e);
             }
         }
     }

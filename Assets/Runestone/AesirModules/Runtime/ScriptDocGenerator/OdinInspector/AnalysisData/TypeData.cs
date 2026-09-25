@@ -135,8 +135,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 .Select(c => DataFactory.CreateConstructorData(c))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedMethodsData = type.GetRuntimeMethods()
-                .Where(x => x != null && !IsSyntheticAccessor(x))
-                .Select(m => DataFactory.CreateMethodData(m))
+                .Where(x => x != null && !IsSyntheticAccessor(x)).Select(m => DataFactory.CreateMethodData(m))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
             RuntimeReflectedEventsData = type.GetRuntimeEvents().Select(e => DataFactory.CreateEventData(e))
                 .OrderBy(data => data, new DerivedMemberDataComparer()).ToArray();
@@ -170,9 +169,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return false;
             }
 
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic |
-                                       BindingFlags.Instance | BindingFlags.Static |
-                                       BindingFlags.DeclaredOnly;
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                                       BindingFlags.Static | BindingFlags.DeclaredOnly;
             if (name.StartsWith("add_"))
             {
                 return declaring.GetEvent(name.Substring(4), flags) != null;
