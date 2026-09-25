@@ -1,7 +1,7 @@
 {
   "name": "cn.runestone.aesir.modules",
   "displayName": "Aesir Modules",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "unity": "2022.3",
   "description": "Aesir 功能模块包。UI 框架（Manager-of-Managers 单例模式、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（双轨订阅、订阅者过滤器精确投递、死引用清理、SO 资产化）+ 音频模块（SFX 轮询播放、BGM 淡入淡出、三通道音量持久化）。",
   "keywords": [
@@ -19,7 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "com.unity.test-framework": "1.1.33",
-    "cn.runestone.aesir.architecture": "0.23.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.24.0"
   },
   "samples": [
     {
@@ -41,6 +41,11 @@
       "displayName": "Audio Module - Basic Usage",
       "description": "音频模块基础用法示例：SFX 播放（含音调抖动）、BGM 淡入淡出切歌、三通道音量与静音持久化。",
       "path": "Samples~/Audio/01_BasicUsage"
+    },
+    {
+      "displayName": "UI Module - Basic Usage",
+      "description": "UI 模块基础用法示例：面板与 Canvas 根窗口两种形态协作、蒙版单遮/叠遮切换、点击蒙版关闭与全屏加载窗口。",
+      "path": "Samples~/UI/01_BasicUsage"
     }
   ]
 }
