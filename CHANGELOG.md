@@ -5,6 +5,10 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.26.0] - 2026-09-25
+
+- **与 Aesir Architecture 0.26.0 版本同步发布** — 本包无功能变更；Architecture 侧升级包内更新器（版本检测改为「直连 GitHub → 镜像站 → CDN 中转」三层兜底并显示获取线路、检测与下载补齐超时、修复两个包连续更新时进度条停留与按钮提前可点的交互问题）
+
 ## [0.25.1] - 2026-09-25
 
 ### Fixed
