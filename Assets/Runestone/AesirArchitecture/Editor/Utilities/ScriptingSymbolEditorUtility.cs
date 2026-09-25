@@ -11,7 +11,7 @@ namespace Runestone.AesirArchitecture.Editor
     /// 遍历所有构建目标（排除 Unknown 和 Dedicated Server），提供幂等的宏定义符号添加/移除能力。
     /// </para>
     /// </summary>
-    public static class ScriptingSymbolUtility
+    public static class ScriptingSymbolEditorUtility
     {
         static NamedBuildTarget[] _validTargets;
 
@@ -62,7 +62,7 @@ namespace Runestone.AesirArchitecture.Editor
         {
             if (string.IsNullOrEmpty(symbol))
             {
-                AesirArchitectureDebug.LogWarning(nameof(ScriptingSymbolUtility), "symbol 不能为空");
+                AesirArchitectureDebug.LogWarning(nameof(ScriptingSymbolEditorUtility), "symbol 不能为空");
                 return;
             }
 
@@ -77,7 +77,7 @@ namespace Runestone.AesirArchitecture.Editor
 
             if (added)
             {
-                AesirArchitectureDebug.Log(nameof(ScriptingSymbolUtility), $"已添加宏定义符号: {symbol}");
+                AesirArchitectureDebug.Log(nameof(ScriptingSymbolEditorUtility), $"已添加宏定义符号: {symbol}");
             }
         }
 
@@ -93,7 +93,7 @@ namespace Runestone.AesirArchitecture.Editor
         {
             if (string.IsNullOrEmpty(symbol))
             {
-                AesirArchitectureDebug.LogWarning(nameof(ScriptingSymbolUtility), "symbol 不能为空");
+                AesirArchitectureDebug.LogWarning(nameof(ScriptingSymbolEditorUtility), "symbol 不能为空");
                 return;
             }
 
@@ -108,7 +108,7 @@ namespace Runestone.AesirArchitecture.Editor
 
             if (removed)
             {
-                AesirArchitectureDebug.Log(nameof(ScriptingSymbolUtility), $"已移除宏定义符号: {symbol}");
+                AesirArchitectureDebug.Log(nameof(ScriptingSymbolEditorUtility), $"已移除宏定义符号: {symbol}");
             }
         }
 

@@ -15,10 +15,14 @@ namespace Runestone.AesirArchitecture
     ///     <para>
     ///     <b>有意收窄的能力边界</b>：
     ///     <list type="bullet">
-    ///         <item><b>帧粒度</b>——计时按帧结算，<c>Delay(0.05f)</c> 在 60fps 下约 3-4 帧后触发；
-    ///         所有任务最早下一帧执行（含 <c>Delay(0)</c>，不做同帧投递）。</item>
-    ///         <item><b>游戏时间</b>——计时基于 <see cref="Time.time" />，受 <c>timeScale</c> 影响
-    ///         （<c>timeScale = 0</c> 期间暂停计时，随游戏时间推进）。</item>
+    ///         <item>
+    ///         <b>帧粒度</b>——计时按帧结算，<c>Delay(0.05f)</c> 在 60fps 下约 3-4 帧后触发；
+    ///         所有任务最早下一帧执行（含 <c>Delay(0)</c>，不做同帧投递）。
+    ///         </item>
+    ///         <item>
+    ///         <b>游戏时间</b>——计时基于 <see cref="Time.time" />，受 <c>timeScale</c> 影响
+    ///         （<c>timeScale = 0</c> 期间暂停计时，随游戏时间推进）。
+    ///         </item>
     ///         <item><b>一次性任务</b>——无句柄、无取消、无暂停、不池化；高频反复调度请评估直接持有句柄型事件。</item>
     ///         <item><b>仅主线程</b>——框架铁律；从异步回调访问请先调度回主线程。</item>
     ///     </list>
@@ -36,19 +40,6 @@ namespace Runestone.AesirArchitecture
     /// <seealso cref="AesirArchitecturePlayerLoop" />
     public static class AesirScheduler
     {
-        /// <summary>
-        /// 待结算任务
-        /// </summary>
-        /// <remarks>
-        /// 结构体存储：列表本身零分配承载任务（无每任务堆分配），<see cref="DueTime" /> 为 <see cref="Time.time" /> 域上的绝对到期时刻。
-        /// </remarks>
-        struct ScheduledTask
-        {
-            public float DueTime;
-            public int BornFrame;
-            public Action Callback;
-        }
-
         static readonly List<ScheduledTask> Tasks = new List<ScheduledTask>();
 
         /// <summary>结算缓冲区（复用，稳态零分配）：先出队后投递，回调抛异常不破坏队列完整性。</summary>
@@ -177,6 +168,19 @@ namespace Runestone.AesirArchitecture
             {
                 FireBuffer[i].Callback();
             }
+        }
+
+        /// <summary>
+        /// 待结算任务
+        /// </summary>
+        /// <remarks>
+        /// 结构体存储：列表本身零分配承载任务（无每任务堆分配），<see cref="DueTime" /> 为 <see cref="Time.time" /> 域上的绝对到期时刻。
+        /// </remarks>
+        struct ScheduledTask
+        {
+            public float DueTime;
+            public int BornFrame;
+            public Action Callback;
         }
     }
 }
