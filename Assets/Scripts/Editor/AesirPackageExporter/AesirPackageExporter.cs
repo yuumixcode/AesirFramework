@@ -23,7 +23,9 @@ namespace Runestone.AesirPackageExporter
         /// <summary>
         /// 导出全部两个包到指定输出目录。
         /// </summary>
-        [MenuItem(MenuRoot + "/Export All Packages", false, 0)]
+        // priority 1000/1001/1002：与 Tools/Aesir 其余工具（默认 1000）同组、组内按字母序，
+        // 不与顶部的 Aesir Getting Started（-1000）之间产生额外分割线之外的分组
+        [MenuItem(MenuRoot + "/Export All Packages", false, 1000)]
         static void ExportAll()
         {
             var outputDir = GetOutputDirectory();
@@ -54,7 +56,7 @@ namespace Runestone.AesirPackageExporter
         /// <summary>
         /// 导出 Aesir Architecture 包。
         /// </summary>
-        [MenuItem(MenuRoot + "/Export Aesir Architecture", false, 1)]
+        [MenuItem(MenuRoot + "/Export Aesir Architecture", false, 1001)]
         static void ExportArchitecture()
         {
             ExportSingle(Packages[0]);
@@ -63,7 +65,7 @@ namespace Runestone.AesirPackageExporter
         /// <summary>
         /// 导出 Aesir Modules 包。
         /// </summary>
-        [MenuItem(MenuRoot + "/Export Aesir Modules", false, 2)]
+        [MenuItem(MenuRoot + "/Export Aesir Modules", false, 1002)]
         static void ExportModules()
         {
             ExportSingle(Packages[1]);

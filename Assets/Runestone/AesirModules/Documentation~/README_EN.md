@@ -3,19 +3,19 @@
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an event module, audio management, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.23.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.24.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.23.0`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.24.0`)
 
 ## Modules
 
 | Module | Status | Description |
 |------|------|------|
-| UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + pluggable asset loading |
+| UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + Canvas-root windows (single/stacked mask) + pluggable asset loading |
 | Event | Implemented | `EventModule` dual-track subscription (Attribute + Script) + 4 priority levels with stable sorting + snapshot/re-entrant-safe dispatch + expression-tree optimization + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization |
 | Audio | Implemented | `AudioModule` singleton (minimal 2D audio facade) + SFX round-robin exclusive sources + BGM crossfade + 3-channel volume/mute persistence |
 | Scene | Implemented | `SceneModule` scene load/additive/unload/activate + scene lifecycle events + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Editor Settings) |
@@ -25,17 +25,17 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.23.0 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.24.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed. Note that **the `SceneAssetWrapper` Inspector experience of the Scene module (drag-assign, coloring, one-click fix buttons) requires Odin**; without Odin, only the API surface is guaranteed (construct via `FromScenePath`, assign `SceneAsset` in code, use the TryGet family) — the panel is not supported.
 
 ## Directory Layout
 
-The package uses the standard Unity custom package root layout: `Runtime/` and `Editor/` are the two root-level folders, and functional modules live as subfolders within the corresponding layer (e.g. `Runtime/UI/` and `Editor/UI/`); the shared foundation lives in `Runtime/Common/`.
+The package uses the standard Unity custom package root layout: `Runtime/` and `Editor/` are the two root-level folders, and functional modules live as subfolders within the corresponding layer (e.g. `Runtime/UI/` and `Editor/UI/`); the shared foundation lives in `Runtime/Common/`, and third-party integrations (Odin Inspector, Addressables) live in `Integration/`.
 
 Assembly organization:
 
 - **Core assemblies** are anchored at the layer roots (`Runtime/Runestone.AesirModules.asmdef`, `Editor/Runestone.AesirModules.Editor.asmdef`) — module main code under a layer joins the corresponding core assembly automatically, no asmref needed
-- **Fine-grained assemblies** are anchored under `Common/` (Odin runtime `Runtime/Common/OdinInspector/`, Odin editor `Editor/Common/OdinInspector/`, Addressables glue `Editor/Common/Addressables/`); a module's matching dedicated code sits in its own `OdinInspector/` / `Addressables/` subfolder and is joined via an **Assembly Definition Reference (asmref)**
+- **Fine-grained assemblies** are third-party adapters/integrations, anchored under `Integration/` (Odin runtime `Runtime/Integration/OdinInspector/`, Odin editor `Editor/Integration/OdinInspector/`, Addressables glue `Editor/Integration/Addressables/`); a module's matching dedicated code sits in its own `OdinInspector/` / `Addressables/` subfolder and is joined via an **Assembly Definition Reference (asmref)**
 - **Deleting a module** = deleting `Runtime/<module>/` and `Editor/<module>/` (if present), without affecting the compilation of any other module
 
 ## Installation
@@ -45,7 +45,7 @@ Assembly organization:
 In the Unity Package Manager window, click `+` → `Add package from git URL...`:
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.23.0
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.24.0
 ```
 
 Or edit `Packages/manifest.json`:
@@ -53,18 +53,22 @@ Or edit `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.23.0"
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.24.0"
   }
 }
 ```
 
 To track the latest development version on `main`, replace the URL with `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules`.
 
-UPM automatically resolves the `dependencies` field in `package.json` and pulls Aesir Architecture.
+The `dependencies` field of `package.json` declares Aesir Architecture as a Git URL, so UPM automatically pulls that dependency when installing this package — no manual installation required. Packages installed this way are managed by the Package Manager: to update, remove the package and re-add the new version branch's Git URL; the in-package updater `Tools → Aesir → Check for Updates` does not apply to them.
 
 ### unitypackage Import
 
 Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated in one click via the Unity menu `Tools → Aesir → Check for Updates` (shipped with Aesir Architecture).
+
+> **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (the locating mechanism is provided by Aesir Architecture, mirroring Odin Inspector's counterpart asset). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone`; if you have moved Runestone, clean up the old copy yourself.
+
+> **One-click dependency install when missing**: if only this package is imported via unitypackage (Aesir Architecture not imported), this package's core assembly cannot compile (the Console reports the missing `Runestone.AesirArchitecture` assembly). In that case the menu `Tools → Aesir → Modules → Install Dependencies` appears: after a confirmation dialog listing the package name, version and Git URL to be installed, it installs the matching version of Aesir Architecture via its Git URL — into `Packages/`, managed by the Package Manager — and the core assembly compiles again. Future updates of that dependency go through the Package Manager (remove, then re-add). The menu hides itself once Aesir Architecture is installed.
 
 ## UI Module
 
@@ -78,6 +82,11 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 | `AesirBasePanel` | Component | Abstract panel base: virtual `OnInit` / `OnShow` / `OnHide` / `OnClose`, serialized fields `layer` / `destroyOnHide`, convenience `HideSelf()` |
 | `AesirBasePanelView<T>` | Component | MVP-mode panel view base: inherits `AesirBasePanel` and binds to a Context type (`IView`), accessing Models / Services via the Context |
 | `AesirBasePanelViewController<T>` | Component | MVC-mode panel controller base: inherits `AesirBasePanel` and binds to a Context type (`IController`), accessing Models / Services via the Context and executing Commands / Queries |
+| `IUIWindow` | Engine | Canvas-root window contract: same lifecycle shape as panels (`Initialize → Show(payload) → Hide → DestroyWindow`); properties `SortingOrder` / `DestroyOnHide` / `IsOpen` plus mask scheduling via `SetMaskVisible` |
+| `AesirBaseWindow` | Component | Abstract window base: lifecycle virtuals mirroring `AesirBasePanel`; serialized fields `sortingOrder` (default 500, always above the panel layers) / `destroyOnHide` / `closeOnMaskClick`; mask-click virtual `OnMaskClicked()`; convenience `CloseSelf()` |
+| `AesirBaseWindowView<T>` | Component | MVP-mode window view base: inherits `AesirBaseWindow` and binds to a Context type (`IView`) |
+| `AesirBaseWindowViewController<T>` | Component | MVC-mode window controller base: inherits `AesirBaseWindow` and binds to a Context type (`IController`), executing Commands / Queries |
+| `UIMaskMode` | Engine | Window mask scheduling mode: single (only the topmost visible window's mask is active) / stacked (each window's mask follows its own visibility); configured on `UIModule`, switchable at runtime |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | Pluggable asset loading contract and default implementation (Resources folder). The contract is **synchronous**: suitable for Resources, synchronous caches and similar pipelines; async pipelines such as Addressables must be preloaded and returned synchronously |
 | `UICanvasConfigSO` | Asset | Unified Canvas config asset (a default asset can be created from the Create menu) |
 | `UILayer` | Engine | Layer enum: Background / Normal / Popup / Top |
@@ -127,16 +136,50 @@ public class MainMenuPanel : AesirBasePanel
 
 > **Lifecycle details**: panels are instantiated in an inactive state (Awake / OnEnable are deferred until activation inside Show, so OnEnable can safely access references that only get values after OnInit), driven in the order attach-to-layer → `Initialize` → `Show`; panel registration is keyed by the instance's **actual type** — when the prefab's root script is a *derived* class of the registered type, calling via the base type hits the key-semantics diagnostics (a repeated Show is rejected with an error; Hide / Get warn instead of failing silently). **Register, show, hide and get panels through the same type consistently** (`HideSelf()` inside a panel always uses the actual type and is always safe). `OnClose` is only invoked on the controlled destroy path (`HidePanel` with `DestroyOnHide=true`); **uncontrolled destroys (scene unload, external `Destroy`) only trigger `OnDestroy`** — put event unsubscription and cleanup in `OnDestroy` (or both), writing them only in `OnClose` leaks on scene transitions.
 
+5. Windows (Canvas-root UI) and masks — for screens needing an independent Canvas, an independent sortingOrder, or blocking all input below (modal popups, fullscreen flow pages), use the window form, a sibling of the panel form:
+
+```csharp
+// Register the window prefab (shares the prefab registry with panels; types are separated naturally)
+UIModule.RegisterWindowPrefab<SettingWindow>(prefab);
+
+// Open the window (re-tops and re-fires OnShow if already present; pass a payload)
+UIModule.Open<SettingWindow>("Settings");
+
+// Close the window (DestroyOnHide decides destroy vs. cache for reuse)
+UIModule.Close<SettingWindow>();
+
+// Get the window instance / prewarm
+UIModule.GetWindow<SettingWindow>();
+UIModule.PrewarmWindow<SettingWindow>();
+```
+
+The window lifecycle mirrors the panel exactly (`AesirBaseWindow` virtuals `OnInit / OnShow / OnHide / OnClose` + `CloseSelf()`); the differences are the root node and the attach point: a window prefab's **root node carries its own Canvas** (an independent render root), and opening attaches it **directly under UIRoot** (not under the 4 layer Canvases), sorted by its declared `sortingOrder` (default 500) — always above the panel layers (≤400). Prefab structure convention:
+
+```
+SettingWindow (root: Canvas + CanvasScaler + GraphicRaycaster + window script)
+├── Mask        Mask: fullscreen-stretched Image (blocks all raycasts below it) + optional Button (receives clicks)
+└── Content     Actual UI element container (untouched by the framework)
+```
+
+Masks are scheduled centrally by `UIModule` (serialized config `maskMode`, switchable at runtime via `UIModule.Instance.MaskMode`): **single** (default) = only the topmost visible window's mask is active, so stacked windows do not stack opacity; **stacked** = each window's mask independently follows its own visibility. Mask clicks are wired automatically through the Button and call the `OnMaskClicked()` virtual — by default `closeOnMaskClick` (default false) decides whether the window closes. Windows without a `Mask` child (e.g. opaque fullscreen loading pages) simply do not participate in masking.
+
+**Panel vs. Window**: for persistent HUDs and co-existing non-modal info/list panels, use **Panel** (shared layer Canvas, batching-friendly; the default form for most projects); for modal popups, fullscreen flow pages (settings / pause / results / loading), and overlays needing independent sorting or render isolation, use **Window**. The two forms have symmetric APIs and lifecycles and can be mixed as needed (windows always render above panels); a project usually picks one primary form. Full comparison in [Documentation/ui-module.md](./ui-module.md).
+
 ### Directory Structure
 
 ```
 Runtime/UI/                        # joins the core runtime assembly (layer-root anchor)
-├── UIModule.cs                    # UI manager singleton
+├── UIModule.cs                    # UI manager singleton (panel/window registries + mask scheduling)
 ├── UIRoot.cs                      # UI root node (4-layer Canvas construction)
 ├── IUIPanel.cs                    # Panel contract
 ├── AesirBasePanel.cs              # Panel base class
 ├── AesirBasePanelView.cs          # MVP panel view base (Context-bound)
 ├── AesirBasePanelViewController.cs # MVC panel controller base (Context + Command/Query capabilities)
+├── IUIWindow.cs                   # Canvas-root window contract
+├── AesirBaseWindow.cs             # Window base class (mask-click wiring + CloseSelf)
+├── AesirBaseWindowView.cs         # MVP window view base (Context-bound)
+├── AesirBaseWindowViewController.cs # MVC window controller base (Context + Command/Query capabilities)
+├── UIMaskMode.cs                  # Mask scheduling mode enum (single/stacked)
 ├── UILayer.cs                     # Layer enum
 ├── UICanvasConfigSO.cs            # Canvas config asset
 ├── UIAssetLoader/                 # IUIAssetLoader + ResourcesUILoader
@@ -149,7 +192,8 @@ Editor/UI/                         # joins the core editor assembly (layer-root 
 
 > **Design boundaries**:
 > - **The layer system is a closed set** — `UILayer` is fixed at four layers (Background / Normal / Popup / Top), with the base sorting orders hardcoded to 100 / 200 / 300 / 400 and force-overwritten on every Awake. Adding a layer or changing orders requires modifying the framework source; no configuration surface is provided. Four layers are sufficient for teaching and small-to-mid projects.
-> - **Panel roots attach directly under the layer Canvas (no per-panel Canvas)** — panels of the same layer share the layer Canvas: batching-friendly for same-atlas UI, at the cost of batch interruption on interleaved panels and no per-panel Canvas / independent sortingOrder surface. For an independent Canvas (animation isolation, render effects), add a child Canvas inside the panel prefab yourself (not managed by `UICanvasConfigSO`). In-layer rendering order is decided solely by the Show order (`SetAsLastSibling`).
+> - **Panel roots attach directly under the layer Canvas (no per-panel Canvas)** — panels of the same layer share the layer Canvas: batching-friendly for same-atlas UI, at the cost of batch interruption on interleaved panels and no per-panel Canvas / independent sortingOrder surface. For an independent Canvas (animation isolation, render effects), add a child Canvas inside the panel prefab yourself (not managed by `UICanvasConfigSO`); a **whole screen** needing an independent Canvas, independent sorting or a click-blocking mask should be promoted to the window form (Canvas-root UI, always above the panel layers). In-layer rendering order is decided solely by the Show order (`SetAsLastSibling`).
+> - **Masks serve the window form only** — single/stacked scheduling only touches the window's `Mask` child; panels have no mask — convert an input-blocking panel to the window form instead. Window navigation stacks/back navigation and SmartShowHide pseudo-hiding (next-cycle candidate) are not implemented.
 > - **The loading contract is synchronous** — see the "Loading contract" note above; no async interface.
 > - **`OnClose` only runs on the controlled destroy path** — see the lifecycle details above; uncontrolled destroys (scene unload / external Destroy) only trigger `OnDestroy`.
 > - **Exclude the UI layer from your main camera** — the UICamera cullingMask only contains UI(5) and TransparentFX(1), but a main game camera that also includes the UI layer will render the UI twice; exclude it in your own camera setup.
@@ -427,7 +471,7 @@ public class LevelFlow : MonoBehaviour
 - **Odin Inspector boundary** — the `SceneAssetWrapper` Inspector panel effects depend on Odin (injected via AttributeProcessor); without Odin only the API surface is guaranteed: construct via `SceneAssetWrapper.FromScenePath(...)`, assign the `SceneAsset` property in code (editor only), read via the TryGet family. The panel is not supported.
 - **Addressable scenes are not loaded by SceneModule** — with Addressables installed the wrapper provides the address (`Address` / `TryGetAddress`); load and unload directly through the Addressables API (`Addressables.LoadSceneAsync(wrapper.Address)`).
 - **Do not additive-load the same path twice** — Unity loads two scene instances while tracking records one path; `UnloadScene` unloads only one of them and the leftover instance escapes tracking.
-- **Bootstrap split of duties** — at runtime `SceneModule` only holds the `bootstrapScene` reference for user code to read (`BootstrapSceneAssetWrapper`) and performs no automatic flow; Build Settings index 0 and force-opening the Bootstrap scene on Play are handled by the editor `BootstrapSceneHelper` (enabled in `Tools → Aesir → Scene Editor Settings`, off by default).
+- **Bootstrap split of duties** — at runtime `SceneModule` only holds the `bootstrapScene` reference for user code to read (`BootstrapSceneAssetWrapper`) and performs no automatic flow; Build Settings index 0 and force-opening the Bootstrap scene on Play are handled by the editor `BootstrapSceneHelper` (enabled in `Tools → Aesir → Modules → Scene Editor Settings`, off by default).
 - **No cross-scene payload / no async** — pass data across scenes via framework MiniEvents or a shared Model; async support awaits a framework-wide decision.
 
 ### Directory Structure
@@ -441,7 +485,7 @@ Runtime/Scene/                     # joins the core runtime assembly (layer-root
 ├── SceneAssetWrapperAddressablesBridge.cs  # Addressables capability static bridge
 └── Exceptions/                    # Dedicated exception family
 Editor/Scene/                      # joins the core editor assembly (layer-root anchor)
-├── SceneManagerWindow.cs          # Scene Editor Settings window (Tools/Aesir/Scene Editor Settings)
+├── SceneManagerWindow.cs          # Scene Editor Settings window (Tools/Aesir/Modules/Scene Editor Settings)
 ├── BootstrapSceneHelper.cs        # Bootstrap scene registration tool (off by default)
 ├── SceneEditorSettings.cs         # Editor persisted settings
 ├── Tests/                         # EditMode tests (SceneAssetWrapper 27 cases + SceneModule 20 cases); real load success paths covered by the PlayMode suite in the package-root Tests/Runtime
@@ -455,7 +499,7 @@ Located at `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via
 
 - `BinderTag` marks child objects that need bound references (1 component bound by default); its "bound component count" declares how many components to bind on that object. The hierarchy context menu `GameObject/Aesir/` attaches `BinderAssistant` / `BinderTag` to selected objects in one click.
 - `BinderAssistant` sits on the panel root. "Build Binding Units" incrementally maintains the binding list from the tags (each entry records component type, field name, and binding path). Two generation modes are supported (default "Same-Script Incremental"): "Same-Script Incremental" only replaces the `#region 绑定字段（自动生成）` block (fields + `BindComponents` method, fully-qualified and self-contained) inside the target `*.cs`, leaving everything outside the region to the developer — a scaffold is created automatically when the file does not exist; "Partial Class" produces the hand-written partial `*.cs` (generated once) and an auto-maintained file (suffix selectable, default `.designer.cs` — collapsed by default in Rider, recommended for Rider users). Generated bound fields are grouped under a `TitleGroup` ("绑定字段（自动生成）") marking them as Binder-maintained. Both modes auto-attach the generated component and bind once after compilation.
-- The generated script's base class is selectable from a dropdown: built-in `MonoBehaviour`, the pre-selected Aesir panel family (`AesirBasePanel`, `AesirBasePanelView<T>`, `AesirBasePanelViewController<T>` — the core assembly cannot reference the Odin assembly back to carry the attribute, so the Binder pre-selects them via typeof), and user classes marked with `[BinderBaseType]` (requires referencing `Runestone.AesirModules.OdinInspector`); for the Aesir generic panel bases, pick a concrete Context type from the "Context 类型" dropdown (project-wide AbstractContext derivatives; the placeholder is never emitted into generated code).
+- The generated script's base class is selectable from a dropdown: built-in `MonoBehaviour`, the pre-selected Aesir panel/window family (`AesirBasePanel`, `AesirBasePanelView<T>`, `AesirBasePanelViewController<T>`, `AesirBaseWindow`, `AesirBaseWindowView<T>`, `AesirBaseWindowViewController<T>` — the core assembly cannot reference the Odin assembly back to carry the attribute, so the Binder pre-selects them via typeof; on a Canvas-root object the default base is `AesirBaseWindow` and the default script name gets the `Window` suffix, while panel roots keep `Panel`), and user classes marked with `[BinderBaseType]` (requires referencing `Runestone.AesirModules.OdinInspector`); for the Aesir generic panel/window bases, pick a concrete Context type from the "Context 类型" dropdown (project-wide AbstractContext derivatives; the placeholder is never emitted into generated code).
 - The default namespace and the partial suffix candidate list are persisted in-editor via ScriptableSingleton.
 - Code generation is pure text assembly, covered by the EditMode test assembly `Runestone.AesirModules.Tests` (package-root `Tests/`); `IComponentBinder` remains the extension point for custom binders.
 
@@ -463,7 +507,7 @@ Located at `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via
 
 Located at `Runtime/ScriptDocGenerator/OdinInspector/` and `Editor/ScriptDocGenerator/OdinInspector/` (joined into the Odin assemblies via asmref; **hard dependency on Odin Inspector**, auto-excluded when Odin is not installed). Namespace `Runestone.AesirModules.ScriptDocGenerator` (.Editor).
 
-- **Script Doc Generator** — analyzes C# type information via reflection to generate structured API documentation: fully offline, millisecond-fast for single types, incremental generation (preserves hand-written content after `## Additional Notes` and any Front Matter), Markdown output ready for AI knowledge bases; parameter/returns/remarks/typeparam description columns end to end (Zensical generator); customizable output path (defaults to `<project root>/ScriptDocGenerator/`, outside Assets so no .meta files) / namespace subfolders / file extension / four type-source granularities (single type, multiple types, single assembly, multiple assemblies — the assembly dropdown lists script assemblies only), extensible via `DocGeneratorSettingsSO`, `IAnalysisDataFactory`, and `IAttributeFilter`. Entry point: `Tools → Aesir → Script Doc Generator`.
+- **Script Doc Generator** — analyzes C# type information via reflection to generate structured API documentation: fully offline, millisecond-fast for single types, incremental generation (preserves hand-written content after `## Additional Notes` and any Front Matter), Markdown output ready for AI knowledge bases; parameter/returns/remarks/typeparam description columns end to end (Zensical generator); customizable output path (defaults to `<project root>/ScriptDocGenerator/`, outside Assets so no .meta files) / namespace subfolders / file extension / four type-source granularities (single type, multiple types, single assembly, multiple assemblies — the assembly dropdown lists script assemblies only), extensible via `DocGeneratorSettingsSO`, `IAnalysisDataFactory`, and `IAttributeFilter`. Entry point: `Tools → Aesir → Modules → Script Doc Generator`.
 - **Summary Tool** — Project window context menu (`Assets → Script Doc Generator → Process Summary`) syncs XML `<summary>` comments and the `[Summary]` attribute with the attribute as the authoritative source (attribute-first, XML fallback): Sync (aligns both, keeps both) / Replace (collapses to a single attribute) / Remove (removes attributes, with confirmation) modes, batch processing with a single asset refresh, quote escaping, line-ending preservation, preprocessor-directive aware, auto-adds the `using` directive.
 - **Custom attributes** — `[Summary]` (readable at runtime via `GetSummary()`), `[ReferenceLinkURL]` (attaches documentation links to types).
 
@@ -483,6 +527,7 @@ Currently provided:
 | `Events/02_Filters` | Subscriber-filter sample: Space publishes an alarm with chained `WithTag` + `InsideCollider2D` filters, R publishes an `OnlySelf` family order; in-scene contrast groups (inside/outside/untagged, family/unrelated) visualize precise delivery |
 | `Events/03_SOAsset` | SO assetization sample: `ScoreEventAsset.asset` configures the event payload (SubclassSelector dropdown); the `UnityEventOnAesirEvent` bridge component chains UnityEvent callbacks in the Inspector with zero code |
 | `Audio/01_BasicUsage` | Audio module basic-usage sample: SFX playback (with pitch jitter), BGM crossfade switching, 3-channel volume and mute persistence |
+| `UI/01_BasicUsage` | UI module basic-usage sample: panels and Canvas-root windows cooperating, runtime single/stacked mask switching comparison, close-on-mask-click, fullscreen loading window with payload auto-close |
 
 ## License
 

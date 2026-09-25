@@ -3,7 +3,7 @@
 > A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.23.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.24.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -40,10 +40,10 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 ### Via UPM (Git URL)
 
-Install via UPM with a Git URL pinned to the 0.23.0 version branch (the branch root is the package content):
+Install via UPM with a Git URL pinned to the 0.24.0 version branch (the branch root is the package content):
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.23.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.24.0
 ```
 
 Track the latest development version on `main`:
@@ -63,6 +63,8 @@ Copy this package directory into your project's `Packages/` folder.
 Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated in one click via the Unity menu `Tools → Aesir → Check for Updates` — the **in-package updater**: version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); the window shows the changelog between your local version and the remote version, asks for confirmation and backs up `Assets/Runestone` before updating, then removes stale entries by the exact diff of "previous install manifest − new manifest" without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
 > Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
+>
+> **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
 
 ## Quick Start
 
@@ -155,6 +157,8 @@ this.ExecuteCommand<AddScoreCommand>();
 ```
 
 ## Samples
+
+> **Aesir Getting Started window** (menu `Tools → Aesir → Getting Started`, since 0.24.0): a navigation hub that browses and jumps straight into every sample of both Aesir packages — the overview page shows cards of installed packages (with download guidance for missing ones) and package pages list samples grouped by teaching order; clicking a sample card selects its folder in the Project window, and samples with a scene provide an "Open Scene" button that switches over directly (saving the current scene once beforehand), with results reported via a Toast in the bottom-right corner of the window. Without Odin an IMGUI fallback window is used; with Odin installed the animated Odin window takes over automatically.
 
 The package provides 11 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
 
@@ -276,6 +280,7 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 ```
 cn.runestone.aesir.architecture/
 ├── package.json
+├── AesirPathLookup.asset             # Install-location anchor asset (Runestone can be moved anywhere; do not delete)
 ├── README.md                       # Chinese
 ├── Documentation/
 │   ├── README_EN.md               # This file
@@ -301,23 +306,31 @@ cn.runestone.aesir.architecture/
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy lifecycle proxy
 │   │   ├── Locator/               # GenericLocator type-keyed locator
 │   │   ├── Observable/            # ObservableValue + observable collections (four collections / single-track change notification)
-│   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
+│   │   └── Utilities/             # PlayerLoopUtility
 │   ├── Common/                    # Framework infrastructure
 │   │   ├── AesirArchitecture.cs   # Framework MonoBehaviour singleton entry
 │   │   ├── AesirMonoBehaviour.cs  # Odin-adapted base class
 │   │   ├── AesirScriptableObject.cs
 │   │   ├── AesirArchitectureDebug.cs
+│   │   ├── AesirArchitecturePlayerLoop.cs  # PlayerLoop injection
+│   │   ├── AesirScheduler.cs               # Frame-granular time scheduling (Delay / NextFrame)
 │   │   ├── AssemblyInfo.cs
 │   │   └── ResetStaticsAssistant.cs
 ├── Editor/
 │   ├── Runestone.AesirArchitecture.Editor.asmdef
 │   ├── Common/
-│   │   └── EnsureAesirArchitectureDefine.cs  # Compile symbol management
+│   │   ├── EnsureAesirArchitectureDefine.cs  # Compile symbol management
+│   │   ├── AesirSamplesBuildFilter.cs       # Sample-scene build filter hook
+│   │   ├── AesirPathLookup.cs               # Install-location anchor asset type
+│   │   ├── AesirPathLookupAssetEditor.cs    # Anchor asset inspector (anti-delete notice)
+│   │   └── AesirAssetPaths.cs               # Install-root locator: default root → anchor GUID → type search
 │   ├── Utilities/
-│   │   ├── ScriptingSymbolUtility.cs
+│   │   └── ScriptingSymbolEditorUtility.cs   # Scripting define symbol tool (Utilities convention: Editor-only tools end with EditorUtility)
+│   ├── MenuItems/
 │   │   └── QuickCreateSOMenuItem.cs          # Context-menu quick SO creation (yields to Aesir Inspector when present)
 │   ├── UpdateChecker/                        # In-package updater (Tools → Aesir → Check for Updates)
 │   │   ├── AesirUpdateService.cs             # Stateless toolkit: install scanning, multi-source version check, manifest diff, backup, changelog parsing, update execution
+│   │   ├── AesirUpdateController.cs          # Sole orchestration source (progress callbacks, shared by both windows)
 │   │   └── AesirUpdateWindow.cs              # Updater window (IMGUI fallback; menu entry, routes to the Odin window when Odin is installed)
 │   └── OdinInspector/            # Odin Inspector integration (optional)
 │       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef

@@ -17,8 +17,8 @@
 
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
-| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.23.0` |
-| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.23.0` |
+| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.24.0` |
+| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期、Canvas 根窗口与蒙版）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.24.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
 
@@ -83,6 +83,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 - **`UIModule`（Manager of Managers 单例）** — 静态快捷 API：`UIModule.Show<T>()` / `Hide<T>()` / `Get<T>()` / `Prewarm<T>()` / `RegisterPrefab<T>()`；面板状态机为 激活 → 停用缓存 → 销毁
 - **`UIRoot` 四层 Canvas 层级** — 一键构建 Background / Normal / Popup / Top 分层 Canvas + UICamera + EventSystem（`GameObject → Aesir Modules → Create UIRoot`），层级 Canvas 序列化引用持久化
 - **面板生命周期** — `IUIPanel` 契约 `Initialize → Show(payload) → Hide → DestroyPanel`；`AesirBasePanel` 提供虚方法 `OnInit` / `OnShow` / `OnHide` / `OnClose`；`DestroyOnHide` 决定隐藏时销毁还是缓存复用
+- **窗口（Canvas 根 UI）与蒙版** — 与面板并列的第二种形态：`AesirBaseWindow` 家族预制体根节点自带 Canvas、直接挂载于 UIRoot、默认 `sortingOrder` 500 恒在面板四层之上；静态 API `UIModule.Open<T>()` / `Close<T>()` / `GetWindow<T>()`；预制体 `Mask` 子物体为蒙版（`UIMaskMode` 单遮/叠遮统一调度、点击蒙版可关闭）；模态弹窗、全屏流转页推荐窗口形态，常驻 HUD 与非模态面板推荐面板形态（选型对比见包内文档）
 - **可插拔资源加载** — 默认 `ResourcesUILoader`（Resources 目录），实现 `IUIAssetLoader` 即可替换为 Addressables 等
 - **预热** — `Prewarm<T>()` 逐帧预实例化，`PrewarmAll()` 分摊首次打开的实例化卡顿
 - **Binder 组件绑定（Odin 可选）** — `BinderAssistant` / `BinderTag` 将 UI 元素自动绑定到面板脚本
@@ -129,10 +130,10 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 在 Unity Package Manager 窗口点击左上角 `+` → `Add package from git URL...`，填入对应子包的 Git URL：
 
-| 子包 | Git URL（固定 0.23.0） |
+| 子包 | Git URL（固定 0.24.0） |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.23.0` |
-| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.23.0` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.24.0` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.24.0` |
 
 > 版本分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 生成（包内容即分支根目录），仓库只保留最新版本分支。
 
@@ -143,7 +144,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | 资产 | 内容 |
 |---|---|
 | `AesirArchitecture-v<版本>.unitypackage` | 仅 Aesir Architecture |
-| `AesirModules-v<版本>.unitypackage` | 仅 Aesir Modules（不含依赖，需自行导入 Architecture） |
+| `AesirModules-v<版本>.unitypackage` | 仅 Aesir Modules（不含依赖；缺 Architecture 时菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装） |
 | `AesirFramework-v<版本>.unitypackage` | 两包合并 |
 
 以此方式安装的包装在 `Assets/Runestone/` 下（代码可改），**更新无需手动重新下载**：Unity 菜单 `Tools → Aesir → Check for Updates` 打开包内更新器，一键完成"检测新版本 → 查看更新日志 → 确认后自动备份 → 差集清理残留 → 静默导入"（安装 Odin Inspector 时更新器为 Odin 界面）。版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测）；经 CDN 检测，最新发布最长约 12 小时后才会被检测到。
@@ -164,19 +165,21 @@ https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModu
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.23.0",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.23.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.24.0",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.24.0"
   }
 }
 ```
 
-只添加你需要的子包——**只安装 Aesir Modules 时**，UPM 会自动解析依赖并拉取 Aesir Architecture（`package.json` 的 `dependencies` 字段已声明）。
+只添加你需要的子包——**只安装 Aesir Modules 时**，UPM 会自动拉取 Aesir Architecture（本包 `package.json` 的 `dependencies` 已声明其 Git URL）。
 
 ### 安装示例（Samples）
 
 - **本仓库直接浏览 / 下载源码**：示例就在各包的 `Samples/` 文件夹内，可直接查看运行。
 - **Git URL 安装**：Package Manager → 选中包 → `Samples` 标签页 → 按需 Import；示例源同时保留在各包的 `Samples~/` 隐藏目录中。
 - **unitypackage 导入**：示例随包内含，导入后即可运行。
+
+> **示例不进玩家构建**：示例脚本整文件包在 `#if UNITY_EDITOR` 内（编译期剔除）；即使把示例场景加进了 Build Settings，构建时也会自动把 Aesir 示例场景从本次构建剔除并在控制台输出 `[Aesir Build]` 剔除日志（Build Settings 列表本身不被修改；CI 直接调用 `BuildPipeline.BuildPlayer` 的自定义构建脚本不经过此钩子）。
 
 ---
 
@@ -282,7 +285,7 @@ AesirFramework/                            # 你现在看到的仓库
 
 ## ✅ 质量与 CI
 
-- **测试** — EditMode 测试 650+ 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
+- **测试** — EditMode 测试 720+ 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
 - **CI（GitHub Actions）** —
   - `auto-release.yml`：每次推送 `main` 自动发布 GitHub Release（三个 unitypackage + 更新器所需的 update-info.json / files-manifest）
   - `auto-publish-branches.yml`：按包目录 subtree split 生成 `AesirArchitecture-v<版本>` / `AesirModules-v<版本>` 固定版本分支

@@ -5,6 +5,27 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.24.0] - 2026-09-25
+
+### Added
+
+- **Aesir Getting Started Window（示例导航）** — 菜单 `Tools/Aesir/Getting Started`（priority -1000，居 Tools/Aesir 顶部，与后续菜单项之间有独立分割线），窗口标题「Aesir Getting Started Window」：概览页展示安装的 Aesir 包卡片（含未安装包的占位引导），包页按教学分组列出示例，点击卡片在 Project 窗口选中示例文件夹，有场景的示例经「打开场景」按钮直达（先保存当前场景一次再切换），动作结果经窗口右下角 Toast 提示。数据层 `AesirGetStartedService` 以各包 package.json 的 samples 清单为唯一真源（新增示例只需更新 package.json），包发现覆盖 Assets 安装 / 嵌入式包 / UPM Git 安装（未导入示例保留条目并引导 Package Manager）。IMGUI 兜底窗口在核心编辑器程序集，Odin 版窗口（页面栈导航 + 示例卡片 + 概览垂直收起 / 页间水平滑动动效，参照 Odin Inspector 自带 Getting Started 窗口）在 ODIN_INSPECTOR 程序集，经 `AesirGetStartedWindow.OdinWindowOpener` 委托路由（与更新器同模式）
+- **Aesir 示例构建剔除钩子（`AesirSamplesBuildFilter`）** — 构建时自动把 Build Settings 场景列表中的 Aesir 示例场景从本次构建剔除并输出 `[Aesir Build]` 剔除明细日志；覆盖开发仓库 / unitypackage（`Assets/Runestone/<包>/Samples/`）与 Package Manager 导入（`Assets/Samples/Aesir Architecture|Modules/<版本>/`）两类形态，Build Settings 持久数据不被修改。实现经 `BuildPlayerWindow.RegisterBuildPlayerHandler` 拦截构建入口（不用 `IPreprocessBuildWithReport`：其回调时场景列表已快照进构建选项）；CI / 自定义脚本直接调用 `BuildPipeline.BuildPlayer` 不经过此钩子。示例「不进玩家构建」自此覆盖脚本（`#if UNITY_EDITOR` 编译剔除）与场景两条路径。EditMode 测试 7 用例（`Tests/Editor/AesirSamplesBuildFilterTests.cs`）锁定路径规则与过滤逻辑
+- **安装位置锚点机制（Runestone 可移动到项目任意文件夹）** — 每包包根新增 `AesirPathLookup.asset` 空壳锚点资产（机制参照 Odin Inspector 的 OdinPathLookup.asset：文件夹移动时 .meta GUID 保持不变），路径定位器 `AesirAssetPaths`（`Editor/Common/`）按「默认安装根 → 锚点 GUID 查询 → 锚点类型搜索」三级解析实际安装根，域重载后自动重解析。三个消费端随之动态化：示例场景构建剔除（`AesirSamplesBuildFilter` 改按定位根判定）、包更新器扫描与备份源（新增 `AesirUpdateService.ScanInstalledPackagesFromAllRoots` 多根合并、跨根同包去重；`AesirUpdateController` / 备份调用切换）、Getting Started 包扫描与示例定位（`AesirGetStartedService` 记录各包实际包根 `PackageRootPath`）。锚点资产带防误删 Inspector（`AesirPathLookupAssetEditor`，显示期望 / 实际 GUID，GUID 被改写时警示）。更新器确认框补充「unitypackage 导入始终装回默认位置 `Assets/Runestone`，移动过的旧位置需自行清理」说明。新增 `Tests/Editor/AesirAssetPathsTests.cs`（6 用例：包根推导 / 父目录 / package.json 验证 / 真实锚点 GUID 定位），构建剔除测试补移动形态 3 用例
+- **示例脚本构建剔除守护测试（`AesirSamplesScriptGuardTests`）** — 「示例不进玩家构建」的脚本侧回归防线：运行时示例程序集内的每个 .cs 必须整文件 `#if UNITY_EDITOR` 包裹（Editor-only 程序集除外），新增示例漏包裹、包裹格式偏差（如 using 指令落在 `#if` 之外）都会在 EditMode 测试失败。扫描覆盖锚点定位安装根下两包 `Samples/` 与 `Samples~/` 双份（后者是 Package Manager 导入的源）与 `Assets/Samples/Aesir Architecture|Modules/` 导入形态；带「本地安装根存在时必须扫到运行时脚本」的 sanity 断言，防扫描逻辑损坏导致假绿。与构建剔除钩子测试（场景侧）共同锁死两条剔除路径
+
+### Changed
+
+- **包更新器 Odin 窗口标题区改为手绘** — 移除 `[Title]` 特性（其 BoldTitle / Subtitle 样式灰暗、观感如禁用文本，Subtitle 样式自带 alpha 0.7 削减），改为窗口内手绘标题区：正常亮度粗体主标题（fontSize 15）+ 正常文本色副标题（fontSize 11）+ 1px 分隔线，并固定于滚动区外（内容滚动时标题保持可见）；样式派生 `SirenixGUIStyles.BoldLabel` / `Label`，与 Getting Started 窗口先例一致
+- **Tools/Aesir 菜单按包分组** — 包专属菜单项归入 `Tools/Aesir/Architecture/` 与 `Tools/Aesir/Modules/`（Aesir Modules 侧）两组子菜单，跨包工具 Getting Started 留根部（priority -1000 居顶）；PlaneWar 场景修复工具由 `Tools/Aesir/PlaneWar/Fix Scene References` 归位至 `Tools/Aesir/Architecture/Samples/PlaneWar/Fix Scene References`（priority 995，对齐示例菜单 `Architecture/Samples/` 约定）
+- **Check for Updates 菜单移至 Tools/Aesir 最底部** — priority 990 → 1100：与上方工具组（最大 1002）差值超过 10，Unity 自动插入独立分割线，更新入口成为菜单底部独立段（对齐 Getting Started -1000 置顶配分割线的先例）
+- **Editor 目录结构调整：`QuickCreateSOMenuItem` 移入新建的 `Editor/MenuItems/`** — 菜单项按性质归类（菜单项而非工具集，不再与 Utilities 混放），类名、文件名与菜单路径均不变；`Editor/Utilities/` 仅保留以 `EditorUtility` 结尾的编辑器工具集（配套改名见 Renamed 节）
+- **`AesirArchitecturePlayerLoop` / `AesirScheduler` 文件归位 `Runtime/Common/`** — 两者为框架基础设施（与 `AesirArchitecture` 单例、`ResetStaticsAssistant` 同层），不属 Utilities 工具集；`Runtime/Modules/Utilities/` 按命名规范仅保留 `PlayerLoopUtility.cs`。类名与命名空间零变化、对消费者透明（`AesirScheduler.cs` 文件名随所在层惯例改为 `AesirArchitectureScheduler.cs`，类名仍为 `AesirScheduler`）
+
+### Renamed（破坏性变更）
+
+- **`ScriptingSymbolUtility` → `ScriptingSymbolEditorUtility`** — 落实「Utilities 文件夹下脚本以 `Utility` / `EditorUtility`（Editor 环境）结尾」命名规范。public 静态类，外部脚本若直接引用需同步更名；`EnsureAesirArchitectureDefine` 调用方与 EditMode 测试（文件同步更名 `ScriptingSymbolEditorUtilityTests`）已随源更新
+
 ## [0.23.0] - 2026-09-23
 
 > 本批为全仓锐评修复与极简收敛批次，含破坏性变更（见 Removed / Renamed 节）。
