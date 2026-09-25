@@ -37,7 +37,9 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>注册 Odin 版窗口的打开方式（域重载清空静态委托后由 Odin 程序集重新注册）。</summary>
         public static void RegisterOdinWindowOpener(Action opener) => OdinWindowOpener = opener;
 
-        [MenuItem(MenuPath)]
+        // priority 1100：更新入口置 Tools/Aesir 最底部，与上方工具组（最大 1002）差值超过 10，
+        // Unity 自动插入独立分割线（对齐 Getting Started -1000 置顶配分割线的先例）
+        [MenuItem(MenuPath, false, 1100)]
         static void Open()
         {
             if (OdinWindowOpener != null)
@@ -56,17 +58,18 @@ namespace Runestone.AesirArchitecture.Editor
         #region 状态
 
         /// <summary>更新器状态（序列化载体；编排与写入全部在共享控制器）。</summary>
-        [SerializeField] AesirUpdateController.UpdateState _state = new AesirUpdateController.UpdateState();
+        [SerializeField]
+        AesirUpdateController.UpdateState _state = new AesirUpdateController.UpdateState();
 
         /// <summary>更新日志折叠展开态。</summary>
-        [SerializeField] bool _changelogExpanded = true;
+        [SerializeField]
+        bool _changelogExpanded = true;
 
         /// <summary>共享编排控制器（非序列化，OnEnable 重建并接管 _state）。</summary>
         AesirUpdateController _controller;
 
         /// <summary>过期包缓存（视图回调时重算，避免 OnGUI 每帧 LINQ）。</summary>
-        List<AesirUpdateService.InstalledPackage> _outdated =
-            new List<AesirUpdateService.InstalledPackage>();
+        List<AesirUpdateService.InstalledPackage> _outdated = new List<AesirUpdateService.InstalledPackage>();
 
         Vector2 _scrollPosition;
 
@@ -131,7 +134,7 @@ namespace Runestone.AesirArchitecture.Editor
         void DrawHelpBoxes()
         {
             EditorGUILayout.HelpBox(
-                "更新范围：Assets/Runestone 下的本地安装（复制 / unitypackage 导入）。\n" +
+                "更新范围：本地安装的 Aesir 包（复制 / unitypackage 导入，默认位置 Assets/Runestone，" + "可自由移动到项目任意文件夹）。\n" +
                 "经 Package Manager（Git URL）安装的副本不在本工具管辖内，请使用 Package Manager 更新。\n" +
                 "版本检测经 CDN，最新发布最长约 12 小时后才会被检测到（可点「打开 Releases 页面」确认）。", MessageType.Info);
 
@@ -150,7 +153,7 @@ namespace Runestone.AesirArchitecture.Editor
             if (_state.Packages.Count == 0)
             {
                 EditorGUILayout.HelpBox(
-                    $"未在 {AesirUpdateService.InstallRootRelativePath} 下扫描到 Aesir 包。" +
+                    $"未在 {AesirUpdateService.PrimaryInstallRoot} 下扫描到 Aesir 包。" +
                     "请通过 GitHub Releases 导入 unitypackage 安装，或确认安装目录正确。", MessageType.Warning);
                 return;
             }
@@ -198,8 +201,7 @@ namespace Runestone.AesirArchitecture.Editor
                 return;
             }
 
-            _changelogExpanded =
-                EditorGUILayout.Foldout(_changelogExpanded, "更新日志（本地 → 远程变更）", true);
+            _changelogExpanded = EditorGUILayout.Foldout(_changelogExpanded, "更新日志（本地 → 远程变更）", true);
             if (_changelogExpanded)
             {
                 // 不回写返回值：文本区可滚动浏览、内容以状态为唯一数据源

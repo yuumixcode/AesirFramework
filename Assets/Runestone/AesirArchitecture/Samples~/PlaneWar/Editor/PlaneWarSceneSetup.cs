@@ -13,13 +13,15 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
     /// 修复场景中 HUD 组件的 Text 引用和 Player prefab 的 bulletPrefab 引用。
     /// 场景与预制体目录不硬编码安装路径，而是按资源名全仓搜索——
     /// 包内 Samples/（开发仓库）与 UPM 导入副本（Assets/Samples/&lt;包名&gt;/&lt;版本&gt;/）两种布局均可定位。
-    /// 菜单路径：Tools → Aesir → PlaneWar → Fix Scene References
+    /// 菜单路径：Tools → Aesir → Architecture → Samples → PlaneWar → Fix Scene References
     /// </remarks>
     public static class PlaneWarSceneSetup
     {
         const string SceneName = "SampleForPlaneWarMono";
 
-        [MenuItem("Tools/Aesir/PlaneWar/Fix Scene References")]
+        // priority 995：决定 Architecture 组的组级排序（父菜单 priority 由子项最小值决定），
+        // 使 Architecture 组位于 Modules 组（999）之前；差值 ≤10 不产生分割线
+        [MenuItem("Tools/Aesir/Architecture/Samples/PlaneWar/Fix Scene References", false, 995)]
         static void FixReferences()
         {
             var scenePath = FindAssetPath(SceneName + " t:Scene");

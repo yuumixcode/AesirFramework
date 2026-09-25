@@ -3,7 +3,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     /// <summary>
     /// Script Doc Generator 所有 MenuItem 菜单路径和优先级的统一管理。
     /// Unity 中 MenuItem 的顺序由 priority 参数（一个整数）决定，核心规则是：数字越小，位置越靠上。若不设置，默认值为 1000。
-    /// 父菜单的 priority 由首次被编译的子菜单项决定。
+    /// 父菜单的 priority 由其子菜单项 priority 的最小值决定。
     /// </summary>
     public static class ScriptDocGeneratorMenuPaths
     {
@@ -24,14 +24,17 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         #region Tools Menu
 
         /// <summary>
-        /// 打开 Script Doc Generator 窗口的菜单路径。
+        /// 打开 Script Doc Generator 窗口的菜单路径（Aesir Modules 包专属工具，归入 Modules 组）。
         /// </summary>
-        public const string ScriptDocGenerator = "Tools/Aesir/Script Doc Generator";
+        public const string ScriptDocGenerator = "Tools/Aesir/Modules/Script Doc Generator";
 
         /// <summary>
         /// Script Doc Generator 菜单项优先级。
+        /// 决定 Modules 组的组级排序（父菜单 priority 由子项最小值决定）：
+        /// 999 位于 Architecture 组（995）之后（Check for Updates 已置底 1100）；
+        /// 与相邻组差值 ≤ 10 不产生分割线，同属工具组且为组内第一项。
         /// </summary>
-        public const int ScriptDocGeneratorOrder = -895;
+        public const int ScriptDocGeneratorOrder = 999;
 
         #endregion
 
