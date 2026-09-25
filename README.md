@@ -348,5 +348,6 @@ Copyright (c) 2026 Yuumix
 - **Aesir Inspector** — 独立公开仓库，专门面向 [Odin Inspector](https://odininspector.com/) 开发者的学习工具包：[yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
 - **ObservableCollections** — Cysharp 出品的高性能可观察集合与同步视图库（MIT）。Aesir Architecture 内置其**高频子集**（四种集合 / `CollectionChanged`，见 `Documentation/observable-collections.md`）；需要同步视图、R3 响应式、环形缓冲区、XAML 绑定等完整能力时直接使用上游：[Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **Eflatun.SceneReference** — 强类型、可靠的 Unity 场景引用方案（MIT）。Aesir Modules Scene 模块的 `SceneAssetWrapper` 吸收了其功能设计（GUID 锚点自愈、状态机校验、`TryGet` 安全读取家族等）：[starikcetin/Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
+- **QFramework** — liangxiegame 出品的 Unity 游戏开发框架（MIT）：能力接口组合、Command/Query、事件与工具链一应俱全，配套完整教程与案例。Aesir Architecture 的架构分层思路与包内更新器（参考其 PackageKit「版本记录随包走 + 先删后导」并增强自动备份与差集清理）均受其启发：[liangxiegame/QFramework](https://github.com/liangxiegame/QFramework)
 - **Vertical 2D Shooting（Goldmetal）** — 韩国 Goldmetal 基础教程 BE4 配套的纵版射击 2D 素材包（标注 Goldmetal 出处即可自由使用，含商用）。Aesir Architecture 的 PlaneWar 示例内含该素材的自包含拷贝：[Goldmetal Studio](https://www.goldmetal.co.kr)
 - **作者主页**: [yuumixcode](https://github.com/yuumixcode)
