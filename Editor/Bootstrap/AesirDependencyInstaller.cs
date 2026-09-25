@@ -41,7 +41,7 @@ namespace Runestone.AesirModules.Editor.Bootstrap
             "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v{0}";
 
         /// <summary>本包 package.json 解析失败时的兜底版本（与 package.json 的 version 随发版同步 bump）。</summary>
-        internal const string FallbackSelfVersion = "0.25.0";
+        internal const string FallbackSelfVersion = "0.25.1";
 
         /// <summary>菜单路径：Aesir Modules 包专属工具，归 Tools/Aesir/Modules/ 组。</summary>
         public const string MenuPath = "Tools/Aesir/Modules/Install Dependencies";
