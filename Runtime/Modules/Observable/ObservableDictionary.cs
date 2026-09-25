@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Runestone.AesirArchitecture.Internal;
 
 namespace Runestone.AesirArchitecture
 {
@@ -43,9 +42,7 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 默认构造，创建空字典。
         /// </summary>
-        public ObservableDictionary()
-        {
-        }
+        public ObservableDictionary() { }
 
         /// <summary>
         /// 指定初始键值构造。初始键值不触发变更通知（语义同反序列化填充）。
@@ -68,26 +65,18 @@ namespace Runestone.AesirArchitecture
         /// 指定键比较器构造。
         /// </summary>
         /// <param name="comparer">键比较器；为 null 时使用 <see cref="EqualityComparer{TKey}" />.Default。</param>
-        public ObservableDictionary(IEqualityComparer<TKey> comparer)
-        {
+        public ObservableDictionary(IEqualityComparer<TKey> comparer) =>
             dictionary = new Dictionary<TKey, TValue>(comparer);
-        }
-
-        /// <summary>
-        /// 键值对数量。
-        /// </summary>
-        public int Count
-        {
-            get
-            {
-                return dictionary.Count;
-            }
-        }
 
         /// <summary>
         /// 内部 <see cref="Dictionary{TKey, TValue}" /> 使用的键比较器。
         /// </summary>
         public IEqualityComparer<TKey> Comparer => dictionary.Comparer;
+
+        /// <summary>
+        /// 键值对数量。
+        /// </summary>
+        public int Count => dictionary.Count;
 
         /// <summary>
         /// 固定返回 <c>false</c>，该集合可写。
@@ -125,15 +114,13 @@ namespace Runestone.AesirArchitecture
                     dictionary[key] = value;
                     _changedEvent.Invoke(CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Replace(
                         new KeyValuePair<TKey, TValue>(key, value),
-                        new KeyValuePair<TKey, TValue>(key, oldValue),
-                        -1));
+                        new KeyValuePair<TKey, TValue>(key, oldValue), -1));
                 }
                 else
                 {
                     dictionary[key] = value;
                     _changedEvent.Invoke(CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Add(
-                        new KeyValuePair<TKey, TValue>(key, value),
-                        -1));
+                        new KeyValuePair<TKey, TValue>(key, value), -1));
                 }
             }
         }
@@ -147,8 +134,7 @@ namespace Runestone.AesirArchitecture
         {
             dictionary.Add(key, value);
             _changedEvent.Invoke(CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Add(
-                new KeyValuePair<TKey, TValue>(key, value),
-                -1));
+                new KeyValuePair<TKey, TValue>(key, value), -1));
         }
 
         /// <summary>
@@ -194,8 +180,7 @@ namespace Runestone.AesirArchitecture
             }
 
             _changedEvent.Invoke(CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Remove(
-                new KeyValuePair<TKey, TValue>(key, value),
-                -1));
+                new KeyValuePair<TKey, TValue>(key, value), -1));
             return true;
         }
 
@@ -215,8 +200,7 @@ namespace Runestone.AesirArchitecture
 
             dictionary.Remove(item.Key);
             _changedEvent.Invoke(CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>.Remove(
-                new KeyValuePair<TKey, TValue>(item.Key, value),
-                -1));
+                new KeyValuePair<TKey, TValue>(item.Key, value), -1));
             return true;
         }
 
@@ -253,7 +237,8 @@ namespace Runestone.AesirArchitecture
         ICollection<TValue> IDictionary<TKey, TValue>.Values => dictionary.Values;
 
         /// <inheritdoc cref="IObservableCollection{T}.AddListener" />
-        public AutoRemoveListenerHandle AddListener(Action<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>> callback) =>
+        public AutoRemoveListenerHandle AddListener(
+            Action<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>> callback) =>
             _changedEvent.AddListener(callback);
 
         /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />

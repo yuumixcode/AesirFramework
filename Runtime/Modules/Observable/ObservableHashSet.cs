@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using Runestone.AesirArchitecture.Internal;
 
 namespace Runestone.AesirArchitecture
 {
@@ -45,18 +44,13 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 默认构造，创建空集合。
         /// </summary>
-        public ObservableHashSet()
-        {
-        }
+        public ObservableHashSet() { }
 
         /// <summary>
         /// 指定初始容量构造，避免批量添加时的多次扩容（rehash）。
         /// </summary>
         /// <param name="capacity">初始容量。</param>
-        public ObservableHashSet(int capacity)
-        {
-            set = new HashSet<T>(capacity);
-        }
+        public ObservableHashSet(int capacity) => set = new HashSet<T>(capacity);
 
         /// <summary>
         /// 指定初始元素构造。初始元素不触发变更通知（语义同反序列化填充）。
@@ -74,21 +68,7 @@ namespace Runestone.AesirArchitecture
         /// 指定元素比较器构造。
         /// </summary>
         /// <param name="comparer">元素比较器；为 null 时使用 <see cref="EqualityComparer{T}" />.Default。</param>
-        public ObservableHashSet(IEqualityComparer<T> comparer)
-        {
-            set = new HashSet<T>(comparer);
-        }
-
-        /// <summary>
-        /// 元素数量。
-        /// </summary>
-        public int Count
-        {
-            get
-            {
-                return set.Count;
-            }
-        }
+        public ObservableHashSet(IEqualityComparer<T> comparer) => set = new HashSet<T>(comparer);
 
         /// <summary>
         /// 内部 <see cref="HashSet{T}" /> 使用的元素比较器。
@@ -96,9 +76,72 @@ namespace Runestone.AesirArchitecture
         public IEqualityComparer<T> Comparer => set.Comparer;
 
         /// <summary>
+        /// 元素数量。
+        /// </summary>
+        public int Count => set.Count;
+
+        /// <summary>
         /// 固定返回 <c>false</c>，该集合可写。
         /// </summary>
         public bool IsReadOnly => false;
+
+        void ICollection<T>.Add(T item) => Add(item);
+
+        /// <summary>
+        /// 移除指定元素，成功时触发 Remove 通知（参数为该元素）。
+        /// </summary>
+        /// <param name="item">要移除的元素。</param>
+        /// <returns>找到并移除返回 <c>true</c>；元素不存在时不触发通知，返回 <c>false</c>。</returns>
+        public bool Remove(T item)
+        {
+            if (!set.Remove(item))
+            {
+                return false;
+            }
+
+            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Remove(item, -1));
+            return true;
+        }
+
+        /// <summary>
+        /// 清空集合。集合非空时以 Reset 通知；已为空时不通知。
+        /// </summary>
+        public void Clear()
+        {
+            if (set.Count == 0)
+            {
+                return;
+            }
+
+            set.Clear();
+            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Reset());
+        }
+
+        /// <summary>
+        /// 判断是否包含指定元素。
+        /// </summary>
+        /// <param name="item">要查找的元素。</param>
+        /// <returns>包含返回 <c>true</c>，否则返回 <c>false</c>。</returns>
+        public bool Contains(T item) => set.Contains(item);
+
+        /// <summary>
+        /// 从指定数组索引开始复制元素到目标数组。
+        /// </summary>
+        /// <param name="array">目标数组。</param>
+        /// <param name="arrayIndex">目标数组起始索引。</param>
+        public void CopyTo(T[] array, int arrayIndex) => set.CopyTo(array, arrayIndex);
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => set.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)set).GetEnumerator();
+
+        /// <inheritdoc cref="IObservableCollection{T}.AddListener" />
+        public AutoRemoveListenerHandle AddListener(Action<CollectionChangedEventArgs<T>> callback) =>
+            _changedEvent.AddListener(callback);
+
+        /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />
+        public void RemoveListener(Action<CollectionChangedEventArgs<T>> callback) =>
+            _changedEvent.RemoveListener(callback);
 
         /// <summary>
         /// 添加元素，实际添加时触发 Add 通知（参数为该元素）。
@@ -194,68 +237,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="equalValue">用于比较的元素。</param>
         /// <param name="actualValue">集合中实际存储的等值元素。</param>
         /// <returns>集合中存在等值元素返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool TryGetValue(T equalValue, [MaybeNullWhen(false)] out T actualValue)
-        {
-            return set.TryGetValue(equalValue, out actualValue);
-        }
-
-        void ICollection<T>.Add(T item) => Add(item);
-
-        /// <summary>
-        /// 移除指定元素，成功时触发 Remove 通知（参数为该元素）。
-        /// </summary>
-        /// <param name="item">要移除的元素。</param>
-        /// <returns>找到并移除返回 <c>true</c>；元素不存在时不触发通知，返回 <c>false</c>。</returns>
-        public bool Remove(T item)
-        {
-            if (!set.Remove(item))
-            {
-                return false;
-            }
-
-            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Remove(item, -1));
-            return true;
-        }
-
-        /// <summary>
-        /// 清空集合。集合非空时以 Reset 通知；已为空时不通知。
-        /// </summary>
-        public void Clear()
-        {
-            if (set.Count == 0)
-            {
-                return;
-            }
-
-            set.Clear();
-            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Reset());
-        }
-
-        /// <summary>
-        /// 判断是否包含指定元素。
-        /// </summary>
-        /// <param name="item">要查找的元素。</param>
-        /// <returns>包含返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool Contains(T item) => set.Contains(item);
-
-        /// <summary>
-        /// 从指定数组索引开始复制元素到目标数组。
-        /// </summary>
-        /// <param name="array">目标数组。</param>
-        /// <param name="arrayIndex">目标数组起始索引。</param>
-        public void CopyTo(T[] array, int arrayIndex) => set.CopyTo(array, arrayIndex);
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => set.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)set).GetEnumerator();
-
-        /// <inheritdoc cref="IObservableCollection{T}.AddListener" />
-        public AutoRemoveListenerHandle AddListener(Action<CollectionChangedEventArgs<T>> callback) =>
-            _changedEvent.AddListener(callback);
-
-        /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />
-        public void RemoveListener(Action<CollectionChangedEventArgs<T>> callback) =>
-            _changedEvent.RemoveListener(callback);
+        public bool TryGetValue(T equalValue, [MaybeNullWhen(false)] out T actualValue) =>
+            set.TryGetValue(equalValue, out actualValue);
 
         /// <summary>
         /// 返回遍历元素的结构体枚举器，foreach 具体类型时零分配。

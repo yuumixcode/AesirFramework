@@ -1,11 +1,8 @@
-using Runestone.AesirArchitecture.Internal;
-using System.Buffers;
-using System.Collections;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
+using System.Diagnostics.CodeAnalysis;
+using Runestone.AesirArchitecture.Internal;
 
 namespace Runestone.AesirArchitecture
 {
@@ -25,34 +22,32 @@ namespace Runestone.AesirArchitecture
     [Serializable]
     public sealed class ObservableQueue<T> : IReadOnlyCollection<T>, IObservableCollection<T>
     {
-        readonly Queue<T> queue;
-
         readonly MiniEvent<CollectionChangedEventArgs<T>> _changedEvent =
             new MiniEvent<CollectionChangedEventArgs<T>>();
 
-        public ObservableQueue()
-        {
-            this.queue = new Queue<T>();
-        }
+        readonly Queue<T> queue;
 
-        public ObservableQueue(int capacity)
-        {
-            this.queue = new Queue<T>(capacity);
-        }
+        public ObservableQueue() => queue = new Queue<T>();
 
-        public ObservableQueue(IEnumerable<T> collection)
-        {
+        public ObservableQueue(int capacity) => queue = new Queue<T>(capacity);
+
+        public ObservableQueue(IEnumerable<T> collection) =>
             // 对齐其余三集合：初始元素为 null 时视为空集合（BCL Queue<T> 构造对 null 抛 ArgumentNullException）
-            this.queue = collection != null ? new Queue<T>(collection) : new Queue<T>();
-        }
+            queue = collection != null ? new Queue<T>(collection) : new Queue<T>();
 
-        public int Count
-        {
-            get
-            {
-                return queue.Count;
-            }
-        }
+        /// <inheritdoc cref="IObservableCollection{T}.AddListener" />
+        public AutoRemoveListenerHandle AddListener(Action<CollectionChangedEventArgs<T>> callback) =>
+            _changedEvent.AddListener(callback);
+
+        /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />
+        public void RemoveListener(Action<CollectionChangedEventArgs<T>> callback) =>
+            _changedEvent.RemoveListener(callback);
+
+        public int Count => queue.Count;
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => queue.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)queue).GetEnumerator();
 
         /// <summary>
         /// 元素入队，触发 Add 通知（索引为队尾位置）。
@@ -117,6 +112,7 @@ namespace Runestone.AesirArchitecture
                 _changedEvent.Invoke(CollectionChangedEventArgs<T>.Remove(result, 0));
                 return true;
             }
+
             result = default;
             return false;
         }
@@ -159,10 +155,7 @@ namespace Runestone.AesirArchitecture
             _changedEvent.Invoke(CollectionChangedEventArgs<T>.Reset());
         }
 
-        public T Peek()
-        {
-            return queue.Peek();
-        }
+        public T Peek() => queue.Peek();
 
         public bool TryPeek([MaybeNullWhen(false)] out T result)
         {
@@ -171,27 +164,17 @@ namespace Runestone.AesirArchitecture
                 result = queue.Peek();
                 return true;
             }
+
             result = default;
             return false;
         }
 
-        public T[] ToArray()
-        {
-            return queue.ToArray();
-        }
+        public T[] ToArray() => queue.ToArray();
 
         public void TrimExcess()
         {
             queue.TrimExcess();
         }
-
-        /// <inheritdoc cref="IObservableCollection{T}.AddListener" />
-        public AutoRemoveListenerHandle AddListener(Action<CollectionChangedEventArgs<T>> callback) =>
-            _changedEvent.AddListener(callback);
-
-        /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />
-        public void RemoveListener(Action<CollectionChangedEventArgs<T>> callback) =>
-            _changedEvent.RemoveListener(callback);
 
         /// <summary>
         /// 清空所有变更监听。
@@ -210,10 +193,6 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <returns>元素枚举器。</returns>
         public Enumerator GetEnumerator() => new Enumerator(queue.GetEnumerator());
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => queue.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)queue).GetEnumerator();
 
         /// <summary>
         /// 元素枚举器。

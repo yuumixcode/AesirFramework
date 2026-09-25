@@ -45,18 +45,13 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 默认构造，创建空列表。
         /// </summary>
-        public ObservableList()
-        {
-        }
+        public ObservableList() { }
 
         /// <summary>
         /// 指定初始容量构造，避免批量添加时的多次数组扩容。
         /// </summary>
         /// <param name="capacity">初始容量。</param>
-        public ObservableList(int capacity)
-        {
-            items = new List<T>(capacity);
-        }
+        public ObservableList(int capacity) => items = new List<T>(capacity);
 
         /// <summary>
         /// 指定初始元素构造。初始元素不触发变更通知（语义同反序列化填充）。
@@ -73,13 +68,7 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 元素数量。
         /// </summary>
-        public int Count
-        {
-            get
-            {
-                return items.Count;
-            }
-        }
+        public int Count => items.Count;
 
         /// <summary>
         /// 固定返回 <c>false</c>，该集合可写。
@@ -93,10 +82,7 @@ namespace Runestone.AesirArchitecture
         /// <remarks>使用 <see cref="EqualityComparer{T}" />.Default 判断值是否变化，仅在变化时触发通知。</remarks>
         public T this[int index]
         {
-            get
-            {
-                return items[index];
-            }
+            get => items[index];
             set
             {
                 var oldItem = items[index];
@@ -119,23 +105,6 @@ namespace Runestone.AesirArchitecture
             var index = items.Count;
             items.Add(item);
             _changedEvent.Invoke(CollectionChangedEventArgs<T>.Add(item, index));
-        }
-
-        /// <summary>
-        /// 批量添加数组元素，逐项触发 Add 通知。
-        /// </summary>
-        /// <param name="itemsToAdd">要添加的元素数组。</param>
-        /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出。</exception>
-        public void AddRange(T[] itemsToAdd)
-        {
-            if (itemsToAdd == null)
-            {
-                throw new ArgumentNullException(nameof(itemsToAdd));
-            }
-
-            var index = items.Count;
-            items.AddRange(itemsToAdd);
-            NotifyAddedRange(itemsToAdd, index);
         }
 
         /// <summary>
@@ -174,6 +143,98 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
+        /// 移除第一个匹配元素，成功时触发 Remove 通知。
+        /// </summary>
+        /// <param name="item">要移除的元素。</param>
+        /// <returns>找到并移除返回 <c>true</c>；元素不存在时不触发通知，返回 <c>false</c>。</returns>
+        public bool Remove(T item)
+        {
+            var index = items.IndexOf(item);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            RemoveAt(index);
+            return true;
+        }
+
+        /// <summary>
+        /// 移除指定索引的元素，触发 Remove 通知（参数含移除前索引与被移除元素）。
+        /// </summary>
+        /// <param name="index">要移除元素的索引。</param>
+        public void RemoveAt(int index)
+        {
+            var item = items[index];
+            items.RemoveAt(index);
+            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Remove(item, index));
+        }
+
+        /// <summary>
+        /// 清空列表。列表非空时以 Reset 通知；已为空时不通知。
+        /// </summary>
+        public void Clear()
+        {
+            if (items.Count == 0)
+            {
+                return;
+            }
+
+            items.Clear();
+            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Reset());
+        }
+
+        /// <summary>
+        /// 判断是否包含指定元素。
+        /// </summary>
+        /// <param name="item">要查找的元素。</param>
+        /// <returns>包含返回 <c>true</c>，否则返回 <c>false</c>。</returns>
+        public bool Contains(T item) => items.Contains(item);
+
+        /// <summary>
+        /// 返回指定元素的索引；不存在时返回 -1。
+        /// </summary>
+        /// <param name="item">要查找的元素。</param>
+        /// <returns>元素索引或 -1。</returns>
+        public int IndexOf(T item) => items.IndexOf(item);
+
+        /// <summary>
+        /// 从指定数组索引开始复制元素到目标数组。
+        /// </summary>
+        /// <param name="array">目标数组。</param>
+        /// <param name="arrayIndex">目标数组起始索引。</param>
+        public void CopyTo(T[] array, int arrayIndex) => items.CopyTo(array, arrayIndex);
+
+        IEnumerator<T> IEnumerable<T>.GetEnumerator() => items.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)items).GetEnumerator();
+
+        /// <inheritdoc cref="IObservableCollection{T}.AddListener" />
+        public AutoRemoveListenerHandle AddListener(Action<CollectionChangedEventArgs<T>> callback) =>
+            _changedEvent.AddListener(callback);
+
+        /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />
+        public void RemoveListener(Action<CollectionChangedEventArgs<T>> callback) =>
+            _changedEvent.RemoveListener(callback);
+
+        /// <summary>
+        /// 批量添加数组元素，逐项触发 Add 通知。
+        /// </summary>
+        /// <param name="itemsToAdd">要添加的元素数组。</param>
+        /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出。</exception>
+        public void AddRange(T[] itemsToAdd)
+        {
+            if (itemsToAdd == null)
+            {
+                throw new ArgumentNullException(nameof(itemsToAdd));
+            }
+
+            var index = items.Count;
+            items.AddRange(itemsToAdd);
+            NotifyAddedRange(itemsToAdd, index);
+        }
+
+        /// <summary>
         /// 在指定索引插入数组元素，逐项触发 Add 通知。
         /// </summary>
         /// <param name="index">插入位置索引。</param>
@@ -208,34 +269,6 @@ namespace Runestone.AesirArchitecture
                 items.InsertRange(index, clone.AsEnumerable());
                 NotifyAddedRange(clone.Span, index);
             }
-        }
-
-        /// <summary>
-        /// 移除第一个匹配元素，成功时触发 Remove 通知。
-        /// </summary>
-        /// <param name="item">要移除的元素。</param>
-        /// <returns>找到并移除返回 <c>true</c>；元素不存在时不触发通知，返回 <c>false</c>。</returns>
-        public bool Remove(T item)
-        {
-            var index = items.IndexOf(item);
-            if (index < 0)
-            {
-                return false;
-            }
-
-            RemoveAt(index);
-            return true;
-        }
-
-        /// <summary>
-        /// 移除指定索引的元素，触发 Remove 通知（参数含移除前索引与被移除元素）。
-        /// </summary>
-        /// <param name="index">要移除元素的索引。</param>
-        public void RemoveAt(int index)
-        {
-            var item = items[index];
-            items.RemoveAt(index);
-            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Remove(item, index));
         }
 
         /// <summary>
@@ -325,53 +358,6 @@ namespace Runestone.AesirArchitecture
                 action(item);
             }
         }
-
-        /// <summary>
-        /// 清空列表。列表非空时以 Reset 通知；已为空时不通知。
-        /// </summary>
-        public void Clear()
-        {
-            if (items.Count == 0)
-            {
-                return;
-            }
-
-            items.Clear();
-            _changedEvent.Invoke(CollectionChangedEventArgs<T>.Reset());
-        }
-
-        /// <summary>
-        /// 判断是否包含指定元素。
-        /// </summary>
-        /// <param name="item">要查找的元素。</param>
-        /// <returns>包含返回 <c>true</c>，否则返回 <c>false</c>。</returns>
-        public bool Contains(T item) => items.Contains(item);
-
-        /// <summary>
-        /// 返回指定元素的索引；不存在时返回 -1。
-        /// </summary>
-        /// <param name="item">要查找的元素。</param>
-        /// <returns>元素索引或 -1。</returns>
-        public int IndexOf(T item) => items.IndexOf(item);
-
-        /// <summary>
-        /// 从指定数组索引开始复制元素到目标数组。
-        /// </summary>
-        /// <param name="array">目标数组。</param>
-        /// <param name="arrayIndex">目标数组起始索引。</param>
-        public void CopyTo(T[] array, int arrayIndex) => items.CopyTo(array, arrayIndex);
-
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => items.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)items).GetEnumerator();
-
-        /// <inheritdoc cref="IObservableCollection{T}.AddListener" />
-        public AutoRemoveListenerHandle AddListener(Action<CollectionChangedEventArgs<T>> callback) =>
-            _changedEvent.AddListener(callback);
-
-        /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />
-        public void RemoveListener(Action<CollectionChangedEventArgs<T>> callback) =>
-            _changedEvent.RemoveListener(callback);
 
         /// <summary>
         /// 返回遍历元素的结构体枚举器，foreach 具体类型时零分配。

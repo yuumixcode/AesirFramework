@@ -187,7 +187,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void Delay_LazyRegistersHook_ResetStaticsClearsQueueAndUnregisters()
         {
-            var before = AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate);
+            var before =
+                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate);
             AesirScheduler.Delay(1f, () => { });
             Assert.AreEqual(before + 1,
                 AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate),
