@@ -116,15 +116,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// 代码块中属于"XML 注释归属成员（块内首成员）"的 [Summary] 特性文本内容（已反转义）。
         /// 不存在、无法解析或首个 [Summary] 属于块内非首成员时为 null。
         /// </summary>
-        public string SummaryAttributeContent
-        {
-            get
-            {
-                return GetSummaryAttribution(out var content) == SummaryAttribution.FirstMember
-                    ? content
-                    : null;
-            }
-        }
+        public string SummaryAttributeContent =>
+            GetSummaryAttribution(out var content) == SummaryAttribution.FirstMember ? content : null;
 
         /// <summary>
         /// 块内首成员声明之后是否存在任何 [Summary] 特性（属于块内其他成员）。
@@ -142,18 +135,70 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         }
 
         /// <summary>
-        /// [Summary] 特性的归属分析结果。
+        /// 首选 Summary 内容：[Summary] 特性优先（特性为权威源），无特性或特性无法解析时回退 XML summary。
         /// </summary>
-        enum SummaryAttribution
+        public string PreferredSummaryContent =>
+            SummaryAttributeContent ?? (string.IsNullOrEmpty(SummaryValue) ? null : SummaryValue);
+
+        /// <summary>
+        /// 删除了 summary 标签部分的 xml。
+        /// </summary>
+        public string RemovedSummaryXml
         {
-            /// <summary>块内无 [Summary] 特性。</summary>
-            None,
+            get
+            {
+                var processedXml = xml;
+                var match = Regex.Match(xml, @"///\s*<summary>(.*?)</summary>", RegexOptions.Singleline);
+                if (match.Success)
+                {
+                    processedXml = xml.Replace(match.Value, "");
+                    processedXml = Regex.Replace(processedXml, @"^\s*$\r?\n", "", RegexOptions.Multiline);
+                    // 摘要块整块摘除后，其紧邻的空 /// 行成为无内容的孤儿注释行，一并清除；
+                    // 只清剩余注释区的首尾——标签之间的空 /// 行是用户的段落排版，保留
+                    processedXml = Regex.Replace(processedXml, @"^(?:[ \t]*///[ \t]*(?:\r?\n|$))+", "");
+                    processedXml = Regex.Replace(processedXml, @"(?:\r?\n)?[ \t]*///[ \t]*(?:\r?\n)*$", "\n");
+                }
 
-            /// <summary>首个 [Summary] 位于首成员声明之前——属于 XML 注释的归属成员。</summary>
-            FirstMember,
+                return processedXml;
+            }
+        }
 
-            /// <summary>首个 [Summary] 位于首成员声明之后——属于块内其他成员。</summary>
-            NonFirstMember
+        /// <summary>
+        /// 删除了第一个 [Summary()] 部分的代码块（不含开头预处理指令行）。
+        /// </summary>
+        public string RemovedFirstSummaryAttributeCode
+        {
+            get
+            {
+                var targetCode = CodeAfterLeadingPreprocessor;
+                var attr = nameof(SummaryAttribute).Replace("Attribute", "");
+                var match = Regex.Match(targetCode,
+                    @"(?m)(?:^|\s)\s*\[" + attr + @"\(""(?<content>[\s\S]*?)""\)\]", RegexOptions.Multiline);
+                if (match.Success)
+                {
+                    targetCode = targetCode.Replace(match.Value, "");
+                    targetCode = Regex.Replace(targetCode, @"^\s*$\r?\n", "", RegexOptions.Multiline);
+                }
+
+                return targetCode;
+            }
+        }
+
+        /// <summary>
+        /// 删除了所有 [Summary()] 部分的代码块（不含开头预处理指令行）。
+        /// </summary>
+        public string RemoveAllSummaryAttributeCode
+        {
+            get
+            {
+                var targetCode = CodeAfterLeadingPreprocessor;
+                var attr = nameof(SummaryAttribute).Replace("Attribute", "");
+                targetCode = Regex.Replace(targetCode,
+                    @"(?m)(?:^|\s)\s*\[" + attr + @"\(""(?<content>[\s\S]*?)""\)\]", "",
+                    RegexOptions.Multiline);
+                targetCode = Regex.Replace(targetCode, @"^\s*$\r?\n", "", RegexOptions.Multiline);
+                return targetCode;
+            }
         }
 
         /// <summary>
@@ -233,73 +278,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// 压缩连续空白并 Trim（与 <see cref="SummaryValue" /> 的最终规范化一致），用于幂等比较。
         /// </summary>
         static string NormalizeSummaryText(string text) => Regex.Replace(text, @"\s+", " ").Trim();
-
-        /// <summary>
-        /// 首选 Summary 内容：[Summary] 特性优先（特性为权威源），无特性或特性无法解析时回退 XML summary。
-        /// </summary>
-        public string PreferredSummaryContent =>
-            SummaryAttributeContent ?? (string.IsNullOrEmpty(SummaryValue) ? null : SummaryValue);
-
-        /// <summary>
-        /// 删除了 summary 标签部分的 xml。
-        /// </summary>
-        public string RemovedSummaryXml
-        {
-            get
-            {
-                var processedXml = xml;
-                var match = Regex.Match(xml, @"///\s*<summary>(.*?)</summary>", RegexOptions.Singleline);
-                if (match.Success)
-                {
-                    processedXml = xml.Replace(match.Value, "");
-                    processedXml = Regex.Replace(processedXml, @"^\s*$\r?\n", "", RegexOptions.Multiline);
-                    // 摘要块整块摘除后，其紧邻的空 /// 行成为无内容的孤儿注释行，一并清除；
-                    // 只清剩余注释区的首尾——标签之间的空 /// 行是用户的段落排版，保留
-                    processedXml = Regex.Replace(processedXml, @"^(?:[ \t]*///[ \t]*(?:\r?\n|$))+", "");
-                    processedXml = Regex.Replace(processedXml, @"(?:\r?\n)?[ \t]*///[ \t]*(?:\r?\n)*$", "\n");
-                }
-
-                return processedXml;
-            }
-        }
-
-        /// <summary>
-        /// 删除了第一个 [Summary()] 部分的代码块（不含开头预处理指令行）。
-        /// </summary>
-        public string RemovedFirstSummaryAttributeCode
-        {
-            get
-            {
-                var targetCode = CodeAfterLeadingPreprocessor;
-                var attr = nameof(SummaryAttribute).Replace("Attribute", "");
-                var match = Regex.Match(targetCode,
-                    @"(?m)(?:^|\s)\s*\[" + attr + @"\(""(?<content>[\s\S]*?)""\)\]", RegexOptions.Multiline);
-                if (match.Success)
-                {
-                    targetCode = targetCode.Replace(match.Value, "");
-                    targetCode = Regex.Replace(targetCode, @"^\s*$\r?\n", "", RegexOptions.Multiline);
-                }
-
-                return targetCode;
-            }
-        }
-
-        /// <summary>
-        /// 删除了所有 [Summary()] 部分的代码块（不含开头预处理指令行）。
-        /// </summary>
-        public string RemoveAllSummaryAttributeCode
-        {
-            get
-            {
-                var targetCode = CodeAfterLeadingPreprocessor;
-                var attr = nameof(SummaryAttribute).Replace("Attribute", "");
-                targetCode = Regex.Replace(targetCode,
-                    @"(?m)(?:^|\s)\s*\[" + attr + @"\(""(?<content>[\s\S]*?)""\)\]", "",
-                    RegexOptions.Multiline);
-                targetCode = Regex.Replace(targetCode, @"^\s*$\r?\n", "", RegexOptions.Multiline);
-                return targetCode;
-            }
-        }
 
         /// <summary>
         /// 获取以指定内容生成的 [Summary] 特性行（内容经 C# 转义，缩进与 XML 注释块一致）。
@@ -414,12 +392,24 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// 先解码 &amp;amp; 会把源码中的字面实体文本（如 &amp;amp;lt;，表示字符串 "&lt;"）错误地二次解码成 &lt;。
         /// </summary>
         static string DecodeXmlEntities(string text) =>
-            text.Replace("&lt;", "<")
-                .Replace("&gt;", ">")
-                .Replace("&quot;", "\"")
-                .Replace("&apos;", "'")
+            text.Replace("&lt;", "<").Replace("&gt;", ">").Replace("&quot;", "\"").Replace("&apos;", "'")
                 .Replace("&amp;", "&");
 
         static bool IsPreprocessorDirective(string line) => line.TrimStart().StartsWith("#");
+
+        /// <summary>
+        /// [Summary] 特性的归属分析结果。
+        /// </summary>
+        enum SummaryAttribution
+        {
+            /// <summary>块内无 [Summary] 特性。</summary>
+            None,
+
+            /// <summary>首个 [Summary] 位于首成员声明之前——属于 XML 注释的归属成员。</summary>
+            FirstMember,
+
+            /// <summary>首个 [Summary] 位于首成员声明之后——属于块内其他成员。</summary>
+            NonFirstMember
+        }
     }
 }
