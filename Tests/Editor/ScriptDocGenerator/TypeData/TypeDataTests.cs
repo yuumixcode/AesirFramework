@@ -198,9 +198,8 @@ System.IConvertible", typeData.FullDeclarationWithAttributes);
 
         class AccessorFilterFixture
         {
-            public event TestDelegate SomethingHappened;
-
             public int Value { get; set; }
+            public event TestDelegate SomethingHappened;
 
             /// <summary>用户以访问器前缀命名的普通方法——不应被误滤。</summary>
             public void get_Thing() { }
@@ -222,7 +221,8 @@ System.IConvertible", typeData.FullDeclarationWithAttributes);
             }
 
             Assert.IsFalse(signatures.Exists(s => s.Contains("add_SomethingHappened")), "事件 add 访问器应被过滤");
-            Assert.IsFalse(signatures.Exists(s => s.Contains("remove_SomethingHappened")), "事件 remove 访问器应被过滤");
+            Assert.IsFalse(signatures.Exists(s => s.Contains("remove_SomethingHappened")),
+                "事件 remove 访问器应被过滤");
             Assert.IsFalse(signatures.Exists(s => s.Contains("get_Value")), "属性 get 访问器应被过滤");
             Assert.IsFalse(signatures.Exists(s => s.Contains("set_Value")), "属性 set 访问器应被过滤");
             Assert.IsTrue(signatures.Exists(s => s.Contains("get_Thing")), "用户普通方法 get_Thing 不应被名称前缀误杀");

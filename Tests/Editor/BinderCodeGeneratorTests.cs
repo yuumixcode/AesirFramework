@@ -129,7 +129,8 @@ namespace Runestone.AesirModules.Tests.Editor
             var script = BinderCodeGenerator.BuildGeneratedScript(Config(units));
 
             Assert.That(script,
-                Does.Contain("confirmButton = transform.Find(\"Panel/Buttons\").GetComponent<UnityEngine.UI.Button>();"),
+                Does.Contain(
+                    "confirmButton = transform.Find(\"Panel/Buttons\").GetComponent<UnityEngine.UI.Button>();"),
                 "首个同类型单元应保持 GetComponent 零开销");
             Assert.That(script,
                 Does.Contain(

@@ -30,6 +30,60 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
             ".MasterVolume", ".BgmVolume", ".SfxVolume", ".MasterMute", ".BgmMute", ".SfxMute"
         };
 
+        #region 静态重置（RIOLM 铁律）
+
+        [Test]
+        public void ResetStatics_ClearsSingletonInstance()
+        {
+            var module = CreateModule();
+            Assert.AreSame(module, AudioModule.Instance);
+
+            var reset = typeof(AudioModule).GetMethod("ResetStatics",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsNotNull(reset, "AudioModule 应按框架铁律在类内声明 RIOLM ResetStatics（非泛型单例类内自重置）");
+            reset.Invoke(null, null);
+
+            var field =
+                typeof(AudioModule).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsNull(field.GetValue(null), "ResetStatics 应清空静态单例引用");
+
+            // 场景中的预放置实例仍在，Instance 经 FindAnyObjectByType 兜底重发现
+            Assert.AreSame(module, AudioModule.Instance);
+        }
+
+        #endregion
+
+        #region SFX — pitch 钳制
+
+        [Test]
+        public void PlaySfx_PitchClamped_NeverNegativeOrOverMax()
+        {
+            var module = CreateModule();
+            var sfxSources = GetSfxSources(module);
+            var clip = NewClip("Clip");
+
+            // pitch - jitter 可低至 -0.1：旧实现会产生负音调（反向播放）
+            for (var i = 0; i < 100; i++)
+            {
+                AudioModule.PlaySfx(clip, 1f, 0.5f, 0.6f);
+            }
+
+            // pitch + jitter 可高至 3.4
+            for (var i = 0; i < 100; i++)
+            {
+                AudioModule.PlaySfx(clip, 1f, 2.9f, 0.5f);
+            }
+
+            foreach (var source in sfxSources)
+            {
+                Assert.GreaterOrEqual(source.pitch, 0.01f - 1e-4f,
+                    "pitch-jitter<0 应钳制到 0.01（负 pitch 在 Unity 为反向播放）");
+                Assert.LessOrEqual(source.pitch, 3f + 1e-4f, "pitch+jitter 应钳制到 3");
+            }
+        }
+
+        #endregion
+
         #region 环境管理
 
         readonly List<GameObject> _createdObjects = new List<GameObject>();
@@ -609,28 +663,6 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
 
         #endregion
 
-        #region 静态重置（RIOLM 铁律）
-
-        [Test]
-        public void ResetStatics_ClearsSingletonInstance()
-        {
-            var module = CreateModule();
-            Assert.AreSame(module, AudioModule.Instance);
-
-            var reset = typeof(AudioModule).GetMethod("ResetStatics",
-                BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.IsNotNull(reset, "AudioModule 应按框架铁律在类内声明 RIOLM ResetStatics（非泛型单例类内自重置）");
-            reset.Invoke(null, null);
-
-            var field = typeof(AudioModule).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.IsNull(field.GetValue(null), "ResetStatics 应清空静态单例引用");
-
-            // 场景中的预放置实例仍在，Instance 经 FindAnyObjectByType 兜底重发现
-            Assert.AreSame(module, AudioModule.Instance);
-        }
-
-        #endregion
-
         #region BGM 淡变语义（取消淡出 / 反悔切歌）
 
         static readonly BindingFlags PrivateInstance = BindingFlags.NonPublic | BindingFlags.Instance;
@@ -662,8 +694,7 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
             Assert.AreSame(clip, bgmSource.clip);
             Assert.AreNotSame(routineBefore, GetPrivateField(module, "_bgmFadeRoutine"),
                 "淡出协程应被取消并替换为续接淡入（旧实现幂等误伤：淡出继续走到停止）");
-            Assert.AreEqual(1f, (float)GetPrivateField(module, "_bgmFadeFactor"), 1e-4f,
-                "续接淡入首步后系数应回到 1");
+            Assert.AreEqual(1f, (float)GetPrivateField(module, "_bgmFadeFactor"), 1e-4f, "续接淡入首步后系数应回到 1");
         }
 
         [Test]
@@ -688,8 +719,7 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
 
             Assert.IsTrue(bgmSource.isPlaying);
             Assert.AreSame(clipA, bgmSource.clip, "反悔回到旧曲应取消切歌，片段保持 A");
-            Assert.AreNotSame(routineBefore, GetPrivateField(module, "_bgmFadeRoutine"),
-                "切歌协程应被取消并替换");
+            Assert.AreNotSame(routineBefore, GetPrivateField(module, "_bgmFadeRoutine"), "切歌协程应被取消并替换");
             Assert.AreEqual(1f, (float)GetPrivateField(module, "_bgmFadeFactor"), 1e-4f);
         }
 
@@ -800,37 +830,6 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
             Assert.IsFalse(routine.MoveNext(), "淡出完成后协程应结束");
             Assert.IsFalse(bgmSource.isPlaying, "淡出完成后停止播放");
             Assert.AreSame(clip, bgmSource.clip, "停止后片段保留");
-        }
-
-        #endregion
-
-        #region SFX — pitch 钳制
-
-        [Test]
-        public void PlaySfx_PitchClamped_NeverNegativeOrOverMax()
-        {
-            var module = CreateModule();
-            var sfxSources = GetSfxSources(module);
-            var clip = NewClip("Clip");
-
-            // pitch - jitter 可低至 -0.1：旧实现会产生负音调（反向播放）
-            for (var i = 0; i < 100; i++)
-            {
-                AudioModule.PlaySfx(clip, 1f, 0.5f, 0.6f);
-            }
-
-            // pitch + jitter 可高至 3.4
-            for (var i = 0; i < 100; i++)
-            {
-                AudioModule.PlaySfx(clip, 1f, 2.9f, 0.5f);
-            }
-
-            foreach (var source in sfxSources)
-            {
-                Assert.GreaterOrEqual(source.pitch, 0.01f - 1e-4f,
-                    "pitch-jitter<0 应钳制到 0.01（负 pitch 在 Unity 为反向播放）");
-                Assert.LessOrEqual(source.pitch, 3f + 1e-4f, "pitch+jitter 应钳制到 3");
-            }
         }
 
         #endregion

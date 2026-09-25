@@ -527,8 +527,7 @@ public class NoNamespaceClass
         [Test]
         public void ExtractMemberName_ExplicitInterfaceImplementation_ReturnsQualifiedName()
         {
-            Assert.AreEqual("IFoo.Bar",
-                SourceFileAnalyzerUtility.ExtractMemberName("void IFoo.Bar()"));
+            Assert.AreEqual("IFoo.Bar", SourceFileAnalyzerUtility.ExtractMemberName("void IFoo.Bar()"));
             Assert.AreEqual("IDisposable.Dispose",
                 SourceFileAnalyzerUtility.ExtractMemberName("void IDisposable.Dispose()"));
             Assert.AreEqual("IFoo.Property",
@@ -546,8 +545,7 @@ public class NoNamespaceClass
         public void ExtractMemberName_SimilarForms_NotMisidentifiedAsExplicitImpl()
         {
             // 嵌套类型字段：类型段 Foo.Bar 后跟空格 + 成员名，显式实现正则不命中，走通用/简单匹配
-            Assert.AreEqual("Baz",
-                SourceFileAnalyzerUtility.ExtractMemberName("public Foo.Bar Baz;"));
+            Assert.AreEqual("Baz", SourceFileAnalyzerUtility.ExtractMemberName("public Foo.Bar Baz;"));
             // 语句行被守卫拦截（不会走到显式实现正则）
             Assert.IsNull(SourceFileAnalyzerUtility.ExtractMemberName("return a.b();"));
         }

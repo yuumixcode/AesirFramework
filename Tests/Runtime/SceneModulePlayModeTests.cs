@@ -32,11 +32,15 @@ namespace Runestone.AesirModules.Tests.Runtime
     /// <seealso cref="SceneModule" />
     public class SceneModulePlayModeTests
     {
-        const string SceneAPath = "Assets/Runestone/AesirModules/Tests/Runtime/TestScenes/SceneModulePlayTestA.unity";
-        const string SceneBPath = "Assets/Runestone/AesirModules/Tests/Runtime/TestScenes/SceneModulePlayTestB.unity";
+        const string SceneAPath =
+            "Assets/Runestone/AesirModules/Tests/Runtime/TestScenes/SceneModulePlayTestA.unity";
+
+        const string SceneBPath =
+            "Assets/Runestone/AesirModules/Tests/Runtime/TestScenes/SceneModulePlayTestB.unity";
+
+        Scene _originalActiveScene;
 
         EditorBuildSettingsScene[] _originalBuildScenes;
-        Scene _originalActiveScene;
 
         /// <summary>
         /// 编辑模式域加载期登记测试场景（enabled 条目）。
@@ -46,8 +50,9 @@ namespace Runestone.AesirModules.Tests.Runtime
         /// 构建场景列表，PlayMode 内写 <c>EditorBuildSettings.scenes</c> 不会被运行中的场景管理器采纳；
         /// 且本引擎对 <b>disabled</b> 条目同样拒绝运行时加载（实测报 "not added to the build settings"），
         /// 只能登记为 enabled。影响面：BuildSettings 属项目设置不随包分发，unitypackage 消费者不受影响，
-        /// 仅开发仓自身的玩家构建会包含这两个空测试场景（每场景 <1KB，无任何对象）。
-        /// 每次域加载幂等补登记，覆盖测试资产新增后未重启即运行等场景。
+        /// 仅开发仓自身的玩家构建会包含这两个空测试场景（每场景
+        /// <1KB， 无任何对象）。
+        ///       每次域加载幂等补登记， 覆盖测试资产新增后未重启即运行等场景。
         /// </remarks>
         [InitializeOnLoadMethod]
         static void RegisterTestScenesOnDomainLoad() => EnsureTestScenesRegistered();
@@ -55,18 +60,13 @@ namespace Runestone.AesirModules.Tests.Runtime
         static void EnsureTestScenesRegistered()
         {
             var existing = EditorBuildSettings.scenes;
-            var missing = new[] { SceneAPath, SceneBPath }
-                .Where(path => existing.All(s => s.path != path
-                                                // disabled 条目运行时不可加载，升级为 enabled
-                                                || !s.enabled))
-                .Select(path => new EditorBuildSettingsScene(path, true))
-                .ToArray();
+            var missing = new[] { SceneAPath, SceneBPath }.Where(path => existing.All(s => s.path != path
+                // disabled 条目运行时不可加载，升级为 enabled
+                || !s.enabled)).Select(path => new EditorBuildSettingsScene(path, true)).ToArray();
             if (missing.Length > 0)
             {
                 EditorBuildSettings.scenes = existing
-                    .Where(s => !new[] { SceneAPath, SceneBPath }.Contains(s.path))
-                    .Concat(missing)
-                    .ToArray();
+                    .Where(s => !new[] { SceneAPath, SceneBPath }.Contains(s.path)).Concat(missing).ToArray();
             }
         }
 
@@ -141,17 +141,18 @@ namespace Runestone.AesirModules.Tests.Runtime
 
             try
             {
-                module.LoadSceneSingle(SceneAPath,
-                    onCompleted: () => { completed = true; order.Add("completed"); },
-                    onFailed: () => failed = true,
-                    onProgress: p =>
+                module.LoadSceneSingle(SceneAPath, () =>
+                {
+                    completed = true;
+                    order.Add("completed");
+                }, () => failed = true, p =>
+                {
+                    lastProgress = Mathf.Max(lastProgress, p);
+                    if (p >= 1f - 1e-3f)
                     {
-                        lastProgress = Mathf.Max(lastProgress, p);
-                        if (p >= 1f - 1e-3f)
-                        {
-                            progressReachedOne = true;
-                        }
-                    });
+                        progressReachedOne = true;
+                    }
+                });
 
                 yield return WaitUntil(() => completed || failed, "Single 加载应在超时前回调");
             }
@@ -161,8 +162,7 @@ namespace Runestone.AesirModules.Tests.Runtime
             }
 
             Assert.IsFalse(failed, "成功路径不应触发失败回调");
-            Assert.AreEqual(new[] { "event", "completed" }, order,
-                "SceneLoadedEvent 应先于 onCompleted 广播");
+            Assert.AreEqual(new[] { "event", "completed" }, order, "SceneLoadedEvent 应先于 onCompleted 广播");
             Assert.GreaterOrEqual(lastProgress, 1f - 1e-3f, "最终进度应归一化到 1.0（0.9 激活上限归一化）");
             Assert.IsTrue(progressReachedOneBeforeEvent, "事件广播时进度应已报告到 1.0（onProgress(1f) 先于广播）");
 
@@ -192,9 +192,7 @@ namespace Runestone.AesirModules.Tests.Runtime
             var completed = false;
             var failed = false;
 
-            module.LoadSceneAdditive(SceneAPath,
-                onCompleted: () => completed = true,
-                onFailed: () => failed = true);
+            module.LoadSceneAdditive(SceneAPath, () => completed = true, () => failed = true);
 
             yield return WaitUntil(() => completed || failed, "Additive 加载应在超时前回调");
 
@@ -215,8 +213,8 @@ namespace Runestone.AesirModules.Tests.Runtime
             var module = SceneModule.Instance;
             var aLoaded = false;
             var bLoaded = false;
-            module.LoadSceneAdditive(SceneAPath, onCompleted: () => aLoaded = true);
-            module.LoadSceneAdditive(SceneBPath, onCompleted: () => bLoaded = true);
+            module.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
+            module.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
             yield return WaitUntil(() => aLoaded && bLoaded, "两个叠加场景应在超时前加载完成");
 
             Assert.AreEqual(2, module.AddedScenePaths.Count, "前置：两个场景均已入追踪");
@@ -252,7 +250,7 @@ namespace Runestone.AesirModules.Tests.Runtime
         {
             var module = SceneModule.Instance;
             var aLoaded = false;
-            module.LoadSceneAdditive(SceneAPath, onCompleted: () => aLoaded = true);
+            module.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
             yield return WaitUntil(() => aLoaded, "叠加场景 A 应在超时前加载完成");
 
             var nestedLoadStarted = false;
@@ -264,7 +262,7 @@ namespace Runestone.AesirModules.Tests.Runtime
                 if (path == SceneAPath && !nestedLoadStarted)
                 {
                     nestedLoadStarted = true;
-                    module.LoadSceneAdditive(SceneBPath, onCompleted: () => bLoaded = true);
+                    module.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
                 }
             });
 
@@ -283,8 +281,7 @@ namespace Runestone.AesirModules.Tests.Runtime
             Assert.IsFalse(SceneManager.GetSceneByPath(SceneAPath).isLoaded, "快照内的 A 应已卸载");
 
             yield return WaitUntil(() => bLoaded, "嵌套加载的 B 应在超时前完成加载");
-            Assert.IsTrue(SceneManager.GetSceneByPath(SceneBPath).isLoaded,
-                "广播期间新叠加的 B 不应在本趟被卸载（快照语义）");
+            Assert.IsTrue(SceneManager.GetSceneByPath(SceneBPath).isLoaded, "广播期间新叠加的 B 不应在本趟被卸载（快照语义）");
             Assert.AreEqual(1, module.AddedScenePaths.Count, "B 应正常入追踪");
             Assert.AreEqual(SceneBPath, module.AddedScenePaths[0], "追踪中应只剩 B");
         }
@@ -302,8 +299,8 @@ namespace Runestone.AesirModules.Tests.Runtime
             var module = SceneModule.Instance;
             var aLoaded = false;
             var bLoaded = false;
-            module.LoadSceneAdditive(SceneAPath, onCompleted: () => aLoaded = true);
-            module.LoadSceneAdditive(SceneBPath, onCompleted: () => bLoaded = true);
+            module.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
+            module.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
             yield return WaitUntil(() => aLoaded && bLoaded, "两个叠加场景应在超时前加载完成");
 
             var outerCompleted = false;
