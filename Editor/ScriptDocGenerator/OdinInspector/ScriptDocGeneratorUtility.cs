@@ -8,6 +8,8 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
+[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests")]
+
 namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 {
     /// <summary>
@@ -186,10 +188,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 }
 
                 var readAllLines = File.ReadAllLines(filePathWithExtensions);
-                if (TryGetFrontMatter(readAllLines, out var frontMatter))
-                {
-                    markdownText = frontMatter + markdownText;
-                }
+                markdownText = MergeFrontMatterWhenMissing(readAllLines, markdownText);
 
                 var additionalDescription = GetAdditionalDescriptionFromExistingFile(readAllLines);
                 if (!string.IsNullOrEmpty(additionalDescription))
@@ -248,10 +247,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     if (File.Exists(filePathWithExtensions))
                     {
                         var readAllLines = File.ReadAllLines(filePathWithExtensions);
-                        if (TryGetFrontMatter(readAllLines, out var frontMatter))
-                        {
-                            markdownText = frontMatter + markdownText;
-                        }
+                        markdownText = MergeFrontMatterWhenMissing(readAllLines, markdownText);
 
                         var additionalDescription = GetAdditionalDescriptionFromExistingFile(readAllLines);
                         if (!string.IsNullOrEmpty(additionalDescription))
@@ -357,6 +353,20 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 filePathWithExtensions += ".md";
             }
         }
+
+        /// <summary>
+        /// 增量生成时的 Front Matter 合并：旧文件存在 Front Matter 且新内容未自带时拼回旧头部，
+        /// 新内容自带 Front Matter（如 Zensical 生成器自产 YAML 头）时以新生成的为准，避免产生双重头部。
+        /// </summary>
+        internal static string MergeFrontMatterWhenMissing(string[] existingLines, string markdownText) =>
+            !HasFrontMatter(markdownText) && TryGetFrontMatter(existingLines, out var frontMatter)
+                ? frontMatter + markdownText
+                : markdownText;
+
+        /// <summary>文本是否自带 Front Matter 头（以 --- 或 +++ 起始）。</summary>
+        static bool HasFrontMatter(string text) =>
+            text.StartsWith("---", StringComparison.Ordinal) ||
+            text.StartsWith("+++", StringComparison.Ordinal);
 
         static bool TryGetFrontMatter(string[] sourceLines, out string frontMatter)
         {
