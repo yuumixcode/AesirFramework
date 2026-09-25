@@ -20,15 +20,34 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.25.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.25.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.25.1** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.25.1** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.25.0` / `#AesirModules-v0.25.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.25.1` / `#AesirModules-v0.25.1`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.25.1] - 2026-09-25
+
+---
+
+### [modules] Aesir Modules
+
+**Fixed**
+
+- **PlayMode 场景套件把测试场景常驻 EditorBuildSettings（并被打进玩家构建）** — 此前经 `[InitializeOnLoadMethod]` 在编辑模式域加载期把两个测试场景登记为 enabled 条目且从不摘除，条目随 `ProjectSettings/EditorBuildSettings.asset` 落盘、进入玩家构建（本仓库该文件已入库这两条，本次一并清除）。现改为 `IPrebuildSetup` 在进入 Play 前的编辑模式阶段登记、`IPostBuildCleanup` 退出 Play 后按名摘除——条目仅存在于本次运行期间；另有域加载兜底清扫回收被强杀运行遗留的条目。新增 EditMode 守护用例 `SceneModuleTestSceneHygieneTests` 锁定「测试场景不得常驻 BuildSettings」
+- **SceneModule 测试无法随包进入实际工程** — `SceneAssetWrapperTests` 硬依赖宿主工程存在 `Assets/Scenes/SampleScene.unity`（消费工程可能已删除它），缺失时 `FromScenePath` 直接抛 `SceneAssetWrapperCreationException`：现由 SetUp 在缺失时从包内最小场景夹具临时复制、TearDown 按「谁创建谁删除」还原（含空目录）。PlayMode 套件与 `SceneAssetWrapperTests` 的资产路径不再写死 Assets 相对路径，改为按文件名经 AssetDatabase 定位（Assets 安装 / 嵌入式包 / UPM Git 安装自适应）
+
+---
+
+### [architecture] Aesir Architecture
+
+- 与 Aesir Modules 0.25.1 版本同步发布 — 本包无功能变更；Modules 侧修复场景测试套件的 BuildSettings 污染与可移植性
 
 ---
 

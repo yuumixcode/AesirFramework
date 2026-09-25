@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.25.1] - 2026-09-25
+
+### Fixed
+
+- **PlayMode 场景套件把测试场景常驻 EditorBuildSettings（并被打进玩家构建）** — 此前经 `[InitializeOnLoadMethod]` 在编辑模式域加载期把两个测试场景登记为 enabled 条目且从不摘除，条目随 `ProjectSettings/EditorBuildSettings.asset` 落盘、进入玩家构建（本仓库该文件已入库这两条，本次一并清除）。现改为 `IPrebuildSetup` 在进入 Play 前的编辑模式阶段登记、`IPostBuildCleanup` 退出 Play 后按名摘除——条目仅存在于本次运行期间，不进构建也不污染宿主工程配置；另有域加载兜底清扫回收被强杀运行（编辑器崩溃、进程被 kill）遗留的条目。新增 EditMode 守护用例 `SceneModuleTestSceneHygieneTests` 锁定「测试场景不得常驻 BuildSettings」
+- **SceneModule 测试无法随包进入实际工程** — ①`SceneAssetWrapperTests` 硬依赖宿主工程存在 `Assets/Scenes/SampleScene.unity`（Unity 默认模板路径，消费工程可能已删除它），缺失时 `FromScenePath` 直接抛 `SceneAssetWrapperCreationException`：现由 SetUp 在缺失时从包内最小场景夹具（随测试分发）临时复制一份、TearDown 按“谁创建谁删除”还原（含本次创建的空目录），宿主工程原有场景一律不动（不就地新建场景：编辑器在“当前打开场景未命名未保存”时拒绝追加式新建，batchmode 下必现）；②PlayMode 套件把测试场景路径写死为 `Assets/Runestone/AesirModules/Tests/Runtime/TestScenes/…`，包以 UPM 形态安装（`Packages/…`）时该路径不存在：现按文件名经 AssetDatabase 定位，Assets 安装 / 嵌入式包 / UPM Git 安装三种形态自适应；③`SceneAssetWrapperTests` 的 `WrapperCsPath` 同类硬编码一并改为按文件名定位（原先在 UPM 形态下静默失效，非场景 GUID 用例变成空 GUID 假通过）
+
 ## [0.25.0] - 2026-09-25
 
 ### Fixed

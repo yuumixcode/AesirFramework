@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.25.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.25.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.25.1 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.25.1 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.25.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.25.1）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.25.0）
+## Aesir Architecture（0.25.1）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -155,7 +155,7 @@
 
 ---
 
-## Aesir Modules（0.25.0）
+## Aesir Modules（0.25.1）
 
 ### UI 框架
 
@@ -212,6 +212,7 @@
 - `SceneManagerWindow` — 场景管理自定义编辑器窗口
 - `BootstrapSceneHelper` — 场景引导工具
 - `SceneAssetWrapper` — 可序列化场景资源引用
+- 场景测试卫生 — `Editor/Scene/Tests/` 与 `Tests/Runtime/` 的场景测试不依赖宿主工程内容：场景路径按文件名经 AssetDatabase 定位；`SceneAssetWrapperTests` 在宿主缺失 `Assets/Scenes/SampleScene.unity` 时从包内最小场景夹具复制、TearDown 按「谁创建谁删除」还原；`SceneModulePlayModeTests` 的 BuildSettings 登记经 `IPrebuildSetup` / `IPostBuildCleanup` 仅存在于运行期间（另有域加载兜底清扫），并由 `SceneModuleTestSceneHygieneTests` 守护
 
 ### 脚本文档生成模块（需 Odin）
 
@@ -267,7 +268,7 @@
 | `Runestone.AesirModules.InputSystem` | Runtime/UI/InputSystem/ | UIRoot 输入模块替换（ENABLE_INPUT_SYSTEM，独立可选） |
 | `Runestone.AesirModules.Scene.Tests` | Editor/Scene/Tests/ | Scene 模块 EditMode 测试（UNITY_INCLUDE_TESTS） |
 | `Runestone.AesirModules.Tests` | Tests/（根） | 包级 EditMode 测试（Binder/EventModule/Audio/UIModule/ScriptDocGenerator/依赖补全；引用 core+Odin+Bootstrap，Editor-only + UNITY_INCLUDE_TESTS） |
-| `Runestone.AesirModules.Tests.Runtime` | Tests/Runtime/ | 包级 PlayMode 测试（SceneModule 真实加载成功路径 4 用例 + TestScenes 最小场景资产；含 UnityEditor 运行时登记 BuildSettings，仅编辑器编译） |
+| `Runestone.AesirModules.Tests.Runtime` | Tests/Runtime/ | 包级 PlayMode 测试（SceneModule 真实加载成功路径 5 用例 + TestScenes 最小场景资产；BuildSettings 登记经 IPrebuildSetup/IPostBuildCleanup 仅存在于运行期间 + 域加载兜底清扫，仅编辑器编译） |
 | `Runestone.AesirModules.Samples.Events.KeyPress` | Samples/Events/01_KeyPress/ | 运行时 + #if UNITY_EDITOR |
 | `Runestone.AesirModules.Samples.Events.Filters` | Samples/Events/02_Filters/ | 运行时 + #if UNITY_EDITOR |
 | `Runestone.AesirModules.Samples.Events.SOAsset` | Samples/Events/03_SOAsset/ | 运行时 + #if UNITY_EDITOR |
@@ -467,7 +468,7 @@ Unity -batchmode -projectPath . -testPlatform editmode -runTests \
 ### 分支策略
 
 - `main` — 开发主线
-- 版本分支 `AesirArchitecture-v0.25.0` / `AesirModules-v0.25.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
+- 版本分支 `AesirArchitecture-v0.25.1` / `AesirModules-v0.25.1` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
 
 ---
 
@@ -644,6 +645,9 @@ undefined
 - [2026-09-25 12:56:40] [2026-09-25] 【0.24.0 发版完成，覆盖同日 12:37/10:47 各"工作树未提交"条目状态】0.24.0 已正式发布（2026-09-25 13:00，用户指令"更新版本号/CHANGELOG/README/文档、分批提交、推送、发包"）：主仓 11 个分批 commit 推送 main（7f5701d Rider 格式化 pass→3836f45 SDG 格式化→b0d4ead RAA 目录规范化→f8c80e9 RAM Integration/ 迁移→9ca121b 锚点+构建钩子+菜单+更新器→2bb6d25 Getting Started→d084b34 依赖补全→23ae80c UI 窗口+守护测试→139053d 版本同步 0.24.0→bc6b2bf meta 补遗→6fbce55 TJGenerators 轮换）；Auto Release/Publish Branches 双流水线 success；Release v0.24.0 三资产（RAA/RAF/RAM unitypackage）；新分支 AesirArchitecture-v0.24.0/AesirModules-v0.24.0 已生成，v0.23.0 旧分支已删；CI update-info.json [skip ci] 回写（75f1593）已 pull。文档站 94432b6 先期推送（changelog 新段/依赖自动拉取口径修正/Getting Started 引导/samples 页）。验证基线：refresh 0 错 0 警、EditMode 720 total/718 Pass/0 Fail/2 Skip 全绿、sync-samples 零漂移。**发版实测坑（下次 bump 注意）**：① AesirDependencyInstallerTests.ReadSelfVersion_MatchesPackageJson 硬编码 "0.23.0" 在版本替换后必失败——已改为动态读 package.json version（JsonUtility + File.ReadAllText），下次发版 bump 该用例免疫，但根 README 测试数 720+ 仍需手动更新；② git 分批提交改名文件（ScriptingSymbolUtility→EditorUtility 等）必须连 .meta 一起 add，本次漏了 meta 对与 MenuItems.meta 靠补遗 commit 修复——批量 add 目录时注意 untracked 的目录级 .meta 不在目录内容里；③ CODELY.md 程序集表历史计数长期失真（RAA 表 15 实 17、RAM 表 9 实 15，Samples~/ 双份在 find 计数时需去重）。**Why:** 多个旧条目"工作树未提交"已过时。**How to apply:** 后续"0.24.0 相关"勿再当待办；下次发版按本次 11 commit 分批模式 + 上述坑位清单执行。
 - [2026-09-25 13:54:20] [2026-09-25] 文档站 Scripting API 已重生成至 0.24.0 并新增 RAM 侧（文档站 commit 5769e68，224 文件，未推送）：RAA 92→130 页（新：AesirScheduler/CollectionChangedEventArgs/ObservableQueue/0.24 全部 Editor 工具/Internal 命名空间 4 页；ScriptingSymbolUtility→EditorUtility 改名页已随 rsync --delete 迁移）、RAM 141 页首次上站（docs/modules/scripting-api/）。nav 按「程序集」字段分组（RAA 3 组 + RAM 5 组，Modules 索引条目名「Modules 命名空间参考」）；index.md 按命名空间 H2→种类 H3 重建。⚠️ **ScriptDocGenerator 双 Front Matter 缺陷**：Zensical 生成器自产 Front Matter，而 GenerateSingleTypeDoc/GenerateMultipleTypeDocs 的增量合并逻辑（TryGetFrontMatter）会把旧文件的 FM 再拼到新内容前——对「已存在且带 FM 的文件」重生成必然产出双 FM。规避：每次重生成前清空本地 ScriptDocGenerator/Runestone/（文档站页零手写内容，无损失；本次已验证）；根治需修 Utility 拼接逻辑（markdownText 已以 FM 开头时跳过拼接），待用户裁决是否修。**脚本化驱动方式**（绕开 UI 层 DisplayDialog/OpenWithDefaultApp 的弹窗阻塞）：exec_editor_script 直调 ScriptDocGeneratorUtility.AnalyzeMultipleAssemblies(域内 Runestone.Aesir* 程序集 FullName 清单，排除 Samples/Tests) + GenerateMultipleTypeDocs(list, ZensicalScriptingAPISettingsSO.Instance, ScriptDocGeneratorPanelSO.DefaultDocFolderPath)；Addressables/InputSystem 未装包时程序集不在域内自动排除（本次 8 个程序集 271 类型，16.5s 完成）。索引/nav 重建脚本为会话 ad-hoc（/tmp/gen_api_index.py 会丢），规则：index 解析每页 note 块（种类/命名空间/程序集）+ `## 声明` csharp 块后首段 summary（遇 `##`/`**小节**` 标题即止，>90 字符截 88+…，空则 —），nav 组内按文件名（含 .md）ASCII 序——嵌套类 .Enumerator 之类因 '.' < 'm' 天然排主类之前，与既有 nav 顺序一致。**How to apply:** 下次 API 变更后重生成：清空本地产物 → exec_editor_script 直调 Utility → rsync 到文档站（RAA 用 --delete）→ 重跑索引/nav 脚本（按本条规则重建）→ build --strict → zeriying 身份提交。
 - [2026-09-25 14:02:40] [2026-09-25] 【覆盖同日 13:54「文档站 Scripting API 重生成」条目中「双 FM 缺陷待用户裁决」——已修复并随 0.25.0 发版】SDG 双 Front Matter 缺陷已修复 + 0.25.0 版本同步完成（主仓 513baa1 fix 批 + 3091e5a 版本批、文档站 3a2dde3，均**未推送**——推送 main 即触发 auto-release 发 v0.25.0 + 生成两版本分支 + 删 v0.24.0 旧分支，CI 回写 update-info.json 后需 pull）。修复形态：`ScriptDocGeneratorUtility.MergeFrontMatterWhenMissing`（internal static 合并守卫：新内容自带 FM 时以新生成为准）+ 文件头 `[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests")]`（BinderCodeGenerator 同款先例——asmref 汇入 Odin 程序集的文件，核心 AssemblyInfo 不覆盖）+ `FrontMatterMergeTests` 4 用例；验证基线 refresh 0 错 0 警 + RAM Tests EditMode 470/0/0 全绿（0.24.0 基线 466+4）。此后重生成 API 文档**无需再清空本地 ScriptDocGenerator/**（守卫已根治双 FM）。**发版坑新增两条：**① `AesirDependencyInstaller.FallbackSelfVersion` 硬编码常量随发版 bump（XML 注释已声明，本次 0.24.0→0.25.0，之前 0.23.0 发版漏过一次）；② CODELY.md 的特性小节标题括号（如「Getting Started 窗口（0.24.0）」「依赖补全（0.24.0）」「窗口感知（0.24.0）」「Canvas 根窗口形态（0.24.0）」）是**引入版本标注，勿随发版批量替换**（本次批量替换误改 4 处后逐一回退；主章节标题「## Aesir Architecture（X）」才是随发版 bump 的当前版本语义）。
+- [2026-09-25 14:09:57] [2026-09-25] 【覆盖同日「0.25.0 版本同步完成（未推送）」状态——0.25.0 已正式发布】推送与 CI 全链路完成：主仓 fa1a8ea（版本批，含 amend 进的记忆条目）+ 513baa1（fix 批）推送；Auto Release（21s）发布 Release v0.25.0（非 draft，资产三件：AesirArchitecture/AesirFramework/AesirModules-v0.25.0.unitypackage）；Auto Publish Branches（50s）生成 AesirArchitecture-v0.25.0/AesirModules-v0.25.0 分支；v0.24.0 旧分支已删（只保留最新版本分支）；CI update-info.json [skip ci] 回写（dc8d4f0）已 pull；文档站 3a2dde3（含同批 5769e68 API 文档 271 页）已推送且 Deploy Zensical 成功（33s）。**0.25.0 发版全链路（SDG 双 FM 修复→版本同步→双仓提交→推送→CI→旧分支清理）无遗留待办。**How to apply: 后续「0.25.0 相关」勿再当待办；下次发版照 14:00 条目的发版坑清单（FallbackSelfVersion 常量 bump、CODELY.md 小节括号是引入标注勿动）。
+- [2026-09-25 20:32:31] [2026-09-25] 场景测试套件的 BuildSettings 卫生已修复（**覆盖 2026-09-14 条目中「[InitializeOnLoadMethod] 编辑模式域加载期登记 BuildSettings enabled 条目」的旧机制**，该机制已删除）：`SceneModulePlayModeTests` 改为 `IPrebuildSetup`（进入 Play 前的编辑模式阶段登记 enabled 条目）+ `IPostBuildCleanup`（退出 Play 后按名摘除），条目仅存在于本次运行期间；另有域加载兜底清扫（`EditorApplication.isPlayingOrWillChangePlaymode` 时跳过，故不会误删运行中刚登记的条目）回收被强杀遗留的条目。**关键事实：UTF 1.1.33 的 `PlaymodeLauncher`（play-mode-in-editor 路径）确实会执行 `IPrebuildSetup.Setup()` / `IPostBuildCleanup.Cleanup()`——不要按 `TestJobRunner.GetTaskList` 推断（该任务表在 play-mode-in-editor 分支只有 SaveModiedSceneTask + LegacyPlayModeRunTask，`PrebuildSetupTask` 只服务 EditMode/Player 分支）。** `ProjectSettings/EditorBuildSettings.asset` 中已入库的两个测试场景条目已清除（哈希 de5f3ded… 为清理后基线）；新增 EditMode 守护用例 `SceneModuleTestSceneHygieneTests`（断言无 `/Tests/` 下的场景常驻 BuildSettings）。Why: 旧机制把测试场景常驻进 BuildSettings → 随工程配置入库、进玩家构建。How to apply: 后续 PlayMode 测试需要场景进 BuildSettings 一律用这对接口，勿用域加载常驻登记。
+- [2026-09-25 20:32:31] [2026-09-25] 包内测试自建场景资产的两个实测坑与正解：①`EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive)` 在当前打开场景「未命名且未保存」时抛 `InvalidOperationException: Cannot create a new scene additively with an untitled scene unsaved`——batchmode 下打开场景即未命名，必现；`Single` 模式新建又会关掉宿主当前场景（测试运行器场景）。**正解 = `AssetDatabase.CopyAsset(包内最小场景夹具路径, 目标路径)`**（纯资产操作，不触碰任何已打开场景）；TearDown 用 `AssetDatabase.DeleteAsset` 删除，目录用递归 `CreateFolder` 并记录「最高层新建目录」以便整体回收（只记叶子会留空父目录）。夹具按文件名经 `AssetDatabase.FindAssets("t:Scene <名>")` + 文件名精确比对定位（Assets 安装 / Packages 安装形态自适应）。②`SceneAssetWrapperTests` 的 `SceneAssetWrapperCreationException：路径上不存在场景资产 'Assets/Scenes/SampleScene.unity'` 根因就是测试硬依赖宿主工程场景。Why: 包导入消费工程后跑测试必现。How to apply: 测试需要真实场景资产时复制包内夹具，勿就地新建；场景名断言用 `Path.GetFileNameWithoutExtension(路径)` 而非写死字面量。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
