@@ -19,7 +19,9 @@ namespace Runestone.AesirModules.Editor
             settings = SceneEditorSettings.instance;
         }
 
-        [MenuItem("Tools/Aesir/Scene Editor Settings")]
+        // 归入 Tools/Aesir/Modules/ 子菜单（Aesir Modules 包专属工具）；默认 priority 1000，
+        // 组内位于 Script Doc Generator（999）之后，差值 ≤ 10 不产生分割线
+        [MenuItem("Tools/Aesir/Modules/Scene Editor Settings")]
         static void Open()
         {
             var window = GetWindow<SceneManagerWindow>();
