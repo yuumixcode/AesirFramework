@@ -40,21 +40,21 @@ namespace Runestone.AesirModules.Samples.Audio.BasicUsage
         [SerializeField]
         AudioClip sfxJitter;
 
-        /// <summary>音量滑条本地显示值是否已从模块初始化（首次绘制时同步一次）。</summary>
-        bool _volumeSliderInitialized;
+        /// <summary>BGM 通道音量滑条的本地显示值（写入时机同上）。</summary>
+        float _bgmVolumeSlider = 1f;
+
+        Font _dynamicFont;
 
         /// <summary>总音量滑条的本地显示值——拖动结束才写入模块（setter 每次赋值即落 PlayerPrefs，逐帧写入属误用）。</summary>
         float _masterVolumeSlider = 1f;
 
-        /// <summary>BGM 通道音量滑条的本地显示值（写入时机同上）。</summary>
-        float _bgmVolumeSlider = 1f;
+        Rect _panelRect = new Rect(16, 16, 380, 560);
 
         /// <summary>音效通道音量滑条的本地显示值（写入时机同上）。</summary>
         float _sfxVolumeSlider = 1f;
 
-        Font _dynamicFont;
-
-        Rect _panelRect = new Rect(16, 16, 380, 560);
+        /// <summary>音量滑条本地显示值是否已从模块初始化（首次绘制时同步一次）。</summary>
+        bool _volumeSliderInitialized;
 
         void Awake()
         {

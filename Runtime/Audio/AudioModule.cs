@@ -42,7 +42,10 @@ namespace Runestone.AesirModules
         /// <param name="clip">音频片段。</param>
         /// <param name="volume">本次播放的局部音量（0-1），与 SFX 通道音量、总音量相乘生效。</param>
         /// <param name="pitch">本次播放的基准音调。</param>
-        /// <param name="pitchJitter">音调随机抖动幅度（非负）：最终音调在 [pitch - jitter, pitch + jitter] 内随机并钳制到 [0.01, 3]（不会反播），用于脚步/射击等防止机械感。</param>
+        /// <param name="pitchJitter">
+        /// 音调随机抖动幅度（非负）：最终音调在 [pitch - jitter, pitch + jitter] 内随机并钳制到 [0.01,
+        /// 3]（不会反播），用于脚步/射击等防止机械感。
+        /// </param>
         public static void PlaySfx(AudioClip clip,
             float volume = 1f,
             float pitch = 1f,

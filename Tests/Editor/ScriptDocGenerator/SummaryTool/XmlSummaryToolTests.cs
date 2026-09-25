@@ -540,6 +540,50 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 ");
         }
 
+        #region Sync 幂等（空白压缩对称）
+
+        [Test]
+        public void SyncAttributeWhitespaceDifference_DoesNotRewrite()
+        {
+            // 特性与 XML 仅空白差异时不应触发回写（非幂等修复：比较前两侧同等压缩）
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
+{
+    /// <summary>hello world</summary>
+    [Summary(""hello  world"")]
+    public class TestWhitespace { }
+}
+";
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
+            StringAssert.Contains("/// <summary>hello world</summary>", result);
+            StringAssert.Contains("[Summary(\"hello  world\")]", result);
+        }
+
+        #endregion
+
+        #region Remove 模式 header 区清理
+
+        [Test]
+        public void RemoveMode_HeaderAttribute_IsStripped()
+        {
+            // 首个 XML 注释之前（header 区）的 [Summary] 此前永不被清理
+            const string source = @"using System;
+using Runestone.AesirModules.ScriptDocGenerator;
+
+[Summary(""头部类的特性"")]
+public class HeaderClass { }
+";
+            var result = new XmlSummaryTool(source).ParseSourceScript()
+                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.RemoveSummary);
+            Assert.IsFalse(result.Contains("[Summary("), "header 区的 [Summary] 应被 Remove 模式清理");
+            StringAssert.Contains("public class HeaderClass { }", result);
+        }
+
+        #endregion
+
         #region 新语义与修复回归
 
         const string EscapedQuoteCode = @"using System;
@@ -704,30 +748,6 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 
         #endregion
 
-        #region Sync 幂等（空白压缩对称）
-
-        [Test]
-        public void SyncAttributeWhitespaceDifference_DoesNotRewrite()
-        {
-            // 特性与 XML 仅空白差异时不应触发回写（非幂等修复：比较前两侧同等压缩）
-            const string source = @"using System;
-using Runestone.AesirModules.ScriptDocGenerator;
-
-namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
-{
-    /// <summary>hello world</summary>
-    [Summary(""hello  world"")]
-    public class TestWhitespace { }
-}
-";
-            var result = new XmlSummaryTool(source).ParseSourceScript()
-                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
-            StringAssert.Contains("/// <summary>hello world</summary>", result);
-            StringAssert.Contains("[Summary(\"hello  world\")]", result);
-        }
-
-        #endregion
-
         #region 多成员代码块特性归属（fail-closed 跳过）
 
         const string NonFirstMemberAttrCode = @"using System;
@@ -750,8 +770,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
             var result = new XmlSummaryTool(NonFirstMemberAttrCode).ParseSourceScript()
                 .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
             StringAssert.Contains("[Summary(\"次成员的特性\")]", result);
-            Assert.IsFalse(result.Contains("[Summary(\"首成员的注释\")]"),
-                "非首成员持特性时不应把次成员内容错注到块头");
+            Assert.IsFalse(result.Contains("[Summary(\"首成员的注释\")]"), "非首成员持特性时不应把次成员内容错注到块头");
         }
 
         [Test]
@@ -822,26 +841,6 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
                 .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.SyncSummary);
             StringAssert.Contains("[Summary(\"嵌套方法的特性\")]", result);
             Assert.IsFalse(result.Contains("[Summary(\"类的注释\")]"), "嵌套成员的特性不应被错注到类上");
-        }
-
-        #endregion
-
-        #region Remove 模式 header 区清理
-
-        [Test]
-        public void RemoveMode_HeaderAttribute_IsStripped()
-        {
-            // 首个 XML 注释之前（header 区）的 [Summary] 此前永不被清理
-            const string source = @"using System;
-using Runestone.AesirModules.ScriptDocGenerator;
-
-[Summary(""头部类的特性"")]
-public class HeaderClass { }
-";
-            var result = new XmlSummaryTool(source).ParseSourceScript()
-                .GetProcessedSourceScript(XmlSummaryTool.ProcessMode.RemoveSummary);
-            Assert.IsFalse(result.Contains("[Summary("), "header 区的 [Summary] 应被 Remove 模式清理");
-            StringAssert.Contains("public class HeaderClass { }", result);
         }
 
         #endregion
