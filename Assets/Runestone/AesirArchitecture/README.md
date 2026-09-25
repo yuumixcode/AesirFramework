@@ -3,7 +3,7 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.23.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.24.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
@@ -40,10 +40,10 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 ### 通过 UPM（Git URL）
 
-在 Unity Package Manager 中通过 Git URL 安装（固定 0.23.0 版本分支，包内容即分支根目录）：
+在 Unity Package Manager 中通过 Git URL 安装（固定 0.24.0 版本分支，包内容即分支根目录）：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.23.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.24.0
 ```
 
 跟踪 main 最新开发版：
@@ -63,6 +63,8 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**一键检查并更新：版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测），窗口内直接展示「本地 → 远程」更新日志，更新前弹出确认框并自动备份 `Assets/Runestone`，再按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件；安装 Odin Inspector 时更新器为 Odin 界面。
 
 > 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
+>
+> **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
 
 ## 快速开始
 
@@ -155,6 +157,8 @@ this.ExecuteCommand<AddScoreCommand>();
 ```
 
 ## 示例（Samples）
+
+> **Aesir Getting Started 窗口**（菜单 `Tools → Aesir → Getting Started`，0.24.0 起）：集中浏览与直达 Aesir 两包全部示例的导航入口——概览页展示已安装包卡片（含未安装包的下载引导），包页按教学分组列出示例；点击示例卡片即在 Project 窗口选中其文件夹，带场景的示例可经「打开场景」按钮一键直达（切换前自动保存当前场景一次），操作结果以窗口右下角 Toast 提示。未安装 Odin 时提供 IMGUI 兜底窗口，安装 Odin 后自动切换为带页面动效的 Odin 版窗口。
 
 包内提供 11 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
 
@@ -276,6 +280,7 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 ```
 cn.runestone.aesir.architecture/
 ├── package.json
+├── AesirPathLookup.asset             # 安装位置锚点资产（Runestone 可移动到项目任意文件夹，勿删）
 ├── README.md                       # 本文件（中文）
 ├── Documentation/                  # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
 │   ├── README_EN.md               # English version
@@ -302,23 +307,31 @@ cn.runestone.aesir.architecture/
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
 │   │   ├── Observable/            # ObservableValue + 可观察集合（四种集合 / 单轨变更通知）
-│   │   └── Utilities/             # PlayerLoopUtility + AesirArchitecturePlayerLoop
+│   │   └── Utilities/             # PlayerLoopUtility
 │   ├── Common/                    # 框架基础设施
 │   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
 │   │   ├── AesirMonoBehaviour.cs  # Odin 自动适配基类
 │   │   ├── AesirScriptableObject.cs
 │   │   ├── AesirArchitectureDebug.cs
+│   │   ├── AesirArchitecturePlayerLoop.cs  # PlayerLoop 注入
+│   │   ├── AesirScheduler.cs               # 帧粒度时间调度（Delay / NextFrame）
 │   │   ├── AssemblyInfo.cs
 │   │   └── ResetStaticsAssistant.cs
 ├── Editor/
 │   ├── Runestone.AesirArchitecture.Editor.asmdef
 │   ├── Common/
-│   │   └── EnsureAesirArchitectureDefine.cs  # 编译符号管理
+│   │   ├── EnsureAesirArchitectureDefine.cs  # 编译符号管理
+│   │   ├── AesirSamplesBuildFilter.cs       # 示例场景构建剔除钩子
+│   │   ├── AesirPathLookup.cs               # 安装位置锚点资产类型
+│   │   ├── AesirPathLookupAssetEditor.cs    # 锚点资产防误删 Inspector（显示期望 / 实际 GUID）
+│   │   └── AesirAssetPaths.cs               # 本地安装根定位：默认根 → 锚点 GUID → 类型搜索三级
 │   ├── Utilities/
-│   │   ├── ScriptingSymbolUtility.cs
+│   │   └── ScriptingSymbolEditorUtility.cs   # 脚本宏定义工具（Utilities 规范：Editor 环境以 EditorUtility 结尾）
+│   ├── MenuItems/
 │   │   └── QuickCreateSOMenuItem.cs          # 右键快捷创建 SO（Aesir Inspector 存在时自动让位）
 │   ├── UpdateChecker/                        # 包内更新器（Tools → Aesir → Check for Updates）
 │   │   ├── AesirUpdateService.cs             # 无状态工具集：扫描安装、多源版本检测、清单差集、备份、CHANGELOG 解析、更新执行
+│   │   ├── AesirUpdateController.cs          # 更新编排唯一真源（进度回调，双窗口共用）
 │   │   └── AesirUpdateWindow.cs              # 更新窗口（IMGUI 兜底；菜单入口，装 Odin 时路由到 Odin 版）
 │   └── OdinInspector/            # Odin Inspector 集成（可选）
 │       ├── Runestone.AesirArchitecture.Editor.OdinInspector.asmdef

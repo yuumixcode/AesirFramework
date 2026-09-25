@@ -17,8 +17,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.23.0` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.23.0` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.24.0` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.24.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -129,10 +129,10 @@ A dual-track subscription event system: `[AesirListener]` attribute-based static
 
 In the Unity Package Manager window, click `+` in the top-left → `Add package from git URL...` and paste the corresponding sub-package URL:
 
-| Sub-Package | Git URL (pinned to 0.23.0) |
+| Sub-Package | Git URL (pinned to 0.24.0) |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.23.0` |
-| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.23.0` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.24.0` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.24.0` |
 
 > Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches.
 
@@ -143,7 +143,7 @@ Download the matching unitypackage from [GitHub Releases](https://github.com/yuu
 | Asset | Content |
 |---|---|
 | `AesirArchitecture-v<version>.unitypackage` | Aesir Architecture only |
-| `AesirModules-v<version>.unitypackage` | Aesir Modules only (no dependencies; import Architecture yourself) |
+| `AesirModules-v<version>.unitypackage` | Aesir Modules only (no dependencies; if Architecture is missing, the menu `Tools → Aesir → Modules → Install Dependencies` installs it in one click) |
 | `AesirFramework-v<version>.unitypackage` | Both packages combined |
 
 Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for one-click "detect new version → review changelog → confirm → auto backup → diff-based stale cleanup → silent import" (Odin-based UI when Odin Inspector is installed). Version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); via CDN, a new release may take up to ~12 hours to be detected.
@@ -164,19 +164,21 @@ Add the following to your project's `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.23.0",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.23.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.24.0",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.24.0"
   }
 }
 ```
 
-Add only the sub-packages you need — **when installing only Aesir Modules**, UPM will automatically resolve the dependencies and pull Aesir Architecture (declared in `package.json`'s `dependencies` field).
+Add only the sub-packages you need — **when installing only Aesir Modules**, UPM automatically pulls Aesir Architecture (this package's `package.json` declares its Git URL in `dependencies`).
 
 ### Installing Samples
 
 - **Browsing / downloading this repository directly**: samples live in each package's `Samples/` folder, ready to view and run.
 - **Git URL install**: Package Manager → select the package → `Samples` tab → import on demand; the sample sources are also kept in each package's hidden `Samples~/` folder.
 - **unitypackage import**: samples ship inside the package and run right after import.
+
+> **Samples never enter player builds**: sample scripts are wrapped in `#if UNITY_EDITOR` (stripped at compile time); even if you add sample scenes to Build Settings, Aesir sample scenes are automatically removed from each build via a pre-build hook, with a `[Aesir Build]` removal log printed to the console (the Build Settings list itself is untouched; custom build scripts that call `BuildPipeline.BuildPlayer` directly bypass this hook).
 
 ---
 
@@ -224,7 +226,7 @@ UIModule.Show<MainMenuPanel>();
 UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "Confirm?" });
 ```
 
-The UI framework provides Manager-of-Managers singletons, a 4-layer Canvas hierarchy (`UILayer`), panel lifecycle (active → deactivated cache → destroyed), and a pluggable asset loader (Resources by default, Addressables-ready).
+The UI framework provides Manager-of-Managers singletons, a 4-layer Canvas hierarchy (`UILayer`), panel lifecycle (active → deactivated cache → destroyed), a pluggable asset loader (Resources by default, Addressables-ready), and Canvas-root windows with masks — a second UI form beside panels (`AesirBaseWindow`, `UIModule.Open<T>()` / `Close<T>()`, prefab root carries its own Canvas mounted directly under UIRoot with `sortingOrder` 500 always above the panel layers; the `Mask` child blocks all input below with single/stacked scheduling and close-on-click).
 
 Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Assets/Runestone/AesirModules/Documentation/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
 
@@ -280,7 +282,7 @@ AesirFramework/                            # this repo
 
 ## ✅ Quality & CI
 
-- **Tests** — 650+ EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
+- **Tests** — 720+ EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
 - **CI (GitHub Actions)** —
   - `auto-release.yml`: every push to `main` publishes a GitHub Release (three unitypackages plus the update-info.json / files-manifest used by the in-package updater)
   - `auto-publish-branches.yml`: per-package subtree split generating `AesirArchitecture-v<version>` / `AesirModules-v<version>` pinned branches

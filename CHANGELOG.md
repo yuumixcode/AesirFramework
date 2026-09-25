@@ -20,15 +20,61 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.23.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.23.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.24.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.24.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.23.0` / `#AesirModules-v0.23.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.24.0` / `#AesirModules-v0.24.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.24.0] - 2026-09-25
+
+---
+
+### [architecture] Aesir Architecture
+
+> 本批为「框架零对象池裁决」批次：两包均不内置对象池模块（PlaneWar 示例如需池，实现放示例内部）。
+
+**Added**
+
+- **Aesir Getting Started Window（示例导航）** — 菜单 `Tools/Aesir/Getting Started`（priority -1000 居顶 + 独立分割线）：概览页展示包卡片（含未安装包占位引导），包页按教学分组列出示例，整卡点击定位示例文件夹、有场景的示例经「打开场景」按钮直达，动作结果经右下角 Toast 提示；数据层以各包 package.json samples 清单为唯一真源，包发现覆盖 Assets / 嵌入式 / UPM Git 三形态。IMGUI 兜底窗口在核心编辑器程序集，Odin 版窗口（页面栈 + 概览收起 / 页间滑动动效，参照 Odin Inspector Getting Started）经 `OdinWindowOpener` 委托路由
+- **示例构建剔除钩子（`AesirSamplesBuildFilter`）** — 构建时把 Build Settings 场景列表中的 Aesir 示例场景从本次构建剔除并输出 `[Aesir Build]` 明细日志（Build Settings 持久数据不动）；示例「不进玩家构建」自此覆盖脚本与场景两条路径，EditMode 测试锁定
+- **安装位置锚点机制（Runestone 可移动到项目任意文件夹）** — 每包包根新增 `AesirPathLookup.asset` 空壳锚点（机制参照 Odin Inspector），`AesirAssetPaths` 按「默认根 → 锚点 GUID → 类型搜索」三级解析实际安装根；构建剔除、包更新器扫描与备份、Getting Started 包定位三个消费端全部动态化；锚点带防误删 Inspector
+- **示例脚本构建剔除守护测试（`AesirSamplesScriptGuardTests`）** — 运行时示例程序集内每个 .cs 必须整文件 `#if UNITY_EDITOR` 包裹，漏包裹 / 格式偏差在 EditMode 测试失败；与构建剔除钩子测试共同锁死两条剔除路径
+
+**Changed**
+
+- 包更新器 Odin 窗口标题区改为手绘（移除灰暗的 `[Title]`，标题固定于滚动区外）；Tools/Aesir 菜单按包分组（包专属项归入 `Architecture/`、`Modules/` 子菜单，PlaneWar 修复工具归位 `Architecture/Samples/PlaneWar/`）；Check for Updates 移至菜单最底部（priority 1100 + 独立分割线）；`QuickCreateSOMenuItem` 移入新建 `Editor/MenuItems/`；`AesirArchitecturePlayerLoop` / `AesirScheduler` 文件归位 `Runtime/Common/`（`Modules/Utilities/` 仅留 `PlayerLoopUtility.cs`，类名与命名空间零变化）
+
+**Renamed（破坏性变更）**
+
+- `ScriptingSymbolUtility` → `ScriptingSymbolEditorUtility` — 落实「Utilities 目录下脚本以 `Utility` / `EditorUtility` 结尾」命名规范，外部脚本若直接引用需同步更名
+
+---
+
+### [modules] Aesir Modules
+
+**Added**
+
+- **UI 模块新增 Canvas 根窗口形态（`IUIWindow` / `AesirBaseWindow` 家族）** — 与 Panel 并列的第二种 UI 形态：窗口预制体根节点自带 Canvas，挂载到 UIRoot 下（不经四层 Canvas），默认 `sortingOrder` 500 恒在面板四层之上；静态快捷 API `UIModule.Open<T>()` / `Close<T>()` / `GetWindow<T>()` / `PrewarmWindow<T>()` / `RegisterWindowPrefab<T>()`；预制体结构约定 `Mask`（蒙版）+ `Content`（内容容器）
+- **窗口蒙版遮罩机制** — `UIModule.maskMode` 单遮（仅最高层可见窗口蒙版生效）/ 叠遮（各窗口独立）两种模式，运行时可切换；蒙版点击经 `OnMaskClicked()` 虚方法默认按 `closeOnMaskClick` 关闭本窗口
+- **Binder 支持 Canvas 根窗口感知** — 基类预选下拉新增窗口家族，根节点带 Canvas 时默认脚本名后缀 `Window`、默认基类直指 `AesirBaseWindow`（顺带修复 `ScorePanelPanel` 存量双后缀瑕疵）
+- **示例 UI Basic Usage（`Samples/UI/01_BasicUsage`）** — 面板与窗口协作演示（控制面板 + 日志 HUD + 设置/叠加窗口蒙版对照 + 全屏加载窗口），已登记 package.json samples
+- **UI 窗口与蒙版 EditMode 测试 22 用例**（`UIModuleWindowTests` 17 + `BinderAssistantWindowTests` 5）
+- **缺依赖一键补装（`AesirDependencyInstaller`）** — unitypackage 形态下 RAA 缺失时新菜单 `Tools/Aesir/Modules/Install Dependencies` 确认后经 UPM `Client.Add` 按 Git URL 版本分支自动补装（URL 由本包 version 动态拼接）；配套 package.json 对 RAA 依赖由不可解析的 semver 改为 Git URL 版本分支（UPM 安装时自动递归拉取），新增零引用 `Runestone.AesirModules.Editor.Bootstrap` 程序集；EditMode 测试 14 用例
+
+**Changed**
+
+- Script Doc Generator 菜单归入 `Tools/Aesir/Modules/`（priority -895 → 999，顶部位让给 Getting Started）；Scene Editor Settings 菜单归组 `Tools/Aesir/Modules/`；Odin / Addressables 细分程序集锚点由 `Common/` 迁至 `Integration/`（性质为第三方适配/集成，程序集名与引用零变化）；示例 `KeyPressedEvent` 的 using 指令移入 `#if UNITY_EDITOR` 内（守护测试驱动，对齐统一包裹形态）
+
+**Planned（下期候选）**
+
+- SmartShowHide 伪隐藏（全屏窗口弹出时自动伪隐藏被遮挡面板、关闭后恢复），待蒙版机制经实际项目验证后再评估
 
 ---
 
