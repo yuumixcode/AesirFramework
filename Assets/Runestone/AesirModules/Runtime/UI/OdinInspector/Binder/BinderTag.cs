@@ -54,8 +54,8 @@ namespace Runestone.AesirModules
         {
             get
             {
-                var types = GetComponents<Component>().Where(x => x is not (null or BinderTag)).Select(x => x.GetType())
-                    .ToList();
+                var types = GetComponents<Component>().Where(x => x is not (null or BinderTag))
+                    .Select(x => x.GetType()).ToList();
                 types.Add(typeof(GameObject));
                 return types;
             }
