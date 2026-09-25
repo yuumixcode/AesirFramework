@@ -1,10 +1,10 @@
 {
-  "version": "0.25.0",
-  "tag": "v0.25.0",
+  "version": "0.25.1",
+  "tag": "v0.25.1",
   "packages": [
     {
       "name": "AesirArchitecture",
-      "version": "0.25.0",
+      "version": "0.25.1",
       "files": [
         "Assets/Runestone/AesirArchitecture/AesirPathLookup.asset",
         "Assets/Runestone/AesirArchitecture/CHANGELOG.md",
@@ -343,7 +343,7 @@
     },
     {
       "name": "AesirModules",
-      "version": "0.25.0",
+      "version": "0.25.1",
       "files": [
         "Assets/Runestone/AesirModules/AesirPathLookup.asset",
         "Assets/Runestone/AesirModules/CHANGELOG.md",
@@ -387,6 +387,7 @@
         "Assets/Runestone/AesirModules/Editor/Scene/Tests",
         "Assets/Runestone/AesirModules/Editor/Scene/Tests/Runestone.AesirModules.Scene.Tests.asmdef",
         "Assets/Runestone/AesirModules/Editor/Scene/Tests/SceneAssetWrapperTests.cs",
+        "Assets/Runestone/AesirModules/Editor/Scene/Tests/SceneModuleTestSceneHygieneTests.cs",
         "Assets/Runestone/AesirModules/Editor/Scene/Tests/SceneModuleTests.cs",
         "Assets/Runestone/AesirModules/Editor/ScriptDocGenerator",
         "Assets/Runestone/AesirModules/Editor/ScriptDocGenerator/OdinInspector",
