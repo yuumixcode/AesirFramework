@@ -63,8 +63,18 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>update-info.json 在仓库内的路径（CI 发版后以 [skip ci] 提交回 main）。</summary>
         public const string UpdateInfoRelativePath = ".github/update-info.json";
 
-        /// <summary>包安装根目录（项目相对路径）。</summary>
+        /// <summary>
+        /// 默认安装根（项目相对路径）——快路径首查位置。实际安装根经
+        /// <see cref="AesirAssetPaths" /> 锚点定位（Runestone 可移动到项目任意文件夹），扫描入口用
+        /// <see cref="ScanInstalledPackagesFromAllRoots" />；本常量供单根扫描的默认参数与测试 fixture 使用。
+        /// </summary>
         public const string InstallRootRelativePath = "Assets/Runestone";
+
+        /// <summary>
+        /// 主安装根（项目相对路径）——备份源与提示文案用；委托 <see cref="AesirAssetPaths.PrimaryInstallRoot" />
+        /// 动态解析（默认根优先，无任何本地安装时回退 <see cref="InstallRootRelativePath" />）。
+        /// </summary>
+        public static string PrimaryInstallRoot => AesirAssetPaths.PrimaryInstallRoot;
 
         /// <summary>项目根目录下的更新状态目录名（点前缀，Unity 不导入）。</summary>
         public const string StateDirName = ".aesir";
@@ -211,6 +221,28 @@ namespace Runestone.AesirArchitecture.Editor
         #region 本地安装扫描
 
         /// <summary>
+        /// 扫描全部本地安装根（<see cref="AesirAssetPaths.InstallRoots" />——经锚点资产定位，
+        /// Runestone 可移动到项目任意文件夹；默认根优先）下的 Aesir 包安装。
+        /// 跨根同包 id 去重，先扫描的根胜出（默认根在最前）。
+        /// </summary>
+        public static List<InstalledPackage> ScanInstalledPackagesFromAllRoots()
+        {
+            var results = new List<InstalledPackage>();
+            foreach (var root in AesirAssetPaths.InstallRoots)
+            {
+                foreach (var pkg in ScanInstalledPackages(root))
+                {
+                    if (results.All(p => p.PackageId != pkg.PackageId))
+                    {
+                        results.Add(pkg);
+                    }
+                }
+            }
+
+            return results;
+        }
+
+        /// <summary>
         /// 扫描 <paramref name="installRootRelativePath" /> 下的 Aesir 包安装。
         /// 识别依据：子目录中存在 package.json 且包 id 以 cn.runestone.aesir. 开头。
         /// </summary>
@@ -323,8 +355,7 @@ namespace Runestone.AesirArchitecture.Editor
             string remoteVersion) =>
             string.IsNullOrEmpty(remoteVersion)
                 ? new List<InstalledPackage>()
-                : packages
-                    .Where(p => CompareVersion(p.Version, remoteVersion) < 0)
+                : packages.Where(p => CompareVersion(p.Version, remoteVersion) < 0)
                     .OrderBy(p => p.PackageId, StringComparer.Ordinal).ToList();
 
         /// <summary>
@@ -679,8 +710,9 @@ namespace Runestone.AesirArchitecture.Editor
         /// 从段落列表中筛出位于 (localVersion, remoteVersion] 区间的版本段落（保持原顺序：新 → 旧）。
         /// <paramref name="remoteVersion" /> 为空时不设上限。
         /// </summary>
-        public static List<ChangelogSection> CollectNewerSections(
-            IReadOnlyList<ChangelogSection> sections, string localVersion, string remoteVersion)
+        public static List<ChangelogSection> CollectNewerSections(IReadOnlyList<ChangelogSection> sections,
+            string localVersion,
+            string remoteVersion)
         {
             var result = new List<ChangelogSection>();
             if (sections == null)
@@ -795,8 +827,8 @@ namespace Runestone.AesirArchitecture.Editor
                     builder.Append('\n');
                 }
 
-                builder.Append("【").Append(pkg.DirName).Append("】v").Append(pkg.Version)
-                    .Append(" → ").Append(remoteTag).Append('\n');
+                builder.Append("【").Append(pkg.DirName).Append("】v").Append(pkg.Version).Append(" → ")
+                    .Append(remoteTag).Append('\n');
 
                 string remoteMarkdown = null;
                 try
@@ -810,8 +842,8 @@ namespace Runestone.AesirArchitecture.Editor
 
                 if (remoteMarkdown != null)
                 {
-                    var sections =
-                        CollectNewerSections(ParseChangelogSections(remoteMarkdown), pkg.Version, remoteTag);
+                    var sections = CollectNewerSections(ParseChangelogSections(remoteMarkdown), pkg.Version,
+                        remoteTag);
                     builder.Append(sections.Count > 0 ? RenderChangelogText(sections) : "（无新增版本段落）\n");
                 }
                 else
@@ -1078,25 +1110,25 @@ namespace Runestone.AesirArchitecture.Editor
         /// <paramref name="isGitRepository" /> 为 true 时追加开发仓库警告。
         /// </summary>
         public static string BuildUpdateConfirmation(IReadOnlyList<InstalledPackage> targets,
-            string remoteVersion, bool isGitRepository)
+            string remoteVersion,
+            bool isGitRepository)
         {
             var builder = new StringBuilder();
             builder.Append("即将更新以下包：\n\n");
             foreach (var pkg in targets)
             {
-                builder.Append("    ").Append(pkg.DirName)
-                    .Append("：v").Append(pkg.Version).Append(" → ").Append(remoteVersion).Append('\n');
+                builder.Append("    ").Append(pkg.DirName).Append("：v").Append(pkg.Version).Append(" → ")
+                    .Append(remoteVersion).Append('\n');
             }
 
-            builder.Append('\n')
-                .Append("更新前自动备份 ").Append(InstallRootRelativePath).Append(" 至 ")
+            builder.Append('\n').Append("更新前自动备份 ").Append(AesirAssetPaths.PrimaryInstallRoot).Append(" 至 ")
                 .Append(BackupDirName).Append("/（保留最近 ").Append(BackupKeepCount).Append(" 份）。\n")
-                .Append("包目录内的本地修改将被 Release 内容覆盖，可从备份还原。");
+                .Append("包目录内的本地修改将被 Release 内容覆盖，可从备份还原。\n").Append(
+                    "更新经 unitypackage 导入，始终装回默认位置 Assets/Runestone；" + "若曾移动过 Runestone，旧位置的副本需自行清理。");
 
             if (isGitRepository)
             {
-                builder.Append(
-                    "\n\n⚠ 检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，更新会覆盖本地源码，强烈建议取消。");
+                builder.Append("\n\n⚠ 检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，更新会覆盖本地源码，强烈建议取消。");
             }
 
             builder.Append("\n\n确认开始更新？");
@@ -1107,16 +1139,20 @@ namespace Runestone.AesirArchitecture.Editor
         /// 执行更新：整体备份 → 逐包（下载 → 按清单差集清残留 → 静默导入 → 登记安装清单）。
         /// 返回备份目录的绝对路径（无安装源时备份为 null）。
         /// </summary>
-        /// <param name="snapshot">检测结果快照；<see cref="ReleaseSnapshot.Info" /> 同时承载新清单，
-        /// 302 重定向降级路径无清单，残留清理自动跳过。</param>
+        /// <param name="snapshot">
+        /// 检测结果快照；<see cref="ReleaseSnapshot.Info" /> 同时承载新清单，
+        /// 302 重定向降级路径无清单，残留清理自动跳过。
+        /// </param>
         /// <param name="targets">待更新包列表，须已按依赖顺序排列（Architecture 先于 Modules）。</param>
         /// <param name="onProgress">进度回调（阶段描述 + 0~1 进度）。</param>
         public static async Task<string> UpdatePackagesAsync(ReleaseSnapshot snapshot,
-            IReadOnlyList<InstalledPackage> targets, Action<string, float> onProgress)
+            IReadOnlyList<InstalledPackage> targets,
+            Action<string, float> onProgress)
         {
-            // 1. 整体备份（一次，覆盖本次全部导入）
-            onProgress?.Invoke("备份 Assets/Runestone ...", 0.05f);
-            var backupPath = BackupRunestone($"{DateTime.Now:yyyyMMdd-HHmmss}_v{GetMaxVersion(targets)}");
+            // 1. 整体备份（一次，覆盖本次全部导入；源根经锚点定位，跟随 Runestone 实际位置）
+            onProgress?.Invoke($"备份 {AesirAssetPaths.PrimaryInstallRoot} ...", 0.05f);
+            var backupPath = BackupRunestone($"{DateTime.Now:yyyyMMdd-HHmmss}_v{GetMaxVersion(targets)}",
+                AesirAssetPaths.PrimaryInstallRoot);
 
             var localManifest = LoadLocalManifest();
 
@@ -1139,7 +1175,8 @@ namespace Runestone.AesirArchitecture.Editor
                 var tempFile = Path.Combine(tempDir, assetName);
                 File.WriteAllBytes(tempFile, bytes);
 
-                onProgress?.Invoke($"[{pkg.DirName}] 导入 {assetName} ...", progressBase + progressSpan * 0.95f);
+                onProgress?.Invoke($"[{pkg.DirName}] 导入 {assetName} ...",
+                    progressBase + progressSpan * 0.95f);
                 AssetDatabase.ImportPackage(tempFile, false);
                 File.Delete(tempFile);
 
@@ -1157,8 +1194,8 @@ namespace Runestone.AesirArchitecture.Editor
                 // 清理在导入成功之后执行——导入失败不会造成"旧文件已删、新文件未进"的双失局面
                 if (newEntry != null)
                 {
-                    var stale = ComputeStaleFiles(
-                        localManifest?.GetPackage(pkg.DirName)?.files, newEntry.files, pkg.AssetsPath);
+                    var stale = ComputeStaleFiles(localManifest?.GetPackage(pkg.DirName)?.files,
+                        newEntry.files, pkg.AssetsPath);
                     var deleted = DeleteStaleEntries(stale);
                     PruneEmptyDirectories(pkg.AssetsPath);
                     if (deleted > 0)
