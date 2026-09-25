@@ -24,7 +24,7 @@ namespace Runestone.AesirModules
     [DefaultExecutionOrder(-999)]
     public class UIRoot : AesirMonoBehaviour
     {
-        const int UILayerIndex = 5;
+        internal const int UILayerIndex = 5;
         const int TransparentFXLayerIndex = 1;
         const int UILayerMask = (1 << UILayerIndex) | (1 << TransparentFXLayerIndex);
         internal const string LayerCanvasesFieldName = nameof(_layerCanvases);
@@ -214,6 +214,22 @@ namespace Runestone.AesirModules
             return canvas.transform;
         }
 
+        /// <summary>
+        /// 统一 Canvas 配置（层 Canvas 与窗口接线共用）。未设置时回退默认配置。
+        /// </summary>
+        internal UICanvasConfigSO CanvasConfig
+        {
+            get
+            {
+                if (uiCanvasConfigSO == null)
+                {
+                    EnsureCanvasConfig();
+                }
+
+                return uiCanvasConfigSO;
+            }
+        }
+
         void EnsureUIComponents()
         {
             EnsureUICamera();
@@ -340,7 +356,7 @@ namespace Runestone.AesirModules
             }
         }
 
-        static void SetLayerRecursively(Transform root, int layer)
+        internal static void SetLayerRecursively(Transform root, int layer)
         {
             root.gameObject.layer = layer;
             for (var i = 0; i < root.childCount; i++)
