@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using Runestone.AesirArchitecture.Editor;
 
@@ -41,6 +43,65 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 Directory.Delete(_testRoot, true);
             }
         }
+
+        #region 清单落盘往返
+
+        [Test]
+        public void SaveAndLoadLocalManifest_RoundTrips()
+        {
+            var stateAbs = AesirUpdateService.ToAbsolutePath(AesirUpdateService.StateFilePath);
+            var stateDirAbs = AesirUpdateService.ToAbsolutePath(AesirUpdateService.StateDirName);
+            var hadOriginal = File.Exists(stateAbs);
+            var original = hadOriginal ? File.ReadAllText(stateAbs) : null;
+
+            try
+            {
+                var manifest = new AesirUpdateService.FilesManifest
+                {
+                    packages = new[]
+                    {
+                        new AesirUpdateService.FilesManifest.PackageEntry
+                        {
+                            name = "AesirArchitecture",
+                            version = "0.20.0",
+                            files = new[]
+                            {
+                                "Assets/Runestone/AesirArchitecture/a.cs",
+                                "Assets/Runestone/AesirArchitecture/b.cs"
+                            }
+                        }
+                    }
+                };
+                AesirUpdateService.SaveLocalManifest(manifest);
+
+                var loaded = AesirUpdateService.LoadLocalManifest();
+                Assert.IsNotNull(loaded, "写入后应能读回清单");
+                Assert.AreEqual(1, loaded.packages.Length);
+                Assert.AreEqual("AesirArchitecture", loaded.packages[0].name);
+                Assert.AreEqual("0.20.0", loaded.packages[0].version);
+                Assert.AreEqual(2, loaded.packages[0].files.Length);
+                Assert.AreEqual("Assets/Runestone/AesirArchitecture/a.cs", loaded.packages[0].files[0]);
+            }
+            finally
+            {
+                // 恢复测试前的真实状态文件（项目状态不受测试污染）
+                if (hadOriginal)
+                {
+                    File.WriteAllText(stateAbs, original);
+                }
+                else if (File.Exists(stateAbs))
+                {
+                    File.Delete(stateAbs);
+                    if (Directory.Exists(stateDirAbs) &&
+                        !Enumerable.Any(Directory.EnumerateFileSystemEntries(stateDirAbs)))
+                    {
+                        Directory.Delete(stateDirAbs);
+                    }
+                }
+            }
+        }
+
+        #endregion
 
         #region 版本比较
 
@@ -520,7 +581,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             Assert.IsEmpty(AesirUpdateService.RenderChangelogText(null));
             Assert.IsEmpty(AesirUpdateService.RenderChangelogText(
-                new System.Collections.Generic.List<AesirUpdateService.ChangelogSection>()));
+                new List<AesirUpdateService.ChangelogSection>()));
         }
 
         [Test]
@@ -587,7 +648,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void ComputeOutdatedPackages_SortsByDependencyOrder()
         {
             // Modules 在输入中排前——输出必须 Architecture 在前（依赖顺序）
-            var packages = new System.Collections.Generic.List<AesirUpdateService.InstalledPackage>
+            var packages = new List<AesirUpdateService.InstalledPackage>
             {
                 Pkg("AesirModules", "cn.runestone.aesir.modules", "0.19.0"),
                 Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.19.0")
@@ -604,7 +665,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void ComputeOutdatedPackages_VersionBoundaries()
         {
-            var packages = new System.Collections.Generic.List<AesirUpdateService.InstalledPackage>
+            var packages = new List<AesirUpdateService.InstalledPackage>
             {
                 Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.20.0"),
                 Pkg("AesirModules", "cn.runestone.aesir.modules", "0.19.0")
@@ -616,65 +677,6 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreEqual(0, AesirUpdateService.ComputeOutdatedPackages(packages, "0.19.0").Count);
             Assert.AreEqual(0, AesirUpdateService.ComputeOutdatedPackages(packages, null).Count);
             Assert.AreEqual(0, AesirUpdateService.ComputeOutdatedPackages(packages, "").Count);
-        }
-
-        #endregion
-
-        #region 清单落盘往返
-
-        [Test]
-        public void SaveAndLoadLocalManifest_RoundTrips()
-        {
-            var stateAbs = AesirUpdateService.ToAbsolutePath(AesirUpdateService.StateFilePath);
-            var stateDirAbs = AesirUpdateService.ToAbsolutePath(AesirUpdateService.StateDirName);
-            var hadOriginal = File.Exists(stateAbs);
-            var original = hadOriginal ? File.ReadAllText(stateAbs) : null;
-
-            try
-            {
-                var manifest = new AesirUpdateService.FilesManifest
-                {
-                    packages = new[]
-                    {
-                        new AesirUpdateService.FilesManifest.PackageEntry
-                        {
-                            name = "AesirArchitecture",
-                            version = "0.20.0",
-                            files = new[]
-                            {
-                                "Assets/Runestone/AesirArchitecture/a.cs",
-                                "Assets/Runestone/AesirArchitecture/b.cs"
-                            }
-                        }
-                    }
-                };
-                AesirUpdateService.SaveLocalManifest(manifest);
-
-                var loaded = AesirUpdateService.LoadLocalManifest();
-                Assert.IsNotNull(loaded, "写入后应能读回清单");
-                Assert.AreEqual(1, loaded.packages.Length);
-                Assert.AreEqual("AesirArchitecture", loaded.packages[0].name);
-                Assert.AreEqual("0.20.0", loaded.packages[0].version);
-                Assert.AreEqual(2, loaded.packages[0].files.Length);
-                Assert.AreEqual("Assets/Runestone/AesirArchitecture/a.cs", loaded.packages[0].files[0]);
-            }
-            finally
-            {
-                // 恢复测试前的真实状态文件（项目状态不受测试污染）
-                if (hadOriginal)
-                {
-                    File.WriteAllText(stateAbs, original);
-                }
-                else if (File.Exists(stateAbs))
-                {
-                    File.Delete(stateAbs);
-                    if (Directory.Exists(stateDirAbs) &&
-                        !System.Linq.Enumerable.Any(Directory.EnumerateFileSystemEntries(stateDirAbs)))
-                    {
-                        Directory.Delete(stateDirAbs);
-                    }
-                }
-            }
         }
 
         #endregion
