@@ -6,13 +6,19 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
 {
     /// <summary>
     /// ObservableList&lt;T&gt; 演示组件（背包场景）。
-    /// <para>单轨订阅 <c>AddListener</c>：所有变更（含 Move / Sort / Reverse / 批量操作）都经这一个回调通知，
-    /// 靠 <see cref="CollectionChangedEventArgs{T}" /> 的 <c>Action</c> 区分变更类型。</para>
-    /// <para>通知语义：写操作完成后才触发——回调中读到的已是变更后的集合；无变更的操作不触发通知
+    /// <para>
+    /// 单轨订阅 <c>AddListener</c>：所有变更（含 Move / Sort / Reverse / 批量操作）都经这一个回调通知，
+    /// 靠 <see cref="CollectionChangedEventArgs{T}" /> 的 <c>Action</c> 区分变更类型。
+    /// </para>
+    /// <para>
+    /// 通知语义：写操作完成后才触发——回调中读到的已是变更后的集合；无变更的操作不触发通知
     /// （Remove 不存在的元素、Clear 空列表、索引器赋相同值）；批量操作逐项通知；
-    /// Sort / Reverse / Clear 以 Reset 通知（监听方按"重建视图"处理）。</para>
-    /// <para>订阅演示用 <see cref="AesirArchitecture.RemoveListenerExtensions.RemoveListenerWhenGameObjectOnDisable" />
-    /// 把监听句柄绑定到 GameObject 生命周期——OnDisable 时自动移除，无需手动管理。</para>
+    /// Sort / Reverse / Clear 以 Reset 通知（监听方按"重建视图"处理）。
+    /// </para>
+    /// <para>
+    /// 订阅演示用 <see cref="AesirArchitecture.RemoveListenerExtensions.RemoveListenerWhenGameObjectOnDisable" />
+    /// 把监听句柄绑定到 GameObject 生命周期——OnDisable 时自动移除，无需手动管理。
+    /// </para>
     /// </summary>
     public sealed class ObservableListSample : MonoBehaviour
     {
@@ -74,7 +80,8 @@ namespace Runestone.AesirArchitecture.Samples.ObservableCollections
         [ContextMenu("AddRange：批量添加（逐项通知）")]
         void AddRangeItems()
         {
-            _inventory.AddRange(new[] { $"道具{_itemCounter++}", $"道具{_itemCounter++}", $"道具{_itemCounter++}" });
+            _inventory.AddRange(new[]
+                { $"道具{_itemCounter++}", $"道具{_itemCounter++}", $"道具{_itemCounter++}" });
             DumpItems();
         }
 

@@ -4,7 +4,6 @@ using System.Buffers;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Linq;
 
 namespace Runestone.AesirArchitecture.Internal
 {
@@ -14,7 +13,7 @@ namespace Runestone.AesirArchitecture.Internal
     internal struct CloneCollection<T> : IDisposable
     {
         T[]? array;
-        int length;
+        readonly int length;
 
         public ReadOnlySpan<T> Span => array.AsSpan(0, length);
 
@@ -22,9 +21,9 @@ namespace Runestone.AesirArchitecture.Internal
 
         public CloneCollection(T item)
         {
-            this.array = ArrayPool<T>.Shared.Rent(1);
-            this.length = 1;
-            this.array[0] = item;
+            array = ArrayPool<T>.Shared.Rent(1);
+            length = 1;
+            array[0] = item;
         }
 
         public CloneCollection(IEnumerable<T> source)
@@ -45,8 +44,9 @@ namespace Runestone.AesirArchitecture.Internal
                         array[i++] = item;
                     }
                 }
+
                 this.array = array;
-                this.length = count;
+                length = count;
             }
             else
             {
@@ -58,8 +58,9 @@ namespace Runestone.AesirArchitecture.Internal
                     TryEnsureCapacity(ref array, i);
                     array[i++] = item;
                 }
+
                 this.array = array;
-                this.length = i;
+                length = i;
             }
         }
 
@@ -68,7 +69,7 @@ namespace Runestone.AesirArchitecture.Internal
             var array = ArrayPool<T>.Shared.Rent(source.Length);
             source.CopyTo(array);
             this.array = array;
-            this.length = source.Length;
+            length = source.Length;
         }
 
         // Unity 无 CollectionsMarshal（无法零拷贝取 List<T> 内部数组），用逐项拷贝替代
@@ -79,8 +80,9 @@ namespace Runestone.AesirArchitecture.Internal
             {
                 array[i] = source[index + i];
             }
+
             this.array = array;
-            this.length = count;
+            length = count;
         }
 
         static void TryEnsureCapacity(ref T[] array, int index)
@@ -130,11 +132,11 @@ namespace Runestone.AesirArchitecture.Internal
             public void Add(T item) => throw new NotSupportedException();
             public void Clear() => throw new NotSupportedException();
             public bool Contains(T item) => throw new NotSupportedException();
-            public void CopyTo(T[] dest, int destIndex) =>  Array.Copy(array, 0, dest, destIndex, count);
+            public void CopyTo(T[] dest, int destIndex) => Array.Copy(array, 0, dest, destIndex, count);
 
             public IEnumerator<T> GetEnumerator()
             {
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     yield return array[i];
                 }

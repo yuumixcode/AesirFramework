@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace Runestone.AesirArchitecture
@@ -22,7 +21,5 @@ namespace Runestone.AesirArchitecture
     /// <seealso cref="IObservableDictionary{TKey, TValue}" />
     /// <seealso cref="ObservableDictionary{TKey, TValue}" />
     public interface IReadOnlyObservableDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue>,
-        IObservableCollection<KeyValuePair<TKey, TValue>>
-    {
-    }
+        IObservableCollection<KeyValuePair<TKey, TValue>> { }
 }

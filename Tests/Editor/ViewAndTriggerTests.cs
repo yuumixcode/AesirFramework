@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             protected override void Configure()
             {
-                RegisterModel<TestModel>(new TestModel());
+                RegisterModel(new TestModel());
             }
         }
 
@@ -91,7 +92,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         static void InvokePrivate(object target, string methodName)
         {
             var method = target.GetType().GetMethod(methodName,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsNotNull(method, "未找到私有方法：" + methodName);
             method.Invoke(target, null);
         }

@@ -48,6 +48,9 @@ namespace Runestone.AesirArchitecture
     {
         static MonoLifecycleProxy _instance;
 
+        /// <summary>待重排的事件列表（与 <see cref="_sortDirty" /> 配合：只重排发生增删的事件，不碰其余列表）。</summary>
+        readonly List<MonoLifecycleEvent> _dirtyEvents = new List<MonoLifecycleEvent>();
+
         readonly List<PendingChange> _pendingChanges = new List<PendingChange>();
 
         readonly Dictionary<MonoLifecycleEvent, List<ListenerEntry>> _sortedListeners =
@@ -58,9 +61,6 @@ namespace Runestone.AesirArchitecture
         long _nextInsertionIndex;
         bool _playerLoopRegistered;
         bool _sortDirty;
-
-        /// <summary>待重排的事件列表（与 <see cref="_sortDirty" /> 配合：只重排发生增删的事件，不碰其余列表）。</summary>
-        readonly List<MonoLifecycleEvent> _dirtyEvents = new List<MonoLifecycleEvent>();
 
         void Update()
         {

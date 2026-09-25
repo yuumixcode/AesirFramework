@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Specialized;
 
 namespace Runestone.AesirArchitecture
@@ -13,7 +12,8 @@ namespace Runestone.AesirArchitecture
     /// <para>
     /// 各 <see cref="Action" /> 携带的字段：
     /// <see cref="NotifyCollectionChangedAction.Add" /> → <see cref="NewItem" /> / <see cref="NewStartingIndex" />；
-    /// <see cref="NotifyCollectionChangedAction.Remove" /> → <see cref="OldItem" /> / <see cref="OldStartingIndex" />；
+    /// <see cref="NotifyCollectionChangedAction.Remove" /> → <see cref="OldItem" /> /
+    /// <see cref="OldStartingIndex" />；
     /// <see cref="NotifyCollectionChangedAction.Replace" /> → <see cref="NewItem" /> / <see cref="OldItem" /> /
     /// <see cref="NewStartingIndex" />（等于 <see cref="OldStartingIndex" />）；
     /// <see cref="NotifyCollectionChangedAction.Move" /> → <see cref="NewItem" />（等于 <see cref="OldItem" />，
@@ -51,8 +51,7 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         public readonly int OldStartingIndex;
 
-        CollectionChangedEventArgs(
-            NotifyCollectionChangedAction action,
+        CollectionChangedEventArgs(NotifyCollectionChangedAction action,
             T newItem,
             T oldItem,
             int newStartingIndex,
@@ -71,11 +70,9 @@ namespace Runestone.AesirArchitecture
         /// <param name="newItem">被添加的元素。</param>
         /// <param name="newStartingIndex">被添加到的索引；无索引概念的集合传 -1。</param>
         /// <returns>添加变更参数。</returns>
-        public static CollectionChangedEventArgs<T> Add(T newItem, int newStartingIndex)
-        {
-            return new CollectionChangedEventArgs<T>(
-                NotifyCollectionChangedAction.Add, newItem, default, newStartingIndex, -1);
-        }
+        public static CollectionChangedEventArgs<T> Add(T newItem, int newStartingIndex) =>
+            new CollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Add, newItem, default,
+                newStartingIndex, -1);
 
         /// <summary>
         /// 构造移除变更。
@@ -83,11 +80,9 @@ namespace Runestone.AesirArchitecture
         /// <param name="oldItem">被移除的元素。</param>
         /// <param name="oldStartingIndex">移除前所在索引；无索引概念的集合传 -1。</param>
         /// <returns>移除变更参数。</returns>
-        public static CollectionChangedEventArgs<T> Remove(T oldItem, int oldStartingIndex)
-        {
-            return new CollectionChangedEventArgs<T>(
-                NotifyCollectionChangedAction.Remove, default, oldItem, -1, oldStartingIndex);
-        }
+        public static CollectionChangedEventArgs<T> Remove(T oldItem, int oldStartingIndex) =>
+            new CollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Remove, default, oldItem, -1,
+                oldStartingIndex);
 
         /// <summary>
         /// 构造替换变更。
@@ -96,11 +91,9 @@ namespace Runestone.AesirArchitecture
         /// <param name="oldItem">替换前的元素。</param>
         /// <param name="index">替换位置索引；无索引概念的集合传 -1。</param>
         /// <returns>替换变更参数。</returns>
-        public static CollectionChangedEventArgs<T> Replace(T newItem, T oldItem, int index)
-        {
-            return new CollectionChangedEventArgs<T>(
-                NotifyCollectionChangedAction.Replace, newItem, oldItem, index, index);
-        }
+        public static CollectionChangedEventArgs<T> Replace(T newItem, T oldItem, int index) =>
+            new CollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Replace, newItem, oldItem, index,
+                index);
 
         /// <summary>
         /// 构造移动变更。
@@ -109,20 +102,17 @@ namespace Runestone.AesirArchitecture
         /// <param name="newStartingIndex">移动后的索引。</param>
         /// <param name="oldStartingIndex">移动前的索引。</param>
         /// <returns>移动变更参数。</returns>
-        public static CollectionChangedEventArgs<T> Move(T movedItem, int newStartingIndex, int oldStartingIndex)
-        {
-            return new CollectionChangedEventArgs<T>(
-                NotifyCollectionChangedAction.Move, movedItem, movedItem, newStartingIndex, oldStartingIndex);
-        }
+        public static CollectionChangedEventArgs<T> Move(T movedItem,
+            int newStartingIndex,
+            int oldStartingIndex) =>
+            new CollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Move, movedItem, movedItem,
+                newStartingIndex, oldStartingIndex);
 
         /// <summary>
         /// 构造重置变更（Clear / Sort / Reverse 共用，无附加字段）。
         /// </summary>
         /// <returns>重置变更参数。</returns>
-        public static CollectionChangedEventArgs<T> Reset()
-        {
-            return new CollectionChangedEventArgs<T>(
-                NotifyCollectionChangedAction.Reset, default, default, -1, -1);
-        }
+        public static CollectionChangedEventArgs<T> Reset() =>
+            new CollectionChangedEventArgs<T>(NotifyCollectionChangedAction.Reset, default, default, -1, -1);
     }
 }

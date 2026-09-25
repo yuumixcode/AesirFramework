@@ -92,8 +92,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             set.AddRange(new[] { 1, 2, 3 });
 
             Assert.AreEqual(2, received.Count, "已存在的 1 不应触发通知");
-            CollectionAssert.AreEqual(new[] { 2, 3 },
-                new[] { received[0].NewItem, received[1].NewItem }, "Add 应逐项覆盖新增元素");
+            CollectionAssert.AreEqual(new[] { 2, 3 }, new[] { received[0].NewItem, received[1].NewItem },
+                "Add 应逐项覆盖新增元素");
             CollectionAssert.AreEquivalent(new[] { 1, 2, 3 }, set, "结果应包含全部元素");
             AesirArchitectureDebug.LogTestInfo("AddRange: 仅新增元素逐项触发 Add");
         }

@@ -132,8 +132,16 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var countA = 0;
             var countB = 0;
 
-            void ListenerA() => countA++;
-            void ListenerB() => countB++;
+            void ListenerA()
+            {
+                countA++;
+            }
+
+            void ListenerB()
+            {
+                countB++;
+            }
+
             evt.AddListener(ListenerA);
             evt.AddListener(ListenerB);
 

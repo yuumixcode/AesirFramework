@@ -59,8 +59,9 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 Application.logMessageReceived -= Capture;
             }
 
-            Assert.IsEmpty(warnings, "首次注册不应输出任何 Warning（含动态替换提示）；实际捕获：" +
-                                     (warnings.Count > 0 ? string.Join(" | ", warnings) : "无"));
+            Assert.IsEmpty(warnings,
+                "首次注册不应输出任何 Warning（含动态替换提示）；实际捕获：" +
+                (warnings.Count > 0 ? string.Join(" | ", warnings) : "无"));
             AesirArchitectureDebug.LogTestInfo("Register(首次注册): Model/Service 均无动态替换警告");
 
             void Capture(string condition, string stackTrace, LogType type)
