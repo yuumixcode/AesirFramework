@@ -65,6 +65,10 @@ namespace Runestone.AesirArchitecture.Editor
         [SerializeField]
         bool _changelogExpanded = true;
 
+        /// <summary>检测详情（各层尝试）折叠展开态。</summary>
+        [SerializeField]
+        bool _detectionDetailExpanded;
+
         /// <summary>共享编排控制器（非序列化，OnEnable 重建并接管 _state）。</summary>
         AesirUpdateController _controller;
 
@@ -101,6 +105,7 @@ namespace Runestone.AesirArchitecture.Editor
             DrawHelpBoxes();
             DrawPackageList();
             DrawChangelog();
+            DrawDetectionDetail();
             DrawStatus();
             EditorGUILayout.EndScrollView();
         }
@@ -136,7 +141,8 @@ namespace Runestone.AesirArchitecture.Editor
             EditorGUILayout.HelpBox(
                 "更新范围：本地安装的 Aesir 包（复制 / unitypackage 导入，默认位置 Assets/Runestone，" + "可自由移动到项目任意文件夹）。\n" +
                 "经 Package Manager（Git URL）安装的副本不在本工具管辖内，请使用 Package Manager 更新。\n" +
-                "版本检测经 CDN，最新发布最长约 12 小时后才会被检测到（可点「打开 Releases 页面」确认）。", MessageType.Info);
+                "版本检测按「直连 GitHub → 镜像站 → CDN 中转」顺序兜底，能直连 GitHub 即为 100% 最新；" +
+                "本次实际线路见下方检测结果。", MessageType.Info);
 
             if (_state.IsGitRepository)
             {
@@ -144,6 +150,38 @@ namespace Runestone.AesirArchitecture.Editor
                     "检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，请勿执行更新——Release 内容会覆盖本地源码。",
                     MessageType.Warning);
             }
+
+            if (_state.Snapshot == null)
+            {
+                return;
+            }
+
+            EditorGUILayout.HelpBox(
+                AesirUpdateService.BuildDetectionSummary(_state.RemoteSource, _state.RemoteRouteKind,
+                    _state.GitHubDirectAvailable), MessageType.None);
+
+            if (_state.RemoteRouteKind == AesirUpdateService.ReleaseRouteKind.CdnRelay)
+            {
+                EditorGUILayout.HelpBox(AesirUpdateService.BuildCdnDelayHintText(), MessageType.Warning);
+            }
+        }
+
+        /// <summary>检测详情（各层尝试记录）折叠区——兜底机制可观测，便于定位网络问题。</summary>
+        void DrawDetectionDetail()
+        {
+            if (string.IsNullOrEmpty(_state.DetectionDetail))
+            {
+                return;
+            }
+
+            _detectionDetailExpanded = EditorGUILayout.Foldout(_detectionDetailExpanded, "检测详情（各层尝试）", true);
+            if (_detectionDetailExpanded)
+            {
+                // 不回写返回值：文本区可滚动浏览、内容以状态为唯一数据源
+                EditorGUILayout.TextArea(_state.DetectionDetail, EditorStyles.textArea);
+            }
+
+            EditorGUILayout.Space();
         }
 
         void DrawPackageList()

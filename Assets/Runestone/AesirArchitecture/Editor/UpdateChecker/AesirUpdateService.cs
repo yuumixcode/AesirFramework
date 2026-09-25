@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -8,6 +9,8 @@ using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Networking;
+// System.Diagnostics 与 UnityEngine 都定义 Debug（检测耗时用 Stopwatch，日志用 Unity 的）
+using Debug = UnityEngine.Debug;
 
 namespace Runestone.AesirArchitecture.Editor
 {
@@ -19,11 +22,11 @@ namespace Runestone.AesirArchitecture.Editor
     /// 不位于 Assets 下，本工具扫描不到，应改用 Package Manager 更新。
     /// </para>
     /// <para>
-    /// 版本检测面向大陆用户做了多源兜底（unitypackage 下载始终走 GitHub Release 直链）：
-    /// ① jsDelivr 多域名拉取仓库内 <see cref="UpdateInfoRelativePath" />（CDN 直达、无限流，
-    /// 分支引用有最长约 12 小时的缓存延迟）；② GitHub Releases API（未认证 60 次/时/IP）；③
-    /// GitHub releases/latest 的 302 重定向探测（完全绕开 API 限流）。见
-    /// <see cref="FetchLatestReleaseSnapshotAsync" />。
+    /// 版本检测按「直连 GitHub → GitHub 镜像站 → 免费 CDN 中转」三层顺序兜底（unitypackage 下载始终走
+    /// GitHub Release 直链），首个成功即返回，并记录最终线路与各层尝试结果供界面展示：直连层依次尝试
+    /// Releases API、releases/latest 的 302 探测、仓库内 update-info.json 的直连 raw；直连不可用时才落镜像站
+    /// （内容实时）；最后才是 jsDelivr 等 CDN 中转（分支缓存最长约 12 小时，界面会给出延迟提示）。
+    /// 见 <see cref="CheckLatestReleaseAsync" />。
     /// </para>
     /// <para>
     /// 更新流程：检测远程版本 → 对比本地版本（直接读取包内 package.json）→ 拉取并展示「本地 → 远程」
@@ -94,7 +97,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>GitHub API / 重定向探测超时（秒）。</summary>
         public const int GitHubCheckTimeoutSeconds = 12;
 
-        /// <summary>unitypackage 下载超时（秒）——大文件慢速连接，给足余量。</summary>
+        /// <summary>unitypackage 下载总时长上限（秒）——大文件慢速连接给足余量；另有"无进展"上限见 <see cref="DownloadStallTimeoutSeconds" />。</summary>
         public const int DownloadTimeoutSeconds = 120;
 
         /// <summary>包内 CHANGELOG 文件名（Keep a Changelog 格式）。</summary>
@@ -144,8 +147,11 @@ namespace Runestone.AesirArchitecture.Editor
             /// <summary>版本与清单信息；302 重定向路径只有 tag，此字段为 null（更新时跳过残留清理）。</summary>
             public UpdateInfo Info;
 
-            /// <summary>来源描述（如 "jsDelivr (cdn.jsdelivr.net)" / "GitHub API" / "GitHub 重定向"）。</summary>
+            /// <summary>来源描述（如 "GitHub API" / "镜像 ghproxy.net" / "jsDelivr (cdn.jsdelivr.net)"）。</summary>
             public string Source;
+
+            /// <summary>来源所属线路类别（直连 GitHub / 镜像站 / CDN 中转）。</summary>
+            public ReleaseRouteKind Kind;
 
             /// <summary>Release 标签名（如 v0.15.0）。</summary>
             public string Tag;
@@ -423,71 +429,447 @@ namespace Runestone.AesirArchitecture.Editor
 
         #endregion
 
-        #region 远程版本检测（jsDelivr → GitHub API → 302 探测）
+        #region 远程版本检测（直连 GitHub → 镜像站 → CDN 中转）
 
         /// <summary>
-        /// 获取最新 Release 快照（tag + 可能的清单）。按以下顺序兜底，首个成功即返回：
-        /// ① jsDelivr 多域名拉取仓库内 update-info.json（大陆友好、无限流，CDN 缓存延迟最长约 12 小时）；
-        /// ② GitHub Releases API（未认证 60 次/时/IP）；③ GitHub releases/latest 的 302 重定向探测。
-        /// 全部失败时抛出含各源错误明细的异常。
+        /// 检测线路类别——决定界面上的实时性提示（越靠前越实时）。
         /// </summary>
-        public static async Task<ReleaseSnapshot> FetchLatestReleaseSnapshotAsync()
+        public enum ReleaseRouteKind
         {
-            var errors = new List<string>();
+            /// <summary>
+            /// 直连 GitHub（api.github.com / github.com / raw.githubusercontent.com）：
+            /// 发布即刻可见，版本信息 100% 实时。
+            /// </summary>
+            GitHubDirect = 0,
+
+            /// <summary>GitHub 镜像站（第三方代理 GitHub 内容）：内容实时，可用性取决于镜像站自身。</summary>
+            GitHubMirror = 1,
+
+            /// <summary>免费 CDN 中转（jsDelivr 等）：分支内容有缓存，可能有数小时延迟。</summary>
+            CdnRelay = 2
+        }
+
+        /// <summary>单次检测尝试的记录（界面「检测详情」与故障定位用）。</summary>
+        [Serializable]
+        public sealed class DetectionAttempt
+        {
+            /// <summary>源展示名（如 "GitHub API" / "镜像 ghproxy.net" / "jsDelivr (cdn.jsdelivr.net)"）。</summary>
+            public string Source;
+
+            /// <summary>所属线路类别。</summary>
+            public ReleaseRouteKind Kind;
+
+            /// <summary>本次尝试是否成功。</summary>
+            public bool Succeeded;
+
+            /// <summary>成功说明（解析到的 tag）或失败原因。</summary>
+            public string Detail;
+
+            /// <summary>耗时（毫秒）。</summary>
+            public long ElapsedMs;
+        }
+
+        /// <summary>
+        /// 一次版本检测的完整结果：快照 + 线路信息 + 各层尝试记录。
+        /// <para>标记 <see cref="SerializableAttribute" /> — 窗口状态字段持有后可跨域重载保留。</para>
+        /// </summary>
+        [Serializable]
+        public sealed class ReleaseCheckResult
+        {
+            /// <summary>检测结果快照（tag + 可能的清单）。</summary>
+            public ReleaseSnapshot Snapshot;
+
+            /// <summary>最终返回结果的线路类别。</summary>
+            public ReleaseRouteKind RouteKind;
+
+            /// <summary>最终返回结果的源展示名。</summary>
+            public string RouteName;
+
+            /// <summary>本次检测中直连 GitHub 是否可用（可用即结果 100% 实时，无延迟顾虑）。</summary>
+            public bool GitHubDirectAvailable;
+
+            /// <summary>各层尝试记录（按实际尝试顺序）。</summary>
+            public DetectionAttempt[] Attempts;
+
+            /// <summary>各层尝试的可读摘要（一行一次尝试，成功在前标注 ✓）。</summary>
+            public string BuildAttemptsLog()
+            {
+                if (Attempts == null || Attempts.Length == 0)
+                {
+                    return "（无尝试记录）";
+                }
+
+                var builder = new StringBuilder();
+                foreach (var attempt in Attempts)
+                {
+                    if (builder.Length > 0)
+                    {
+                        builder.Append('\n');
+                    }
+
+                    builder.Append(attempt.Succeeded ? "✓ " : "✗ ").Append(attempt.Source).Append("：")
+                        .Append(attempt.Detail).Append("（").Append(attempt.ElapsedMs).Append(" ms）");
+                }
+
+                return builder.ToString();
+            }
+        }
+
+        /// <summary>
+        /// 单次检测尝试的超时（秒）——单源不可达时快速失败并落到下一层，
+        /// 避免层层长等待把整体检测拖到几十秒。
+        /// </summary>
+        public const int DetectionAttemptTimeoutSeconds = 5;
+
+        /// <summary>
+        /// 整轮版本检测的总超时（秒）——超时后不再发起新的源请求（已完成的尝试记录保留、界面照常展示），
+        /// 避免"直连 3 源 + 镜像 2 源 + CDN 4 源"全部卡住时把窗口拖到 40 秒以上。
+        /// </summary>
+        public const int DetectionTotalTimeoutSeconds = 30;
+
+        /// <summary>
+        /// 下载无进展超时（秒）——下载过程中连续该时长没有任何字节进展即中止
+        /// （总时长上限见 <see cref="DownloadTimeoutSeconds" />）。服务端慢速滴水或连接挂起时，
+        /// <c>UnityWebRequest.timeout</c> 不会触发，只有墙钟判据能兜住。
+        /// </summary>
+        public const int DownloadStallTimeoutSeconds = 30;
+
+        /// <summary>
+        /// 直连 GitHub 的 update-info.json 地址（GitHub 自有域名，无 API 限流、带文件清单；
+        /// 缓存仅数分钟，远优于 CDN 中转）。
+        /// </summary>
+        public static readonly string GitHubRawUpdateInfoUrl =
+            $"https://raw.githubusercontent.com/{RepoPath}/main/{UpdateInfoRelativePath}";
+
+        /// <summary>
+        /// GitHub 镜像站前缀（第三方代理 raw.githubusercontent.com；「前缀 + 完整 GitHub 地址」形态）。
+        /// 顺序即尝试顺序——直连不通时镜像站仍返回实时内容。
+        /// </summary>
+        public static readonly string[] GitHubMirrorPrefixes = { "https://ghproxy.net/", "https://gh-proxy.com/" };
+
+        /// <summary>jsDelivr CDN 上的 update-info.json 地址（分支引用，缓存最长约 12 小时）。</summary>
+        public static string BuildJsDelivrUpdateInfoUrl(string domain) =>
+            $"https://{domain}/gh/{RepoPath}@main/{UpdateInfoRelativePath}";
+
+        /// <summary>线路类别的展示标签（界面「获取线路」用）。</summary>
+        public static string GetRouteKindLabel(ReleaseRouteKind kind)
+        {
+            switch (kind)
+            {
+                case ReleaseRouteKind.GitHubDirect:
+                    return "直连 GitHub";
+                case ReleaseRouteKind.GitHubMirror:
+                    return "镜像站";
+                default:
+                    return "CDN 中转";
+            }
+        }
+
+        /// <summary>
+        /// 连接状态文案：直连可用 = 本次结果 100% 实时；否则说明结果来自兜底线路。
+        /// </summary>
+        public static string BuildConnectionStatusText(bool gitHubDirectAvailable) =>
+            gitHubDirectAvailable
+                ? "GitHub 直连：可用 —— 版本信息 100% 实时。"
+                : "GitHub 直连：不可用 —— 已通过兜底线路获取，结果可能不是最新。";
+
+        /// <summary>获取线路文案：最终结果是经哪条线路拿到的（直连 / 镜像站 / CDN 中转）。</summary>
+        public static string BuildRouteText(string routeName, ReleaseRouteKind kind) =>
+            $"获取线路：{routeName}（{GetRouteKindLabel(kind)}）。";
+
+        /// <summary>CDN 中转延迟提示（仅当结果来自 CDN 中转时展示）。</summary>
+        public static string BuildCdnDelayHintText() =>
+            "本次版本信息经 CDN 中转获取，可能有数小时延迟（jsDelivr 分支缓存最长约 12 小时）。" +
+            "如需确认是否为最新版，请点「打开 Releases 页面」查看。";
+
+        /// <summary>检测结果摘要（连接状态 + 获取线路两行，界面合并展示）。</summary>
+        public static string BuildDetectionSummary(string routeName,
+            ReleaseRouteKind kind,
+            bool gitHubDirectAvailable) =>
+            BuildConnectionStatusText(gitHubDirectAvailable) + "\n" + BuildRouteText(routeName, kind);
+
+        /// <summary>
+        /// 检测远程最新 Release（tag + 可能的清单），按「直连 GitHub → 镜像站 → CDN 中转」三层顺序兜底，
+        /// 首个成功即返回；单次尝试超时 <see cref="DetectionAttemptTimeoutSeconds" /> 秒。
+        /// </summary>
+        /// <remarks>
+        ///     <para>
+        ///     第一层直连 GitHub（最实时，依次尝试）：① Releases API（结构化、发布即刻可见，未认证 60 次/时/IP）；
+        ///     ② releases/latest 的 302 重定向探测（完全绕开 API 限流）；③ 仓库内 update-info.json 的直连 raw
+        ///     （无 API 限流且带文件清单，缓存仅数分钟）。
+        ///     </para>
+        ///     <para>
+        ///     第二层镜像站（<see cref="GitHubMirrorPrefixes" /> 代理 raw 内容，内容实时）；
+        ///     第三层免费 CDN 中转（<see cref="JsDelivrDomains" />，分支缓存最长约 12 小时）。
+        ///     直连可用时绝不用后两层——这保证「能连 GitHub 就是最新」。
+        ///     </para>
+        ///     <para>
+        ///     只有 tag 的结果（API / 302）会再按同层顺序补齐文件清单（清单缺失会跳过"差集清理残留"）；
+        ///     补齐只接受 tag 与本次检测一致者——CDN 可能仍是旧版本，错配清单会误删文件。
+        ///     </para>
+        ///     <para>全部失败时抛出含各源错误明细的异常。</para>
+        /// </remarks>
+        /// <param name="fetchTextAsync">
+        /// 文本拉取委托（默认走真实网络 <see cref="GetTextAsync" />）；测试注入 fake 以覆盖兜底顺序。
+        /// </param>
+        /// <param name="probeLatestTagAsync">
+        /// 302 探测委托（默认走真实网络 <see cref="ProbeLatestTagFromRedirect" />）。
+        /// </param>
+        /// <param name="clock">
+        /// 时钟委托（默认 <see cref="DefaultClock" />，编辑器启动秒数）；测试注入以覆盖整轮超时分支。
+        /// </param>
+        public static async Task<ReleaseCheckResult> CheckLatestReleaseAsync(
+            Func<string, int, Task<string>> fetchTextAsync = null,
+            Func<Task<string>> probeLatestTagAsync = null,
+            Func<double> clock = null)
+        {
+            // 显式 lambda 而非方法组：拉取方法带可选参数，方法组转换不接受缺省实参
+            fetchTextAsync ??= (url, timeoutSeconds) => GetTextAsync(url, timeoutSeconds);
+            probeLatestTagAsync ??= () => ProbeLatestTagFromRedirect();
+            clock ??= DefaultClock;
+            var totalBudget = new TimeoutBudget(DetectionTotalTimeoutSeconds, clock());
+            var attempts = new List<DetectionAttempt>();
+
+            // 整轮预算守卫：超时后不再发起新请求（已完成的尝试照常留痕，界面能看到为什么停下）
+            bool HasBudget(string name, ReleaseRouteKind kind)
+            {
+                if (!totalBudget.IsExpired(clock()))
+                {
+                    return true;
+                }
+
+                attempts.Add(RecordAttempt(name, kind, false,
+                    $"跳过：整轮检测已超时（{DetectionTotalTimeoutSeconds} 秒）", Stopwatch.StartNew()));
+                return false;
+            }
+
+            // ── 第一层：直连 GitHub（最实时；能连上就是最新）──
+            ReleaseSnapshot snapshot = null;
+            if (HasBudget("GitHub API", ReleaseRouteKind.GitHubDirect))
+            {
+                snapshot = await TryTagSourceAsync("GitHub API", ReleaseRouteKind.GitHubDirect,
+                    async () => ExtractJsonField(
+                        await fetchTextAsync(LatestReleaseApiUrl, DetectionAttemptTimeoutSeconds), "tag_name"),
+                    attempts);
+            }
+
+            if (snapshot == null && HasBudget("GitHub 重定向", ReleaseRouteKind.GitHubDirect))
+            {
+                snapshot = await TryTagSourceAsync("GitHub 重定向", ReleaseRouteKind.GitHubDirect,
+                    probeLatestTagAsync, attempts);
+            }
+
+            if (snapshot == null && HasBudget("GitHub Raw", ReleaseRouteKind.GitHubDirect))
+            {
+                snapshot = await TryUpdateInfoSourceAsync("GitHub Raw", ReleaseRouteKind.GitHubDirect,
+                    GitHubRawUpdateInfoUrl, fetchTextAsync, attempts);
+            }
+
+            // ── 第二层：镜像站（第三方代理 GitHub 内容，内容实时）──
+            if (snapshot == null)
+            {
+                foreach (var prefix in GitHubMirrorPrefixes)
+                {
+                    var mirrorName = $"镜像 {new Uri(prefix).Host}";
+                    if (!HasBudget(mirrorName, ReleaseRouteKind.GitHubMirror))
+                    {
+                        break;
+                    }
+
+                    snapshot = await TryUpdateInfoSourceAsync(mirrorName, ReleaseRouteKind.GitHubMirror,
+                        prefix + GitHubRawUpdateInfoUrl, fetchTextAsync, attempts);
+                    if (snapshot != null)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // ── 第三层：免费 CDN 中转（有缓存延迟，故排最后）──
+            if (snapshot == null)
+            {
+                foreach (var domain in JsDelivrDomains)
+                {
+                    var cdnName = $"jsDelivr ({domain})";
+                    if (!HasBudget(cdnName, ReleaseRouteKind.CdnRelay))
+                    {
+                        break;
+                    }
+
+                    snapshot = await TryUpdateInfoSourceAsync(cdnName, ReleaseRouteKind.CdnRelay,
+                        BuildJsDelivrUpdateInfoUrl(domain), fetchTextAsync, attempts);
+                    if (snapshot != null)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            if (snapshot == null)
+            {
+                var headline = totalBudget.IsExpired(clock())
+                    ? $"版本检测超时（超过 {DetectionTotalTimeoutSeconds} 秒）"
+                    : "所有更新源均不可用";
+                throw new Exception(headline + "：\n" +
+                                    new ReleaseCheckResult { Attempts = attempts.ToArray() }.BuildAttemptsLog());
+            }
+
+            // tag-only 结果（API / 302）补齐文件清单：清单缺失会跳过"差集清理残留"。
+            // 同样受整轮预算约束——预算已耗尽时不再补，tag 才是更新必需的信息
+            if (snapshot.Info == null && !totalBudget.IsExpired(clock()))
+            {
+                await TryEnrichManifestAsync(snapshot, fetchTextAsync, attempts, totalBudget, clock);
+            }
+
+            return new ReleaseCheckResult
+            {
+                Snapshot = snapshot,
+                RouteKind = snapshot.Kind,
+                RouteName = snapshot.Source,
+                GitHubDirectAvailable = snapshot.Kind == ReleaseRouteKind.GitHubDirect,
+                Attempts = attempts.ToArray()
+            };
+        }
+
+        /// <summary>
+        /// 旧入口（保留兼容）：等价于 <see cref="CheckLatestReleaseAsync" /> 的快照部分。
+        /// 新代码请用 <see cref="CheckLatestReleaseAsync" />——它还给出线路类别与各层尝试记录。
+        /// </summary>
+        public static async Task<ReleaseSnapshot> FetchLatestReleaseSnapshotAsync() =>
+            (await CheckLatestReleaseAsync()).Snapshot;
+
+        /// <summary>尝试从"只给 tag"的源（API / 302 探测）取最新 tag；失败记录原因并返回 null。</summary>
+        static async Task<ReleaseSnapshot> TryTagSourceAsync(string name,
+            ReleaseRouteKind kind,
+            Func<Task<string>> fetchTagAsync,
+            List<DetectionAttempt> attempts)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                var tag = await fetchTagAsync();
+                if (!string.IsNullOrEmpty(tag))
+                {
+                    attempts.Add(RecordAttempt(name, kind, true, tag, stopwatch));
+                    return new ReleaseSnapshot { Source = name, Kind = kind, Tag = tag };
+                }
+
+                attempts.Add(RecordAttempt(name, kind, false, "响应中未解析到 tag", stopwatch));
+            }
+            catch (Exception e)
+            {
+                attempts.Add(RecordAttempt(name, kind, false, e.Message, stopwatch));
+            }
+
+            return null;
+        }
+
+        /// <summary>尝试从 update-info.json（tag + 清单）取版本信息；失败记录原因并返回 null。</summary>
+        static async Task<ReleaseSnapshot> TryUpdateInfoSourceAsync(string name,
+            ReleaseRouteKind kind,
+            string url,
+            Func<string, int, Task<string>> fetchTextAsync,
+            List<DetectionAttempt> attempts)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            try
+            {
+                var info = ParseUpdateInfo(await fetchTextAsync(url, DetectionAttemptTimeoutSeconds));
+                if (info?.tag != null)
+                {
+                    attempts.Add(RecordAttempt(name, kind, true, info.tag, stopwatch));
+                    return new ReleaseSnapshot { Source = name, Kind = kind, Tag = info.tag, Info = info };
+                }
+
+                attempts.Add(RecordAttempt(name, kind, false, "响应中无 tag 字段", stopwatch));
+            }
+            catch (Exception e)
+            {
+                attempts.Add(RecordAttempt(name, kind, false, e.Message, stopwatch));
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 为只有 tag 的检测结果补齐文件清单（best-effort，按 直连 raw → 镜像站 → CDN 顺序）。
+        /// 遇到首个可解析但 tag 不一致的源即停止——列表按实时性排序，其后各源不会更新，
+        /// 继续尝试只会白等（CDN 分支缓存最长约 12 小时，正是典型的陈旧源）。
+        /// </summary>
+        static async Task TryEnrichManifestAsync(ReleaseSnapshot snapshot,
+            Func<string, int, Task<string>> fetchTextAsync,
+            List<DetectionAttempt> attempts,
+            TimeoutBudget totalBudget,
+            Func<double> clock)
+        {
+            var candidates = new List<(string name, ReleaseRouteKind kind, string url)>
+            {
+                ("GitHub Raw", ReleaseRouteKind.GitHubDirect, GitHubRawUpdateInfoUrl)
+            };
+            foreach (var prefix in GitHubMirrorPrefixes)
+            {
+                candidates.Add(($"镜像 {new Uri(prefix).Host}", ReleaseRouteKind.GitHubMirror,
+                    prefix + GitHubRawUpdateInfoUrl));
+            }
 
             foreach (var domain in JsDelivrDomains)
             {
+                candidates.Add(($"jsDelivr ({domain})", ReleaseRouteKind.CdnRelay,
+                    BuildJsDelivrUpdateInfoUrl(domain)));
+            }
+
+            foreach (var (name, kind, url) in candidates)
+            {
+                if (totalBudget.IsExpired(clock()))
+                {
+                    attempts.Add(RecordAttempt(name, kind, false,
+                        $"跳过补齐清单：整轮检测已超时（{DetectionTotalTimeoutSeconds} 秒）",
+                        Stopwatch.StartNew()));
+                    return;
+                }
+
+                var stopwatch = Stopwatch.StartNew();
                 try
                 {
-                    var url = $"https://{domain}/gh/{RepoPath}@main/{UpdateInfoRelativePath}";
-                    var info = ParseUpdateInfo(await GetTextAsync(url, JsDelivrCheckTimeoutSeconds));
-                    if (info?.tag != null)
+                    var info = ParseUpdateInfo(await fetchTextAsync(url, DetectionAttemptTimeoutSeconds));
+                    if (info?.tag == null)
                     {
-                        return new ReleaseSnapshot
-                            { Source = $"jsDelivr ({domain})", Tag = info.tag, Info = info };
+                        attempts.Add(RecordAttempt(name, kind, false, "补齐清单：响应中无 tag 字段", stopwatch));
+                        continue;
                     }
 
-                    errors.Add($"jsDelivr ({domain}): 响应中无 tag 字段");
+                    if (CompareVersion(info.tag, snapshot.Tag) != 0)
+                    {
+                        attempts.Add(RecordAttempt(name, kind, false,
+                            $"补齐清单：该源版本 {info.tag} 与本次检测 {snapshot.Tag} 不一致，跳过（不采用陈旧清单）",
+                            stopwatch));
+                        return;
+                    }
+
+                    snapshot.Info = info;
+                    attempts.Add(RecordAttempt(name, kind, true, $"补齐清单（{info.tag}）", stopwatch));
+                    return;
                 }
                 catch (Exception e)
                 {
-                    errors.Add($"jsDelivr ({domain}): {e.Message}");
+                    attempts.Add(RecordAttempt(name, kind, false, $"补齐清单：{e.Message}", stopwatch));
                 }
             }
-
-            try
-            {
-                var json = await GetTextAsync(LatestReleaseApiUrl, GitHubCheckTimeoutSeconds);
-                var tag = ExtractJsonField(json, "tag_name");
-                if (!string.IsNullOrEmpty(tag))
-                {
-                    return new ReleaseSnapshot { Source = "GitHub API", Tag = tag };
-                }
-
-                errors.Add("GitHub API: 响应中无 tag_name 字段");
-            }
-            catch (Exception e)
-            {
-                errors.Add($"GitHub API: {e.Message}");
-            }
-
-            try
-            {
-                var tag = await ProbeLatestTagFromRedirect();
-                if (tag != null)
-                {
-                    return new ReleaseSnapshot { Source = "GitHub 重定向", Tag = tag };
-                }
-
-                errors.Add("GitHub 重定向: Location 中未解析到 tag");
-            }
-            catch (Exception e)
-            {
-                errors.Add($"GitHub 重定向: {e.Message}");
-            }
-
-            throw new Exception("所有更新源均不可用：\n" + string.Join("\n", errors));
         }
+
+        static DetectionAttempt RecordAttempt(string name,
+            ReleaseRouteKind kind,
+            bool succeeded,
+            string detail,
+            Stopwatch stopwatch) =>
+            new DetectionAttempt
+            {
+                Source = name,
+                Kind = kind,
+                Succeeded = succeeded,
+                Detail = detail,
+                ElapsedMs = stopwatch.ElapsedMilliseconds
+            };
 
         /// <summary>
         /// 解析 update-info.json；内容为空或格式异常时返回 null（调用方按"源不可用"处理）。
@@ -514,14 +896,22 @@ namespace Runestone.AesirArchitecture.Editor
         /// 向 GitHub releases/latest 发起禁止重定向的 HEAD 请求，从 302 Location 中提取最新 tag。
         /// 完全绕开 API 限流（该路径不走 api.github.com）。
         /// </summary>
-        public static async Task<string> ProbeLatestTagFromRedirect()
+        public static async Task<string> ProbeLatestTagFromRedirect(Func<double> clock = null)
         {
+            clock ??= DefaultClock;
             using var request = UnityWebRequest.Head(LatestReleasePageUrl);
             request.redirectLimit = 0;
             request.timeout = GitHubCheckTimeoutSeconds;
+            var budget = new TimeoutBudget(GitHubCheckTimeoutSeconds, clock());
             var operation = request.SendWebRequest();
             while (!operation.isDone)
             {
+                if (budget.IsExpired(clock()))
+                {
+                    request.Abort();
+                    throw new Exception($"请求超时（超过 {GitHubCheckTimeoutSeconds} 秒）：{LatestReleasePageUrl}");
+                }
+
                 await Task.Yield();
             }
 
@@ -554,14 +944,55 @@ namespace Runestone.AesirArchitecture.Editor
 
         #region 网络下载
 
-        /// <summary>GET 文本内容（UnityWebRequest，编辑器主线程异步等待）。</summary>
-        public static async Task<string> GetTextAsync(string url, int timeoutSeconds = 20)
+        /// <summary>默认时钟：编辑器启动以来的秒数（测试可注入自定义时钟以验证超时分支）。</summary>
+        public static double DefaultClock() => EditorApplication.timeSinceStartup;
+
+        /// <summary>
+        /// 墙钟超时预算。用于给"整轮检测""单次请求""下载"设硬上限——
+        /// <c>UnityWebRequest.timeout</c> 只覆盖"完全无数据"的情形，服务端慢速滴水时不会触发，
+        /// 会把进度条长时间挂在屏幕上（用户实测反馈）。
+        /// </summary>
+        public readonly struct TimeoutBudget
         {
+            readonly double _deadline;
+
+            /// <summary>以 <paramref name="limitSeconds" /> 为上限、自 <paramref name="now" /> 起算建立预算。</summary>
+            public TimeoutBudget(double limitSeconds, double now)
+            {
+                LimitSeconds = limitSeconds;
+                _deadline = now + limitSeconds;
+            }
+
+            /// <summary>预算时长（秒）。</summary>
+            public double LimitSeconds { get; }
+
+            /// <summary>当前时刻是否已超时。</summary>
+            public bool IsExpired(double now) => now >= _deadline;
+
+            /// <summary>剩余时间（秒，最小 0）。</summary>
+            public double Remaining(double now) => Math.Max(0d, _deadline - now);
+        }
+
+        /// <summary>
+        /// GET 文本内容（UnityWebRequest，编辑器主线程异步等待）。
+        /// 除 <c>request.timeout</c>（无数据超时）外再加墙钟硬上限：超时即 <c>Abort</c> 并抛超时异常。
+        /// </summary>
+        public static async Task<string> GetTextAsync(string url, int timeoutSeconds = 20,
+            Func<double> clock = null)
+        {
+            clock ??= DefaultClock;
             using var request = UnityWebRequest.Get(url);
             request.timeout = timeoutSeconds;
+            var budget = new TimeoutBudget(timeoutSeconds, clock());
             var operation = request.SendWebRequest();
             while (!operation.isDone)
             {
+                if (budget.IsExpired(clock()))
+                {
+                    request.Abort();
+                    throw new Exception($"请求超时（超过 {timeoutSeconds} 秒）：{url}");
+                }
+
                 await Task.Yield();
             }
 
@@ -573,17 +1004,49 @@ namespace Runestone.AesirArchitecture.Editor
             return request.downloadHandler.text;
         }
 
-        /// <summary>GET 二进制内容（用于下载 unitypackage），通过回调上报 0~1 下载进度。</summary>
+        /// <summary>
+        /// GET 二进制内容（用于下载 unitypackage），通过回调上报 0~1 下载进度。
+        /// 双重墙钟上限：总时长 <paramref name="timeoutSeconds" /> 与"无进展"
+        /// <paramref name="stallTimeoutSeconds" />——任一超限即 <c>Abort</c> 并抛超时异常，
+        /// 保证上层进度条必定收尾（不会出现长时间卡住的进度条）。
+        /// </summary>
         public static async Task<byte[]> DownloadBytesAsync(string url,
             Action<float> onProgress = null,
-            int timeoutSeconds = DownloadTimeoutSeconds)
+            int timeoutSeconds = DownloadTimeoutSeconds,
+            int stallTimeoutSeconds = DownloadStallTimeoutSeconds,
+            Func<double> clock = null)
         {
+            clock ??= DefaultClock;
             using var request = UnityWebRequest.Get(url);
             request.timeout = timeoutSeconds;
+            var totalBudget = new TimeoutBudget(timeoutSeconds, clock());
             var operation = request.SendWebRequest();
+
+            var lastProgress = -1f;
+            var lastProgressAt = clock();
             while (!operation.isDone)
             {
-                onProgress?.Invoke(request.downloadProgress);
+                var now = clock();
+                if (totalBudget.IsExpired(now))
+                {
+                    request.Abort();
+                    throw new Exception($"下载超时（总时长超过 {timeoutSeconds} 秒，已下载 {request.downloadProgress:P0}）：{url}");
+                }
+
+                var progress = request.downloadProgress;
+                if (progress > lastProgress)
+                {
+                    lastProgress = progress;
+                    lastProgressAt = now;
+                }
+                else if (now - lastProgressAt >= stallTimeoutSeconds)
+                {
+                    request.Abort();
+                    throw new Exception(
+                        $"下载超时（连续 {stallTimeoutSeconds} 秒无进展，已下载 {progress:P0}）：{url}");
+                }
+
+                onProgress?.Invoke(progress);
                 await Task.Yield();
             }
 
@@ -1177,6 +1640,9 @@ namespace Runestone.AesirArchitecture.Editor
 
                 onProgress?.Invoke($"[{pkg.DirName}] 导入 {assetName} ...",
                     progressBase + progressSpan * 0.95f);
+                // 导入期间 Unity 会显示自己的导入进度条：先收起本工具的进度条，避免两条进度条互相覆盖；
+                // 导入结束后由下一次 onProgress 回调重新显示本工具的进度条
+                EditorUtility.ClearProgressBar();
                 AssetDatabase.ImportPackage(tempFile, false);
                 File.Delete(tempFile);
 
@@ -1209,6 +1675,18 @@ namespace Runestone.AesirArchitecture.Editor
                 {
                     localManifest = MergePackageEntry(localManifest, newEntry);
                     SaveLocalManifest(localManifest);
+                }
+
+                // 每包结束后明确报出下一步（含"无更多包"），避免多包更新时进度条停在上一包的导入文案上
+                if (i + 1 < targets.Count)
+                {
+                    onProgress?.Invoke(
+                        $"[{pkg.DirName}] 已完成（{i + 1}/{targets.Count}），准备更新 {targets[i + 1].DirName} ...",
+                        progressBase + progressSpan);
+                }
+                else
+                {
+                    onProgress?.Invoke($"[{pkg.DirName}] 已完成（{i + 1}/{targets.Count}）", 0.95f);
                 }
             }
 
