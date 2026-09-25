@@ -199,21 +199,6 @@ namespace UnityTcp.Editor.Tools
     /// </summary>
     public static class GenerateSkyboxTool
     {
-        [ExecuteCustomTool.CustomTool("generate_skybox",
-            "Generate a skybox (Cubemap) from a text prompt or reference image using AI. " +
-            "The output is a PNG imported as a Cubemap texture saved to Assets/TJGenerators/History/. " +
-            "Parameters: generator_id (optional, default 'rodin-skybox'), prompt (text description), " +
-            "image_path (reference image path, optional), output_path (optional asset save path). " +
-            "IMPORTANT ASYNC WORKFLOW: " +
-            "(1) Call this tool to start the generation task. Returns task_id and placeholder assets immediately. " +
-            "(2) Apply placeholder assets to the scene using the `place_assets_in_scene` skill. " +
-            "(3) END YOUR CURRENT RESPONSE TURN immediately after step 2. " +
-            "    *** POLLING IS STRICTLY FORBIDDEN. NEVER call `query_skybox_status` in a loop or repeatedly. *** " +
-            "    Only call `query_skybox_status` ONCE as a last-resort fallback if no notification arrives after the estimated wait time. " +
-            "(4) A <bg_task_done> notification will arrive automatically in your next turn when generation finishes. " +
-            "    The notification payload contains ALL the same fields as `query_skybox_status` (texture_path, material_path, preview_url, generator_id, prompt, start_time, end_time, duration_seconds, etc.). " +
-            "    If you receive the notification, the task is done — do NOT call `query_skybox_status` under any circumstances. " +
-            "    Note: automatic notification requires a compatible CLI client version; if no notification arrives, call `query_skybox_status` ONCE only.")]
         public static object GenerateSkybox(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -304,7 +289,7 @@ namespace UnityTcp.Editor.Tools
                     {
                         SkyboxTaskTracker.MarkCompleted(taskId, savedPath, previewUrl);
                         // Read the completed task to include timing fields in the notification,
-                        // mirroring the full field set returned by query_skybox_status.
+                        // mirroring the full field set returned by query_local_task.
                         var t = SkyboxTaskTracker.GetTask(taskId);
                         GenerationNotifier.NotifyCompleted("generate_skybox", taskId, capturedBackendTaskId,
                             new JObject
@@ -350,12 +335,12 @@ namespace UnityTcp.Editor.Tools
                     { "submission_success", true },
                     { "message",
                         "Skybox generation started. " +
-                        "STEP 1 (do now): Use `place_assets_in_scene` skill to apply placeholder_material_path to the scene skybox. " +
-                        "STEP 2 (critical): END THIS RESPONSE TURN immediately after applying the placeholder. " +
-                        "STEP 3 (automatic): A <bg_task_done> notification will appear in your next turn (~90s) " +
+                        "STEP 1 (do now): Call activate_skill(\"unity-place-assets-in-scene\"), then use exec_editor_script as instructed to apply placeholder_material_path to the scene skybox. " +
+                        "STEP 2 (critical): Keep this worker active until the task is terminal and its assets are verified. " +
+                        "STEP 3: A <bg_task_done> notification may arrive (~90s) " +
                         "containing ALL generation results (texture_path, material_path, preview_url, timing, etc.). " +
-                        "*** POLLING IS STRICTLY FORBIDDEN — do NOT call query_skybox_status repeatedly. " +
-                        "Only call query_skybox_status ONCE as a last-resort fallback if no notification arrives. ***" },
+                        "Wait up to 30 seconds in the current worker, then call query_local_task once; repeat only while pending. " +
+                        "Do not busy-poll query_local_task, submit again, or report success while pending." },
                     { "task_id",            taskId },
                     { "backend_task_id",    submitResult.BackendTaskId },
                     { "status",             "submitted" },
@@ -367,7 +352,7 @@ namespace UnityTcp.Editor.Tools
                     { "preview_url",        PreviewUrlHelper.BuildFixedPreviewUrl(submitResult.BackendTaskId) },
                     { "estimated_wait_seconds", 90 },
                     { "notification_mode",  "bg_task_done" },
-                    { "next_action",        "Apply placeholder NOW, then END YOUR TURN. Wait for <bg_task_done> notification with final texture_path." }
+                    { "next_action",        "Apply the placeholder once, then wait and query this task until terminal; verify the final Cubemap and material before reporting success." }
                 };
             }
             catch (Exception e)
@@ -388,11 +373,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_skybox_status",
-            "Query the status of a skybox generation task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "Status values: 'generating', 'recovering', 'completed', 'failed', 'interrupted'. " +
-            "When completed, returns 'texture_path' with the Cubemap asset path in the project. " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QuerySkyboxStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -474,7 +454,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_skybox_tasks", "List all active and recent skybox generation tasks")]
         public static object ListSkyboxTasks(JObject parameters)
         {
 #if UNITY_EDITOR

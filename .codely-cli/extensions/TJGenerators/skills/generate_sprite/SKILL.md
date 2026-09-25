@@ -3,15 +3,14 @@ name: unity-sprite-generation
 description: Generate 2D sprite assets (game icons, item images, UI elements, character portraits, skill icons) in Unity using AI via text prompts or reference images. Use this skill whenever the user wants to create a 2D image asset for a Unity game — even if they just say "帮我生成一个道具图标", "给武器画个图", "make me a sprite for my RPG item", or "generate a game icon". Trigger proactively for any 2D art asset creation request in a Unity context, including icons, portraits, textures, or any visual content for games. Uses 火山 SeeDream (huoshan_seedream) as the default model.
 ---
 
-> ⚠️ **执行约束**
-> - **主 agent**：无 `execute_custom_tool` 权限，必须 `task(subagent_name="sprite-and-sprite-sequence-generator", ...)` 委托，不要 `activate_skill` 后自己调。
-> - **子代理（本文档主要读者）**：有权限，按下方 `execute_custom_tool(...)` 示例执行。
+> **执行前读取**：[共享执行约定](../../experience/templates/generator-async-pattern.md)。
+> 主 agent 按需委托 `general-purpose`；已在子代理中则直接执行本 skill，不再委托。已提交的阶段从原任务续接。
 
-> ⛔ **`place_assets_in_scene` 调用规则**
-> - **调用方式**：`activate_skill("unity-place-assets-in-scene")` → 按 §4b Sprite 模板用 `execute_csharp_script` 建 `SpriteRenderer` 或 UI `Image`（**不是** `execute_custom_tool`）。
+> ⛔ **场景放置规则**
+> - **调用方式**：`activate_skill("unity-place-assets-in-scene")` → 按 §4b Sprite 模板用 `exec_editor_script` 建 `SpriteRenderer` 或 UI `Image`（**不是** `execute_custom_tool`）。
 > - **子代理**：提交后**立即调一次**放占位 Sprite（SpriteRenderer / UI Image）；收到 `<bg_task_done>` 后**不再调**（PNG 原地覆盖，已实例化的 SpriteRenderer/Image 自动显示真实精灵）。
 > - **主 agent**：报告里的 `sprite_path` 是"已放置"的证据，不是"请你放置"的指示，**不要再调**。
-> - **例外**：用户明确要"再放一份 / 换位置 / 改 scale"时才再次调用。详见 [async-pattern §5.1](../../experience/templates/generator-async-pattern.md#51-place_assets_in_scene-调用规则)。
+> - **例外**：用户明确要"再放一份 / 换位置 / 改 scale"时才再次调用。详见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 # Generate 2D Sprite in Unity 🎨
 
@@ -28,11 +27,11 @@ Output: PNG 自动导入为 **Sprite (`TextureImporterType.Sprite`)**，保存�
 ## 🚦 执行四步（不要跳读外链）
 
 1. 调 `generate_sprite` → 拿 `task_id` + `placeholder_path`（1×1 灰 Sprite）
-2. 立即 `place_assets_in_scene`（资产类型 `Sprite`，路径用 `placeholder_path`）→ 建立 `SpriteRenderer` 或 UI `Image`
-3. **END RESPONSE TURN** — 不要 poll、不要 `query_sprite_status`、不要继续操作
-4. 下一轮收到 `<bg_task_done>` → 读 `sprite_path` / `image_path`（PNG 已原地覆盖，已实例化的 SpriteRenderer/Image 自动显示真实精灵，**不要再 place**）
+2. 立即 `activate_skill("unity-place-assets-in-scene")`，用 `exec_editor_script` 放置 `placeholder_path` 的 `Sprite` → 建立 `SpriteRenderer` 或 UI `Image`
+3. 在当前执行者内按共享约定有间隔等待，调用 `query_local_task` 确认当前阶段的终态
+4. 确认当前任务 `completed` 后 → 读 `sprite_path` / `image_path`（PNG 已原地覆盖，已实例化的 SpriteRenderer/Image 自动显示真实精灵，**不要再 place**）
 
-**档位**：短任务 60–180 秒；120 秒内无通知才允许 `query_sprite_status` 一次。最多 **5 个**并发。完整 async 规则见 [generator-async-pattern](../../experience/templates/generator-async-pattern.md)。
+**档位**：短任务 60–180 秒；无通知时按共享约定等待后查询 `query_local_task`。最多 **5 个**并发。完整 async 规则见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 ## ⚠️ Skill 独有约束
 
@@ -40,7 +39,13 @@ Output: PNG 自动导入为 **Sprite (`TextureImporterType.Sprite`)**，保存�
 2. **至少要给一个输入**——`prompt` 或 `image_path` 至少一个。
 3. **`size` 最小 ~1920×1920**——小于约 3,686,400 像素会 400 报错（与 generate_image 共享此限制）。
 4. **`is_segmentation` 默认 `true`**——sprite 默认抠背景做透明（适合道具/角色/技能图标）；UI 背景/场景类设 `false`。
-5. **资产类型必须是 `Sprite` 而非 `Texture2D`**——`place_assets_in_scene` 会按 Sprite 类型把资产挂到 `SpriteRenderer` 或 UI `Image`；用 `Texture2D` 类型会得到 `RawImage`，不能直接做游戏内精灵。
+5. **资产类型必须是 `Sprite` 而非 `Texture2D`**——放置 skill 的 Sprite 模板把资产挂到 `SpriteRenderer` 或 UI `Image`；用 `Texture2D` 模板会得到 `RawImage`，不能直接做游戏内精灵。
+
+## 角色与动画衔接
+
+仅静态精灵执行本 skill；用户要求动画且没有参考图时，同一执行者先完成本 skill，再加载 `unity-sprite-sequence-generation`，把真实 `image_path` 传入序列帧步骤。已有图直接进入序列帧 skill。
+
+角色在 2048px / PPU=100 时可用 `localScale=0.10`，小道具 `0.05`、大角色 `0.20`；用户的尺寸要求优先。记录实际 scale，后续动画保持一致。SpriteRenderer 用空 GameObject，复用同名精灵目标，不加到带 MeshRenderer 的 Cube/Plane/Quad 上。
 
 ## 与 generate_image 的差异速查
 
@@ -103,7 +108,7 @@ execute_custom_tool(
 ### 返回字段
 
 - `task_id`
-- `placeholder_path`：1×1 灰色 Sprite，**立即可用**——交给 `place_assets_in_scene`
+- `placeholder_path`：1×1 灰色 Sprite，**立即可用**——按上方场景放置规则应用
 - `type_id` / `style_id`：回传（如有）
 - `estimated_wait_seconds` ≈ 90
 - `notification_mode: "bg_task_done"`
@@ -121,13 +126,13 @@ execute_custom_tool(
 | `generator_id` | 使用的生成器 |
 | `prompt` | 原始 prompt |
 
-> 注：`query_sprite_status` 返回里也有 `sprite_path` 字段，是 `image_path` 的别名（仅 `completed` 时存在）。
+> 注：`query_local_task` 返回里也有 `sprite_path` 字段，是 `image_path` 的别名（仅 `completed` 时存在）。
 
-### `query_sprite_status` / `list_sprite_tasks`
+### `query_local_task` / `list_local_tasks`
 
-`query_sprite_status` 仅作 fallback（120 秒后单次）。返回字段同 `<bg_task_done>` payload，外加 `placeholder_path`（仅 `generating` 时）和 `sprite_path`（仅 `completed` 时，等同 `image_path`）。
+`query_local_task` 仅作 fallback（120 秒后单次）。返回字段同 `<bg_task_done>` payload，外加 `placeholder_path`（仅 `generating` 时）和 `sprite_path`（仅 `completed` 时，等同 `image_path`）。
 
-`list_sprite_tasks` 返回当前 session 的所有 sprite 任务。
+`list_local_tasks` 返回当前 session 的所有 sprite 任务。
 
 ## 内容类型预设 (`type_id`)
 
@@ -260,8 +265,8 @@ if not result.get("success", True):
 task_id = result["task_id"]
 placeholder_path = result["placeholder_path"]
 
-# ✅ 立即用 place_assets_in_scene 把 placeholder_path 应用为 Sprite
-# 然后 END RESPONSE TURN，等 bg_task_done 通知
+# ✅ activate_skill("unity-place-assets-in-scene")，按指引用 exec_editor_script 把 placeholder_path 应用为 Sprite
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 ```
 
 ### 像素风武器
@@ -335,7 +340,7 @@ for prompt, type_id in items:
     task_ids.append(result["task_id"])
     # ✅ 直接继续，不 poll
 
-# END RESPONSE TURN — 每个 task 都会单独发 bg_task_done
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 ```
 
 ## 放入场景
@@ -347,7 +352,7 @@ for prompt, type_id in items:
 
 缩放参考（SpriteRenderer 模式）：~1 单位用 `0.05f`，~2 单位用 `0.10f`，~4 单位（角色）用 `0.20f`。
 
-规则见 [async-pattern §5 / §5.1](../../experience/templates/generator-async-pattern.md#5-placeholder-工作流适用于会返回-placeholder_path--prefab_output_path-的工具)。
+规则见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 ## 参数速查
 
@@ -392,24 +397,20 @@ for prompt, type_id in items:
 
 ### Skill 独有问题
 
-> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [generator-async-pattern §10](../../experience/templates/generator-async-pattern.md#10-通用故障排查)。
+> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 > 合法 `generator_id`：`"frontier-game-design"` / `"huoshan_seedream"` / `"frontier-effect"`。
 
 | 问题 | 原因 | 解决 |
 |---|---|---|
 | `Either 'prompt' or 'image_path' must be provided` | 两个都没给 | 至少给一个 |
 | 400 size 错误 | size < 1920×1920 | 用上表预设值 |
-| `is_segmentation=true` 但背景没被去掉 | 主体不清晰 / 背景太复杂 | 提供更干净的参考图；或先用简单背景 prompt 重生成 |
+| `is_segmentation=true` 但背景没被去掉 | 主体不清晰 / 背景太复杂 | 提供更干净的参考图；或仅在用户要求重试时用简单背景 prompt |
 | 出来的图风格/主体不对 | type_id 与 style_id 没配 | 同时设 `type_id` + `style_id`；prompt 补颜色/材质/姿态 |
-| Sprite 在 3D 场景里巨大 | 默认 PPU=100，2048px ≈ 20.48 单位 | `place_assets_in_scene` 时设合适 `localScale`（见上文缩放参考） |
+| Sprite 在 3D 场景里巨大 | 默认 PPU=100，2048px ≈ 20.48 单位 | 用放置脚本设合适 `localScale`（见上文缩放参考） |
 
-### Domain reload 后 task 丢失
+### Domain reload 后恢复
 
-通用恢复流程见 [generator-async-pattern §6](../../experience/templates/generator-async-pattern.md#6-domain-reload-recovery)。本 skill 完成态阈值：
-
-- PNG ≥ 200 KB → 真实 Sprite 已就绪（2K 透明 PNG 通常几 MB，但小图标可能 200 KB）
-
-可用 `glob("Assets/TJGenerators/History/*.png")` + 文件大小恢复。
+通用恢复流程见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。确认原任务终态后，验证 PNG 已导入为 Sprite、实际尺寸和目标 SpriteRenderer/UI Image（若要求放置）。
 
 ---
 

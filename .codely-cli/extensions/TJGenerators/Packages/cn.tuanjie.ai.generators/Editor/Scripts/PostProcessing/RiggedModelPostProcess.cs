@@ -261,6 +261,16 @@ namespace TJGenerators.PostProcessing
             string targetRigBaseName,
             string motionFbxUnityPath)
         {
+            return CreateSingleClipLoopAnimatorControllerFromMotionClip(modelDir, targetRigBaseName,
+                motionFbxUnityPath, true);
+        }
+
+        public static string CreateSingleClipLoopAnimatorControllerFromMotionClip(
+            string modelDir,
+            string targetRigBaseName,
+            string motionFbxUnityPath,
+            bool loop)
+        {
             try
             {
                 modelDir = PathUtils.NormalizeModelDirectory(modelDir);
@@ -305,18 +315,21 @@ namespace TJGenerators.PostProcessing
                 if (previousDefault != null && previousDefault != motionState)
                     sm.RemoveState(previousDefault);
 
-                var selfLoop = motionState.AddTransition(motionState);
-                selfLoop.hasExitTime = true;
-                selfLoop.exitTime = 1f;
-                selfLoop.duration = 0f;
-                selfLoop.offset = 0f;
-                selfLoop.hasFixedDuration = true;
+                if (loop)
+                {
+                    var selfLoop = motionState.AddTransition(motionState);
+                    selfLoop.hasExitTime = true;
+                    selfLoop.exitTime = 1f;
+                    selfLoop.duration = 0f;
+                    selfLoop.offset = 0f;
+                    selfLoop.hasFixedDuration = true;
+                }
 
                 AssetDatabase.SaveAssets();
                 PathUtils.SafeRefresh();
 
                 TJLog.Log(
-                    $"[RiggedModelPostProcess] 单剪辑循环 Animator Controller 已创建: {controllerPath} (clip={clip.name})"
+                    $"[RiggedModelPostProcess] 单剪辑 Animator Controller 已创建: {controllerPath} (clip={clip.name}, loop={loop})"
                 );
                 return controllerPath;
             }

@@ -1,33 +1,23 @@
-# HunyuanMotion Generator
+# HunyuanMotion（MCP `generate_motion` + 导入 motion）
 
-generator_id: `hunyuan-motion`  
+generator: MCP 工具 `generate_motion`（后端 HY Motion）  
 Use case: generate motion animation for an already-rigged Humanoid FBX
 
 ---
 
-## `generate_model_motion`
+## `generate_motion`（MCP，生成段）
 
-Generates motion animation for an already-rigged Humanoid FBX using HunyuanMotion.
-If the source model is not yet rigged, use `generate_animated_character` on that FBX
-(or `generate_rigged_model` first, then this tool).
-From scratch, use `generate_3d_model_by_tripo_p1` / `by_rodin` with `add_motion=true`.
-
-**Output:**
-- Motion FBX — same directory as source, filename `{baseName}_motion.fbx`
-- AnimatorController with a single looping state — filename `{riggedBaseName}_Controller.controller`
-- If `target_prefab_path` is provided: the Prefab's `Animator` gets controller + avatar assigned automatically
-- Enter Play Mode to see the animation loop
+Generates motion animation clips from a text description.
+If the source model is not yet rigged, rig it first (`unirig_rig`，或从零流程的 `add_motion`)。
 
 **Parameters:**
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `rigged_model_path` | string | yes | — | Humanoid FBX path (`Assets/...`) |
-| `motion_description` | string | yes | — | Motion description (e.g. `"a backflip"`; English gives best results) |
-| `target_prefab_path` | string | no | — | Prefab to assign the controller + avatar to on completion |
-| `action_duration` | float | no | 5.0 | Duration of the motion clip in seconds (recommended: 2–10) |
-| `cfg_strength` | float | no | 5.0 | Guidance strength — higher = closer to description (recommended: 3–7) |
-| `random_seed` | int | no | 0 | Random seed; 0 = server random (different seeds produce different motion styles) |
+| `input_text` | string | yes | — | Motion description（如 `"walk forward"` / `"wave right hand"` / `"jump and land"`；英文效果最好） |
+| `action_duration` | float | no | 5.0 | 动作时长（秒） |
+| `cfg_strength` | float | no | 5.0 | 文本引导强度（越高越贴近描述，建议 3–7） |
+| `random_seed_list` | string | no | `"0,1,2,3"` | 随机种子（**导入链路固定传 `"0"` 单剪辑**：多 seed 产出多剪辑，导入工具按单剪辑自循环控制器处理，多余剪辑被忽略） |
 
 **action_duration Reference:**
 
@@ -37,127 +27,40 @@ From scratch, use `generate_3d_model_by_tripo_p1` / `by_rodin` with `add_motion=
 | 4–6s | Standard loops (run cycle, idle stand) |
 | 7–10s | Complex sequences (gymnastics, dance) |
 
-> `generate_animated_character` uses the same `action_duration` / `cfg_strength` / `random_seed`
-> parameters with identical semantics and defaults.
+**输出**：动作 FBX URL（`check_task` 结果里拿）。
 
-**Submit response (success):**
-
-```json
-{
-  "success": true,
-  "task_id": "motion_only_1_...",
-  "backend_task_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "status": "generating_motion",
-  "generator_id": "hunyuan-motion",
-  "rigged_model_path": "Assets/Models/MyChar_rigged.fbx",
-  "motion_description": "a backflip",
-  "estimated_wait_seconds": 90,
-  "notification_mode": "bg_task_done",
-  "message": "Motion generation started. A bg_task_done notification will arrive automatically when complete."
-}
-```
-
-**Submit response (failure):**
-
-```json
-{ "success": false, "error_code": "AUTH_REQUIRED", "message": "Not logged in..." }
-```
-
-Always check `result["success"]` after calling. If `false`, report the error immediately and **do not** poll.
+提交 → **在当前子代理内等待，不结束任务** → 执行返回的 poll 命令 + `check_task` 一次 → 拿 motion FBX URL。
+⛔ 禁止 agent 循环 `check_task`；禁止对同一动作重复提交。
 
 ---
 
-## `query_model_motion_status`
+## 导入段（Unity CustomTool `import_3d_model_from_url`，output_type=motion）
 
-**Parameters:**
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `task_id` | string | yes | `task_id` returned by `generate_model_motion` |
-
-Status values are defined in the shared table in SKILL.md.
-
-**Response (in progress):**
-
-```json
-{
-  "success": true,
-  "task_id": "motion_only_1_...",
-  "pipeline_type": "motion_only",
-  "status": "generating_motion",
-  "progress": 55,
-  "start_time": "2026-05-07 14:09:08",
-  "rigged_model_path": "Assets/Models/MyChar_rigged.fbx",
-  "motion_description": "a backflip",
-  "next_poll_recommended_after_seconds": 15,
-  "polling_hint": "Task is 55% complete (generating_motion). Wait 15s before polling again."
-}
+```
+execute_custom_tool(
+  tool_name="import_3d_model_from_url",
+  parameters={
+    "model_url":          "<motion fbx URL from check_task>",
+    "output_type":       "motion",
+    "rigged_model_path":  "Assets/Models/MyChar_rigged.fbx",   # Required — 已导入工程的 Humanoid FBX
+    "target_prefab_path": "Assets/Characters/MyChar.prefab",   # Optional — 自动接线 controller + avatar
+    "loop":              True,                                  # Optional，默认 true（一次性动作传 false）
+    "prompt":             "<可选，History 显示>",
+    "session_id":         "<可选>"
+  }
+)
 ```
 
-> ⚠️ `polling_hint` / `next_poll_recommended_after_seconds` are **server-emitted hints, not instructions to the agent**. Agents must NOT loop on `query_*_status`; wait for `<bg_task_done>`. Fallback query is allowed once after the timeout in [generator-async-pattern §3](../../../experience/templates/generator-async-pattern.md#3-fallback-超时表).
+**导入后自动完成：**
 
-**Response (completed):**
+- 下载动作 FBX → 落在绑骨模型同目录（`{baseName}_motion.fbx` 语义）
+- Humanoid 动画导入配置（`loop` 控制循环）
+- 创建单剪辑 AnimatorController：`{riggedBaseName}_Controller.controller`；`loop=false` 时不创建自循环跳转
+- `target_prefab_path` 传入时：Prefab 的 `Animator` 自动获得 controller + avatar
+- `<bg_task_done>`：`motion_fbx_path`、`controller_path`、`rigged_model_path`（无占位 Prefab，跳过 place）
 
-```json
-{
-  "success": true,
-  "task_id": "motion_only_1_...",
-  "pipeline_type": "motion_only",
-  "status": "completed",
-  "progress": 100,
-  "start_time": "2026-05-07 14:09:08",
-  "rigged_model_path": "Assets/Models/MyChar_rigged.fbx",
-  "motion_fbx_path": "Assets/Models/MyChar_motion.fbx",
-  "controller_path": "Assets/Models/MyChar_rigged_Controller.controller",
-  "motion_description": "a backflip",
-  "result_summary": "Generation completed: motion FBX, AnimatorController (auto-loops in Play Mode).",
-  "end_time": "2026-05-07 14:10:22",
-  "duration_seconds": 74
-}
-```
+**注意**：`rigged_model_path` 必须是**已导入工程**的 `Assets/...` 路径（通常来自上一步路径 A 的
+`model_path`），不是 CDN URL。没传 `target_prefab_path` 时，收到通知后用
+`activate_skill("unity-place-assets-in-scene")` 加载放置指引，按 §4a 用 `exec_editor_script` 手动接线一次。
 
-**Response (interrupted):**
-
-```json
-{
-  "success": true,
-  "task_id": "motion_only_1_...",
-  "pipeline_type": "motion_only",
-  "status": "interrupted",
-  "progress": 55,
-  "start_time": "2026-05-07 14:09:00",
-  "rigged_model_path": "Assets/Models/MyChar_rigged.fbx",
-  "motion_description": "a backflip",
-  "error": "Generation was interrupted (domain reload) and the backend task record was lost. Please re-generate.",
-  "end_time": "2026-05-07 14:10:00",
-  "duration_seconds": 60,
-  "hint": "Re-generate using the same parameters."
-}
-```
-
-To recover: call `generate_model_motion` again with the same `rigged_model_path`, `motion_description`,
-and other parameters. Note: this tool has no `force_overwrite` parameter.
-
----
-
-## `list_model_motion_tasks`
-
-Lists all motion generation tasks from the current Unity Editor session.
-
-**Parameters:** none
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "tasks": [ /* each item has the same structure as query_model_motion_status */ ],
-  "count": 1
-}
-```
-
----
-
-## Notification and Fallback
-
-异步通用纪律见 [generator-async-pattern](../../../experience/templates/generator-async-pattern.md)：等 `<bg_task_done>` 通知，**不要轮询**；fallback `query_model_motion_status` 仅一次。
+**Fallback**：`query_local_task`（仅超时一次）。domain reload 自动幂等重跑。

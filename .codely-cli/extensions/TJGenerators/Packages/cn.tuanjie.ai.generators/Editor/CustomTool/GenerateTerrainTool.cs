@@ -244,12 +244,14 @@ namespace UnityTcp.Editor.Tools
             _tasks.TryGetValue(id, out var t);
             return t;
         }
+
+        public static List<ApplyTaskInfo> GetAllTasks() => new List<ApplyTaskInfo>(_tasks.Values);
 #endif
     }
 
     /// <summary>
     /// CustomTools for generating Unity Terrain heightmaps via the Frontier AI model.
-    /// Workflow: generate_terrain (async) → query_terrain_status → apply_terrain_heightmap (async) → query_terrain_apply_status.
+    /// Workflow: generate_terrain (async) → query_local_task → apply_terrain_heightmap (async) → query_local_task.
     /// </summary>
     public static class GenerateTerrainTool
     {
@@ -264,7 +266,7 @@ namespace UnityTcp.Editor.Tools
             "resolution ('1K'/'2K'/'4K', default '2K'; terrain heightmaps are always square), " +
             "output_path (optional save path). " +
             "IMPORTANT: Generation takes 30-90 seconds. Wait at least 5 seconds before the first " +
-            "query_terrain_status call, then poll every 10-15 seconds.")]
+            "query_local_task call, then poll every 10-15 seconds.")]
         public static object GenerateTerrain(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -398,11 +400,11 @@ namespace UnityTcp.Editor.Tools
                     { "message",
                         "Terrain heightmap generation started. " +
                         "STEP 1 (do now): Note the placeholder_path. " +
-                        "STEP 2 (critical): END THIS RESPONSE TURN immediately. " +
-                        "STEP 3 (automatic): A <bg_task_done> notification will appear in your next turn (~60s) " +
+                        "STEP 2 (critical): Keep this worker active until the task is terminal and its assets are verified. " +
+                        "STEP 3: A <bg_task_done> notification may arrive (~60s) " +
                         "containing ALL results (heightmap_path, preview_url, timing, etc.). " +
                         "When completed, call apply_terrain_heightmap with the heightmap_path. " +
-                        "*** POLLING IS STRICTLY FORBIDDEN — only call query_terrain_status ONCE as a last-resort fallback. ***" },
+                        "Wait up to 30 seconds in the current worker, then call query_local_task; repeat only while pending. Verify the real heightmap before applying it; do not resubmit or finish this worker on submission." },
                     { "task_id",            taskId },
                     { "backend_task_id",    submitResult.BackendTaskId },
                     { "status",             "submitted" },
@@ -436,7 +438,7 @@ namespace UnityTcp.Editor.Tools
             "Start async post-processing of a heightmap PNG and place a Unity Terrain in the scene. " +
             "IMPORTANT: This is ASYNC — returns apply_task_id immediately (< 1s). " +
             "Post-processing (bilateral filter + thermal erosion) runs in background (~10-60s). " +
-            "Poll query_terrain_apply_status with apply_task_id to check completion. " +
+            "Poll query_local_task with apply_task_id to check completion. " +
             "Parameters: heightmap_path (required), " +
             "task_id (optional but strongly recommended — prevents duplicate terrain creation; pass the task_id from generate_terrain), " +
             "session_id (optional, string — associates generated assets with a session for tracking), " +
@@ -471,7 +473,7 @@ namespace UnityTcp.Editor.Tools
                     return new Dictionary<string, object>
                     {
                         { "success", false },
-                        { "message", $"Heightmap file not found: {heightmapPath}. Make sure query_terrain_status returns status='completed' before calling apply." }
+                        { "message", $"Heightmap file not found: {heightmapPath}. Make sure query_local_task returns status='completed' before calling apply." }
                     };
                 }
 
@@ -660,7 +662,7 @@ namespace UnityTcp.Editor.Tools
                         $"Post-processing started in background. " +
                         "A <bg_task_done> notification will arrive automatically when terrain is ready (~60-180s). " +
                         "Do NOT retry apply_terrain_heightmap. " +
-                        "*** POLLING IS STRICTLY FORBIDDEN — only call query_terrain_apply_status ONCE as a last-resort fallback. ***" },
+                        "Wait up to 30 seconds in the current worker, then call query_local_task with apply_task_id; repeat only while pending. Verify Terrain and TerrainData before reporting success; do not reapply while pending." },
                     { "estimated_seconds",        90 },
                     { "notification_mode",        "bg_task_done" },
                     { "max_wait_before_retry_seconds", timeoutSeconds }
@@ -684,13 +686,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_terrain_apply_status",
-            "Query the status of an apply_terrain_heightmap background task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "Pass the apply_task_id returned by apply_terrain_heightmap. " +
-            "Status: 'processing' (background filtering running), " +
-            "'completed' (terrain is in the scene — workflow done, do not call apply again), " +
-            "'failed' (see error field). " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QueryTerrainApplyStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -771,11 +766,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_terrain_status",
-            "Query the status of a terrain heightmap generation task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "When completed, heightmap_path contains the PNG ready for apply_terrain_heightmap. " +
-            "Status values: 'generating', 'recovering', 'completed', 'failed', 'interrupted'. " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QueryTerrainStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -860,7 +850,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_terrain_tasks", "List all active and recent terrain heightmap generation tasks.")]
         public static object ListTerrainTasks(JObject parameters)
         {
 #if UNITY_EDITOR

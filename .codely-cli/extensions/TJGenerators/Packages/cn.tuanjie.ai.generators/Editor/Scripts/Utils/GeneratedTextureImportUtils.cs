@@ -62,6 +62,8 @@ namespace TJGenerators.Utils
             }
 
             importer.alphaIsTransparency = alphaIsTransparency;
+            // Layer dimensions must match their source pixels and layout metadata.
+            importer.npotScale = TextureImporterNPOTScale.None;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
             importer.crunchedCompression = false;
 

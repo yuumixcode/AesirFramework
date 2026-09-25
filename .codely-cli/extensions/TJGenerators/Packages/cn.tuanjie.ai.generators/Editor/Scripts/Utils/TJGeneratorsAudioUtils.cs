@@ -31,39 +31,6 @@ namespace TJGenerators.Utils
         }
 
         /// <summary>
-        /// 在指定路径写入 LAME 编码的最短静音 MP3 并导入为 AudioClip。
-        /// 手写帧头 + 全零主数据不是合法 MPEG 码流，Unity 6 FSBTool 会报 Failed decoding audio clip。
-        /// </summary>
-        public static string CreateBlankMp3Clip(string path)
-        {
-            path = Path.ChangeExtension(path, ".mp3");
-            string absolutePath = PathUtils.ToAbsoluteAssetPath(path);
-            string directory = Path.GetDirectoryName(absolutePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                Directory.CreateDirectory(directory);
-            File.WriteAllBytes(absolutePath, CreateShortestValidMp3());
-            ImportAudioClip(path);
-            TJGeneratorsGenerationLabel.EnableLabel(TJGeneratorsAssetReference.FromPath(path));
-            return path;
-        }
-
-        /// <summary>
-        /// LAME 编码的约 26ms 单声道静音（32 kbps）。需为真实编码器输出，FSBTool 才能解码。
-        /// </summary>
-        private static byte[] CreateShortestValidMp3()
-        {
-            // LAME 3.100, ~26ms mono silence @ 32 kbps (313 bytes)
-            return Convert.FromBase64String(
-                "//NAxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVV" +
-                "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" +
-                "VVVVVVVVVVX/80LEWwAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" +
-                "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" +
-                "VVVVVVVVVVVVVVVVVVVVVVX/80DEpAAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVV" +
-                "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" +
-                "VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==");
-        }
-
-        /// <summary>
         /// 生成最短合法 WAV：44 字节头 + 最少静音采样（若干 16-bit 0），满足 FSBTool 非零长度要求。
         /// </summary>
         private static byte[] CreateShortestValidWav()

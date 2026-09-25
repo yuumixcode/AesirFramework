@@ -3,20 +3,21 @@ name: unity-game-ui-kit-generation
 description: Generate game UI asset kits in Unity via a two-step workflow (plus an optional fallback) — Step 1 generates a game UI screenshot from text (Seedream 5.0 Pro), Step 2 decomposes the screenshot into independent transparent PNG UI-element layers (base image + up to 16 layers, ready to use as sprites directly), Step 3 (fallback only) slices a merged layer via CV connected-component detection. Use this skill whenever the user wants to create game UI assets such as HUD layouts, inventory screens, buttons, panels, health bars, skill icons — e.g. "帮我生成游戏UI", "生成背包界面", "make a game HUD", "create UI kit for my game". Trigger proactively for any game UI design or UI element extraction request in Unity. Do NOT use for standalone 2D sprites/icons (use generate_sprite) or general images (use generate_image).
 ---
 
-> ⚠️ **执行约束**
-> - **主 agent**：无 `execute_custom_tool` 权限，必须 `task(subagent_name="game-ui-kit-generator", ...)` 委托，不要 `activate_skill` 后自己调。
-> - **子代理（本文档主要读者）**：有权限，按下方 `execute_custom_tool(...)` 示例执行。
+> **执行前读取**：[共享执行约定](../../experience/templates/generator-async-pattern.md)。
+> 主 agent 按需委托 `general-purpose`；已在子代理中则直接执行本 skill，不再委托。已提交的阶段从原任务续接。
 
-> ⛔ **`place_assets_in_scene` 调用规则**（本 skill **无 placeholder**）
-> - **调用方式**：`activate_skill("unity-place-assets-in-scene")` → 按 §4b Sprite 模板用 `execute_csharp_script` 建 `SpriteRenderer` 或 Canvas 子节点 + `Image`（**不是** `execute_custom_tool`）。
-> - **子代理**：Step 2 产出图层 PNG 后，**可选**调 `place_assets_in_scene` 把需要的 Sprite 放到场景。Step 1 **不调**（中间产物，不需要放置）。
+> ⛔ **场景放置规则**（本 skill **无 placeholder**）
+> - **调用方式**：`activate_skill("unity-place-assets-in-scene")` → 按 §4b Sprite 模板用 `exec_editor_script` 建 `SpriteRenderer` 或 Canvas 子节点 + `Image`（**不是** `execute_custom_tool`）。
+> - **子代理**：Step 2 产出图层 PNG 后，**可选**按上述调用方式把需要的 Sprite 放到场景。Step 1 **不放置**（中间产物，不需要放置）。
 > - **主 agent**：报告里的 `layer_paths` / `sliced_asset_paths` 是产出路径，不是"请你放置"的指示，**不要再调**。
-> - **例外**：用户明确要"放到场景"时才调用。详见 [async-pattern §5.1](../../experience/templates/generator-async-pattern.md#51-place_assets_in_scene-调用规则)。
+> - **例外**：用户明确要"放到场景"时才调用。详见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 # Generate Game UI Kit in Unity 🎮
 
 通过两步工作流生成游戏 UI 资产套件（外加一个兜底切割步骤）。
 Output: Step 1 产出 UI 截图 PNG（2848×1600）；Step 2 产出 **1 张底图 + 最多 16 个透明 PNG 图层**（每个 UI 元素一个独立图层，直接可用作 Sprite），自动保存到 `Assets/TJGenerators/History/`。
+
+用户中文需求可先整理成英文视觉描述，保留指定文字、布局和风格。最终报告各阶段 ID、截图、图层路径/数量及实际做过的切割和放置。
 
 ## 工作流概览
 
@@ -35,19 +36,19 @@ Output: Step 1 产出 UI 截图 PNG（2848×1600）；Step 2 产出 **1 张底�
 ### Step 1：生成 UI 截图
 
 1. 调 `generate_game_ui_kit`（**不传** `screenshot_path`）→ 拿 `task_id` + `placeholder_path`（1×1 灰色 PNG）
-2. **跳过** `place_assets_in_scene`（中间产物，不放置）
-3. **END RESPONSE TURN** — 不要 poll、不要 `query_game_ui_kit_status`、不要继续操作
-4. 下一轮收到 `<bg_task_done>` → 读 `image_path`（截图本地路径）→ **立即提交 Step 2**
+2. **跳过场景放置**（中间产物，不放置）
+3. 在当前执行者内按共享约定有间隔等待，调用 `query_local_task` 确认当前阶段的终态
+4. 确认当前任务 `completed` 后 → 读 `image_path`（截图本地路径）→ **立即提交 Step 2**
 
 ### Step 2：图层拆分（主力路径）
 
 5. 调 `generate_game_ui_kit`（`screenshot_path` = Step 1 的 `image_path`，provider 与 Step 1 一致）→ 拿 `task_id` + `placeholder_path`
-6. **END RESPONSE TURN** — 不要 poll
-7. 下一轮收到 `<bg_task_done>` → 读 `layer_paths` / `layers_found`，按图层类型分流：
+6. 在当前执行者内按共享约定有间隔等待，调用 `query_local_task` 确认当前阶段的终态
+7. 确认当前任务 `completed` 后 → 读 `layer_paths` / `layers_found`，按图层类型分流：
    - **`layer_0_path` 是底图（合成背景），不是元素**——不要当作 Sprite 使用
    - **元素美术层**（名称形如 `*_Art`）：**无动态文字**的透明图层，直接可用作 Sprite——动态文字已被刻意移除，数值/名字由引擎运行时用 Text/TMP 组件渲染
    - **动态文字层**（名称形如 `*_Dynamic_Text`）：只有烤死的文字，**仅作位置/字号/风格参考**（用于摆放运行时文本组件），**不要**当 Sprite 入库（数值会过期）
-   - **可选**：调 `place_assets_in_scene` 把需要的美术层放到场景（资产类型 `Sprite`）
+   - **可选放置**：图层初始导入为 `Texture2D`。先用 `exec_editor_script` 将选中的美术层 `TextureImporter` 设为 `Sprite`、`spriteImportMode=Single`、`alphaIsTransparency=true`，调用 `SaveAndReimport()`；底图与动态文字层保持原类型。再 `activate_skill("unity-place-assets-in-scene")`，按 `Sprite` 模板放置。
    - **仅当某个美术层仍包含多个元素时**（16 层上限导致小元素被合并）→ 对该层执行 Step 3
 
 ### Step 3（兜底）：CV 切割被合并的图层
@@ -55,7 +56,7 @@ Output: Step 1 产出 UI 截图 PNG（2848×1600）；Step 2 产出 **1 张底�
 8. 调 `slice_image`（`image_path` = 该图层路径，`background_mode` = `"transparent"`）→ 拿 `sliced_asset_paths` + `sliced_count`
 9. 报告完成
 
-**档位**：Step 1 约 30–90 秒；Step 2 约 60–180 秒（最多 17 张图下载）；120 秒内无通知才允许 `query_game_ui_kit_status` 一次。Step 3 同步返回。完整 async 规则见 [generator-async-pattern](../../experience/templates/generator-async-pattern.md)。
+**档位**：Step 1 约 30–90 秒；Step 2 约 60–180 秒（最多 17 张图下载）；无通知时按共享约定等待后查询 `query_local_task`。Step 3 同步返回。完整 async 规则见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 ## ⚠️ Skill 独有约束
 
@@ -157,11 +158,11 @@ execute_custom_tool(
 |---|---|
 | `image_path` | 品红底 cutout sheet 本地路径（需配合 Step 3 `solid_color` 切割） |
 
-### `query_game_ui_kit_status` / `list_game_ui_kit_tasks`
+### `query_local_task` / `list_local_tasks`
 
-`query_game_ui_kit_status` 仅作 fallback（120 秒后单次）。返回字段同 `<bg_task_done>` payload（seedream Step 2 任务额外有 `layer_paths`/`layers_found`/`layers_folder`），外加 `placeholder_path`（仅 `generating` 时）。
+`query_local_task` 仅作 fallback（120 秒后单次）。返回字段同 `<bg_task_done>` payload（seedream Step 2 任务额外有 `layer_paths`/`layers_found`/`layers_folder`），外加 `placeholder_path`（仅 `generating` 时）。
 
-`list_game_ui_kit_tasks` 返回当前 session 的所有 game_ui_kit 任务（含 seedream Step 1/2 与 frontier 任务）。
+`list_local_tasks` 返回当前 session 的所有 game_ui_kit 任务（含 seedream Step 1/2 与 frontier 任务）。
 
 ## 参数速查
 
@@ -205,7 +206,7 @@ if not result.get("success", True):
     raise RuntimeError(f"[{result['error_code']}] {result['message']}")
 
 task_id = result["task_id"]
-# ✅ END RESPONSE TURN — 等 bg_task_done
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 # 通知到达后读 image_path，提交 Step 2
 ```
 
@@ -221,7 +222,7 @@ result = execute_custom_tool(
     }
 )
 task_id = result["task_id"]
-# ✅ END RESPONSE TURN — 等 bg_task_done
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 # 通知到达后读 layer_paths：
 #   layer_paths[0]   = 底图（不要当元素用）
 #   layer_paths[1..N] = 透明元素图层，直接可用
@@ -241,7 +242,7 @@ result = execute_custom_tool(
 )
 if result.get("success"):
     sliced_paths = result["sliced_asset_paths"]
-# ✅ 可选：place_assets_in_scene 放置图层/切割后的 Sprite
+# ✅ 可选：activate_skill("unity-place-assets-in-scene")，按指引用 exec_editor_script 放置图层/切割后的 Sprite
 # ✅ 报告完成
 ```
 
@@ -314,7 +315,7 @@ result = execute_custom_tool(
 
 ### Skill 独有问题
 
-> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [generator-async-pattern §10](../../experience/templates/generator-async-pattern.md#10-通用故障排查)。
+> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 | 问题 | 原因 | 解决 |
 |---|---|---|
@@ -326,14 +327,9 @@ result = execute_custom_tool(
 | 把底图当成了元素 | `layer_paths[0]` 语义误解 | 第 0 张是底图（合成背景），元素在 `[1..N]` |
 | 想用旧品红 cutout 流程 | provider 选择 | 传 `provider: "frontier"`（两步一致），Step 2 后必须 `slice_image`（`solid_color`） |
 
-### Domain reload 后 task 丢失
+### Domain reload 后恢复
 
-通用恢复流程见 [generator-async-pattern §6](../../experience/templates/generator-async-pattern.md#6-domain-reload-recovery)。本 skill 完成态阈值：
-
-- PNG < 5 KB → 仍是 placeholder 或任务丢失
-- PNG ≥ 50 KB → 真实图片已就绪
-
-可用 `glob("Assets/TJGenerators/History/*.png")` + 文件大小恢复。注意区分 Step 1 截图和 Step 2 图层产物（按时间和数量判断；图层产物是 `{basename}_1.png … _N.png` 兄弟文件序列）。
+通用恢复流程见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。分别确认截图和拆层阶段的终态。加载返回的截图/图层路径并核对图层数量；底图、元素美术层、文字参考层分别处理，不凭文件时间猜测阶段。
 
 ---
 

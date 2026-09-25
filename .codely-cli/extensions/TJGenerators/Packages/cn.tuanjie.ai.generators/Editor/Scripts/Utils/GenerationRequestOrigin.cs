@@ -20,6 +20,19 @@ namespace TJGenerators.Utils
 
         /// <summary>Workspace 名请求头名称，与 X-Session-Id 并列上报，用于按项目/工作区分组统计。</summary>
         public const string WorkspaceNameHeaderName = "X-Workspace-Name";
+        public const string WorkspaceNameEncodingHeaderName = "X-Workspace-Name-Encoding";
+
+        /// <summary>Unity rejects non-ASCII/control characters in HTTP headers. Mark encoded names explicitly
+        /// so literal percent escapes in old clients' names are never decoded accidentally.</summary>
+        internal static void ApplyWorkspaceNameHeader(UnityEngine.Networking.UnityWebRequest request, string name)
+        {
+            if (string.IsNullOrEmpty(name)) return;
+            bool encode = false;
+            foreach (char c in name)
+                if (c < 32 || c > 126) { encode = true; break; }
+            request.SetRequestHeader(WorkspaceNameHeaderName, encode ? System.Uri.EscapeDataString(name) : name);
+            if (encode) request.SetRequestHeader(WorkspaceNameEncodingHeaderName, "uri");
+        }
 
         /// <summary>编辑器 UI 面板发起的生成。</summary>
         public const string Ui = "ui";

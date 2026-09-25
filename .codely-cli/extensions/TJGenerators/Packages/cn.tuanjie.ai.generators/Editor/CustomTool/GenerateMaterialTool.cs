@@ -215,7 +215,7 @@ namespace UnityTcp.Editor.Tools
             "size (optional output resolution: '1920x1920', '2048x2048', '3072x3072', '3200x3200'; total pixels must be between ~3.69M and ~10.4M — do not use '1024x1024' or '4096x4096', default '2048x2048'), " +
             "output_path (optional custom save path for the texture PNG). " +
             "NOTE: Provide at least one of image_path, pattern_id, preset_id, or prompt. " +
-            "IMPORTANT: Generation takes 1-3 minutes. Wait at least 5 seconds before the first query_material_status call, then poll every 10-15 seconds. " +
+            "IMPORTANT: Generation takes 1-3 minutes. Wait at least 5 seconds before the first query_local_task call, then poll every 10-15 seconds. " +
             "A placeholder_path and placeholder_material_path are returned immediately — you can assign the material to a renderer right away.")]
         public static object GenerateMaterial(JObject parameters)
         {
@@ -386,12 +386,12 @@ namespace UnityTcp.Editor.Tools
                     { "submission_success",   true },
                     { "message",
                         "Material generation started. " +
-                        "STEP 1 (do now): Use `place_assets_in_scene` skill to apply placeholder_material_path to the scene. " +
-                        "STEP 2 (critical): END THIS RESPONSE TURN immediately. " +
-                        "STEP 3 (automatic): A <bg_task_done> notification will appear in your next turn (~90s) " +
+                        "STEP 1 (do now): Call activate_skill(\"unity-place-assets-in-scene\"), then use exec_editor_script as instructed to apply placeholder_material_path to the scene. " +
+                        "STEP 2 (critical): Keep this worker active until the task is terminal and its assets are verified. " +
+                        "STEP 3: A <bg_task_done> notification may arrive (~90s) " +
                         "containing ALL generation results (texture_path, material_path, preview_url, timing, etc.). " +
-                        "*** POLLING IS STRICTLY FORBIDDEN — do NOT call query_material_status repeatedly. " +
-                        "Only call query_material_status ONCE as a last-resort fallback if no notification arrives. ***" },
+                        "Wait up to 30 seconds in the current worker, then call query_local_task once; repeat only while pending. " +
+                        "Do not busy-poll query_local_task, submit again, or report success while pending." },
                     { "task_id",              taskId },
                     { "backend_task_id",      submitResult.BackendTaskId },
                     { "status",               "submitted" },
@@ -430,11 +430,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_material_status",
-            "Query the status of a material generation task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "When completed, returns 'texture_path' (PNG) and 'material_path' (.mat) with asset paths in the project. " +
-            "Status values: 'generating', 'completed', 'failed'. " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QueryMaterialStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -515,7 +510,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_material_tasks", "List all active and recent material generation tasks")]
         public static object ListMaterialTasks(JObject parameters)
         {
 #if UNITY_EDITOR

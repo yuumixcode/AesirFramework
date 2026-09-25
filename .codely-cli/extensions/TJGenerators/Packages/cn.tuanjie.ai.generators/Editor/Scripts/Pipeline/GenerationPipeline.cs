@@ -268,6 +268,78 @@ namespace TJGenerators.Pipeline
             yield return PollTaskStatus(generator, backendTaskId);
         }
 
+        /// <summary>
+        /// 从外部来源（如 MCP 后端）已完成生成的模型 URL 直接导入：
+        /// 跳过提交与轮询阶段，直接进入下载 → 导入 → 后处理 → 绑定 Prefab 链路。
+        /// 生成阶段由外部完成（MCP generate_3d_model + check_task 拿到 URL），
+        /// 后处理（材质重映射 / auto-fit / add_motion 绑骨动画）与生成器直连路径完全一致。
+        /// </summary>
+        public IEnumerator ImportModelFromUrl(
+            ModelGeneratorBase generator,
+            string modelUrl,
+            string renderedImageUrl,
+            string assetGuid,
+            TJGeneratorsTaskHandle taskHandle = null
+        )
+        {
+            _pipelineSettings = generator.GetPipelineSettings();
+            _activeTaskHandle = taskHandle;
+
+            if (TJGeneratorsPlayModeGuard.TryBlock(_host))
+            {
+                if (_activeTaskHandle != null)
+                {
+                    _activeTaskHandle.MarkFailed("PLAY_MODE", TJGeneratorsPlayModeGuard.Message);
+                    _activeTaskHandle = null;
+                }
+                yield break;
+            }
+
+            if (string.IsNullOrEmpty(modelUrl))
+            {
+                string urlMissing = TJGeneratorsL10n.L("未提供模型下载 URL");
+                TJLog.LogError($"[GenerationPipeline] ImportModelFromUrl: {urlMissing}");
+                _host.ShowDialog(TJGeneratorsL10n.L("错误"), urlMissing);
+                if (_activeTaskHandle != null)
+                {
+                    _activeTaskHandle.MarkFailed("invalid_input", urlMissing);
+                    _activeTaskHandle = null;
+                }
+                yield break;
+            }
+
+            generator.CurrentGeneratingTaskId = TJGeneratorsHistoryManager.AddGeneratingPlaceholder(
+                generator.GetPrompt(),
+                generator.GetImagePath(),
+                generator.GetModelVersion(),
+                generator.IsTextToModel(),
+                assetGuid,
+                generator.GetHistoryDisplayPrompt(),
+                _sessionId
+            );
+
+            if (_activeTaskHandle != null)
+                _activeTaskHandle.SetLocalTaskId(generator.CurrentGeneratingTaskId);
+
+            generator.IsRunning = true;
+            RegisterActiveGenerator(generator);
+            generator.ButtonText = TJGeneratorsL10n.L("导入中...");
+            _host.RefreshHistory();
+            _host.Repaint();
+
+            _mediaHandlers.TryInitializeMediaSavePaths(generator);
+
+            string actualExtension = GenerationAssetFormatUtils.GetExtensionFromUrl(modelUrl);
+            if (string.IsNullOrEmpty(actualExtension))
+                actualExtension = ".fbx";
+            bool isFBX = string.Equals(actualExtension, ".fbx", StringComparison.OrdinalIgnoreCase);
+            string savePath = GetModelSavePath("Import" + actualExtension);
+
+            TJLog.Log($"[GenerationPipeline] ImportModelFromUrl: {modelUrl} -> {savePath}");
+
+            yield return DownloadModel(generator, modelUrl, savePath, isFBX, renderedImageUrl);
+        }
+
         private IEnumerator SendGenerationRequest(ModelGeneratorBase generator, string assetGuid)
         {
             string endpoint = generator.ApiEndpoint;
@@ -1399,12 +1471,18 @@ namespace TJGenerators.Pipeline
                     modelInstance.transform.localRotation = Quaternion.Euler(rotation);
                     modelInstance.transform.localScale = new Vector3(scale, scale, scale);
 
-                    // 模型如果小到几乎看不见（一个点），按包围盒自适应放大到目标尺寸。
+                    // 模型如果小到几乎看不见（一个点），按内容包围盒自适应放大到目标尺寸。
+                    // root-local 测量法（与 import-recipe 模板一致）：在实例根节点本地空间测内容最长边，
+                    // 剔除根节点自身缩放（含 cm 单位 FBX 的文件单位换算），不受换算传播时序影响——
+                    // 旧版在原始 FBX 资产上量 bounds，会读到单位换算前的网格导致 ~100 倍缩小（表现为 ~1cm）。
                     if (autoFitToTargetScale && targetSize > 0f)
                     {
-                        float normalized = ComputeAutoFitScale(modelPrefab, targetSize);
-                        if (normalized > 0f)
+                        float contentLongest = ContentLongestEdgeInRootLocal(modelInstance);
+                        if (contentLongest > Mathf.Epsilon)
+                        {
+                            float normalized = targetSize / contentLongest;
                             modelInstance.transform.localScale = new Vector3(normalized, normalized, normalized);
+                        }
                     }
 
                     ApplyDefaultMaterialIfMissing(modelInstance);
@@ -1456,40 +1534,45 @@ namespace TJGenerators.Pipeline
         }
 
         /// <summary>
-        /// 按模型所有渲染器包围盒的最长边计算归一化 scale，使其最长边恰好等于 targetSize。
-        /// 返回 targetSize / longestEdge。无可渲染网格、或包围盒无法计算/退化为 0 时返回 0（表示不做归一化）。
+        /// 在实例根节点本地空间测量内容包围盒最长边（root-local 测量法，与 import-recipe 模板一致）。
+        /// 通过 InverseTransformPoint 剔除根节点自身缩放（含 cm 单位 FBX 的文件单位换算），
+        /// 不受该换算传播时序影响——修复在原始资产上量 bounds 读到换算前网格导致的 ~1cm 缩小问题。
+        /// 返回 0 表示无可渲染内容。
         /// </summary>
-        private float ComputeAutoFitScale(GameObject modelPrefab, float targetSize)
+        private static float ContentLongestEdgeInRootLocal(GameObject root)
         {
-            var renderers = modelPrefab.GetComponentsInChildren<Renderer>(true);
+            var renderers = root.GetComponentsInChildren<Renderer>(true);
             if (renderers == null || renderers.Length == 0)
                 return 0f;
 
-            var bounds = new Bounds();
-            bool hasBounds = false;
+            bool has = false;
+            Vector3 min = Vector3.zero, max = Vector3.zero;
+            Action<Vector3> Encap = p =>
+            {
+                if (!has) { min = p; max = p; has = true; return; }
+                min = Vector3.Min(min, p);
+                max = Vector3.Max(max, p);
+            };
+
+            var rootT = root.transform;
             foreach (var r in renderers)
             {
                 if (r == null) continue;
-                if (!hasBounds)
-                {
-                    bounds = r.bounds;
-                    hasBounds = true;
-                }
-                else
-                {
-                    bounds.Encapsulate(r.bounds);
-                }
+                Bounds b = r.bounds;
+                Encap(rootT.InverseTransformPoint(b.min));
+                Encap(rootT.InverseTransformPoint(b.max));
+                Encap(rootT.InverseTransformPoint(new Vector3(b.min.x, b.min.y, b.max.z)));
+                Encap(rootT.InverseTransformPoint(new Vector3(b.min.x, b.max.y, b.min.z)));
+                Encap(rootT.InverseTransformPoint(new Vector3(b.max.x, b.min.y, b.min.z)));
+                Encap(rootT.InverseTransformPoint(new Vector3(b.min.x, b.max.y, b.max.z)));
+                Encap(rootT.InverseTransformPoint(new Vector3(b.max.x, b.min.y, b.max.z)));
+                Encap(rootT.InverseTransformPoint(new Vector3(b.max.x, b.max.y, b.min.z)));
             }
 
-            if (!hasBounds)
-                return 0f;
-
-            Vector3 size = bounds.size;
+            if (!has) return 0f;
+            Vector3 size = max - min;
             float longest = Mathf.Max(Mathf.Max(size.x, size.y), size.z);
-            if (longest <= Mathf.Epsilon)
-                return 0f;
-
-            return targetSize / longest;
+            return longest > Mathf.Epsilon ? longest : 0f;
         }
 
         /// <summary>

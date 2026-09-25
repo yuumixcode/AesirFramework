@@ -226,7 +226,7 @@ namespace UnityTcp.Editor.Tools
                             "transparent cutouts, ready to use; dynamic text layers (e.g. *_Dynamic_Text) are only position/style " +
                             "reference for runtime Text components — do not ship them as sprites. " +
                             "If a layer still contains multiple merged elements, run slice_image on it with background_mode 'transparent'. " +
-                            "*** POLLING IS STRICTLY FORBIDDEN. ***" },
+                            "Wait up to 30 seconds in the current worker, then query_local_task; repeat only while pending. Verify the current stage before continuing; do not resubmit or end this worker on submission." },
                         { "task_id", taskId },
                         { "backend_task_id", submitResult.BackendTaskId },
                         { "status", "submitted" },
@@ -290,10 +290,10 @@ namespace UnityTcp.Editor.Tools
                             ? "Game UI kit Step 1 (screenshot) started. " +
                               "After <bg_task_done>, submit Step 2 with screenshot_path = the returned image_path " +
                               "and the SAME provider. " +
-                              "*** POLLING IS STRICTLY FORBIDDEN. ***"
+                              "Wait up to 30 seconds in the current worker, then query_local_task; repeat only while pending. Verify the current stage before continuing; do not resubmit or end this worker on submission."
                             : "Game UI kit Step 2 (cutout sheet) started. " +
                               "A <bg_task_done> notification will arrive with the final image_path. " +
-                              "*** POLLING IS STRICTLY FORBIDDEN. ***" },
+                              "Wait up to 30 seconds in the current worker, then query_local_task; repeat only while pending. Verify the current stage before continuing; do not resubmit or end this worker on submission." },
                     { "task_id",            singleTaskId },
                     { "backend_task_id",    submitResult.BackendTaskId },
                     { "status",             "submitted" },
@@ -454,11 +454,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_game_ui_kit_status",
-            "Query the status of a game UI kit generation task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "When completed, returns 'image_path' (Step 1 / frontier Step 2) or 'layer_paths'/'layers_found'/'layers_folder' (seedream Step 2 layers). " +
-            "Status values: 'generating', 'completed', 'failed'. " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QueryGameUiKitStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -541,7 +536,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_game_ui_kit_tasks", "List all active and recent game UI kit generation tasks")]
         public static object ListGameUiKitTasks(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -598,7 +592,7 @@ namespace UnityTcp.Editor.Tools
 
 #if UNITY_EDITOR
         /// <summary>layers tracker 任务的查询结果（seedream Step 2）</summary>
-        private static Dictionary<string, object> BuildLayersTaskResult(ImageLayersTaskTracker.ImageLayersTaskInfo task)
+        internal static Dictionary<string, object> BuildLayersTaskResult(ImageLayersTaskTracker.ImageLayersTaskInfo task)
         {
             var result = new Dictionary<string, object>
             {

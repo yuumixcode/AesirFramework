@@ -82,8 +82,19 @@ namespace UnityTcp.Editor.Tools
 
                     if (!string.IsNullOrEmpty(item.assetGuid))
                     {
-                        entry["asset_guid"] = item.assetGuid;
-                        string assetPath = AssetDatabase.GUIDToAssetPath(item.assetGuid);
+                        string assetGuid = item.assetGuid;
+                        string assetPath = AssetDatabase.GUIDToAssetPath(assetGuid);
+                        // Older imports can retain the GUID of a deleted WAV placeholder.
+                        // Resolve their existing output without rewriting historical records.
+                        if ((string.IsNullOrEmpty(assetPath) || AssetDatabase.LoadMainAssetAtPath(assetPath) == null)
+                            && !string.IsNullOrEmpty(item.modelPath)
+                            && (item.modelPath.StartsWith("Assets/") || item.modelPath.StartsWith("Assets\\"))
+                            && AssetDatabase.LoadMainAssetAtPath(item.modelPath) != null)
+                        {
+                            assetGuid = AssetDatabase.AssetPathToGUID(item.modelPath);
+                            assetPath = item.modelPath;
+                        }
+                        entry["asset_guid"] = assetGuid;
                         if (!string.IsNullOrEmpty(assetPath))
                             entry["asset_path"] = assetPath;
                     }

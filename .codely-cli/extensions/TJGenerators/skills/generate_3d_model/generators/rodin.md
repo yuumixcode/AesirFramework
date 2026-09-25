@@ -1,172 +1,80 @@
-# Rodin Gen-2.5 生成器文档
+# Rodin Gen-2.5（MCP provider）
 
-generator_id: `rodin`  
-适用场景：高精度 / hero 资产 / PBR 材质 / **FBX** 输出 / 高质量 3D 模型  
-默认 tier: `Gen-2.5-Extreme-High`（极高精度）
+provider: `rodin`（`generate_3d_model` 的默认值）  
+适用场景：默认通用 / 快速出模 / 轻量道具 / PBR / 高精度 hero 资产（调高 tier）  
+输出：**FBX**（`with_fbx` 默认 true），贴图内嵌，导入后由 `import_3d_model_from_url` 走 rodin 预设后处理（-90° 朝向修正 + auto-fit）
 
----
+> 生成提交 / 轮询纪律 / 成本确认见 [mcp.md](mcp.md)；本文件只列 **rodin 独有参数**。
 
-## 何时选择 Rodin Gen-2.5
+## 何时选择 Rodin
 
-- 高精度 hero 资产（武器主角、场景标志物）
-- 需要 PBR 材质纹理（`material: "PBR"`）
-- 需要 FBX 格式输出（含材质与模型）
-- 需要精细控制质量等级（`tier` 从 Extreme-Low 到 Extreme-High）
-- 需要四边形网格（`mesh_mode: "Quad"`）
+- 用户没明确指定 provider → **rodin**（MCP 默认）
+- 要 PBR 材质 / 贴图内嵌 FBX
+- 需要精确控制面数预算（`face_limit` 500–2000000）
+- 高精度 hero 资产 → 显式 `tier=Gen-2.5-Extreme-High`
 
----
+## Rodin 独有参数（`generate_3d_model`）
 
-## 工具
+| 参数 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| `tier` | string | `Gen-2.5-Extreme-Low` | 生成档位（见下表）。⚠️ MCP 默认是**最快**的 Extreme-Low；要高精度必须显式调高 |
+| `texture_mode` | string | 服务端默认 | 贴图质量：`legacy` / `extreme-low` / `low` / `medium` / `high` |
+| `geometry_instruct_mode` | string | `faithful` | `faithful`（贴近输入）/ `creative`（更自由发挥） |
+| `hd_texture` | bool | false | 贴图增强后处理（可能降低与输入的相似度） |
+| `texture_delight` | bool | false | 从贴图中去除光照信息 |
+| `face_limit` | number | 不发送 | 目标面数上限 **500–2000000**（等价旧 quality_override）。低档 tier 不传时后端自动封顶：Extreme-Low→20000、Low→60000 |
+| `pbr` | bool | true | 是否生成 PBR 材质 |
+| `export_uv` | bool | true | 是否导出 UV |
 
-### `generate_3d_model_by_rodin`
-
-启动 Rodin Gen-2.5 生成任务。
-
-**参数：**
-
-| 参数 | 类型 | 必填 | 默认 | 说明 |
-|------|------|------|------|------|
-| `prompt` | string | 无图时必填 | — | 文本描述（≤1000字符） |
-| `image_path` | string | 无提示词时必填 | — | Unity 资产路径（`Assets/...`）或绝对路径 |
-| `prefab_output_path` | string | 否 | 自动生成 | 输出 prefab 路径（`.prefab` 自动添加） |
-| `force_overwrite` | bool | 否 | false | 覆盖同路径已有 prefab |
-| `tier` | string | 否 | `Gen-2.5-Extreme-High` | 模型层级（见下表） |
-| `quality` | string | 否 | `medium` | 质量等级（面数预设，Raw 档映射 high=100万/medium=50万/low=6万/extra-low=2万）：`extra-low`/`low`/`medium`/`high` |
-| `quality_override` | int | 否 | 不设置 | 自定义目标面数（500–2000000），**优先于 `quality`**；Quad 模式上限 200000，非 High 档 tier 上限 1000000。低档位 tier 未传时后端自动封顶（Extreme-Low→20000、Low→60000） |
-| `material` | string | 否 | `PBR` | 材质类型：`PBR`/`Shaded` |
-| `mesh_mode` | string | 否 | `Quad` | 网格模式：`Quad`（四边形）/`Raw`（三角形） |
-| `ta_pose` | bool | 否 | false | 生成 T/A 姿势的模型。**`add_motion` 时建议 true** |
-| `geometry_format` | string | 否 | `fbx` | 输出格式 |
-| `session_id` | string | 否 | — | 为占位符 prefab 添加 Session 标签 |
-| `add_motion` | bool | 否 | false | 与 UI「添加动作」相同：主模型落地后自动 UniRig + HunyuanMotion |
-| `motion_description` | string | `add_motion` 时必填 | — | 英文动作描述，例如 `a walking cycle` |
-
-**tier 选项：**
+### tier 选项
 
 | 值 | 描述 |
 |----|------|
-| `Gen-2.5-Extreme-Low` | 超低（最快，适合快速预览） |
-| `Gen-2.5-Low` | 低（快，适合简单物体） |
+| `Gen-2.5-Extreme-Low` | 超低（**默认**，最快，适合快速预览 / 轻量道具） |
+| `Gen-2.5-Low` | 低（快，简单物体） |
 | `Gen-2.5-Medium` | 中（平衡） |
 | `Gen-2.5-High` | 高（精细） |
-| `Gen-2.5-Extreme-High` | 极高（**默认**，最精细，适合 hero 资产） |
+| `Gen-2.5-Extreme-High` | 极高（hero 资产 / 最高细节，必须显式指定） |
 
-**返回（成功）：**
+### 面数控制速查
 
-```json
-{
-  "success": true,
-  "task_id": "static_model_1_...",
-  "generator_id": "rodin",
-  "prompt": "wooden chair",
-  "prefab_output_path": "Assets/TJGenerators/History/Model3D.prefab",
-  "estimated_wait_seconds": 600,
-  "notification_mode": "bg_task_done"
-}
-```
+- 低面（小游戏/移动端）：`tier=Gen-2.5-Low` 或 `face_limit=8000` 等显式数值
+- 精确预算：直接传 `face_limit`（优先于 tier 预设）
+- 高精度高面：`tier=Gen-2.5-Extreme-High`（不传 `face_limit` 即不封顶）
 
-**返回（失败）：**
+## ⚠️ 与旧 Unity 工具的差异
 
-```json
-{ "success": false, "error_code": "AUTH_REQUIRED", "message": "Not logged in..." }
-```
-
-调用前检查 `result["success"]`。若 `false`，立即上报错误，**不要**继续轮询。
-
----
-
-### `query_3d_model_status_by_rodin`
-
-查询任务状态（**fallback only，仅一次**——见 [generator-async-pattern §2](../../../experience/templates/generator-async-pattern.md#2--polling-is-strictly-forbidden)）。
-
-**参数：**
-
-| 参数 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `task_id` | string | 是 | `generate_3d_model_by_rodin` 返回的 `task_id` |
-
-**状态值：**
-
-| Status | 含义 |
-|--------|------|
-| `initializing` | 任务已创建，等待后端任务 ID |
-| `generating` | 后端生成中（进度 0–100%） |
-| `recovering` | domain reload 后自动恢复中——**等 `<bg_task_done>` 通知**,不要重复 query |
-| `completed` | 完成，模型已下载并绑定到 prefab |
-| `failed` | 生成失败（查看 `error` 字段） |
-| `interrupted` | domain reload 后丢失后端记录，需重新生成 |
-
-> `interrupted` 处理：用 `generate_3d_model_by_rodin` 加 `force_overwrite=true` 和相同 `prefab_output_path` 重新生成。
-
-**返回（完成）：**
-
-```json
-{
-  "success": true,
-  "task_id": "static_model_1_...",
-  "status": "completed",
-  "progress": 100,
-  "prefab_path": "Assets/TJGenerators/History/Model3D.prefab",
-  "model_path": "Assets/TJGenerators/History/Model3D_model/Model3D_model.fbx",
-  "preview_url": "https://example.com/preview.png",
-  "result_summary": "Generation completed. Model: Assets/...fbx. Prefab: Assets/...prefab.",
-  "end_time": "2026-03-13 10:35:22",
-  "duration_seconds": 487
-}
-```
-
-> **`preview_url`** — 渲染预览缩略图 URL，需直接展示给用户预览生成效果，可能为空。
-
-**返回（进行中）：**
-
-> ⚠️ Fallback 查询规则见 [generator-async-pattern §3](../../../experience/templates/generator-async-pattern.md#3-fallback-超时表)：长任务 300 秒后才允许调用，仅一次。
-
-```json
-{
-  "success": true,
-  "status": "generating",
-  "progress": 45
-}
-```
-
----
-
-### `list_3d_model_tasks_by_rodin`
-
-列出当前 Unity Editor session 内的所有 Rodin Gen-2.5 任务。
-
-**参数：** 无
-
----
+旧 `generate_3d_model_by_rodin` 的以下参数在 MCP 上**暂无对应**，不要传：
+`material`（PBR/Shaded）、`mesh_mode`（Quad/Raw）、`ta_pose`、`geometry_format`。
+（`ta_pose` 对从零带动画有帮助；后端如后续补齐会同步到本文档。）
 
 ## 输入模式
 
-| 模式 | 参数 | 适用场景 |
-|------|------|---------|
-| 文生3D | `prompt` | 文字描述生成 |
-| 图生3D | `image_path` | 从参考图生成 |
-| 文+图 | `prompt` + `image_path` | 带文字指导的参考图生成 |
+| 模式 | 参数 | 适用 |
+|------|------|------|
+| 文生3D | `prompt` | 文字描述 |
+| 图生3D | `image_url`（先 `file_upload`） | 参考图 |
+| 文+图 | `prompt` + `image_url` | 带文字指导的图生 |
+| 多视图 | ❌ **rodin 不支持**（仅 tripo） | — |
 
----
+## 示例
 
-## quality 参考值（面数预设）
+```
+# 轻量默认
+generate_3d_model(mode="text_to_model", provider="rodin",
+                  prompt="wooden barrel, medieval style")
 
-`quality` 控制的是目标面数（不是 tier）。Gen-2.5 `Raw` 档映射：`high`=100万 / `medium`=50万（默认）/ `low`=6万 / `extra-low`=2万；`Quad` 档：`high`=5万 / `medium`=1.8万 / `low`=8000 / `extra-low`=4000。需要精确面数时用 `quality_override` 直接指定。
+# 高精度 hero 武器
+generate_3d_model(mode="text_to_model", provider="rodin",
+                  prompt="ornate golden sword with gem-encrusted hilt",
+                  tier="Gen-2.5-Extreme-High", pbr=True)
 
-| 值 | 描述 |
-|----|------|
-| `extra-low` | 超低面数（最快） |
-| `low` | 低面数 |
-| `medium` | 中等（默认，Raw 档=50万面） |
-| `high` | 高面数 |
+# 精确面数预算
+generate_3d_model(mode="image_to_model", provider="rodin",
+                  image_url="<file_url>", face_limit=6000)
+```
 
----
+## 导入衔接
 
-## Domain Reload 与通知
-
-通用 domain reload 恢复流程与异步纪律见 [generator-async-pattern](../../../experience/templates/generator-async-pattern.md)：
-
-- 任务状态持久化到 `Library/AI.TJGenerators/InterruptedTasks.json`
-- reload 后状态短暂显示 `recovering`，C# host 会自动恢复并重发 `<bg_task_done>` 通知
-- **`interrupted` 状态独有处理**：用 `generate_3d_model_by_rodin` + `force_overwrite=true` + 相同 `prefab_output_path` 重新提交（Tripo P1 一般不会出 `interrupted`）
-- 写代码时使用 `execute_csharp_script`，**不要**把 `.cs` 文件写入磁盘（会触发不必要的 domain reload）
+`check_task` 拿到 fbx URL 后：`import_3d_model_from_url(provider="rodin", ...)`。
+rodin FBX 为 cm 文件单位，导入工具的 auto-fit 会按包围盒归一到 ~1m，**不要**手改 importer scale。

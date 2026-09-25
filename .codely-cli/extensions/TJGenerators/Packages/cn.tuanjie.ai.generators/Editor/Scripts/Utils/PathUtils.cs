@@ -538,6 +538,10 @@ namespace TJGenerators.Utils
 
             foreach (string file in Directory.GetFiles(absFolder, "*", SearchOption.AllDirectories))
             {
+                // Unity imports metadata with its source asset. Importing .meta directly can
+                // delete/recreate importer settings and invalidate Sprite sub-asset references.
+                if (file.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
+                    continue;
                 string rel = AbsolutePathToAssetsRelative(file);
                 if (string.IsNullOrEmpty(rel) || !rel.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase))
                     continue;

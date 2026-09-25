@@ -1,196 +1,69 @@
 ---
 name: unity-audio-clip-generation
-description: Generate background music (BGM) and ambient audio clips in Unity using AI via text descriptions. Use this skill when the user wants background music, BGM, soundtrack, ambient sound, or looping audio for a Unity scene — e.g. "给场景加个背景音乐", "生成背景音乐", "make some music for my game", or "create an audio clip". DO NOT use for sound effects (SFX) such as gunshots, footsteps, UI clicks, explosions — use the `generate_sound_effect` skill instead.
+description: "Generate background music (BGM) and ambient audio clips in Unity using AI via text descriptions. Use this skill when the user wants background music, BGM, soundtrack, ambient sound, or looping audio for a Unity scene — e.g. \"给场景加个背景音乐\", \"生成背景音乐\", \"make some music for my game\", or \"create an audio clip\". DO NOT use for sound effects (SFX) such as gunshots, footsteps, UI clicks, explosions — use the generate_sound_effect skill instead. Two-phase MCP flow: generation runs on the MCP backend (generate_music + check_task), landing runs in Unity via the import_audio_from_url custom tool (is_bgm=true auto-creates/reuses a BGMPlayer)."
 ---
 
-> ⚠️ **执行约束**
-> - **主 agent**：无 `execute_custom_tool` 权限，必须 `task(subagent_name="audio-generator", ...)` 委托，不要 `activate_skill` 后自己调。
-> - **子代理（本文档主要读者）**：有权限，按下方 `execute_custom_tool(...)` 示例执行。
+> **执行前读取**：[共享执行约定](../../experience/templates/generator-async-pattern.md)。
+> 主 agent 按需委托 `general-purpose`；已在子代理中则直接执行本 skill，不再委托。已提交的阶段从原任务续接。
 
-> ⛔ **`place_assets_in_scene` 调用规则**
-> - **调用方式**：`activate_skill("unity-place-assets-in-scene")` → 按 §4c AudioClip BGM 模板用 `execute_csharp_script` 配置 `AudioSource`（**不是** `execute_custom_tool`）。
-> - **子代理**：提交后**立即调一次**把占位 WAV 配到 AudioSource；收到 `<bg_task_done>` 后**不再调**（AudioSource.clip 自动指向真实音频）。
-> - **主 agent**：报告里的 `audio_path` 是"已放置"的证据，不是"请你放置"的指示，**不要再调**。
-> - **例外**：用户明确要"换 AudioSource / 再加一个实例"时才再次调用。详见 [async-pattern §5.1](../../experience/templates/generator-async-pattern.md#51-place_assets_in_scene-调用规则)。
+# Generate BGM / Ambient Audio in Unity 🎵 (MCP two-phase)
 
-# Generate Audio Clip (BGM / Ambient Music) in Unity 🎵
+Generate background music / ambient clips as **AudioClip**（WAV/MP3）保存到 `Assets/TJGenerators/History/ImportAudio/`。
 
-Generate **background music and ambient audio** assets in Unity using Sonilo AI, from text descriptions of music style, mood, or scene.
-Output: WAV file auto-imported as **AudioClip**, saved到 `Assets/TJGenerators/History/`。
+**两段式流程**：
+- **第一段·生成（MCP 后端）**：`generate_music`（prompt 建议含 "bgm"/"background music"）→ 后台轮询 → `check_task` 拿 **`output.data.audioUrl`**
+- **第二段·导入 + 后处理（Unity CustomTool）**：`import_audio_from_url`（**is_bgm=true**）→ 静音 WAV 占位 → 下载原位覆盖 → **场景无引用时自动创建/复用 BGMPlayer（loop + 2D + playOnAwake）**，已有 AudioSource 引用占位则自动重绑真实 clip → History 记录 → 本次等待结束后 `query_local_task` 单次拉取
 
-> ⚠️ **仅 BGM 和环境音乐。** 一次性音效（枪声、脚步、UI 点击、爆炸等）用 `generate_sound_effect` skill。
+## 🚦 执行五步
 
-## 🚦 执行四步（不要跳读外链）
+1. 调 MCP `generate_music`：`prompt`（中英皆可，写明风格/情绪/场景/乐器；提示加 "bgm"）+ `duration_seconds`（游戏 BGM 推荐 15-30s；循环 BGM 推荐 30-60s；1-180）+ `output_format`（**只选 `wav` 或 `mp3`**——.aac/.flac 不可导入 Unity）→ 拿 `task_id`，按共享约定执行返回的轮询命令
+2. 轮询结束 → `check_task` 一次 → 音频 URL 在 `output.data.audioUrl`（另含实测 `duration`/`fileSize`）
+3. `execute_custom_tool("import_audio_from_url", {audio_url, is_bgm: true, prompt, ...})` → 拿 `task_id` + `placeholder_path`（静音 WAV，可先挂 AudioSource 预接线，完成自动重绑）
+4. **在当前子代理内前台等待（每次最多30秒）（estimated_wait_seconds≈30s）** → **在当前子代理内等待，不结束任务**
+5. 本次等待结束 → `query_local_task` **一次** → 读 `audio_path` + `created_bgm_player`；仍 `importing` 则再进行一次前台短等待。**不要干等 Unity 推送，按共享约定等待后再查询**
 
-1. 调 `generate_audio_clip` → 拿 `task_id` + `placeholder_path`（无声 WAV）
-2. 立即 `place_assets_in_scene`（资产类型 `AudioClip BGM`，路径用 `placeholder_path`）→ 创建 `BGMPlayer` + AudioSource（loop=true, spatialBlend=0）
-3. **END RESPONSE TURN** — 不要 poll、不要 `query_audio_clip_status`、不要继续操作
-4. 下一轮收到 `<bg_task_done>` → 读 `audio_path`（WAV 已原地覆盖，AudioSource.clip 自动指向真实音乐，**不要再 place**）
-
-**档位**：短任务 60–180 秒；120 秒内无通知才允许 `query_audio_clip_status` 一次。完整 async 规则见 [generator-async-pattern](../../experience/templates/generator-async-pattern.md)。
+**档位**：生成 30-120 秒（按时长计费）；导入实测秒级。
 
 ## ⚠️ Skill 独有约束
 
-1. **`prompt` required**——必须描述音乐风格/情绪/乐器/场景。支持中文和英文。
-2. **`duration_seconds` 范围 1–180**（float，秒）——超出会被拒绝；默认 90。
-3. **资产类型用 `AudioClip BGM` 不是 `AudioClip SFX`**——`place_assets_in_scene` 会按 BGM 类型配置 AudioSource：`loop=true`、`spatialBlend=0`（2D，无空间衰减）。
-4. **`play_on_awake` 直接控 AudioSource**——这个参数不影响生成本身，而是控制 `place_assets_in_scene` 创建 AudioSource 时是否自动播放（默认 `true`）。需要脚本触发时设 `false`。
+1. **`output_format` 只选 `wav`/`mp3`**——Unity 不可导入 .aac/.flac/.m4a；check_task 返回其它扩展名时报告格式不兼容，不自动重生成。
+2. **按秒计费 + 成本确认**——`duration_seconds` 影响积分；省略时按 90s 估算。预估达阈值会返回确认提示：展示设置与预估积分，取得用户**明确同意**后才 `confirm_cost=true` 重提；时长请求本身不等于批准扣费。
+3. **BGMPlayer 行为**——`is_bgm=true` 且场景中没有 AudioSource 引用该 clip 时自动创建 `BGMPlayer`（loop + spatialBlend=0 + playOnAwake）；已有引用则只重绑不新建。不要在场景里手工再建一份。
+4. **本工程验证**——`query_local_task` 返回 `audio_path` 即完成；可用 `unity_asset(action="get_info")` 确认，不要用截图验证。
 
-## When to Use / NOT to Use
+## 旧参数 → MCP 参数映射（原 Unity generate_audio_clip）
 
-适用：BGM、环境氛围音乐、loop 背景音轨、场景音乐主题、菜单音乐、boss 战音乐。
+| 旧参数 | MCP `generate_music` | 备注 |
+|---|---|---|
+| `generator_id: sonilo-music` | 无（MCP 固定 provider） | — |
+| `prompt` | 同名 | 中英皆可 |
+| `duration_seconds` | 同名 | 计费相关 |
+| `output_format`（旧默认 wav） | 同名 | 只选 wav / mp3 |
+| `play_on_awake` | 传给第二段 `import_audio_from_url` | is_bgm 时默认 true |
+| `output_path` | 传给第二段 `import_audio_from_url` | 默认 History/ImportAudio/<url-hash>.<ext> |
 
-不适用：
-- 一次性音效（枪声/脚步/UI 点击/爆炸/拾取） → `generate_sound_effect`
-- 编辑/混音现有音频文件（本工具只生成新音频）
-- 配音 / TTS（不在本 skill 范围）
-
-## 工具
-
-所有工具通过 `execute_custom_tool` 调用。
-
-### `generate_audio_clip`
+## 第二段 · `import_audio_from_url`（execute_custom_tool）
 
 ```python
 execute_custom_tool(
-  tool_name="generate_audio_clip",
+  tool_name="import_audio_from_url",
   parameters={
-    "prompt": "epic orchestral battle music, intense drums, rising tension",  # Required
-    "generator_id": "sonilo-music",      # 唯一可用 generator（默认）
-    "duration_seconds": 90,               # 1–180 秒，默认 90
-    "output_format": "wav",              # wav|mp3，默认 wav
-    "play_on_awake": True,               # 创建的 AudioSource 是否自动播放，默认 true
-    # output_path: 不建议指定，默认 Assets/TJGenerators/History/
-  }
-)
+    "audio_url": "https://.../result.wav",   # check_task 的 output.data.audioUrl
+    "is_bgm": True,                            # BGM/环境音必传；音效勿传
+    "prompt": "calm forest bgm",               # 可选，History 显示
+    "output_path": "Assets/TJGenerators/History/MyBgm.wav",  # 可选
+    "session_id": "..."
+  })
 ```
 
-> ⚠️ **不要随便指定 `output_path`**——使用项目中尚未存在的目录（如 `Assets/Audio/BGM`）会导致资产无法被 Unity 正确导入。默认路径是标准位置。
+返回：`task_id`、`placeholder_path`、`output_path`、`estimated_wait_seconds`(30)。完成字段：`audio_path`、`updated_audio_sources`、`created_bgm_player`。**不要无间隔连续查询。**
 
-### 返回字段
+## 故障处理
 
-- `task_id`
-- `placeholder_path`：占位 WAV（无声），**立即可用**——交给 `place_assets_in_scene`
-- `estimated_wait_seconds` ≈ 90
-- `notification_mode: "bg_task_done"`
-
-提交失败时 `result["success"] == false`，读 `error_code` / `message`，**不要**poll。
-
-### `<bg_task_done>` 独有字段
-
-通用字段见模板。本 skill 额外字段：
-
-| 字段 | 说明 |
-|---|---|
-| `audio_path` | 最终 AudioClip 资产路径（== `placeholder_path`，原地覆盖） |
-| `preview_url` | 音频预览 URL 或本地路径 |
-| `generator_id` | 使用的生成器 |
-| `prompt` | 原始 prompt |
-
-### `query_audio_clip_status` / `list_audio_clip_tasks`
-
-`query_audio_clip_status` 仅作 fallback（120 秒后单次）。返回字段同 `<bg_task_done>` payload，外加 `placeholder_path`（仅 `generating` 时）。
-
-`list_audio_clip_tasks` 返回当前 session 的所有 audio_clip 任务。
-
-## 参数速查
-
-| 参数 | 类型 | 默认 | 说明 |
-|---|---|---|---|
-| `generator_id` | string | `"sonilo-music"` | 唯一可用 |
-| `prompt` | string | **required** | 风格/情绪/乐器/场景描述（支持中文和英文） |
-| `duration_seconds` | float | `90` | 输出长度秒数（**1–180**） |
-| `output_format` | string | `"wav"` | `wav` / `mp3` |
-| `play_on_awake` | bool | `true` | 创建的 AudioSource 是否在 Play Mode 自动播放 |
-| `output_path` | string | — | 自定义路径（**不建议指定**） |
-
-## 使用示例
-
-### 生成 BGM
-
-```python
-result = execute_custom_tool(
-    tool_name="generate_audio_clip",
-    parameters={
-        "prompt": "calm ambient fantasy RPG town music, gentle flute and strings, peaceful atmosphere",
-        "duration_seconds": 60
-    }
-)
-if not result.get("success", True):
-    raise RuntimeError(f"[{result['error_code']}] {result['message']}")
-
-task_id = result["task_id"]
-placeholder_path = result["placeholder_path"]
-
-# ✅ 立即用 place_assets_in_scene 把 placeholder_path 应用为 AudioClip BGM
-# 然后 END RESPONSE TURN，等 bg_task_done 通知
-```
-
-### 脚本触发的 BGM（不自动播放）
-
-```python
-parameters={
-    "prompt": "tense boss fight music, heavy brass, fast percussion",
-    "duration_seconds": 90,
-    "play_on_awake": False        # 脚本里手动 audioSource.Play() 触发
-}
-```
-
-## 放入场景
-
-资产类型 **`AudioClip BGM`**（不是 `AudioClip SFX`、不是 `AudioClip`），路径用 `placeholder_path` / `audio_path`。
-
-Scene side-effect：创建 `BGMPlayer` GameObject + AudioSource，`loop=true`、`spatialBlend=0`、`playOnAwake=<生成参数 play_on_awake>`；不需要绑定到具体 GameObject（BGM 是 2D 全局音）。
-
-规则（占位/原地覆盖/只调一次）见 [async-pattern §5 / §5.1](../../experience/templates/generator-async-pattern.md#5-placeholder-工作流适用于会返回-placeholder_path--prefab_output_path-的工具)。
-
-## Prompt 写作指南
-
-像给作曲家写 brief 一样，描述**风格 / 情绪 / 乐器 / 场景**。
-
-| 场景 | Prompt 示例 |
-|---|---|
-| RPG 城镇 | `"peaceful medieval town music, acoustic guitar, flute, warm and welcoming"` |
-| Boss 战 | `"intense orchestral battle, heavy brass, fast percussion, rising tension"` |
-| 探索 | `"ambient open world exploration, soft synth pads, gentle piano, sense of wonder"` |
-| 恐怖 | `"unsettling horror ambiance, dissonant strings, low rumbles, eerie silence"` |
-| 胜利 | `"triumphant fanfare, full orchestra, brass stabs, heroic and celebratory"` |
-| 科幻 | `"futuristic electronic ambient, pulsing synths, glitchy textures, space atmosphere"` |
-| 休闲手游 | `"upbeat cheerful casual game music, ukulele, xylophone, light and fun"` |
-
-技巧：
-- **流派**：orchestral / electronic / jazz / folk / metal
-- **情绪**：peaceful / tense / mysterious / heroic / melancholic
-- **乐器**：piano / guitar / strings / synth / drums
-- **能量**：calm / slow build / driving / intense
-- **用途**：background loop / intro jingle / boss fight / menu theme
-
-## 故障排查
-
-### Skill 独有问题
-
-> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [generator-async-pattern §10](../../experience/templates/generator-async-pattern.md#10-通用故障排查)。
-
-| 问题 | 原因 | 解决 |
+| 症状 | 原因 | 处理 |
 |---|---|---|
-| 音乐与 prompt 不符 | prompt 太模糊 / 描述矛盾 | 写更具体的乐器 + 情绪；避免矛盾描述 |
-| 想快速试错 prompt | duration 默认 90 太长 | 临时设 `duration_seconds: 30` 加快迭代 |
-| AudioClip 在 Unity 没显示 | output_path 目录不存在 | 不要自定义 `output_path`，用默认路径 |
-
-### Domain reload 后 task 丢失
-
-通用恢复流程见 [generator-async-pattern §6](../../experience/templates/generator-async-pattern.md#6-domain-reload-recovery)。本 skill 完成态阈值（覆盖通用 `<1KB` 占位规则）：
-
-- WAV < 10 KB → 仍是 placeholder（无声占位）
-- WAV ≥ 1 MB → 真实音乐已就绪（60 秒 WAV 通常几 MB）
-
-可用 `glob("Assets/TJGenerators/History/*.wav")` + 文件大小恢复。
-
----
-
-**Task ID Format**：`audio_{counter}_{timestamp}`
-
-**Notes**：
-- 输出 WAV 自动导入为 `AudioClip`
-- 自动应用 `TuanjieAI` 标签
-- 需 Unity Editor 在线运行；消耗 AI 服务额度
+| `check_task` 仍 pending 超预估 | 音乐生成 30-120s 正常 | 对同一 task_id 再 check_task 一次，勿重复提交 |
+| 返回确认提示（费用） | 时长 × 单价达阈值 | 展示预估积分，用户同意后 confirm_cost=true 重提 |
+| `import_audio_from_url` 报扩展名不支持 | .aac/.flac/.m4a | 报告格式不兼容；新提交应指定 wav/mp3，不自动重生成 |
+| query 返回 `recovering` | 域重载中断 | 再进行一次前台短等待等自动恢复（幂等重跑） |
+| 通知未到达 | 通知可能未送达当前执行者 | 按共享执行约定处理——有间隔等待 + 状态查询 是标准完成模式 |

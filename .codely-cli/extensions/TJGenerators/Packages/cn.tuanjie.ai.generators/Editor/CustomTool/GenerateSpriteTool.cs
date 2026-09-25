@@ -201,7 +201,7 @@ namespace UnityTcp.Editor.Tools
             "is_segmentation (bool, auto-remove background, default true), output_path (optional save path), " +
             "imageSize (frontier-game-design only, 'square_hd'/'square'/'portrait_4_3'/'portrait_16_9'/'landscape_4_3'/'landscape_16_9', default 'square_hd'), " +
             "outputFormat (frontier-game-design only, 'png'/'jpeg', default 'png'). " +
-            "IMPORTANT: Generation takes 1-3 minutes. Wait at least 5 seconds before the first query_sprite_status call, " +
+            "IMPORTANT: Generation takes 1-3 minutes. Wait at least 5 seconds before the first query_local_task call, " +
             "then poll every 10-15 seconds. A placeholder_path is returned immediately — you can assign it to a SpriteRenderer right away.")]
         public static object GenerateSprite(JObject parameters)
         {
@@ -345,12 +345,12 @@ namespace UnityTcp.Editor.Tools
                     { "submission_success", true },
                     { "message",
                         "Sprite generation started. " +
-                        "STEP 1 (do now): Apply placeholder_path to a SpriteRenderer (or use `place_assets_in_scene` skill). " +
-                        "STEP 2 (critical): END THIS RESPONSE TURN immediately. " +
-                        "STEP 3 (automatic): A <bg_task_done> notification will appear in your next turn (~90s) " +
+                        "STEP 1 (do now): Call activate_skill(\"unity-place-assets-in-scene\"), then use exec_editor_script as instructed to apply placeholder_path to a SpriteRenderer. " +
+                        "STEP 2 (critical): Keep this worker active until the task is terminal and its assets are verified. " +
+                        "STEP 3: A <bg_task_done> notification may arrive (~90s) " +
                         "containing ALL generation results (image_path, preview_url, timing, etc.). " +
-                        "*** POLLING IS STRICTLY FORBIDDEN — do NOT call query_sprite_status repeatedly. " +
-                        "Only call query_sprite_status ONCE as a last-resort fallback if no notification arrives. ***" },
+                        "Wait up to 30 seconds in the current worker, then call query_local_task once; repeat only while pending. " +
+                        "Do not busy-poll query_local_task, submit again, or report success while pending." },
                     { "task_id",            taskId },
                     { "backend_task_id",    submitResult.BackendTaskId },
                     { "status",             "submitted" },
@@ -385,11 +385,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_sprite_status",
-            "Query the status of a sprite generation task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "When completed, returns 'sprite_path' with the Sprite asset path in the project. " +
-            "Status values: 'generating', 'completed', 'failed'. " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QuerySpriteStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -466,7 +461,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_sprite_tasks", "List all active and recent sprite generation tasks")]
         public static object ListSpriteTasks(JObject parameters)
         {
 #if UNITY_EDITOR

@@ -3,15 +3,14 @@ name: unity-material-generation
 description: Generate PBR surface material assets (seamless texture PNG + Unity .mat file) in Unity using AI via text prompts, reference images, or built-in texture pattern templates. Use this skill whenever the user wants to create a surface material for a 3D object in a Unity game — even if they just say "帮我生成一个金属材质", "给地面加个石头纹理", "make a wood texture for my floor", or "generate a brick wall material". Trigger proactively for any surface material or PBR texture creation request in a Unity context, including environment textures, object surfaces, architectural materials, or any tileable texture content for 3D objects. Do NOT use for 2D sprites, icons, or UI images — those belong to the unity-sprite-generation skill.
 ---
 
-> ⚠️ **执行约束**
-> - **主 agent**：无 `execute_custom_tool` 权限，必须 `task(subagent_name="material-generator", ...)` 委托，不要 `activate_skill` 后自己调。
-> - **子代理（本文档主要读者）**：有权限，按下方 `execute_custom_tool(...)` 示例执行。
+> **执行前读取**：[共享执行约定](../../experience/templates/generator-async-pattern.md)。
+> 主 agent 按需委托 `general-purpose`；已在子代理中则直接执行本 skill，不再委托。已提交的阶段从原任务续接。
 
-> ⛔ **`place_assets_in_scene` 调用规则**
-> - **调用方式**：`activate_skill("unity-place-assets-in-scene")` → 按 §4e Material 模板用 `execute_csharp_script` 赋给 `Renderer.sharedMaterial`（**不是** `execute_custom_tool`）。
+> ⛔ **场景放置规则**
+> - **调用方式**：`activate_skill("unity-place-assets-in-scene")` → 按 §4e Material 模板用 `exec_editor_script` 赋给 `Renderer.sharedMaterial`（**不是** `execute_custom_tool`）。
 > - **子代理**：提交后**立即调一次**把占位 `.mat` 赋给目标 Renderer；收到 `<bg_task_done>` 后**不再调**（已赋上的 `Renderer.sharedMaterial` 自动显示真实贴图）。
 > - **主 agent**：报告里的 `material_path` 是"已放置"的证据，不是"请你放置"的指示，**不要再调**。
-> - **例外**：用户明确要"换 Renderer / 再赋一个对象"时才再次调用。详见 [async-pattern §5.1](../../experience/templates/generator-async-pattern.md#51-place_assets_in_scene-调用规则)。
+> - **例外**：用户明确要"换 Renderer / 再赋一个对象"时才再次调用。详见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 # Generate Surface Material in Unity 🪨
 
@@ -23,11 +22,11 @@ Output: seamless PNG texture (imported as **Default Texture**) + a ready-to-use 
 ## 🚦 执行四步（不要跳读外链）
 
 1. 调 `generate_material` → 拿 `task_id` + `placeholder_path`（PNG）+ `placeholder_material_path`（`.mat`）
-2. 立即 `place_assets_in_scene`（资产类型 `Material`，路径用 `placeholder_material_path`）→ 赋给目标 Renderer
-3. **END RESPONSE TURN** — 不要 poll、不要 `query_material_status`、不要继续操作
-4. 下一轮收到 `<bg_task_done>` → 读 `material_path` / `texture_path`（PNG 已原地覆盖，`.mat.mainTexture` 自动更新，已绑定的 Renderer 不需要重赋值，**不要再 place**）
+2. 若用户指定 `target_object` 但对象不存在，按给定名称和变换创建 Cube（墙体不要用水平 Plane）；随后 `activate_skill("unity-place-assets-in-scene")`，用 `exec_editor_script` 把 `placeholder_material_path` 的 `Material` 赋给目标 Renderer
+3. 在当前执行者内按共享约定有间隔等待，调用 `query_local_task` 确认当前阶段的终态
+4. 确认当前任务 `completed` 后 → 读 `material_path` / `texture_path`（PNG 已原地覆盖，`.mat.mainTexture` 自动更新，已绑定的 Renderer 不需要重赋值，**不要再 place**）
 
-**档位**：短任务 60–180 秒；120 秒内无通知才允许 `query_material_status` 一次。最多 **5 个**并发。完整 async 规则见 [generator-async-pattern](../../experience/templates/generator-async-pattern.md)。
+**档位**：短任务 60–180 秒；无通知时按共享约定等待后查询 `query_local_task`。最多 **5 个**并发。完整 async 规则见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 ## ⚠️ Skill 独有约束
 
@@ -98,11 +97,11 @@ preset.prompt + ", " + style.prompt + ", " + your prompt
 | `generator_id` | 使用的生成器 |
 | `prompt` | 实际拼接的 prompt |
 
-### `query_material_status` / `list_material_tasks`
+### `query_local_task` / `list_local_tasks`
 
-`query_material_status` 仅作 fallback（120 秒后单次）。返回字段同 `<bg_task_done>` payload，外加 `placeholder_path` / `placeholder_material_path`（仅 `generating` 时）。
+`query_local_task` 仅作 fallback（120 秒后单次）。返回字段同 `<bg_task_done>` payload，外加 `placeholder_path` / `placeholder_material_path`（仅 `generating` 时）。
 
-`list_material_tasks` 返回当前 session 的所有 material 任务。
+`list_local_tasks` 返回当前 session 的所有 material 任务。
 
 ## 参数速查
 
@@ -193,8 +192,8 @@ if not result.get("success", True):
 task_id = result["task_id"]
 placeholder_material_path = result["placeholder_material_path"]
 
-# ✅ 立即用 place_assets_in_scene 把 .mat 应用到目标物体
-# 然后 END RESPONSE TURN，等 bg_task_done 通知
+# ✅ activate_skill("unity-place-assets-in-scene")，按指引用 exec_editor_script 把 .mat 应用到目标物体
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 ```
 
 ### 按纹理图案生成
@@ -234,14 +233,14 @@ for preset, style, prompt in materials:
     task_ids.append(result["task_id"])
     # ✅ 直接继续，不 poll
 
-# END RESPONSE TURN — 每个 task 都会单独发 bg_task_done
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 ```
 
 ## 放入场景
 
 资产类型 **`Material`**，路径用 `placeholder_material_path` / `material_path`。`placement_instruction` 例：`"赋给 Floor 的材质"`、`"应用到 Wall_001"`。
 
-规则见 [async-pattern §5 / §5.1](../../experience/templates/generator-async-pattern.md#5-placeholder-工作流适用于会返回-placeholder_path--prefab_output_path-的工具)。
+规则见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 ## Prompt 写作指南
 
@@ -263,7 +262,7 @@ for preset, style, prompt in materials:
 
 ## 故障排查
 
-> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [generator-async-pattern §10](../../experience/templates/generator-async-pattern.md#10-通用故障排查)。
+> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 ### Skill 独有问题
 
@@ -273,14 +272,9 @@ for preset, style, prompt in materials:
 | `pattern_id` 没起效 | 模板图未预生成 | 在 Unity Editor 跑 **AI生成 → 开发 → 材质模板生成器** 一次；之后会回退到 `image_path` 或纯文本 |
 | 材质长得不像目标类型 | preset/style/prompt 不匹配 | 设正确 `preset_id`（控类型）+ `style_id`（控状态），`prompt` 补颜色/纹理细节 |
 
-### Domain reload 后 task 丢失
+### Domain reload 后恢复
 
-通用恢复流程见 [generator-async-pattern §6](../../experience/templates/generator-async-pattern.md#6-domain-reload-recovery)。本 skill 完成态阈值：
-
-- PNG ≥ 100 KB → 真实纹理已就绪
-- `.mat` 文件本身较小（约几 KB）——通过对应 PNG 大小判定即可
-
-可用 `glob("Assets/TJGenerators/History/*.png")` + 文件大小恢复。
+通用恢复流程见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。确认原任务终态后，加载 PNG 为 Texture2D、确认非占位尺寸，并验证 Material 的贴图引用与目标 Renderer（若要求应用）。
 
 ---
 

@@ -3,12 +3,8 @@ name: unity-terrain-generation
 description: Generate a large-scale Unity Terrain (heightmap-based) and place it in the scene. Use this skill — NOT unity-3d-model-generation — whenever the user describes a landscape, terrain, or landform environment, including canyon, valley, mountain range, hills, plains, plateau, island, volcano, desert dunes, coastal cliffs, or any terrain feature. Trigger examples — "帮我生成一个地形", "生成峡谷地形", "生成山地地貌", "侵蚀地貌", "冲积平原", "沉积岩", "create a canyon", "generate a valley", "make mountain terrain", "rocky landscape", "eroded cliffs", "floodplain terrain", "generate landscape". KEY RULE — if the request describes a large-scale ground/environment shape (not a standalone prop or object), always use this skill. By default, the AI agent automatically handles the full workflow (generate heightmap → apply to scene) without user intervention.
 ---
 
-> ⚠️ **执行约束**（**当前无专属子代理**）
-> - **主 agent**：无 `execute_custom_tool` 权限。任选其一委托：
->   1. `task(subagent_name="general-purpose", ...)` 把任务委给通用子代理（其有 `execute_custom_tool` 权限）；
->   2. 或临时在 `agents/` 下新增 `terrain-generator.toml`（allowed_tools 含 `execute_custom_tool`，allowed_skills 含 `unity-terrain-generation`）后委托。
->   不要主 agent 直接 `activate_skill` 后调 `execute_custom_tool`，会报"自定义工具未注册"。
-> - **子代理（本文档主要读者）**：有权限，按下方 `execute_custom_tool(...)` 示例执行。
+> **执行前读取**：[共享执行约定](../../experience/templates/generator-async-pattern.md)。
+> 主 agent 按需委托 `general-purpose`；已在子代理中则直接执行本 skill，不再委托。已提交的阶段从原任务续接。
 
 # Generate Unity Terrain 🏔️
 
@@ -22,24 +18,24 @@ description: Generate a large-scale Unity Terrain (heightmap-based) and place it
 
 **Stage 1（heightmap 生成）**：
 1. 调 `generate_terrain` → 拿 `task_id_1` + `placeholder_path`（1×1 灰，仅占位，不要 place）
-2. **END RESPONSE TURN** — 不要 poll、不要 `query_terrain_status`
-3. 下一轮收到 `<bg_task_done>` → 读 `heightmap_path`
+2. 在当前执行者内等待，按共享约定查询 `query_local_task`（Stage 1 的 `task_id`）直到终态
+3. 确认对应任务 `completed` 后 → 读 `heightmap_path`
 
 **Stage 2（应用到场景）**：
 4. **立即**调 `apply_terrain_heightmap`（传 Stage 1 的 `heightmap_path`）→ 拿 `task_id_2`
-5. **END RESPONSE TURN** — 不要 poll、不要 `query_terrain_apply_status`
-6. 下一轮收到 `<bg_task_done>` → Terrain 已在场景，workflow 完成
+5. 等待并查询 `query_local_task`（Stage 2 的 `apply_task_id`）直到终态
+6. 确认对应任务 `completed` 后 → Terrain 已在场景，workflow 完成
 
-**档位**：Stage 1 30–90 秒（fallback 120 秒）；Stage 2 60–180 秒（fallback 300 秒）。除非用户明确说"只生成高度图"，否则两段必须串完。完整 async 规则见 [generator-async-pattern](../../experience/templates/generator-async-pattern.md)。
+**档位**：Stage 1 30–90 秒（fallback 120 秒）；Stage 2 60–180 秒（fallback 300 秒）。除非用户明确说"只生成高度图"，否则两段必须串完。完整 async 规则见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 ## ⚠️ Skill 独有约束
 
 1. **必须串两段，不能只跑一段**——除非用户明确说"只生成高度图"。默认 AI agent 端到端自动完成：Stage 1 通知到达 → 立即调 `apply_terrain_heightmap` → Stage 2 通知到达 → workflow 完成。
-2. **不要在两段之间 polling**——通用纪律是"等通知"，本 skill 也一样。原 polling 写法（`time.sleep` 循环）已被 `<bg_task_done>` 替代。
+2. **两段串行**——每段按共享约定等待后查询；Stage 1 的成功终态及真实高度图验证通过后才能开始 Stage 2。
 3. **`task_id` 与 `apply_task_id` 必须区分**——前者来自 Stage 1，后者来自 Stage 2，**不可混用**。Stage 2 的 query 工具只接受 `apply_task_id`。
 4. **强烈建议给 `apply_terrain_heightmap` 传 `task_id`**——开启**幂等保护**：同一 `task_id` 已 apply 过会立即返回 `already_applied: true`，避免在场景里建多个重复 Terrain。
 5. **绝不要用 `placeholder_path` 喂给 `apply_terrain_heightmap`**——必须用通知 / query 拿到的真实 `heightmap_path`（同名但内容不同）。placeholder 是 1×1 stub，apply 会失败。
-6. **Stage 2 处理中不要重试**——通知没到时，先看 `elapsed_seconds`：< 300 秒一律继续等；只在 `failed` 或 > 300 秒才考虑重试 `apply_terrain_heightmap`。
+6. **Stage 2 处理中不要重试**——耗时超过估计也继续查询原 apply 任务；确认失败或丢失并检查场景后，才按同一生成 `task_id` 恢复，利用幂等保护避免重复 Terrain。
 7. **并发上限 5**（仅 Stage 1）——同时运行的 terrain 生成任务最多 5 个。
 8. **`generate_terrain` 不可配 aspect ratio**——总是 1:1 方形 heightmap。
 
@@ -55,23 +51,7 @@ description: Generate a large-scale Unity Terrain (heightmap-based) and place it
 
 ## 工作流
 
-```mermaid
-flowchart TD
-
-A[Step 1: 调用 generate_terrain<br/>提交 heightmap 生成] --> B[立即返回 task_id<br/>END RESPONSE TURN]
-B --> C{Stage 1 通知?}
-C -- bg_task_done received --> D[拿到 heightmap_path]
-C -- 超时 300s --> E[query_terrain_status 一次]
-E --> D
-D --> F[Step 2: 调用 apply_terrain_heightmap<br/>传 heightmap_path + task_id]
-F --> G[立即返回 apply_task_id<br/>END RESPONSE TURN]
-G --> H{Stage 2 通知?}
-H -- bg_task_done received --> I[Terrain 已在场景<br/>WORKFLOW 完成]
-H -- 超时 300s --> J[query_terrain_apply_status 一次]
-J --> I
-```
-
-> 仅当用户明确说"只生成高度图，先不要放到场景里" / "I'll apply it myself" / "分步执行"时，才停在 Stage 1 不进 Stage 2。
+`generate_terrain → 等待/查询成功 → 验证高度图 → apply_terrain_heightmap(task_id=原生成ID) → 等待/查询成功 → 验证 Terrain 和 TerrainData`。只要高度图时在第一段成功后结束。
 
 ## 工具
 
@@ -108,7 +88,7 @@ result = execute_custom_tool(
 | `preview_url` | 预览 URL 或本地路径 |
 | `prompt` | 原始 prompt |
 
-> **收到此通知后立即调 `apply_terrain_heightmap`**（除非用户明确说不要）。**不要**调 `query_terrain_status`。
+> **收到此通知后立即调 `apply_terrain_heightmap`**（除非用户明确说不要）。**不要**调 `query_local_task`。
 
 ### Stage 2：`apply_terrain_heightmap`
 
@@ -152,7 +132,7 @@ apply_result = execute_custom_tool(
 | `terrain_data_path` | 生成的 TerrainData asset 路径 |
 | `terrain_go_name` | 场景中创建的 Terrain GameObject 名 |
 
-> 收到此通知 = workflow 全部完成。**不要**调 `query_terrain_apply_status`。
+> 收到此通知 = workflow 全部完成。**不要**调 `query_local_task`。
 
 ### Fallback Query 工具
 
@@ -160,11 +140,11 @@ apply_result = execute_custom_tool(
 
 | 工具 | 输入 | 用途 |
 |---|---|---|
-| `query_terrain_status` | `task_id` | Stage 1 fallback |
-| `query_terrain_apply_status` | `apply_task_id` | Stage 2 fallback |
-| `list_terrain_tasks` | — | 列出 session 内所有 terrain 生成任务 |
+| `query_local_task` | `task_id` | Stage 1 fallback |
+| `query_local_task` | `apply_task_id` | Stage 2 fallback |
+| `list_local_tasks` | — | 列出 session 内所有 terrain 生成任务 |
 
-> **绝不混用 task_id 与 apply_task_id**——`query_terrain_status` 只接受 `task_id`，`query_terrain_apply_status` 只接受 `apply_task_id`。
+> **绝不混用 task_id 与 apply_task_id**——`query_local_task` 只接受 `task_id`，`query_local_task` 只接受 `apply_task_id`。
 
 ## 状态枚举
 
@@ -176,7 +156,7 @@ apply_result = execute_custom_tool(
 | `completed` | heightmap 就绪 — 调用 `apply_terrain_heightmap` |
 | `applied` | 已 apply 过场景 — **不要再调 apply**（已自动幂等保护） |
 | `failed` | 生成失败，看 `error_message` |
-| `interrupted` | Editor 重启，task 丢失 — 重新生成 |
+| `interrupted` | 任务中断；按共享约定核对原任务及产物后恢复 |
 
 ### Stage 2（`apply_terrain_heightmap`）
 
@@ -238,7 +218,7 @@ if not result.get("success", True):
 
 task_id = result["task_id"]
 
-# ✅ END RESPONSE TURN，等 Stage 1 的 bg_task_done 通知
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 # ─────────────────── 通知到达后的下一回合 ───────────────────
 # heightmap_path = notification.heightmap_path
 
@@ -253,8 +233,8 @@ apply_result = execute_custom_tool(
 )
 apply_task_id = apply_result["apply_task_id"]
 
-# ✅ END RESPONSE TURN，等 Stage 2 的 bg_task_done 通知
-# 通知到达 = Terrain 已在场景，workflow 完成
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
+# 确认 apply 任务成功并验证 Terrain/TerrainData 后报告完成
 ```
 
 ### 手动后处理
@@ -294,7 +274,7 @@ for prompt in terrain_prompts:
     task_ids.append(result["task_id"])
     # ✅ 直接继续，不 poll、不等通知
 
-# ✅ END RESPONSE TURN — 每个 task 各自发 Stage 1 bg_task_done 通知
+# 在当前执行者内有间隔等待/查询该阶段的终态，再继续后续步骤（见共享执行约定）
 # 收到通知后再各自调 apply_terrain_heightmap（也别忘了传 task_id 防重复）
 ```
 
@@ -306,15 +286,14 @@ result = execute_custom_tool(
     tool_name="generate_terrain",
     parameters={"prompt": "rolling hills with gentle valleys"}
 )
-# 报告 task_id 给用户，不要自动 apply
-print(f"Heightmap 生成中。task_id={result['task_id']}。完成后用 apply_terrain_heightmap 应用。")
+# 等待/查询 Stage 1 成功并验证真实 heightmap_path 后报告；不要自动 apply
 ```
 
 ## 放入场景
 
 通常不需要单独的"放入场景"步骤——Stage 2 (`apply_terrain_heightmap`) 已经把 Terrain GameObject 放到当前场景。
 
-如果用户**已有** TerrainData asset（`.asset`，不是 heightmap PNG）想放入场景，那才用 `place_assets_in_scene`：资产类型 **`TerrainData`**，路径用 `.asset` 文件。
+如果用户**已有** TerrainData asset（`.asset`，不是 heightmap PNG）想放入场景，用 `activate_skill("unity-place-assets-in-scene")` 加载指引，再用 `exec_editor_script` 放置：资产类型 **`TerrainData`**，路径用 `.asset` 文件。
 
 ## Prompt 写作指南
 
@@ -339,7 +318,7 @@ print(f"Heightmap 生成中。task_id={result['task_id']}。完成后用 apply_t
 
 ### Skill 独有问题
 
-> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [generator-async-pattern §10](../../experience/templates/generator-async-pattern.md#10-通用故障排查)。
+> 通用故障（配置缺失 / 任务卡住 / 状态异常 / 未登录）见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。
 
 | 问题 | 原因 | 解决 |
 |---|---|---|
@@ -348,11 +327,11 @@ print(f"Heightmap 生成中。task_id={result['task_id']}。完成后用 apply_t
 | Terrain 完全平坦 | PNG 不是灰度 / 归一化失败 | 确认 Stage 1 `status="completed"` 后才调 apply |
 | `apply_terrain_heightmap` 报"file not found" | 用了 `placeholder_path` 而不是 `heightmap_path` | 等通知 / query 拿到真实 `heightmap_path` 再用 |
 | Stage 2 想重试 | `processing` 状态下不要重试 | `elapsed_seconds < 300` 一律等；只在 `failed` 或超 300 秒才考虑 |
-| `query_terrain_apply_status` 报 task 找不到 | 用了 `task_id` 而不是 `apply_task_id` | Stage 2 query 必须用 `apply_task_id` |
+| `query_local_task` 报 task 找不到 | 用了 `task_id` 而不是 `apply_task_id` | Stage 2 query 必须用 `apply_task_id` |
 
 ### Domain reload 后 task 丢失
 
-通用恢复流程见 [generator-async-pattern §6](../../experience/templates/generator-async-pattern.md#6-domain-reload-recovery)。本 skill 完成态判定（两阶段独立）：
+通用恢复流程见 [共享执行约定](../../experience/templates/generator-async-pattern.md)。本 skill 完成态判定（两阶段独立）：
 
 - Stage 1：generation tasks 持久化到 session storage，reload 后会自动恢复；通知会重发
 - Stage 2：apply tasks 仅内存，reload 会丢失——需要从 Stage 1 的 `heightmap_path` 重跑 apply

@@ -35,6 +35,21 @@ namespace TJGenerators.PostProcessing
             bool loop,
             bool writeCutoutBackToAsset = false)
         {
+            return CutoutAndSlice(assetPath, tolerance, feather, cols, rows, fps, loop,
+                writeCutoutBackToAsset, false);
+        }
+
+        public static SliceResult CutoutAndSlice(
+            string assetPath,
+            float tolerance,
+            float feather,
+            int cols,
+            int rows,
+            float fps,
+            bool loop,
+            bool writeCutoutBackToAsset,
+            bool preserveExistingAlpha)
+        {
             Texture2D src = null;
             Texture2D cutout = null;
             try
@@ -43,7 +58,11 @@ namespace TJGenerators.PostProcessing
                 if (src == null)
                     throw new InvalidOperationException("Failed to read image for cutout/slice.");
 
-                cutout = BuildGreenScreenCutoutTexture(src, tolerance, feather);
+                // Native transparent outputs are already cut out; green foreground is valid content.
+                // Keep explicit manual chroma-key behavior unless the automatic caller opts in.
+                cutout = preserveExistingAlpha && src.GetPixels32().Any(pixel => pixel.a < 255)
+                    ? UnityEngine.Object.Instantiate(src)
+                    : BuildGreenScreenCutoutTexture(src, tolerance, feather);
                 if (cutout == null)
                     throw new InvalidOperationException("Green-screen cutout failed.");
 

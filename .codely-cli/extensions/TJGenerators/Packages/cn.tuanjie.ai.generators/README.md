@@ -2,24 +2,30 @@
 
 TJGenerators for Unity 是一款强大的 AI 内容生成插件，集成团结 AI 平台的多模态生成能力，无缝嵌入 Unity 编辑器工作流。支持 3D 模型、天空盒、2D 精灵、表面材质、2D 动作/精灵表序列帧、背景音乐、音效、语音合成与声音克隆、图片放大、Game UI Kit、视频、3D 世界等多种游戏资产的 AI 生成，帮助开发者和创作者大幅提升内容创作效率。
 
+Codely 扩展通过 skills 指导执行，耗时任务按需委托内置 `general-purpose` 子代理，不再注册按资产类型划分的专属代理。MCP 提供生成与轮询指引，Unity custom tools 保留导入和后处理能力；任务在真实资产验证后交付。委托、等待及中断续接规则见 [共享执行约定](extension/experience/templates/generator-async-pattern.md)。
+
+本地任务统一通过 `query_local_task` / `list_local_tasks` 查询，`list_session_assets` 保留会话资产清单；MCP 生成状态由 `check_task` 查询。天空盒使用 MCP `generate_skybox` 在线生成，复用 `import_image_from_url(import_type="skybox")` 导入 Cubemap 和材质。
+
 ## 功能特性
 
 ### 🎮 3D 模型生成
+
+> **Agent（Codely 扩展）链路说明**：3D 生成的提交/轮询已迁移到后端 MCP（`generate_3d_model` / `unirig_rig` / `generate_motion` / `tripo_texture_model` + `check_task`），Unity 侧通过 CustomTool `import_3d_model_from_url`（支持 `output_type=static|rigged|motion` 与 `add_motion`，含材质重映射 / auto-fit / 占位 Prefab / `<bg_task_done>` 通知 / 域重载幂等恢复）完成下载导入与后处理。编辑器窗口仍走内置生成链路，不受影响。
 
 | 生成器 | 功能 | 特点 |
 |--------|------|------|
 | **Tripo 3D / Tripo P1** | 文生3D、图生3D、多视图生成3D | 默认 P1 模型，支持低面控制、PBR、网格分割；文生 3D 可选 `add_motion` 一步生成带动画角色 |
 | **Rodin** | 文生3D、图生3D、多视图生成3D | 支持 Gen-2.5 五种层级（超低/低/中/高/极高），FBX 输出；可用 `quality_override` 自定义面数上限（优先于 quality 预设）；文生 3D 可选 `add_motion` |
 | **混元3.1** | 文生3D、图生3D、多视图生成3D | 高精度生成，支持 PBR，输出 OBJ zip |
-| **Tripo 纹理重生成** | 对已有 3D 模型重新生成贴图 / PBR | CustomTool `generate_tripo_texture_model`，需已有模型 task ID 或 model URL |
+| **Tripo 纹理重生成** | 对已有 3D 模型重新生成贴图 / PBR | Agent 链路：MCP `tripo_texture_model`（需已有 Tripo 任务 ID 或模型 URL）+ `import_3d_model_from_url`（provider=tripo-texture） |
 
 ### ✂️ 图片工具
 
 | 工具 | 功能 |
 |------|------|
 | **图片切割** | 对大图进行传统 CV 自动区域检测，预览并批量导出独立精灵（`AI/工具/图片切割`） |
-| **图片分层** | 将一张输入图 AI 拆分为多张独立 RGBA 图层 PNG（Qwen 或 Seedream Pro）；编辑器图片窗口与 CustomTool `generate_image_layers` |
-| **ESRGAN 图片放大** | Real-ESRGAN 超分（CustomTool `upscale_image`），支持 1x–8x、多种模型与可选人脸增强 |
+| **图片分层** | 将一张输入图 AI 拆分为多张独立 RGBA 图层 PNG（Qwen 或 Seedream Pro）；编辑器图片窗口保留；Agent 链路：MCP `generate_image_layers` + CustomTool `import_image_from_url` |
+| **ESRGAN 图片放大** | Real-ESRGAN 超分，支持 1x–8x、多种模型与可选人脸增强；Agent 链路：MCP `upscale_image` + CustomTool `import_image_from_url` |
 | **Game UI Kit** | 默认两步工作流（CustomTool `generate_game_ui_kit`）：Seedream Pro 文生游戏 UI 截图（2848×1600）→ 图层拆分为底图 + 最多 16 层透明 PNG；`frontier` 品红底抠图拼版为旧路径；图层合并时可用 `slice_image` 兜底切割 |
 
 ### 🌌 天空盒生成
@@ -29,6 +35,8 @@ TJGenerators for Unity 是一款强大的 AI 内容生成插件，集成团结 A
 | **Rodin Skybox** | 文生天空盒、图生天空盒，支持高分辨率输出 |
 
 ### 🖼️ 图片生成
+
+> **Agent（Codely 扩展）链路说明**：图片生成 / 图片分层 / 图片放大的提交与轮询已迁移到后端 MCP（`generate_image` / `generate_image_layers` / `upscale_image` + `check_task`），Unity 侧通过 CustomTool `import_image_from_url`（单图 GUID 稳定占位 / 多图图层模式，含域重载幂等恢复）完成下载导入与后处理。序列帧族（`generate_frontier_sequence` / `generate_2d_sprite_sequence_*`）与 `generate_game_ui_kit` 仍走 Unity 内置链路；编辑器窗口不受影响。
 
 | 生成器 | 功能 | 特点 |
 |--------|------|------|
@@ -58,20 +66,25 @@ TJGenerators for Unity 是一款强大的 AI 内容生成插件，集成团结 A
 
 ### 🎵 音频生成
 
+> **Agent（Codely 扩展）链路说明**：音频生成（BGM / 音效 / TTS）与声音克隆的提交与轮询已迁移到后端 MCP（`generate_music` / `generate_sound_effect` / `generate_tts` / `voice_clone` + `check_task`），Unity 侧通过 CustomTool `import_audio_from_url`（静音 WAV 占位、AudioSource 自动重绑、BGM 场景自动创建 BGMPlayer，含域重载幂等恢复）完成下载导入；注意 `output_format` 只选 `wav`/`mp3`（.aac/.flac 不可导入）。声音克隆无落盘段（返回 `custom_voice_id` 字符串，交给 `generate_tts` 的 `voice_id`）。编辑器窗口不受影响。
+
 | 生成器 | 功能 |
 |--------|------|
 | **Sonilo 音乐生成** | 文生背景音乐，支持 1-180 秒时长，WAV/MP3 输出 |
 | **Sonilo 音效生成** | 文生音效（SFX），支持中英文，1-180 秒，WAV/MP3 输出 |
 | **MiniMax 语音合成** | 文生语音（TTS），支持预设语音角色与自定义 Voice ID；省略 `voice_id` 时使用内置默认音色 |
-| **声音克隆** | 从音频样本克隆音色（CustomTool `voice_clone`），返回 `custom_voice_id` 可交给 TTS 使用 |
+| **声音克隆** | 从音频样本克隆音色（Agent 链路：MCP `voice_clone`），返回 `custom_voice_id` 可交给 TTS 使用 |
 
 ### 🎬 视频生成
+
+> **Agent（Codely 扩展）链路说明**：视频生成与特效视频的提交与轮询已迁移到后端 MCP（`generate_video` / `generate_effect_video` + `check_task`；`generate_video` 支持 Seedance 2.0/2.5 与 MiniMax H3/H3 Max），Unity 侧通过 CustomTool `import_video_from_url`（空白 MP4 占位 GUID 稳定、`chroma_key=true` 时自动生成 ChromaKey 材质并布置特效播放器，含域重载幂等恢复）完成下载导入。编辑器窗口不受影响。
 
 | 生成器 | 功能 | 特点 |
 |--------|------|------|
 | **Seedance 2** | 文生/图生/多模态视频 | 火山 Seedance 2，支持 `first_frame` / `first_last_frame` / `multimodal`（参考视频 + 多参考图 + 音频参考）；可选参考图上传，未上传时文生视频、上传后自动切换参考图模式；可选 Mini / 标准 / 快速模型，4-15 秒，分辨率 480p / 720p |
-| **HappyHorse 1.1** | 文生/图生视频 | 阿里云 HappyHorse，支持首帧图生视频 |
-| **特效视频（生图+生视频）** | 文生/图生特效视频 | 绿幕输出，自动抠像生成 ChromaKey 材质，可一键在场景中创建特效播放器 |
+| **MiniMax Hailuo H3 / H3 Max** | 文生/图生/参考视频 | 中文/英文 prompt，原生音频，768P/2K，H3 最长 60 秒；H3 Max 更高质量但仅三种基础模式（仅 Agent 链路） |
+| **HappyHorse 1.1** | 文生/图生视频 | 阿里云 HappyHorse，支持首帧图生视频（仅编辑器窗口） |
+| **特效视频（生图+生视频）** | 文生/图生特效视频 | 绿幕输出，Agent 链路：MCP `generate_effect_video` + `import_video_from_url`（chroma_key）自动抠像生成 ChromaKey 材质，可一键在场景中创建特效播放器 |
 
 ### 🌍 世界生成
 
@@ -90,7 +103,7 @@ TJGenerators for Unity 是一款强大的 AI 内容生成插件，集成团结 A
 
 - **配置驱动架构**：所有生成器通过 JSON 配置文件定义，添加新生成器无需编写 C# 代码
 - **公开 C# API**：支持在编辑器脚本中调用生成功能
-- **任务恢复机制**：编辑器意外关闭后自动恢复进行中的任务；CustomTool（图片、图片分层、精灵、材质、音频、视频、特效视频、天空盒、地形、2D 序列帧、绑骨动画、图片放大、Game UI Kit 等）在 Domain Reload 后亦可自动恢复未完成生成；绑骨动画任务会持久化 `sessionId` 以便按会话恢复与通知
+- **任务恢复机制**：编辑器意外关闭后自动恢复进行中的任务；CustomTool（图片、精灵、材质、天空盒、地形、2D 序列帧、Game UI Kit 等）在 Domain Reload 后亦可自动恢复未完成流程——3D 模型 / 图片 / 视频 / 音频导入任务的 URL 为永久 CDN 链接且下载路径确定性分配，重载后幂等重跑（导入完成段为 at-least-once，带防重入守卫）；任务持久化 `sessionId` 以便按会话恢复与通知
 - **Play 模式保护**：Unity 播放期间禁用生成、资产搜索、下载及场景放置操作，避免退出播放后生成内容被丢弃；提示文案可点击直接退出 Play Mode
 - **Placeholder 自动清理**：生成失败或取消时自动移除 Prefab 内残留 Placeholder 子对象；`AI/工具/清理占位 GameObject` 可批量扫描项目 Prefab 清理
 - **历史记录管理**：按资产隔离历史记录，支持快速复用与在 Project 中定位；写入 `sessionId` 便于按 Agent 会话分组，可通过 `list_session_assets` CustomTool 查询

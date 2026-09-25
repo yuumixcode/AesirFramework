@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -348,12 +348,12 @@ namespace UnityTcp.Editor.Tools
             "loop (optional bool, whether the AnimationClip loops, default true). " +
             "NOTE: image_path is mandatory — the API only accepts image input for sprite sequence generation. " +
             "IMPORTANT ASYNC WORKFLOW: " +
-            "(1) Call this tool to start generation; note task_id and end your response turn immediately. " +
-            "(2) *** POLLING IS STRICTLY FORBIDDEN. NEVER call `query_sprite_sequence_status` in a loop or repeatedly. *** " +
-            "    Only call `query_sprite_sequence_status` ONCE as a last-resort fallback if no <bg_task_done> notification arrives after ~90 seconds. " +
-            "(3) A <bg_task_done> notification will arrive automatically in your next turn when generation finishes (~1-3 minutes). " +
+            "(1) Call this tool to start generation; note task_id and keep this worker active until terminal status and asset verification. " +
+            "(2) Wait up to 30 seconds, then call `query_local_task` once; repeat only while pending. " +
+            "    Do not busy-poll `query_local_task`, submit again, or finish this worker while pending. " +
+            "(3) A <bg_task_done> notification may arrive when generation finishes (~1-3 minutes). " +
             "    The notification payload contains ALL result fields (folder_path, animation_clip_path, frame_count, backend_task_id, preview_url, timing, etc.). " +
-            "    If you receive the notification, the task is done — do NOT call `query_sprite_sequence_status` under any circumstances.")]
+            "    Match the notification to this task ID; verify terminal status and real assets before finishing.")]
         public static object GenerateSpriteSequence(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -459,11 +459,11 @@ namespace UnityTcp.Editor.Tools
                     { "message",
                         "Sprite sequence generation started. " +
                         "STEP 1 (do now): Note the task_id for later retrieval. " +
-                        "STEP 2 (critical): END THIS RESPONSE TURN immediately. " +
-                        "STEP 3 (automatic): A <bg_task_done> notification will appear in your next turn (~90s) " +
+                        "STEP 2 (critical): Keep this worker active until the task is terminal and its assets are verified. " +
+                        "STEP 3: A <bg_task_done> notification may arrive (~90s) " +
                         "containing ALL generation results (folder_path, animation_clip_path, frame_count, timing, etc.). " +
-                        "*** POLLING IS STRICTLY FORBIDDEN — do NOT call query_sprite_sequence_status repeatedly. " +
-                        "Only call query_sprite_sequence_status ONCE as a one-time fallback if no notification arrives. ***" },
+                        "Wait up to 30 seconds in the current worker, then call query_local_task once; repeat only while pending. " +
+                        "Do not busy-poll query_local_task, submit again, or report success while pending." },
                     { "task_id",            taskId },
                     { "backend_task_id",    submitResult.BackendTaskId },
                     { "status",             "submitted" },
@@ -495,11 +495,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_sprite_sequence_status",
-            "Query the status of a sprite sequence generation task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "When completed, returns the same result fields as the bg_task_done notification: folder_path, animation_clip_path, frame_count, backend_task_id, preview_url, timing fields, etc. " +
-            "Status values: 'generating', 'recovering', 'completed', 'failed', 'interrupted'. " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QuerySpriteSequenceStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -549,7 +544,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_sprite_sequence_tasks", "List all active and recent sprite sequence generation tasks")]
         public static object ListSpriteSequenceTasks(JObject parameters)
         {
 #if UNITY_EDITOR

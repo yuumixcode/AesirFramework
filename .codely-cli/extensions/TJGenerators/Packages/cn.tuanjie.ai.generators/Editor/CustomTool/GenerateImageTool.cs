@@ -167,8 +167,6 @@ namespace UnityTcp.Editor.Tools
             });
         }
 
-        public static void RemoveTask(string taskId) => Store.RemoveTask(taskId);
-
         public static void CleanupCompletedTasks() => Store.CleanupCompletedTasks();
 #endif
     }
@@ -314,207 +312,15 @@ namespace UnityTcp.Editor.Tools
     }
 
     /// <summary>
-    /// CustomTool for generating image assets using TJGenerators Image pipeline.
-    /// Supports text-to-image and image-to-image generation.
-    /// Supported models: frontier-game-design (default), huoshan_seedream_image, frontier-effect.
+    /// Sequence-family image CustomTools (generate_frontier_sequence / generate_2d_sprite_sequence_auto /
+    /// generate_2d_sprite_sequence_router + query/list). Plain image generation now runs on the MCP backend
+    /// (generate_image -> check_task -> import_image_from_url); this class keeps the shared Unity-side
+    /// pipeline internals (ImageTaskTracker / GenerateImageInternal / ImagePipelineHost) that the sequence
+    /// family — and generate_game_ui_kit's single-image steps — still rely on.
     /// Output is a PNG (TextureImporterType.Default) saved to Assets/TJGenerators/History/.
     /// </summary>
     public static class GenerateImageTool
     {
-        [ExecuteCustomTool.CustomTool("generate_image",
-            "Generate an image asset from a text prompt or reference image using AI. " +
-            "Output is a PNG (Texture2D, Default type) saved to Assets/TJGenerators/History/. " +
-            "Key parameters: generator_id (default 'frontier-game-design'; or 'huoshan_seedream_image', 'frontier-effect'), " +
-            "prompt (text description), image_path (optional reference image — omit for text-to-image), " +
-            "size (output resolution, e.g. '2048x2048', huoshan_seedream_image only), " +
-            "is_segmentation (bool, auto-remove background; if explicitly set, its value is used as-is; " +
-            "if omitted, defaults to true for png and false for jpeg), " +
-            "resolution (frontier-effect only, '0.5K'/'1K'/'2K'/'4K', default '1K'), " +
-            "aspect_ratio (frontier-effect only, 'auto'/'16:9'/'9:16'/'1:1'/'4:3'/'3:4'/'3:2'/'2:3'/'5:4'/'4:5'/'21:9', default 'auto'), " +
-            "output_format (frontier-effect only, 'png'/'jpeg', default 'jpeg'), " +
-            "imageSize (frontier-game-design only, 'square_hd'/'square'/'portrait_4_3'/'portrait_16_9'/'landscape_4_3'/'landscape_16_9', default 'square_hd'), " +
-            "outputFormat (frontier-game-design only, 'png'/'jpeg', default 'jpeg'; png enables isSegmentation, jpeg disables it), " +
-            "prompt_template (frontier-game-design only, 'game_icon'/'concept_art', optional prompt prefix), " +
-            "output_path (optional save path). " +
-            "IMPORTANT: Generation takes 30-90 seconds. Wait at least 5 seconds before the first " +
-            "query_image_status call, then poll every 10-15 seconds. " +
-            "A placeholder_path is returned immediately — you can reference it right away.")]
-        public static object GenerateImage(JObject parameters)
-        {
-#if UNITY_EDITOR
-            try
-            {
-                TJLog.Log($"[GenerateImageTool] Generating image with parameters: {parameters}");
-
-                string generatorId = parameters["generator_id"]?.ToString() ?? "frontier-game-design";
-                string prompt      = parameters["prompt"]?.ToString();
-                string imagePath   = parameters["image_path"]?.ToString();
-                string outputPath  = parameters["output_path"]?.ToString();
-                string sessionId   = parameters["session_id"]?.ToString() ?? "";
-                GenerationRequestOrigin.SetWorkspaceName(parameters["workspace_name"]?.ToString());
-
-                if (string.IsNullOrEmpty(prompt) && string.IsNullOrEmpty(imagePath))
-                {
-                    return new Dictionary<string, object>
-                    {
-                        { "success", false },
-                        { "message", "Either 'prompt' or 'image_path' must be provided" }
-                    };
-                }
-
-                int maxLen = GetImagePromptMaxLength(generatorId);
-                if (maxLen > 0 && !string.IsNullOrEmpty(prompt) && prompt.Length > maxLen)
-                {
-                    return new Dictionary<string, object>
-                    {
-                        { "success", false },
-                        { "error_code", "INVALID_PARAMS" },
-                        { "message", $"Prompt length ({prompt.Length}) exceeds the {maxLen} character limit for '{generatorId}'." }
-                    };
-                }
-
-                // 加载图片生成器配置
-                var config = ConfigManager.GetGeneratorConfig(ConfigType.Image, generatorId);
-                if (config == null)
-                {
-                    return new Dictionary<string, object>
-                    {
-                        { "success", false },
-                        { "message", $"Cannot find image generator config for '{generatorId}'. Valid values: 'frontier-game-design', 'huoshan_seedream_image', 'frontier-effect'." }
-                    };
-                }
-
-                // 创建生成器并设置输入
-                var generator = new DynamicGenerator(config);
-
-                if (!string.IsNullOrEmpty(prompt))
-                    generator.SetTextPrompt(prompt);
-
-                string userDisplayForHistory = parameters["prompt"]?.ToString()?.Trim();
-                if (!string.IsNullOrWhiteSpace(userDisplayForHistory))
-                    generator.SetHistoryDisplayPrompt(userDisplayForHistory);
-
-                if (!string.IsNullOrEmpty(imagePath))
-                    generator.SetImagePath(imagePath);
-
-                // 应用 prompt_template（frontier-game-design 专用）
-                string promptTemplateId = parameters["prompt_template"]?.ToString();
-                if (!string.IsNullOrEmpty(promptTemplateId) && config?.promptTemplateSelector?.options != null)
-                {
-                    var template = config.promptTemplateSelector.options.Find(t => t.id == promptTemplateId);
-                    if (template != null)
-                        generator.SetPromptTemplateSelection(template);
-                    else
-                        TJLog.LogWarning($"[GenerateImageTool] prompt_template '{promptTemplateId}' not found in config, ignoring.");
-                }
-
-                // 应用可选参数
-                ApplyImageParameters(generator, parameters);
-
-                // 阶段1：同步提交任务到后端
-                var submitResult = TJGeneratorsGenerationService.SubmitTaskSync(generator, sessionId);
-                if (!submitResult.Success)
-                {
-                    TJLog.LogError($"[GenerateImageTool] 任务提交失败 [{submitResult.ErrorCode}]: {submitResult.Message}");
-                    return new Dictionary<string, object>
-                    {
-                        { "success",    false },
-                        { "error_code", submitResult.ErrorCode },
-                        { "message",    submitResult.Message }
-                    };
-                }
-
-                TJLog.Log($"[GenerateImageTool] 任务提交成功，backend_task_id={submitResult.BackendTaskId}");
-
-                // 提交成功后再创建 placeholder（避免鉴权失败时留下无用文件）
-                string placeholderPath = CreatePlaceholderTexture(outputPath);
-
-                // 注册任务
-                string capturedBackendTaskId = submitResult.BackendTaskId;
-                string taskId = ImageTaskTracker.CreateTask(generatorId, prompt, imagePath, placeholderPath, capturedBackendTaskId);
-
-                // 创建 pipeline host
-                var host = new ImagePipelineHost(
-                    placeholderPath,
-                    sessionId,
-                    (savedPath, previewUrl) =>
-                    {
-                        ImageTaskTracker.MarkTaskCompleted(taskId, savedPath, previewUrl);
-                        var t = ImageTaskTracker.GetTask(taskId);
-                        GenerationNotifier.NotifyCompleted("generate_image", taskId, capturedBackendTaskId,
-                            new JObject
-                            {
-                                ["session_id"]       = sessionId,
-                                ["generator_id"]     = generatorId,
-                                ["prompt"]           = prompt ?? "",
-                                ["image_path"]       = savedPath,
-                                ["preview_url"]      = previewUrl ?? "",
-                                ["progress"]         = 100,
-                                ["start_time"]       = t?.StartTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
-                                ["end_time"]         = t?.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
-                                ["duration_seconds"] = (t != null && t.EndTime.HasValue) ? (int)(t.EndTime.Value - t.StartTime).TotalSeconds : 0
-                            });
-                    },
-                    errorMsg =>
-                    {
-                        ImageTaskTracker.MarkTaskFailed(taskId, errorMsg);
-                        GenerationNotifier.NotifyFailed("generate_image", taskId, capturedBackendTaskId, errorMsg,
-                            new JObject { ["session_id"] = sessionId, ["generator_id"] = generatorId, ["prompt"] = prompt ?? "" });
-                    }
-                );
-
-                string historyAssetGuid = CustomToolHistoryBindings.HistoryGuidFromPlaceholderAssetPath(placeholderPath);
-
-                // 阶段2：异步轮询（跳过提交）
-                var pipeline = new GenerationPipeline(host, ConfigType.Image, GenerationRequestOrigin.Agent, sessionId, "generate_image");
-                EditorCoroutineUtility.StartCoroutineOwnerless(
-                    pipeline.StartFromSubmittedTask(generator, historyAssetGuid, submitResult.BackendTaskId));
-
-                TJLog.Log($"[GenerateImageTool] 轮询已启动，task_id={taskId}, backend_task_id={submitResult.BackendTaskId}, placeholder: {placeholderPath}");
-
-                string mode = string.IsNullOrEmpty(imagePath) ? "text-to-image" : "image-to-image";
-
-                return new Dictionary<string, object>
-                {
-                    { "success",            true },
-                    { "submission_success", true },
-                    { "message",
-                        "Image generation started. " +
-                        "STEP 1 (do now): Apply placeholder_path to the scene if needed. " +
-                        "STEP 2 (critical): END THIS RESPONSE TURN immediately. " +
-                        "STEP 3 (automatic): A <bg_task_done> notification will appear in your next turn (~60s) " +
-                        "containing ALL generation results (image_path, preview_url, timing, etc.). " +
-                        "*** POLLING IS STRICTLY FORBIDDEN — do NOT call query_image_status repeatedly. " +
-                        "Only call query_image_status ONCE as a last-resort fallback if no notification arrives. ***" },
-                    { "task_id",            taskId },
-                    { "backend_task_id",    submitResult.BackendTaskId },
-                    { "status",             "submitted" },
-                    { "generator_id",       generatorId },
-                    { "mode",               mode },
-                    { "prompt",             prompt ?? "" },
-                    { "placeholder_path",   placeholderPath },
-                    { "estimated_wait_seconds", 60 },
-                    { "notification_mode",  "bg_task_done" },
-                    { "preview_url",        PreviewUrlHelper.BuildFixedPreviewUrl(submitResult.BackendTaskId) }
-                };
-            }
-            catch (Exception e)
-            {
-                TJLog.LogError($"[GenerateImageTool] Error: {e}");
-                return new Dictionary<string, object>
-                {
-                    { "success", false },
-                    { "message", $"Error generating image: {e.Message}" }
-                };
-            }
-#else
-            return new Dictionary<string, object>
-            {
-                { "success", false },
-                { "message", "This tool only works in Unity Editor." }
-            };
-#endif
-        }
 
         // CustomTool 名称 generate_frontier_sequence / 请求字段 frontier_sequence_envelope 为后端协议，保持不变。
         [ExecuteCustomTool.CustomTool("generate_frontier_sequence",
@@ -606,7 +412,7 @@ namespace UnityTcp.Editor.Tools
             "Status flow: submitted -> generating -> postprocessing -> completed/failed. " +
             "Params: prompt(required), image_path(optional), profile_id(optional), " +
             "chroma_tolerance/chroma_feather(optional), fps(optional), loop(optional). " +
-            "IMPORTANT: This call returns immediately; use query_2d_sprite_sequence_auto_status to poll.")]
+            "IMPORTANT: This call returns immediately; use query_local_task to poll.")]
         public static object Generate2DSpriteSequenceAuto(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -697,7 +503,7 @@ namespace UnityTcp.Editor.Tools
                     { "task_id", autoTaskId },
                     { "image_task_id", imageTaskId },
                     { "status", "submitted" },
-                    { "message", "Auto sprite-sequence task submitted. Image generation is running in background, then post-processing will run automatically. Poll query_2d_sprite_sequence_auto_status." },
+                    { "message", "Auto sprite-sequence task submitted. Image generation is running in background, then post-processing will run automatically. Poll query_local_task." },
                     { "slice_columns", cols },
                     { "slice_rows", rows },
                     { "chroma_tolerance", tolerance },
@@ -729,10 +535,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_2d_sprite_sequence_auto_status",
-            "Query auto 2D sprite-sequence task status. " +
-            "Status values: submitted, generating, postprocessing, completed, failed, interrupted. " +
-            "When image generation completes, this tool automatically performs cutout + slicing + animation creation.")]
         public static object Query2DSpriteSequenceAutoStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -761,7 +563,7 @@ namespace UnityTcp.Editor.Tools
                 // Keep a live link to underlying image task for preview purposes
                 var imageTaskForPreview = ImageTaskTracker.GetTask(autoTask.ImageTaskId);
 
-                if (!autoTask.PostProcessDone && autoTask.Status != "failed")
+                if (parameters?["read_only"]?.Value<bool>() != true && !autoTask.PostProcessDone && autoTask.Status != "failed")
                 {
                     var imageTask = imageTaskForPreview;
                     if (imageTask == null)
@@ -846,7 +648,7 @@ namespace UnityTcp.Editor.Tools
             }
             catch (Exception e)
             {
-                TJLog.LogError($"[GenerateImageTool] Error in query_2d_sprite_sequence_auto_status: {e}");
+                TJLog.LogError($"[GenerateImageTool] Error in query_local_task: {e}");
                 return new Dictionary<string, object>
                 {
                     { "success", false },
@@ -909,9 +711,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_2d_sprite_sequence_router_status",
-            "Query status for a task created by generate_2d_sprite_sequence_router. " +
-            "If task_id starts with 'sprite_sequence_', route to query_sprite_sequence_status; if starts with 'auto_sprite_seq_', route to query_2d_sprite_sequence_auto_status.")]
         public static object Query2DSpriteSequenceRouterStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -951,7 +750,7 @@ namespace UnityTcp.Editor.Tools
             }
             catch (Exception e)
             {
-                TJLog.LogError($"[GenerateImageTool] Error in query_2d_sprite_sequence_router_status: {e}");
+                TJLog.LogError($"[GenerateImageTool] Error in query_local_task: {e}");
                 return new Dictionary<string, object>
                 {
                     { "success", false },
@@ -967,8 +766,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_2d_sprite_sequence_router_tasks",
-            "List both legacy and auto 2D sequence tasks for router workflow.")]
         public static object List2DSpriteSequenceRouterTasks(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -1014,7 +811,7 @@ namespace UnityTcp.Editor.Tools
             }
             catch (Exception e)
             {
-                TJLog.LogError($"[GenerateImageTool] Error in list_2d_sprite_sequence_router_tasks: {e}");
+                TJLog.LogError($"[GenerateImageTool] Error in list_local_tasks: {e}");
                 return new Dictionary<string, object>
                 {
                     { "success", false },
@@ -1030,8 +827,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("list_2d_sprite_sequence_auto_tasks",
-            "List all active and recent auto 2D sprite-sequence tasks in current Unity Editor session.")]
         public static object List2DSpriteSequenceAutoTasks(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -1080,7 +875,7 @@ namespace UnityTcp.Editor.Tools
             }
             catch (Exception e)
             {
-                TJLog.LogError($"[GenerateImageTool] Error in list_2d_sprite_sequence_auto_tasks: {e}");
+                TJLog.LogError($"[GenerateImageTool] Error in list_local_tasks: {e}");
                 return new Dictionary<string, object>
                 {
                     { "success", false },
@@ -1096,11 +891,6 @@ namespace UnityTcp.Editor.Tools
 #endif
         }
 
-        [ExecuteCustomTool.CustomTool("query_image_status",
-            "Query the status of an image generation task. Use ONLY as a one-time fallback if no <bg_task_done> notification arrives. " +
-            "When completed, returns 'image_path' with the Texture2D asset path in the project. " +
-            "Status values: 'generating', 'completed', 'failed', 'interrupted'. " +
-            "WARNING: Do NOT call this tool repeatedly. Polling is forbidden.")]
         public static object QueryImageStatus(JObject parameters)
         {
 #if UNITY_EDITOR
@@ -1418,11 +1208,11 @@ namespace UnityTcp.Editor.Tools
                 { "message",
                     "Image generation started. " +
                     "STEP 1 (do now): Apply placeholder_path to the scene if needed. " +
-                    "STEP 2 (critical): END THIS RESPONSE TURN immediately. " +
-                    "STEP 3 (automatic): A <bg_task_done> notification will appear in your next turn (~60s) " +
+                    "STEP 2 (critical): Keep this worker active until the task is terminal and its assets are verified. " +
+                    "STEP 3: A <bg_task_done> notification may arrive (~60s) " +
                     "containing ALL generation results (image_path, preview_url, timing, etc.). " +
-                    "*** POLLING IS STRICTLY FORBIDDEN — do NOT call query_image_status repeatedly. " +
-                    "Only call query_image_status ONCE as a last-resort fallback if no notification arrives. ***" },
+                    "Wait up to 30 seconds in the current worker, then call query_local_task once; repeat only while pending. " +
+                    "Do not busy-poll query_local_task, submit again, or report success while pending." },
                 { "task_id",            taskId },
                 { "backend_task_id",    submitResult.BackendTaskId },
                 { "status",             "submitted" },
@@ -1527,7 +1317,9 @@ namespace UnityTcp.Editor.Tools
                     autoTask.SliceColumns,
                     autoTask.SliceRows,
                     autoTask.Fps,
-                    autoTask.Loop
+                    autoTask.Loop,
+                    writeCutoutBackToAsset: false,
+                    preserveExistingAlpha: true
                 );
 
                 AutoSpriteSequenceTaskTracker.ApplyTaskUpdate(autoTask, t =>
@@ -1799,7 +1591,6 @@ namespace UnityTcp.Editor.Tools
         }
 #endif
 
-        [ExecuteCustomTool.CustomTool("list_image_tasks", "List all active and recent image generation tasks")]
         public static object ListImageTasks(JObject parameters)
         {
 #if UNITY_EDITOR

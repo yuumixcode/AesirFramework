@@ -3,11 +3,13 @@ name: unity-place-assets-in-scene
 description: 将 Unity 资产放入当前场景，支持自然语言描述位置/旋转/缩放。触发条件：用户要求放置或给出位置意图（"放到场景"、"放在桌子旁边"、"scale 0.5"等）；用户询问资产为何未出现在场景；3D 模型任务提交后默认立即放置占位 Prefab（除非用户明确不需要）；generate_sprite 完成后主动放置。支持 Prefab / Sprite / AudioClip / Material / Cubemap / AnimationClip / TerrainData。不负责生成资产本身。
 ---
 
+> 使用宿主的 `exec_editor_script` 执行 C#；入口不可用时报告缺失，不猜测其他工具名。
+
 # Place Assets in Scene 📌
 
 > ⚠️ **这是 skill `unity-place-assets-in-scene`，不是 custom tool。**
-> 标准调用链：`activate_skill("unity-place-assets-in-scene")` → 读本文 → 按资产类型小节用 `execute_csharp_script` 跑放置脚本（Prefab → §4a、Sprite → §4b、AudioClip → §4c/§4d、Material → §4e、Skybox → §4f、AnimationClip → §4g、Terrain → §4h、Texture2D → §4i）。
-> ⛔ 没有 `execute_custom_tool("place_assets_in_scene", ...)`；调了会报 *tool not found*。
+> 标准调用链：`activate_skill("unity-place-assets-in-scene")` → 读本文 → 按资产类型小节用 `exec_editor_script` 跑放置脚本（Prefab → §4a、Sprite → §4b、AudioClip → §4c/§4d、Material → §4e、Skybox → §4f、AnimationClip → §4g、Terrain → §4h、Texture2D → §4i）。
+> ⛔ 不要把 skill 名称传给 `execute_custom_tool`；加载 skill 后按本文执行脚本。
 > ⛔ Prefab 不能用 `unity_gameobject` 放（只建空对象，接不上生成完成后的更新链路），必须走 §4a。
 
 将已经存在的 Unity 资产放入当前打开的场景。输入核心是 `asset_path`（来自各生成 skill 返回的 `xxx_path` 字段）、资产类型，以及可选的 `placement_instruction`。本 skill 只负责放置，不负责生成。
@@ -16,18 +18,19 @@ description: 将 Unity 资产放入当前场景，支持自然语言描述位置
 
 - 输入：`asset_path` + `asset_type` + 可选 `placement_instruction`
 - 输出：按用户意图把资产放入当前场景，必要时自动创建 GameObject / Canvas / AudioSource / Terrain / AnimatorController
-- 放置逻辑统一通过 `execute_csharp_script` 完成；除非用户明确要求，否则不要把 `.cs` 文件写到磁盘，避免不必要的 Domain Reload
+- 放置逻辑统一通过 `exec_editor_script` 完成；除非用户明确要求，否则不要把 `.cs` 文件写到磁盘，避免不必要的 Domain Reload
 
 ## 资产类型速查表
 
 | 类型 | 典型来源 | 放置方式 |
 |------|---------|---------|
-| Prefab（`.prefab`） | `generate_3d_model_by_rodin`、`generate_3d_model_by_tripo_p1`、`generate_animated_character`、`generate_rigged_model` | `PrefabUtility.InstantiatePrefab` |
+| Prefab（`.prefab`） | `import_3d_model_from_url`（MCP `generate_3d_model` / `unirig_rig` / `tripo_texture_model` 生成后落地；含 add_motion / rigged / motion 模式） | `PrefabUtility.InstantiatePrefab` |
 | Sprite（`.png`，`TextureImporterType.Sprite`） | `generate_sprite` | 新建空 GameObject + `SpriteRenderer`，或 Canvas 子节点 + `UnityEngine.UI.Image` |
-| AudioClip BGM（`.wav`） | `generate_audio_clip` | `AudioSource`，`loop=true`，`spatialBlend=0` |
-| AudioClip SFX（`.wav` / `.mp3`） | `generate_sound_effect` | `AudioSource`，`loop=false`，`spatialBlend=1` |
+| AudioClip BGM（`.wav`） | `import_audio_from_url`（MCP `generate_music` 生成后落地；is_bgm=true 时导入工具已自动创建/复用 BGMPlayer） | `AudioSource`，`loop=true`，`spatialBlend=0` |
+| AudioClip SFX（`.wav` / `.mp3`） | `import_audio_from_url`（MCP `generate_sound_effect` / `generate_tts` 生成后落地） | `AudioSource`，`loop=false`，`spatialBlend=1` |
+| VideoClip（`.mp4`） | `import_video_from_url`（MCP `generate_video` / `generate_effect_video` 生成后落地） | `VideoPlayer`（绿幕特效视频配 ChromaKey 材质 + RenderTexture） |
 | Material（`.mat`） | `generate_material` | `Renderer.sharedMaterial = material` |
-| Cubemap Skybox（`.mat`） | `generate_skybox` | `RenderSettings.skybox = material` |
+| Cubemap Skybox（`.mat`） | MCP `generate_skybox` → `import_image_from_url(import_type="skybox")` | Built-in / URP: `RenderSettings.skybox = material`；HDRP 使用 HDRI Sky Volume |
 | AnimationClip（`.anim`） | `generate_sprite_sequence` | `AnimatorController + Animator` |
 | Texture2D / Image（`.png` / `.jpg`） | `generate_image` | 赋给 `Material.mainTexture`，或创建 `RawImage` |
 | Heightmap（`.png`）→ Terrain | `generate_terrain` | 调用 `apply_terrain_heightmap` |
@@ -65,7 +68,7 @@ description: 将 Unity 资产放入当前场景，支持自然语言描述位置
 
 适合：用户提到的对象名不确定是否存在，先 find 确认再用其 position。
 
-**方法 4：`execute_csharp_script`** — 自定义查询（最灵活）
+**方法 4：`exec_editor_script`** — 自定义查询（最灵活）
 
 适合：需要计算所有物体包围盒、统计对象密度、找最近空位等复杂逻辑。
 
@@ -130,7 +133,7 @@ if (cam != null) {
 
 ## 标准 C# 样板代码
 
-所有放置代码都通过 `execute_csharp_script` 执行。禁止把临时 `.cs` 文件写入磁盘。
+所有放置代码都通过 `exec_editor_script` 执行。禁止把临时 `.cs` 文件写入磁盘。
 
 ```csharp
 AssetDatabase.Refresh();
@@ -154,14 +157,14 @@ UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
 > `placement_instruction` 通用规则：
 > - `position` / `rotation` / `localScale` 按解析结果替换
 > - 用户未指定的维度保留默认值
-> - 相对位置计算优先在同一次 `execute_csharp_script` 内完成
+> - 相对位置计算优先在同一次 `exec_editor_script` 内完成
 
 ### 4a. Prefab
 
-重要：`unity_gameobject` 只会创建空对象，永远不要用它来放真实 Prefab，必须用 `execute_csharp_script`。
+重要：`unity_gameobject` 只会创建空对象，永远不要用它来放真实 Prefab，必须用 `exec_editor_script`。
 
 适用场景：
-- `generate_3d_model_by_rodin` / `generate_3d_model_by_tripo_p1` / `generate_animated_character` / `generate_rigged_model` 正常流程：任务启动后立刻用 `prefab_output_path` 放置占位 Prefab；生成完成后 Placeholder 子节点会自动被真实模型替换，无需二次调用
+- `import_3d_model_from_url` 正常流程：任务启动后立刻用 `prefab_output_path` 放置占位 Prefab（Cube/Capsule）；生成完成后 Placeholder 子节点会自动被真实模型替换，无需二次调用（rigged 导入后 Animator 与 AnimatorController 自动绑定；add_motion 从零流程同理）
 - 将已完成的 Prefab 放入另一个场景
 
 ```csharp
@@ -183,7 +186,7 @@ Undo.RegisterCreatedObjectUndo(instance, "放置 Prefab");
 UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
 ```
 
-带动画角色通过 `generate_animated_character` 生成时，Animator 与 AnimatorController 会在生成完成后自动绑定；这里只需正常实例化。
+带动画角色（import_3d_model_from_url + add_motion / rigged / motion 模式）生成时，Animator、Avatar 与 AnimatorController 会在生成完成后自动绑定；这里只需正常实例化。
 
 ### 4b. Sprite
 
@@ -414,9 +417,9 @@ UnityEditor.SceneManagement.EditorSceneManager.MarkAllScenesDirty();
 
 ```text
 generate_terrain
-→ query_terrain_status（拿到 heightmap_path）
+→ query_local_task（拿到 heightmap_path）
 → apply_terrain_heightmap
-→ query_terrain_apply_status（等待 completed）
+→ query_local_task（等待 completed）
 ```
 
 情形 B：如果输入已经是 `TerrainData` 资产，则直接创建 Terrain：
@@ -555,8 +558,8 @@ for (int i = 0; i < count; i++) {
 ## Domain Reload
 
 - 会触发 Domain Reload 的典型操作：把新的 `.cs` 文件写入工程、修改脚本并触发编译、进入某些需要脚本重载的编辑器流程
-- 不会触发：`execute_csharp_script`、`AssetDatabase.Refresh()`、实例化 Prefab、创建普通场景对象
-- 如果生成任务期间发生 Domain Reload，多数生成 skill 都会自动恢复；这里的放置操作应继续优先使用 `execute_csharp_script`，不要把一次性脚本落盘
+- 不会触发：`exec_editor_script`、`AssetDatabase.Refresh()`、实例化 Prefab、创建普通场景对象
+- 如果生成任务期间发生 Domain Reload，多数生成 skill 都会自动恢复；这里的放置操作应继续优先使用 `exec_editor_script`，不要把一次性脚本落盘
 
 ## 截图验证
 
@@ -591,5 +594,5 @@ for (int i = 0; i < count; i++) {
 ## 使用提示
 
 - `generate_sprite`：拿到 `placeholder_path` 后立即调用本 skill，通常最省事
-- `generate_3d_model_by_rodin` / `generate_3d_model_by_tripo_p1` / `generate_animated_character` / `generate_rigged_model`：用 `prefab_output_path` 提前放置占位物体，生成完成自动替换
+- `import_3d_model_from_url`（3D 模型 / 贴图重生成 / 绑骨 / 带动画）：用 `prefab_output_path` 提前放置占位物体，生成完成自动替换
 - `generate_terrain`：常规流程继续走 `apply_terrain_heightmap`，不要绕过
