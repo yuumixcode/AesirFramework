@@ -165,6 +165,9 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>同时显示的 Toast 数量上限（新 Toast 入队前把最早弹出的一条直接关闭，避免右下角持续堆叠）。</summary>
         const int MaxToasts = 3;
 
+        /// <summary>失败提示的 Toast 颜色（红色系，用于导入失败 / 清单未找到）。</summary>
+        static readonly Color ErrorToastColor = new Color(0.83f, 0.29f, 0.28f);
+
         #endregion
 
         #region 打开方式注册
@@ -259,11 +262,11 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>OdinEditorWindow.toasts 私有字段缓存（Odin 未公开 Toast 队列 API，上限机制须经反射访问）。</summary>
         static FieldInfo _toastsField;
 
-        /// <summary>弹右下角 Toast：先按 <see cref="MaxToasts" /> 收敛队列，再入队并记录动画活跃期（时长 + 0.5s 淡出 + 滑入余量）。</summary>
-        void ShowBottomRightToast(SdfIconType icon, string message)
+        /// <summary>弹右下角 Toast：先按 <see cref="MaxToasts" /> 收敛队列，再入队并记录动画活跃期（时长 + 0.5s 淡出 + 滑入余量）。默认绿色（成功动作），<paramref name="toastColor" /> 可覆盖为引导 / 失败色。</summary>
+        void ShowBottomRightToast(SdfIconType icon, string message, Color? toastColor = null)
         {
             DismissOldestToastsOverLimit();
-            ShowToast(ToastPosition.BottomRight, icon, message, Color.green, ToastDurationSeconds);
+            ShowToast(ToastPosition.BottomRight, icon, message, toastColor ?? Color.green, ToastDurationSeconds);
             _toastDriveDeadline = EditorApplication.timeSinceStartup + ToastDurationSeconds + 1.5f;
         }
 
@@ -339,6 +342,37 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>包卡片状态行文本（已安装附版本号；未安装为引导文案）。</summary>
         static string BuildStatusText(AesirGetStartedService.AesirPackageInfo installed) =>
             installed == null ? "未安装" : $"已安装 · v{installed.Version}";
+
+        /// <summary>
+        /// 示例导入成功后的刷新：重扫包与示例（新导入的示例目录对 AssetDatabase 已可见），
+        /// 并把当前打开的包页重绑到最新扫描实例——未导入卡片即时切换为已导入态，无需手动刷新或重进页面。
+        /// </summary>
+        public void RefreshAfterImport()
+        {
+            Scan();
+            if (_pages.Count > 0 && _pages[_pages.Count - 1] is PackagePage page)
+            {
+                var fresh = FindCardPackage(page.Package.Id);
+                if (fresh != null)
+                {
+                    page.Rebind(fresh);
+                }
+            }
+        }
+
+        /// <summary>按包 Id 取最新扫描实例（概览卡片持有；未找到返回 null）。</summary>
+        AesirGetStartedService.AesirPackageInfo FindCardPackage(string packageId)
+        {
+            foreach (var card in _cards)
+            {
+                if (card.Installed != null && card.Installed.Id == packageId)
+                {
+                    return card.Installed;
+                }
+            }
+
+            return null;
+        }
 
         #endregion
 
@@ -1021,10 +1055,23 @@ namespace Runestone.AesirArchitecture.Editor
 
             public override void EnterPage()
             {
-                _groups = AesirGetStartedService.GroupSamples(Package);
-                _footerText = $"共 {Package.Samples.Count} 个示例 · 点击卡片在 Project 窗口选中示例文件夹 · 「打开场景」保存当前场景并进入示例";
+                Rebind(Package);
                 base.EnterPage();
             }
+
+            /// <summary>（重）绑定包实例并重建分组视图与页脚（导入示例后 <see cref="RefreshAfterImport" /> 重扫刷新复用）。</summary>
+            public void Rebind(AesirGetStartedService.AesirPackageInfo pkg)
+            {
+                Package = pkg;
+                _groups = AesirGetStartedService.GroupSamples(pkg);
+                _footerText = BuildFooterText(pkg);
+            }
+
+            /// <summary>页脚提示（按安装形态区分动作说明：Assets 安装直读示例，UPM / 嵌入式先导入再使用）。</summary>
+            static string BuildFooterText(AesirGetStartedService.AesirPackageInfo pkg) =>
+                pkg.InstallType == AesirGetStartedService.AesirInstallType.AssetsCopy
+                    ? $"共 {pkg.Samples.Count} 个示例 · 点击卡片在 Project 窗口选中示例文件夹 · 「打开场景」保存当前场景并进入示例"
+                    : $"共 {pkg.Samples.Count} 个示例 · 未导入示例点击「导入 Sample」确认后导入到 Assets/Samples · 已导入示例点击卡片定位文件夹";
 
             public override void DrawFooter(Rect rect)
             {
@@ -1067,23 +1114,26 @@ namespace Runestone.AesirArchitecture.Editor
 
             /// <summary>
             /// 示例卡片（照 Odin TutorialPage）：左图标 + 标题/描述 + 底部信息行（无场景提示 / 档位徽章）+
-            /// 右侧动作按钮（有场景为「打开场景」、未导入为「去导入」、已导入无场景不占按钮列），整卡点击在
-            /// Project 窗口选中示例文件夹。底部信息行有专属高度预算（不与描述叠字）；绘制序列恒定（不做任何早退门控）。
+            /// 右侧动作按钮（有场景为「打开场景」、未导入为「导入 Sample」、已导入无场景不占按钮列）。整卡点击：
+            /// 已导入在 Project 窗口选中示例文件夹，未导入弹 Toast 引导导入（导入动作在右侧按钮）。
+            /// 底部信息行有专属高度预算（不与描述叠字）；绘制序列恒定（不做任何早退门控）。
             /// </summary>
             void DrawSampleCard(AesirGetStartedService.AesirSampleInfo sample)
             {
                 const int iconWidth = 50;
                 const int textPadding = 14;
-                const int buttonWidth = 80;
                 const float buttonHeight = 36f;
                 const float bottomLineHeight = 20f; // 底部信息行：无场景提示（左）+ 档位徽章（右）
+
+                // 按钮宽度按形态取值：「导入 Sample」（中文 + 空格 + Sample 拉丁词）比「打开场景」宽
+                var buttonWidth = sample.IsImported ? 80 : 96;
 
                 var badge = AesirGetStartedService.GetSampleBadge(sample);
                 var hasSceneHint = sample.IsImported && !sample.HasScene;
                 var hasBottomLine = badge != null || hasSceneHint;
                 var bottomLine = hasBottomLine ? bottomLineHeight : 0f;
 
-                // 右侧按钮列：有场景 →「打开场景」、未导入 →「去导入」；已导入无场景不占按钮列（描述全宽）
+                // 右侧按钮列：已导入有场景 →「打开场景」、未导入 →「导入 Sample」；已导入无场景不占按钮列（描述全宽）
                 var buttonColumnWidth = sample.IsImported && !sample.HasScene ? 0f : buttonWidth + 14f;
 
                 // 描述换行高度预算：内容区实际宽度须扣掉图标、内边距与按钮列，否则预算行数偏少导致溢出
@@ -1095,17 +1145,17 @@ namespace Runestone.AesirArchitecture.Editor
 
                 var rect = GUILayoutUtility.GetRect(0f, rowHeight * EntranceT);
 
-                // 未导入卡片半显（不用 GUI.enabled=false——「去导入」引导按钮仍需可点击）
+                // 未导入卡片半显（不用 GUI.enabled=false——「导入 Sample」按钮仍需可点击）
                 var prevColor = GUI.color;
                 if (!sample.IsImported)
                 {
                     GUI.color *= new Color(1f, 1f, 1f, 0.5f);
                 }
 
-                // 背景 + hover 高亮 + 边框
+                // 背景 + hover 高亮 + 边框（未导入卡整卡可点击——Toast 引导，同样有 hover 反馈）
                 EditorGUI.DrawRect(rect, SirenixGUIStyles.HeaderBoxBackgroundColor);
                 var hover = rect.Contains(Event.current.mousePosition);
-                if (hover && sample.IsImported)
+                if (hover)
                 {
                     EditorGUI.DrawRect(rect, SirenixGUIStyles.MouseOverBgOverlayColor);
                 }
@@ -1157,7 +1207,7 @@ namespace Runestone.AesirArchitecture.Editor
                         .AlignCenterY(buttonHeight);
                     // 按钮样式用 Button 而非 MiniButton——MiniButton 的背景不随 rect 高度拉伸（恒 ~18px 高
                     // 且锚在 rect 顶部），加大 rect 只扩点击区不涨可见高度；Button 随 rect 完整渲染
-                    if (GUI.Button(buttonRect, sample.IsImported ? "打开场景" : "去导入", SirenixGUIStyles.Button))
+                    if (GUI.Button(buttonRect, sample.IsImported ? "打开场景" : "导入 Sample", SirenixGUIStyles.Button))
                     {
                         if (sample.IsImported)
                         {
@@ -1169,12 +1219,12 @@ namespace Runestone.AesirArchitecture.Editor
                         }
                         else
                         {
-                            AesirGetStartedService.OpenPackageManager();
+                            ImportSampleWithConfirm(sample);
                         }
                     }
                 }
 
-                // 整卡点击：在 Project 窗口选中示例文件夹并弹 Toast（未导入引导 Package Manager）
+                // 整卡点击：已导入在 Project 窗口选中示例文件夹并弹 Toast；未导入弹 Toast 引导导入
                 if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
                 {
                     if (sample.IsImported)
@@ -1187,12 +1237,36 @@ namespace Runestone.AesirArchitecture.Editor
                     }
                     else
                     {
-                        AesirGetStartedService.OpenPackageManager();
+                        Window.ShowBottomRightToast(SdfIconType.InfoCircleFill,
+                            AesirGetStartedService.BuildNotImportedToastMessage(sample));
                     }
                 }
 
                 GUI.color = prevColor;
                 GUILayoutUtility.GetRect(0f, 8f);
+            }
+
+            /// <summary>
+            /// 弹确认框导入 UPM / 嵌入式安装的示例：确认后经 Package Manager 的 Sample API 导入到
+            /// Assets/Samples/，成功即 <see cref="RefreshAfterImport" /> 重扫重绑当前页（卡片切换为已导入态）
+            /// 并 Toast 报告位置；用户取消静默；失败 / 清单未找到以红色 Toast 提示。
+            /// </summary>
+            void ImportSampleWithConfirm(AesirGetStartedService.AesirSampleInfo sample)
+            {
+                switch (AesirGetStartedService.ConfirmAndImportUpmSample(sample, out var message))
+                {
+                    case AesirGetStartedService.AesirSampleImportResult.Imported:
+                        Window.RefreshAfterImport();
+                        Window.ShowBottomRightToast(SdfIconType.CheckCircleFill, message);
+                        break;
+
+                    case AesirGetStartedService.AesirSampleImportResult.Cancelled:
+                        break; // 用户在确认框取消，无需提示
+
+                    default:
+                        Window.ShowBottomRightToast(SdfIconType.XCircleFill, message, ErrorToastColor);
+                        break;
+                }
             }
         }
 
