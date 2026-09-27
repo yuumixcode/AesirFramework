@@ -32,9 +32,10 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>注册 Odin 版窗口的打开方式（域重载清空静态委托后由 Odin 程序集重新注册）。</summary>
         public static void RegisterOdinWindowOpener(Action opener) => OdinWindowOpener = opener;
 
-        // priority -1000：菜单排序键（越小越靠上），使本项居 Tools/Aesir 顶部；
-        // 与后续菜单项（995 / 999 / 1000）差值超过 10，Unity 自动在其间插入独立分割线
-        [MenuItem(MenuPath, false, -1000)]
+        // priority -980：菜单排序键（越小越靠上）。父菜单 priority 由子项最小值决定，本项即
+        // Tools/Aesir 组的最小值——-980 大于 Tools/Odin 组的 -1000，故 Aesir 组稳定排在 Odin 组之后；
+        // 与组内次小值 -900（Inspector 组）差值超过 10，Unity 自动在其间插入独立分割线
+        [MenuItem(MenuPath, false, -980)]
         static void Open()
         {
             if (OdinWindowOpener != null)
