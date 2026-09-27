@@ -1,0 +1,26 @@
+{
+  "name": "Runestone.AesirModules.UniTask",
+  "rootNamespace": "Runestone.AesirModules",
+  "references": [
+    "Runestone.AesirArchitecture",
+    "Runestone.AesirModules",
+    "Cysharp.Threading.Tasks"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [
+    "AESIR_MODULES_UNITASK"
+  ],
+  "versionDefines": [
+    {
+      "name": "com.cysharp.unitask",
+      "expression": "",
+      "define": "AESIR_MODULES_UNITASK"
+    }
+  ],
+  "noEngineReferences": false
+}
