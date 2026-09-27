@@ -20,10 +20,10 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.27.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.27.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.27.1** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.27.1** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.27.0` / `#AesirModules-v0.27.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.27.1` / `#AesirModules-v0.27.1`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
@@ -31,6 +31,18 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
 
 ---
+
+## [0.27.1] - 2026-09-27
+
+---
+
+### [modules] Aesir Modules
+
+**Fixed**
+
+- **UniTask 集成的程序集名错误（asmdef 引用名与宏维护器检测名）** — UniTask 的命名空间名 `Cysharp.Threading.Tasks` 被误当作程序集名使用（com.cysharp.unitask 包内 asmdef 实际名为 `UniTask`）：①核心与适配程序集的 asmdef `references` 解析不到任何程序集，含 UniTask 的消费工程刷新即报 `CS0246`（`'Cysharp'` / `'UniTaskVoid'` 找不到）；②`AesirUniTaskDefineKeeper` 按该名检测域内程序集恒为 false，unitypackage / DLL 安装形态下已装 UniTask 的工程全局宏 `AESIR_MODULES_UNITASK` 反被误删、UniTask 分支与适配程序集静默失效零报错（UPM 安装形态宏由 versionDefines 管理，未受影响——多数工程未察觉的原因）。现 references 改按程序集名 `UniTask` 引用；检测改为白名单（`UniTask`——asmdef 源码 / unitypackage 形态；`Cysharp.Threading.Tasks`——NuGet 预编译 DLL）；`AesirUniTaskDefineKeeperTests` 新增命名守卫 2 用例（白名单含真实程序集名 + 两处 asmdef 引用锁定），共 7 用例
+
+架构包（Aesir Architecture）本版本无功能变更，随版本配套发布。
 
 ## [0.27.0] - 2026-09-27
 
