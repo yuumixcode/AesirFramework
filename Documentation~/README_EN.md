@@ -3,13 +3,13 @@
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an event module, audio management, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.26.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.27.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.26.0`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.27.0`)
 
 ## Modules
 
@@ -18,14 +18,14 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 | UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + Canvas-root windows (single/stacked mask) + pluggable asset loading |
 | Event | Implemented | `EventModule` dual-track subscription (Attribute + Script) + 4 priority levels with stable sorting + snapshot/re-entrant-safe dispatch + expression-tree optimization + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization |
 | Audio | Implemented | `AudioModule` singleton (minimal 2D audio facade) + SFX round-robin exclusive sources + BGM crossfade + 3-channel volume/mute persistence |
-| Scene | Implemented | `SceneModule` scene load/additive/unload/activate + scene lifecycle events + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Editor Settings) |
+| Scene | Implemented | `SceneModule` static facade (scene load/additive/unload/activate + scene lifecycle events, call `SceneModule.xxx` directly) + UniTask adapter assembly (optional, define auto-maintained: with UniTask the coroutine implementation is replaced by UniTask-driven flow and awaitable APIs are provided) + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Editor Settings) |
 | ScriptDocGenerator | Implemented (requires Odin) | Reflection-based C# type analysis generating structured API docs (incremental, preserves hand-written content) + Summary tool (syncs XML `<summary>` and the `[Summary]` attribute, attribute-first) |
 
 > Two additional optional capabilities: **Binder component binding** (`Runtime/UI/OdinInspector/Binder/`, requires Odin Inspector) and **Input System input module adaptation** (`Runtime/UI/InputSystem/`, separate assembly, active automatically when the Input System is enabled).
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.26.0 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.27.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed. Note that **the `SceneAssetWrapper` Inspector experience of the Scene module (drag-assign, coloring, one-click fix buttons) requires Odin**; without Odin, only the API surface is guaranteed (construct via `FromScenePath`, assign `SceneAsset` in code, use the TryGet family) — the panel is not supported.
 
 ## Directory Layout
@@ -45,7 +45,7 @@ Assembly organization:
 In the Unity Package Manager window, click `+` → `Add package from git URL...`:
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.0
 ```
 
 Or edit `Packages/manifest.json`:
@@ -53,7 +53,7 @@ Or edit `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0"
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.0"
   }
 }
 ```
@@ -86,9 +86,10 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 | `AesirBaseWindow` | Component | Abstract window base: lifecycle virtuals mirroring `AesirBasePanel`; serialized fields `sortingOrder` (default 500, always above the panel layers) / `destroyOnHide` / `closeOnMaskClick`; mask-click virtual `OnMaskClicked()`; convenience `CloseSelf()` |
 | `AesirBaseWindowView<T>` | Component | MVP-mode window view base: inherits `AesirBaseWindow` and binds to a Context type (`IView`) |
 | `AesirBaseWindowViewController<T>` | Component | MVC-mode window controller base: inherits `AesirBaseWindow` and binds to a Context type (`IController`), executing Commands / Queries |
-| `UIMaskMode` | Engine | Window mask scheduling mode: single (only the topmost visible window's mask is active) / stacked (each window's mask follows its own visibility); configured on `UIModule`, switchable at runtime |
+| `UIMaskMode` | Engine | Window mask scheduling mode: single (only the topmost visible window's mask is active) / stacked (each window's mask follows its own visibility); initial value configured on `UIModuleConfigSO`, switchable at runtime |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | Pluggable asset loading contract and default implementation (Resources folder). The contract is **synchronous**: suitable for Resources, synchronous caches and similar pipelines; async pipelines such as Addressables must be preloaded and returned synchronously |
 | `UICanvasConfigSO` | Asset | Unified Canvas config asset (a default asset can be created from the Create menu) |
+| `UIModuleConfigSO` | Asset | UI module global config asset (singleton): module-level settings such as the mask scheduling mode; auto-created under Resources (`UIModuleConfig/UIModuleConfig`) by the editor; a custom loader can replace the Resources fallback |
 | `UILayer` | Engine | Layer enum: Background / Normal / Popup / Top |
 
 ### Quick Start
@@ -161,7 +162,7 @@ SettingWindow (root: Canvas + CanvasScaler + GraphicRaycaster + window script)
 └── Content     Actual UI element container (untouched by the framework)
 ```
 
-Masks are scheduled centrally by `UIModule` (serialized config `maskMode`, switchable at runtime via `UIModule.Instance.MaskMode`): **single** (default) = only the topmost visible window's mask is active, so stacked windows do not stack opacity; **stacked** = each window's mask independently follows its own visibility. Mask clicks are wired automatically through the Button and call the `OnMaskClicked()` virtual — by default `closeOnMaskClick` (default false) decides whether the window closes. Windows without a `Mask` child (e.g. opaque fullscreen loading pages) simply do not participate in masking.
+Masks are scheduled centrally by `UIModule` (initial value configured on the `UIModuleConfigSO` singleton asset, auto-created by the editor under `Assets/Resources/UIModuleConfig/` — no pre-placed `[UIModule]` required; projects abandoning Resources entirely can register a custom loader via `UIModuleConfigSO.RegisterConfigLoader`; switchable at runtime via `UIModule.Instance.MaskMode`): **single** (default) = only the topmost visible window's mask is active, so stacked windows do not stack opacity; **stacked** = each window's mask independently follows its own visibility. Mask clicks are wired automatically through the Button and call the `OnMaskClicked()` virtual — by default `closeOnMaskClick` (default false) decides whether the window closes. Windows without a `Mask` child (e.g. opaque fullscreen loading pages) simply do not participate in masking.
 
 **Panel vs. Window**: for persistent HUDs and co-existing non-modal info/list panels, use **Panel** (shared layer Canvas, batching-friendly; the default form for most projects); for modal popups, fullscreen flow pages (settings / pause / results / loading), and overlays needing independent sorting or render isolation, use **Window**. The two forms have symmetric APIs and lifecycles and can be mixed as needed (windows always render above panels); a project usually picks one primary form. Full comparison in [Documentation/ui-module.md](./ui-module.md).
 
@@ -182,11 +183,13 @@ Runtime/UI/                        # joins the core runtime assembly (layer-root
 ├── UIMaskMode.cs                  # Mask scheduling mode enum (single/stacked)
 ├── UILayer.cs                     # Layer enum
 ├── UICanvasConfigSO.cs            # Canvas config asset
+├── UIModuleConfigSO.cs            # UI module global config asset (singleton: mask mode etc., Resources fallback + custom loader)
 ├── UIAssetLoader/                 # IUIAssetLoader + ResourcesUILoader
 ├── InputSystem/                   # Input System input module adaptation (separate optional assembly)
 └── OdinInspector/Binder/          # Binder family (joined into the Odin assembly via asmref)
 Editor/UI/                         # joins the core editor assembly (layer-root anchor)
 ├── UIModuleMenuItems.cs           # Create UIRoot / Default UICanvasConfig menu items
+├── UIModuleConfigAssetInitializer.cs # auto-creates the UIModuleConfig fallback asset (after editor-mode domain load)
 └── OdinInspector/                 # Odin AttributeProcessors (joined into the Odin editor assembly via asmref)
 ```
 
@@ -402,44 +405,60 @@ Editor/Audio/                     # joins the core editor assembly (layer-root a
 | Type | Description |
 |------|------|
 | `SceneModule` | Scene management singleton: Single/Additive loading (completion/failure/progress callbacks), unloading, reload, active-scene switching, `SceneLoadedEvent` / `SceneUnloadedEvent` lifecycle broadcast, DDOL serialized setting |
+| `SceneModuleConfigSO` | Module-global config asset (singleton): global bootstrap-scene fallback + load-progress normalization cap; the editor auto-creates it under Resources (`SceneModuleConfig/SceneModuleConfig`) and a custom loader can replace the Resources fallback |
 | `SceneAssetWrapper` | Serializable scene reference: GUID-anchor self-healing (rename/move immune, broken-ref recovery), state-machine validation (`State` / `UnsafeReason`), `TryGet` safe-read family; address-query capability extends automatically when Addressables is installed. The Inspector panel experience (drag-assign, coloring, one-click fixes) requires Odin Inspector; without Odin, only the API surface is guaranteed. Functional design references [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference) |
 | `SceneAssetWrapperState` / `SceneAssetWrapperUnsafeReason` | Reference state (Regular/Addressable/Unsafe) and unsafe-reason enums |
 | `SceneAssetWrapperAddressablesBridge` | Addressables editor capability static bridge (zero Addressables dependency in the core assembly; hidden automatically when the package is absent) |
 | `SceneAssetWrapperException` family | Four dedicated exceptions (empty reference / creation failure / package absent / not addressable), each message carries "fix / avoid" guidance |
 
-Main `SceneModule` API:
+Main `SceneModule` API (the public API is all static — call `SceneModule.xxx` directly, no `Instance` needed):
 
 ```csharp
 // Loading (path & SceneAssetWrapper overloads; onProgress reports per-frame 0-1
-// progress, normalized against Unity's 0.9 activation cap so bars can reach 100%)
-SceneModule.Instance.LoadSceneSingle(scenePath,
+// progress, normalized against the configured activation cap — SceneModuleConfigSO.progressCap,
+// default 0.9 — so bars can reach 100%)
+SceneModule.LoadSceneSingle(scenePath,
     onCompleted: () => { },
     onFailed:    () => { },
     onProgress:  p => { });
-SceneModule.Instance.LoadSceneAdditive(scenePath);
+SceneModule.LoadSceneAdditive(scenePath);
 
 // Unloading (module-additive scenes leave tracking automatically; batch unload
 // skips a failed scene with a warning instead of failing everything)
-SceneModule.Instance.UnloadScene(scenePath);
-SceneModule.Instance.UnloadAllAddedScenes();
+SceneModule.UnloadScene(scenePath);
+SceneModule.UnloadAllAddedScenes();
 
 // Active-scene switching (multi-scene workflow: decides lighting source and
-// the default Instantiate landing scene)
-SceneModule.Instance.SetActiveScene(scenePath);
+// the default Instantiate landing scene); pure static, never instantiates the module
+SceneModule.SetActiveScene(scenePath);
 
 // Reload the active scene (async Single semantics)
-SceneModule.Instance.ReloadScene();
+SceneModule.ReloadScene();
 
 // Scene lifecycle broadcast (MiniEvent, path payload; AddListener returns an auto-remove handle)
-SceneModule.Instance.SceneLoadedEvent.AddListener(path => Debug.Log($"Loaded {path}"));
-SceneModule.Instance.SceneUnloadedEvent.AddListener(path => Debug.Log($"Unloaded {path}"));
+SceneModule.SceneLoadedEvent.AddListener(path => Debug.Log($"Loaded {path}"));
+SceneModule.SceneUnloadedEvent.AddListener(path => Debug.Log($"Unloaded {path}"));
 
 // Queries: AddedScenePaths (additive tracking) / LastLoadedScene / BootstrapSceneAssetWrapper
+// (instance field wins; falls back to the config asset's global bootstrap scene when unset)
+```
+
+### UniTask Adaptation (optional, automatic)
+
+When the game project contains UniTask (UPM package `com.cysharp.unitask` takes effect via versionDefines; unitypackage / DLL installs are handled by the editor define keeper `AesirUniTaskDefineKeeper`, which adds/removes the `AESIR_MODULES_UNITASK` symbol automatically): the internal load/unload flow switches to UniTask-driven automatically (semantics identical to the coroutine path), and the adapter assembly `Runestone.AesirModules.UniTask` compiles in and provides awaitable APIs; without UniTask the adapter assembly is excluded entirely and the coroutine path stays.
+
+```csharp
+// Failure throws InvalidOperationException (cause logged to Console by SceneModule);
+// CancellationToken only cancels the wait, the underlying flow keeps running to completion
+await SceneModuleUniTask.LoadSceneSingleAsync(scenePath, onProgress: p => { });
+await SceneModuleUniTask.LoadSceneAdditiveAsync(sceneRef);
+await SceneModuleUniTask.UnloadSceneAsync(scenePath);
+await SceneModuleUniTask.UnloadAllAddedScenesAsync();
 ```
 
 ### Quick Start
 
-1. Pre-place (recommended): attach `SceneModule` to an object in the bootstrap scene (or just touch `SceneModule.Instance` to auto-create under the `[Aesir Modules]` host). For a root-object pre-placement, DDOL follows the `dontDestroyOnLoad` field (default on) — **keep it on**: a Single load unloads every old scene, and an instance without DDOL is destroyed along with its scene, aborting in-flight load callbacks.
+1. Pre-place (recommended): attach `SceneModule` to an object in the bootstrap scene (or skip pre-placement — the first static API call auto-creates the module under the `[Aesir Modules]` host). For a root-object pre-placement, DDOL follows the `dontDestroyOnLoad` field (default on) — **keep it on**: a Single load unloads every old scene, and an instance without DDOL is destroyed along with its scene, aborting in-flight load callbacks.
 
 2. Declare scene references with `SceneAssetWrapper` and drag-assign in the Inspector (requires Odin):
 
@@ -454,7 +473,7 @@ public class LevelFlow : MonoBehaviour
     void Start()
     {
         // Invalid refs (empty / not in Build Settings) and Addressable scenes route to onFailed, never throw
-        SceneModule.Instance.LoadSceneSingle(gameplayScene,
+        SceneModule.LoadSceneSingle(gameplayScene,
             onCompleted: () => Debug.Log("Level entered"),
             onProgress: p => Debug.Log($"Loading {p:P0}"));
 
@@ -471,26 +490,32 @@ public class LevelFlow : MonoBehaviour
 - **Odin Inspector boundary** — the `SceneAssetWrapper` Inspector panel effects depend on Odin (injected via AttributeProcessor); without Odin only the API surface is guaranteed: construct via `SceneAssetWrapper.FromScenePath(...)`, assign the `SceneAsset` property in code (editor only), read via the TryGet family. The panel is not supported.
 - **Addressable scenes are not loaded by SceneModule** — with Addressables installed the wrapper provides the address (`Address` / `TryGetAddress`); load and unload directly through the Addressables API (`Addressables.LoadSceneAsync(wrapper.Address)`).
 - **Do not additive-load the same path twice** — Unity loads two scene instances while tracking records one path; `UnloadScene` unloads only one of them and the leftover instance escapes tracking.
-- **Bootstrap split of duties** — at runtime `SceneModule` only holds the `bootstrapScene` reference for user code to read (`BootstrapSceneAssetWrapper`) and performs no automatic flow; Build Settings index 0 and force-opening the Bootstrap scene on Play are handled by the editor `BootstrapSceneHelper` (enabled in `Tools → Aesir → Modules → Scene Editor Settings`, off by default).
-- **No cross-scene payload / no async** — pass data across scenes via framework MiniEvents or a shared Model; async support awaits a framework-wide decision.
+- **Bootstrap split of duties** — at runtime `SceneModule` only holds the `bootstrapScene` reference for user code to read (`BootstrapSceneAssetWrapper`: the instance serialized field wins; when unset it falls back to the global bootstrap scene on the `SceneModuleConfigSO` config asset) and performs no automatic flow; Build Settings index 0 and force-opening the Bootstrap scene on Play are handled by the editor `BootstrapSceneHelper` (enabled in `Tools → Aesir → Modules → Scene Editor Settings`, off by default).
+- **No cross-scene payload** — pass data across scenes via framework MiniEvents or a shared Model; async driving is provided only through the adapter assembly when the project contains UniTask (see "UniTask Adaptation"), no other async abstractions are built in.
 
 ### Directory Structure
 
 ```
 Runtime/Scene/                     # joins the core runtime assembly (layer-root anchor)
-├── SceneModule.cs                 # Scene management singleton (load / unload / reload / activate / events / DDOL)
+├── SceneModule.cs                 # Scene management singleton (static facade + coroutine/UniTask dual-driving: load / unload / reload / activate / events / DDOL)
+├── SceneModuleConfigSO.cs         # Module-global config asset (singleton: bootstrap-scene fallback + progress cap, Resources fallback + custom loader)
 ├── SceneAssetWrapper.cs           # Serializable scene reference (GUID anchor + state machine)
 ├── SceneAssetWrapperState.cs      # Reference state machine
 ├── SceneAssetWrapperUnsafeReason.cs
 ├── SceneAssetWrapperAddressablesBridge.cs  # Addressables capability static bridge
 └── Exceptions/                    # Dedicated exception family
+Runtime/Integration/UniTask/       # UniTask adapter assembly (Runestone.AesirModules.UniTask, gated by the AESIR_MODULES_UNITASK define)
+└── SceneModuleUniTask.cs          # Awaitable scene load/unload adaptation API
 Editor/Scene/                      # joins the core editor assembly (layer-root anchor)
 ├── SceneManagerWindow.cs          # Scene Editor Settings window (Tools/Aesir/Modules/Scene Editor Settings)
 ├── BootstrapSceneHelper.cs        # Bootstrap scene registration tool (off by default)
+├── SceneModuleConfigAssetInitializer.cs  # auto-creates the SceneModuleConfig fallback asset (after editor-mode domain load)
 ├── SceneEditorSettings.cs         # Editor persisted settings
-├── Tests/                         # EditMode tests (SceneAssetWrapper 27 cases + SceneModule 20 cases); real load success paths covered by the PlayMode suite in the package-root Tests/Runtime
+├── Tests/                         # EditMode tests (SceneAssetWrapper 27 cases + SceneModule 24 cases, incl. the static-facade contract); real load success paths covered by the PlayMode suite in the package-root Tests/Runtime
 ├── OdinInspector/                 # SceneAssetWrapper Processor (joined via asmref)
 └── Addressables/                  # Addressables glue implementation (joined via asmref)
+Editor/UniTask/
+└── AesirUniTaskDefineKeeper.cs    # AESIR_MODULES_UNITASK define keeper (adds/removes the global symbol based on assembly presence; UPM installs are left to versionDefines)
 ```
 
 ## Binder Component Binding (Odin optional)
@@ -507,7 +532,7 @@ Located at `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via
 
 Located at `Runtime/ScriptDocGenerator/OdinInspector/` and `Editor/ScriptDocGenerator/OdinInspector/` (joined into the Odin assemblies via asmref; **hard dependency on Odin Inspector**, auto-excluded when Odin is not installed). Namespace `Runestone.AesirModules.ScriptDocGenerator` (.Editor).
 
-- **Script Doc Generator** — analyzes C# type information via reflection to generate structured API documentation: fully offline, millisecond-fast for single types, incremental generation (preserves hand-written content after `## Additional Notes` and any Front Matter), Markdown output ready for AI knowledge bases; parameter/returns/remarks/typeparam description columns end to end (Zensical generator); customizable output path (defaults to `<project root>/ScriptDocGenerator/`, outside Assets so no .meta files) / namespace subfolders / file extension / four type-source granularities (single type, multiple types, single assembly, multiple assemblies — the assembly dropdown lists script assemblies only), extensible via `DocGeneratorSettingsSO`, `IAnalysisDataFactory`, and `IAttributeFilter`. Entry point: `Tools → Aesir → Modules → Script Doc Generator`.
+- **Script Doc Generator** — analyzes C# type information via reflection to generate structured API documentation: fully offline, millisecond-fast for single types, incremental generation (preserves hand-written content after `## Additional Notes` and any Front Matter), Markdown output ready for AI knowledge bases; parameter/returns/remarks/typeparam description columns end to end (Zensical generator); customizable output path (defaults to `<project root>/ScriptDocGenerator/`, outside Assets so no .meta files) / namespace subfolders / file extension / four type-source granularities (single type, multiple types, single assembly, multiple assemblies — the assembly dropdown lists script assemblies only), extensible via `DocGeneratorSettingsSO`, `IAnalysisDataFactory`, and `IAttributeFilter`. Entry point: `Tools → Aesir → Modules → Script Doc Generator`; a UI-free static API is also available outside the panel (`ScriptDocGeneratorAPI.GenerateDocsForType/ForTypes/ForAssembly/ForFolder`, accepting assembly names and folder paths, with optional Default / Zensical / custom settings) for automation scripts and AI assistants to call directly.
 - **Summary Tool** — Project window context menu (`Assets → Script Doc Generator → Process Summary`) syncs XML `<summary>` comments and the `[Summary]` attribute with the attribute as the authoritative source (attribute-first, XML fallback): Sync (aligns both, keeps both) / Replace (collapses to a single attribute) / Remove (removes attributes, with confirmation) modes, batch processing with a single asset refresh, quote escaping, line-ending preservation, preprocessor-directive aware, auto-adds the `using` directive.
 - **Custom attributes** — `[Summary]` (readable at runtime via `GetSummary()`), `[ReferenceLinkURL]` (attaches documentation links to types).
 
