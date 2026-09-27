@@ -5,6 +5,10 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.27.1] - 2026-09-27
+
+- **与 Aesir Modules 0.27.1 版本同步发布** — 本包无功能变更；Modules 侧修复 UniTask 集成的程序集名错误（详见其 CHANGELOG）
+
 ## [0.27.0] - 2026-09-27
 
 ### Added
