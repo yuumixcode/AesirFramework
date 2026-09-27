@@ -3,7 +3,7 @@
   "rootNamespace": "Runestone.AesirModules",
   "references": [
     "Runestone.AesirArchitecture",
-    "Cysharp.Threading.Tasks"
+    "UniTask"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
