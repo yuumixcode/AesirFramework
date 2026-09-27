@@ -92,14 +92,16 @@ UIModule.RegisterWindowPrefab<SettingWindow>(prefab);
 
 ### 蒙版机制（单遮 / 叠遮）
 
-蒙版不是独立物体，而是每个窗口预制体内的 `Mask` 子物体：位于自身 Canvas 内、`Content` 之下、其余一切 UI 之上——天然挡住本窗口以下的面板与其他窗口的射线与视觉。`UIModule` 按序列化配置 `maskMode` 统一调度，每次窗口 Open / Close / 销毁后重算：
+蒙版不是独立物体，而是每个窗口预制体内的 `Mask` 子物体：位于自身 Canvas 内、`Content` 之下、其余一切 UI 之上——天然挡住本窗口以下的面板与其他窗口的射线与视觉。`UIModule` 按 `UIModuleConfigSO`（单例配置资产）的 `maskMode` 统一调度，每次窗口 Open / Close / 销毁后重算：
 
 | 模式 | 语义 |
 |------|------|
 | 单遮（默认） | 全局仅最高层可见窗口的蒙版生效（sortingOrder 最大者，同值取后开者），多窗口叠加透明度不叠加 |
 | 叠遮 | 每个窗口的蒙版独立跟随自身打开状态，透明度逐层叠加 |
 
-蒙版点击：`Mask` 子物体挂 `Button` 时由基类在 `OnInit` 自动接线，回调虚方法 `OnMaskClicked()`——默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口，子类可覆写自定义行为（如提示「先完成当前操作」）。运行时经 `UIModule.Instance.MaskMode` 切换，切换立即重算。无 `Mask` 子物体的窗口（如全屏不透明加载页）对蒙版调度为无操作，天然不参与遮挡。
+蒙版点击：`Mask` 子物体挂 `Button` 时由基类在 `OnInit` 自动接线，回调虚方法 `OnMaskClicked()`——默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口，子类可覆写自定义行为（如提示「先完成当前操作」）。无 `Mask` 子物体的窗口（如全屏不透明加载页）对蒙版调度为无操作，天然不参与遮挡。
+
+蒙版模式的初始值配置于 **`UIModuleConfigSO`**（单例配置资产，编辑器首次导入时自动创建在 `Assets/Resources/UIModuleConfig/UIModuleConfig.asset`）：在 Project 窗口直接编辑资产即可生效，不要求预放置 `[UIModule]`。运行时解析顺序：①`UIModuleConfigSO.RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销）；②Resources 兜底（`Resources/UIModuleConfig/UIModuleConfig`）；③内存默认实例。运行时经 `UIModule.Instance.MaskMode` 切换只覆盖内存值，不改写配置资产。
 
 ## Panel 与 Window 的选型对比
 
@@ -159,5 +161,6 @@ public interface IUIAssetLoader
 
 - 面板生命周期状态机由 `Tests/Editor/UI/UIModuleTests.cs` 锁定（17 用例：三路 Show、Hide 双分叉、Prewarm 幂等、键语义诊断、RemovePanelRecord 反清理、缺层中止、生命周期顺序、注册时序（OnShow 内递归 Show 不重复实例化、OnShow 抛异常不泄漏）、Awake/OnEnable 推迟到 Show 激活的生命周期契约）；
 - 窗口生命周期与蒙版机制由 `Tests/Editor/UI/UIModuleWindowTests.cs` 锁定（17 用例：挂载接线、sortingOrder 应用、UI 层递归、生命周期契约、Close 双分叉、键语义、Panel↔Window 跨契约互斥、根缺 Canvas 中止、反清理，蒙版单遮重算 / 同序 tie / 叠遮独立 / 点击蒙版 / 无 Mask 子物体无操作）；Binder 窗口感知由 `Tests/Editor/BinderAssistantWindowTests.cs` 锁定（5 用例：默认脚本名后缀、默认基类、后缀去重、基类下拉窗口家族、Context 下拉触发）；
+- 单例配置资产由 `Tests/Editor/UI/UIModuleConfigSOTests.cs` 锁定（10 用例：Resources 解析与缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复兜底、加载器返回 null 落内存默认、CreateDefault 默认值、UIModule 蒙版初值取自配置、运行时切换不改写资产）；
 - Binder 代码生成器另有 20 用例（`BinderCodeGeneratorTests` 14 + `BinderContextSelectorTests` 1 + `BinderHierarchyUtilityTests` 5）；
 - 修改 UIModule 状态机或 UIRoot 层级构建逻辑时，先跑对应 EditMode 测试。

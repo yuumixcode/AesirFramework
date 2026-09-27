@@ -3,7 +3,7 @@
 > A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.26.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.27.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -40,10 +40,10 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 ### Via UPM (Git URL)
 
-Install via UPM with a Git URL pinned to the 0.26.0 version branch (the branch root is the package content):
+Install via UPM with a Git URL pinned to the 0.27.0 version branch (the branch root is the package content):
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.26.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.0
 ```
 
 Track the latest development version on `main`:
@@ -60,7 +60,12 @@ Copy this package directory into your project's `Packages/` folder.
 
 ### unitypackage Import
 
-Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated in one click via the Unity menu `Tools → Aesir → Check for Updates` — the **in-package updater**: version detection uses multi-source fallback for mainland connectivity (jsDelivr CDN → GitHub API → redirect probe); the window shows the changelog between your local version and the remote version, asks for confirmation and backs up `Assets/Runestone` before updating, then removes stale entries by the exact diff of "previous install manifest − new manifest" without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
+Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated via the Unity menu `Tools → Aesir → Check for Updates` — the **in-package updater**:
+
+- **Version detection** falls back through three tiers for mainland connectivity (direct GitHub → mirror sites → jsDelivr CDN relay; results are 100% real-time whenever a direct connection works). The window shows the "local → remote" changelog plus per-tier detection details.
+- **Two update entries**: the per-row "Update" button updates a single package, for projects that only use one of them (when the other known package is present and outdated, the confirmation dialog warns about the paired-version risk); "Update All" brings the whole framework to the remote version — outdated packages are updated and missing Aesir packages are installed, with fresh installs clearly marked in the confirmation dialog.
+- **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
+- Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
 > Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
 >

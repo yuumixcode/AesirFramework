@@ -3,7 +3,7 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.26.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.27.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
@@ -40,10 +40,10 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 ### 通过 UPM（Git URL）
 
-在 Unity Package Manager 中通过 Git URL 安装（固定 0.26.0 版本分支，包内容即分支根目录）：
+在 Unity Package Manager 中通过 Git URL 安装（固定 0.27.0 版本分支，包内容即分支根目录）：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.26.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.0
 ```
 
 跟踪 main 最新开发版：
@@ -60,7 +60,12 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 
 ### unitypackage 导入
 
-从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**一键检查并更新：版本检测面向大陆做了多源兜底（jsDelivr CDN → GitHub API → 重定向探测），窗口内直接展示「本地 → 远程」更新日志，更新前弹出确认框并自动备份 `Assets/Runestone`，再按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件；安装 Odin Inspector 时更新器为 Odin 界面。
+从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**检查并更新：
+
+- **版本检测**面向大陆网络做了三层兜底（直连 GitHub → 镜像站 → jsDelivr CDN 中转，能直连即 100% 实时），窗口内直接展示「本地 → 远程」更新日志与各层尝试详情；
+- **两种更新入口**：包列表每行的「更新」按钮仅更新单个包，供只使用其中一个包的项目按需更新（另一包在场且落后时，确认框会提示配套版本风险）；「全部更新」让整个框架到达远程版本——已安装的旧包更新、缺失的 Aesir 包补装，补装条目在确认框中明确标为「新安装」；
+- **下载直连失败自动切换镜像站代理**，全部线路失败时弹窗给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效；
+- 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装 Odin Inspector 时更新器为 Odin 界面。
 
 > 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
 >
@@ -330,7 +335,7 @@ cn.runestone.aesir.architecture/
 │   ├── MenuItems/
 │   │   └── QuickCreateSOMenuItem.cs          # 右键快捷创建 SO（Aesir Inspector 存在时自动让位）
 │   ├── UpdateChecker/                        # 包内更新器（Tools → Aesir → Check for Updates）
-│   │   ├── AesirUpdateService.cs             # 无状态工具集：扫描安装、多源版本检测、清单差集、备份、CHANGELOG 解析、更新执行
+│   │   ├── AesirUpdateService.cs             # 无状态工具集：扫描安装、多源版本检测、清单差集、CHANGELOG 解析、更新执行
 │   │   ├── AesirUpdateController.cs          # 更新编排唯一真源（进度回调，双窗口共用）
 │   │   └── AesirUpdateWindow.cs              # 更新窗口（IMGUI 兜底；菜单入口，装 Odin 时路由到 Odin 版）
 │   └── OdinInspector/            # Odin Inspector 集成（可选）
