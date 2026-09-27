@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
@@ -35,14 +34,13 @@ namespace Runestone.AesirModules.Editor.Bootstrap
         internal const string ArchitecturePackageId = "cn.runestone.aesir.architecture";
 
         /// <summary>
-        /// 依赖 Git URL 模板，{0} 为 RAA 版本号——锚定 CI subtree split 生成的版本分支，
-        /// 与根 README 的 UPM 安装教程同款锚定方式；两包同号发版，分支版本由本包 version 推导。
+        /// 依赖 Git URL —— 锚定 CI subtree split 生成的常驻 <c>latest</c> 分支。
+        /// 分支名永久固定（旧策略的版本分支随发版轮换并删除，钉住它的 URL 会直接失效报
+        /// "Could not clone"），一次输入即可持续获取最新版；需要钉死旧版本时改用
+        /// Release tag（<c>?path=Assets/Runestone/AesirArchitecture#v&lt;版本&gt;</c>，tag 永久保留）。
         /// </summary>
-        internal const string DependencyGitUrlTemplate =
-            "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v{0}";
-
-        /// <summary>本包 package.json 解析失败时的兜底版本（与 package.json 的 version 随发版同步 bump）。</summary>
-        internal const string FallbackSelfVersion = "0.29.0";
+        internal const string DependencyGitUrl =
+            "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest";
 
         /// <summary>菜单路径：Aesir Modules 包专属工具，归 Tools/Aesir/Modules/ 组。</summary>
         public const string MenuPath = "Tools/Aesir/Modules/Install Dependencies";
@@ -80,12 +78,10 @@ namespace Runestone.AesirModules.Editor.Bootstrap
                 return;
             }
 
-            var selfVersion = ReadSelfVersion();
-            var gitUrl = BuildDependencyGitUrl(selfVersion);
             var message =
                 "检测到 Aesir Architecture (RAA) 缺失，AesirModules 核心程序集当前无法编译。\n\n" +
-                $"将安装：Aesir Architecture v{selfVersion}\n" +
-                $"Git URL：{gitUrl}\n" +
+                "将安装：Aesir Architecture（latest 常驻分支最新版，与 AesirModules 同号发版）\n" +
+                $"Git URL：{DependencyGitUrl}\n" +
                 "安装方式：Package Manager（安装到 Packages/，作为 UPM 包管理）\n" +
                 "安装完成后 AesirModules 核心程序集将自动恢复编译。\n" +
                 "（需要可访问 GitHub 的网络环境）\n\n" +
@@ -96,8 +92,8 @@ namespace Runestone.AesirModules.Editor.Bootstrap
             }
 
             SessionState.SetBool(InstallPendingKey, true);
-            Debug.Log($"[Aesir] 正在通过 Package Manager 安装 Aesir Architecture（{gitUrl}）…");
-            _addRequest = Client.Add(gitUrl);
+            Debug.Log($"[Aesir] 正在通过 Package Manager 安装 Aesir Architecture（{DependencyGitUrl}）…");
+            _addRequest = Client.Add(DependencyGitUrl);
             EditorApplication.update += PollAddRequest;
         }
 
@@ -120,7 +116,7 @@ namespace Runestone.AesirModules.Editor.Bootstrap
 
             SessionState.SetBool(InstallPendingKey, false);
             Debug.Log("[Aesir] Aesir Architecture 安装完成，AesirModules 核心程序集已恢复编译。" +
-                      "（该包位于 Packages/ 下，后续版本更新经 Package Manager 移除后重新 Add Git URL）");
+                      "（该包位于 Packages/ 下，latest 分支常驻滚动更新：升级 = 移除后用同一 Git URL 重新添加）");
         }
 
         /// <summary>轮询安装请求：失败即时弹窗；成功路径不在此提示（域重载会中断后续执行，转交 SessionState 标记收尾）。</summary>
@@ -253,39 +249,6 @@ namespace Runestone.AesirModules.Editor.Bootstrap
             catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
             {
                 return false; // 读取 / 解析失败按非 RAA 包处理（fail-closed）
-            }
-        }
-
-        /// <summary>本包版本号 → RAA 版本分支名（两包同号发版，版本由 CI 校验一致）。</summary>
-        internal static string BuildDependencyBranchName(string selfVersion)
-        {
-            return "AesirArchitecture-v" + selfVersion;
-        }
-
-        /// <summary>本包版本号 → 依赖 Git URL。</summary>
-        internal static string BuildDependencyGitUrl(string selfVersion)
-        {
-            return string.Format(DependencyGitUrlTemplate, selfVersion);
-        }
-
-        /// <summary>
-        /// 读本包 package.json 的 version 作为依赖版本号：源文件位于 <c>&lt;包根&gt;/Editor/Bootstrap/</c>，
-        /// 经编译期 <see cref="CallerFilePathAttribute" /> 实参定位包根（Assets 与 UPM 形态目录结构一致）；
-        /// 定位或解析失败回退 <see cref="FallbackSelfVersion" />。
-        /// </summary>
-        internal static string ReadSelfVersion([CallerFilePath] string sourceFilePath = "")
-        {
-            try
-            {
-                var packageRoot = Path.GetDirectoryName(
-                    Path.GetDirectoryName(Path.GetDirectoryName(sourceFilePath)));
-                var manifest = JsonUtility.FromJson<PackageManifest>(
-                    File.ReadAllText(Path.Combine(packageRoot ?? string.Empty, "package.json")));
-                return string.IsNullOrEmpty(manifest.version) ? FallbackSelfVersion : manifest.version;
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
-            {
-                return FallbackSelfVersion; // 包根定位 / 读取 / 解析失败的兜底（坏安装形态）
             }
         }
 
