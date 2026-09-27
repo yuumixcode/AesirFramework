@@ -22,7 +22,7 @@ namespace Runestone.AesirArchitecture
     ///     </item>
     ///     <item>
     ///     <b>取消勾选</b>：实例保留在所在场景、随场景卸载销毁——必须自行处理多场景叠加（Additive）加载下的
-    ///     生命周期管理。Inspector 会显示警告信息框，运行时亦输出提醒日志。
+    ///     生命周期管理。Inspector 会显示警告信息框提示。
     ///     </item>
     /// </list>
     /// </para>
@@ -30,8 +30,6 @@ namespace Runestone.AesirArchitecture
     [DefaultExecutionOrder(-999)]
     public class AesirArchitecture : AesirMonoBehaviour
     {
-        static AesirArchitecture _instance;
-
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景（仅根物体生效；预放置为子物体时本字段不参与判断，DDOL 跟随宿主）。
         /// </summary>
@@ -46,6 +44,8 @@ namespace Runestone.AesirArchitecture
         /// </remarks>
         [SerializeField]
         bool dontDestroyOnLoad = true;
+
+        static AesirArchitecture _instance;
 
         /// <summary>
         /// DDOL 开关字段名，提供给 Odin Inspector 使用。
@@ -104,15 +104,10 @@ namespace Runestone.AesirArchitecture
 
             _instance = this;
 
-            if (!dontDestroyOnLoad)
+            // 仅根物体可加入 DDOL 场景；预放置为子物体时本字段不参与判断，DDOL 跟随宿主
+            // （引擎对非根物体调用 DontDestroyOnLoad 只输出警告且不生效），与 UIModule / UIRoot 范式同形
+            if (dontDestroyOnLoad && transform.root == transform)
             {
-                AesirArchitectureDebug.LogWarning("dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" +
-                                                  "必须自行处理多场景叠加（Additive）加载下的生命周期");
-            }
-            else if (transform.root == transform)
-            {
-                // 仅根物体可加入 DDOL 场景；预放置为子物体时本字段不参与判断，DDOL 跟随宿主
-                // （引擎对非根物体调用 DontDestroyOnLoad 只输出警告且不生效），与 UIModule / UIRoot 范式同形
                 DontDestroyOnLoad(gameObject);
             }
         }
