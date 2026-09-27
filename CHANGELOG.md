@@ -20,15 +20,72 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.26.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.26.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.27.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.27.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.26.0` / `#AesirModules-v0.26.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.27.0` / `#AesirModules-v0.27.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.27.0] - 2026-09-27
+
+---
+
+### [architecture] Aesir Architecture
+
+**Added**
+
+- **更新器单包更新入口** — 包列表每行新增「更新」按钮（IMGUI 与 Odin 窗口同步），另一已知包在场且落后时确认框前置「配套版本警告」，提示但不阻止
+- **「全部更新」升级为"补全 + 更新"语义** — 目标扩展为"过期包 + 缺失的已知包补装"（`ComputeUpdateTargets`），确认框逐包标注「更新 / 新安装」并前置缺包说明
+
+**Fixed**
+
+- **「全部更新」在 GitHub 直连不可用时卡死在下载进度条** — unitypackage 下载按「直连 → 镜像站代理（`ghproxy.net` / `gh-proxy.com`）」逐线路兜底，全部失败时异常附手动下载指引
+- **更新进度条不可取消** — 下载阶段进度条改用 `DisplayCancelableProgressBar`，取消后温和收尾（区分已完成导入与未更新的包）
+- **更新流程收尾异常导致程序集重载锁泄漏** — 收尾重构为配平守卫结构，任何异常路径恰好解锁一次；顺序改为「先解锁、再清忙碌标记」，不再存在死锁窗口
+- **`AESIR_ARCHITECTURE` 宏确保器写入时机重入风险（预防性加固）** — 写宏推迟到 `EditorApplication.delayCall`，仅在符号缺失时写入
+- **Tools/Aesir 组菜单排序随域重载抖动** — Getting Started priority -1000 → -980，稳定居 Tools/Odin 组之后并自动插独立分割线
+
+**Changed**
+
+- **移除 DDOL 关闭时的运行时 Warning 提醒日志** — 非 DDOL 提示完全由 Inspector 信息框承担
+- **DDOL 开关字段前移至类声明首位** — 确立各单例类「DDOL 开关在最上」的统一排布
+- **更新确认框文案重构** — `BuildUpdateConfirmation` 拆为全部/单包两个入口；`UpdatePackagesAsync` 返回 `UpdateResult`（已完成包 / 是否取消 / 未更新包）
+
+**Removed**
+
+- **移除更新器更新前自动备份机制（`.aesir-backup/`）** — 全量复制数千文件对消费者 git 仓库构成无谓噪音；回滚走 GitHub Releases 旧版 unitypackage 重新导入（确认框已明示），`BackupRunestone` / `UpdateResult.BackupPath` 等 API 一并移除
+
+---
+
+### [modules] Aesir Modules
+
+**Added**
+
+- **Scene 模块 UniTask 适配（新程序集 `Runestone.AesirModules.UniTask`）** — 安装 UniTask 时内部流程自动改为 UniTask 驱动，新增可 await 的 `SceneModuleUniTask` API（`LoadSceneSingleAsync` 等 5 个）；宏 `AESIR_MODULES_UNITASK` 由 versionDefines + 编辑器宏维护器自动维护
+- **UI 模块全局配置资产 `UIModuleConfigSO`（单例）** — 窗口蒙版模式等模块级配置迁出 `UIModule` 序列化字段，不再要求预放置；加载器注册 → Resources 兜底 → 内存默认实例三级解析，编辑器自动创建兜底资产
+- **场景模块全局配置资产 `SceneModuleConfigSO`（单例）** — 承载全局启动场景兜底 `bootstrapScene` 与加载进度归一化上限 `progressCap`，设计对齐 `UIModuleConfigSO`
+- **Script Doc Generator 静态 API（`ScriptDocGeneratorAPI`）** — 面板的无 UI 等价入口，供自动化脚本与 AI 直接调用（按类型/程序集/文件夹生成，返回 `ScriptDocGenerationResult`）
+
+**Changed（含破坏性）**
+
+- **`SceneModule` 公开 API 静态门面化（破坏性）** — 全部公开成员改为静态（直接 `SceneModule.LoadSceneSingle(...)`），实例侧全私有（守护用例锁定）；顺带修正 `LastLoadedScene` / 事件自动属性的序列化残留隐患
+- **窗口蒙版模式配置迁移至 `UIModuleConfigSO`（破坏性）** — 移除 `UIModule` 的 `maskMode` 序列化字段，升级后以配置资产为准
+- **加载进度上限配置迁移至 `SceneModuleConfigSO`** — 常量 0.9 改为配置资产字段，消费端钳制 (0, 1]
+- **移除各模块 DDOL 关闭时的运行时 Warning 提醒日志；DDOL 开关字段统一前移至类声明首位**
+- **Script Doc Generator「调试检查模式」重排至窗口最底部** — TypeData 中间结果列表位于开关下方，提示三态化
+
+**Fixed**
+
+- **Script Doc Generator 调试检查模式关闭时 TypeData 列表仍显示** — 根因是 Odin 对同一成员的多个 ShowIf 为 OR 语义，现合并为复合条件属性（AND）
+- **Script Doc Generator 调试模式警告信息框表达式解析错误** — `$value` 误用，改为 `@成员名` 根实例上下文解析
+- **Script Doc Generator 窗口 PropertyTree 未释放** — `OnDisable` 释放并置空，消除 GC 警告
+- **Script Doc Generator 绘制回调内解析资产库单例导致卡顿与 "GUIStateObj is deleted" 报错** — 单例解析收敛到 `OnEnable` + 按域缓存
 
 ---
 

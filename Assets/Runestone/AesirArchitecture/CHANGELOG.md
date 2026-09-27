@@ -5,6 +5,33 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.27.0] - 2026-09-27
+
+### Added
+
+- **更新器单包更新入口** — 包列表每行新增「更新」按钮（IMGUI 与 Odin 窗口同步），仅更新指定包，供只使用其中一个包的项目按需更新：另一已知包在场且落后于远程版本时，确认框前置「配套版本警告」（两包按同版本配套发布，仅更新其一可能导致编译错误或运行时 API 不匹配），提示但不阻止，决定权在用户
+- **「全部更新」升级为"补全 + 更新"语义** — 目标从"已安装的过期包"扩展为"过期包 + 缺失的已知包补装"（`ComputeUpdateTargets`）：只装了架构包（或只装了功能包）的项目点「全部更新」会把缺失的包一并装上；确认框逐包标明「未安装 → vX（新安装）」并前置缺包说明——提示用户缺失的包也会被安装，可取消后改用行内「更新」按钮只更新已安装的包；按钮可见性随之扩展为"有待更新包或缺失包"
+
+### Fixed
+
+- **「全部更新」在 GitHub 直连不可用的网络环境下卡死在下载进度条（用户实测反馈：卡在 55% 不动）** — 版本检测有三层兜底（直连 → 镜像站 → CDN 中转），unitypackage 下载却只走 GitHub Release 直链一条路：检测能出结果、下载却必然卡住。现在下载按「直连 → 镜像站代理（`ghproxy.net` / `gh-proxy.com`，前缀 + 完整 Release 地址）」逐线路兜底（`DownloadUnityPackageAsync`），单线路失败自动落下一线路；全部线路失败时异常消息附「打开 Releases 页面手动下载资产、双击导入」的自助指引，不再只有一句"下载失败"
+- **更新进度条不可取消，卡住时用户没有逃生门** — 更新执行阶段的进度条改用 `EditorUtility.DisplayCancelableProgressBar`，用户随时可点「取消」中止下载（`DownloadBytesAsync` 新增取消探测委托，下载循环逐帧评估）；取消后温和收尾——如实区分「已完成导入的包（保持有效）」与「未更新的包」，并说明取消发生在下载阶段、项目文件未受影响；确认框与进度提示补充「更新期间请保持 Unity 窗口处于前台」（编辑器失焦时下载与导入可能停滞）
+- **更新流程收尾阶段抛异常时程序集重载锁泄漏，之后整个会话无法域重载（只能重启编辑器）** — 原收尾 finally 按「清忙碌标记（`EndBusy`）→ 重扫 → 刷新导入 → 解锁」顺序执行：`Rescan` / `AssetDatabase.Refresh`（或视图刷新回调）一旦抛异常，`UnlockReloadAssemblies` 被跳过；而忙碌标记已被清除，`[InitializeOnLoadMethod]` 的域重载兜底判断（`SessionState` 标记仍在才算被打断）不成立、不会补解锁——重载锁泄漏到整个会话，此后一切需要域重载的操作（编译、`AssetDatabase.Refresh` 等）全部阻塞。现收尾重构为配平守卫结构：加锁纳入 try 内 + `reloadLocked` 局部标志保证任何异常路径下恰好解锁一次、绝不重复解锁；重扫/刷新包在独立 try/finally 中，异常原样向上传播（fail-fast 不吞）但解锁与标记清理必然执行；顺序改为「先解锁、再清忙碌标记」——解锁前任何一步被异常/强杀中断时标记仍在，兜底收尾可补解锁，不再存在「标记已清而锁仍持有」的死锁窗口
+- **`AESIR_ARCHITECTURE` 宏确保器的写入时机存在重入风险（预防性加固）** — `[InitializeOnLoad]` 静态构造函数运行于程序集注册/域重载期间，此时调用 `PlayerSettings.SetScriptingDefineSymbols` 写宏会触发脚本重编译请求，属于重入，可能使 Unity 走到程序集注册的致命分支。现写入推迟到 `EditorApplication.delayCall`（编辑器空闲首帧）执行；`EnsureScriptingDefineSymbol` 按构建目标逐一比对、仅在符号确实缺失时才写入（已存在则零写入、不触发重编译）的行为不变
+- **Tools/Aesir 组在 Tools 菜单中的排序随域重载抖动（与 Tools/Odin 组先后不定）** — Tools 菜单父项的 priority 取子项最小值，Getting Started 的 -1000 与 Odin 的 `Tools/Odin/Getting Started`（同为 -1000）打平，两组先后只由注册顺序决定——同一份未改动的代码连续两次域重载实测先后相反。现调整为 -980（大于 -1000），Aesir 组稳定排在 Odin 组之后，且差值超过 10 自动在两组间插入独立分割线
+
+### Changed
+
+- **移除 `AesirArchitecture` DDOL 关闭时的运行时 Warning 提醒日志** — 非 DDOL 提示完全由 Inspector 承担（Odin 条件 Warning 信息框，仅关闭时显示），运行时不再输出日志，避免「不支持多场景叠加」的观感误导；XML 文档与 Processor 文案同步
+
+- **DDOL 开关字段前移至类声明首位** — `AesirArchitecture` 的 `dontDestroyOnLoad` 序列化字段移至类体第一个字段（静态字段之前），脚本阅读与 Inspector 展示中 DDOL 决策均为第一项，确立各单例类「DDOL 开关在最上」的统一排布
+
+- **更新确认框文案重构（`BuildUpdateConfirmation` 拆为 `BuildUpdateAllConfirmation` / `BuildSingleUpdateConfirmation`）** — 全部更新与单包更新分别构建确认文案：操作列表改为「即将执行以下操作」并逐条标注「更新 / 新安装」，公共尾注补「保持前台运行」提示；单包更新的确认按钮文案改为「仅更新此包」、结尾为「确认仍要仅更新 Xxx 吗？」（防误触）；`UpdatePackagesAsync` 返回值由备份路径字符串改为 `UpdateResult`（已完成包 + 是否取消 + 未更新包），取消与失败对用户呈现不同的收尾
+
+### Removed
+
+- **移除更新器更新前自动备份机制（`.aesir-backup/`）** — 每次更新把安装根全量复制（数千文件）到消费者项目根，对 git 仓库构成无谓的提交噪音与磁盘占用；而标准用户的回滚路径本就存在且更优——上一版本 unitypackage 永久保留在 GitHub Releases，重新导入即完整还原（残留清理只动安装清单内的文件、用户新增文件不受影响），且更新本身刚用过网络。本地修改被覆盖的场景属不推荐用法，改由确认框明示（「本地修改将被 Release 内容覆盖；如需回滚，可从 GitHub Releases 下载旧版本的 unitypackage 重新导入」），不再做运行时防御。`UpdateResult.BackupPath` 字段与 `BackupRunestone` / `PruneBackups` API 及 `BackupDirName` / `BackupKeepCount` 常量一并移除
+
 ## [0.26.0] - 2026-09-25
 
 ### Added

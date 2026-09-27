@@ -5,6 +5,39 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.27.0] - 2026-09-27
+
+### Added
+
+- **Scene 模块 UniTask 适配（新程序集 `Runestone.AesirModules.UniTask`）** — 游戏工程包含 UniTask 时自动生效：①内部加载/卸载流程由协程驱动替换为 UniTask 驱动（`UniTask.NextFrame` / `ToUniTask`，宿主销毁经 `destroyCancellationToken` 静默中止，公开 API 与回调语义与协程路径完全一致，共享校验与完成记账）；②适配程序集（`Runtime/Integration/UniTask/`，宏关闭时整体不编译）提供可 await 的 `SceneModuleUniTask` 静态 API：`LoadSceneSingleAsync` / `LoadSceneAdditiveAsync` / `UnloadSceneAsync`（含 `SceneAssetWrapper` 重载）/ `ReloadSceneAsync` / `UnloadAllAddedScenesAsync`——失败抛 `InvalidOperationException`（原因见 Console），`CancellationToken` 取消仅中止等待、底层流程继续完成，宿主销毁时等待方以取消收场不悬挂。宏 `AESIR_MODULES_UNITASK` 自动维护：UPM 包（`com.cysharp.unitask`）安装经核心与适配程序集的 versionDefines 装卸自动生效；unitypackage / DLL 安装经编辑器宏维护器 `AesirUniTaskDefineKeeper`（`Editor/UniTask/`，`[InitializeOnLoad]` + `delayCall` 推迟写宏防重入）按域内 `Cysharp.Threading.Tasks` 程序集在场与否增删全局宏。新增 `AesirUniTaskDefineKeeperTests`（5 用例：决策矩阵 + 适配程序集装配与宏存在性等价守卫）
+
+- **UI 模块全局配置资产 `UIModuleConfigSO`（单例）** — 将模块级配置（当前承载窗口蒙版调度模式 `maskMode`）从 `UIModule` 序列化字段迁出：在 Project 窗口直接编辑资产即可生效，不再要求预放置 `[UIModule]`。单例解析顺序：①`RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销并使已缓存实例失效）；②Resources 兜底（`Resources/UIModuleConfig/UIModuleConfig`）；③内存默认实例。编辑器在编辑模式域加载后自动创建兜底资产（`UIModuleConfigAssetInitializer`，Resources 路径已命中或项目内已有同类型资产时不重复创建）。新增 EditMode 测试 `UIModuleConfigSOTests`（10 用例）
+
+- **场景模块全局配置资产 `SceneModuleConfigSO`（单例）** — 承载无需预放置 `[SceneModule]` 即可调整的模块级配置，设计对齐 `UIModuleConfigSO`。单例解析顺序：①`RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销并使已缓存实例失效）；②Resources 兜底（`Resources/SceneModuleConfig/SceneModuleConfig`，编辑器在编辑模式域加载后自动创建兜底资产 `SceneModuleConfigAssetInitializer`，Resources 路径已命中或项目内已有同类型资产时不重复创建）；③内存默认实例。当前承载：全局启动场景兜底 `bootstrapScene`（预放置实例的序列化字段未赋值时 `BootstrapSceneAssetWrapper` 回退读取本值）与加载进度归一化上限 `progressCap`（默认 0.9）。新增 EditMode 测试 `SceneModuleConfigSOTests`（11 用例）
+
+- **Script Doc Generator 静态 API（`ScriptDocGeneratorAPI`）** — 面板操作的无 UI 等价入口，面向自动化脚本与 AI 助手直接调用：`GenerateDocsForType` / `GenerateDocsForTypes` / `GenerateDocsForAssembly`（支持程序集短名或 FullName）/ `GenerateDocsForFolder`（文件夹含子文件夹内全部脚本，源码扫描映射类型，普通 C# 类不依赖 `MonoScript.GetClass()`）；配套 `DefaultSettings` / `ZensicalSettings` / `DefaultOutputFolder` / `FindAllSettings`（枚举项目内全部生成器设置资产，含自定义派生）。全程无确认弹窗、不自动打开生成结果，覆盖语义与面板"多程序集模式"一致（增量合并保留手写内容）；返回 `ScriptDocGenerationResult`（写入文件清单 / 设置名 / 输出根目录 / 未解析类型名，`ToString` 出单行摘要）。写入核心自面板流程下沉为 `WriteTypeDocSilently`（面板交互行为不变）。新增 EditMode 测试 `ScriptDocGeneratorApiTests`（16 用例：程序集解析 / 路径归一化 / 文件夹类型解析 / 三种来源端到端 / 预设枚举）
+
+### Changed
+
+- **`SceneModule` 公开 API 静态门面化（破坏性）** — 全部公开成员改为静态，直接 `SceneModule.LoadSceneSingle(...)` 调用（首次调用自动创建/查找单例），不再需要 `SceneModule.Instance.xxx`（`Instance` 属性保留供组件级访问）；实例侧成员全部私有化，类型不再暴露任何公开实例 API（EditMode 守护用例锁定）。顺带修正两处违反「MonoBehaviour 运行状态用显式非序列化字段」约定的自动属性：`LastLoadedScene` 与 `SceneLoadedEvent` / `SceneUnloadedEvent` 转为显式字段（此前自动属性 backing field 会被场景序列化残留，跨 Play 污染状态）；`SetActiveScene` / `ReloadScene` 为纯静态操作，不会创建模块实例
+
+- **窗口蒙版模式的配置来源迁移至 `UIModuleConfigSO`** — 移除 `UIModule` 的 `maskMode` 序列化字段（破坏性：预放置实例上已序列化的 `maskMode` 值不再读取，升级后以配置资产为准，未创建配置资产时为代码默认值单遮）；`UIModule.MaskMode` 属性保留，初值在首次访问时取自 `UIModuleConfigSO`，运行时切换语义不变（只覆盖内存值并立即重算蒙版）
+
+- **`SceneModule` 加载进度归一化上限的来源迁移至 `SceneModuleConfigSO`** — 内部常量 `SceneLoadProgressCap`（0.9）改为配置资产字段 `progressCap`（默认 0.9，消费端钳制到 (0, 1] 防止误配置造成除零或反向进度），每次加载时读取、协程与 UniTask 两条驱动路径共用；`bootstrapScene` 序列化字段保留且预放置实例优先，未赋值时新增配置资产全局兜底（均为非破坏性增强）
+
+- **移除 `AesirModules` / `UIModule` / `AudioModule` / `SceneModule` / `UIRoot` DDOL 关闭时的运行时 Warning 提醒日志** — 非 DDOL 提示完全由 Inspector 承担（Odin 信息框），运行时不再输出日志，避免「不支持多场景叠加」的观感误导；XML 文档同步
+
+- **DDOL 开关字段前移至类声明首位** — `AesirModules` / `AudioModule` / `SceneModule` / `UIModule` / `UIRoot` 的 `dontDestroyOnLoad` 序列化字段统一移至类体第一个字段（常量与静态字段之前）；`SceneModule`（自定义启动场景之前）与 `UIRoot`（Canvas 统一配置之前）的 Inspector 展示顺序随之变化，DDOL 决策均为第一项
+
+- **Script Doc Generator「调试检查模式」重排至窗口最底部并完善提示** — 开关由窗口顶部（路径设置之后）移至面板最底部，TypeData 中间结果列表位于开关下方（开启后渲染）；按状态三态提示：未开启时显示 Info 指引（仅当需要检查中间过程的 TypeData——即单个成员的解析结果——才开启，日常生成无需开启）；开启时显示 Info 说明（窗口显示类型分析中间产物 TypeData，可展开检查每个成员的解析结果）；开启且程序集模式时追加 Warning 性能警示（分析的类足够多时整图渲染明显卡顿）
+
+### Fixed
+
+- **Script Doc Generator 调试检查模式关闭时 TypeData 中间结果列表仍显示** — `_typeData` / `_typeDataList` 此前并挂两个 ShowIf（调试开关 + 类型来源模式），而 Odin 对同一成员的多个 ShowIf 是 **OR 语义**（任一条件满足即显示）——类型来源模式条件在对应模式下恒真，导致列表无视调试检查开关直接渲染（多程序集模式下几百个类型的整图常驻窗口）；现合并为单个复合条件属性 `ShowSingleTypeAnalysisData` / `ShowListTypeAnalysisData`（AND 语义），仅在开启调试检查模式且对应类型来源模式时渲染
+- **Script Doc Generator 面板"调试检查模式"的警告信息框表达式解析错误** — 可见性表达式误写 `@$value.ShowAssemblyDebugWarning`：InfoBox 挂在 bool 字段上，Odin 的 `$value` 指该字段自身的布尔值，绘制时报 `Unable to locate identifier 'ShowAssemblyDebugWarning' in context of type 'System.bool'`（面板截图中红色报错）；改为 `@ShowAssemblyDebugWarning` 在根实例上下文解析成员
+- **Script Doc Generator 面板在绘制回调内解析资产库单例导致的卡顿与 "GUIStateObj is deleted" 报错** — `ScriptDocGeneratorWindow.DrawEditor` 此前每次绘制都解析 `ScriptDocGeneratorPanelSO.Instance`（未命中时触发 `CreateAsset` + `AssetDatabase.Refresh` 全项目重扫，卡死编辑器并产出 "the GUIStateObj is deleted, but is accessed"）；现 `DrawEditor` 只做空值保护、单例解析收敛到 `OnEnable`，`ScriptDocGeneratorPanelSO` / `DefaultScriptingAPISettingsSO` / `ZensicalScriptingAPISettingsSO` 三个单例改为 static 字段按域缓存（Unity fake-null 语义，资产被删后缓存自动失效重建），配套测试程序集补 `UnityEditor.TestRunner` 引用
+- **Script Doc Generator 窗口的 PropertyTree 未释放** — `ScriptDocGeneratorWindow._soTree` 在域重载 / 窗口销毁时未 Dispose，Odin 在下次 GC 时报 "An Odin PropertyTree instance is being garbage collected without first having been disposed"；现于 `OnDisable` 释放并置空
+
 ## [0.26.0] - 2026-09-25
 
 - **与 Aesir Architecture 0.26.0 版本同步发布** — 本包无功能变更；Architecture 侧升级包内更新器（版本检测改为「直连 GitHub → 镜像站 → CDN 中转」三层兜底并显示获取线路、检测与下载补齐超时、修复两个包连续更新时进度条停留与按钮提前可点的交互问题）

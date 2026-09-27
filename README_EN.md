@@ -17,8 +17,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.26.0` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.26.0` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.27.0` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.27.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -129,10 +129,10 @@ A dual-track subscription event system: `[AesirListener]` attribute-based static
 
 In the Unity Package Manager window, click `+` in the top-left → `Add package from git URL...` and paste the corresponding sub-package URL:
 
-| Sub-Package | Git URL (pinned to 0.26.0) |
+| Sub-Package | Git URL (pinned to 0.27.0) |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.26.0` |
-| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.0` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.0` |
 
 > Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches.
 
@@ -146,7 +146,7 @@ Download the matching unitypackage from [GitHub Releases](https://github.com/yuu
 | `AesirModules-v<version>.unitypackage` | Aesir Modules only (no dependencies; if Architecture is missing, the menu `Tools → Aesir → Modules → Install Dependencies` installs it in one click) |
 | `AesirFramework-v<version>.unitypackage` | Both packages combined |
 
-Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for one-click "detect new version → review changelog → confirm → auto backup → diff-based stale cleanup → silent import" (Odin-based UI when Odin Inspector is installed). Version detection falls back through three tiers — direct GitHub (Releases API → 302 probe → raw repo content) → GitHub mirrors → CDN relay — with a 5-second per-source timeout before dropping to the next tier. The window reports whether GitHub was reachable this run (direct = 100% up to date) and which route produced the result, warning about multi-hour delays only when the CDN relay was used.
+Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for "detect new version → review changelog → confirm → silent import → diff-based stale cleanup" (Odin-based UI when Odin Inspector is installed). Updates come in two entries: the per-row "Update" button updates a single package (for projects that only use one of them; when the other known package is present and outdated, the confirmation dialog warns about the paired-version risk); "Update All" brings the whole framework to the remote version — outdated packages are updated and missing Aesir packages are installed (fresh installs are clearly marked in the confirmation dialog). unitypackage downloads fall back to mirror-site proxies when the direct GitHub link fails, and if every route fails the dialog offers a manual-download guide; the download progress bar can be cancelled at any time, and already imported packages stay valid. Version detection falls back through three tiers — direct GitHub (Releases API → 302 probe → raw repo content) → GitHub mirrors → CDN relay — with a 5-second per-source timeout before dropping to the next tier. The window reports whether GitHub was reachable this run (direct = 100% up to date) and which route produced the result, warning about multi-hour delays only when the CDN relay was used.
 
 > Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
 
@@ -164,8 +164,8 @@ Add the following to your project's `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.26.0",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.0",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.0"
   }
 }
 ```
@@ -282,7 +282,7 @@ AesirFramework/                            # this repo
 
 ## ✅ Quality & CI
 
-- **Tests** — 725+ EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
+- **Tests** — 794 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
 - **CI (GitHub Actions)** —
   - `auto-release.yml`: every push to `main` publishes a GitHub Release (three unitypackages plus the update-info.json / files-manifest used by the in-package updater)
   - `auto-publish-branches.yml`: per-package subtree split generating `AesirArchitecture-v<version>` / `AesirModules-v<version>` pinned branches
@@ -345,7 +345,7 @@ See root [`LICENSE`](./LICENSE) for details.
 - **Aesir Inspector** — separate public repository, a learning toolkit for [Odin Inspector](https://odininspector.com/) developers: [yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
 - **ObservableCollections** — high-performance observable collections and synchronized views by Cysharp (MIT). Aesir Architecture ships a **high-frequency subset** of it (four collections / `CollectionChanged` — see `Documentation/observable-collections.md`); for synchronized views, R3 reactive integration, ring buffers, XAML binding and other full capabilities use upstream directly: [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **Eflatun.SceneReference** — strongly typed, robust and reliable scene references for Unity (MIT). `SceneAssetWrapper` in the Aesir Modules Scene module absorbed its functional design (GUID-anchor self-healing, state-machine validation, the `TryGet` safe-read family, etc.): [starikcetin/Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
-- **QFramework** — a Unity game development framework by liangxiegame (MIT): capability interface composition, Command/Query, events and tooling in one package, with full tutorials and case studies. Both the layered architecture of Aesir Architecture and its in-package updater (inspired by its PackageKit's "version record travels with the package + delete-before-import", enhanced with automatic backups and precise diff cleanup) owe their design to it: [liangxiegame/QFramework](https://github.com/liangxiegame/QFramework)
+- **QFramework** — a Unity game development framework by liangxiegame (MIT): capability interface composition, Command/Query, events and tooling in one package, with full tutorials and case studies. Both the layered architecture of Aesir Architecture and its in-package updater (inspired by its PackageKit's "version record travels with the package", enhanced with precise diff cleanup) owe their design to it: [liangxiegame/QFramework](https://github.com/liangxiegame/QFramework)
 - **Vertical 2D Shooting (Goldmetal)** — a vertical-scrolling 2D shooting sprite pack bundled with Goldmetal's BE4 basics course (free to use, including commercially, as long as Goldmetal is credited). The PlaneWar sample in Aesir Architecture contains a self-contained copy of these sprites: [Goldmetal Studio](https://www.goldmetal.co.kr)
 - **Author homepage**: [yuumixcode](https://github.com/yuumixcode)
 
