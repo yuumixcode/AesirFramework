@@ -4,10 +4,12 @@
   "references": [
     "Runestone.AesirArchitecture",
     "Runestone.AesirModules",
+    "Runestone.AesirModules.Editor",
     "Runestone.AesirModules.Editor.Bootstrap",
     "Runestone.AesirModules.OdinInspector",
     "Runestone.AesirModules.Editor.OdinInspector",
-    "UnityEngine.TestRunner"
+    "UnityEngine.TestRunner",
+    "UnityEditor.TestRunner"
   ],
   "includePlatforms": [
     "Editor"
