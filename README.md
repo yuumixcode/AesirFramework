@@ -18,7 +18,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 | UI | 已实现 | `UIModule` 单例（Manager of Managers）+ `UIRoot` 四层 Canvas + 面板生命周期 + Canvas 根窗口（蒙版单遮/叠遮）+ 可插拔资源加载 |
 | Event | 已实现 | `EventModule` 双轨订阅（Attribute + Script）+ 4 档优先级稳定排序 + 快照与重入安全分发 + 表达式树优化 + 订阅者过滤器（精确投递）+ 死引用清理 + SO 资产化 |
 | Audio | 已实现 | `AudioModule` 单例（2D 音频极简门面）+ SFX 独占音源轮询 + BGM 淡入淡出 + 三通道音量/静音持久化 |
-| Scene | 已实现 | `SceneModule` 静态门面（加载/叠加/卸载/激活场景切换 + 场景事件广播，直接 `SceneModule.xxx` 调用）+ UniTask 适配程序集（可选，宏自动维护，含 UniTask 时协程实现自动替换为 UniTask 驱动并提供可 await API）+ `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Editor Settings） |
+| Scene | 已实现 | `SceneModule` 静态门面（加载/叠加/卸载/激活场景切换 + 场景事件广播，直接 `SceneModule.xxx` 调用）+ UniTask 适配程序集（可选，宏自动维护，含 UniTask 时协程实现自动替换为 UniTask 驱动并提供可 await API）+ `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Module Settings） |
 | ScriptDocGenerator | 已实现（需 Odin） | 反射分析 C# 类型生成结构化 API 文档（增量保留手写内容）+ Summary 工具（XML `<summary>` 与 `[Summary]` 特性同步，特性优先） |
 
 > 另有两项可选能力：**Binder 组件绑定**（`Runtime/UI/OdinInspector/Binder/`，需 Odin Inspector）与 **Input System 输入模块适配**（`Runtime/UI/InputSystem/`，独立程序集，启用 Input System 时自动生效）。
@@ -42,9 +42,10 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 
 ### UPM（Git URL，推荐）
 
-在 Unity Package Manager 窗口 `+` → `Add package from git URL...`：
+在 Unity Package Manager 窗口 `+` → `Add package from git URL...`，两个包各添加一条：
 
 ```
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.1
 https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1
 ```
 
@@ -53,14 +54,17 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1
 ```json
 {
   "dependencies": {
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.1",
     "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1"
   }
 }
 ```
 
-跟踪 main 最新开发版：把 URL 换成 `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules`。
+跟踪 main 最新开发版：把两条 URL 分别换成 `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture` 与 `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules`。
 
-`package.json` 的 `dependencies` 已声明 Aesir Architecture 的 Git URL，UPM 安装本包时会自动拉取该依赖，无需手动安装。以此方式安装的包由 Package Manager 管理：更新时移除后重新 Add 新版本分支的 Git URL，不经过 `Tools → Aesir → Check for Updates` 包内更新器。
+> **两个包需要分别添加**：Unity Package Manager 不支持在包的 `package.json` 中声明 Git URL 依赖（只能在项目 manifest.json 中声明，Unity 官方限制），因此本包不携带对 Aesir Architecture 的依赖声明。只添加本包也能安装成功，但核心程序集会因缺少 Aesir Architecture 而编译失败——此时菜单 `Tools → Aesir → Modules → Install Dependencies` 会出现，可一键补装对应版本的 Aesir Architecture（详见下文）。
+
+以此方式安装的包由 Package Manager 管理：更新时移除后重新 Add 新版本分支的 Git URL，不经过 `Tools → Aesir → Check for Updates` 包内更新器——纯 UPM 安装形态下该菜单不显示（更新器只管辖 Assets 形态的安装副本）。
 
 ### unitypackage 导入
 
@@ -68,7 +72,7 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1
 
 > **Runestone 目录可整体移动到项目任意文件夹**：各包包根的 `AesirPathLookup.asset` 锚点资产负责带路（定位机制由 Aesir Architecture 提供，参照 Odin Inspector 的同款资产），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`，曾移动过的旧位置副本需自行清理。
 
-> **缺依赖时的一键补装**：unitypackage 方式只导入本包（未同时导入 Aesir Architecture）时，本包核心程序集无法编译（Console 报 `Runestone.AesirArchitecture` 程序集缺失）。此时菜单 `Tools → Aesir → Modules → Install Dependencies` 会出现，点击后经确认窗口（列明将安装的包名、版本与 Git URL）以 Git URL 自动安装对应版本的 Aesir Architecture——安装至 `Packages/` 下由 Package Manager 管理，本包核心程序集随即恢复编译；该依赖包的后续更新经 Package Manager 移除后重新 Add。安装了 Aesir Architecture 后此菜单自动隐藏。
+> **缺依赖时的一键补装**：本包安装后 Aesir Architecture 缺失时（unitypackage 只导入本包、或 UPM 单独添加本包），本包核心程序集无法编译（Console 报 `Runestone.AesirArchitecture` 程序集缺失）。此时菜单 `Tools → Aesir → Modules → Install Dependencies` 会出现（该菜单所在程序集零依赖，其余程序集编译失败时仍可用），点击后经确认窗口（列明将安装的包名、版本与 Git URL）以 Git URL 自动安装对应版本的 Aesir Architecture——安装至 `Packages/` 下由 Package Manager 管理，本包核心程序集随即恢复编译；该依赖包的后续更新经 Package Manager 移除后重新 Add。安装了 Aesir Architecture 后此菜单自动隐藏。
 
 ## UI 模块
 
@@ -481,7 +485,7 @@ public class LevelFlow : MonoBehaviour
 - **Odin Inspector 边界** — `SceneAssetWrapper` 的 Inspector 面板效果依赖 Odin（经 AttributeProcessor 注入）；未安装 Odin 时仅保证 API 可用：`SceneAssetWrapper.FromScenePath(...)` 构造、编辑器下 `SceneAsset` 属性代码赋值、TryGet 家族读取，面板不支持。
 - **Addressable 场景不经 SceneModule 加载** — 安装 Addressables 后 wrapper 提供地址（`Address` / `TryGetAddress`），加载请直接调用 `Addressables.LoadSceneAsync(wrapper.Address)`，卸载同理走 Addressables API。
 - **重复叠加同一路径后果自负** — Unity 会加载两个场景实例而追踪列表按路径只记一条，`UnloadScene` 按路径只卸载其一，剩余实例脱离追踪；请勿对同一路径重复 `LoadSceneAdditive`。
-- **启动场景（Bootstrap）分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`：实例序列化字段优先、未赋值时回退配置资产 `SceneModuleConfigSO` 的全局启动场景），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 场景由编辑器 `BootstrapSceneHelper` 负责（`Tools → Aesir → Modules → Scene Editor Settings` 中开启，默认关闭）。
+- **启动场景（Bootstrap）分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`：实例序列化字段优先、未赋值时回退配置资产 `SceneModuleConfigSO` 的全局启动场景），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 场景由编辑器 `BootstrapSceneHelper` 负责（`Tools → Aesir → Modules → Scene Module Settings` 中开启，默认关闭）。
 - **不做场景间传参** — 跨场景传数据用框架 MiniEvent 或共享 Model；异步驱动仅在工程包含 UniTask 时经适配程序集提供可 await 的 API（见「UniTask 适配」节），不内置其他 async 抽象。
 
 ### 目录结构
@@ -498,8 +502,11 @@ Runtime/Scene/                     # 汇入核心运行时程序集（层根锚�
 Runtime/Integration/UniTask/       # UniTask 适配程序集（Runestone.AesirModules.UniTask，AESIR_MODULES_UNITASK 宏门控）
 └── SceneModuleUniTask.cs          # 可 await 的场景加载/卸载适配 API
 Editor/Scene/                      # 汇入核心编辑器程序集（层根锚点）
-├── SceneManagerWindow.cs          # Scene Editor Settings 设置窗口（Tools/Aesir/Modules/Scene Editor Settings）
+├── SceneEditorSettings.cs         # 编辑器设置单例（Bootstrapper 开关与路径，展示特性 #if ODIN_INSPECTOR 包裹，数据层零 Odin 依赖）
+├── SceneModuleSettingsWindow.cs    # Scene Module Settings 设置窗口（原生 IMGUI 兜底，持菜单入口，经 OdinWindowOpener 路由）
 ├── BootstrapSceneHelper.cs        # Bootstrapper 场景搜集注册工具（默认关闭）
+├── OdinInspector/                  # 汇入 Odin 编辑器程序集
+│   └── SceneModuleSettingsWindowOdin.cs  # 设置窗口 Odin 版（InlineEditor 展示设置单例，经 asmref 汇入，无 Odin 整体排除）
 ├── SceneModuleConfigAssetInitializer.cs  # SceneModuleConfig 兜底资产自动创建（编辑模式域加载后）
 ├── SceneEditorSettings.cs         # 编辑器持久化设置
 ├── Tests/                         # EditMode 测试（SceneAssetWrapper 27 用例 + SceneModule 24 用例，含静态门面契约）；真实加载成功路径另见包根 Tests/Runtime 的 PlayMode 用例
@@ -517,7 +524,7 @@ Editor/UniTask/
 - `BinderAssistant` 挂在根面板上，「构建绑定单元」按标记增量维护绑定列表（每条记录组件类型、字段名、绑定路径），支持两种生成模式（默认「同一脚本增量」）：「同一脚本增量」只替换目标 `*.cs` 内「绑定字段（自动生成）」region 的内容（字段 + `BindComponents` 方法，类型与特性全限定、自包含），region 外内容归开发者所有，文件不存在时自动创建脚手架；「Partial 分部类」产出手写 partial `*.cs`（仅生成一次）与自动维护文件（后缀可选，默认 `.designer.cs`——Rider 中该后缀默认折叠，Rider 用户推荐）；生成脚本的绑定字段以 `TitleGroup`（「绑定字段（自动生成）」）分组标注自动生成；两种模式编译完成后都会自动挂载组件并执行一次绑定；
 - 生成脚本的基类可下拉选择：内置 `MonoBehaviour`、由 Binder 预选的 Aesir 面板/窗口家族（`AesirBasePanel`、`AesirBasePanelView<T>`、`AesirBasePanelViewController<T>`、`AesirBaseWindow`、`AesirBaseWindowView<T>`、`AesirBaseWindowViewController<T>`——核心程序集无法反向引用 Odin 程序集标注特性，故由 Binder 经 typeof 内置；Canvas 根物体上默认基类直指 `AesirBaseWindow`、默认脚本名后缀取 `Window`，面板根保持 `Panel`，物体名已带对应后缀时不重复拼接），以及用户以 `[BinderBaseType]` 标记的类（需引用 `Runestone.AesirModules.OdinInspector`）；选择 Aesir 泛型面板/窗口基类后在「Context 类型」下拉中选择项目内 AbstractContext 派生类（占位不会写进生成代码）；
 - 命名空间默认值与 partial 后缀候选列表经 ScriptableSingleton 在编辑器阶段持久化；
-- 生成逻辑为纯文本拼装，配套 EditMode 测试程序集 `Runestone.AesirModules.Tests`（包根 `Tests/`）；`IComponentBinder` 保留为自定义绑定器扩展点。
+- 生成逻辑为纯文本拼装，配套 EditMode 测试程序集 `Runestone.AesirModules.Tests.Editor`（包根 `Tests/Editor/`）；`IComponentBinder` 保留为自定义绑定器扩展点。
 
 ## 脚本文档生成模块（需 Odin）
 

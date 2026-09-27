@@ -17,10 +17,6 @@
     "url": "https://github.com/yuumixcode"
   },
   "license": "MIT",
-  "dependencies": {
-    "com.unity.test-framework": "1.1.33",
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.1"
-  },
   "samples": [
     {
       "displayName": "Event Module - Key Press",
