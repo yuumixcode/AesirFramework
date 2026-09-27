@@ -118,8 +118,8 @@ namespace Runestone.AesirArchitecture.Editor
         void DrawToolbar()
         {
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Aesir Framework 示例导航 — 点击「打开场景」保存当前场景并进入示例；「定位」在 Project 窗口选中示例文件夹。",
-                EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("Aesir Framework 示例导航 — 点击「打开场景」保存当前场景并进入示例；「定位」在 Project 窗口选中示例文件夹；" +
+                "UPM / 嵌入式安装的未导入示例经「导入 Sample」确认后导入。", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("刷新", EditorStyles.toolbarButton, GUILayout.Width(60)))
             {
@@ -135,7 +135,7 @@ namespace Runestone.AesirArchitecture.Editor
         {
             var installNote = pkg.InstallType == AesirGetStartedService.AesirInstallType.AssetsCopy
                 ? "Assets 安装"
-                : "UPM 安装 · 示例经 Package Manager → Samples 导入";
+                : "UPM 安装 · 未导入示例可一键导入";
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(pkg.DisplayName, EditorStyles.boldLabel);
@@ -196,9 +196,24 @@ namespace Runestone.AesirArchitecture.Editor
             }
             else
             {
-                if (GUILayout.Button("去导入", GUILayout.Width(70)))
+                // 未导入（UPM / 嵌入式安装）：确认框 + Package Manager Sample API 导入
+                if (GUILayout.Button("导入 Sample", GUILayout.Width(96)))
                 {
-                    AesirGetStartedService.OpenPackageManager();
+                    var result = AesirGetStartedService.ConfirmAndImportUpmSample(sample, out var message);
+                    switch (result)
+                    {
+                        case AesirGetStartedService.AesirSampleImportResult.Imported:
+                            Scan(); // 卡片即时切换为已导入态
+                            Debug.Log($"[Aesir GetStarted] {message}");
+                            break;
+
+                        case AesirGetStartedService.AesirSampleImportResult.Cancelled:
+                            break; // 用户在确认框取消，无需提示
+
+                        default:
+                            EditorUtility.DisplayDialog(AesirGetStartedService.ImportConfirmTitle, message, "确定");
+                            break;
+                    }
                 }
             }
 
