@@ -25,7 +25,9 @@ namespace Runestone.AesirArchitecture.Samples
             runtimeInitializeLoadTypeSettings = RuntimeInitializeLoadTypeSettings.instance;
         }
 
-        [MenuItem("Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType")]
+        // priority 995：承担 Architecture 组的组级排序锚点（父菜单 priority 由子项最小值决定），
+        // 使 Architecture 组位于 Modules 组（998）之前；差值 ≤10 不产生分割线
+        [MenuItem("Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType", false, 995)]
         public static void ShowWindow()
         {
             var window = GetWindow<RuntimeInitializeLoadTypeWindow>();
