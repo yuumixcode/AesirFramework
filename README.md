@@ -40,10 +40,10 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 ### 通过 UPM（Git URL）
 
-在 Unity Package Manager 中通过 Git URL 安装（固定 0.29.0 版本分支，包内容即分支根目录）：
+在 Unity Package Manager 中通过 Git URL 安装（常驻 `latest` 分支——分支名永久固定，一次输入持续更新；包内容即分支根目录）：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest
 ```
 
 跟踪 main 最新开发版：
@@ -67,7 +67,7 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 - **下载直连失败自动切换镜像站代理**，全部线路失败时弹窗给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效；
 - 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装 Odin Inspector 时更新器为 Odin 界面。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后重新添加新版本分支的 Git URL（或把 `manifest.json` 中的 `#AesirArchitecture-v<版本>` 分支名改为新版本）。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后用同一 URL 重新添加（`latest` 分支名永久固定，无需随发版修改；需钉死旧版本时改用 Release tag，如 `?path=Assets/Runestone/AesirArchitecture#v0.29.0`）。
 >
 > **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
 
