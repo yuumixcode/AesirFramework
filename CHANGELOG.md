@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.27.1] - 2026-09-27
+
+### Fixed
+
+- **UniTask 集成的程序集名错误（asmdef 引用名与宏维护器检测名，0.27.0 引入）** — UniTask 的命名空间名 `Cysharp.Threading.Tasks` 被误当作程序集名使用（com.cysharp.unitask 包内 asmdef 的实际程序集名为 `UniTask`），两处受害：①核心与适配程序集的 asmdef `references` 以该名引用 UniTask——解析不到任何程序集，含 UniTask 的消费工程刷新即报 `CS0246: 'Cysharp' / 'UniTaskVoid' could not be found`（versionDefines 正常给宏，`#if AESIR_MODULES_UNITASK` 分支参与编译才暴露引用失败）；②`AesirUniTaskDefineKeeper` 按该名检测域内程序集恒为 false——unitypackage / DLL 安装形态下已装 UniTask 的工程全局宏反被误删，UniTask 分支与适配程序集静默失效零报错（UPM 安装形态宏由 versionDefines 管理、维护器不干预，该 bug 休眠，故多数工程未察觉）。现 references 改按程序集名 `UniTask` 引用；检测改为程序集名白名单（`UniTask`——asmdef 源码 / unitypackage 形态；`Cysharp.Threading.Tasks`——NuGet 预编译 DLL）。`AesirUniTaskDefineKeeperTests` 新增命名守卫 2 用例（白名单含真实程序集名 + 两处 asmdef 引用锁定），共 7 用例
+
 ## [0.27.0] - 2026-09-27
 
 ### Added
