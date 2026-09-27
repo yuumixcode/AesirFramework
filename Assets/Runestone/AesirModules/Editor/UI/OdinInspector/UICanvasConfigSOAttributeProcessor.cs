@@ -23,7 +23,6 @@ namespace Runestone.AesirModules.Editor.OdinInspector
             {
                 case nameof(UICanvasConfigSO.renderMode):
                     attributes.Add(new BoxGroupAttribute("Canvas Component"));
-                    attributes.Add(new ReadOnlyAttribute());
                     break;
 
                 case nameof(UICanvasConfigSO.pixelPerfect):
