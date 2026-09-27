@@ -15,10 +15,10 @@ namespace Runestone.AesirArchitecture.Editor
     /// 包发现覆盖三种安装形态（同名包按此优先级取一）：① 代码导入
     /// <see cref="AesirUpdateService.InstallRootRelativePath" />（复制 / unitypackage，示例位于包内
     /// <c>Samples/</c>）；② 嵌入式包（<c>Packages/</c> 目录下的包源码）；③ UPM Git URL 安装
-    /// （包源在 <see cref="PackageCacheRootPath" />）。后两种 UPM 形态的示例须经
-    /// Package Manager → Samples 导入到 <c>Assets/Samples/&lt;包显示名&gt;/&lt;版本&gt;/&lt;示例显示名&gt;/</c>，
-    /// 未导入的条目仍保留在清单中（<see cref="AesirSampleInfo.IsImported" /> 为 false），
-    /// 由窗口引导用户去 Package Manager 导入。
+    /// （包源在 <see cref="PackageCacheRootPath" />）。后两种 UPM 形态的示例须导入到
+    /// <c>Assets/Samples/&lt;包显示名&gt;/&lt;版本&gt;/&lt;示例显示名&gt;/</c>，未导入的条目仍保留在清单中
+    ///（<see cref="AesirSampleInfo.IsImported" /> 为 false），由窗口的「导入 Sample」按钮经确认框
+    /// 直接调用 Unity Package Manager 的 Sample API 导入（<see cref="ConfirmAndImportUpmSample" />）。
     /// </para>
     /// <para>
     /// 示例元数据（显示名 / 描述 / 顺序 / 档位）以各包 package.json 的 samples 清单为唯一真源，
@@ -95,6 +95,22 @@ namespace Runestone.AesirArchitecture.Editor
 
             /// <summary>UPM Git URL 安装（包源在 Library/PackageCache），示例经 Package Manager 导入到 Assets/Samples/。</summary>
             Upm
+        }
+
+        /// <summary>UPM / 嵌入式安装的示例导入结果。</summary>
+        public enum AesirSampleImportResult
+        {
+            /// <summary>导入成功（含示例目录已存在时的幂等跳过）。</summary>
+            Imported,
+
+            /// <summary>用户在确认框取消了导入。</summary>
+            Cancelled,
+
+            /// <summary>Package Manager 示例清单中未找到对应条目（按显示名匹配失败）。</summary>
+            NotFound,
+
+            /// <summary>导入失败（Sample API 返回失败）。</summary>
+            Failed
         }
 
         /// <summary>已安装的 Aesir 包信息（扫描产物）。</summary>
@@ -321,7 +337,7 @@ namespace Runestone.AesirArchitecture.Editor
                 }
                 else
                 {
-                    rootPath = $"{UpmSamplesRootPath}/{pkg.DisplayName}/{pkg.Version}/{s.displayName}";
+                    rootPath = BuildUpmSampleRootPath(pkg, s.displayName);
                 }
 
                 if (!AssetDatabase.IsValidFolder(rootPath))
@@ -560,6 +576,156 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>打开场景动作的 Toast 提示文本（告知示例场景已打开、切换前的场景已保存）。</summary>
         public static string BuildOpenSceneToastMessage(AesirSampleInfo sample) =>
             $"已打开示例场景：{sample.ScenePath}，切换前的场景已保存";
+
+        #endregion
+
+        #region UPM 示例导入
+
+        /// <summary>
+        /// UnityEditor.PackageManager.UI.Sample 的最小投影（显示名 / 已导入态 / 导入委托）。
+        /// 真实类型构造非公开、不可继承，测试经 <see cref="ImportUpmSample" /> 的 finder 参数注入伪造实现。
+        /// </summary>
+        internal sealed class UpmSampleHandle
+        {
+            /// <summary>示例显示名（package.json samples.displayName，与清单同源的匹配键）。</summary>
+            public string DisplayName;
+
+            /// <summary>是否已导入（导入目录已存在于 Assets/Samples）。</summary>
+            public bool IsImported;
+
+            /// <summary>执行导入，返回是否成功（真实实现等价无参 Sample.Import()）。</summary>
+            public Func<bool> Import;
+        }
+
+        /// <summary>UPM 示例导入的落地路径（与 ResolveSamples 判定已导入用的路径同源，单一格式真源）。</summary>
+        static string BuildUpmSampleRootPath(AesirPackageInfo pkg, string sampleDisplayName) =>
+            $"{UpmSamplesRootPath}/{pkg.DisplayName}/{pkg.Version}/{sampleDisplayName}";
+
+        /// <summary>UPM / 嵌入式安装的示例导入后位置（项目相对路径，与 Package Manager 实际落地位置一致）。</summary>
+        public static string GetUpmSampleImportPath(AesirSampleInfo sample) =>
+            BuildUpmSampleRootPath(sample.Package, sample.DisplayName);
+
+        /// <summary>未导入示例整卡点击的 Toast 文本（引导经右侧按钮导入——导入动作在窗口内完成，不必去 Package Manager）。</summary>
+        public static string BuildNotImportedToastMessage(AesirSampleInfo sample) =>
+            $"请点击右侧「导入 Sample」按钮导入 {sample.DisplayName} Sample 案例";
+
+        /// <summary>导入确认框标题。</summary>
+        public const string ImportConfirmTitle = "导入 Sample";
+
+        /// <summary>导入确认框的确认按钮文本。</summary>
+        public const string ImportConfirmOkButton = "导入";
+
+        /// <summary>导入确认框的取消按钮文本。</summary>
+        public const string ImportConfirmCancelButton = "取消";
+
+        /// <summary>导入确认框正文：包名 + 示例名 + 示例介绍 + 导入后位置。</summary>
+        public static string BuildImportConfirmMessage(AesirSampleInfo sample)
+        {
+            var text = $"是否导入「{sample.Package.DisplayName}」的「{sample.DisplayName}」示例？";
+            if (!string.IsNullOrEmpty(sample.Description))
+            {
+                text += $"\n\n{sample.Description}";
+            }
+
+            return text + $"\n\n导入后示例位于：{GetUpmSampleImportPath(sample)}";
+        }
+
+        /// <summary>
+        /// 弹出 Unity 确认框（含示例介绍与导入后位置，可取消），确认后经 Unity Package Manager 的
+        /// Sample API 把示例导入到 <c>Assets/Samples/&lt;包显示名&gt;/&lt;版本&gt;/&lt;示例显示名&gt;/</c>；
+        /// 取消返回 <see cref="AesirSampleImportResult.Cancelled" />，不动文件系统。
+        /// </summary>
+        public static AesirSampleImportResult ConfirmAndImportUpmSample(AesirSampleInfo sample, out string message)
+        {
+            if (!EditorUtility.DisplayDialog(ImportConfirmTitle, BuildImportConfirmMessage(sample),
+                    ImportConfirmOkButton, ImportConfirmCancelButton))
+            {
+                message = "已取消导入";
+                return AesirSampleImportResult.Cancelled;
+            }
+
+            return ImportUpmSample(sample, out message);
+        }
+
+        /// <summary>
+        /// 经 Unity Package Manager 的 Sample API 导入示例（不弹确认框）。按显示名与 package.json
+        /// samples 清单精确匹配（Ordinal——两者同源必然相等）；已导入幂等跳过；finder 参数供测试注入
+        /// 伪造实现，默认经 <c>UnityEditor.PackageManager.UI.Sample.FindByPackage</c> 查询真实清单。
+        /// 窗口走 <see cref="ConfirmAndImportUpmSample" />；本方法 internal（注入参数含 internal 投影类型）。
+        /// </summary>
+        internal static AesirSampleImportResult ImportUpmSample(AesirSampleInfo sample,
+            out string message,
+            Func<string, string, List<UpmSampleHandle>> sampleFinder = null)
+        {
+            message = null;
+            if (sample?.Package == null)
+            {
+                message = "导入失败：示例信息缺失。";
+                return AesirSampleImportResult.Failed;
+            }
+
+            var handles = sampleFinder != null
+                ? sampleFinder(sample.Package.Id, sample.Package.Version)
+                : FindUpmSamplesDefault(sample.Package.Id, sample.Package.Version);
+            if (handles != null)
+            {
+                foreach (var h in handles)
+                {
+                    if (h == null || !string.Equals(h.DisplayName, sample.DisplayName, StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    if (h.IsImported)
+                    {
+                        message = $"示例已导入：{GetUpmSampleImportPath(sample)}";
+                        return AesirSampleImportResult.Imported;
+                    }
+
+                    if (h.Import())
+                    {
+                        message = $"已导入 Sample：{GetUpmSampleImportPath(sample)}";
+                        return AesirSampleImportResult.Imported;
+                    }
+
+                    message = "导入失败：请到 Package Manager 的 Samples 标签页重试。";
+                    return AesirSampleImportResult.Failed;
+                }
+            }
+
+            message =
+                $"未在 Package Manager 示例清单中找到「{sample.DisplayName}」，请到 Package Manager 的 Samples 标签页手动导入。";
+            return AesirSampleImportResult.NotFound;
+        }
+
+        /// <summary>
+        /// Sample 查找的默认实现。本引擎（Unity 2022.3.62f3c1 中国版）的
+        /// <c>Sample.Import</c> 返回 bool、ImportOptions 为 internal（不可显式传值），
+        /// 故只能无参调用走默认选项——实测无阻塞弹窗、已导入时二次调用同样返回成功。
+        /// </summary>
+        static List<UpmSampleHandle> FindUpmSamplesDefault(string packageId, string version)
+        {
+            var result = new List<UpmSampleHandle>();
+            var found = UnityEditor.PackageManager.UI.Sample.FindByPackage(packageId, version);
+            if (found == null)
+            {
+                return result;
+            }
+
+            foreach (var s in found)
+            {
+                result.Add(new UpmSampleHandle
+                {
+                    DisplayName = s.displayName,
+                    IsImported = s.isImported,
+                    // 显式 lambda 而非方法组转换：Import 的参数类型 ImportOptions 为 internal，
+                    // lambda 调用无参重载解析为默认实参，方法组转换在此存在编译风险
+                    Import = () => s.Import()
+                });
+            }
+
+            return result;
+        }
 
         #endregion
 
