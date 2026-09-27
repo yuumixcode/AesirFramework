@@ -19,9 +19,6 @@ namespace Runestone.AesirModules
     [DefaultExecutionOrder(-999)]
     public class UIModule : AesirMonoBehaviour
     {
-        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
-        static UIModule _instance;
-
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效。
         /// </summary>
@@ -37,6 +34,9 @@ namespace Runestone.AesirModules
         /// </remarks>
         [SerializeField]
         bool dontDestroyOnLoad = true;
+
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
+        static UIModule _instance;
 
         /// <summary>
         /// 面板实例注册表，键 = 面板实例的实际类型。
@@ -55,10 +55,15 @@ namespace Runestone.AesirModules
         /// <summary>窗口实例注册表，键 = 窗口实例的实际类型（与面板注册表相互独立，键语义约定一致）。</summary>
         readonly Dictionary<Type, IUIWindow> _windowDict = new Dictionary<Type, IUIWindow>();
 
-        /// <summary>窗口蒙版调度模式：单遮 = 仅最高层可见窗口的蒙版生效；叠遮 = 各窗口蒙版独立生效。</summary>
-        [Tooltip("窗口蒙版调度模式：单遮 = 仅最高层可见窗口的蒙版生效；叠遮 = 各窗口蒙版独立生效")]
-        [SerializeField]
-        UIMaskMode maskMode = UIMaskMode.Single;
+        /// <summary>
+        /// 当前生效的窗口蒙版调度模式。运行状态字段（显式非序列化），
+        /// 首次访问 <see cref="MaskMode" /> 时取自 <see cref="UIModuleConfigSO" />，不依赖组件生命周期时机；
+        /// 运行时切换只覆盖内存值，不改写配置资产。
+        /// </summary>
+        UIMaskMode _maskMode;
+
+        /// <summary><see cref="_maskMode" /> 是否已从配置解析。</summary>
+        bool _maskModeResolved;
 
         IUIAssetLoader _loader;
         UIRoot _uiRoot;
@@ -96,14 +101,25 @@ namespace Runestone.AesirModules
         public Camera UICamera => _uiRoot?.UICamera;
 
         /// <summary>
-        /// 窗口蒙版调度模式。运行时可切换，切换后立即重算全部窗口蒙版。
+        /// 窗口蒙版调度模式。初值来自 <see cref="UIModuleConfigSO" />（在 Project 窗口编辑配置资产即可调整，
+        /// 不要求预放置本组件）；运行时可切换，切换后立即重算全部窗口蒙版。
         /// </summary>
         public UIMaskMode MaskMode
         {
-            get => maskMode;
+            get
+            {
+                if (!_maskModeResolved)
+                {
+                    _maskMode = UIModuleConfigSO.Instance.maskMode;
+                    _maskModeResolved = true;
+                }
+
+                return _maskMode;
+            }
             set
             {
-                maskMode = value;
+                _maskMode = value;
+                _maskModeResolved = true;
                 RefreshWindowMasks();
             }
         }
@@ -122,12 +138,7 @@ namespace Runestone.AesirModules
             _loader ??= new ResourcesUILoader();
 
             // 非根物体（运行时自动创建于 [Aesir Modules] 宿主下）时 DDOL 跟随宿主，本字段不参与判断
-            if (!dontDestroyOnLoad)
-            {
-                AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
-                    "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" + "必须自行处理多场景叠加（Additive）加载下的生命周期");
-            }
-            else if (transform.root == transform)
+            if (dontDestroyOnLoad && transform.root == transform)
             {
                 DontDestroyOnLoad(gameObject);
             }
@@ -1003,7 +1014,7 @@ namespace Runestone.AesirModules
         /// </summary>
         void RefreshWindowMasks()
         {
-            if (maskMode == UIMaskMode.Stacked)
+            if (MaskMode == UIMaskMode.Stacked)
             {
                 foreach (var pair in _windowDict)
                 {

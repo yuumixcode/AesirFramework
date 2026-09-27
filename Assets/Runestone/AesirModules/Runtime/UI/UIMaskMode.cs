@@ -3,7 +3,8 @@ using UnityEngine;
 namespace Runestone.AesirModules
 {
     /// <summary>
-    /// 窗口蒙版调度模式，配置于 <see cref="UIModule" />，运行时可经 <see cref="UIModule.MaskMode" /> 切换。
+    /// 窗口蒙版调度模式，初始值配置于 <see cref="UIModuleConfigSO" />（Resources 兜底资产，
+    /// 编辑器自动创建），运行时可经 <see cref="UIModule.MaskMode" /> 切换。
     /// </summary>
     public enum UIMaskMode
     {

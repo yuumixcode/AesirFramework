@@ -10,7 +10,7 @@ namespace Runestone.AesirModules
     /// </summary>
     public class UICanvasConfigSO : AesirScriptableObject
     {
-        [Tooltip("渲染模式 — 项目固定为 ScreenSpaceCamera，所有 UI Canvas 以相机投影方式渲染")]
+        [Tooltip("渲染模式 — 默认 ScreenSpaceCamera，所有 UI Canvas 以相机投影方式渲染")]
         [SerializeField]
         internal RenderMode renderMode = RenderMode.ScreenSpaceCamera;
 
