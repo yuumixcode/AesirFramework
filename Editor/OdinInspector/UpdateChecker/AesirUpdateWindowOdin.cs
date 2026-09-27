@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Utilities;
@@ -12,7 +11,9 @@ namespace Runestone.AesirArchitecture.Editor
 {
     /// <summary>
     /// Aesir 包更新窗口（Odin Inspector 版）— 检测远程最新版本、展示「本地 → 远程」更新日志、
-    /// 确认后一键更新 <see cref="AesirUpdateService.InstallRootRelativePath" /> 下的本地安装包。
+    /// 确认后更新 <see cref="AesirUpdateService.InstallRootRelativePath" /> 下的本地安装包。
+    /// 两种入口：包列表行内「更新」按钮仅更新单个包（配套版本风险由确认框提示）；
+    /// 「全部更新」让整个框架到达远程版本（旧的更新、缺失的已知包补装，确认框明示）。
     /// <para>
     /// 全部编排逻辑（检测 / 更新日志 / 更新执行 / 忙碌门禁）在共享控制器
     /// <see cref="AesirUpdateController" /> 中与 IMGUI 兜底窗口共用，本类只做状态序列化、标题区手绘、
@@ -23,7 +24,7 @@ namespace Runestone.AesirArchitecture.Editor
     /// <para>
     /// 状态设计：远程版本 / 检测结果 / 更新日志均为序列化字段，更新导入触发域重载后窗口内容不丢失；
     /// 行视图模型（<see cref="PackageRow" />）在状态变化时一次性重建并重算显示文本与颜色，
-    /// OnGUI 期间零 LINQ、零字符串拼接、零磁盘 IO。
+    /// OnGUI 期间零 LINQ、零字符串拼接、零磁盘 IO（行内按钮的 Owner 引用为非序列化，域重载后随重建回填）。
     /// </para>
     /// </summary>
     public class AesirUpdateWindowOdin : OdinEditorWindow
@@ -58,6 +59,20 @@ namespace Runestone.AesirArchitecture.Editor
             [HideInInspector]
             public bool Outdated;
 
+            /// <summary>
+            /// 行内「更新」按钮的可用状态（忙碌期间禁用；Owner 缺失时保持可用以避免行渲染异常，
+            /// 点击经窗口侧的忙碌门禁兜底）。
+            /// </summary>
+            [HideInInspector]
+            public bool UpdateEnabled = true;
+
+            /// <summary>
+            /// 所属窗口（行内按钮回调用）。非序列化：Odin 序列化不保存、域重载后由
+            /// <see cref="RebuildRows" /> 重新注入（OnEnable → Initialize → Rescan → RebuildRows 必经）。
+            /// </summary>
+            [NonSerialized]
+            public AesirUpdateWindowOdin Owner;
+
             [HorizontalGroup("Row", 0.42f)]
             [EnableGUI]
             [DisplayAsString(false, 13)]
@@ -77,13 +92,15 @@ namespace Runestone.AesirArchitecture.Editor
             [GUIColor(nameof(StatusColor))]
             public string Remote;
 
-            /// <summary>待更新提示文本（不提供单包更新按钮——统一走「全部更新」，防版本撕裂）。</summary>
-            [HorizontalGroup("Row", Width = 120)]
-            [EnableGUI]
-            [DisplayAsString]
-            [HideLabel]
+            /// <summary>
+            /// 行内单包更新按钮——只需更新某一个包的用户入口；配套版本风险（另一包落后时）由确认框提示，
+            /// 不阻止。点击经窗口转发到 <see cref="AesirUpdateController.RequestUpdateSingle" />。
+            /// </summary>
+            [HorizontalGroup("Row", Width = 90)]
             [ShowIf(nameof(Outdated))]
-            public string UpdateHint = "请用「全部更新」";
+            [EnableIf(nameof(UpdateEnabled))]
+            [Button("更新", ButtonSizes.Small)]
+            void UpdateSingle() => Owner?.RequestUpdateSingle(Model);
         }
 
         #endregion
@@ -211,9 +228,9 @@ namespace Runestone.AesirArchitecture.Editor
         [PropertySpace(4, 0)]
         [Button("$" + nameof(UpdateAllLabel), ButtonSizes.Large)]
         [GUIColor(0.45f, 0.85f, 0.45f)]
-        [ShowIf(nameof(HasOutdated))]
+        [ShowIf(nameof(HasUpdateActions))]
         [EnableIf(nameof(NotBusy))]
-        void UpdateAllButton() => _controller.RequestUpdate(_controller.OutdatedPackages());
+        void UpdateAllButton() => _controller.RequestUpdateAll();
 
         [FoldoutGroup("更新日志（本地 → 远程变更）", VisibleIf = nameof(HasChangelog))]
         [EnableGUI]
@@ -303,8 +320,10 @@ namespace Runestone.AesirArchitecture.Editor
                 var row = new PackageRow
                 {
                     Model = pkg,
+                    Owner = this,
                     Name = pkg.DirName,
-                    Local = "本地 v" + pkg.Version
+                    Local = "本地 v" + pkg.Version,
+                    UpdateEnabled = !_state.Busy
                 };
 
                 if (string.IsNullOrEmpty(_state.RemoteVersion))
@@ -337,8 +356,13 @@ namespace Runestone.AesirArchitecture.Editor
                 _rows.Add(row);
             }
 
-            HasOutdated = _rows.Any(row => row.Outdated);
+            // 「全部更新」的可操作面：待更新包 + 缺失的已知包（补装）——只装一个包的项目也能据此补全
+            HasUpdateActions = _controller != null && _controller.UpdateTargets().Count > 0;
         }
+
+        /// <summary>行内单包更新按钮的转发（PackageRow 经 Owner 调用；忙碌门禁在控制器内兜底）。</summary>
+        public void RequestUpdateSingle(AesirUpdateService.InstalledPackage package) =>
+            _controller.RequestUpdateSingle(package);
 
         #endregion
 
@@ -353,7 +377,8 @@ namespace Runestone.AesirArchitecture.Editor
 
         bool HasNoPackages => _state.Packages.Count == 0;
 
-        bool HasOutdated { get; set; }
+        /// <summary>「全部更新」是否可操作（有待更新包或缺失的已知包可补装）。</summary>
+        bool HasUpdateActions { get; set; }
 
         bool HasChangelog => !string.IsNullOrEmpty(_state.ChangelogText);
 

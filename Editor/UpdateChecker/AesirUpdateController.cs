@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -32,6 +33,12 @@ namespace Runestone.AesirArchitecture.Editor
         readonly string _progressTitle;
 
         readonly Action _viewChanged;
+
+        /// <summary>
+        /// 用户在进度条上点了「取消」（<see cref="SetProgress" /> 置位、单向保持）。
+        /// 仅更新执行阶段把进度条渲染为可取消并探测此标记；下载循环每帧评估并中止请求。
+        /// </summary>
+        bool _cancelRequested;
 
         /// <summary>
         /// 构造编排控制器。
@@ -76,6 +83,13 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>取全部待更新包（委托 <see cref="AesirUpdateService.ComputeOutdatedPackages" />，按包 id 排序保证依赖顺序）。</summary>
         public List<AesirUpdateService.InstalledPackage> OutdatedPackages() =>
             AesirUpdateService.ComputeOutdatedPackages(State.Packages, State.RemoteVersion);
+
+        /// <summary>
+        /// 取「全部更新」的执行目标：全部待更新包 + 缺失的已知包（补装），
+        /// 委托 <see cref="AesirUpdateService.ComputeUpdateTargets" />——「全部更新」按钮的可见性也以此判断。
+        /// </summary>
+        public List<AesirUpdateService.InstalledPackage> UpdateTargets() =>
+            AesirUpdateService.ComputeUpdateTargets(State.Packages, State.RemoteVersion);
 
         /// <summary>检查远程最新版本并拉取更新日志（忙碌中重复调用直接返回）。</summary>
         public async void CheckForUpdates()
@@ -138,34 +152,63 @@ namespace Runestone.AesirArchitecture.Editor
         }
 
         /// <summary>
-        /// 更新入口（「全部更新」按钮）：先弹确认框防误操作，确认后执行
-        /// 备份 → 逐包下载导入 → 登记清单。取消或忙碌中直接返回。
-        /// 两包同 Release 发布且 Modules 依赖 Architecture——任何调用都会被扩展为全部待更新包，
-        /// 从入口杜绝单包更新造成的版本撕裂。
+        /// 「全部更新」入口（工具栏按钮）：目标 = 全部待更新包 + 缺失的已知包（补装，
+        /// <see cref="AesirUpdateService.ComputeUpdateTargets" />）——「全部更新」的语义是让整个框架
+        /// 到达远程版本（旧的更新、缺的安装）。确认框含补装说明（缺失的包会标为「新安装」并单独提示，
+        /// 用户可选择取消后仅单独更新已安装的包）。取消或忙碌中直接返回。
         /// </summary>
-        public void RequestUpdate(List<AesirUpdateService.InstalledPackage> targets)
+        public void RequestUpdateAll()
         {
-            if (State.Busy || State.Snapshot == null || targets == null || targets.Count == 0)
+            if (State.Busy || State.Snapshot == null)
             {
                 return;
             }
 
-            // 统一扩展为全部待更新包（已按依赖顺序排列），忽略传入的子集
-            targets = OutdatedPackages();
+            var targets = UpdateTargets();
             if (targets.Count == 0)
             {
                 return;
             }
 
             var confirmed = EditorUtility.DisplayDialog("确认更新",
-                AesirUpdateService.BuildUpdateConfirmation(targets, State.RemoteVersion,
-                    State.IsGitRepository), "开始更新", "取消");
+                AesirUpdateService.BuildUpdateAllConfirmation(targets, State.RemoteVersion, State.IsGitRepository),
+                "开始更新", "取消");
             if (!confirmed)
             {
                 return;
             }
 
             UpdatePackages(targets);
+        }
+
+        /// <summary>
+        /// 「单包更新」入口（包列表行内按钮）：仅更新指定包，供只需要其中一个包的用户使用。
+        /// 另一已知包在场且落后于远程版本时，确认框前置配套版本警告（两包按同版本配套发布，
+        /// 仅更新其一可能造成版本撕裂——提示但不阻止，决定权在用户）。
+        /// </summary>
+        public void RequestUpdateSingle(AesirUpdateService.InstalledPackage package)
+        {
+            if (State.Busy || State.Snapshot == null || package == null)
+            {
+                return;
+            }
+
+            // 单包也须低于远程版本才有意义（窗口层只在待更新行渲染按钮，此处兜底）
+            if (AesirUpdateService.CompareVersion(package.Version, State.RemoteVersion) >= 0)
+            {
+                return;
+            }
+
+            var confirmed = EditorUtility.DisplayDialog("确认更新",
+                AesirUpdateService.BuildSingleUpdateConfirmation(package, State.RemoteVersion, State.Packages,
+                    State.IsGitRepository),
+                "仅更新此包", "取消");
+            if (!confirmed)
+            {
+                return;
+            }
+
+            UpdatePackages(new List<AesirUpdateService.InstalledPackage> { package });
         }
 
         async void UpdatePackages(List<AesirUpdateService.InstalledPackage> targets)
@@ -179,15 +222,34 @@ namespace Runestone.AesirArchitecture.Editor
             // 本异步链会随旧域一起消失——第二个包永远等不到、进度条停在上一包的导入文案上，
             // 而 Busy 是 [NonSerialized]（域重载后重置为 false）会让按钮又能点，交互错乱。
             // 锁到流程收尾（finally 解锁）→ 全程只在最后重载一次，两个包走完同一条链路。
-            EditorApplication.LockReloadAssemblies();
+            // reloadLocked 是 Lock/Unlock 的配平标志：任何异常路径下恰好解锁一次、绝不重复解锁；
+            // 加锁放在 try 内部——加锁本身失败时无锁可解（不解锁），忙碌标记则无论如何都会在 finally 清理
+            var reloadLocked = false;
             try
             {
-                var backupPath =
-                    await AesirUpdateService.UpdatePackagesAsync(State.Snapshot, targets, SetProgress);
-                SetStatus($"更新完成（{State.RemoteVersion}）。备份：{backupPath}");
-                Debug.Log($"[Aesir Updater] {State.Status}");
-                EditorUtility.DisplayDialog(_progressTitle,
-                    $"已更新到 {State.RemoteVersion}。\n\n本地修改已备份至：\n{backupPath}", "好");
+                EditorApplication.LockReloadAssemblies();
+                reloadLocked = true;
+                _cancelRequested = false;
+
+                var result = await AesirUpdateService.UpdatePackagesAsync(State.Snapshot, targets,
+                    (message, progress) => SetProgress(message, progress, cancellable: true),
+                    () => _cancelRequested);
+
+                if (result.Cancelled)
+                {
+                    // 用户取消：温和收尾，如实区分已导入（保持有效）与未更新的包
+                    SetStatus(BuildCancelledStatus(result));
+                    Debug.Log($"[Aesir Updater] {State.Status}");
+                    EditorUtility.DisplayDialog(_progressTitle,
+                        State.Status + "\n\n取消发生在下载阶段，项目文件未受影响，可稍后重新执行更新。", "好");
+                }
+                else
+                {
+                    SetStatus($"更新完成（{State.RemoteVersion}）");
+                    Debug.Log($"[Aesir Updater] {State.Status}");
+                    EditorUtility.DisplayDialog(_progressTitle,
+                        $"已更新到 {State.RemoteVersion}。", "好");
+                }
             }
             catch (Exception e)
             {
@@ -197,13 +259,49 @@ namespace Runestone.AesirArchitecture.Editor
             }
             finally
             {
-                // 先收进度条与忙碌标记（此刻仍持有重载锁，收尾不会被域重载打断）
-                EndBusy();
-                Rescan();
-                // 刷新触发新脚本编译；解锁放在最后，域重载在本流程全部收尾之后才发生
-                AssetDatabase.Refresh();
-                EditorApplication.UnlockReloadAssemblies();
+                // 收尾三步（清进度条 → 重扫 → 刷新导入）包在独立的 try/finally 中：
+                // 任一步抛异常，解锁与忙碌标记清理仍必然执行，异常原样向上传播（fail-fast 不吞）
+                try
+                {
+                    // 先收进度条（此刻仍持锁）：避免与 Unity 自带导入进度条互相覆盖
+                    EditorUtility.ClearProgressBar();
+                    Rescan();
+                    // 刷新触发新脚本编译；此刻仍持锁，编译完成后的域重载被推迟到解锁之后
+                    AssetDatabase.Refresh();
+                }
+                finally
+                {
+                    // 顺序铁律：先解锁、再清忙碌标记。解锁前的任何一步若被异常/强杀中断，
+                    // 「AesirUpdater.Busy」仍在，域重载后 RecoverFromInterruptedRun 能兜底解锁；
+                    // 若反过来先清标记再解锁，两步之间一旦中断，兜底判断即失效，
+                    // 重载锁会泄漏整个会话——此后一切需要域重载的操作都阻塞，只能重启编辑器
+                    if (reloadLocked)
+                    {
+                        EditorApplication.UnlockReloadAssemblies();
+                        reloadLocked = false;
+                    }
+
+                    EndBusy();
+                }
             }
+        }
+
+        /// <summary>用户取消后的状态文案：如实区分已导入（保持有效）与未更新的包。</summary>
+        static string BuildCancelledStatus(AesirUpdateService.UpdateResult result)
+        {
+            var builder = new StringBuilder("更新已取消。");
+            if (result.CompletedDirNames.Count > 0)
+            {
+                builder.Append("已完成导入：").Append(string.Join("、", result.CompletedDirNames))
+                    .Append("（内容保持有效）。");
+            }
+            else
+            {
+                builder.Append("尚无包完成导入。");
+            }
+
+            builder.Append("未更新：").Append(string.Join("、", result.SkippedDirNames)).Append("。");
+            return builder.ToString();
         }
 
         bool BeginBusy()
@@ -247,12 +345,28 @@ namespace Runestone.AesirArchitecture.Editor
                              "已清理残留进度条与程序集重载锁。");
         }
 
-        void SetProgress(string message, float progress)
+        /// <summary>
+        /// 上报进度并刷新全局进度条。<paramref name="cancellable" /> 为 true 时渲染为带「取消」按钮的进度条，
+        /// 用户点取消即置位 <see cref="_cancelRequested" />（下载循环每帧探测并中止请求——
+        /// 卡在慢速线路时用户不必等待超时判据触发）。检测阶段进度条短暂且无法中途探测取消，保持不可取消。
+        /// </summary>
+        void SetProgress(string message, float progress, bool cancellable = false)
         {
             State.Status = message;
             var progress01 = Mathf.Clamp01(progress);
             _progressChanged?.Invoke(progress01);
-            EditorUtility.DisplayProgressBar(_progressTitle, message, progress01);
+            if (cancellable)
+            {
+                if (EditorUtility.DisplayCancelableProgressBar(_progressTitle, message, progress01))
+                {
+                    _cancelRequested = true;
+                }
+            }
+            else
+            {
+                EditorUtility.DisplayProgressBar(_progressTitle, message, progress01);
+            }
+
             _viewChanged?.Invoke();
         }
 

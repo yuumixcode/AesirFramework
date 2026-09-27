@@ -46,7 +46,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>本地安装根列表（项目相对路径，按解析顺序去重；默认根优先）。</summary>
         public static IReadOnlyList<string> InstallRoots => installRoots;
 
-        /// <summary>主安装根（列表首个；备份与提示文案用）。无任何本地安装时回退默认根。</summary>
+        /// <summary>主安装根（列表首个；提示文案用）。无任何本地安装时回退默认根。</summary>
         public static string PrimaryInstallRoot =>
             installRoots.Length > 0 ? installRoots[0] : DefaultInstallRoot;
 
