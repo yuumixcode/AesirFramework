@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Changed
+
+- **README 安装指引改锚常驻 `latest` 分支** — 仓库分支策略重构（详见根 CHANGELOG [Unreleased]）：版本分支（`AesirArchitecture-v<版本>`，随发版轮换并删除）废弃，UPM（Git URL）安装 URL 改为常驻滚动分支 `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest`（CI 每次推送 main 时 subtree split 滚动更新，分支名永久固定）。Git URL 一次输入持续可用——升级 = Package Manager 移除后用同一 URL 重新添加，无需随发版修改；需要钉死旧版本时改用 Release tag（`?path=Assets/Runestone/AesirArchitecture#v<版本>`，tag 永久保留）
+
 ## [0.29.0] - 2026-09-27
 
 ### Added

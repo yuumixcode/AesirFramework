@@ -23,12 +23,35 @@ versions follow [Semantic Versioning](https://semver.org/).
 | Aesir Architecture | `cn.runestone.aesir.architecture` | **0.29.0** |
 | Aesir Modules | `cn.runestone.aesir.modules` | **0.29.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.29.0` / `#AesirModules-v0.29.0`），按需选用。
-> *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
+> *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
 >
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [Unreleased]
+
+---
+
+**仓库级变更 / Repository-wide**
+
+- **Git 分支策略重构：版本分支废弃，改用常驻 `latest` 分支** — 旧策略（版本分支 `AesirArchitecture-v<版本>` / `AesirModules-v<版本>` 随发版轮换、旧分支随发版删除）下，消费者经 Git URL 钉住的分支会在发版后从远端消失（Package Manager 报 `Could not clone`），且每次升级都必须改 URL——无法一次输入持续更新。新策略：① `auto-publish-branches.yml` 每次推送 `main` 时按包目录 subtree split 滚动更新**常驻分支** `AesirArchitecture-latest` / `AesirModules-latest`（分支名永久固定，包内容即分支根目录），Git URL 一次输入持续可用，升级 = Package Manager 移除后用同一 URL 重新添加（或删除 `packages-lock.json` 对应条目重新解析）；② 钉旧版本改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/<包目录>#v<版本>`（tag 永久保留）；③ CI 自动清理远端残留的 `AesirXxx-v*` 版本分支。README（根 + 两包，中英 + Documentation~ 镜像）与文档站安装指引全部同步
+
+### [architecture] Aesir Architecture
+
+**Changed**
+
+- **README 安装指引改锚常驻 `latest` 分支** — UPM（Git URL）安装 URL 由固定版本分支改为 `#AesirArchitecture-latest`，升级口径同步为「移除后用同一 URL 重新添加，无需随发版修改」
+
+### [modules] Aesir Modules
+
+**Changed**
+
+- **`AesirDependencyInstaller` 补装 URL 常驻分支化** — 缺 Aesir Architecture 时一键补装的 Git URL 由「本包 version 动态拼接版本分支」改为固定常量 `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest`（旧策略的版本分支随发版删除，拼接出的 URL 会失效）；移除版本推导函数（`ReadSelfVersion` / `BuildDependencyBranchName` / `BuildDependencyGitUrl`）与 `FallbackSelfVersion` 兜底常量（发版不再需要同步 bump，消灭易漏项），安装确认框与收尾日志文案同步；`AesirDependencyInstallerTests` 以常量 URL 守卫用例替代版本拼接用例（断言 URL 不含版本号）
+- **README 安装指引改锚常驻 `latest` 分支** — UPM（Git URL）安装 URL（含 manifest.json 示例）改为 `latest` 分支，升级口径同步为「移除后用同一 URL 重新添加」
 
 ---
 

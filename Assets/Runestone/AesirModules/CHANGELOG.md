@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Changed
+
+- **`AesirDependencyInstaller` 补装 URL 常驻分支化** — 缺 Aesir Architecture 时一键补装的 Git URL 由「本包 version 动态拼接版本分支」改为固定常量 `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest`（锚定 CI 常驻滚动分支——旧策略的版本分支随发版轮换并删除，拼接出的 URL 会失效报 "Could not clone"）；移除版本推导函数（`ReadSelfVersion` / `BuildDependencyBranchName` / `BuildDependencyGitUrl`）与 `FallbackSelfVersion` 兜底常量（发版不再需要同步 bump），安装确认框与收尾日志文案同步；`AesirDependencyInstallerTests` 以常量 URL 守卫用例替代版本拼接用例（断言 URL 不含版本号）
+- **README 安装指引改锚常驻 `latest` 分支** — 仓库分支策略重构（详见根 CHANGELOG [Unreleased]）：UPM（Git URL）安装 URL（含 manifest.json 示例）改为 `latest` 分支，升级口径同步为「移除后用同一 URL 重新添加，无需随发版修改」
+
 ## [0.29.0] - 2026-09-27
 
 ### Added

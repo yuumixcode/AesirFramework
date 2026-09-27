@@ -126,16 +126,16 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 ## 📦 安装方式
 
-### 方式 1：固定版本分支安装（推荐）
+### 方式 1：常驻 latest 分支安装（推荐）
 
 在 Unity Package Manager 窗口点击左上角 `+` → `Add package from git URL...`，填入对应子包的 Git URL：
 
-| 子包 | Git URL（固定 0.29.0） |
+| 子包 | Git URL（常驻分支，一次输入持续更新） |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0` |
-| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest` |
 
-> 版本分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 生成（包内容即分支根目录），仓库只保留最新版本分支。**升级到新版本**：Package Manager 不会对 Git URL 安装的包显示更新提示——移除旧包后按新版本分支的 Git URL 重新添加，或直接把 `manifest.json` 中的 `#AesirArchitecture-v<版本>` / `#AesirModules-v<版本>` 分支名改为新版本。
+> `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.29.0`（`path` 换成对应包目录，tag 永久保留）。
 >
 > **两个包需要分别添加**：UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），仅添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败——可随后经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装。
 
@@ -151,7 +151,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 以此方式安装的包装在 `Assets/Runestone/` 下（代码可改），**更新无需手动重新下载**：Unity 菜单 `Tools → Aesir → Check for Updates` 打开包内更新器完成"检测新版本 → 查看更新日志 → 确认后静默导入 → 按差集清理残留"（安装 Odin Inspector 时更新器为 Odin 界面）。更新入口分两级：包列表行内「更新」按钮仅更新单个包（只使用其中一个包的项目按需更新，另一包在场且落后时确认框提示配套版本风险）；「全部更新」让整个框架到达远程版本——已安装的旧包更新、缺失的 Aesir 包补装（确认框明示「新安装」条目）。unitypackage 下载在 GitHub 直连失败时自动切换镜像站代理，全部线路失败时给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效。版本检测按「直连 GitHub（Releases API → 302 探测 → 仓库 raw 内容）→ GitHub 镜像站 → CDN 中转」三层顺序兜底，单源 5 秒超时即落下一层；窗口显示本次能否直连 GitHub（能直连即版本信息 100% 实时）与最终获取线路，仅在落到 CDN 中转时提示可能有数小时延迟。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下 `Check for Updates` 菜单不显示，升级方式见上方方式 1（移除后按新版本分支重新添加）。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下 `Check for Updates` 菜单不显示，升级方式见上方方式 1（移除后用同一 URL 重新添加）。
 
 ### 方式 3：跟踪 main 最新（开发预览）
 
@@ -167,13 +167,13 @@ https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModu
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest"
   }
 }
 ```
 
-只添加你需要的子包——但注意 UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），只添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败；可先只装 Aesir Modules，再经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装 Aesir Architecture。升级到新版本时，把依赖条目中的 `#AesirArchitecture-v<版本>` / `#AesirModules-v<版本>` 分支名改为新版本号即可（Package Manager 不会对 Git URL 包显示更新提示）。
+只添加你需要的子包——但注意 UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），只添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败；可先只装 Aesir Modules，再经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装 Aesir Architecture。两条 URL 固定不变（`latest` 分支常驻滚动更新）：升级 = 移除后用同一 URL 重新添加，无需随发版修改（Package Manager 不会对 Git URL 包显示更新提示）。
 
 ### 安装示例（Samples）
 
@@ -287,10 +287,10 @@ AesirFramework/                            # 你现在看到的仓库
 
 ## ✅ 质量与 CI
 
-- **测试** — EditMode 测试 805 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
+- **测试** — EditMode 测试 803 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
 - **CI（GitHub Actions）** —
   - `auto-release.yml`：每次推送 `main` 自动发布 GitHub Release（三个 unitypackage + 更新器所需的 update-info.json / files-manifest）
-  - `auto-publish-branches.yml`：按包目录 subtree split 生成 `AesirArchitecture-v<版本>` / `AesirModules-v<版本>` 固定版本分支
+  - `auto-publish-branches.yml`：按包目录 subtree split 滚动更新常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`（Git URL 一次输入持续更新），并自动清理废弃的版本分支
 
 ---
 
