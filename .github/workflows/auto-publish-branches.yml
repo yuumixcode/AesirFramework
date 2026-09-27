@@ -23,11 +23,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # 包目录名 → 发布分支名前缀（分支名 = 前缀 + 版本号，如 AesirArchitecture-v0.12.0）
+          # 包目录名 → 常驻发布分支（分支名永久固定：Git URL 一次输入即可持续获取最新版，
+          # 升级 = Package Manager 移除后用同一 URL 重新添加；需要钉死旧版本时改用
+          # Release tag + ?path=<包路径>，见 prune-obsolete-branches 作业说明）
           - package: AesirArchitecture
-            branch_prefix: AesirArchitecture
+            branch: AesirArchitecture-latest
           - package: AesirModules
-            branch_prefix: AesirModules
+            branch: AesirModules-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,15 +44,12 @@ jobs:
       - name: Split and push package branch
         run: |
           PACKAGE_DIR="Assets/Runestone/${{ matrix.package }}"
+          BRANCH="${{ matrix.branch }}"
 
           if [ ! -d "$PACKAGE_DIR" ]; then
             echo "::error::Package directory $PACKAGE_DIR does not exist"
             exit 1
           fi
-
-          # 从 package.json 动态读取版本号
-          VERSION=$(jq -r '.version' "$PACKAGE_DIR/package.json")
-          BRANCH="${{ matrix.branch_prefix }}-v${VERSION}"
 
           echo "📦 Splitting $PACKAGE_DIR → branch $BRANCH"
 
@@ -60,8 +59,34 @@ jobs:
           # 将子目录拆分为独立分支（包内容成为分支根目录）
           git subtree split --prefix="$PACKAGE_DIR" --branch "$BRANCH"
 
-          # 强制推送到远端
+          # 强制推送到远端（分支名固定，滚动指向最新提交）
           git push origin "$BRANCH" --force
 
           echo "✅ Published $BRANCH — latest commit:"
           git log --oneline -1 "$BRANCH"
+
+  # 旧策略的版本分支（AesirXxx-v<版本>）已废弃：分支名随发版轮换且旧分支随发版删除，
+  # 消费者钉住的 Git URL 会直接失效（Package Manager 报 "Could not clone"）。
+  # 钉版入口统一为 Release tag（?path=<包路径>#v<版本>，tag 永久保留）；
+  # 本作业清理远端残留的版本分支，防止消费者误钉注定会被删除的分支。
+  prune-obsolete-branches:
+    runs-on: ubuntu-latest
+    needs: publish
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Delete obsolete version branches
+        run: |
+          OBSOLETE=$(git ls-remote --heads origin \
+            'refs/heads/AesirArchitecture-v*' 'refs/heads/AesirModules-v*' \
+            | awk '{print $2}')
+          if [ -z "$OBSOLETE" ]; then
+            echo "无废弃版本分支需要清理。"
+            exit 0
+          fi
+          for ref in $OBSOLETE; do
+            branch="${ref#refs/heads/}"
+            echo "🗑 Deleting obsolete version branch: $branch"
+            git push origin --delete "$branch"
+          done

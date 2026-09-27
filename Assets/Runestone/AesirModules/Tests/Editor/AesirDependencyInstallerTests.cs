@@ -1,8 +1,6 @@
-using System.IO;
 using System.Reflection;
 using NUnit.Framework;
 using Runestone.AesirModules.Editor.Bootstrap;
-using UnityEngine;
 
 namespace Runestone.AesirModules.Tests.Editor
 {
@@ -18,30 +16,19 @@ namespace Runestone.AesirModules.Tests.Editor
         const string ArchitecturePackageRoot = "Assets/Runestone/AesirArchitecture";
         const string ModulesPackageRoot = "Assets/Runestone/AesirModules";
 
-        #region 依赖 URL 拼接
+        #region 依赖 URL
 
         [Test]
-        public void ReadSelfVersion_MatchesPackageJson()
+        public void DependencyGitUrl_AnchorsEvergreenLatestBranch()
         {
-            // 本包 package.json 的 version 与 packageId 前缀是依赖分支名的唯一真源
-            // （ReadSelfVersion 随发版 bump 变化——断言与 package.json 实际 version 一致，勿硬编码历史版本号）
-            var packageVersion = ReadPackageJsonVersion();
-            Assert.AreEqual(packageVersion, AesirDependencyInstaller.ReadSelfVersion());
-        }
-
-        [Test]
-        public void BuildDependencyBranchName_ConcatPrefix()
-        {
-            Assert.AreEqual("AesirArchitecture-v0.23.0",
-                AesirDependencyInstaller.BuildDependencyBranchName("0.23.0"));
-        }
-
-        [Test]
-        public void BuildDependencyGitUrl_AnchorsVersionBranch()
-        {
-            Assert.AreEqual(
-                "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.23.0",
-                AesirDependencyInstaller.BuildDependencyGitUrl("0.23.0"));
+            // 常驻 latest 分支：URL 永久固定，一次输入即可持续获取最新版
+            // （旧策略的版本分支随发版轮换并删除，钉住它的 URL 会失效报 "Could not clone"）。
+            // 因此 URL 不得包含版本号——发版后无需回改本断言。
+            Assert.AreEqual("https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest",
+                AesirDependencyInstaller.DependencyGitUrl);
+            Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(
+                AesirDependencyInstaller.DependencyGitUrl, @"-v\d"),
+                "依赖 URL 不得锚定随发版删除的版本分支");
         }
 
         #endregion
@@ -141,23 +128,6 @@ namespace Runestone.AesirModules.Tests.Editor
                 BindingFlags.NonPublic | BindingFlags.Static);
             Assert.IsNotNull(method);
             Assert.IsFalse((bool)method.Invoke(null, null));
-        }
-
-        #endregion
-
-        #region 辅助方法
-
-        /// <summary>读取本包 package.json 的 version 字段（发版 bump 后无需回改断言）。</summary>
-        static string ReadPackageJsonVersion()
-        {
-            var packageJson = File.ReadAllText("Assets/Runestone/AesirModules/package.json");
-            return JsonUtility.FromJson<PackageJsonVersion>(packageJson).version;
-        }
-
-        [System.Serializable]
-        class PackageJsonVersion
-        {
-            public string version;
         }
 
         #endregion
