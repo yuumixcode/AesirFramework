@@ -8,7 +8,7 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests")]
+[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests.Editor")]
 
 namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 {

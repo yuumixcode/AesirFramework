@@ -17,8 +17,9 @@ namespace Runestone.AesirModules.Editor.Bootstrap
     /// RAA 缺失，RAM 核心 / Editor 程序集因解析不到 <c>Runestone.AesirArchitecture</c> 全部不编译，
     /// 此时本菜单是唯一可用的 Aesir 工具入口，其编译不得依赖任何会失败的程序集。
     /// <para>
-    /// UPM 形态安装无需本菜单：本包 package.json 的 dependencies 已声明 RAA 的 Git URL，
-    /// Package Manager 安装时自动递归拉取依赖。
+    /// UPM 单独安装本包时同样触发本菜单：Unity Package Manager 不支持包内声明 Git URL 依赖
+    /// （仅项目 manifest 可声明），故本包 package.json 不携带 RAA 依赖声明，单独安装可成功
+    /// 但缺 RAA 程序集，本菜单即为此场景提供一键补装。
     /// </para>
     /// <para>
     /// 安装走 <see cref="Client.Add" />（Git URL），RAA 落在 Packages/ 下以 UPM 形态存在；
@@ -59,7 +60,8 @@ namespace Runestone.AesirModules.Editor.Bootstrap
 
         #region 菜单入口
 
-        // validate：RAA 缺失时才显示——UPM 形态依赖自动拉取、正常 Assets 安装 RAA 在场，均不出现
+        // validate：RAA 缺失时才显示——Assets 正常双包安装 RAA 在场不出现；
+        // UPM 单装本包（无法声明包内依赖）或 Assets 只导入本包时出现，一键补装 RAA
         [MenuItem(MenuPath, true)]
         static bool ValidateMenuVisible()
         {
@@ -227,8 +229,8 @@ namespace Runestone.AesirModules.Editor.Bootstrap
 
         /// <summary>
         /// 目录是否为 RAA 包根：package.json 可解析且顶层 name 字段为 RAA 包 id。
-        /// 不用子串匹配——RAM 的 dependencies 也引用着 RAA 的包 id（依赖声明键名），
-        /// 全文 Contains 会把 RAM 包根误判为 RAA。
+        /// 不用子串匹配——package.json 全文 Contains 会因任意提及 RAA 包 id 的文案误判
+        /// （历史形态的依赖声明键名即先例），按解析后的 name 字段精确比对。
         /// </summary>
         internal static bool PackageRootHasArchitectureId(string packageRootProjectRelativePath)
         {
