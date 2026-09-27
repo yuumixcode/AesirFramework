@@ -1,10 +1,10 @@
 {
-  "version": "0.28.0",
-  "tag": "v0.28.0",
+  "version": "0.29.0",
+  "tag": "v0.29.0",
   "packages": [
     {
       "name": "AesirArchitecture",
-      "version": "0.28.0",
+      "version": "0.29.0",
       "files": [
         "Assets/Runestone/AesirArchitecture/AesirPathLookup.asset",
         "Assets/Runestone/AesirArchitecture/CHANGELOG.md",
@@ -277,9 +277,6 @@
         "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Art/Bullets.png",
         "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Art/Enemies.png",
         "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Art/Player.png",
-        "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Editor",
-        "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Editor/PlaneWarSceneSetup.cs",
-        "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Editor/Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor.asmdef",
         "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Prefab",
         "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Prefab/Bullet.prefab",
         "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Prefab/EnemyA.prefab",
@@ -312,6 +309,7 @@
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AbstractContextUnregisterTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirArchitecturePlayerLoopTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirAssetPathsTests.cs",
+        "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirGetStartedServiceTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirSamplesBuildFilterTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirSamplesScriptGuardTests.cs",
         "Assets/Runestone/AesirArchitecture/Tests/Editor/AesirSchedulerTests.cs",
@@ -344,7 +342,7 @@
     },
     {
       "name": "AesirModules",
-      "version": "0.28.0",
+      "version": "0.29.0",
       "files": [
         "Assets/Runestone/AesirModules/AesirPathLookup.asset",
         "Assets/Runestone/AesirModules/CHANGELOG.md",
