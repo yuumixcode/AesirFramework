@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.27.1 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.27.1 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.28.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.28.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.27.1）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.28.0）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.27.1）
+## Aesir Architecture（0.28.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -156,7 +156,7 @@
 
 ---
 
-## Aesir Modules（0.27.1）
+## Aesir Modules（0.28.0）
 
 ### UI 框架
 
@@ -471,7 +471,7 @@ Unity -batchmode -projectPath . -testPlatform editmode -runTests \
 ### 分支策略
 
 - `main` — 开发主线
-- 版本分支 `AesirArchitecture-v0.27.1` / `AesirModules-v0.27.1` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
+- 版本分支 `AesirArchitecture-v0.28.0` / `AesirModules-v0.28.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
 
 ---
 
@@ -680,7 +680,8 @@ undefined
 - [2026-09-27 20:19:00] 【UPM 包测试 gating 机制实测（2026-09-27，Unity 2022.3.62f3c1 中国版）——官方注册包「带 Tests 却无 Test Runner 噪音」的原因】①官方包大量带 Tests 发布：本机 PackageCache 21+ 包实测，2D 全家桶×9、mathematics、render-pipelines.core/universal/universal-config、searcher、shadergraph、textmeshpro、ugui 均带 Tests；burst/collections/timeline/editorcoroutines/ext.nunit/ide.*/modules.*/test-framework 不带；②守卫与 Aesir 完全同款：URP/ugui Runtime 用 defineConstraints UNITY_INCLUDE_TESTS，TMP/mathematics/ugui Editor 另加 optionalUnityReferences TestAssemblies；官方包无一在 package.json 声明 test-framework 依赖；③**核心机制：UPM 包内的测试程序集在消费者项目默认不编译、不出现在 Test Runner**——实证一：本项目装 URP/TMP/ugui/mathematics + TF，ScriptAssemblies 零官方测试 DLL；实证二：临时项目 file: 装 RAA + TF，核心程序集编译而 Tests.Editor/Tests 两个测试程序集均不编译（同守卫同包在 Assets 形态则编译——gating 变量=程序集位于 UPM 包内）；④**结论修正：Aesir 双包 UPM 形态无 Test Runner 噪音（机制自动兜底）**，噪音只存在于 Assets/unitypackage 形态（消费者可删 Tests/）；同一份包 UPM 形态比 unitypackage 更干净，属官方生态同款行为；⑤opt-in 未复现：手写 ProjectSettings/PackageManagerSettings.asset 的 testables 字段（RAA file: 与 builtin ugui 两轮对照）测试 DLL 均未出现——batchmode -quit 单轮启动疑似不做「testables→宏注入→二次编译」链条，无法排除是写入时机/格式/native 序列化细节；官方 opt-in 入口（Project Settings → Package Manager → Testables，GUI 操作）待需要时实测；⑥连带更新：TF 硬依赖危害降级（强拉 TF 后非 testable 包测试仍不编译）。**Why:** 消费者项目跑 Aesir 测试的正确姿势（opt-in）与「包带 Tests 是否安全」的评估基线。**How to apply:** 后续讨论 UPM 形态测试噪音时以本条为准，勿再引用「PackageCache 只读→测试不可删」旧论；若用户要在消费项目跑框架测试，指引 Testables opt-in 路径并先 GUI 实测。
 - [2026-09-27 20:49:04] 【UPM 依赖治理批次完成（2026-09-27 20:45，工作树未提交；文档站已单独本地提交 de01125 未推送）】用户裁决四项全部落地：①RAM package.json 删整个 dependencies 字段（Git URL 依赖 + TF 硬依赖一并移除，对齐 RAA 无依赖声明）；②测试程序集收敛为每包 2 个（RAM：Runestone.AesirModules.Tests.Runtime→.Tests 改名[PlayMode，namespace 去 .Runtime 后缀]、包级 Tests→.Tests.Editor 改名[asmdef 移 Tests/Editor/]、Scene.Tests 并入 Tests/Editor/Scene/[文件 GUID 不变]；RAA 原本就 2 个不动），5 处 InternalsVisibleTo 同步改 Tests.Editor；③更新器菜单 validate：AesirUpdateWindow 加 [MenuItem(MenuPath, true)] ValidateMenuVisible（ScanInstalledPackagesFromAllRoots 零 Assets 形态安装即隐藏，纯本地 IO）；④Install Dependencies 菜单适用范围扩展 UPM 单装场景（类 remarks/validate 注释改写）。验证基线：refresh 0 错 0 警；ScriptAssemblies 恰好 4 个测试 DLL；EditMode 794/0/2 与基线一致；本项目菜单 validate 实测（Check for Updates=True / Install Dependencies=False / 扫描 2 包）；**UPM E2E 双场景实测**——场景 A（file: 单装 RAM）：UPM 解析零报错（invalid SemVer 已消除）、Bootstrap.dll 是唯一编译产物且零错误（零引用设计生效、补装菜单可用）；场景 B（file: 双包）：0 编译错误、**Check for Updates validate=False（纯 UPM 形态菜单隐藏实测通过）**、Install Dependencies=False、测试 DLL 默认不编译。文档全链同步：RAM/根 README 中英+镜像+Documentation~ 镜像、两包 CHANGELOG [Unreleased]、CODELY.md 正文 6 处（python 限定记忆区前）、文档站 5 处（updater/getting-started×2/API 页 remarks/changelog Unreleased，build --strict 过）。**PlayMode batchmode 22/22 全绿**（2026-09-27 20:50 补跑完成：改名后的 Runestone.AesirModules.Tests.SceneModulePlayModeTests 真实运行通过，BuildSettings 跑后零残留；编辑器已重启重连）。**E2E 环境坑**：①临时项目 manifest 缺 com.unity.ugui/modules.audio/modules.physics2d 会产生 RAM 的环境性编译假错误（UnityEngine.UI/EventSystems/AudioClip 转发程序集），补齐后消失；②batchmode 带编译错误时 -executeMethod 被 "Aborting batchmode due to failure" 阻断，探针只能在编译通过环境执行，编译错误场景改用磁盘侧 DLL/log 验证。**How to apply:** 后续会话引用「测试程序集收敛/UPM 菜单隐藏/依赖移除」以本条为基线；发版时 [Unreleased] 转正 + 文档站 changelog 同步；下一轮锐评时 UPM 无 Odin 环境的编译验证应纳入常态（见 Scene 编辑器缺陷条目）。
 
-- [2026-09-27 20:43:26] 【RAM 无 Odin 环境编译缺陷（2026-09-27 E2E 实测发现，未修）】`Editor/Scene/` 下 SceneEditorSettings.cs（84 错）与 SceneManagerWindow.cs（24 错）直接 `using Sirenix` 且无 `#if ODIN_INSPECTOR` 包裹，汇入主编辑器程序集 `Runestone.AesirModules.Editor`（无 ODIN 守卫）——**无 Odin 消费者环境（unitypackage/UPM 均然）下 RAM Editor 主程序集编译失败，"Odin 可选"宣称在 RAM 主 Editor 程序集不成立**（E2E 场景 B file: 双包临时项目实测 108 个 CS0246；E2E 副本剔除 Editor/Scene/*.cs 后 0 错误全编译）。主开发仓装 Odin 故从未暴露。修复方向候选（待用户裁决）：把这两个文件移入 `Editor/Scene/OdinInspector/` 经 asmref 汇入 `Runestone.AesirModules.Editor.OdinInspector`（ODIN 守卫，无 Odin 整体排除，与 Binder/SDG 模式一致）或整文件 #if 包裹；注意 SceneManagerWindow 是 EditorWindow 主类、SceneEditorSettings 被 BootstrapSceneHelper 引用，移动会牵连 Scene 模块的编辑器入口可见性（无 Odin 环境下场景管理窗口/引导工具将不可用，属合理降级但需 README 声明）。**Why:** 本批次 UPM E2E 的意外产物，两轮锐评均未发现（都在装 Odin 的环境审查）。**How to apply:** 用户提"修 Odin 可选/RAM 无 Odin 编译"时按此定位；验证法 = file: 双包临时项目（manifest 补 ugui/modules.audio/modules.physics2d）batchmode 0 错。
+- [2026-09-27 21:05:09] 【RAM 无 Odin 编译缺陷已修复（2026-09-27 21:10，主仓 commit 03b7abf，覆盖原「未修」状态）】`Editor/Scene/` 的 SceneEditorSettings/SceneManagerWindow 曾直接 using Sirenix 且无守卫（汇入主 Editor 程序集），无 Odin 消费者环境 RAM Editor 主程序集编译失败（E2E 实测 108 个 CS0246）。修复形态：①SceneEditorSettings 留主程序集作纯数据层，Odin 展示特性（LabelText/LabelWidth/ShowInInspector/ReadOnly/Button）整体 #if ODIN_INSPECTOR 包裹（本仓核心程序集既有模式）；②Odin 窗口 SceneModuleSettingsWindowOdin（原 SceneManagerWindow）git mv 至 Editor/Scene/OdinInspector/ 经 asmref 汇入 ODIN 守卫程序集，Editor.OdinInspector asmdef 补 Runestone.AesirModules.Editor 引用；③新增原生 IMGUI 兜底 SceneModuleSettingsWindow（主程序集，持菜单 Tools/Aesir/Modules/Scene Module Settings，OdinWindowOpener 静态委托路由——更新器双窗口同款），未装 Odin 展示等价信息量（Toggle×2 + SelectableLabel 只读路径×2 + 搜集按钮）。菜单由 Scene Editor Settings 更名 **Scene Module Settings**（用户指定），窗口标题同步。**How to apply:** 后续"Odin 可选"模块的编辑器代码一律照此双窗口模式（数据层 #if 特性 + Odin 版入守卫程序集 + 原生兜底持菜单路由）；验证法 = file: 双包临时项目（manifest 补 ugui/modules.audio/modules.physics2d）batchmode 0 错。
+
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
