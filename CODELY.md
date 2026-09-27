@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.29.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.29.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.30.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.30.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.29.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.30.0）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.29.0）
+## Aesir Architecture（0.30.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -156,7 +156,7 @@
 
 ---
 
-## Aesir Modules（0.29.0）
+## Aesir Modules（0.30.0）
 
 ### UI 框架
 
@@ -685,6 +685,7 @@ undefined
 - [2026-09-27 22:11:28] [2026-09-27] Unity batchmode 最小临时项目（UPM E2E）三个启动坑（2026-09-27 实测，Unity 2022.3.62f3c1 中国版，连续两轮 batchmode 秒退后逐一排除）：①macOS `/tmp` 是符号链接（→/private/tmp），`-projectPath /tmp/...` 直接失败——日志特征 `Couldn't set project path to: (空)`、exit 1、log 里 0 处包名，必须用 `/private/tmp/...` 真实路径；②仅有 Packages/manifest.json + ProjectSettings/ProjectVersion.txt 仍同样失败——batchmode 判定"不是 Unity 项目"，还必须补一个**空 Assets/ 目录**；③ProjectVersion.txt 只写 `m_EditorVersion` 一行不够，需从主项目抄完整两行（`m_EditorVersionWithRevision: 2022.3.62f3c1 (1623fc0bbb97)`）。**可用最小结构 = Assets/（空）+ Packages/manifest.json（file: 指向真包，另补 com.unity.ugui / com.unity.modules.audio / com.unity.modules.physics2d 防 RAM 环境性编译假错误）+ ProjectSettings/ProjectVersion.txt（完整两行）**。Why: 做 UPM / 无 Odin / file: 双包 E2E 验证要重建临时项目，此前 0.28.0 E2E 的临时项目细节未存导致本次三连踩。How to apply: 下次任何 batchmode 临时项目验证照此结构一次建对，勿再用 /tmp、勿省 Assets 目录。
 - [2026-09-27 22:11:41] [2026-09-27 22:10] UPM 差异化交互盘点定案 + package.json 元数据链接字段批次已完成（2026-09-27，主仓工作树未提交、叠在 Getting Started 一键导入等未提交批次上；文档站 1ee93ea 本地提交未推送）。**盘点结论（勿再重新盘点）**：UPM 形态交互面 0.28.0 后已全部闭环——Check for Updates validate 隐藏、Install Dependencies UPM 单装补装、Getting Started 三形态发现+ContainsId 同包去重（代码核查确认）+示例一键导入、BuildFilter 三形态、测试 gating、UniTask 宏 versionDefines 全权；本轮补齐最后两项：①两包 package.json 新增 `documentationUrl`（RAA→…/architecture/、RAM→…/modules/）+ `changelogUrl`（同→…/changelog/，四个 URL curl 200 实证），UPM 详情页将出现 View documentation/changelog 链接——对 Assets 形态无副作用、CI subtree split 自动带上、URL 无版本号不受发版替换影响；②UPM 升级操作指引补 8 处（根 README 中英方式 1/2/4 各 3 处 + RAA 包内 README 中英各 1 处 + Documentation~ 镜像 + 文档站 arch getting-started×2/updater/modules getting-started），统一口径「PM 不对 Git URL 包显示更新提示，升级 = 移除后重新添加新版本分支 Git URL 或改 manifest 分支名」；RAM 包内 README 中英本就有具体操作（L67）未动。两包 CHANGELOG 登记（RAA 追加 [Unreleased] Added、RAM 新建 [Unreleased]）。**验证基线**：python json.load 过、文档站 zensical build --strict 0 问题、UPM file: 双包临时项目 batchmode E2E——resolve 零 invalid、0 error CS、两包全部程序集+示例+Bootstrap DLL 落盘。**遗留**：①PM 详情页链接的 GUI 渲染（batchmode 无 GUI）未实测，属 Unity 官方字段语义，留用户下次 UPM 安装时顺带查看；②Testables opt-in 文档候选经用户裁决不执行（维持「测试是开发侧设施」口径）。How to apply: 后续「UPM 交互还有什么没做」勿再重新盘点；发版时本批 [Unreleased] 转正 + 文档站 changelog 同步；主仓本批改动文件 9 个待用户分批提交。
 - [2026-09-27 22:24:39] [2026-09-27 22:30] 【0.29.0 已正式发布，覆盖同日 22:00「Getting Started 一键导入批次（工作树未提交）」、22:11:41「主仓本批 9 文件待分批提交/发版时 [Unreleased] 转正」等条目的未提交状态】0.29.0 发版全链路完成（2026-09-27，主仓 4 提交推送：f5b21dc GS 一键导入 → d4b4c46 PlaneWar Editor 程序集移除 → d3d0e6c UPM 元数据字段+升级指引 → 90825ff 版本批；CI 回写 ff593e6 已 pull）：Release v0.29.0 非 draft 三资产（AesirArchitecture/AesirFramework/AesirModules-v0.29.0.unitypackage），新分支 AesirArchitecture-v0.29.0/AesirModules-v0.29.0 已生成、v0.28.0 旧分支已删；文档站 1ee93ea（UPM 升级指引）+ 10d3fcd（版本批）已推送，Deploy Zensical success ×2，线上抽查 changelog 含 0.29.0 ×7。**验证基线（新）：refresh 0 错 0 警、EditMode 805 Pass/0 Fail/2 Skip（807 total，含 GS 新增 9 用例，根 README 测试数已更新 805）、PlayMode batchmode 22/22、BuildSettings 零残留、sync-samples 零漂移。**发版实测坑三条：①版本号摸底 grep 的 `grep -vi changelog` 会误滤 README 徽章行（徽章链接指向 CHANGELOG.md）——必须单独 `grep -n "shields.io/badge/version" 各 README` 补摸（本轮根 README 无徽章、包内 4 份 README 徽章在 L6）；②CODELY.md 正文区替换 count=7 而非 6——L473 分支行一行含 2 处版本号（0.28.0「行数≠出现数」坑再次验证）；③AesirGetStartedServiceTests.cs 的 `PackageVersion = "0.28.0"` 是纯测试夹具常量（构造伪造包用、不对比真实 package.json），发版不需要同步 bump——后续 grep 摸底看到它勿误改。**编辑器已被 kill -9 退出（PlayMode batchmode 用），下次操作前需用户手动重开或按流程重启。**How to apply: 后续「0.29.0 相关」勿再当待办；下次发版照本条 4 提交模式 + 三坑清单执行。
+- [2026-09-27 22:37:41] [2026-09-27 22:40] 【Git 分支策略已重构为常驻 latest 分支——覆盖旧「版本分支随发版轮换并删除」策略，后续勿再按旧口径发版/写文档】用户新需求「无法用一个 git-url 持续更新，要求输入一次就能持续更新版本」（起因：Package Manager 报 Could not clone，钉住的 #AesirModules-v0.28.0 分支已随 0.29.0 发版删除）。新策略：① auto-publish-branches.yml matrix 分支名固定为 AesirArchitecture-latest / AesirModules-latest（不再从 package.json version 推导），每次推送 main 时 subtree split 强制滚动更新；② 新增 prune-obsolete-branches 作业（needs publish）自动删除远端 Aesir*-v* 废弃版本分支——发版流程不再手动删分支；③ 钉旧版本 = Release tag（?path=Assets/Runestone/<包目录>#v<版本>，tag 永久保留；tag 在 monorepo 根故必须带 ?path=）；④ UPM git 包永不自动更新（lock 钉 commit hash）——「持续更新」的实际上限 = URL 永不失效 + 升级时移除后用同一 URL 重新添加（或删 packages-lock.json 条目重解析），文档一律按此口径。代码联动：AesirDependencyInstaller.URL 常量化 DependencyGitUrl=...git#AesirArchitecture-latest，删 ReadSelfVersion/BuildDependencyBranchName/BuildDependencyGitUrl(version)/FallbackSelfVersion（发版 bump 联动项消灭），确认框不再显示版本号；测试 14→12 用例（新增「URL 不含 -v\d」守卫），根 README 测试数 805→803、CODELY 安装器计数 14→12 已同步。README/CHANGELOG/文档站/私有 Docs Auto-Publish-Branches.md/aesir-version-sync 技能全部同步（技能删掉了版本分支名 bump 与手动删分支步骤）。提交状态：主仓 000e40b（CI+安装器+测试）+ b1e40a9（docs）本地未推送；文档站 9c4a078、私有 Docs 2d54656 均未推送。**推送 main 后 CI 行为**：latest 两分支生成并滚动、prune 作业删除 v0.29.0 两个版本分支、auto-release 按 0.29.0 滚动重建 Release（同版本重推删除重建 tag 属既有设计）。**验证基线**：ruby YAML 解析过 + dotnet build Bootstrap/Tests.Editor 0 错 0 警；EditMode 实跑未做（本会话无 Bridge、编辑器已退出）——用户编辑器内跑 RAM Tests.Editor 确认 12 用例全绿后才算完整交付；README 中的 #v0.29.0 钉版示例随发版 bump 一并替换属预期（技能已注明）。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
