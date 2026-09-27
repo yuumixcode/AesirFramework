@@ -20,10 +20,10 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.27.1** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.27.1** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.28.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.28.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.27.1` / `#AesirModules-v0.27.1`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.28.0` / `#AesirModules-v0.28.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
@@ -31,6 +31,28 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
 
 ---
+
+## [0.28.0] - 2026-09-27
+
+---
+
+### [architecture] Aesir Architecture
+
+**Changed**
+
+- **`Tools → Aesir → Check for Updates` 菜单按安装形态显隐** — 新增菜单 validate：扫描不到 Assets 形态的 Aesir 包安装（AesirAssetPaths 锚点定位安装根 + 解析 package.json，纯本地目录 IO）时菜单整体隐藏——纯 UPM（Git URL）安装的副本由 Package Manager 管辖，更新器没有管辖对象，显示菜单只会误导；Assets 形态安装（含与 UPM 混合并存）时照常显示。IMGUI 与 Odin 版窗口共用同一菜单入口，一处验证双窗口生效
+
+### [modules] Aesir Modules
+
+**Removed**
+
+- **`package.json` 依赖声明整段移除（破坏性）** — ① Aesir Architecture 的 Git URL 依赖条目：Unity Package Manager 不支持在包内声明 Git URL 依赖（仅项目 manifest.json 可声明，Unity 官方硬规定），保留会使 UPM 单独安装本包直接失败（`Version 'https://...' is invalid. Expected a 'SemVer' compatible value.`）——移除后单装可成功，缺 RAA 时经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装（菜单所在程序集零依赖，其余程序集编译失败时仍可用），安装教程改为两包分别添加；② `com.unity.test-framework` 硬依赖：测试程序集已有 `UNITY_INCLUDE_TESTS` 守卫（未安装 Test Framework 时整体排除），硬依赖非必需，只会把未安装 Test Framework 的项目强行拉入该包
+
+**Changed**
+
+- **测试程序集收敛（破坏性）** — 每包只保留 `xxx.Tests.Editor`（EditMode）与 `xxx.Tests`（PlayMode）两个测试程序集，Test Runner 不再出现第三个程序集折叠节点：`Runestone.AesirModules.Scene.Tests`（`Editor/Scene/Tests/`）并入包级 EditMode 程序集并迁移至 `Tests/Editor/Scene/`（文件 GUID 不变）；包级 EditMode 程序集 `Runestone.AesirModules.Tests` 改名 `Runestone.AesirModules.Tests.Editor`（对齐 RAA 命名模式，asmdef 移至 `Tests/Editor/`）；PlayMode 程序集 `Runestone.AesirModules.Tests.Runtime` 改名 `Runestone.AesirModules.Tests`（命名空间同步去掉 `.Runtime` 后缀）；5 处 `InternalsVisibleTo` 目标名同步更新
+- **Scene 模块设置双窗口与无 Odin 编译修复** — `Editor/Scene/` 的设置类曾直接 `using Sirenix` 且无守卫（汇入主编辑器程序集 `Runestone.AesirModules.Editor`），无 Odin 消费者环境（unitypackage / UPM 均然）下该程序集编译失败、「Odin 可选」宣称不成立（UPM E2E 实测 108 个 CS0246，开发仓装 Odin 从未暴露）。修复：①`SceneEditorSettings` 留主程序集作纯数据层，Odin 展示特性整体 `#if ODIN_INSPECTOR` 包裹（数据读写零变化）；②Odin 版窗口 `SceneModuleSettingsWindowOdin`（原 `SceneManagerWindow`）迁至 `Editor/Scene/OdinInspector/` 经 asmref 汇入 ODIN 守卫程序集；③新增原生 IMGUI 兜底 `SceneModuleSettingsWindow`（持菜单入口，`OdinWindowOpener` 静态委托按 Odin 可用性路由，与包内更新器双窗口同款模式），未装 Odin 时展示等价信息量（两个开关 + 两个只读路径 + 手动搜集按钮）。菜单 `Tools → Aesir → Modules → Scene Editor Settings` 更名 **`Scene Module Settings`**（窗口标题同步）。无 Odin 环境 file: 双包 E2E 0 编译错误（修复前 108 个）、主项目 Odin 窗口真实绘制通过、EditMode 794/0/2 零回归
+- **`Install Dependencies` 补装菜单适用范围扩展** — 除 unitypackage 只导入本包外，UPM 单独安装本包（缺 Aesir Architecture、核心程序集编译失败）同样触发该菜单一键补装；包内注释与 README 口径同步（此前「UPM 自动拉取依赖」的宣称失实——Unity 不支持包间 Git URL 依赖）
 
 ## [0.27.1] - 2026-09-27
 
