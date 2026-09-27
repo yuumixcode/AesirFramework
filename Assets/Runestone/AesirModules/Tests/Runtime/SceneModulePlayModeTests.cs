@@ -187,7 +187,7 @@ namespace Runestone.AesirModules.Tests.Runtime
             var completed = false;
             var failed = false;
 
-            var handle = module.SceneLoadedEvent.AddListener(path =>
+            var handle = SceneModule.SceneLoadedEvent.AddListener(path =>
             {
                 Assert.AreEqual(SceneAPath, path, "SceneLoadedEvent 参数应为场景路径");
                 // 事件广播时进度应已归一化到 1.0（0.9 激活上限归一化，onProgress(1f) 先于广播）
@@ -197,7 +197,7 @@ namespace Runestone.AesirModules.Tests.Runtime
 
             try
             {
-                module.LoadSceneSingle(SceneAPath, () =>
+                SceneModule.LoadSceneSingle(SceneAPath, () =>
                 {
                     completed = true;
                     order.Add("completed");
@@ -222,9 +222,9 @@ namespace Runestone.AesirModules.Tests.Runtime
             Assert.GreaterOrEqual(lastProgress, 1f - 1e-3f, "最终进度应归一化到 1.0（0.9 激活上限归一化）");
             Assert.IsTrue(progressReachedOneBeforeEvent, "事件广播时进度应已报告到 1.0（onProgress(1f) 先于广播）");
 
-            Assert.AreEqual(SceneAPath, module.LastLoadedScene.path, "LastLoadedScene 应为刚加载的场景");
+            Assert.AreEqual(SceneAPath, SceneModule.LastLoadedScene.path, "LastLoadedScene 应为刚加载的场景");
             Assert.AreEqual(SceneAPath, SceneManager.GetActiveScene().path, "Single 加载后激活场景应为新场景");
-            Assert.AreEqual(0, module.AddedScenePaths.Count, "Single 加载后叠加追踪应清空");
+            Assert.AreEqual(0, SceneModule.AddedScenePaths.Count, "Single 加载后叠加追踪应清空");
 
             // DDOL 存活：模块经 [Aesir Modules] 宿主 DDOL，Single 卸载全部旧场景不杀模块——回调链因此得以完整
             Assert.AreSame(module, SceneModule.Instance, "Single 加载后模块应为同一实例（DDOL 存活）");
@@ -243,18 +243,17 @@ namespace Runestone.AesirModules.Tests.Runtime
         [UnityTest]
         public IEnumerator LoadSceneAdditive_SuccessPath_TracksScene_KeepsActiveScene()
         {
-            var module = SceneModule.Instance;
             var activeBefore = SceneManager.GetActiveScene();
             var completed = false;
             var failed = false;
 
-            module.LoadSceneAdditive(SceneAPath, () => completed = true, () => failed = true);
+            SceneModule.LoadSceneAdditive(SceneAPath, () => completed = true, () => failed = true);
 
             yield return WaitUntil(() => completed || failed, "Additive 加载应在超时前回调");
 
             Assert.IsFalse(failed, "成功路径不应触发失败回调");
-            Assert.AreEqual(1, module.AddedScenePaths.Count, "叠加加载应登记追踪");
-            Assert.AreEqual(SceneAPath, module.AddedScenePaths[0], "追踪路径应为叠加场景路径");
+            Assert.AreEqual(1, SceneModule.AddedScenePaths.Count, "叠加加载应登记追踪");
+            Assert.AreEqual(SceneAPath, SceneModule.AddedScenePaths[0], "追踪路径应为叠加场景路径");
             Assert.AreEqual(activeBefore, SceneManager.GetActiveScene(), "Additive 不应改变激活场景");
             Assert.IsTrue(SceneManager.GetSceneByPath(SceneAPath).isLoaded, "场景应真实加载");
         }
@@ -266,21 +265,20 @@ namespace Runestone.AesirModules.Tests.Runtime
         [UnityTest]
         public IEnumerator UnloadAllAddedScenes_UnloadsAll_ClearsTracking_AndInvokesCallback()
         {
-            var module = SceneModule.Instance;
             var aLoaded = false;
             var bLoaded = false;
-            module.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
-            module.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
+            SceneModule.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
+            SceneModule.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
             yield return WaitUntil(() => aLoaded && bLoaded, "两个叠加场景应在超时前加载完成");
 
-            Assert.AreEqual(2, module.AddedScenePaths.Count, "前置：两个场景均已入追踪");
+            Assert.AreEqual(2, SceneModule.AddedScenePaths.Count, "前置：两个场景均已入追踪");
 
             var unloadedEvents = new List<string>();
-            var handle = module.SceneUnloadedEvent.AddListener(unloadedEvents.Add);
+            var handle = SceneModule.SceneUnloadedEvent.AddListener(unloadedEvents.Add);
             var allUnloaded = false;
             try
             {
-                module.UnloadAllAddedScenes(() => allUnloaded = true);
+                SceneModule.UnloadAllAddedScenes(() => allUnloaded = true);
                 yield return WaitUntil(() => allUnloaded, "UnloadAll 应在超时前完成全部卸载");
             }
             finally
@@ -291,7 +289,7 @@ namespace Runestone.AesirModules.Tests.Runtime
             Assert.AreEqual(2, unloadedEvents.Count, "每个卸载的场景应各广播一次 SceneUnloadedEvent");
             Assert.IsTrue(unloadedEvents.Contains(SceneAPath) && unloadedEvents.Contains(SceneBPath),
                 "卸载事件参数应覆盖两个叠加场景");
-            Assert.AreEqual(0, module.AddedScenePaths.Count, "批量卸载后追踪应清空");
+            Assert.AreEqual(0, SceneModule.AddedScenePaths.Count, "批量卸载后追踪应清空");
             Assert.IsFalse(SceneManager.GetSceneByPath(SceneAPath).isLoaded, "场景 A 应已卸载");
             Assert.IsFalse(SceneManager.GetSceneByPath(SceneBPath).isLoaded, "场景 B 应已卸载");
         }
@@ -304,27 +302,26 @@ namespace Runestone.AesirModules.Tests.Runtime
         [UnityTest]
         public IEnumerator UnloadAllAddedScenes_SnapshotIteration_NestedLoadDuringBroadcastNotInThisBatch()
         {
-            var module = SceneModule.Instance;
             var aLoaded = false;
-            module.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
+            SceneModule.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
             yield return WaitUntil(() => aLoaded, "叠加场景 A 应在超时前加载完成");
 
             var nestedLoadStarted = false;
             var bLoaded = false;
             var allUnloaded = false;
-            var handle = module.SceneUnloadedEvent.AddListener(path =>
+            var handle = SceneModule.SceneUnloadedEvent.AddListener(path =>
             {
                 // A 的卸载广播内嵌套叠加 B：快照在趟首固定为 [A]，B 不在本趟卸载范围
                 if (path == SceneAPath && !nestedLoadStarted)
                 {
                     nestedLoadStarted = true;
-                    module.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
+                    SceneModule.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
                 }
             });
 
             try
             {
-                module.UnloadAllAddedScenes(() => allUnloaded = true);
+                SceneModule.UnloadAllAddedScenes(() => allUnloaded = true);
                 yield return WaitUntil(() => allUnloaded, "UnloadAll 应在超时前完成本趟卸载");
             }
             finally
@@ -338,8 +335,8 @@ namespace Runestone.AesirModules.Tests.Runtime
 
             yield return WaitUntil(() => bLoaded, "嵌套加载的 B 应在超时前完成加载");
             Assert.IsTrue(SceneManager.GetSceneByPath(SceneBPath).isLoaded, "广播期间新叠加的 B 不应在本趟被卸载（快照语义）");
-            Assert.AreEqual(1, module.AddedScenePaths.Count, "B 应正常入追踪");
-            Assert.AreEqual(SceneBPath, module.AddedScenePaths[0], "追踪中应只剩 B");
+            Assert.AreEqual(1, SceneModule.AddedScenePaths.Count, "B 应正常入追踪");
+            Assert.AreEqual(SceneBPath, SceneModule.AddedScenePaths[0], "追踪中应只剩 B");
         }
 
         /// <summary>
@@ -352,17 +349,16 @@ namespace Runestone.AesirModules.Tests.Runtime
         [UnityTest]
         public IEnumerator UnloadAllAddedScenes_ReentrantUnloadDuringBroadcast_BothBatchesComplete()
         {
-            var module = SceneModule.Instance;
             var aLoaded = false;
             var bLoaded = false;
-            module.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
-            module.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
+            SceneModule.LoadSceneAdditive(SceneAPath, () => aLoaded = true);
+            SceneModule.LoadSceneAdditive(SceneBPath, () => bLoaded = true);
             yield return WaitUntil(() => aLoaded && bLoaded, "两个叠加场景应在超时前加载完成");
 
             var outerCompleted = false;
             var innerCompleted = false;
             var reentryTriggered = false;
-            var handle = module.SceneUnloadedEvent.AddListener(path =>
+            var handle = SceneModule.SceneUnloadedEvent.AddListener(path =>
             {
                 if (reentryTriggered)
                 {
@@ -371,12 +367,12 @@ namespace Runestone.AesirModules.Tests.Runtime
 
                 // 收到首个卸载广播（外层迭代中）时嵌套再调 UnloadAllAddedScenes
                 reentryTriggered = true;
-                module.UnloadAllAddedScenes(() => innerCompleted = true);
+                SceneModule.UnloadAllAddedScenes(() => innerCompleted = true);
             });
 
             try
             {
-                module.UnloadAllAddedScenes(() => outerCompleted = true);
+                SceneModule.UnloadAllAddedScenes(() => outerCompleted = true);
                 yield return WaitUntil(() => outerCompleted && innerCompleted, "内外两层批量卸载均应在超时前完成");
             }
             finally
@@ -387,7 +383,7 @@ namespace Runestone.AesirModules.Tests.Runtime
             Assert.IsTrue(reentryTriggered, "前置：广播期间应触发嵌套卸载");
             Assert.IsTrue(outerCompleted, "外层 onAllUnloaded 应正常完成（不被内层 Clear 截断）");
             Assert.IsTrue(innerCompleted, "内层 onAllUnloaded 应正常完成");
-            Assert.AreEqual(0, module.AddedScenePaths.Count, "全部场景应被卸载、追踪清空");
+            Assert.AreEqual(0, SceneModule.AddedScenePaths.Count, "全部场景应被卸载、追踪清空");
             Assert.IsFalse(SceneManager.GetSceneByPath(SceneAPath).isLoaded, "A 应已卸载");
             Assert.IsFalse(SceneManager.GetSceneByPath(SceneBPath).isLoaded, "B 应已卸载（修复前会漏卸）");
         }

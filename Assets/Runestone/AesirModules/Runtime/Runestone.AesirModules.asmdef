@@ -2,7 +2,8 @@
   "name": "Runestone.AesirModules",
   "rootNamespace": "Runestone.AesirModules",
   "references": [
-    "Runestone.AesirArchitecture"
+    "Runestone.AesirArchitecture",
+    "Cysharp.Threading.Tasks"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -16,6 +17,11 @@
       "name": "com.unity.addressables",
       "expression": "",
       "define": "AESIR_MODULES_ADDRESSABLES"
+    },
+    {
+      "name": "com.cysharp.unitask",
+      "expression": "",
+      "define": "AESIR_MODULES_UNITASK"
     }
   ],
   "noEngineReferences": false

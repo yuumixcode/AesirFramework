@@ -3,7 +3,8 @@
   "rootNamespace": "Runestone.AesirModules.Editor",
   "references": [
     "Runestone.AesirModules",
-    "Runestone.AesirArchitecture"
+    "Runestone.AesirArchitecture",
+    "Runestone.AesirArchitecture.Editor"
   ],
   "includePlatforms": [
     "Editor"
