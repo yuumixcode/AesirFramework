@@ -27,6 +27,22 @@ namespace Runestone.AesirModules
     [DefaultExecutionOrder(-999)]
     public class AudioModule : AesirMonoBehaviour
     {
+        /// <summary>
+        /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效。
+        /// </summary>
+        /// <remarks>
+        /// 默认 true（跨场景持久）。设为 false 时实例保留在所在场景、随场景卸载销毁，
+        /// 必须自行处理多场景叠加（Additive）加载下的生命周期管理。
+        /// 运行时自动创建的实例挂载在 [Aesir Modules] 宿主下（非根物体），
+        /// DDOL 跟随宿主决策，本字段不参与判断。
+        /// <para>
+        /// Inspector 呈现（字段说明 InfoBox 与关闭警告 InfoBox）由
+        /// <c>AudioModuleAttributeProcessor</c> 动态注入，运行时代码不持有任何 Inspector 样式特性。
+        /// </para>
+        /// </remarks>
+        [SerializeField]
+        bool dontDestroyOnLoad = true;
+
         internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
 
         const string DefaultPrefsKey = "AesirAudio";
@@ -99,22 +115,6 @@ namespace Runestone.AesirModules
         #endregion
 
         #region 序列化字段
-
-        /// <summary>
-        /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效。
-        /// </summary>
-        /// <remarks>
-        /// 默认 true（跨场景持久）。设为 false 时实例保留在所在场景、随场景卸载销毁，
-        /// 必须自行处理多场景叠加（Additive）加载下的生命周期管理。
-        /// 运行时自动创建的实例挂载在 [Aesir Modules] 宿主下（非根物体），
-        /// DDOL 跟随宿主决策，本字段不参与判断。
-        /// <para>
-        /// Inspector 呈现（字段说明 InfoBox 与关闭警告 InfoBox）由
-        /// <c>AudioModuleAttributeProcessor</c> 动态注入，运行时代码不持有任何 Inspector 样式特性。
-        /// </para>
-        /// </remarks>
-        [SerializeField]
-        bool dontDestroyOnLoad = true;
 
         /// <summary>
         /// SFX 独占音源数量。源全忙时按轮询序抢占最旧的源；初始化时一次性创建，运行时修改无效。
@@ -206,12 +206,7 @@ namespace Runestone.AesirModules
             EnsureInitialized();
 
             // 非根物体（运行时自动创建于 [Aesir Modules] 宿主下）时 DDOL 跟随宿主，本字段不参与判断
-            if (!dontDestroyOnLoad)
-            {
-                AesirModulesDebug.LogWarning(AesirModulesDebug.AudioModuleTag,
-                    "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" + "必须自行处理多场景叠加（Additive）加载下的生命周期");
-            }
-            else if (transform.root == transform)
+            if (dontDestroyOnLoad && transform.root == transform)
             {
                 DontDestroyOnLoad(gameObject);
             }
