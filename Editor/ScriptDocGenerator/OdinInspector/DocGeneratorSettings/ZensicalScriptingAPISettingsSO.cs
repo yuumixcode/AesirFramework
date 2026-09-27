@@ -30,12 +30,26 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         static readonly Regex AnchorSanitizeRegex =
             new Regex("[^a-z0-9\\u4e00-\\u9fff]+", RegexOptions.Compiled);
 
+        static ZensicalScriptingAPISettingsSO _instance;
+
         /// <summary>
-        /// Zensical 文档生成设置单例
+        /// Zensical 文档生成设置单例。解析结果按域缓存：缺失资产的解析会执行 CreateAsset 与
+        /// AssetDatabase.Refresh，每次都重新解析会把这类重操作带进高频路径。
         /// </summary>
-        public static ZensicalScriptingAPISettingsSO Instance =>
-            ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ZensicalScriptingAPISettingsSO>(
-                ConfigName, ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "ZensicalScriptingAPI");
+        public static ZensicalScriptingAPISettingsSO Instance
+        {
+            get
+            {
+                if (_instance)
+                {
+                    return _instance;
+                }
+
+                _instance = ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ZensicalScriptingAPISettingsSO>(
+                    ConfigName, ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "ZensicalScriptingAPI");
+                return _instance;
+            }
+        }
 
         /// <inheritdoc />
         public override string GetGeneratedDocumentation(ITypeData data)
