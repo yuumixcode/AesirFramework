@@ -136,6 +136,8 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1` |
 
 > 版本分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 生成（包内容即分支根目录），仓库只保留最新版本分支。
+>
+> **两个包需要分别添加**：UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），仅添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败——可随后经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装。
 
 ### 方式 2：unitypackage 导入 + 包内更新器（大陆 / 离线友好）
 
@@ -149,7 +151,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 以此方式安装的包装在 `Assets/Runestone/` 下（代码可改），**更新无需手动重新下载**：Unity 菜单 `Tools → Aesir → Check for Updates` 打开包内更新器完成"检测新版本 → 查看更新日志 → 确认后静默导入 → 按差集清理残留"（安装 Odin Inspector 时更新器为 Odin 界面）。更新入口分两级：包列表行内「更新」按钮仅更新单个包（只使用其中一个包的项目按需更新，另一包在场且落后时确认框提示配套版本风险）；「全部更新」让整个框架到达远程版本——已安装的旧包更新、缺失的 Aesir 包补装（确认框明示「新安装」条目）。unitypackage 下载在 GitHub 直连失败时自动切换镜像站代理，全部线路失败时给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效。版本检测按「直连 GitHub（Releases API → 302 探测 → 仓库 raw 内容）→ GitHub 镜像站 → CDN 中转」三层顺序兜底，单源 5 秒超时即落下一层；窗口显示本次能否直连 GitHub（能直连即版本信息 100% 实时）与最终获取线路，仅在落到 CDN 中转时提示可能有数小时延迟。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下 `Check for Updates` 菜单不显示，请直接用 Package Manager 更新。
 
 ### 方式 3：跟踪 main 最新（开发预览）
 
@@ -171,7 +173,7 @@ https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModu
 }
 ```
 
-只添加你需要的子包——**只安装 Aesir Modules 时**，UPM 会自动拉取 Aesir Architecture（本包 `package.json` 的 `dependencies` 已声明其 Git URL）。
+只添加你需要的子包——但注意 UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），只添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败；可先只装 Aesir Modules，再经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装 Aesir Architecture。
 
 ### 安装示例（Samples）
 

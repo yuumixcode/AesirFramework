@@ -67,7 +67,7 @@ Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFram
 - **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
 - Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely; update them with the Package Manager directly.
 >
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
 

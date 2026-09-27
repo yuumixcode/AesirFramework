@@ -67,7 +67,7 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 - **下载直连失败自动切换镜像站代理**，全部线路失败时弹窗给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效；
 - 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装 Odin Inspector 时更新器为 Odin 界面。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内，请直接用 Package Manager 更新。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示，请直接用 Package Manager 更新。
 >
 > **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
 
