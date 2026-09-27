@@ -17,8 +17,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.28.0` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.28.0` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.29.0` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.29.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -129,12 +129,12 @@ A dual-track subscription event system: `[AesirListener]` attribute-based static
 
 In the Unity Package Manager window, click `+` in the top-left → `Add package from git URL...` and paste the corresponding sub-package URL:
 
-| Sub-Package | Git URL (pinned to 0.28.0) |
+| Sub-Package | Git URL (pinned to 0.29.0) |
 |---|---|
-| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.28.0` |
-| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.28.0` |
+| Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0` |
+| Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0` |
 
-> Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches.
+> Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches. **To upgrade**: Package Manager shows no update prompt for Git URL packages — remove the old package and re-add the new version branch's Git URL, or change the `#AesirArchitecture-v<version>` / `#AesirModules-v<version>` branch reference in `manifest.json` to the new version.
 >
 > **Both packages must be added separately**: UPM does not support Git URL dependencies inside a package (official Unity limitation). Adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture — you can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 
@@ -150,7 +150,7 @@ Download the matching unitypackage from [GitHub Releases](https://github.com/yuu
 
 Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for "detect new version → review changelog → confirm → silent import → diff-based stale cleanup" (Odin-based UI when Odin Inspector is installed). Updates come in two entries: the per-row "Update" button updates a single package (for projects that only use one of them; when the other known package is present and outdated, the confirmation dialog warns about the paired-version risk); "Update All" brings the whole framework to the remote version — outdated packages are updated and missing Aesir packages are installed (fresh installs are clearly marked in the confirmation dialog). unitypackage downloads fall back to mirror-site proxies when the direct GitHub link fails, and if every route fails the dialog offers a manual-download guide; the download progress bar can be cancelled at any time, and already imported packages stay valid. Version detection falls back through three tiers — direct GitHub (Releases API → 302 probe → raw repo content) → GitHub mirrors → CDN relay — with a 5-second per-source timeout before dropping to the next tier. The window reports whether GitHub was reachable this run (direct = 100% up to date) and which route produced the result, warning about multi-hour delays only when the CDN relay was used.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely; update them with the Package Manager directly.
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely; to update, remove the old package and re-add the new version branch's Git URL (see the upgrade note under Option 1).
 
 ### Option 3: Track main (Development Preview)
 
@@ -166,13 +166,13 @@ Add the following to your project's `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.28.0",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.28.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0"
   }
 }
 ```
 
-Add only the sub-packages you need — note, however, that UPM does not support Git URL dependencies inside a package (official Unity limitation): adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture. You can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
+Add only the sub-packages you need — note, however, that UPM does not support Git URL dependencies inside a package (official Unity limitation): adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture. You can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`. To upgrade to a newer version, change the `#AesirArchitecture-v<version>` / `#AesirModules-v<version>` branch reference in the dependency entries to the new version (Package Manager shows no update prompt for Git URL packages).
 
 ### Installing Samples
 
@@ -284,7 +284,7 @@ AesirFramework/                            # this repo
 
 ## ✅ Quality & CI
 
-- **Tests** — 796 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
+- **Tests** — 805 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
 - **CI (GitHub Actions)** —
   - `auto-release.yml`: every push to `main` publishes a GitHub Release (three unitypackages plus the update-info.json / files-manifest used by the in-package updater)
   - `auto-publish-branches.yml`: per-package subtree split generating `AesirArchitecture-v<version>` / `AesirModules-v<version>` pinned branches

@@ -3,7 +3,7 @@
 > A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.28.0-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.29.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -40,10 +40,10 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 ### Via UPM (Git URL)
 
-Install via UPM with a Git URL pinned to the 0.28.0 version branch (the branch root is the package content):
+Install via UPM with a Git URL pinned to the 0.29.0 version branch (the branch root is the package content):
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.28.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0
 ```
 
 Track the latest development version on `main`:
@@ -67,7 +67,7 @@ Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFram
 - **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
 - Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely; update them with the Package Manager directly.
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add the new version branch's Git URL (or change the `#AesirArchitecture-v<version>` branch reference in `manifest.json`).
 >
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
 
@@ -163,7 +163,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## Samples
 
-> **Aesir Getting Started window** (menu `Tools → Aesir → Getting Started`, since 0.24.0): a navigation hub that browses and jumps straight into every sample of both Aesir packages — the overview page shows cards of installed packages (with download guidance for missing ones) and package pages list samples grouped by teaching order; clicking a sample card selects its folder in the Project window, and samples with a scene provide an "Open Scene" button that switches over directly (saving the current scene once beforehand), with results reported via a Toast in the bottom-right corner of the window. Without Odin an IMGUI fallback window is used; with Odin installed the animated Odin window takes over automatically.
+> **Aesir Getting Started window** (menu `Tools → Aesir → Getting Started`, since 0.24.0): a navigation hub that browses and jumps straight into every sample of both Aesir packages — the overview page shows cards of installed packages (with download guidance for missing ones) and package pages list samples grouped by teaching order; clicking a sample card selects its folder in the Project window, and samples with a scene provide an "Open Scene" button that switches over directly (saving the current scene once beforehand), with results reported via a Toast in the bottom-right corner of the window. For not-yet-imported samples of UPM (Git URL) / embedded installs, clicking a card shows a guidance Toast, and the "Import Sample" button opens a confirmation dialog (with the sample description and destination path, cancellable) that imports the sample straight into Assets/Samples/ via the Package Manager Sample API and refreshes the list automatically. Without Odin an IMGUI fallback window is used; with Odin installed the animated Odin window takes over automatically.
 
 The package provides 11 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
 
