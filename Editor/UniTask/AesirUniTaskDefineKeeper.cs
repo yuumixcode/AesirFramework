@@ -12,7 +12,7 @@ namespace Runestone.AesirModules.Editor
     /// <para>
     /// 维护规则：游戏工程以 UPM 包（<c>com.cysharp.unitask</c>）安装 UniTask 时，
     /// 宏由核心程序集与适配程序集的 versionDefines 全权管理（装/卸自动生效），本维护器不干预全局符号；
-    /// 其他安装形态（unitypackage / DLL 导入）按「域内是否存在 Cysharp.Threading.Tasks 程序集」
+    /// 其他安装形态（unitypackage / DLL 导入）按「域内是否存在 UniTask 程序集」
     /// 增删全局符号——存在则补齐，不存在则移除。
     /// </para>
     /// </summary>
@@ -34,8 +34,18 @@ namespace Runestone.AesirModules.Editor
         /// <summary>UniTask 适配程序集与核心宏分支共用的脚本宏定义符号。</summary>
         internal const string DefineName = "AESIR_MODULES_UNITASK";
 
-        /// <summary>UniTask 的程序集名（asmdef 源码安装与预编译 DLL 安装同名）。</summary>
-        internal const string UniTaskAssemblyName = "Cysharp.Threading.Tasks";
+        /// <summary>
+        /// UniTask 的程序集名白名单（检测域内 UniTask 时按名称匹配）：
+        /// UPM 包 / unitypackage / asmdef 源码安装的程序集名为 <c>UniTask</c>
+        /// （com.cysharp.unitask 包内 UniTask.asmdef 的程序集名），NuGet 预编译 DLL 的程序集名为
+        /// <c>Cysharp.Threading.Tasks</c>——均为真实程序集名；注意 <c>Cysharp.Threading.Tasks</c>
+        /// 同时也是 UniTask 的命名空间名，但 asmdef 引用与程序集检测均按程序集名匹配，二者不可混用。
+        /// </summary>
+        internal static readonly string[] UniTaskAssemblyNames =
+        {
+            "UniTask",
+            "Cysharp.Threading.Tasks"
+        };
 
         /// <summary>UniTask 的 UPM 包名（该安装形态由 versionDefines 全权管理宏）。</summary>
         internal const string UniTaskUpmPackageName = "com.cysharp.unitask";
@@ -87,8 +97,9 @@ namespace Runestone.AesirModules.Editor
         /// <summary>UniTask 程序集是否已加载进当前域（asmdef 源码安装与预编译 DLL 安装均覆盖）。</summary>
         internal static bool IsUniTaskAssemblyLoaded()
         {
+            var assemblyNames = UniTaskAssemblyNames;
             return AppDomain.CurrentDomain.GetAssemblies()
-                .Any(assembly => assembly.GetName().Name == UniTaskAssemblyName);
+                .Any(assembly => assemblyNames.Contains(assembly.GetName().Name));
         }
     }
 }
