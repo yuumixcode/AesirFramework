@@ -31,9 +31,10 @@ namespace Runestone.AesirArchitecture.Editor
     /// <para>
     /// 更新流程：检测远程版本 → 对比本地版本（直接读取包内 package.json）→ 拉取并展示「本地 → 远程」
     /// 更新日志（<see cref="BuildChangelogDigestAsync" />）→ 确认框二次确认（
-    /// <see cref="BuildUpdateConfirmation" />）→ 更新前自动备份（用户可能修改过代码）→
-    /// 按"上次安装清单 − 新版清单"精确差集清理残留（不误伤用户新增文件）→
-    /// 下载 .unitypackage → 静默导入 → 逐包登记安装清单。
+    /// <see cref="BuildUpdateAllConfirmation" /> / <see cref="BuildSingleUpdateConfirmation" />）→
+    /// 下载 .unitypackage（直连 → 镜像站逐线路兜底，可随时取消）→ 静默导入 →
+    /// 按"上次安装清单 − 新版清单"精确差集清理残留（导入成功后才清理，不误伤用户新增文件）→
+    /// 逐包登记安装清单。
     /// </para>
     /// </summary>
     public static class AesirUpdateService
@@ -74,7 +75,7 @@ namespace Runestone.AesirArchitecture.Editor
         public const string InstallRootRelativePath = "Assets/Runestone";
 
         /// <summary>
-        /// 主安装根（项目相对路径）——备份源与提示文案用；委托 <see cref="AesirAssetPaths.PrimaryInstallRoot" />
+        /// 主安装根（项目相对路径）——提示文案用；委托 <see cref="AesirAssetPaths.PrimaryInstallRoot" />
         /// 动态解析（默认根优先，无任何本地安装时回退 <see cref="InstallRootRelativePath" />）。
         /// </summary>
         public static string PrimaryInstallRoot => AesirAssetPaths.PrimaryInstallRoot;
@@ -82,14 +83,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>项目根目录下的更新状态目录名（点前缀，Unity 不导入）。</summary>
         public const string StateDirName = ".aesir";
 
-        /// <summary>项目根目录下的备份目录名（点前缀，Unity 不导入）。</summary>
-        public const string BackupDirName = ".aesir-backup";
-
         /// <summary>本地安装清单文件名（记录每次更新成功后各包的完整文件列表）。</summary>
         public const string ManifestFileName = "installed-manifest.json";
-
-        /// <summary>本地备份保留份数（超出后按时间从旧到新删除）。</summary>
-        public const int BackupKeepCount = 3;
 
         /// <summary>jsDelivr 检测超时（秒）——不可达时通常立刻失败，超时不宜过长。</summary>
         public const int JsDelivrCheckTimeoutSeconds = 5;
@@ -105,6 +100,16 @@ namespace Runestone.AesirArchitecture.Editor
 
         /// <summary>package.json 中 Aesir 包 id 的公共前缀。</summary>
         const string PackageIdPrefix = "cn.runestone.aesir.";
+
+        /// <summary>
+        /// AesirFramework 全部已知包（目录名 → 包 id）。目录名同时是 Release 资产命名（&lt;目录名&gt;-v&lt;版本&gt;.unitypackage）
+        /// 与默认安装目录名。「全部更新」以此为基准补装缺失的包（见 <see cref="ComputeUpdateTargets" />）。
+        /// </summary>
+        public static readonly (string DirName, string PackageId)[] KnownPackages =
+        {
+            ("AesirArchitecture", "cn.runestone.aesir.architecture"),
+            ("AesirModules", "cn.runestone.aesir.modules")
+        };
 
         /// <summary>
         /// GitHub Raw 内容地址前缀（CHANGELOG 拉取的兜底源；大陆可达性不如 jsDelivr，排在最后）。
@@ -208,6 +213,23 @@ namespace Runestone.AesirArchitecture.Editor
 
             /// <summary>package.json 中的版本号。</summary>
             public string Version;
+        }
+
+        /// <summary>
+        /// 一次更新流程的执行结果：成功 / 用户取消均以正常返回收尾（取消时 <see cref="Cancelled" /> 为 true，
+        /// 已导入的包保持有效）；下载失败等异常仍向上抛出（由窗口层弹错误框 + 手动下载指引）。
+        /// </summary>
+        [Serializable]
+        public sealed class UpdateResult
+        {
+            /// <summary>已完整导入的包目录名（按执行顺序；取消/失败时之前完成的包仍然有效）。</summary>
+            public List<string> CompletedDirNames = new List<string>();
+
+            /// <summary>用户是否在下载阶段取消了流程（导入是同步步骤，取消不会产生半导入的包）。</summary>
+            public bool Cancelled;
+
+            /// <summary>尚未执行的包目录名（仅取消时有值；用于窗口如实告知哪些包未动）。</summary>
+            public List<string> SkippedDirNames = new List<string>();
         }
 
         #endregion
@@ -363,6 +385,50 @@ namespace Runestone.AesirArchitecture.Editor
                 ? new List<InstalledPackage>()
                 : packages.Where(p => CompareVersion(p.Version, remoteVersion) < 0)
                     .OrderBy(p => p.PackageId, StringComparer.Ordinal).ToList();
+
+        /// <summary>
+        /// 计算「全部更新」的执行目标：全部待更新包 <see cref="ComputeOutdatedPackages" />，
+        /// 加上 <see cref="KnownPackages" /> 中本地未安装的包（补装目标，<see cref="InstalledPackage.Version" />
+        /// 为空）；合并后按包 id 排序保证依赖顺序。
+        /// <para>
+        /// 语义：「全部更新」= 让整个框架（全部已知包）到达远程版本——旧的更新、缺的补装。
+        /// 补装目标经确认框明示（「未安装 → vX（新安装）」），用户可选择取消后单独更新已安装的包。
+        /// 补装包的 unitypackage 导入始终落位默认安装根（Unity 机制固有）。
+        /// </para>
+        /// </summary>
+        public static List<InstalledPackage> ComputeUpdateTargets(List<InstalledPackage> installedPackages,
+            string remoteVersion)
+        {
+            if (string.IsNullOrEmpty(remoteVersion))
+            {
+                return new List<InstalledPackage>();
+            }
+
+            var targets = ComputeOutdatedPackages(installedPackages, remoteVersion);
+            foreach (var (dirName, packageId) in KnownPackages)
+            {
+                // 本地已安装（含刚计入的过期包）的不再补装
+                if (installedPackages.Any(p => p != null && p.PackageId == packageId))
+                {
+                    continue;
+                }
+
+                targets.Add(new InstalledPackage
+                {
+                    DirName = dirName,
+                    PackageId = packageId,
+                    Version = null,
+                    // 导入校验/差集清理用默认安装根：unitypackage 装回 Assets/Runestone 是 Unity 固有行为
+                    AssetsPath = $"{InstallRootRelativePath}/{dirName}"
+                });
+            }
+
+            return targets.OrderBy(p => p.PackageId, StringComparer.Ordinal).ToList();
+        }
+
+        /// <summary>目标是否为补装（本地未安装、由「全部更新」新安装的包）——以 <see cref="InstalledPackage.Version" /> 为空判定。</summary>
+        public static bool IsFreshInstall(InstalledPackage package) =>
+            string.IsNullOrEmpty(package?.Version);
 
         /// <summary>
         /// 比较两个语义化版本号（允许 v/V 前缀，缺省段按 0 处理）。
@@ -1010,11 +1076,17 @@ namespace Runestone.AesirArchitecture.Editor
         /// <paramref name="stallTimeoutSeconds" />——任一超限即 <c>Abort</c> 并抛超时异常，
         /// 保证上层进度条必定收尾（不会出现长时间卡住的进度条）。
         /// </summary>
+        /// <param name="isCanceled">
+        /// 取消探测委托（每帧评估一次）：返回 true 时 <c>Abort</c> 请求并抛
+        /// <see cref="OperationCanceledException" />——给卡在慢速线路上的用户提供逃生门，
+        /// 不必等待超时判据触发。
+        /// </param>
         public static async Task<byte[]> DownloadBytesAsync(string url,
             Action<float> onProgress = null,
             int timeoutSeconds = DownloadTimeoutSeconds,
             int stallTimeoutSeconds = DownloadStallTimeoutSeconds,
-            Func<double> clock = null)
+            Func<double> clock = null,
+            Func<bool> isCanceled = null)
         {
             clock ??= DefaultClock;
             using var request = UnityWebRequest.Get(url);
@@ -1026,6 +1098,12 @@ namespace Runestone.AesirArchitecture.Editor
             var lastProgressAt = clock();
             while (!operation.isDone)
             {
+                if (isCanceled != null && isCanceled())
+                {
+                    request.Abort();
+                    throw new OperationCanceledException($"已取消下载：{url}");
+                }
+
                 var now = clock();
                 if (totalBudget.IsExpired(now))
                 {
@@ -1057,6 +1135,61 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             return request.downloadHandler.data;
+        }
+
+        /// <summary>
+        /// 下载指定包的 unitypackage：按「GitHub Release 直链 → GitHub 镜像站代理」顺序逐线路尝试，
+        /// 单条线路失败（超时 / 连接失败）自动落到下一线路，每条线路独立适用双重墙钟超时。
+        /// 用户取消（<paramref name="isCanceled" /> 返回 true）立即抛 <see cref="OperationCanceledException" />，
+        /// 不再尝试后续线路。全部线路失败时抛出含各线路错误明细与手动下载指引的异常——
+        /// 用户网络全部线路不可达时仍有明确的自助路径。
+        /// </summary>
+        /// <param name="onProgress">进度回调（当前线路展示名, 0~1 进度）；换线路时进度从零重报。</param>
+        /// <remarks>
+        /// 镜像站（<see cref="GitHubMirrorPrefixes" />）以「前缀 + 完整 GitHub 地址」形态代理 Release 资产，
+        /// 与版本检测的镜像站兜底共用域名清单；属第三方公益服务，可用性与限速不受本框架控制，
+        /// 故仅作为直连失败后的兜底、绝不排在直连之前。jsDelivr 不代理 Release 资产，不在此列。
+        /// </remarks>
+        public static async Task<byte[]> DownloadUnityPackageAsync(ReleaseSnapshot snapshot,
+            string packageDirName,
+            Action<string, float> onProgress = null,
+            Func<bool> isCanceled = null)
+        {
+            var directUrl = snapshot.GetUnityPackageUrl(packageDirName);
+            var assetName = $"{packageDirName}-v{snapshot.Tag.TrimStart('v')}.unitypackage";
+            var routes = new List<(string Name, string Url)> { ("GitHub Release 直链", directUrl) };
+            foreach (var prefix in GitHubMirrorPrefixes)
+            {
+                routes.Add(($"镜像 {new Uri(prefix).Host}", prefix + directUrl));
+            }
+
+            var errors = new List<string>();
+            foreach (var (name, url) in routes)
+            {
+                try
+                {
+                    return await DownloadBytesAsync(url,
+                        p => onProgress?.Invoke(name, p),
+                        DownloadTimeoutSeconds,
+                        DownloadStallTimeoutSeconds,
+                        null,
+                        isCanceled);
+                }
+                catch (OperationCanceledException)
+                {
+                    // 用户主动取消：不属于线路失败，不再尝试后续线路
+                    throw;
+                }
+                catch (Exception e)
+                {
+                    errors.Add($"{name}：{e.Message}");
+                }
+            }
+
+            throw new Exception($"unitypackage 全部下载线路均失败（{assetName}）：\n" +
+                                string.Join("\n", errors) + "\n\n" +
+                                $"自助方案：打开 {ReleasesPageUrl} 手动下载 {assetName}，" +
+                                "下载完成后双击导入本项目即可完成更新；或待网络恢复后重试本更新器。");
         }
 
         #endregion
@@ -1500,138 +1633,173 @@ namespace Runestone.AesirArchitecture.Editor
 
         #endregion
 
-        #region 备份
-
-        /// <summary>
-        /// 将安装根目录整体复制到备份目录（&lt;backupRoot&gt;/&lt;label&gt;），并裁剪至保留最近
-        /// <paramref name="keepCount" /> 份。源目录不存在时返回 null（无安装即无备份）。
-        /// </summary>
-        /// <param name="label">
-        /// 备份子目录名，须以时间戳开头（格式 yyyyMMdd-HHmmss_...），
-        /// 保证 Ordinal 排序即时间序（版本号前缀会打乱 0.9 与 0.14 的次序，故时间戳在前）。
-        /// </param>
-        public static string BackupRunestone(string label,
-            string sourceRelativePath = InstallRootRelativePath,
-            string backupRootRelativePath = BackupDirName,
-            int keepCount = BackupKeepCount)
-        {
-            var sourceAbs = ToAbsolutePath(sourceRelativePath);
-            if (!Directory.Exists(sourceAbs))
-            {
-                return null;
-            }
-
-            var backupRootAbs = ToAbsolutePath(backupRootRelativePath);
-            Directory.CreateDirectory(backupRootAbs);
-
-            var destinationAbs = Path.Combine(backupRootAbs, label);
-            CopyDirectory(sourceAbs, destinationAbs);
-            PruneBackups(backupRootAbs, keepCount);
-            return destinationAbs;
-        }
-
-        /// <summary>递归复制目录（全量，含隐藏文件；备份追求完整还原能力）。</summary>
-        static void CopyDirectory(string sourceDir, string destDir)
-        {
-            Directory.CreateDirectory(destDir);
-            foreach (var file in Directory.GetFiles(sourceDir))
-            {
-                File.Copy(file, Path.Combine(destDir, Path.GetFileName(file)), true);
-            }
-
-            foreach (var dir in Directory.GetDirectories(sourceDir))
-            {
-                CopyDirectory(dir, Path.Combine(destDir, Path.GetFileName(dir)));
-            }
-        }
-
-        /// <summary>按目录名的 Ordinal 排序裁剪旧备份（label 以时间戳开头时排序即时间序）。</summary>
-        public static void PruneBackups(string backupRootAbsolutePath, int keepCount)
-        {
-            if (keepCount <= 0 || !Directory.Exists(backupRootAbsolutePath))
-            {
-                return;
-            }
-
-            var dirs = Directory.GetDirectories(backupRootAbsolutePath)
-                .OrderBy(d => d, StringComparer.Ordinal).ToArray();
-            for (var i = 0; i < dirs.Length - keepCount; i++)
-            {
-                Directory.Delete(dirs[i], true);
-            }
-        }
-
-        #endregion
-
         #region 更新执行
 
         /// <summary>当前项目根目录是否存在 .git（若是 AesirFramework 开发仓库，执行更新会覆盖本地源码）。</summary>
         public static bool IsGitRepository() => Directory.Exists(ToAbsolutePath(".git"));
 
         /// <summary>
-        /// 构建更新前的确认框文本：逐包列示「本地 v旧 → 远程新」，附备份与覆盖说明；
-        /// <paramref name="isGitRepository" /> 为 true 时追加开发仓库警告。
+        /// 构建「全部更新」确认框文本：逐包列示「本地 → 远程」，补装目标（本地未安装的已知包，
+        /// 见 <see cref="ComputeUpdateTargets" />）显示「未安装 → vX（新安装）」。
+        /// <para>
+        /// 存在补装目标时前置缺包说明——「全部更新」的语义是让整个框架到达远程版本
+        /// （旧的更新、缺的安装），提示用户缺失的包也会被安装，并给出改用单包更新的路径；
+        /// 末尾附覆盖回滚、装回位置与前台运行提示，<paramref name="isGitRepository" /> 为
+        /// true 时追加开发仓库警告。
+        /// </para>
         /// </summary>
-        public static string BuildUpdateConfirmation(IReadOnlyList<InstalledPackage> targets,
+        public static string BuildUpdateAllConfirmation(IReadOnlyList<InstalledPackage> targets,
             string remoteVersion,
             bool isGitRepository)
         {
             var builder = new StringBuilder();
-            builder.Append("即将更新以下包：\n\n");
+            builder.Append("即将执行以下操作：\n\n");
+
+            var freshInstalls = new List<string>();
             foreach (var pkg in targets)
             {
-                builder.Append("    ").Append(pkg.DirName).Append("：v").Append(pkg.Version).Append(" → ")
-                    .Append(remoteVersion).Append('\n');
+                builder.Append("    ").Append(pkg.DirName).Append("：");
+                if (IsFreshInstall(pkg))
+                {
+                    builder.Append("未安装 → ").Append(remoteVersion).Append("（新安装）\n");
+                    freshInstalls.Add(pkg.DirName);
+                }
+                else
+                {
+                    builder.Append("v").Append(pkg.Version).Append(" → ").Append(remoteVersion).Append('\n');
+                }
             }
 
-            builder.Append('\n').Append("更新前自动备份 ").Append(AesirAssetPaths.PrimaryInstallRoot).Append(" 至 ")
-                .Append(BackupDirName).Append("/（保留最近 ").Append(BackupKeepCount).Append(" 份）。\n")
-                .Append("包目录内的本地修改将被 Release 内容覆盖，可从备份还原。\n").Append(
-                    "更新经 unitypackage 导入，始终装回默认位置 Assets/Runestone；" + "若曾移动过 Runestone，旧位置的副本需自行清理。");
-
-            if (isGitRepository)
+            if (freshInstalls.Count > 0)
             {
-                builder.Append("\n\n⚠ 检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，更新会覆盖本地源码，强烈建议取消。");
+                builder.Append("\n注意：本项目当前未安装 ").Append(string.Join("、", freshInstalls))
+                    .Append("。「全部更新」在更新已安装包的同时，")
+                    .Append("还会从 GitHub Release 下载并安装上述标为（新安装）的包。\n")
+                    .Append("若您只需要更新已安装的包，请点「取消」，改用包列表中对应行的「更新」按钮。\n");
             }
 
-            builder.Append("\n\n确认开始更新？");
+            AppendUpdateCommonNotice(builder, isGitRepository);
+            builder.Append("\n确认开始更新？");
             return builder.ToString();
         }
 
         /// <summary>
-        /// 执行更新：整体备份 → 逐包（下载 → 按清单差集清残留 → 静默导入 → 登记安装清单）。
-        /// 返回备份目录的绝对路径（无安装源时备份为 null）。
+        /// 构建「单包更新」确认框文本：列示目标包「本地 → 远程」；检测到另一已知包
+        /// （<see cref="KnownPackages" />）在场且落后于远程版本时，前置配套版本警告——
+        /// 两包按同版本配套发布，仅更新其一可能造成版本撕裂（编译错误 / 运行时 API 不匹配）；
+        /// 末尾附覆盖回滚、装回位置与前台运行提示。警告只提示不阻止，决定权在用户。
+        /// </summary>
+        /// <param name="allInstalled">本地已安装的全部包（配套版本检测用；单包入口由调用方传入扫描结果）。</param>
+        public static string BuildSingleUpdateConfirmation(InstalledPackage target,
+            string remoteVersion,
+            IReadOnlyList<InstalledPackage> allInstalled,
+            bool isGitRepository)
+        {
+            var builder = new StringBuilder();
+            builder.Append("即将仅更新 ").Append(target.DirName).Append("：v").Append(target.Version)
+                .Append(" → ").Append(remoteVersion).Append('\n');
+
+            foreach (var (dirName, _) in KnownPackages)
+            {
+                if (dirName == target.DirName)
+                {
+                    continue;
+                }
+
+                var other = allInstalled?.FirstOrDefault(p => p != null && p.DirName == dirName);
+                if (other == null || CompareVersion(other.Version, remoteVersion) >= 0)
+                {
+                    continue;
+                }
+
+                builder.Append("\n⚠ 配套版本警告：").Append(dirName).Append(" 与 ").Append(target.DirName)
+                    .Append(" 按同版本配套发布。当前 ").Append(dirName).Append(" 为 v").Append(other.Version)
+                    .Append("，仅更新 ").Append(target.DirName).Append(" 到 ").Append(remoteVersion)
+                    .Append(" 后两包版本将不一致，可能导致编译错误或运行时 API 不匹配。\n")
+                    .Append("建议点「取消」改用「全部更新」，将两个包一并更新到 ").Append(remoteVersion)
+                    .Append("。\n");
+                break;
+            }
+
+            AppendUpdateCommonNotice(builder, isGitRepository);
+            builder.Append("\n确认仍要仅更新 ").Append(target.DirName).Append(" 吗？");
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// 追加公共说明（覆盖回滚 / 装回默认位置 / 前台运行 / 开发仓库警告）；
+        /// 确认句由各入口自行拼接（全部更新与单包更新的措辞不同）。
+        /// </summary>
+        static void AppendUpdateCommonNotice(StringBuilder builder, bool isGitRepository)
+        {
+            builder.Append('\n')
+                .Append("包目录内的本地修改将被 Release 内容覆盖；如需回滚，可从 GitHub Releases 下载旧版本的 ")
+                .Append("unitypackage 重新导入（上一版本资产永久保留在 Releases 页面）。\n")
+                .Append("更新经 unitypackage 导入，始终装回默认位置 Assets/Runestone；" +
+                        "若曾移动过 Runestone，旧位置的副本需自行清理。\n")
+                .Append("更新期间请保持 Unity 窗口处于前台：编辑器失焦时下载与导入可能停滞，进度会长时间不动。\n");
+
+            if (isGitRepository)
+            {
+                builder.Append(
+                    "\n⚠ 检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，更新会覆盖本地源码，强烈建议取消。\n");
+            }
+        }
+
+        /// <summary>
+        /// 执行更新：逐包（下载 → 静默导入 → 按清单差集清理残留 → 登记安装清单）。
+        /// 下载经 <see cref="DownloadUnityPackageAsync" /> 逐线路兜底（直连 → 镜像站代理）；
+        /// 用户取消时以 <see cref="UpdateResult" />（<see cref="UpdateResult.Cancelled" /> = true）正常返回，
+        /// 已导入的包保持有效、剩余目标如实列入 <see cref="UpdateResult.SkippedDirNames" />；
+        /// 其他失败仍向上抛出（由窗口层弹错误框，异常消息含手动下载指引）。
         /// </summary>
         /// <param name="snapshot">
         /// 检测结果快照；<see cref="ReleaseSnapshot.Info" /> 同时承载新清单，
         /// 302 重定向降级路径无清单，残留清理自动跳过。
         /// </param>
-        /// <param name="targets">待更新包列表，须已按依赖顺序排列（Architecture 先于 Modules）。</param>
+        /// <param name="targets">
+        /// 执行目标列表，须已按依赖顺序排列（Architecture 先于 Modules）；
+        /// 可含补装目标（<see cref="InstalledPackage.Version" /> 为空，见 <see cref="ComputeUpdateTargets" />）。
+        /// </param>
         /// <param name="onProgress">进度回调（阶段描述 + 0~1 进度）。</param>
-        public static async Task<string> UpdatePackagesAsync(ReleaseSnapshot snapshot,
+        /// <param name="isCanceled">取消探测委托（下载阶段每帧评估；用户点进度条「取消」后返回 true）。</param>
+        public static async Task<UpdateResult> UpdatePackagesAsync(ReleaseSnapshot snapshot,
             IReadOnlyList<InstalledPackage> targets,
-            Action<string, float> onProgress)
+            Action<string, float> onProgress,
+            Func<bool> isCanceled = null)
         {
-            // 1. 整体备份（一次，覆盖本次全部导入；源根经锚点定位，跟随 Runestone 实际位置）
-            onProgress?.Invoke($"备份 {AesirAssetPaths.PrimaryInstallRoot} ...", 0.05f);
-            var backupPath = BackupRunestone($"{DateTime.Now:yyyyMMdd-HHmmss}_v{GetMaxVersion(targets)}",
-                AesirAssetPaths.PrimaryInstallRoot);
+            var result = new UpdateResult();
 
             var localManifest = LoadLocalManifest();
 
-            // 2. 逐包下载导入（targets 已按依赖顺序排列）
+            // 逐包下载导入（targets 已按依赖顺序排列）
             for (var i = 0; i < targets.Count; i++)
             {
                 var pkg = targets[i];
-                var assetUrl = snapshot.GetUnityPackageUrl(pkg.DirName);
                 var assetName = $"{pkg.DirName}-v{snapshot.Tag.TrimStart('v')}.unitypackage";
 
                 var progressBase = 0.1f + 0.8f * i / targets.Count;
                 var progressSpan = 0.8f / targets.Count;
                 onProgress?.Invoke($"[{pkg.DirName}] 下载 {assetName} ...", progressBase);
-                var bytes = await DownloadBytesAsync(assetUrl,
-                    p => onProgress?.Invoke($"[{pkg.DirName}] 下载 {assetName} ...",
-                        progressBase + progressSpan * p));
+                byte[] bytes;
+                try
+                {
+                    bytes = await DownloadUnityPackageAsync(snapshot, pkg.DirName,
+                        (route, p) => onProgress?.Invoke($"[{pkg.DirName}] 经{route}下载 {assetName} ...",
+                            progressBase + progressSpan * p),
+                        isCanceled);
+                }
+                catch (OperationCanceledException)
+                {
+                    // 用户取消：已导入的包保持有效，剩余目标（含当前包）如实回报给窗口层提示
+                    result.Cancelled = true;
+                    for (var j = i; j < targets.Count; j++)
+                    {
+                        result.SkippedDirNames.Add(targets[j].DirName);
+                    }
+
+                    return result;
+                }
 
                 var tempDir = ToAbsolutePath("Temp/AesirUpdate");
                 Directory.CreateDirectory(tempDir);
@@ -1647,12 +1815,14 @@ namespace Runestone.AesirArchitecture.Editor
                 File.Delete(tempFile);
 
                 // 导入后先校验再清理：包目录缺失说明导入静默失败（unitypackage 损坏等），
-                // 此时跳过残留清理与清单登记（旧清单保留，下次更新的差集依据不丢失），并告警指向备份
+                // 此时跳过残留清理与清单登记（旧清单保留，下次更新的差集依据不丢失），
+                // 并告警指向手动恢复路径（从 Releases 重新下载对应版本导入）
                 var newEntry = snapshot.Info?.GetPackage(pkg.DirName);
                 if (!Directory.Exists(ToAbsolutePath(pkg.AssetsPath)))
                 {
                     Debug.LogError($"[Aesir Updater] {pkg.DirName}: 导入后未找到包目录 {pkg.AssetsPath}，" +
-                                   $"导入可能已失败。本次未执行残留清理，请从备份恢复：{backupPath}");
+                                   "导入可能已失败。本次未执行残留清理与清单登记；" +
+                                   $"如需恢复，请从 {ReleasesPageUrl} 重新下载对应版本的 unitypackage 导入。");
                     continue;
                 }
 
@@ -1677,6 +1847,8 @@ namespace Runestone.AesirArchitecture.Editor
                     SaveLocalManifest(localManifest);
                 }
 
+                result.CompletedDirNames.Add(pkg.DirName);
+
                 // 每包结束后明确报出下一步（含"无更多包"），避免多包更新时进度条停在上一包的导入文案上
                 if (i + 1 < targets.Count)
                 {
@@ -1690,22 +1862,7 @@ namespace Runestone.AesirArchitecture.Editor
                 }
             }
 
-            return backupPath;
-        }
-
-        /// <summary>取包列表中的最高版本号（两包版本由 CI 强制一致，此处仍按最高取值兜底）。</summary>
-        static string GetMaxVersion(IEnumerable<InstalledPackage> packages)
-        {
-            string max = null;
-            foreach (var pkg in packages)
-            {
-                if (max == null || CompareVersion(pkg.Version, max) > 0)
-                {
-                    max = pkg.Version;
-                }
-            }
-
-            return max ?? "0.0.0";
+            return result;
         }
 
         #endregion
