@@ -14,12 +14,16 @@ namespace Runestone.AesirModules.Tests.Editor
     /// <summary>
     /// 验证 <see cref="SceneModule" /> 行为层：TryGetLoadablePath 拒绝矩阵（经公共入口）、
     /// 协程失败分支（手动驱动 IEnumerator）、Single 加载失败保留叠加追踪（锁定修复时序）、
-    /// SetActiveScene 校验、场景事件广播、重复实例与 DDOL 语义、预设名只读列表。
+    /// SetActiveScene 校验、场景事件广播、重复实例与 DDOL 语义、预设名只读列表、静态门面契约。
     /// </summary>
     /// <remarks>
     ///     <para>
     ///     加载成功路径依赖 LoadSceneAsync 的真实执行（仅 Play Mode 可用），本套件只覆盖纯逻辑与失败分支；
     ///     预期的 LogError/LogWarning 用 <see cref="LogAssert" /> 显式声明。
+    ///     </para>
+    ///     <para>
+    ///     公开 API 为静态门面：SetUp 将被测实例注入静态单例字段后统一走静态入口，
+    ///     事件/属性断言因此同时锁定「门面 → 单例转发」链路。
     ///     </para>
     ///     <para>
     ///     Addressables 相关用例与 SceneAssetWrapperTests 共用桥隔离约定：SetUp 注销桥、
@@ -37,6 +41,7 @@ namespace Runestone.AesirModules.Tests.Editor
             SceneAssetWrapperAddressablesBridge.Unregister();
             _host = new GameObject("SceneModule_Under_Test");
             _module = _host.AddComponent<SceneModule>();
+            SetInstanceTo(_module);
         }
 
         [TearDown]
@@ -70,6 +75,14 @@ namespace Runestone.AesirModules.Tests.Editor
         #endregion
 
         #region 反射辅助
+
+        static void SetInstanceTo(SceneModule module)
+        {
+            var field = typeof(SceneModule).GetField("_instance",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsNotNull(field, "_instance 静态字段不存在");
+            field.SetValue(null, module);
+        }
 
         static void ResetInstanceToNull()
         {
@@ -157,7 +170,7 @@ namespace Runestone.AesirModules.Tests.Editor
 
             // AesirModulesDebug 输出带富文本前缀，纯字符串匹配不上，须用 Regex
             LogAssert.Expect(LogType.Error, new Regex("场景引用为空（SceneAssetWrapper == null）。"));
-            _module.LoadSceneSingle((SceneAssetWrapper)null, () => completed = true, () => failed = true);
+            SceneModule.LoadSceneSingle((SceneAssetWrapper)null, () => completed = true, () => failed = true);
 
             Assert.IsFalse(completed, "空引用不得触发完成回调");
             Assert.IsTrue(failed, "空引用应触发失败回调");
@@ -171,7 +184,7 @@ namespace Runestone.AesirModules.Tests.Editor
             var wrapper = MakeAddressableWrapper("fake-address");
 
             LogAssert.Expect(LogType.Error, new Regex("为 Addressable 场景，SceneModule 无法加载"));
-            _module.LoadSceneSingle(wrapper, () => completed = true, () => failed = true);
+            SceneModule.LoadSceneSingle(wrapper, () => completed = true, () => failed = true);
 
             Assert.IsFalse(completed, "Addressable 引用不得触发完成回调");
             Assert.IsTrue(failed, "Addressable 引用应触发失败回调");
@@ -185,7 +198,7 @@ namespace Runestone.AesirModules.Tests.Editor
             var wrapper = MakeWrapperWithPath("Assets/Fake/NotInBuild.unity");
 
             LogAssert.Expect(LogType.Error, new Regex("场景引用无效（不在 BuildSettings）"));
-            _module.LoadSceneSingle(wrapper, () => completed = true, () => failed = true);
+            SceneModule.LoadSceneSingle(wrapper, () => completed = true, () => failed = true);
 
             Assert.IsFalse(completed);
             Assert.IsTrue(failed, "不在 BuildSettings 的引用应触发失败回调");
@@ -197,7 +210,7 @@ namespace Runestone.AesirModules.Tests.Editor
             var failed = false;
 
             LogAssert.Expect(LogType.Error, new Regex("场景引用为空（SceneAssetWrapper == null）。"));
-            _module.LoadSceneAdditive((SceneAssetWrapper)null, null, () => failed = true);
+            SceneModule.LoadSceneAdditive((SceneAssetWrapper)null, null, () => failed = true);
 
             Assert.IsTrue(failed);
         }
@@ -208,7 +221,7 @@ namespace Runestone.AesirModules.Tests.Editor
             var failed = false;
 
             LogAssert.Expect(LogType.Error, new Regex("场景引用为空，无法卸载。"));
-            _module.UnloadScene((SceneAssetWrapper)null, null, () => failed = true);
+            SceneModule.UnloadScene((SceneAssetWrapper)null, null, () => failed = true);
 
             Assert.IsTrue(failed);
         }
@@ -291,14 +304,14 @@ namespace Runestone.AesirModules.Tests.Editor
         public void SetActiveScene_NotLoadedPath_ReturnsFalse()
         {
             LogAssert.Expect(LogType.Error, new Regex("场景未加载，无法设为激活场景"));
-            Assert.IsFalse(_module.SetActiveScene("Assets/Fake/NotLoaded.unity"));
+            Assert.IsFalse(SceneModule.SetActiveScene("Assets/Fake/NotLoaded.unity"));
         }
 
         [Test]
         public void SetActiveScene_NullWrapper_ReturnsFalse()
         {
             LogAssert.Expect(LogType.Error, new Regex("场景引用无效或场景未加载"));
-            Assert.IsFalse(_module.SetActiveScene((SceneAssetWrapper)null));
+            Assert.IsFalse(SceneModule.SetActiveScene((SceneAssetWrapper)null));
         }
 
         [Test]
@@ -308,7 +321,7 @@ namespace Runestone.AesirModules.Tests.Editor
             var wrapper = MakeWrapperWithPath("Assets/Fake/NotInBuild.unity");
 
             LogAssert.Expect(LogType.Error, new Regex("场景引用无效或场景未加载"));
-            Assert.IsFalse(_module.SetActiveScene(wrapper));
+            Assert.IsFalse(SceneModule.SetActiveScene(wrapper));
         }
 
         #endregion
@@ -319,13 +332,13 @@ namespace Runestone.AesirModules.Tests.Editor
         public void SceneLoadedEvent_Invoke_ReachesListenerAndAutoRemove()
         {
             var received = 0;
-            var handle = _module.SceneLoadedEvent.AddListener(path => received++);
+            var handle = SceneModule.SceneLoadedEvent.AddListener(path => received++);
 
-            _module.SceneLoadedEvent.Invoke("Assets/Fake/Scene.unity");
+            SceneModule.SceneLoadedEvent.Invoke("Assets/Fake/Scene.unity");
             Assert.AreEqual(1, received);
 
             handle.Dispose();
-            _module.SceneLoadedEvent.Invoke("Assets/Fake/Scene.unity");
+            SceneModule.SceneLoadedEvent.Invoke("Assets/Fake/Scene.unity");
             Assert.AreEqual(1, received, "Dispose 后不应再收到事件");
         }
 
@@ -333,9 +346,9 @@ namespace Runestone.AesirModules.Tests.Editor
         public void SceneUnloadedEvent_Invoke_ReachesListener()
         {
             var receivedPath = null as string;
-            _module.SceneUnloadedEvent.AddListener(path => receivedPath = path);
+            SceneModule.SceneUnloadedEvent.AddListener(path => receivedPath = path);
 
-            _module.SceneUnloadedEvent.Invoke("Assets/Fake/Unloaded.unity");
+            SceneModule.SceneUnloadedEvent.Invoke("Assets/Fake/Unloaded.unity");
             Assert.AreEqual("Assets/Fake/Unloaded.unity", receivedPath);
         }
 
@@ -344,10 +357,10 @@ namespace Runestone.AesirModules.Tests.Editor
         {
             var loadedCount = 0;
             var unloadedCount = 0;
-            _module.SceneLoadedEvent.AddListener(_ => loadedCount++);
-            _module.SceneUnloadedEvent.AddListener(_ => unloadedCount++);
+            SceneModule.SceneLoadedEvent.AddListener(_ => loadedCount++);
+            SceneModule.SceneUnloadedEvent.AddListener(_ => unloadedCount++);
 
-            _module.SceneLoadedEvent.Invoke("a.unity");
+            SceneModule.SceneLoadedEvent.Invoke("a.unity");
 
             Assert.AreEqual(1, loadedCount);
             Assert.AreEqual(0, unloadedCount);
@@ -382,11 +395,10 @@ namespace Runestone.AesirModules.Tests.Editor
         }
 
         [Test]
-        public void DontDestroyOnLoadDisabled_EmitsWarning()
+        public void DontDestroyOnLoadDisabled_DoesNotMigrateScene()
         {
             SetPrivateField(_module, "dontDestroyOnLoad", false);
 
-            LogAssert.Expect(LogType.Warning, new Regex("dontDestroyOnLoad 已关闭"));
             InvokePrivateAwake(_module);
 
             Assert.AreNotEqual("DontDestroyOnLoad", _host.scene.name,
@@ -421,6 +433,53 @@ namespace Runestone.AesirModules.Tests.Editor
             method.Invoke(null, null);
 
             Assert.IsNull(field.GetValue(null), "ResetStatics 后 _instance 应为 null");
+        }
+
+        #endregion
+
+        #region 静态门面契约
+
+        [Test]
+        public void StaticFacade_NoPublicInstanceApiOnType()
+        {
+            // 公开 API 全部为静态成员（AudioModule 同款门面约定）——
+            // 实例侧只保留单例生命周期，杜绝 Instance 与静态入口两套并行 API
+            var methods = typeof(SceneModule).GetMethods(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            Assert.IsEmpty(methods, "SceneModule 不应有公开实例方法（静态门面约定）");
+
+            var properties = typeof(SceneModule).GetProperties(
+                BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            Assert.IsEmpty(properties, "SceneModule 不应有公开实例属性（静态门面约定）");
+        }
+
+        [Test]
+        public void StaticFacade_LastLoadedScene_ForwardsToInstance()
+        {
+            var expected = SceneManager.GetActiveScene();
+            SetPrivateField(_module, "_lastLoadedScene", expected);
+
+            Assert.AreEqual(expected, SceneModule.LastLoadedScene, "静态门面应转发单例的 LastLoadedScene");
+        }
+
+        [Test]
+        public void StaticFacade_AddedScenePaths_ForwardsToInstance()
+        {
+            var addedPaths = (List<string>)GetPrivateField(_module, "_addedScenePaths");
+            addedPaths.Add("Assets/Fake/Additive.unity");
+
+            CollectionAssert.AreEqual(new[] { "Assets/Fake/Additive.unity" }, SceneModule.AddedScenePaths,
+                "静态门面应转发单例的叠加追踪列表");
+        }
+
+        [Test]
+        public void StaticFacade_BootstrapSceneAssetWrapper_ForwardsToInstance()
+        {
+            var wrapper = MakeWrapperWithPath("Assets/Fake/Bootstrap.unity");
+            SetPrivateField(_module, "bootstrapScene", wrapper);
+
+            Assert.AreSame(wrapper, SceneModule.BootstrapSceneAssetWrapper,
+                "静态门面应转发单例的自定义启动场景引用");
         }
 
         #endregion
