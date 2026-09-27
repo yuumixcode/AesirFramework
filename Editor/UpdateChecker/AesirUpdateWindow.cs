@@ -23,6 +23,10 @@ namespace Runestone.AesirArchitecture.Editor
     /// 远程版本 / 检测结果 / 更新日志均为序列化字段，更新导入触发域重载后窗口内容不丢失；
     /// 过期包列表为缓存值，OnGUI 期间零 LINQ、零磁盘 IO。
     /// </para>
+    /// <para>
+    /// 菜单项经 validate 按安装形态显隐：扫描不到 Assets 形态的 Aesir 包安装时整体隐藏
+    /// （UPM 安装的副本由 Package Manager 管辖，不经过本更新器）。
+    /// </para>
     /// </summary>
     public class AesirUpdateWindow : EditorWindow
     {
@@ -42,6 +46,17 @@ namespace Runestone.AesirArchitecture.Editor
 
         // priority 1100：更新入口置 Tools/Aesir 最底部，与上方工具组（最大 1002）差值超过 10，
         // Unity 自动插入独立分割线（对齐 Getting Started -980 置顶配分割线的先例）
+
+        // validate：扫描不到 Assets 形态的 Aesir 包安装时隐藏菜单——UPM 安装（Package Manager 管理）
+        // 或未安装形态下更新器没有管辖对象（UPM 副本的更新应走 Package Manager），菜单不再显示避免误导；
+        // Assets 形态安装（含与 UPM 混合并存）时照常显示，更新器只管辖 Assets 副本。
+        // 扫描为纯本地目录 IO（锚点定位安装根 + 解析 package.json），菜单展开频率下开销可忽略
+        [MenuItem(MenuPath, true)]
+        static bool ValidateMenuVisible()
+        {
+            return AesirUpdateService.ScanInstalledPackagesFromAllRoots().Count > 0;
+        }
+
         [MenuItem(MenuPath, false, 1100)]
         static void Open()
         {
