@@ -20,10 +20,10 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.28.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.28.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.29.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.29.0** |
 
-> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.28.0` / `#AesirModules-v0.28.0`），按需选用。
+> **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐固定版本分支 `#AesirArchitecture-v0.29.0` / `#AesirModules-v0.29.0`），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (pinned version branches recommended) and used on demand.*
 >
 > **依赖关系 / Dependency**:
@@ -31,6 +31,27 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
 
 ---
+
+## [0.29.0] - 2026-09-27
+
+---
+
+### [architecture] Aesir Architecture
+
+**Added**
+
+- **Getting Started 窗口支持 UPM / 嵌入式安装的示例一键导入** — 未导入示例的卡片：整卡点击的 Toast 改为导入引导（「请点击右侧「导入 Sample」按钮导入 xxx Sample 案例」），右侧按钮由「去导入」（跳转 Package Manager 窗口）升级为「导入 Sample」——点击弹出 Unity 确认框（含示例介绍与导入后位置，可取消），确认后经 Package Manager 的 Sample API（`UnityEditor.PackageManager.UI.Sample`）直接导入到 `Assets/Samples/<包显示名>/<版本>/<示例显示名>/`；导入成功自动重扫示例清单，卡片即时切换为已导入态（可继续「打开场景」/定位）。示例已导入时幂等跳过；Package Manager 清单中匹配不到条目时以红色 Toast 提示兜底。IMGUI 兜底窗口与 Odin 版同步。新增测试 `AesirGetStartedServiceTests`（Sample 查找经参数注入伪造，不触碰真实 Package Manager）
+- **`package.json` 新增 UPM 元数据链接字段** — `documentationUrl` 指向文档站 Architecture 分区、`changelogUrl` 指向文档站更新日志页：UPM（Git URL）安装后在 Package Manager 包详情页出现「View documentation」「View changelog」链接；README 安装指引（中英）同步补充具体升级操作——Package Manager 不对 Git URL 包显示更新提示，升级 = 移除旧包后重新添加新版本分支的 Git URL，或修改 `manifest.json` 中的分支名
+
+**Removed**
+
+- **PlaneWar 场景引用修复菜单** — 移除 `Tools → Aesir → Architecture → Samples → PlaneWar → Fix Scene References`（`PlaneWarSceneSetup`）——开发期用于一次性修复示例场景 HUD / Player 预制体引用的工具，引用已随资产固化进仓库，无需随包分发；示例 Editor 程序集 `Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor` 一并移除。`RuntimeInitializeLoadType` 示例菜单显式 priority 995 接管 Architecture 组排序锚点，`Tools/Aesir` 菜单布局不变
+
+### [modules] Aesir Modules
+
+**Added**
+
+- **`package.json` 新增 UPM 元数据链接字段** — `documentationUrl` 指向文档站 Modules 分区、`changelogUrl` 指向文档站更新日志页：UPM（Git URL）安装后在 Package Manager 包详情页出现「View documentation」「View changelog」链接
 
 ## [0.28.0] - 2026-09-27
 
