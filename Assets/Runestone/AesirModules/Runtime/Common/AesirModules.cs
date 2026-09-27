@@ -13,7 +13,7 @@ namespace Runestone.AesirModules
     ///     <item><b>默认（勾选）</b>：实例在 <c>Awake</c> 时加入 DontDestroyOnLoad 场景，跨场景持久存在。</item>
     ///     <item>
     ///     <b>取消勾选</b>：实例保留在所在场景、随场景卸载销毁——必须自行处理多场景叠加（Additive）加载下的
-    ///     生命周期管理。Inspector 会显示警告信息框，运行时亦输出提醒日志。
+    ///     生命周期管理。Inspector 会显示警告信息框提示。
     ///     </item>
     /// </list>
     /// </remarks>
@@ -21,9 +21,6 @@ namespace Runestone.AesirModules
     [DisallowMultipleComponent]
     public class AesirModules : AesirMonoBehaviour
     {
-        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
-        static AesirModules _instance;
-
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景。
         /// </summary>
@@ -38,6 +35,9 @@ namespace Runestone.AesirModules
         /// </remarks>
         [SerializeField]
         bool dontDestroyOnLoad = true;
+
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
+        static AesirModules _instance;
 
         /// <summary>
         /// 获取全局唯一的架构管理器实例
@@ -84,11 +84,6 @@ namespace Runestone.AesirModules
             if (dontDestroyOnLoad)
             {
                 DontDestroyOnLoad(gameObject);
-            }
-            else
-            {
-                AesirModulesDebug.LogWarning(AesirModulesDebug.AesirModulesTag,
-                    "dontDestroyOnLoad 已关闭：实例保留在所在场景、随场景卸载销毁，" + "必须自行处理多场景叠加（Additive）加载下的生命周期");
             }
         }
 
