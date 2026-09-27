@@ -35,10 +35,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static ValueDropdownList<string> _currentDomainAssemblies;
 
-        [PropertyOrder(5)]
+        [PropertyOrder(90)]
         [SerializeField]
         [LabelText("调试检查模式")]
-        [Tooltip("开启后在窗口内渲染类型分析的中间结果（完整成员树）。\n" + "仅用于检查分析数据，日常生成文档无需开启；程序集模式下大量类型的整图渲染会明显拖慢窗口。")]
+        [Tooltip("仅当需要检查类型分析的中间产物 TypeData（即单个成员的解析结果）时才开启，日常生成文档无需开启。\n" +
+                 "开启后窗口会渲染类型分析的中间产物（完整成员树），可展开检查每一个成员的解析结果；\n" +
+                 "程序集模式下分析的类足够多时，整图渲染会明显拖慢窗口。")]
         bool debugInspectionMode;
 
         [PropertyOrder(2)]
@@ -90,19 +92,36 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         [NonSerialized]
         [ShowInInspector]
-        [PropertyOrder(90)]
+        [PropertyOrder(96)]
         ITypeData _typeData;
 
         [NonSerialized]
         [ShowInInspector]
-        [PropertyOrder(90)]
+        [PropertyOrder(96)]
         List<ITypeData> _typeDataList;
 
         public static string DefaultDocFolderPath => ScriptDocGeneratorPaths.DefaultDocFolderPath;
 
-        public static ScriptDocGeneratorPanelSO Instance =>
-            ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ScriptDocGeneratorPanelSO>(
-                ConfigName, ScriptDocGeneratorPaths.PanelConfigFolderPath, "ScriptDocGenerator");
+        static ScriptDocGeneratorPanelSO _instance;
+
+        /// <summary>
+        /// 面板单例访问。解析结果按域缓存：缺失资产的解析会执行 CreateAsset 与 AssetDatabase.Refresh，
+        /// 每次都重新解析会把这类重操作带进绘制回调等高频路径。
+        /// </summary>
+        public static ScriptDocGeneratorPanelSO Instance
+        {
+            get
+            {
+                if (_instance)
+                {
+                    return _instance;
+                }
+
+                _instance = ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ScriptDocGeneratorPanelSO>(
+                    ConfigName, ScriptDocGeneratorPaths.PanelConfigFolderPath, "ScriptDocGenerator");
+                return _instance;
+            }
+        }
 
         public Type TargetType
         {
@@ -139,11 +158,25 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         bool IsNeedTypeAnalysisDataList => IsMultipleType || IsSingleAssembly || IsMultipleAssemblies;
 
-        /// <summary>是否渲染分析中间结果（仅调试检查模式）</summary>
-        bool ShowTypeAnalysisData => debugInspectionMode;
+        /// <summary>单类型模式下是否渲染分析中间结果（调试检查模式 + 单类型模式同时满足）。</summary>
+        /// <remarks>
+        /// 条件必须合并为单个 ShowIf 使用：Odin 对同一成员的多个 ShowIf 是 OR 语义
+        /// （任一条件满足即显示），此前"调试开关 + 模式"两个 ShowIf 并挂导致模式条件恒真时
+        /// 列表无视调试开关直接显示。
+        /// </remarks>
+        bool ShowSingleTypeAnalysisData => debugInspectionMode && IsSingleType;
+
+        /// <summary>列表型模式下是否渲染分析中间结果（调试检查模式 + 多类型/单程序集/多程序集模式同时满足）</summary>
+        bool ShowListTypeAnalysisData => debugInspectionMode && IsNeedTypeAnalysisDataList;
 
         /// <summary>程序集模式下渲染整图的性能警告（仅调试检查模式显示）</summary>
         bool ShowAssemblyDebugWarning => debugInspectionMode && (IsSingleAssembly || IsMultipleAssemblies);
+
+        /// <summary>调试检查模式未开启时的使用指引（何时才需要开启）</summary>
+        bool ShowDebugModeUsageHint => !debugInspectionMode;
+
+        /// <summary>调试检查模式开启后的功能说明（可以看到什么、怎么用）</summary>
+        bool ShowDebugModeEnabledHint => debugInspectionMode;
 
         void OnEnable()
         {
@@ -553,24 +586,33 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
                 if (member.Name == nameof(_typeData))
                 {
+                    // 单一复合条件（AND 语义）：Odin 对同成员多个 ShowIf 是 OR（任一满足即显示），
+                    // 不得把"调试开关"与"模式条件"拆成两个 ShowIf 并挂
                     attributes.Add(new TitleGroupAttribute("$" + nameof(_typeAnalysisResultLabel)));
-                    attributes.Add(new ShowIfAttribute(nameof(ShowTypeAnalysisData)));
-                    attributes.Add(new ShowIfAttribute(nameof(IsSingleType)));
+                    attributes.Add(new ShowIfAttribute(nameof(ShowSingleTypeAnalysisData)));
                 }
 
                 if (member.Name == nameof(_typeDataList))
                 {
                     attributes.Add(new TitleGroupAttribute("$" + nameof(_typeAnalysisResultLabel)));
-                    attributes.Add(new ShowIfAttribute(nameof(ShowTypeAnalysisData)));
-                    attributes.Add(new ShowIfAttribute(nameof(IsNeedTypeAnalysisDataList)));
+                    attributes.Add(new ShowIfAttribute(nameof(ShowListTypeAnalysisData)));
                 }
 
                 if (member.Name == nameof(debugInspectionMode))
                 {
-                    // 条件警告：仅在程序集模式 + 调试检查开启时显示，表达式经 $value 引用面板实例
+                    // 提示框按需三态互斥显示：关闭时（何时才需要开）/ 开启时（能看到什么）/
+                    // 开启且程序集模式（卡顿警示）。可见性条件为根实例成员名（与 ShowIf 同款解析），
+                    // 勿写 @$value 前缀——InfoBox 挂在 bool 字段上，$value 指该字段的布尔值，
+                    // 会报 "Unable to locate identifier ... in context of type 'System.bool'"
                     attributes.Add(new InfoBoxAttribute(
-                        "程序集模式下渲染分析中间结果会一次性绘制数百个类型的完整成员树，窗口可能明显卡顿；" + "仅在需要检查分析数据时开启。",
-                        InfoMessageType.Warning, "@$value.ShowAssemblyDebugWarning"));
+                        "需要检查中间过程的 TypeData（即成员分析的单个解析结果）时才开启调试检查模式，日常生成文档无需开启。",
+                        InfoMessageType.Info, "@" + nameof(ShowDebugModeUsageHint)));
+                    attributes.Add(new InfoBoxAttribute(
+                        "已开启调试检查模式：窗口会显示类型分析的中间产物 TypeData，可展开检查每一个成员的解析结果。",
+                        InfoMessageType.Info, "@" + nameof(ShowDebugModeEnabledHint)));
+                    attributes.Add(new InfoBoxAttribute(
+                        "程序集模式下分析的类足够多时，一次性渲染数百个类型的完整成员树会导致窗口明显卡顿，一般情况请勿开启。",
+                        InfoMessageType.Warning, "@" + nameof(ShowAssemblyDebugWarning)));
                 }
             }
         }
