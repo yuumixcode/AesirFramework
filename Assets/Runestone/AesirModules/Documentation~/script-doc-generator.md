@@ -82,7 +82,7 @@ ScriptDocGeneratorAPI.GenerateDocsForType(typeof(SceneAssetWrapper), outputFolde
 
 ### 单元测试覆盖
 
-本模块测试位于包根 `Tests/Editor/ScriptDocGenerator/`（汇入 `Runestone.AesirModules.Tests` 程序集），覆盖签名生成、源码解析与工具行为。测试用例会随着功能迭代持续补充：
+本模块测试位于包根 `Tests/Editor/ScriptDocGenerator/`（汇入 `Runestone.AesirModules.Tests.Editor` 程序集），覆盖签名生成、源码解析与工具行为。测试用例会随着功能迭代持续补充：
 
 | 测试模块 | 测试数 | 说明 |
 |---------|-------|------|
@@ -180,5 +180,5 @@ Editor/ScriptDocGenerator/OdinInspector/    # 经 asmref 汇入 Runestone.AesirM
 ├── SourceFileTool/                         # 源码扫描与 XML 文档注释解析（六种标签全链路）
 ├── SummaryAttributeTool/                   # XmlSummaryTool（特性优先同步）
 └── ...                                     # 窗口、面板、菜单、路径常量等
-Tests/Editor/ScriptDocGenerator/            # 单元测试（汇入 Runestone.AesirModules.Tests）
+Tests/Editor/ScriptDocGenerator/            # 单元测试（汇入 Runestone.AesirModules.Tests.Editor）
 ```

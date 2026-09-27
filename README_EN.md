@@ -135,6 +135,8 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 | Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1` |
 
 > Version branches are generated automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root). The repository only keeps the latest version branches.
+>
+> **Both packages must be added separately**: UPM does not support Git URL dependencies inside a package (official Unity limitation). Adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture — you can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 
 ### Option 2: unitypackage Import + In-Package Updater (mainland / offline friendly)
 
@@ -148,7 +150,7 @@ Download the matching unitypackage from [GitHub Releases](https://github.com/yuu
 
 Packages installed this way live under `Assets/Runestone/` (code editable), and **updating requires no manual re-download**: open the in-package updater via `Tools → Aesir → Check for Updates` for "detect new version → review changelog → confirm → silent import → diff-based stale cleanup" (Odin-based UI when Odin Inspector is installed). Updates come in two entries: the per-row "Update" button updates a single package (for projects that only use one of them; when the other known package is present and outdated, the confirmation dialog warns about the paired-version risk); "Update All" brings the whole framework to the remote version — outdated packages are updated and missing Aesir packages are installed (fresh installs are clearly marked in the confirmation dialog). unitypackage downloads fall back to mirror-site proxies when the direct GitHub link fails, and if every route fails the dialog offers a manual-download guide; the download progress bar can be cancelled at any time, and already imported packages stay valid. Version detection falls back through three tiers — direct GitHub (Releases API → 302 probe → raw repo content) → GitHub mirrors → CDN relay — with a 5-second per-source timeout before dropping to the next tier. The window reports whether GitHub was reachable this run (direct = 100% up to date) and which route produced the result, warning about multi-hour delays only when the CDN relay was used.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — update them with the Package Manager directly.
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely; update them with the Package Manager directly.
 
 ### Option 3: Track main (Development Preview)
 
@@ -170,7 +172,7 @@ Add the following to your project's `Packages/manifest.json`:
 }
 ```
 
-Add only the sub-packages you need — **when installing only Aesir Modules**, UPM automatically pulls Aesir Architecture (this package's `package.json` declares its Git URL in `dependencies`).
+Add only the sub-packages you need — note, however, that UPM does not support Git URL dependencies inside a package (official Unity limitation): adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture. You can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 
 ### Installing Samples
 

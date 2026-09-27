@@ -18,7 +18,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 | UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + Canvas-root windows (single/stacked mask) + pluggable asset loading |
 | Event | Implemented | `EventModule` dual-track subscription (Attribute + Script) + 4 priority levels with stable sorting + snapshot/re-entrant-safe dispatch + expression-tree optimization + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization |
 | Audio | Implemented | `AudioModule` singleton (minimal 2D audio facade) + SFX round-robin exclusive sources + BGM crossfade + 3-channel volume/mute persistence |
-| Scene | Implemented | `SceneModule` static facade (scene load/additive/unload/activate + scene lifecycle events, call `SceneModule.xxx` directly) + UniTask adapter assembly (optional, define auto-maintained: with UniTask the coroutine implementation is replaced by UniTask-driven flow and awaitable APIs are provided) + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Editor Settings) |
+| Scene | Implemented | `SceneModule` static facade (scene load/additive/unload/activate + scene lifecycle events, call `SceneModule.xxx` directly) + UniTask adapter assembly (optional, define auto-maintained: with UniTask the coroutine implementation is replaced by UniTask-driven flow and awaitable APIs are provided) + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Module Settings) |
 | ScriptDocGenerator | Implemented (requires Odin) | Reflection-based C# type analysis generating structured API docs (incremental, preserves hand-written content) + Summary tool (syncs XML `<summary>` and the `[Summary]` attribute, attribute-first) |
 
 > Two additional optional capabilities: **Binder component binding** (`Runtime/UI/OdinInspector/Binder/`, requires Odin Inspector) and **Input System input module adaptation** (`Runtime/UI/InputSystem/`, separate assembly, active automatically when the Input System is enabled).
@@ -42,9 +42,10 @@ Assembly organization:
 
 ### UPM (Git URL, recommended)
 
-In the Unity Package Manager window, click `+` → `Add package from git URL...`:
+In the Unity Package Manager window, click `+` → `Add package from git URL...` — add one URL per package:
 
 ```
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.1
 https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1
 ```
 
@@ -53,14 +54,17 @@ Or edit `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.27.1",
     "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.1"
   }
 }
 ```
 
-To track the latest development version on `main`, replace the URL with `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules`.
+To track the latest development version on `main`, replace the two URLs with `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture` and `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules` respectively.
 
-The `dependencies` field of `package.json` declares Aesir Architecture as a Git URL, so UPM automatically pulls that dependency when installing this package — no manual installation required. Packages installed this way are managed by the Package Manager: to update, remove the package and re-add the new version branch's Git URL; the in-package updater `Tools → Aesir → Check for Updates` does not apply to them.
+> **Both packages must be added separately**: the Unity Package Manager does not support Git URL dependencies inside a package's `package.json` (they may only be declared in the project's manifest.json — an official Unity limitation), so this package ships no dependency declaration for Aesir Architecture. Adding only this package still installs it, but the core assembly fails to compile without Aesir Architecture — at that point the menu `Tools → Aesir → Modules → Install Dependencies` appears and installs the matching version of Aesir Architecture in one click (see below).
+
+Packages installed this way are managed by the Package Manager: to update, remove the package and re-add the new version branch's Git URL; the in-package updater `Tools → Aesir → Check for Updates` does not apply to them — under a pure UPM installation the menu is hidden entirely (the updater only manages Assets-form copies).
 
 ### unitypackage Import
 
@@ -68,7 +72,7 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (the locating mechanism is provided by Aesir Architecture, mirroring Odin Inspector's counterpart asset). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone`; if you have moved Runestone, clean up the old copy yourself.
 
-> **One-click dependency install when missing**: if only this package is imported via unitypackage (Aesir Architecture not imported), this package's core assembly cannot compile (the Console reports the missing `Runestone.AesirArchitecture` assembly). In that case the menu `Tools → Aesir → Modules → Install Dependencies` appears: after a confirmation dialog listing the package name, version and Git URL to be installed, it installs the matching version of Aesir Architecture via its Git URL — into `Packages/`, managed by the Package Manager — and the core assembly compiles again. Future updates of that dependency go through the Package Manager (remove, then re-add). The menu hides itself once Aesir Architecture is installed.
+> **One-click dependency install when missing**: whenever Aesir Architecture is missing after this package is installed (unitypackage import without Aesir Architecture, or UPM adding only this package), this package's core assembly cannot compile (the Console reports the missing `Runestone.AesirArchitecture` assembly). In that case the menu `Tools → Aesir → Modules → Install Dependencies` appears (the menu lives in a zero-dependency assembly, so it stays available while every other assembly fails to compile): after a confirmation dialog listing the package name, version and Git URL to be installed, it installs the matching version of Aesir Architecture via its Git URL — into `Packages/`, managed by the Package Manager — and the core assembly compiles again. Future updates of that dependency go through the Package Manager (remove, then re-add). The menu hides itself once Aesir Architecture is installed.
 
 ## UI Module
 
@@ -490,7 +494,7 @@ public class LevelFlow : MonoBehaviour
 - **Odin Inspector boundary** — the `SceneAssetWrapper` Inspector panel effects depend on Odin (injected via AttributeProcessor); without Odin only the API surface is guaranteed: construct via `SceneAssetWrapper.FromScenePath(...)`, assign the `SceneAsset` property in code (editor only), read via the TryGet family. The panel is not supported.
 - **Addressable scenes are not loaded by SceneModule** — with Addressables installed the wrapper provides the address (`Address` / `TryGetAddress`); load and unload directly through the Addressables API (`Addressables.LoadSceneAsync(wrapper.Address)`).
 - **Do not additive-load the same path twice** — Unity loads two scene instances while tracking records one path; `UnloadScene` unloads only one of them and the leftover instance escapes tracking.
-- **Bootstrap split of duties** — at runtime `SceneModule` only holds the `bootstrapScene` reference for user code to read (`BootstrapSceneAssetWrapper`: the instance serialized field wins; when unset it falls back to the global bootstrap scene on the `SceneModuleConfigSO` config asset) and performs no automatic flow; Build Settings index 0 and force-opening the Bootstrap scene on Play are handled by the editor `BootstrapSceneHelper` (enabled in `Tools → Aesir → Modules → Scene Editor Settings`, off by default).
+- **Bootstrap split of duties** — at runtime `SceneModule` only holds the `bootstrapScene` reference for user code to read (`BootstrapSceneAssetWrapper`: the instance serialized field wins; when unset it falls back to the global bootstrap scene on the `SceneModuleConfigSO` config asset) and performs no automatic flow; Build Settings index 0 and force-opening the Bootstrap scene on Play are handled by the editor `BootstrapSceneHelper` (enabled in `Tools → Aesir → Modules → Scene Module Settings`, off by default).
 - **No cross-scene payload** — pass data across scenes via framework MiniEvents or a shared Model; async driving is provided only through the adapter assembly when the project contains UniTask (see "UniTask Adaptation"), no other async abstractions are built in.
 
 ### Directory Structure
@@ -507,7 +511,10 @@ Runtime/Scene/                     # joins the core runtime assembly (layer-root
 Runtime/Integration/UniTask/       # UniTask adapter assembly (Runestone.AesirModules.UniTask, gated by the AESIR_MODULES_UNITASK define)
 └── SceneModuleUniTask.cs          # Awaitable scene load/unload adaptation API
 Editor/Scene/                      # joins the core editor assembly (layer-root anchor)
-├── SceneManagerWindow.cs          # Scene Editor Settings window (Tools/Aesir/Modules/Scene Editor Settings)
+├── SceneEditorSettings.cs         # Editor settings singleton (Bootstrapper toggles & paths; display attributes wrapped in #if ODIN_INSPECTOR — zero Odin dependency in the data layer)
+├── SceneModuleSettingsWindow.cs    # Scene Module Settings window (native IMGUI fallback, holds the menu entry, routes via OdinWindowOpener)
+├── OdinInspector/                  # Folded into the Odin editor assembly
+│   └── SceneModuleSettingsWindowOdin.cs  # Odin-flavoured settings window (InlineEditor of the settings singleton; joined via asmref, excluded entirely without Odin)
 ├── BootstrapSceneHelper.cs        # Bootstrap scene registration tool (off by default)
 ├── SceneModuleConfigAssetInitializer.cs  # auto-creates the SceneModuleConfig fallback asset (after editor-mode domain load)
 ├── SceneEditorSettings.cs         # Editor persisted settings
@@ -526,7 +533,7 @@ Located at `Runtime/UI/OdinInspector/Binder/` (joined into the Odin assembly via
 - `BinderAssistant` sits on the panel root. "Build Binding Units" incrementally maintains the binding list from the tags (each entry records component type, field name, and binding path). Two generation modes are supported (default "Same-Script Incremental"): "Same-Script Incremental" only replaces the `#region 绑定字段（自动生成）` block (fields + `BindComponents` method, fully-qualified and self-contained) inside the target `*.cs`, leaving everything outside the region to the developer — a scaffold is created automatically when the file does not exist; "Partial Class" produces the hand-written partial `*.cs` (generated once) and an auto-maintained file (suffix selectable, default `.designer.cs` — collapsed by default in Rider, recommended for Rider users). Generated bound fields are grouped under a `TitleGroup` ("绑定字段（自动生成）") marking them as Binder-maintained. Both modes auto-attach the generated component and bind once after compilation.
 - The generated script's base class is selectable from a dropdown: built-in `MonoBehaviour`, the pre-selected Aesir panel/window family (`AesirBasePanel`, `AesirBasePanelView<T>`, `AesirBasePanelViewController<T>`, `AesirBaseWindow`, `AesirBaseWindowView<T>`, `AesirBaseWindowViewController<T>` — the core assembly cannot reference the Odin assembly back to carry the attribute, so the Binder pre-selects them via typeof; on a Canvas-root object the default base is `AesirBaseWindow` and the default script name gets the `Window` suffix, while panel roots keep `Panel`), and user classes marked with `[BinderBaseType]` (requires referencing `Runestone.AesirModules.OdinInspector`); for the Aesir generic panel/window bases, pick a concrete Context type from the "Context 类型" dropdown (project-wide AbstractContext derivatives; the placeholder is never emitted into generated code).
 - The default namespace and the partial suffix candidate list are persisted in-editor via ScriptableSingleton.
-- Code generation is pure text assembly, covered by the EditMode test assembly `Runestone.AesirModules.Tests` (package-root `Tests/`); `IComponentBinder` remains the extension point for custom binders.
+- Code generation is pure text assembly, covered by the EditMode test assembly `Runestone.AesirModules.Tests.Editor` (package-root `Tests/Editor/`); `IComponentBinder` remains the extension point for custom binders.
 
 ## Script Doc Generator Module (requires Odin)
 
