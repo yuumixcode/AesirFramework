@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Changed
+
+- **`Tools → Aesir → Check for Updates` 菜单按安装形态显隐** — 新增菜单 validate：扫描不到 Assets 形态的 Aesir 包安装（AesirAssetPaths 锚点定位安装根 + 解析 package.json，纯本地目录 IO）时菜单整体隐藏——纯 UPM（Git URL）安装的副本由 Package Manager 管辖，更新器没有管辖对象，显示菜单只会误导；Assets 形态安装（含与 UPM 混合并存）时照常显示。IMGUI 与 Odin 版窗口共用同一菜单入口，一处验证两窗口生效
+
 ## [0.27.1] - 2026-09-27
 
 - **与 Aesir Modules 0.27.1 版本同步发布** — 本包无功能变更；Modules 侧修复 UniTask 集成的程序集名错误（详见其 CHANGELOG）
