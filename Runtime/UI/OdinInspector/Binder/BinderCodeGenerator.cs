@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests")]
+[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests.Editor")]
 
 namespace Runestone.AesirModules
 {
