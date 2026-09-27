@@ -1,6 +1,6 @@
 {
-  "name": "Runestone.AesirModules.Tests",
-  "rootNamespace": "Runestone.AesirModules.Tests",
+  "name": "Runestone.AesirModules.Tests.Editor",
+  "rootNamespace": "Runestone.AesirModules.Tests.Editor",
   "references": [
     "Runestone.AesirArchitecture",
     "Runestone.AesirModules",

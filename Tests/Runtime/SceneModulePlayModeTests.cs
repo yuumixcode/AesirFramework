@@ -10,7 +10,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace Runestone.AesirModules.Tests.Runtime
+namespace Runestone.AesirModules.Tests
 {
     /// <summary>
     /// <see cref="SceneModule" /> 真实加载/卸载成功路径的 PlayMode 测试（全仓锐评 02-优化方案 B3-4）。

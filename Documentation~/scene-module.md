@@ -12,8 +12,9 @@
 | `SceneAssetWrapper` | 可序列化场景引用：GUID 锚点自愈、状态机校验、TryGet 安全读取家族、Addressables 地址缓存 |
 | `SceneAssetWrapperState` | 引用状态枚举：`Regular`（BuildSettings 途径）/ `Addressable` / `Unsafe` |
 | `SceneAssetWrapperUnsafeReason` | 不安全原因：`Empty` / `NotInBuild` |
+| `SceneModuleSettingsWindow` | Scene 模块设置窗口（双窗口模式，与包内更新器同款）：菜单 `Tools → Aesir → Modules → Scene Module Settings` 经静态委托按 Odin 可用性路由——装 Odin 打开 `SceneModuleSettingsWindowOdin`（InlineEditor 展示 `SceneEditorSettings` 单例），未装打开原生 IMGUI 兜底窗口（信息量等价：两个开关 + 两个只读路径 + 手动搜集按钮） |
 | `SceneAssetWrapperException` 异常族 | 空引用 / 创建失败 / Addressables 未装包 / 不可寻址四类，消息带"修复 / 规避"双指引 |
-| `BootstrapSceneHelper` | 编辑器 Bootstrapper 场景搜集注册工具（默认关闭，`Tools → Aesir → Modules → Scene Editor Settings` 开启） |
+| `BootstrapSceneHelper` | 编辑器 Bootstrapper 场景搜集注册工具（默认关闭，`Tools → Aesir → Modules → Scene Module Settings` 开启） |
 
 ## SceneModule API
 
@@ -108,8 +109,8 @@ Inspector 三态着色与一键修复（需 Odin）：Addressable 场景青色�
 
 ## 测试与维护
 
-- 数据层与行为层 EditMode 用例位于 `Editor/Scene/Tests/`（`SceneAssetWrapperTests` 27 + `SceneModuleTests` 24（含静态门面契约：类型不得再暴露公开实例 API、门面转发单例状态）+ 测试场景卫生守护 1，协程经手动 `MoveNext` 驱动模拟）。测试场景由 SetUp 准备：宿主工程缺失时从包内最小场景夹具（随测试分发）临时复制、TearDown 按“谁创建谁删除”还原（含空目录），测试不依赖宿主工程恰好存在某个场景；涉及的资产路径一律按文件名经 AssetDatabase 定位，不写死 Assets 相对路径。
-- 真实加载/卸载成功路径由包根 `Tests/Runtime/SceneModulePlayModeTests.cs`（PlayMode 程序集 `Runestone.AesirModules.Tests.Runtime`）覆盖：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义。测试场景为 `TestScenes/` 下两个最小 .unity；BuildSettings 登记走 `IPrebuildSetup`（进入 Play 前的编辑模式阶段登记 enabled 条目）与 `IPostBuildCleanup`（退出 Play 后摘除），条目仅存在于本次运行期间——不进玩家构建、不污染宿主工程配置；不能在 PlayMode 内登记（`LoadSceneAsync` 校验的是进入 Play 时固化的构建场景列表）且 disabled 条目运行时不可加载，均实测；域加载另有兜底清扫，回收被强杀运行遗留的条目。Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）。
+- 数据层与行为层 EditMode 用例位于 `Tests/Editor/Scene/`（`SceneAssetWrapperTests` 27 + `SceneModuleTests` 24（含静态门面契约：类型不得再暴露公开实例 API、门面转发单例状态）+ 测试场景卫生守护 1，协程经手动 `MoveNext` 驱动模拟；与包级 EditMode 程序集 `Runestone.AesirModules.Tests.Editor` 合并编译）。测试场景由 SetUp 准备：宿主工程缺失时从包内最小场景夹具（随测试分发）临时复制、TearDown 按“谁创建谁删除”还原（含空目录），测试不依赖宿主工程恰好存在某个场景；涉及的资产路径一律按文件名经 AssetDatabase 定位，不写死 Assets 相对路径。
+- 真实加载/卸载成功路径由包根 `Tests/Runtime/SceneModulePlayModeTests.cs`（PlayMode 程序集 `Runestone.AesirModules.Tests`）覆盖：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义。测试场景为 `TestScenes/` 下两个最小 .unity；BuildSettings 登记走 `IPrebuildSetup`（进入 Play 前的编辑模式阶段登记 enabled 条目）与 `IPostBuildCleanup`（退出 Play 后摘除），条目仅存在于本次运行期间——不进玩家构建、不污染宿主工程配置；不能在 PlayMode 内登记（`LoadSceneAsync` 校验的是进入 Play 时固化的构建场景列表）且 disabled 条目运行时不可加载，均实测；域加载另有兜底清扫，回收被强杀运行遗留的条目。Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）。
 - 单例配置资产由 `Tests/Editor/Scene/SceneModuleConfigSOTests.cs` 锁定（11 用例：Resources 解析与缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复兜底、加载器返回 null 落内存默认、CreateDefault 默认值、启动场景兜底回退矩阵——实例字段优先 / 配置兜底 / 双双未配置返回 null）。
 - UniTask 适配的宏维护器由 `Tests/Editor/UniTask/AesirUniTaskDefineKeeperTests.cs` 锁定（7 用例：决策矩阵——UPM 安装交由 versionDefines 不干预全局 / 程序集在场补宏 / 不在场移除；装配不变量——`Runestone.AesirModules.UniTask` 程序集加载状态与宏存在性必须一致；命名守卫——检测白名单与两处 asmdef 引用必须命中 UniTask 的真实程序集名，防止把命名空间名 `Cysharp.Threading.Tasks` 误当程序集名使用的回归）。
-- 修改 `SceneModule` 加载/卸载协程、UniTask 驱动分支或快照缓冲逻辑时，先跑 `Editor/Scene/Tests` EditMode 套件，再跑 `Tests/Runtime` PlayMode 套件；UniTask 分支在未安装 UniTask 的工程不参与编译，改动后需在含 UniTask 的工程（或以最小 API 桩程序集 + 临时置宏）验证双态编译。
+- 修改 `SceneModule` 加载/卸载协程、UniTask 驱动分支或快照缓冲逻辑时，先跑 `Tests/Editor/Scene` EditMode 套件，再跑 `Tests/Runtime` PlayMode 套件；UniTask 分支在未安装 UniTask 的工程不参与编译，改动后需在含 UniTask 的工程（或以最小 API 桩程序集 + 临时置宏）验证双态编译。

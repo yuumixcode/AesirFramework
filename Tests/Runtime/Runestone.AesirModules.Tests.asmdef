@@ -1,6 +1,6 @@
 {
-  "name": "Runestone.AesirModules.Tests.Runtime",
-  "rootNamespace": "Runestone.AesirModules.Tests.Runtime",
+  "name": "Runestone.AesirModules.Tests",
+  "rootNamespace": "Runestone.AesirModules.Tests",
   "references": [
     "Runestone.AesirArchitecture",
     "Runestone.AesirModules",
