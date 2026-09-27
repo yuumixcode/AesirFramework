@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.28.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.28.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.29.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期、帧粒度时间调度（AesirScheduler）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.29.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.28.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.29.0）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.28.0）
+## Aesir Architecture（0.29.0）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -138,8 +138,8 @@
 
 - `Tools/Aesir/Getting Started`（priority -980 居 Tools/Aesir 顶部 + 独立分割线；大于 Tools/Odin 组的 -1000，消除两组优先级打平导致的组间排序抖动），窗口标题「Aesir Getting Started Window」
 - `AesirGetStartedService`（数据层）+ `AesirGetStartedWindow`（IMGUI 兜底，核心 Editor 程序集）+ `AesirGetStartedWindowOdin`（Odin 版，页面栈 + 包卡片 + 概览垂直收起/页间水平滑动动效，参照 Odin Inspector Getting Started，经 `OdinWindowOpener` 静态委托路由，与更新器同模式）
-- 以各包 package.json samples 清单为唯一真源（新增示例零代码跟进）；包发现覆盖 Assets 安装（经 AesirAssetPaths 锚点多根）/ 嵌入式包 / UPM Git 安装（未导入示例保留条目引导 Package Manager）
-- 交互：整卡点击 = PingSample 定位示例文件夹 + Toast；有场景卡「打开场景」按钮 = OpenSampleScene（先保存当前场景一次再切换）+ Toast
+- 以各包 package.json samples 清单为唯一真源（新增示例零代码跟进）；包发现覆盖 Assets 安装（经 AesirAssetPaths 锚点多根）/ 嵌入式包 / UPM Git 安装（未导入示例保留条目，窗口内一键导入，见交互行）
+- 交互：整卡点击 = PingSample 定位示例文件夹 + Toast；有场景卡「打开场景」按钮 = OpenSampleScene（先保存当前场景一次再切换）+ Toast；未导入卡（UPM / 嵌入式）整卡点击 = 导入引导 Toast（「请点击右侧「导入 Sample」按钮导入 xxx Sample 案例」）、「导入 Sample」按钮 = ConfirmAndImportUpmSample（EditorUtility.DisplayDialog 确认框含示例介绍与导入后位置，可取消 → 确认后经 UnityEditor.PackageManager.UI.Sample API 导入到 Assets/Samples/<包显示名>/<版本>/<示例显示名>/；本引擎 Sample.Import() 返回 bool、ImportOptions 为 internal 只能无参调用、已导入幂等跳过、清单匹配不到红色 Toast 兜底）；导入成功 RefreshAfterImport 重扫并重绑当前包页（PackagePage.Rebind）。测试 AesirGetStartedServiceTests（finder 参数注入伪造，不触碰真实 Package Manager）
 
 ### Odin Inspector 集成
 
@@ -156,7 +156,7 @@
 
 ---
 
-## Aesir Modules（0.28.0）
+## Aesir Modules（0.29.0）
 
 ### UI 框架
 
@@ -234,7 +234,7 @@
 
 ## 程序集定义
 
-### Aesir Architecture（17 个 asmdef）
+### Aesir Architecture（16 个 asmdef）
 
 | 程序集 | 路径 | 说明 |
 |--------|------|------|
@@ -253,7 +253,6 @@
 | `Runestone.AesirArchitecture.Samples.ObservableValue` | Samples/ObservableValue/Scripts/ | 运行时 + #if UNITY_EDITOR |
 | `Runestone.AesirArchitecture.Samples.ObservableCollections` | Samples/ObservableCollections/Scripts/ | 运行时 + #if UNITY_EDITOR |
 | `Runestone.AesirArchitecture.Samples.PlaneWarMono` | Samples/PlaneWar/Scripts/Mono/ | 运行时 + #if UNITY_EDITOR |
-| `Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor` | Samples/PlaneWar/Editor/ | 场景引用一键修复菜单 |
 | `Runestone.AesirArchitecture.Samples.RuntimeInitializeLoadType` | Samples/RuntimeInitializeLoadType/ | Editor-only asmdef（初始化时机演示） |
 
 ### Aesir Modules（15 个 asmdef + 7 个 asmref）
@@ -317,7 +316,7 @@
 7. **ObservableValue (Odin Inspector)** — `ObservableValue<T>` 自定义 Drawer 演示；需要 Odin Inspector
 8. **ObservableCollections（可观察集合）** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` / `ObservableQueue<T>` 使用示例：单轨订阅 `AddListener`（按 Action 分流 Add / Remove / Replace / Move / Reset），ContextMenu 触发增删改查与集合运算；命名空间 `Runestone.AesirArchitecture.Samples.ObservableCollections`
 9. **MiniEvent** — `MiniEvent` 和 `MiniEvent<T>` 使用示例（无参/单参事件）
-10. **PlaneWar（Mono 版）** — 纵版射击飞机大战实战示例：得分 HUD、三型敌机、重开流程；命名空间 `Runestone.AesirArchitecture.Samples.PlaneWarMono`，`Tools → Aesir → Architecture → Samples → PlaneWar → Fix Scene References` 一键修复引用；RAA 版（Scripts/Raa）待编写
+10. **PlaneWar（Mono 版）** — 纵版射击飞机大战实战示例：得分 HUD、三型敌机、重开流程；命名空间 `Runestone.AesirArchitecture.Samples.PlaneWarMono`；RAA 版（Scripts/Raa）待编写
 11. **RuntimeInitializeLoadType（初始化时机）** — 五个 `RuntimeInitializeLoadType` 阶段触发顺序演示（SubsystemRegistration → AfterAssembliesLoaded → BeforeSplashScreen → BeforeSceneLoad → AfterSceneLoad），开关经设置窗口控制（`Tools → Aesir → Architecture → Samples/RuntimeInitializeLoadType`）；纯编辑器程序集（Editor-only asmdef），已登记 package.json samples
 
 ### Aesir Modules（包内 `Samples/`）
@@ -471,7 +470,7 @@ Unity -batchmode -projectPath . -testPlatform editmode -runTests \
 ### 分支策略
 
 - `main` — 开发主线
-- 版本分支 `AesirArchitecture-v0.28.0` / `AesirModules-v0.28.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
+- 版本分支 `AesirArchitecture-v0.29.0` / `AesirModules-v0.29.0` — CI 在 main 推送时自动 subtree split 生成（包内容为分支根），Git URL 安装经 `#分支名` 固定版本；**只保留最新版本分支**，旧版本分支随发版删除
 
 ---
 
@@ -681,7 +680,10 @@ undefined
 - [2026-09-27 20:49:04] 【UPM 依赖治理批次完成（2026-09-27 20:45，工作树未提交；文档站已单独本地提交 de01125 未推送）】用户裁决四项全部落地：①RAM package.json 删整个 dependencies 字段（Git URL 依赖 + TF 硬依赖一并移除，对齐 RAA 无依赖声明）；②测试程序集收敛为每包 2 个（RAM：Runestone.AesirModules.Tests.Runtime→.Tests 改名[PlayMode，namespace 去 .Runtime 后缀]、包级 Tests→.Tests.Editor 改名[asmdef 移 Tests/Editor/]、Scene.Tests 并入 Tests/Editor/Scene/[文件 GUID 不变]；RAA 原本就 2 个不动），5 处 InternalsVisibleTo 同步改 Tests.Editor；③更新器菜单 validate：AesirUpdateWindow 加 [MenuItem(MenuPath, true)] ValidateMenuVisible（ScanInstalledPackagesFromAllRoots 零 Assets 形态安装即隐藏，纯本地 IO）；④Install Dependencies 菜单适用范围扩展 UPM 单装场景（类 remarks/validate 注释改写）。验证基线：refresh 0 错 0 警；ScriptAssemblies 恰好 4 个测试 DLL；EditMode 794/0/2 与基线一致；本项目菜单 validate 实测（Check for Updates=True / Install Dependencies=False / 扫描 2 包）；**UPM E2E 双场景实测**——场景 A（file: 单装 RAM）：UPM 解析零报错（invalid SemVer 已消除）、Bootstrap.dll 是唯一编译产物且零错误（零引用设计生效、补装菜单可用）；场景 B（file: 双包）：0 编译错误、**Check for Updates validate=False（纯 UPM 形态菜单隐藏实测通过）**、Install Dependencies=False、测试 DLL 默认不编译。文档全链同步：RAM/根 README 中英+镜像+Documentation~ 镜像、两包 CHANGELOG [Unreleased]、CODELY.md 正文 6 处（python 限定记忆区前）、文档站 5 处（updater/getting-started×2/API 页 remarks/changelog Unreleased，build --strict 过）。**PlayMode batchmode 22/22 全绿**（2026-09-27 20:50 补跑完成：改名后的 Runestone.AesirModules.Tests.SceneModulePlayModeTests 真实运行通过，BuildSettings 跑后零残留；编辑器已重启重连）。**E2E 环境坑**：①临时项目 manifest 缺 com.unity.ugui/modules.audio/modules.physics2d 会产生 RAM 的环境性编译假错误（UnityEngine.UI/EventSystems/AudioClip 转发程序集），补齐后消失；②batchmode 带编译错误时 -executeMethod 被 "Aborting batchmode due to failure" 阻断，探针只能在编译通过环境执行，编译错误场景改用磁盘侧 DLL/log 验证。**How to apply:** 后续会话引用「测试程序集收敛/UPM 菜单隐藏/依赖移除」以本条为基线；发版时 [Unreleased] 转正 + 文档站 changelog 同步；下一轮锐评时 UPM 无 Odin 环境的编译验证应纳入常态（见 Scene 编辑器缺陷条目）。
 
 - [2026-09-27 21:05:09] 【RAM 无 Odin 编译缺陷已修复（2026-09-27 21:10，主仓 commit 03b7abf，覆盖原「未修」状态）】`Editor/Scene/` 的 SceneEditorSettings/SceneManagerWindow 曾直接 using Sirenix 且无守卫（汇入主 Editor 程序集），无 Odin 消费者环境 RAM Editor 主程序集编译失败（E2E 实测 108 个 CS0246）。修复形态：①SceneEditorSettings 留主程序集作纯数据层，Odin 展示特性（LabelText/LabelWidth/ShowInInspector/ReadOnly/Button）整体 #if ODIN_INSPECTOR 包裹（本仓核心程序集既有模式）；②Odin 窗口 SceneModuleSettingsWindowOdin（原 SceneManagerWindow）git mv 至 Editor/Scene/OdinInspector/ 经 asmref 汇入 ODIN 守卫程序集，Editor.OdinInspector asmdef 补 Runestone.AesirModules.Editor 引用；③新增原生 IMGUI 兜底 SceneModuleSettingsWindow（主程序集，持菜单 Tools/Aesir/Modules/Scene Module Settings，OdinWindowOpener 静态委托路由——更新器双窗口同款），未装 Odin 展示等价信息量（Toggle×2 + SelectableLabel 只读路径×2 + 搜集按钮）。菜单由 Scene Editor Settings 更名 **Scene Module Settings**（用户指定），窗口标题同步。**How to apply:** 后续"Odin 可选"模块的编辑器代码一律照此双窗口模式（数据层 #if 特性 + Odin 版入守卫程序集 + 原生兜底持菜单路由）；验证法 = file: 双包临时项目（manifest 补 ugui/modules.audio/modules.physics2d）batchmode 0 错。
-
+- [2026-09-27 21:28:21] 【0.28.0 已正式发布（2026-09-27 21:45，覆盖此前各批"工作树未提交/本地未推送"状态）】主仓 5 提交推送 main（4a5eb44 依赖清理+测试程序集收敛 → 70347f8 更新器菜单显隐 → 03b7abf Scene 双窗口修复+菜单更名 → 9534504 docs 批 → 7759bf3 版本批），CI 双流水线 success；Release **v0.28.0** 非 draft 三资产（AesirArchitecture/AesirFramework/AesirModules-v0.28.0.unitypackage），新分支 AesirArchitecture-v0.28.0 / AesirModules-v0.28.0 已生成、v0.27.1 旧分支已删（只保留最新），CI update-info.json 回写 d107b24 已 pull。文档站 3 提交全部推送（de01125 UPM 依赖口径 → eddf406 Scene 双窗口 → 4872d41 版本批），Deploy Zensical success ×2，线上抽查全过（index 200 / changelog 0.28.0 段 ×7 / scene 页 Scene Module Settings ×3 / updater 页 validate / getting-started 双包口径）。验证基线：refresh 0 错 0 警、EditMode 794/0/2（版本批后复跑）、PlayMode 22/22、sync-samples 零漂移。**发版新坑一条：批量替换脚本第一轮在 README.md 断言 7≠8 失败——我预数把"版本分支"行当成两处，实为一处（L133 行本身只含一个 0.27.1）——**python str.count 按字符出现数而非行数，摸底时行数≠出现数（一行含两个 URL 算 2）；断言失败时脚本零写入（先 assert 后 save），修正计数重跑即可**。**How to apply:** 后续"0.28.0 相关"勿再当待办；下次发版照本条 5 提交模式（fix→feat→fix→docs→chore 版本批）+ gh run list 确认 + 删旧分支 + 文档站 6 件套版本替换；文档站 changelog 的 [Unreleased] 转正照本次模式。
+- [2026-09-27 22:00:23] [2026-09-27 22:00] Getting Started 窗口 UPM 示例一键导入批次已完成（工作树未提交，叠在用户并行删除 PlaneWarMono.Editor asmdef 批次上；文档站独立仓库本地提交 71e2fdb 未推送）：①服务层 AesirGetStartedService 新增 UPM 导入链路——AesirSampleImportResult 枚举（Imported/Cancelled/NotFound/Failed）+ internal UpmSampleHandle 投影 + ConfirmAndImportUpmSample（DisplayDialog 确认框：标题「导入 Sample」、正文含包名+示例名+介绍+导入后位置、按钮 导入/取消）+ ImportUpmSample（internal，finder 可选参数注入伪造，默认走 Sample.FindByPackage 按显示名 Ordinal 匹配，已导入幂等跳过）+ BuildNotImportedToastMessage（整卡点击引导 Toast「请点击右侧「导入 Sample」按钮导入 xxx Sample 案例」——2026-09-27 22:00 用户裁决由原文「请到 Unity Package Manager 页面导入 xxx Sample 案例」改为按钮口径）+ BuildImportConfirmMessage + GetUpmSampleImportPath（路径推导与 ResolveSamples 判已导入同源）。②Odin 窗口：未导入卡按钮「去导入」→「导入 Sample」（宽 96）、点击走 ConfirmAndImport 流（成功 RefreshAfterImport 重扫+Rebind 重绑当前页+绿 Toast；取消静默；失败红 Toast ErrorToastColor）；未导入卡整卡点击改 Toast 引导（不再打开 PM）；hover 对未导入卡启用；ShowBottomRightToast 加 toastColor 参数；PackagePage 提取 Rebind/BuildFooterText（UPM 形态页脚文案区分）。③IMGUI 窗口同步（成功 Scan()+Debug.Log、失败 DisplayDialog）。**Why:** UPM/嵌入式安装的示例原本只能引导用户去 Package Manager 手动导入。**How to apply:** 验证基线——refresh 0 错 0 警、RAA Tests.Editor EditMode 241/241（232+新 9 用例 AesirGetStartedServiceTests）、真实 API E2E 三路径（伪造 pixel-perfect 包信息：ImportUpmSample 真实导入路径推导与 Unity importPath 完全一致 / 确认框点「导入」→Imported / 点「取消」→Cancelled 零副作用，每次导入后 Assets/Samples 已清理）、窗口视觉五项全过（注入伪造 UPM 包页截图：导入 Sample 按钮渲染、半透明区分、UPM 页脚）、RefreshAfterImport 重绑实证（页脚切 Assets 形态、InstallType=AssetsCopy、11 示例 0 未导入）。**实测坑：①本引擎（2022.3.62f3c1 中国版）UnityEditor.PackageManager.UI.Sample：Import() 返回 bool（非 SampleImportResult）、ImportOptions 枚举 internal（不可显式传值只能无参调用）、importPath 是绝对路径、isImported 按导入目录存在判定、已导入时二次 Import() 无阻塞弹窗仍返回 true；②public 方法带 internal 类型可选参数报 CS0051——收窄方法 internal（窗口走 public ConfirmAndImport 包装，测试经 Editor/AssemblyInfo 既有 InternalsVisibleTo）；③方法组转换 Func<bool> = s.Import（默认参数 + internal 参数类型）有风险，用 () => s.Import() lambda；④TestRunnerApi 三段式（SessionState 键 + testMode 显式设置 + 单次 Execute 带全部程序集名 + 独立脚本轮询）本会话实测正常推进（RunStarted→running→done，241 结果真实回传）——全局记忆 20:16「Bridge 内 TestRunnerApi 不推进」的结论与本会话矛盾，以三段式形态为准，怀疑彼时是 Filter.testMode 未设置或双 Execute 互取消；⑤文档站 changelog Unreleased 段插在「## [0.28.0]」前、samples/getting-started×2 三页补「导入 Sample」口径（半角标点）。
+- [2026-09-27 22:11:28] [2026-09-27] Unity batchmode 最小临时项目（UPM E2E）三个启动坑（2026-09-27 实测，Unity 2022.3.62f3c1 中国版，连续两轮 batchmode 秒退后逐一排除）：①macOS `/tmp` 是符号链接（→/private/tmp），`-projectPath /tmp/...` 直接失败——日志特征 `Couldn't set project path to: (空)`、exit 1、log 里 0 处包名，必须用 `/private/tmp/...` 真实路径；②仅有 Packages/manifest.json + ProjectSettings/ProjectVersion.txt 仍同样失败——batchmode 判定"不是 Unity 项目"，还必须补一个**空 Assets/ 目录**；③ProjectVersion.txt 只写 `m_EditorVersion` 一行不够，需从主项目抄完整两行（`m_EditorVersionWithRevision: 2022.3.62f3c1 (1623fc0bbb97)`）。**可用最小结构 = Assets/（空）+ Packages/manifest.json（file: 指向真包，另补 com.unity.ugui / com.unity.modules.audio / com.unity.modules.physics2d 防 RAM 环境性编译假错误）+ ProjectSettings/ProjectVersion.txt（完整两行）**。Why: 做 UPM / 无 Odin / file: 双包 E2E 验证要重建临时项目，此前 0.28.0 E2E 的临时项目细节未存导致本次三连踩。How to apply: 下次任何 batchmode 临时项目验证照此结构一次建对，勿再用 /tmp、勿省 Assets 目录。
+- [2026-09-27 22:11:41] [2026-09-27 22:10] UPM 差异化交互盘点定案 + package.json 元数据链接字段批次已完成（2026-09-27，主仓工作树未提交、叠在 Getting Started 一键导入等未提交批次上；文档站 1ee93ea 本地提交未推送）。**盘点结论（勿再重新盘点）**：UPM 形态交互面 0.28.0 后已全部闭环——Check for Updates validate 隐藏、Install Dependencies UPM 单装补装、Getting Started 三形态发现+ContainsId 同包去重（代码核查确认）+示例一键导入、BuildFilter 三形态、测试 gating、UniTask 宏 versionDefines 全权；本轮补齐最后两项：①两包 package.json 新增 `documentationUrl`（RAA→…/architecture/、RAM→…/modules/）+ `changelogUrl`（同→…/changelog/，四个 URL curl 200 实证），UPM 详情页将出现 View documentation/changelog 链接——对 Assets 形态无副作用、CI subtree split 自动带上、URL 无版本号不受发版替换影响；②UPM 升级操作指引补 8 处（根 README 中英方式 1/2/4 各 3 处 + RAA 包内 README 中英各 1 处 + Documentation~ 镜像 + 文档站 arch getting-started×2/updater/modules getting-started），统一口径「PM 不对 Git URL 包显示更新提示，升级 = 移除后重新添加新版本分支 Git URL 或改 manifest 分支名」；RAM 包内 README 中英本就有具体操作（L67）未动。两包 CHANGELOG 登记（RAA 追加 [Unreleased] Added、RAM 新建 [Unreleased]）。**验证基线**：python json.load 过、文档站 zensical build --strict 0 问题、UPM file: 双包临时项目 batchmode E2E——resolve 零 invalid、0 error CS、两包全部程序集+示例+Bootstrap DLL 落盘。**遗留**：①PM 详情页链接的 GUI 渲染（batchmode 无 GUI）未实测，属 Unity 官方字段语义，留用户下次 UPM 安装时顺带查看；②Testables opt-in 文档候选经用户裁决不执行（维持「测试是开发侧设施」口径）。How to apply: 后续「UPM 交互还有什么没做」勿再重新盘点；发版时本批 [Unreleased] 转正 + 文档站 changelog 同步；主仓本批改动文件 9 个待用户分批提交。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
