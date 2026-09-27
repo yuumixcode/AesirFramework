@@ -20,9 +20,26 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     {
         static readonly string ConfigName = typeof(DefaultScriptingAPISettingsSO).GetNiceFullName();
 
-        public static DefaultScriptingAPISettingsSO Instance =>
-            ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<DefaultScriptingAPISettingsSO>(
-                ConfigName, ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "DefaultCnScriptingAPI");
+        static DefaultScriptingAPISettingsSO _instance;
+
+        /// <summary>
+        /// 默认生成设置单例访问。解析结果按域缓存：缺失资产的解析会执行 CreateAsset 与
+        /// AssetDatabase.Refresh，每次都重新解析会把这类重操作带进高频路径。
+        /// </summary>
+        public static DefaultScriptingAPISettingsSO Instance
+        {
+            get
+            {
+                if (_instance)
+                {
+                    return _instance;
+                }
+
+                _instance = ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<DefaultScriptingAPISettingsSO>(
+                    ConfigName, ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "DefaultCnScriptingAPI");
+                return _instance;
+            }
+        }
 
         public override string GetGeneratedDocumentation(ITypeData data)
         {

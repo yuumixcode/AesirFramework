@@ -116,13 +116,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return null;
             }
 
-            var targetAssembly = Assembly.Load(assemblyFullName);
-            SourceSummaryInitializer.ClearCache();
-
-            return targetAssembly.GetTypes()
-                .Where(t => t.GetCustomAttribute<CompilerGeneratedAttribute>() == null &&
-                            !TypeAnalyzerUtility.IsGeneratedInternalType(t)).Select(type =>
-                    AnalysisDataFactory.CreateTypeData(type, AnalysisDataFactory)).ToList();
+            return AnalyzeAssembly(Assembly.Load(assemblyFullName));
         }
 
         /// <summary>
@@ -148,15 +142,23 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             var result = new List<ITypeData>();
             foreach (var assemblyFullName in assemblyFullNames)
             {
-                var assembly = Assembly.Load(assemblyFullName);
-                var types = assembly.GetTypes()
-                    .Where(t => t.GetCustomAttribute<CompilerGeneratedAttribute>() == null &&
-                                !TypeAnalyzerUtility.IsGeneratedInternalType(t)).Select(type =>
-                        AnalysisDataFactory.CreateTypeData(type, AnalysisDataFactory));
-                result.AddRange(types);
+                result.AddRange(AnalyzeAssembly(Assembly.Load(assemblyFullName)));
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 分析单个程序集内的所有可文档化类型（过滤编译器生成类型与引擎生成内部类型）。
+        /// 面板与静态 API 共用的分析核心。
+        /// </summary>
+        internal static List<ITypeData> AnalyzeAssembly(Assembly assembly)
+        {
+            SourceSummaryInitializer.ClearCache();
+            return assembly.GetTypes()
+                .Where(t => t.GetCustomAttribute<CompilerGeneratedAttribute>() == null &&
+                            !TypeAnalyzerUtility.IsGeneratedInternalType(t)).Select(type =>
+                    AnalysisDataFactory.CreateTypeData(type, AnalysisDataFactory)).ToList();
         }
 
         public static void GenerateSingleTypeDoc(ITypeData typeData,
@@ -176,17 +178,80 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return;
             }
 
-            ReadDocGeneratorSettingSO(typeData, generatorSettings, targetFolderPath, memberData,
-                out var markdownText, out var filePathWithExtensions);
+            // 覆盖确认需要目标路径：先做轻量路径计算，再交写入核心（含增量合并）
+            var filePath = ComputeTypeDocFilePath(typeData, generatorSettings, targetFolderPath);
+            if (File.Exists(filePath) &&
+                !EditorUtility.DisplayDialog("提示",
+                    "已经存在该文档，继续生成将覆盖部分内容，保留首个 " + IdentifierCn + " 之后的内容，是否继续生成？", "确认", "取消"))
+            {
+                return;
+            }
+
+            var writtenPath = WriteTypeDocSilently(typeData, generatorSettings, targetFolderPath);
+            if (writtenPath == null)
+            {
+                return;
+            }
+
+            AssetDatabase.Refresh();
+            EditorUtility.OpenWithDefaultApp(writtenPath);
+        }
+
+        public static void GenerateMultipleTypeDocs(List<ITypeData> typeDataCollection,
+            DocGeneratorSettingsSO generatorSettings,
+            string targetFolderPath)
+        {
+            if (typeDataCollection is not { Count: > 0 } || !generatorSettings ||
+                string.IsNullOrEmpty(targetFolderPath))
+            {
+                Debug.LogError("参数无效，无法生成文档");
+                return;
+            }
+
+            try
+            {
+                for (var i = 0; i < typeDataCollection.Count; i++)
+                {
+                    var typeData = typeDataCollection[i];
+                    typeData.TryAsIMemberData(out var memberData);
+                    var dataTypeName = memberData.Name;
+
+                    EditorUtility.DisplayProgressBar("脚本文档生成", $"正在生成 {dataTypeName} 文档",
+                        (float)i / typeDataCollection.Count);
+
+                    WriteTypeDocSilently(typeData, generatorSettings, targetFolderPath);
+                }
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+
+            AssetDatabase.Refresh();
+            EditorUtility.OpenWithDefaultApp(targetFolderPath);
+        }
+
+        /// <summary>
+        /// 静默写入单个类型的文档：组装 Markdown、增量合并（保留 Front Matter 与
+        /// <c>## Additional Notes</c> 之后的手写内容）、建目录、写盘。
+        /// 无任何确认弹窗、不刷新资源库、不打开生成结果——面板交互流程与静态 API（AI / 自动化调用）共用此核心。
+        /// </summary>
+        /// <returns>写入的文档文件绝对路径；参数无效时记录错误并返回 null。</returns>
+        internal static string WriteTypeDocSilently(ITypeData typeData,
+            DocGeneratorSettingsSO generatorSettings,
+            string targetFolderPath)
+        {
+            if (typeData == null || !generatorSettings || string.IsNullOrEmpty(targetFolderPath))
+            {
+                Debug.LogError("参数无效，无法生成文档");
+                return null;
+            }
+
+            var markdownText = BuildDocMarkdown(typeData, generatorSettings);
+            var filePathWithExtensions = ComputeTypeDocFilePath(typeData, generatorSettings, targetFolderPath);
 
             if (File.Exists(filePathWithExtensions))
             {
-                if (!EditorUtility.DisplayDialog("提示",
-                        "已经存在该文档，继续生成将覆盖部分内容，保留首个 " + IdentifierCn + " 之后的内容，是否继续生成？", "确认", "取消"))
-                {
-                    return;
-                }
-
                 var readAllLines = File.ReadAllLines(filePathWithExtensions);
                 markdownText = MergeFrontMatterWhenMissing(readAllLines, markdownText);
 
@@ -215,73 +280,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             var utf8WithoutBom = new UTF8Encoding(false);
             File.WriteAllText(filePathWithExtensions, markdownText, utf8WithoutBom);
 
-            AssetDatabase.Refresh();
-            EditorUtility.OpenWithDefaultApp(filePathWithExtensions);
-        }
-
-        public static void GenerateMultipleTypeDocs(List<ITypeData> typeDataCollection,
-            DocGeneratorSettingsSO generatorSettings,
-            string targetFolderPath)
-        {
-            if (typeDataCollection is not { Count: > 0 } || !generatorSettings ||
-                string.IsNullOrEmpty(targetFolderPath))
-            {
-                Debug.LogError("参数无效，无法生成文档");
-                return;
-            }
-
-            try
-            {
-                for (var i = 0; i < typeDataCollection.Count; i++)
-                {
-                    var typeData = typeDataCollection[i];
-                    typeData.TryAsIMemberData(out var memberData);
-                    var dataTypeName = memberData.Name;
-
-                    EditorUtility.DisplayProgressBar("脚本文档生成", $"正在生成 {dataTypeName} 文档",
-                        (float)i / typeDataCollection.Count);
-
-                    ReadDocGeneratorSettingSO(typeData, generatorSettings, targetFolderPath, memberData,
-                        out var markdownText, out var filePathWithExtensions);
-
-                    if (File.Exists(filePathWithExtensions))
-                    {
-                        var readAllLines = File.ReadAllLines(filePathWithExtensions);
-                        markdownText = MergeFrontMatterWhenMissing(readAllLines, markdownText);
-
-                        var additionalDescription = GetAdditionalDescriptionFromExistingFile(readAllLines);
-                        if (!string.IsNullOrEmpty(additionalDescription))
-                        {
-                            var userIdentifierParagraphString = UserIdentifierDescriptionParagraph.ToString();
-                            if (markdownText.Contains(userIdentifierParagraphString))
-                            {
-                                markdownText = markdownText.Replace(userIdentifierParagraphString,
-                                    additionalDescription);
-                            }
-                            else
-                            {
-                                markdownText += additionalDescription;
-                            }
-                        }
-                    }
-
-                    var directoryPath = Path.GetDirectoryName(filePathWithExtensions);
-                    if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))
-                    {
-                        Directory.CreateDirectory(directoryPath);
-                    }
-
-                    var utf8WithoutBom = new UTF8Encoding(false);
-                    File.WriteAllText(filePathWithExtensions, markdownText, utf8WithoutBom);
-                }
-            }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
-            }
-
-            AssetDatabase.Refresh();
-            EditorUtility.OpenWithDefaultApp(targetFolderPath);
+            return filePathWithExtensions;
         }
 
         static string GetAdditionalDescriptionFromExistingFile(string[] readAllLines)
@@ -306,14 +305,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             return additionalDescriptionStringBuilder.ToString();
         }
 
-        static void ReadDocGeneratorSettingSO(ITypeData typeData,
-            DocGeneratorSettingsSO generatorSettings,
-            string targetFolderPath,
-            IMemberData memberData,
-            out string markdownText,
-            out string filePathWithExtensions)
+        /// <summary>
+        /// 组装单个类型的完整 Markdown 文本：生成器产出 + 可选的增量标识符段。
+        /// </summary>
+        static string BuildDocMarkdown(ITypeData typeData, DocGeneratorSettingsSO generatorSettings)
         {
-            markdownText = generatorSettings.GetGeneratedDocumentation(typeData);
+            var markdownText = generatorSettings.GetGeneratedDocumentation(typeData);
 
             if (generatorSettings.generateIdentifier)
             {
@@ -322,8 +319,18 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     : markdownText + ("\n" + UserIdentifierDescriptionParagraph);
             }
 
-            var fileNameWithoutExtension =
-                TypeAnalyzerUtility.ConvertToDocumentationFileName(memberData.Name);
+            return markdownText;
+        }
+
+        /// <summary>
+        /// 计算单个类型的目标文档路径（含 generateNamespaceFolder 的命名空间子目录与扩展名）。
+        /// 面板的"已存在覆盖确认"需要在写入前拿到路径，故与写入核心共用本计算。
+        /// </summary>
+        internal static string ComputeTypeDocFilePath(ITypeData typeData,
+            DocGeneratorSettingsSO generatorSettings,
+            string targetFolderPath)
+        {
+            typeData.TryAsIMemberData(out var memberData);
 
             if (generatorSettings.generateNamespaceFolder)
             {
@@ -341,7 +348,9 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 Directory.CreateDirectory(targetFolderPath);
             }
 
-            filePathWithExtensions = Path.Combine(targetFolderPath, fileNameWithoutExtension);
+            var fileNameWithoutExtension =
+                TypeAnalyzerUtility.ConvertToDocumentationFileName(memberData.Name);
+            var filePathWithExtensions = Path.Combine(targetFolderPath, fileNameWithoutExtension);
 
             if (generatorSettings.customizeDocFileExtensionName)
             {
@@ -352,6 +361,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             {
                 filePathWithExtensions += ".md";
             }
+
+            return filePathWithExtensions;
         }
 
         /// <summary>
