@@ -7,7 +7,9 @@ namespace Runestone.AesirArchitecture.Editor
 {
     /// <summary>
     /// Aesir 包更新窗口（IMGUI 兜底版）— 面向"代码导入 Assets/Runestone（非 UPM）"的用户，
-    /// 检查远程最新版本并一键更新本地安装的 Aesir 包。
+    /// 检查远程最新版本并更新本地安装的 Aesir 包。两种入口：
+    /// 包列表行内「更新」按钮仅更新单个包（配套版本风险由确认框提示）；
+    /// 工具栏「全部更新」让整个框架到达远程版本（旧的更新、缺失的已知包补装，确认框明示）。
     /// <para>
     /// 安装了 Odin Inspector 时，菜单入口经 <see cref="OdinWindowOpener" /> 路由到 Odin 版窗口
     /// （AesirUpdateWindowOdin，界面与交互更丰富）；未安装时本窗口为菜单落点。
@@ -15,8 +17,9 @@ namespace Runestone.AesirArchitecture.Editor
     /// <see cref="AesirUpdateController" /> 中与 Odin 版窗口共用，本类只做状态序列化与 IMGUI 展示。
     /// </para>
     /// <para>
-    /// 流程：检测远程版本 → 拉取并展示「本地 → 远程」更新日志 → 确认框二次确认 → 备份
-    /// Assets/Runestone → 按清单差集清理残留 → 静默导入 → 逐包登记安装清单。
+    /// 流程：检测远程版本 → 拉取并展示「本地 → 远程」更新日志 → 确认框二次确认 →
+    /// 静默导入（下载经「直连 → 镜像站」逐线路兜底，进度条可随时取消）→
+    /// 按清单差集清理残留 → 逐包登记安装清单。
     /// 远程版本 / 检测结果 / 更新日志均为序列化字段，更新导入触发域重载后窗口内容不丢失；
     /// 过期包列表为缓存值，OnGUI 期间零 LINQ、零磁盘 IO。
     /// </para>
@@ -38,7 +41,7 @@ namespace Runestone.AesirArchitecture.Editor
         public static void RegisterOdinWindowOpener(Action opener) => OdinWindowOpener = opener;
 
         // priority 1100：更新入口置 Tools/Aesir 最底部，与上方工具组（最大 1002）差值超过 10，
-        // Unity 自动插入独立分割线（对齐 Getting Started -1000 置顶配分割线的先例）
+        // Unity 自动插入独立分割线（对齐 Getting Started -980 置顶配分割线的先例）
         [MenuItem(MenuPath, false, 1100)]
         static void Open()
         {
@@ -75,6 +78,10 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>过期包缓存（视图回调时重算，避免 OnGUI 每帧 LINQ）。</summary>
         List<AesirUpdateService.InstalledPackage> _outdated = new List<AesirUpdateService.InstalledPackage>();
 
+        /// <summary>「全部更新」目标缓存（待更新包 + 缺失的已知包补装；决定工具栏按钮可见性）。</summary>
+        List<AesirUpdateService.InstalledPackage> _updateTargets =
+            new List<AesirUpdateService.InstalledPackage>();
+
         Vector2 _scrollPosition;
 
         #endregion
@@ -87,10 +94,11 @@ namespace Runestone.AesirArchitecture.Editor
             _controller.Initialize();
         }
 
-        /// <summary>状态变化回调（重扫 / 忙碌切换 / 状态文本变更）：重算过期缓存并重绘。</summary>
+        /// <summary>状态变化回调（重扫 / 忙碌切换 / 状态文本变更）：重算缓存并重绘。</summary>
         void OnViewChanged()
         {
             _outdated = _controller.OutdatedPackages();
+            _updateTargets = _controller.UpdateTargets();
             Repaint();
         }
 
@@ -125,9 +133,9 @@ namespace Runestone.AesirArchitecture.Editor
                 Application.OpenURL(AesirUpdateService.ReleasesPageUrl);
             }
 
-            if (_outdated.Count > 0 && GUILayout.Button($"全部更新到 {_state.RemoteVersion}"))
+            if (_updateTargets.Count > 0 && GUILayout.Button($"全部更新到 {_state.RemoteVersion}"))
             {
-                _controller.RequestUpdate(_outdated);
+                _controller.RequestUpdateAll();
             }
 
             EditorGUI.EndDisabledGroup();
@@ -213,9 +221,14 @@ namespace Runestone.AesirArchitecture.Editor
                 else if (AesirUpdateService.CompareVersion(pkg.Version, _state.RemoteVersion) < 0)
                 {
                     EditorGUILayout.LabelField($"远程 {_state.RemoteVersion}", GUILayout.Width(100));
-                    // 不提供单包更新按钮：两包同 Release 发布且 Modules 依赖 Architecture，
-                    // 单包更新会造成版本撕裂——统一走工具栏「全部更新」
-                    EditorGUILayout.LabelField("请用「全部更新」", EditorStyles.miniLabel, GUILayout.Width(130));
+                    // 行内单包更新：只需更新某一个包的用户入口（配套版本风险由确认框提示，不阻止）
+                    using (new EditorGUI.DisabledScope(_state.Busy))
+                    {
+                        if (GUILayout.Button("更新", GUILayout.Width(90)))
+                        {
+                            _controller.RequestUpdateSingle(pkg);
+                        }
+                    }
                 }
                 else if (AesirUpdateService.CompareVersion(pkg.Version, _state.RemoteVersion) == 0)
                 {

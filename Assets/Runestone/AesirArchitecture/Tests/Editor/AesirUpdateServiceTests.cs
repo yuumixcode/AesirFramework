@@ -10,7 +10,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 {
     /// <summary>
     /// 验证 <see cref="AesirUpdateService" /> 的纯逻辑部分：版本比较、package.json 字段解析、
-    /// 清单差集计算与残留删除、空目录回收、备份复制与裁剪、清单 JSON 解析与合并、
+    /// 清单差集计算与残留删除、空目录回收、清单 JSON 解析与合并、
     /// update-info 解析、重定向 tag 提取、下载地址构造。
     /// </summary>
     /// <remarks>
@@ -254,43 +254,6 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsFalse(Directory.Exists(Path.Combine(pkgRoot, "Old")));
             Assert.IsTrue(Directory.Exists(pkgRoot)); // 包根目录本身不回收
             Assert.IsTrue(File.Exists(Path.Combine(pkgRoot, "A", "a.cs")));
-        }
-
-        #endregion
-
-        #region 备份
-
-        [Test]
-        public void BackupRunestone_CopiesContentAndPrunesOldest()
-        {
-            var srcAbs = Path.Combine(_testRoot, "src");
-            Directory.CreateDirectory(srcAbs);
-            File.WriteAllText(Path.Combine(srcAbs, "hello.txt"), "content");
-
-            var sourceRel = Rel(srcAbs);
-            var backupRootRel = Rel(Path.Combine(_testRoot, "backups"));
-
-            var first =
-                AesirUpdateService.BackupRunestone("20260101-000000_v0.1.0", sourceRel, backupRootRel, 2);
-            var second =
-                AesirUpdateService.BackupRunestone("20260102-000000_v0.2.0", sourceRel, backupRootRel, 2);
-            var third =
-                AesirUpdateService.BackupRunestone("20260103-000000_v0.3.0", sourceRel, backupRootRel, 2);
-
-            // 时间戳前缀保证 Ordinal 排序即时间序：保留最近 2 份，最旧的被裁掉
-            Assert.IsFalse(Directory.Exists(first));
-            Assert.IsTrue(Directory.Exists(second));
-            Assert.IsTrue(Directory.Exists(third));
-            StringAssert.AreEqualIgnoringCase("content", File.ReadAllText(Path.Combine(third, "hello.txt")));
-        }
-
-        [Test]
-        public void BackupRunestone_MissingSourceReturnsNull()
-        {
-            var result = AesirUpdateService.BackupRunestone("20260101-000000_v0.1.0",
-                Rel(Path.Combine(_testRoot, "not-exist")), Rel(Path.Combine(_testRoot, "backups")));
-
-            Assert.IsNull(result);
         }
 
         #endregion
@@ -913,7 +876,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         #region 更新确认框文本
 
         [Test]
-        public void BuildUpdateConfirmation_ListsTargetsAndBackupNotice()
+        public void BuildUpdateAllConfirmation_ListsTargetsAndCommonNotice()
         {
             var targets = new[]
             {
@@ -921,29 +884,157 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 new AesirUpdateService.InstalledPackage { DirName = "AesirModules", Version = "0.19.0" }
             };
 
-            var message = AesirUpdateService.BuildUpdateConfirmation(targets, "v0.21.0", false);
+            var message = AesirUpdateService.BuildUpdateAllConfirmation(targets, "v0.21.0", false);
 
+            StringAssert.Contains("即将执行以下操作", message);
             StringAssert.Contains("AesirArchitecture", message);
             StringAssert.Contains("v0.20.0 → v0.21.0", message);
             StringAssert.Contains("v0.19.0 → v0.21.0", message);
-            StringAssert.Contains(AesirUpdateService.BackupDirName, message);
+            // 备份机制已移除：文案不得再承诺自动备份，回滚指引指向 Releases 重下旧版本
+            StringAssert.DoesNotContain("备份", message);
+            StringAssert.Contains("Releases", message);
             StringAssert.Contains("确认开始更新？", message);
+            // 前台运行提示（失焦停滞教训）
+            StringAssert.Contains("前台", message);
+            // 无补装目标不出缺包说明
+            StringAssert.DoesNotContain("新安装", message);
             // 非 git 仓库不带开发仓库警告
             StringAssert.DoesNotContain(".git", message);
         }
 
         [Test]
-        public void BuildUpdateConfirmation_GitRepositoryAppendsWarning()
+        public void BuildUpdateAllConfirmation_GitRepositoryAppendsWarning()
         {
             var targets = new[]
             {
                 new AesirUpdateService.InstalledPackage { DirName = "AesirArchitecture", Version = "0.20.0" }
             };
 
-            var message = AesirUpdateService.BuildUpdateConfirmation(targets, "v0.21.0", true);
+            var message = AesirUpdateService.BuildUpdateAllConfirmation(targets, "v0.21.0", true);
 
             StringAssert.Contains(".git", message);
             StringAssert.Contains("开发仓库", message);
+        }
+
+        [Test]
+        public void BuildUpdateAllConfirmation_FreshInstallTargetsExplainInstallation()
+        {
+            var targets = new List<AesirUpdateService.InstalledPackage>
+            {
+                new AesirUpdateService.InstalledPackage { DirName = "AesirArchitecture", Version = "0.20.0" },
+                // 补装目标（本地未安装，Version 为空）
+                new AesirUpdateService.InstalledPackage { DirName = "AesirModules", Version = null }
+            };
+
+            var message = AesirUpdateService.BuildUpdateAllConfirmation(targets, "v0.21.0", false);
+
+            StringAssert.Contains("AesirModules：未安装 → v0.21.0（新安装）", message);
+            StringAssert.Contains("本项目当前未安装 AesirModules", message);
+            StringAssert.Contains("还会从 GitHub Release 下载并安装", message);
+            // 指引只想更新已装包的用户改走单包按钮
+            StringAssert.Contains("改用包列表中对应行的「更新」按钮", message);
+        }
+
+        [Test]
+        public void BuildSingleUpdateConfirmation_MismatchedPeerPackageWarnsVersionTearing()
+        {
+            var target = Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.20.0");
+            var installed = new List<AesirUpdateService.InstalledPackage>
+            {
+                target,
+                Pkg("AesirModules", "cn.runestone.aesir.modules", "0.20.0")
+            };
+
+            var message = AesirUpdateService.BuildSingleUpdateConfirmation(target, "v0.21.0", installed, false);
+
+            StringAssert.Contains("即将仅更新 AesirArchitecture", message);
+            StringAssert.Contains("配套版本警告", message);
+            StringAssert.Contains("当前 AesirModules 为 v0.20.0", message);
+            StringAssert.Contains("可能导致编译错误或运行时 API 不匹配", message);
+            StringAssert.Contains("「全部更新」", message);
+            StringAssert.Contains("确认仍要仅更新 AesirArchitecture 吗？", message);
+        }
+
+        [Test]
+        public void BuildSingleUpdateConfirmation_PeerUpToDateOrMissing_NoWarning()
+        {
+            var target = Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.20.0");
+
+            // 另一已知包已是远程版本：不警告
+            var withUpToDatePeer = AesirUpdateService.BuildSingleUpdateConfirmation(
+                target, "v0.21.0",
+                new List<AesirUpdateService.InstalledPackage>
+                {
+                    target,
+                    Pkg("AesirModules", "cn.runestone.aesir.modules", "0.21.0")
+                }, false);
+            StringAssert.DoesNotContain("配套版本警告", withUpToDatePeer);
+
+            // 单包项目（另一已知包未安装）：不警告
+            var singlePackageProject = AesirUpdateService.BuildSingleUpdateConfirmation(
+                target, "v0.21.0", new List<AesirUpdateService.InstalledPackage> { target }, false);
+            StringAssert.DoesNotContain("配套版本警告", singlePackageProject);
+        }
+
+        #endregion
+
+        #region 「全部更新」目标计算（待更新 + 缺失补装）
+
+        [Test]
+        public void ComputeUpdateTargets_OutdatedPlusMissingFreshInstalls()
+        {
+            // 只装了 Architecture（旧版）：全部更新 = 更新 Architecture + 补装缺失的 Modules
+            var installed = new List<AesirUpdateService.InstalledPackage>
+            {
+                Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.20.0")
+            };
+
+            var targets = AesirUpdateService.ComputeUpdateTargets(installed, "v0.21.0");
+
+            Assert.AreEqual(2, targets.Count);
+            Assert.AreEqual("cn.runestone.aesir.architecture", targets[0].PackageId,
+                "Architecture 必须先于 Modules（依赖顺序）");
+            Assert.AreEqual("AesirModules", targets[1].DirName, "缺失的已知包应作为补装目标");
+            Assert.IsNull(targets[1].Version, "补装目标无本地版本");
+            Assert.AreEqual("Assets/Runestone/AesirModules", targets[1].AssetsPath,
+                "补装目标按默认安装根定位（unitypackage 导入的固有落位）");
+            Assert.IsTrue(AesirUpdateService.IsFreshInstall(targets[1]));
+            Assert.IsFalse(AesirUpdateService.IsFreshInstall(targets[0]));
+        }
+
+        [Test]
+        public void ComputeUpdateTargets_AllKnownInstalled_NoFreshInstallEntries()
+        {
+            // 两包都已安装（含最新）：全部更新 = 仅待更新包，不追加补装条目
+            var installed = new List<AesirUpdateService.InstalledPackage>
+            {
+                Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.20.0"),
+                Pkg("AesirModules", "cn.runestone.aesir.modules", "0.21.0")
+            };
+
+            var targets = AesirUpdateService.ComputeUpdateTargets(installed, "0.21.0");
+
+            Assert.AreEqual(1, targets.Count);
+            Assert.AreEqual("AesirArchitecture", targets[0].DirName);
+            Assert.IsFalse(AesirUpdateService.IsFreshInstall(targets[0]));
+
+            // 空远程版本：无任何目标（未检测时「全部更新」不可用）
+            Assert.AreEqual(0, AesirUpdateService.ComputeUpdateTargets(installed, null).Count);
+        }
+
+        [Test]
+        public void ComputeUpdateTargets_FreshInstallOnly_AllKnownPackages()
+        {
+            // 只装了 Architecture 且已是最新：全部更新 = 仅补装 Modules（按钮可见、可操作）
+            var installed = new List<AesirUpdateService.InstalledPackage>
+            {
+                Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.21.0")
+            };
+
+            var targets = AesirUpdateService.ComputeUpdateTargets(installed, "v0.21.0");
+
+            Assert.AreEqual(1, targets.Count);
+            Assert.AreEqual("AesirModules", targets[0].DirName);
         }
 
         #endregion
