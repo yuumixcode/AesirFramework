@@ -42,7 +42,7 @@
 | 自定义文档扩展名 | 默认 `.md`，可切换为 `.mdx`、`.txt` 等任意扩展名 |
 | 增量生成标识符 | 开启后自动在文档末尾插入 `## Additional Notes` 段落，重新生成时保留该段落之后的手写内容 |
 | 类型来源模式 | 单类型 / 多类型 / 单程序集 / 多程序集，四种粒度按需选择（程序集模式下拉仅列出项目脚本程序集） |
-| 调试检查模式 | 默认关闭。开启后在窗口内渲染类型分析的中间结果（完整成员树），供检查分析数据；程序集模式下开启时有性能警告提示 |
+| 调试检查模式 | 位于窗口最底部。仅当需要检查类型分析的中间产物 TypeData（即单个成员的解析结果）时才开启，日常生成文档无需开启；TypeData 中间结果列表位于开关下方、仅在开启时渲染，开启且程序集模式下有性能警示（分析的类足够多时整图渲染会明显卡顿） |
 | TypesCacheSO | 将 Type 列表保存为可复用的资源文件，避免每次重新选择 |
 
 ### 可扩展接口
@@ -52,6 +52,33 @@
 | `DocGeneratorSettingsSO` | 继承此抽象类并实现 `GetGeneratedDocumentation(ITypeData)` 方法，即可自定义文档的格式与内容。内置两个参考实现：`DefaultScriptingAPISettingsSO`（中文 API Markdown 文档）与 `ZensicalScriptingAPISettingsSO`（静态站点 API 文档：YAML Front Matter、DocFX 风格表格、参数/返回值/备注/类型参数说明列、锚点跳转） |
 | `IAnalysisDataFactory` | 替换整个类型分析工厂，自定义成员数据的解析逻辑 |
 | `IAttributeFilter` | 自定义特性过滤器，控制哪些特性出现在生成的文档中 |
+
+### 静态 API（AI / 自动化调用）
+
+面板之外，`ScriptDocGeneratorAPI` 提供同一套分析与写入核心的**无 UI 静态入口**——自动化脚本与 AI 助手可以直接调用，不需要打开面板、不需要任何点击。全程无确认弹窗、不自动打开生成结果；覆盖语义与面板"多程序集模式"一致：已存在的文档按增量规则合并（保留 Front Matter 与 `## Additional Notes` 之后的手写内容），未存在则新建。
+
+| 方法 | 说明 |
+|------|------|
+| `GenerateDocsForType(Type, settings, outputFolder)` | 为单个类型生成文档 |
+| `GenerateDocsForTypes(IEnumerable<Type>, ...)` | 为一组类型生成文档 |
+| `GenerateDocsForAssembly(string, ...)` | 为一个程序集内全部类型生成文档；程序集名支持短名（如 `Runestone.AesirModules`，面板下拉同款）或 FullName |
+| `GenerateDocsForFolder(string, ...)` | 为一个文件夹（含子文件夹）内全部脚本声明的类型生成文档；经源码扫描映射类型，**普通 C# 类同样支持**（不依赖 `MonoScript.GetClass()`，后者的覆盖范围仅限 UnityEngine.Object 派生类）；被条件编译剔除等解析不到的类型名记入结果的 `UnresolvedTypeNames` |
+| `FindAllSettings()` | 枚举项目内全部生成器设置资产（两个内置预设 + 自定义派生），供选择设置时定位 |
+
+参数与返回约定：`settings` 传 null 使用内置中文 API 预设（`DefaultSettings`，另 `ZensicalSettings` 为站点预设，自定义 `DocGeneratorSettingsSO` 派生资产直接传入）；`outputFolder` 传 null 输出到项目根 `ScriptDocGenerator/`（Assets 外，不产生 .meta）；文件夹路径接受项目内相对路径（`Assets/...` / `Packages/...`）或项目内绝对路径。返回 `ScriptDocGenerationResult`：`GeneratedFiles`（写入文件清单）、`GeneratedCount` / `Success`、`SettingsName`、`OutputFolder`、`UnresolvedTypeNames`，`ToString()` 输出单行摘要便于日志与 AI 回显。
+
+```csharp
+// 为程序集生成 Zensical 站点文档（输出到默认目录）
+ScriptDocGeneratorAPI.GenerateDocsForAssembly("Runestone.AesirModules", ScriptDocGeneratorAPI.ZensicalSettings);
+
+// 为文件夹内全部脚本生成默认中文 API 文档
+ScriptDocGeneratorAPI.GenerateDocsForFolder("Assets/Runestone/AesirModules/Runtime/Scene");
+
+// 为单个类型生成文档，输出到指定目录
+ScriptDocGeneratorAPI.GenerateDocsForType(typeof(SceneAssetWrapper), outputFolder: "Docs/Api");
+```
+
+对 AI 助手的使用建议：用户说「使用脚本文档生成工具/生成器，为某个程序集（或某个文件夹）生成脚本文档，用 default / Zensical 或某个自定义设置」时，直接调用上述静态 API 即可，无需引导用户打开面板。
 
 ### 单元测试覆盖
 
@@ -74,7 +101,8 @@
 | **MemberData** · 继承 | 4 | 字段/属性/事件/方法从基类继承的 `IsFromInheritance` 标记 |
 | **SourceParsing** | 48 | SourceScanner 单遍状态机：字符串/注释净化、命名空间与类型栈、嵌套类型键、方法参数键、构造函数 `#ctor` 键、param/remarks 等六种 XML 标签解析 |
 | **XmlSummaryTool** | 25 | Summary 工具三模式输出：特性优先双向对齐、引号转义、CRLF 行尾保持、`////` 判定、预处理指令内插入 |
-| **Misc** | 13 | 文档文件名转换、内部类型过滤、生成器输出回归（单事件类/单方法接口章节不丢失、常量表过滤、空继承属性章节） |
+| **Misc** | 13 | 文档文件名转换、内部类型过滤、生成器输出回归（单事件类/单方法接口章节不丢失、常量表过滤、空继承属性章节）、Front Matter 增量合并回归 |
+| **Misc** · 静态 API | 16 | `ScriptDocGeneratorAPI`：程序集解析（短名/FullName/缺失）、文件夹路径归一化（相对/绝对/项目外拒绝）、文件夹类型解析（普通类不依赖 MonoScript）、三种来源端到端生成（写入系统 Temp 并清理）、内置预设枚举 |
 
 ## 2. Summary 工具 (Summary Tool)
 

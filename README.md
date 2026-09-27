@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、事件模块、音频管理、场景管理工具与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.26.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.27.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.26.0`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.27.0`）
 
 ## 模块总览
 
@@ -18,14 +18,14 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 | UI | 已实现 | `UIModule` 单例（Manager of Managers）+ `UIRoot` 四层 Canvas + 面板生命周期 + Canvas 根窗口（蒙版单遮/叠遮）+ 可插拔资源加载 |
 | Event | 已实现 | `EventModule` 双轨订阅（Attribute + Script）+ 4 档优先级稳定排序 + 快照与重入安全分发 + 表达式树优化 + 订阅者过滤器（精确投递）+ 死引用清理 + SO 资产化 |
 | Audio | 已实现 | `AudioModule` 单例（2D 音频极简门面）+ SFX 独占音源轮询 + BGM 淡入淡出 + 三通道音量/静音持久化 |
-| Scene | 已实现 | `SceneModule` 场景加载/叠加/卸载/激活场景切换 + 场景事件广播 + `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Editor Settings） |
+| Scene | 已实现 | `SceneModule` 静态门面（加载/叠加/卸载/激活场景切换 + 场景事件广播，直接 `SceneModule.xxx` 调用）+ UniTask 适配程序集（可选，宏自动维护，含 UniTask 时协程实现自动替换为 UniTask 驱动并提供可 await API）+ `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Editor Settings） |
 | ScriptDocGenerator | 已实现（需 Odin） | 反射分析 C# 类型生成结构化 API 文档（增量保留手写内容）+ Summary 工具（XML `<summary>` 与 `[Summary]` 特性同步，特性优先） |
 
 > 另有两项可选能力：**Binder 组件绑定**（`Runtime/UI/OdinInspector/Binder/`，需 Odin Inspector）与 **Input System 输入模块适配**（`Runtime/UI/InputSystem/`，独立程序集，启用 Input System 时自动生效）。
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.26.0（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.27.0（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。注意 **Scene 模块的 `SceneAssetWrapper` Inspector 面板效果（拖拽赋值、着色、一键修复按钮）依赖 Odin**；未安装 Odin 时仅保证 API 可用（`FromScenePath` 构造 / `SceneAsset` 代码赋值 / TryGet 家族），面板不支持。
 
 ## 目录组织
@@ -45,7 +45,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 在 Unity Package Manager 窗口 `+` → `Add package from git URL...`：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.0
 ```
 
 或编辑 `Packages/manifest.json`：
@@ -53,7 +53,7 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0"
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.27.0"
   }
 }
 ```
@@ -86,9 +86,10 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.26.0
 | `AesirBaseWindow` | Component | 窗口抽象基类：与 `AesirBasePanel` 同构的生命周期虚方法，序列化字段 `sortingOrder`（默认 500 恒在面板四层之上）/ `destroyOnHide` / `closeOnMaskClick`，蒙版点击虚方法 `OnMaskClicked()`，便捷方法 `CloseSelf()` |
 | `AesirBaseWindowView<T>` | Component | MVP 模式窗口视图基类：继承 `AesirBaseWindow` 并按 Context 类型绑定（`IView`） |
 | `AesirBaseWindowViewController<T>` | Component | MVC 模式窗口控制器基类：继承 `AesirBaseWindow` 并按 Context 类型绑定（`IController`），可执行 Command / Query |
-| `UIMaskMode` | Engine | 窗口蒙版调度模式：单遮（仅最高层可见窗口的蒙版生效）/ 叠遮（各窗口蒙版独立生效），配置于 `UIModule`、运行时可切换 |
+| `UIMaskMode` | Engine | 窗口蒙版调度模式：单遮（仅最高层可见窗口的蒙版生效）/ 叠遮（各窗口蒙版独立生效），初始值配置于 `UIModuleConfigSO`、运行时可切换 |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | 可插拔资源加载契约与默认实现（Resources 目录）。加载契约为**同步语义**：适用于 Resources、同步缓存等管线；Addressables 等异步管线需自行预加载后同步返回 |
 | `UICanvasConfigSO` | Asset | Canvas 统一配置资产（可经 Create 菜单创建默认资产） |
+| `UIModuleConfigSO` | Asset | UI 模块全局配置资产（单例）：蒙版调度模式等模块级配置，编辑器自动创建于 Resources（`UIModuleConfig/UIModuleConfig`），可注册自定义加载器替代 Resources 兜底 |
 | `UILayer` | Engine | 层级枚举：Background / Normal / Popup / Top |
 
 ### 快速开始
@@ -161,7 +162,7 @@ SettingWindow（根：Canvas + CanvasScaler + GraphicRaycaster + 窗口脚本）
 └── Content     实际 UI 元素容器（框架不触碰）
 ```
 
-蒙版由 `UIModule` 统一调度（序列化配置 `maskMode`，运行时经 `UIModule.Instance.MaskMode` 切换）：**单遮**（默认）= 全局仅最高层可见窗口的蒙版生效，多窗口叠加透明度不叠加；**叠遮** = 各窗口蒙版独立跟随自身打开状态。蒙版点击经 Button 自动接线回调 `OnMaskClicked()`，默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口。无 `Mask` 子物体的窗口（如全屏不透明加载页）不参与遮挡。
+蒙版由 `UIModule` 统一调度（初始值配置于 `UIModuleConfigSO` 单例资产，编辑器自动创建在 `Assets/Resources/UIModuleConfig/`，不要求预放置 `[UIModule]`；彻底放弃 Resources 时可经 `UIModuleConfigSO.RegisterConfigLoader` 注册自定义加载器；运行时经 `UIModule.Instance.MaskMode` 切换）：**单遮**（默认）= 全局仅最高层可见窗口的蒙版生效，多窗口叠加透明度不叠加；**叠遮** = 各窗口蒙版独立跟随自身打开状态。蒙版点击经 Button 自动接线回调 `OnMaskClicked()`，默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口。无 `Mask` 子物体的窗口（如全屏不透明加载页）不参与遮挡。
 
 **Panel 与 Window 的选型**：常驻 HUD、非模态并存的信息/列表面板用 **Panel**（共享层 Canvas，同图集合批友好，项目默认主形态）；模态弹窗、全屏流转页（设置/暂停/结算/加载）、需要独立排序或渲染隔离的浮层用 **Window**。两种形态 API 与生命周期对称，按需混用成立（窗口恒在面板之上）；一个项目通常只选一种主形态。完整对比见 [Documentation/ui-module.md](./Documentation/ui-module.md)。
 
@@ -182,11 +183,13 @@ Runtime/UI/                        # 汇入核心运行时程序集（层根锚�
 ├── UIMaskMode.cs                  # 蒙版调度模式枚举（单遮/叠遮）
 ├── UILayer.cs                     # 层级枚举
 ├── UICanvasConfigSO.cs            # Canvas 配置资产
+├── UIModuleConfigSO.cs            # UI 模块全局配置资产（单例：蒙版模式等，Resources 兜底 + 可注册加载器）
 ├── UIAssetLoader/                 # IUIAssetLoader + ResourcesUILoader
 ├── InputSystem/                   # Input System 输入模块适配（独立可选程序集）
 └── OdinInspector/Binder/          # Binder 全家桶（经 asmref 汇入 Odin 程序集）
 Editor/UI/                         # 汇入核心编辑器程序集（层根锚点）
 ├── UIModuleMenuItems.cs           # Create UIRoot / Default UICanvasConfig 菜单项
+├── UIModuleConfigAssetInitializer.cs # UIModuleConfig 兜底资产自动创建（编辑模式域加载后）
 └── OdinInspector/                 # Odin AttributeProcessors（经 asmref 汇入 Odin 编辑器程序集）
 ```
 
@@ -398,42 +401,55 @@ Editor/Audio/                     # 汇入核心编辑器程序集（层根锚�
 | 类型 | 说明 |
 |------|------|
 | `SceneModule` | 场景管理单例：Single/Additive 加载（完成/失败/进度回调）、卸载、重载、激活场景切换、`SceneLoadedEvent` / `SceneUnloadedEvent` 场景事件广播、DDOL 序列化配置 |
+| `SceneModuleConfigSO` | 模块全局配置资产（单例）：全局启动场景兜底 + 加载进度归一化上限；编辑器自动创建于 Resources（`SceneModuleConfig/SceneModuleConfig`），可注册自定义加载器替代 Resources 兜底 |
 | `SceneAssetWrapper` | 可序列化场景引用：GUID 锚点自愈（移动/重命名免疫、断链自恢复）、状态机校验（`State` / `UnsafeReason`）、`TryGet` 安全读取家族；安装 Addressables 时自动扩展地址查询能力。Inspector 面板效果（拖拽/着色/一键修复）需 Odin Inspector，未安装时仅保证 API 可用。功能设计参考 [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference) |
 | `SceneAssetWrapperState` / `SceneAssetWrapperUnsafeReason` | 引用状态（Regular/Addressable/Unsafe）与不安全原因枚举 |
 | `SceneAssetWrapperAddressablesBridge` | Addressables 编辑器能力静态桥（核心程序集零 Addressables 依赖，未装包自动隐藏） |
 | `SceneAssetWrapperException` 异常族 | 空引用 / 创建失败 / 未装包 / 不可寻址四类专用异常，消息均带"修复 / 规避"双指引 |
 
-`SceneModule` 主要 API：
+`SceneModule` 主要 API（公开 API 全部为静态成员，直接 `SceneModule.xxx` 调用，无需写 `Instance`）：
 
 ```csharp
 // 加载（path 与 SceneAssetWrapper 双重重载；onProgress 为逐帧 0-1 进度，
-// 已按 Unity 场景激活上限 0.9 归一化，进度条可平滑走到 100%）
-SceneModule.Instance.LoadSceneSingle(scenePath,
+// 已按配置的激活上限归一化——SceneModuleConfigSO.progressCap，默认 0.9，进度条可平滑走到 100%）
+SceneModule.LoadSceneSingle(scenePath,
     onCompleted: () => { },
     onFailed:    () => { },
     onProgress:  p => { });
-SceneModule.Instance.LoadSceneAdditive(scenePath);
+SceneModule.LoadSceneAdditive(scenePath);
 
 // 卸载（经本模块叠加加载的场景自动移出追踪；批量卸载单个失败跳过并告警）
-SceneModule.Instance.UnloadScene(scenePath);
-SceneModule.Instance.UnloadAllAddedScenes();
+SceneModule.UnloadScene(scenePath);
+SceneModule.UnloadAllAddedScenes();
 
-// 激活场景切换（多场景叠加工作流：决定光照设置来源与 Instantiate 默认落点）
-SceneModule.Instance.SetActiveScene(scenePath);
+// 激活场景切换（多场景叠加工作流：决定光照设置来源与 Instantiate 默认落点）；纯静态操作，不会创建模块实例
+SceneModule.SetActiveScene(scenePath);
 
 // 重载当前激活场景（异步 Single 语义）
-SceneModule.Instance.ReloadScene();
+SceneModule.ReloadScene();
 
 // 场景生命周期广播（MiniEvent，参数为场景路径；AddListener 返回句柄自动清理）
-SceneModule.Instance.SceneLoadedEvent.AddListener(path => Debug.Log($"已加载 {path}"));
-SceneModule.Instance.SceneUnloadedEvent.AddListener(path => Debug.Log($"已卸载 {path}"));
+SceneModule.SceneLoadedEvent.AddListener(path => Debug.Log($"已加载 {path}"));
+SceneModule.SceneUnloadedEvent.AddListener(path => Debug.Log($"已卸载 {path}"));
 
-// 查询：AddedScenePaths（叠加追踪）/ LastLoadedScene / BootstrapSceneAssetWrapper
+// 查询：AddedScenePaths（叠加追踪）/ LastLoadedScene / BootstrapSceneAssetWrapper（实例字段优先，未赋值回退配置资产的全局启动场景）
+```
+
+### UniTask 适配（可选，自动生效）
+
+游戏工程包含 UniTask 时（UPM 包 `com.cysharp.unitask` 经 versionDefines 生效；unitypackage / DLL 安装由编辑器宏维护器 `AesirUniTaskDefineKeeper` 自动增删 `AESIR_MODULES_UNITASK` 宏）：加载/卸载内部流程自动改由 UniTask 驱动（语义与协程完全一致），适配程序集 `Runestone.AesirModules.UniTask` 参与编译并提供可 await 的 API；未包含 UniTask 时适配程序集整体不编译、回退协程驱动。
+
+```csharp
+// 失败抛 InvalidOperationException（原因见 Console）；CancellationToken 取消仅中止等待，底层流程继续完成
+await SceneModuleUniTask.LoadSceneSingleAsync(scenePath, onProgress: p => { });
+await SceneModuleUniTask.LoadSceneAdditiveAsync(sceneRef);
+await SceneModuleUniTask.UnloadSceneAsync(scenePath);
+await SceneModuleUniTask.UnloadAllAddedScenesAsync();
 ```
 
 ### 快速开始
 
-1. 预放置（推荐）：把 `SceneModule` 挂到启动场景物体上（或运行时直接 `SceneModule.Instance` 自动创建于 `[Aesir Modules]` 宿主下）。预放置为根物体时受 `dontDestroyOnLoad` 字段（默认开）控制 DDOL——**保持开启**，Single 加载会卸载所有旧场景，关闭 DDOL 的实例将随场景销毁并中断加载回调。
+1. 预放置（推荐）：把 `SceneModule` 挂到启动场景物体上（或不预放置——首次调用静态 API 时自动创建于 `[Aesir Modules]` 宿主下）。预放置为根物体时受 `dontDestroyOnLoad` 字段（默认开）控制 DDOL——**保持开启**，Single 加载会卸载所有旧场景，关闭 DDOL 的实例将随场景销毁并中断加载回调。
 
 2. 用 `SceneAssetWrapper` 声明场景引用并在 Inspector 拖拽赋值（需 Odin）：
 
@@ -448,7 +464,7 @@ public class LevelFlow : MonoBehaviour
     void Start()
     {
         // 引用无效（空/不在 BuildSettings）或 Addressable 场景走 onFailed，不抛异常
-        SceneModule.Instance.LoadSceneSingle(gameplayScene,
+        SceneModule.LoadSceneSingle(gameplayScene,
             onCompleted: () => Debug.Log("进入关卡"),
             onProgress: p => Debug.Log($"加载中 {p:P0}"));
 
@@ -465,26 +481,32 @@ public class LevelFlow : MonoBehaviour
 - **Odin Inspector 边界** — `SceneAssetWrapper` 的 Inspector 面板效果依赖 Odin（经 AttributeProcessor 注入）；未安装 Odin 时仅保证 API 可用：`SceneAssetWrapper.FromScenePath(...)` 构造、编辑器下 `SceneAsset` 属性代码赋值、TryGet 家族读取，面板不支持。
 - **Addressable 场景不经 SceneModule 加载** — 安装 Addressables 后 wrapper 提供地址（`Address` / `TryGetAddress`），加载请直接调用 `Addressables.LoadSceneAsync(wrapper.Address)`，卸载同理走 Addressables API。
 - **重复叠加同一路径后果自负** — Unity 会加载两个场景实例而追踪列表按路径只记一条，`UnloadScene` 按路径只卸载其一，剩余实例脱离追踪；请勿对同一路径重复 `LoadSceneAdditive`。
-- **启动场景（Bootstrap）分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 场景由编辑器 `BootstrapSceneHelper` 负责（`Tools → Aesir → Modules → Scene Editor Settings` 中开启，默认关闭）。
-- **不做场景间传参 / async 化** — 跨场景传数据用框架 MiniEvent 或共享 Model；async 支持待框架统一裁决。
+- **启动场景（Bootstrap）分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`：实例序列化字段优先、未赋值时回退配置资产 `SceneModuleConfigSO` 的全局启动场景），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 场景由编辑器 `BootstrapSceneHelper` 负责（`Tools → Aesir → Modules → Scene Editor Settings` 中开启，默认关闭）。
+- **不做场景间传参** — 跨场景传数据用框架 MiniEvent 或共享 Model；异步驱动仅在工程包含 UniTask 时经适配程序集提供可 await 的 API（见「UniTask 适配」节），不内置其他 async 抽象。
 
 ### 目录结构
 
 ```
 Runtime/Scene/                     # 汇入核心运行时程序集（层根锚点）
-├── SceneModule.cs                 # 场景管理单例（加载 / 卸载 / 重载 / 激活切换 / 事件 / DDOL）
+├── SceneModule.cs                 # 场景管理单例（静态门面 + 协程/UniTask 双驱动：加载 / 卸载 / 重载 / 激活切换 / 事件 / DDOL）
+├── SceneModuleConfigSO.cs         # 模块全局配置资产（单例：启动场景兜底 + 进度上限，Resources 兜底 + 可注册加载器）
 ├── SceneAssetWrapper.cs           # 可序列化场景引用（GUID 锚点 + 状态机）
 ├── SceneAssetWrapperState.cs      # 引用状态机
 ├── SceneAssetWrapperUnsafeReason.cs
 ├── SceneAssetWrapperAddressablesBridge.cs  # Addressables 能力静态桥
 └── Exceptions/                    # 专用异常族
+Runtime/Integration/UniTask/       # UniTask 适配程序集（Runestone.AesirModules.UniTask，AESIR_MODULES_UNITASK 宏门控）
+└── SceneModuleUniTask.cs          # 可 await 的场景加载/卸载适配 API
 Editor/Scene/                      # 汇入核心编辑器程序集（层根锚点）
 ├── SceneManagerWindow.cs          # Scene Editor Settings 设置窗口（Tools/Aesir/Modules/Scene Editor Settings）
 ├── BootstrapSceneHelper.cs        # Bootstrapper 场景搜集注册工具（默认关闭）
+├── SceneModuleConfigAssetInitializer.cs  # SceneModuleConfig 兜底资产自动创建（编辑模式域加载后）
 ├── SceneEditorSettings.cs         # 编辑器持久化设置
-├── Tests/                         # EditMode 测试（SceneAssetWrapper 27 用例 + SceneModule 20 用例）；真实加载成功路径另见包根 Tests/Runtime 的 PlayMode 用例
+├── Tests/                         # EditMode 测试（SceneAssetWrapper 27 用例 + SceneModule 24 用例，含静态门面契约）；真实加载成功路径另见包根 Tests/Runtime 的 PlayMode 用例
 ├── OdinInspector/                 # SceneAssetWrapper Processor（经 asmref 汇入）
 └── Addressables/                  # Addressables 胶水实现（经 asmref 汇入）
+Editor/UniTask/
+└── AesirUniTaskDefineKeeper.cs    # AESIR_MODULES_UNITASK 宏维护器（程序集在场自动增删全局宏，UPM 形态交由 versionDefines）
 ```
 
 ## Binder 组件绑定（Odin 可选）
@@ -501,7 +523,7 @@ Editor/Scene/                      # 汇入核心编辑器程序集（层根锚�
 
 位于 `Runtime/ScriptDocGenerator/OdinInspector/` 与 `Editor/ScriptDocGenerator/OdinInspector/`（经 asmref 汇入 Odin 程序集，**强依赖 Odin Inspector**，未安装时自动排除）。命名空间 `Runestone.AesirModules.ScriptDocGenerator`（.Editor）。
 
-- **Script Doc Generator** — 反射分析 C# 类型信息生成结构化 API 文档：全离线、单类型毫秒级、增量生成（保留 `## Additional Notes` 之后的手写内容与 Front Matter）、Markdown 输出可直接用于 AI 知识库；参数/返回值/备注/类型参数说明列全链路输出（Zensical 生成器）；支持自定义输出路径（默认项目根 `ScriptDocGenerator/`，Assets 外无 .meta）/ 命名空间子目录 / 扩展名 / 单类型·多类型·单程序集·多程序集四种来源粒度（程序集下拉仅列脚本程序集），可经 `DocGeneratorSettingsSO`、`IAnalysisDataFactory`、`IAttributeFilter` 扩展。入口 `Tools → Aesir → Modules → Script Doc Generator`。
+- **Script Doc Generator** — 反射分析 C# 类型信息生成结构化 API 文档：全离线、单类型毫秒级、增量生成（保留 `## Additional Notes` 之后的手写内容与 Front Matter）、Markdown 输出可直接用于 AI 知识库；参数/返回值/备注/类型参数说明列全链路输出（Zensical 生成器）；支持自定义输出路径（默认项目根 `ScriptDocGenerator/`，Assets 外无 .meta）/ 命名空间子目录 / 扩展名 / 单类型·多类型·单程序集·多程序集四种来源粒度（程序集下拉仅列脚本程序集），可经 `DocGeneratorSettingsSO`、`IAnalysisDataFactory`、`IAttributeFilter` 扩展。入口 `Tools → Aesir → Modules → Script Doc Generator`；面板之外另有无 UI 静态 API（`ScriptDocGeneratorAPI.GenerateDocsForType/ForTypes/ForAssembly/ForFolder`，支持程序集名与文件夹路径，`settings` 可选 Default / Zensical / 自定义设置），供自动化脚本与 AI 助手直接调用。
 - **Summary 工具** — Project 窗口右键（`Assets → Script Doc Generator → Process Summary`）在 XML `<summary>` 注释与 `[Summary]` 特性之间同步（特性为权威内容源，特性优先、XML 回退）：Sync（双向对齐保留双份）/ Replace（收敛为单份特性）/ Remove（移除特性，带确认）三种模式、批量单次刷新、引号转义、行尾保持、宏定义感知、自动补 `using`。
 - **自定义特性** — `[Summary]`（运行时可经 `GetSummary()` 读取）、`[ReferenceLinkURL]`（为类型附加文档链接）。
 
