@@ -40,10 +40,10 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 
 ### Via UPM (Git URL)
 
-Install via UPM with a Git URL pinned to the 0.29.0 version branch (the branch root is the package content):
+Install via UPM with a Git URL anchored to the evergreen `latest` branch — the branch name is permanently fixed, so the URL entered once keeps delivering updates (the branch root is the package content):
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest
 ```
 
 Track the latest development version on `main`:
@@ -67,7 +67,7 @@ Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFram
 - **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
 - Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add the new version branch's Git URL (or change the `#AesirArchitecture-v<version>` branch reference in `manifest.json`).
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.29.0`).
 >
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
 

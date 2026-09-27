@@ -45,8 +45,8 @@ Assembly organization:
 In the Unity Package Manager window, click `+` → `Add package from git URL...` — add one URL per package:
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest
 ```
 
 Or edit `Packages/manifest.json`:
@@ -54,17 +54,17 @@ Or edit `Packages/manifest.json`:
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest"
   }
 }
 ```
 
 To track the latest development version on `main`, replace the two URLs with `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture` and `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules` respectively.
 
-> **Both packages must be added separately**: the Unity Package Manager does not support Git URL dependencies inside a package's `package.json` (they may only be declared in the project's manifest.json — an official Unity limitation), so this package ships no dependency declaration for Aesir Architecture. Adding only this package still installs it, but the core assembly fails to compile without Aesir Architecture — at that point the menu `Tools → Aesir → Modules → Install Dependencies` appears and installs the matching version of Aesir Architecture in one click (see below).
+> **Both packages must be added separately**: the Unity Package Manager does not support Git URL dependencies inside a package's `package.json` (they may only be declared in the project's manifest.json — an official Unity limitation), so this package ships no dependency declaration for Aesir Architecture. Adding only this package still installs it, but the core assembly fails to compile without Aesir Architecture — at that point the menu `Tools → Aesir → Modules → Install Dependencies` appears and installs Aesir Architecture in one click (see below).
 
-Packages installed this way are managed by the Package Manager: to update, remove the package and re-add the new version branch's Git URL; the in-package updater `Tools → Aesir → Check for Updates` does not apply to them — under a pure UPM installation the menu is hidden entirely (the updater only manages Assets-form copies).
+Packages installed this way are managed by the Package Manager: the `latest` branches roll forward permanently and the URLs never change, so to update, **remove the package and re-add it with the same URL**; the in-package updater `Tools → Aesir → Check for Updates` does not apply to them — under a pure UPM installation the menu is hidden entirely (the updater only manages Assets-form copies).
 
 ### unitypackage Import
 
@@ -72,7 +72,7 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (the locating mechanism is provided by Aesir Architecture, mirroring Odin Inspector's counterpart asset). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone`; if you have moved Runestone, clean up the old copy yourself.
 
-> **One-click dependency install when missing**: whenever Aesir Architecture is missing after this package is installed (unitypackage import without Aesir Architecture, or UPM adding only this package), this package's core assembly cannot compile (the Console reports the missing `Runestone.AesirArchitecture` assembly). In that case the menu `Tools → Aesir → Modules → Install Dependencies` appears (the menu lives in a zero-dependency assembly, so it stays available while every other assembly fails to compile): after a confirmation dialog listing the package name, version and Git URL to be installed, it installs the matching version of Aesir Architecture via its Git URL — into `Packages/`, managed by the Package Manager — and the core assembly compiles again. Future updates of that dependency go through the Package Manager (remove, then re-add). The menu hides itself once Aesir Architecture is installed.
+> **One-click dependency install when missing**: whenever Aesir Architecture is missing after this package is installed (unitypackage import without Aesir Architecture, or UPM adding only this package), this package's core assembly cannot compile (the Console reports the missing `Runestone.AesirArchitecture` assembly). In that case the menu `Tools → Aesir → Modules → Install Dependencies` appears (the menu lives in a zero-dependency assembly, so it stays available while every other assembly fails to compile): after a confirmation dialog listing the package name and the Git URL to be installed, it installs Aesir Architecture via its Git URL (the evergreen `latest` branch — always the newest release, version-locked with this package) — into `Packages/`, managed by the Package Manager — and the core assembly compiles again. Future updates of that dependency = remove it in the Package Manager and re-add it with the same URL. The menu hides itself once Aesir Architecture is installed.
 
 ## UI Module
 

@@ -45,8 +45,8 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 在 Unity Package Manager 窗口 `+` → `Add package from git URL...`，两个包各添加一条：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0
-https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest
+https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest
 ```
 
 或编辑 `Packages/manifest.json`：
@@ -54,17 +54,17 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0
 ```json
 {
   "dependencies": {
-    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0",
-    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0"
+    "cn.runestone.aesir.architecture": "https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest",
+    "cn.runestone.aesir.modules": "https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest"
   }
 }
 ```
 
 跟踪 main 最新开发版：把两条 URL 分别换成 `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture` 与 `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirModules`。
 
-> **两个包需要分别添加**：Unity Package Manager 不支持在包的 `package.json` 中声明 Git URL 依赖（只能在项目 manifest.json 中声明，Unity 官方限制），因此本包不携带对 Aesir Architecture 的依赖声明。只添加本包也能安装成功，但核心程序集会因缺少 Aesir Architecture 而编译失败——此时菜单 `Tools → Aesir → Modules → Install Dependencies` 会出现，可一键补装对应版本的 Aesir Architecture（详见下文）。
+> **两个包需要分别添加**：Unity Package Manager 不支持在包的 `package.json` 中声明 Git URL 依赖（只能在项目 manifest.json 中声明，Unity 官方限制），因此本包不携带对 Aesir Architecture 的依赖声明。只添加本包也能安装成功，但核心程序集会因缺少 Aesir Architecture 而编译失败——此时菜单 `Tools → Aesir → Modules → Install Dependencies` 会出现，可一键补装 Aesir Architecture（详见下文）。
 
-以此方式安装的包由 Package Manager 管理：更新时移除后重新 Add 新版本分支的 Git URL，不经过 `Tools → Aesir → Check for Updates` 包内更新器——纯 UPM 安装形态下该菜单不显示（更新器只管辖 Assets 形态的安装副本）。
+以此方式安装的包由 Package Manager 管理：`latest` 分支常驻滚动更新、URL 永不改变，更新时**移除后用同一 URL 重新 Add** 即可，不经过 `Tools → Aesir → Check for Updates` 包内更新器——纯 UPM 安装形态下该菜单不显示（更新器只管辖 Assets 形态的安装副本）。
 
 ### unitypackage 导入
 
@@ -72,7 +72,7 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-v0.29.0
 
 > **Runestone 目录可整体移动到项目任意文件夹**：各包包根的 `AesirPathLookup.asset` 锚点资产负责带路（定位机制由 Aesir Architecture 提供，参照 Odin Inspector 的同款资产），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`，曾移动过的旧位置副本需自行清理。
 
-> **缺依赖时的一键补装**：本包安装后 Aesir Architecture 缺失时（unitypackage 只导入本包、或 UPM 单独添加本包），本包核心程序集无法编译（Console 报 `Runestone.AesirArchitecture` 程序集缺失）。此时菜单 `Tools → Aesir → Modules → Install Dependencies` 会出现（该菜单所在程序集零依赖，其余程序集编译失败时仍可用），点击后经确认窗口（列明将安装的包名、版本与 Git URL）以 Git URL 自动安装对应版本的 Aesir Architecture——安装至 `Packages/` 下由 Package Manager 管理，本包核心程序集随即恢复编译；该依赖包的后续更新经 Package Manager 移除后重新 Add。安装了 Aesir Architecture 后此菜单自动隐藏。
+> **缺依赖时的一键补装**：本包安装后 Aesir Architecture 缺失时（unitypackage 只导入本包、或 UPM 单独添加本包），本包核心程序集无法编译（Console 报 `Runestone.AesirArchitecture` 程序集缺失）。此时菜单 `Tools → Aesir → Modules → Install Dependencies` 会出现（该菜单所在程序集零依赖，其余程序集编译失败时仍可用），点击后经确认窗口（列明将安装的包名与 Git URL）以 Git URL 自动安装 Aesir Architecture（常驻 `latest` 分支最新版，与本包同号发版）——安装至 `Packages/` 下由 Package Manager 管理，本包核心程序集随即恢复编译；该依赖包的后续更新 = Package Manager 移除后用同一 URL 重新 Add。安装了 Aesir Architecture 后此菜单自动隐藏。
 
 ## UI 模块
 
