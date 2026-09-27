@@ -4,7 +4,7 @@
   "references": [
     "Runestone.AesirArchitecture",
     "Runestone.AesirModules",
-    "Cysharp.Threading.Tasks"
+    "UniTask"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
