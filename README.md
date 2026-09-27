@@ -3,7 +3,7 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.28.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.29.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
@@ -40,10 +40,10 @@ AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的
 
 ### 通过 UPM（Git URL）
 
-在 Unity Package Manager 中通过 Git URL 安装（固定 0.28.0 版本分支，包内容即分支根目录）：
+在 Unity Package Manager 中通过 Git URL 安装（固定 0.29.0 版本分支，包内容即分支根目录）：
 
 ```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.28.0
+https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-v0.29.0
 ```
 
 跟踪 main 最新开发版：
@@ -67,7 +67,7 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 - **下载直连失败自动切换镜像站代理**，全部线路失败时弹窗给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效；
 - 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装 Odin Inspector 时更新器为 Odin 界面。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示，请直接用 Package Manager 更新。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后重新添加新版本分支的 Git URL（或把 `manifest.json` 中的 `#AesirArchitecture-v<版本>` 分支名改为新版本）。
 >
 > **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
 
@@ -163,7 +163,7 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## 示例（Samples）
 
-> **Aesir Getting Started 窗口**（菜单 `Tools → Aesir → Getting Started`，0.24.0 起）：集中浏览与直达 Aesir 两包全部示例的导航入口——概览页展示已安装包卡片（含未安装包的下载引导），包页按教学分组列出示例；点击示例卡片即在 Project 窗口选中其文件夹，带场景的示例可经「打开场景」按钮一键直达（切换前自动保存当前场景一次），操作结果以窗口右下角 Toast 提示。未安装 Odin 时提供 IMGUI 兜底窗口，安装 Odin 后自动切换为带页面动效的 Odin 版窗口。
+> **Aesir Getting Started 窗口**（菜单 `Tools → Aesir → Getting Started`，0.24.0 起）：集中浏览与直达 Aesir 两包全部示例的导航入口——概览页展示已安装包卡片（含未安装包的下载引导），包页按教学分组列出示例；点击示例卡片即在 Project 窗口选中其文件夹，带场景的示例可经「打开场景」按钮一键直达（切换前自动保存当前场景一次），操作结果以窗口右下角 Toast 提示。UPM（Git URL）/ 嵌入式安装的未导入示例：点击卡片以 Toast 引导导入，「导入 Sample」按钮弹出确认框（含示例介绍与导入后位置，可取消），确认后经 Package Manager 的 Sample API 直接导入到 Assets/Samples/ 并自动刷新示例清单。未安装 Odin 时提供 IMGUI 兜底窗口，安装 Odin 后自动切换为带页面动效的 Odin 版窗口。
 
 包内提供 11 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
 
