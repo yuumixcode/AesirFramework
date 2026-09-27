@@ -48,7 +48,7 @@ SceneModule.SceneUnloadedEvent.AddListener(path => Debug.Log($"已卸载 {path}"
 
 游戏工程包含 UniTask 时，模块自动完成两件事（无需任何配置）：
 
-1. **内部异步驱动替换** — 宏 `AESIR_MODULES_UNITASK` 由编辑器自动维护（UPM 包 `com.cysharp.unitask` 安装经 versionDefines 生效；unitypackage / DLL 安装经 `AesirUniTaskDefineKeeper` 按域内 `Cysharp.Threading.Tasks` 程序集自动增删全局宏），加载/卸载流程改由 UniTask 驱动（`UniTask.NextFrame` / `ToUniTask`，宿主销毁随 `destroyCancellationToken` 静默中止，语义与协程完全一致）；未包含 UniTask 时回退协程驱动，公开 API 不变。
+1. **内部异步驱动替换** — 宏 `AESIR_MODULES_UNITASK` 由编辑器自动维护（UPM 包 `com.cysharp.unitask` 安装经 versionDefines 生效；unitypackage / DLL 安装经 `AesirUniTaskDefineKeeper` 按域内 UniTask 程序集自动增删全局宏，检测按程序集名白名单——asmdef 源码 / unitypackage 形态为 `UniTask`，NuGet 预编译 DLL 为 `Cysharp.Threading.Tasks`），加载/卸载流程改由 UniTask 驱动（`UniTask.NextFrame` / `ToUniTask`，宿主销毁随 `destroyCancellationToken` 静默中止，语义与协程完全一致）；未包含 UniTask 时回退协程驱动，公开 API 不变。
 2. **可 await 的适配 API** — 适配程序集 `Runestone.AesirModules.UniTask`（`Runtime/Integration/UniTask/`，宏关闭时整体不编译）提供 `SceneModuleUniTask` 静态类：
 
 ```csharp
@@ -111,5 +111,5 @@ Inspector 三态着色与一键修复（需 Odin）：Addressable 场景青色�
 - 数据层与行为层 EditMode 用例位于 `Editor/Scene/Tests/`（`SceneAssetWrapperTests` 27 + `SceneModuleTests` 24（含静态门面契约：类型不得再暴露公开实例 API、门面转发单例状态）+ 测试场景卫生守护 1，协程经手动 `MoveNext` 驱动模拟）。测试场景由 SetUp 准备：宿主工程缺失时从包内最小场景夹具（随测试分发）临时复制、TearDown 按“谁创建谁删除”还原（含空目录），测试不依赖宿主工程恰好存在某个场景；涉及的资产路径一律按文件名经 AssetDatabase 定位，不写死 Assets 相对路径。
 - 真实加载/卸载成功路径由包根 `Tests/Runtime/SceneModulePlayModeTests.cs`（PlayMode 程序集 `Runestone.AesirModules.Tests.Runtime`）覆盖：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义。测试场景为 `TestScenes/` 下两个最小 .unity；BuildSettings 登记走 `IPrebuildSetup`（进入 Play 前的编辑模式阶段登记 enabled 条目）与 `IPostBuildCleanup`（退出 Play 后摘除），条目仅存在于本次运行期间——不进玩家构建、不污染宿主工程配置；不能在 PlayMode 内登记（`LoadSceneAsync` 校验的是进入 Play 时固化的构建场景列表）且 disabled 条目运行时不可加载，均实测；域加载另有兜底清扫，回收被强杀运行遗留的条目。Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）。
 - 单例配置资产由 `Tests/Editor/Scene/SceneModuleConfigSOTests.cs` 锁定（11 用例：Resources 解析与缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复兜底、加载器返回 null 落内存默认、CreateDefault 默认值、启动场景兜底回退矩阵——实例字段优先 / 配置兜底 / 双双未配置返回 null）。
-- UniTask 适配的宏维护器由 `Tests/Editor/UniTask/AesirUniTaskDefineKeeperTests.cs` 锁定（5 用例：决策矩阵——UPM 安装交由 versionDefines 不干预全局 / 程序集在场补宏 / 不在场移除；装配不变量——`Runestone.AesirModules.UniTask` 程序集加载状态与宏存在性必须一致）。
+- UniTask 适配的宏维护器由 `Tests/Editor/UniTask/AesirUniTaskDefineKeeperTests.cs` 锁定（7 用例：决策矩阵——UPM 安装交由 versionDefines 不干预全局 / 程序集在场补宏 / 不在场移除；装配不变量——`Runestone.AesirModules.UniTask` 程序集加载状态与宏存在性必须一致；命名守卫——检测白名单与两处 asmdef 引用必须命中 UniTask 的真实程序集名，防止把命名空间名 `Cysharp.Threading.Tasks` 误当程序集名使用的回归）。
 - 修改 `SceneModule` 加载/卸载协程、UniTask 驱动分支或快照缓冲逻辑时，先跑 `Editor/Scene/Tests` EditMode 套件，再跑 `Tests/Runtime` PlayMode 套件；UniTask 分支在未安装 UniTask 的工程不参与编译，改动后需在含 UniTask 的工程（或以最小 API 桩程序集 + 临时置宏）验证双态编译。
