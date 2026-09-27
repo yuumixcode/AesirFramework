@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.29.0] - 2026-09-27
+
+### Added
+
+- **`package.json` 新增 UPM 元数据链接字段** — `documentationUrl` 指向文档站 Modules 分区、`changelogUrl` 指向文档站更新日志页：UPM（Git URL）安装后在 Package Manager 包详情页出现「View documentation」「View changelog」链接
+
 ## [0.28.0] - 2026-09-27
 
 ### Removed
