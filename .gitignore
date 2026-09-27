@@ -149,3 +149,7 @@ InitTestScene*.unity*
 
 TestResults*.xml
 /playmode-test.log
+
+# 模块配置资产（编辑器自动创建，消费者项目由初始化器生成，不入库）
+/Assets/Resources/
+/Assets/Resources.meta
