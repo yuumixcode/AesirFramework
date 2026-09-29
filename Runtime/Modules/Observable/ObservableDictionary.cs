@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
@@ -15,8 +16,9 @@ namespace Runestone.AesirArchitecture
     /// 路径零分配（直接多播调用）。注意：订阅路径（<see cref="AddListener" /> / 句柄创建）有与监听者数量成正比的委托分配，
     /// 勿在每帧订阅场景使用。
     /// <para>
-    /// <c>[SerializeField]</c> 标记 dictionary 字段——Unity 原生不序列化 <see cref="Dictionary{TKey, TValue}" />，
-    /// 安装 Odin Inspector 后该字段可被 Odin 序列化，便于在 Inspector 中编辑初始键值。
+    /// <c>[SerializeField]</c> 标记 dictionary 字段——Unity 原生不序列化 <see cref="Dictionary{TKey, TValue}" />
+    /// （该标记对 Unity 序列化无效果），安装 Odin Inspector 且宿主走 Odin 序列化（如 <see cref="AesirMonoBehaviour" /> 派生组件）时，
+    /// 该字段可被 Odin 序列化管线接管，便于在 Inspector 中编辑初始键值。
     /// </para>
     /// <para>
     /// 变更通知为单一事件（<see cref="AddListener" />），载荷为 <see cref="CollectionChangedEventArgs{T}" />
@@ -37,6 +39,7 @@ namespace Runestone.AesirArchitecture
         readonly MiniEvent<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>> _changedEvent =
             new MiniEvent<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>>();
 
+        [SerializeField]
         Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
 
         /// <summary>

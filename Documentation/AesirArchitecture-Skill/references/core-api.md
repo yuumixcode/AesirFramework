@@ -161,15 +161,15 @@ GenericLocator<IAudioService>.Unregister();
 ```csharp
 // 注册帧回调（不需要 MonoBehaviour）
 // Register 返回 AutoRemoveListenerHandle：Dispose 时自动注销（匿名委托只能靠它注销）
-var handle = AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, MyFrameCallback);
-AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.AfterUpdate, MyAfterUpdateCallback);
+var handle = AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, MyFrameCallback);
+AesirPlayerLoop.Register(AesirLifecyclePhase.AfterUpdate, MyAfterUpdateCallback);
 
 // 注销（二选一：句柄 Dispose 或 Unregister 同一委托实例）
 handle.Dispose();
-AesirArchitecturePlayerLoop.Unregister(AesirArchitectureLifecyclePhase.BeforeUpdate, MyFrameCallback);
+AesirPlayerLoop.Unregister(AesirLifecyclePhase.BeforeUpdate, MyFrameCallback);
 
 // 确保已注入（第三方 SDK 修改 PlayerLoop 后调用一次）
-AesirArchitecturePlayerLoop.EnsureInjected();
+AesirPlayerLoop.EnsureInjected();
 ```
 
 > `Register` 注册回调时会自动检测 PlayerLoop 注入状态并补插。

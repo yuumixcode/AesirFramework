@@ -11,6 +11,8 @@ namespace Runestone.AesirArchitecture.Editor
     /// 右键快捷生成 ScriptableObject 资源文件。
     /// <para>
     /// 项目同时安装 Aesir Inspector（独立包，写入 <c>AESIR_INSPECTOR</c> 宏）时本类整体不参与编译，
+    /// 避免两包注册同名菜单；注意该宏在本仓库已无生产者（2026-09-05 随 Aesir Inspector 迁出清除），
+    /// 本守卫是否生效取决于外部独立仓库是否仍写该宏，本仓库无法自证，
     /// 由其提供同名菜单，避免重复菜单项。
     /// </para>
     /// </summary>

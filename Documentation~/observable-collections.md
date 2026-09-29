@@ -10,7 +10,7 @@
 
 | 保留 | 理由 |
 |------|------|
-| `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` / `ObservableQueue<T>` | 背包、配置表、状态集合、消息队列——独立游戏最常用的四种集合 |
+| `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` | 背包、配置表、状态集合——独立游戏最常用的三种集合；队列（FIFO）等更多形态用上游库 |
 | 单轨变更通知 | 一套事件语义覆盖全部集合（含 Move / Sort / Reverse），监听句柄可绑定 Unity 生命周期自动移除 |
 | Odin Inspector 内联调试面板 | 初学者能直接在 Inspector 里看到集合内容与监听数量 |
 
@@ -24,10 +24,9 @@
 |------|------|
 | `ObservableList<T>` | 可观察列表；支持 `AddRange` / `InsertRange` / `RemoveRange` / `Move` / `Sort` / `Reverse` |
 | `ObservableDictionary<TKey, TValue>` | 可观察字典（键值对无索引，通知索引参数固定为 -1） |
-| `ObservableHashSet<T>` | 可观察集合；保留 `ISet<T>` 集合代数操作（逐项通知） |
-| `ObservableQueue<T>` | 可观察队列（FIFO） |
+| `ObservableHashSet<T>` | 可观察哈希集合；`AddRange` / `RemoveRange` 批量操作逐项通知 |
 
-四者统一实现 `IObservableCollection<T>`：
+三者统一实现 `IObservableCollection<T>`：
 
 ```csharp
 public interface IObservableCollection<T> : IReadOnlyCollection<T>
@@ -104,7 +103,8 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 
 | 需求 | 建议 |
 |------|------|
-| 列表 / 字典 / 集合 / 队列的变更通知 | 直接用本模块 |
+| 列表 / 字典 / 集合的变更通知 | 直接用本模块 |
+| 队列（FIFO）等其余集合形态的变更通知 | 使用上游 |
 | 同步视图与过滤器（列表驱动 GameObject / UI） | 使用上游 |
 | R3 响应式（`ObserveAdd` / `ObserveSort` …） | 使用上游 `ObservableCollections` + `ObservableCollections.R3`（NuGet / UPM） |
 | 环形缓冲区（定长日志、滚动窗口）、栈、交替索引列表 | 使用上游 |
@@ -117,11 +117,11 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 
 两者可以在**同一项目**中同时使用：上游经 UPM（Git URL `…/ObservableCollections.git?path=src/ObservableCollections/UPM~`）或 NuGet DLL 安装，本模块随 Aesir Architecture 包分发——程序集（`ObservableCollections` vs `Runestone.AesirArchitecture`）、UPM 包名、命名空间三层完全隔离，互不引用、互不影响。
 
-跨库同名类型（命名空间不同，共 7 个）：
+跨库同名类型（命名空间不同，共 6 个）：
 
 | 同名类型 | 本模块命名空间 | 上游命名空间 |
 |------|------|------|
-| `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` / `ObservableQueue<T>` | `Runestone.AesirArchitecture` | `ObservableCollections` |
+| `ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` | `Runestone.AesirArchitecture` | `ObservableCollections` |
 | `IObservableCollection<T>` / `IReadOnlyObservableList<T>` / `IReadOnlyObservableDictionary<TKey, TValue>` | `Runestone.AesirArchitecture` | `ObservableCollections` |
 
 - 本模块另有上游没有的类型：`IObservableList<T>` / `IObservableDictionary<TKey, TValue>` / `IObservableHashSet<T>` / `IReadOnlyObservableHashSet<T>` / `CollectionChangedEventArgs<T>`。
@@ -133,7 +133,7 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 | 项目 | 上游 | 本项目 |
 |------|------|--------|
 | 命名空间 | `ObservableCollections` | `Runestone.AesirArchitecture`（内部工具在 `.Internal`） |
-| 集合数量 | 9 种（含队列 / 栈 / 环形缓冲 / 交替索引） | 4 种（List / Dictionary / HashSet / Queue） |
+| 集合数量 | 9 种（含队列 / 栈 / 环形缓冲 / 交替索引） | 3 种（List / Dictionary / HashSet；队列等形态用上游） |
 | 通知模型 | `CollectionChanged`（`readonly ref struct` 载荷 + `in` 参数）+ 各集合另有一套 `IEvent<T>` 轻量事件 | 单轨 `AddListener`（`MiniEvent<T>` 承载，普通 struct 载荷，返回句柄） |
 | 通知语义 | 每次写操作都通知（含无变更写入）、批量操作单次事件、Sort / Reverse 携带 `SortOperation` | 无变更不通知、批量操作逐项通知、Sort / Reverse / Clear 统一 Reset 无附加字段 |
 | 订阅清理 | 事件退订（`-=`）+ `IEvent<T>` 手动管理 | `AutoRemoveListenerHandle`：using / Dispose / Unity 生命周期自动移除 |
@@ -141,7 +141,7 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 | HashSet 集合代数 | `ISet<T>` 全套（并 / 交 / 差 / 子集判定） | 不实现（`IObservableHashSet<T>` 不继承 `ISet<T>`，需要时用内部 `HashSet<T>` 或上游） |
 | `ReadOnlySpan<T>` 批量重载 | `AddRange(ReadOnlySpan<T>)` 等 | 不提供（Span 是库作者面；保留 `T[]` 与 `IEnumerable<T>` 双轨） |
 | 区间 Sort / Reverse | `Sort(index, count, comparer)` 等 | 不提供（整表 `Sort()` / `Reverse()` 保留） |
-| `List<T>` 的 span 批量操作 | `Unsafe.As` 改写内部数组 | 逐项追加 / 先物化再插入（`Internal/ListExtensions.cs`）——Unity netstandard2.1 无 `Unsafe` / `CollectionsMarshal`，语义一致，批量插入多一次数组分配 |
+| `List<T>` 的 span 批量操作 | `Unsafe.As` 改写内部数组 | 不提供（见上 `ReadOnlySpan<T>` 行）；`T[]` / `IEnumerable<T>` 批量入口内部经 `CloneCollection` 先物化（租借数组）再写入——Unity netstandard2.1 无 `Unsafe` / `CollectionsMarshal`，语义一致，批量操作多一次数组分配 |
 | 语言版本 | C# 12（`record struct` / 主构造器 / file-scoped namespace） | C# 9 等价写法 |
 | `IReadOnlySet<T>` | netstandard2.0 内部 shim | 保留项目既有 `IObservableHashSet<T>`（不继承 `ISet<T>`，见上「HashSet 集合代数」行） |
 | `notnull` 约束 | `where TKey : notnull` / `where T : notnull` | 不添加（避免破坏既有可空元素用法） |
@@ -164,5 +164,5 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 |----------|------|
 | `Tests/Editor/ObservableCollectionChangedTests.cs` | 单轨通知语义（无变更不通知 / 批量逐项 / Move / Reset / 字典与集合的 -1 索引 / 句柄与 ClearListeners / 句柄绑定 GameObject OnDisable 自动移除） |
 | `Tests/Editor/ObservableListParityTests.cs` | 列表写操作结果与 BCL `ObservableCollection<T>` 对齐（上游测试移植） |
-| `Tests/Editor/ObservableListTests.cs` / `ObservableDictionaryTests.cs` / `ObservableHashSetTests.cs` | 单轨通知回归（含集合代数操作逐项通知与自差集短路） |
+| `Tests/Editor/ObservableListTests.cs` / `ObservableDictionaryTests.cs` / `ObservableHashSetTests.cs` | 单轨通知回归（含批量操作逐项通知与「源为集合自身」的先物化安全语义） |
 | `Tests/Editor/ObservableValueTests.cs` | `ObservableValue<T>` 回归 |

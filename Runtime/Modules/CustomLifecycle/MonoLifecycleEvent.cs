@@ -12,7 +12,7 @@ namespace Runestone.AesirArchitecture
     /// </para>
     /// <para>
     /// <see cref="BeforeUpdate" /> 和 <see cref="AfterUpdate" /> 由
-    /// <see cref="AesirArchitecturePlayerLoop" /> 驱动，分别对应每帧 Update 之前和 PostLateUpdate 之后。
+    /// <see cref="AesirPlayerLoop" /> 驱动，分别对应每帧 Update 之前和 PostLateUpdate 之后。
     /// 其余事件由 <see cref="MonoLifecycleProxy" /> 在对应 Unity 回调中直接触发。
     /// </para>
     /// </remarks>
@@ -31,8 +31,8 @@ namespace Runestone.AesirArchitecture
         /// 自定义 PlayerLoop 阶段：在 Update 之前执行
         /// </summary>
         /// <remarks>
-        /// 由 <see cref="AesirArchitecturePlayerLoop" /> 的
-        /// <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate" /> 阶段驱动。
+        /// 由 <see cref="AesirPlayerLoop" /> 的
+        /// <see cref="AesirLifecyclePhase.BeforeUpdate" /> 阶段驱动。
         /// <para>常见场景：输入采样、帧前状态快照、在所有 Update 逻辑之前执行的高优先级预处理。</para>
         /// </remarks>
         BeforeUpdate = 1,
@@ -57,8 +57,8 @@ namespace Runestone.AesirArchitecture
         /// 自定义 PlayerLoop 阶段：在 PostLateUpdate 之后执行
         /// </summary>
         /// <remarks>
-        /// 由 <see cref="AesirArchitecturePlayerLoop" /> 的
-        /// <see cref="AesirArchitectureLifecyclePhase.AfterUpdate" /> 阶段驱动。
+        /// 由 <see cref="AesirPlayerLoop" /> 的
+        /// <see cref="AesirLifecyclePhase.AfterUpdate" /> 阶段驱动。
         /// <para>常见场景：帧结束状态快照、性能采样、延迟队列执行、读取当前帧所有模块的最终状态。</para>
         /// </remarks>
         AfterUpdate = 4,

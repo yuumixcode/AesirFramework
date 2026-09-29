@@ -24,7 +24,7 @@ namespace Runestone.AesirArchitecture
     /// 无变更的操作不通知（Remove 不存在的元素、Clear 空列表、索引器赋相同值）；
     /// 批量操作（AddRange / InsertRange / RemoveRange）逐项通知；
     /// <see cref="Sort()" /> / <see cref="Reverse()" /> / <see cref="Clear" /> 以
-    /// <see cref="NotifyCollectionChangedAction.Reset" /> 通知（无附加字段，监听方按"重建视图"处理）。
+    /// <see cref="System.Collections.Specialized.NotifyCollectionChangedAction.Reset" /> 通知（无附加字段，监听方按"重建视图"处理）。
     /// </para>
     /// <para>
     /// 遍历性能：foreach 具体类型走结构体枚举器，零分配；通过 <see cref="IReadOnlyObservableList{T}" /> /

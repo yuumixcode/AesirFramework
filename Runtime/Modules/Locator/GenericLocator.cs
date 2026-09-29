@@ -47,6 +47,11 @@ namespace Runestone.AesirArchitecture
         /// <param name="instance">要注册的实例。</param>
         public void Register<TItem>(TItem instance) where TItem : class, T
         {
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance), "注册实例不可为 null（与 Register(Type, T) 的校验对称）");
+            }
+
             var key = typeof(TItem);
             if (!_registry.ContainsKey(key))
             {
@@ -66,6 +71,16 @@ namespace Runestone.AesirArchitecture
         /// </exception>
         public void Register(Type type, T instance)
         {
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+
             if (!type.IsInstanceOfType(instance))
             {
                 throw new ArgumentException($"实例类型与 {type.Name} 不匹配", nameof(instance));
@@ -127,12 +142,20 @@ namespace Runestone.AesirArchitecture
         /// 按注册顺序获取所有已注册的实例集合
         /// </summary>
         /// <returns>所有已注册实例的 <see cref="IEnumerable{T}" /> 集合，不含类型键，按注册顺序排列。</returns>
+        /// <remarks>
+        /// 返回调用时刻的完整快照（同步物化）：消费端可在枚举期间修改定位器而不抛"集合已修改"异常，
+        /// 期间发生的注册/注销不影响已返回的枚举。物化分配仅发生在调用时（初始化/关停等冷路径）。
+        /// 与诊断成员 <see cref="GetAllEntries" /> 取同一份快照语义，两者修改安全性契约一致。
+        /// </remarks>
         public IEnumerable<T> GetAll()
         {
+            var items = new List<T>(_insertionOrder.Count);
             foreach (var key in _insertionOrder)
             {
-                yield return _registry[key];
+                items.Add(_registry[key]);
             }
+
+            return items;
         }
 
         /// <summary>
@@ -144,7 +167,7 @@ namespace Runestone.AesirArchitecture
             _registry.ContainsKey(typeof(TItem));
 
         /// <summary>
-        /// 清空所有已注册的实例（内部路径：<see cref="Dispose" /> 与 <see cref="AbstractContext{T}.Dispose" /> 使用）。
+        /// 清空所有已注册的实例（<see cref="Dispose" /> 的底层实现）。
         /// </summary>
         internal void Clear()
         {
@@ -153,7 +176,7 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 按 Type 获取实例（非泛型版本，内部路径）
+        /// 按 Type 获取实例（非泛型版本，测试与调试用途）。
         /// </summary>
         /// <param name="type">要查询的 <see cref="Type" />，作为注册键。</param>
         /// <returns>已注册的实例；若未注册则返回 <c>null</c>。</returns>
@@ -161,13 +184,18 @@ namespace Runestone.AesirArchitecture
             _registry.GetValueOrDefault(type);
 
         /// <summary>
-        /// 获取所有已注册键值对（仅供异常路径的近失识别使用，内部路径）
+        /// 获取所有已注册键值对（诊断用途，近失识别专用）。
         /// </summary>
         /// <remarks>
         /// 正常查询请使用 <see cref="Get{TItem}" /> / <see cref="TryGet{TItem}" />。
-        /// 此成员仅供 <see cref="AbstractContext{T}" /> 在"未注册"异常路径中遍历已注册条目，
-        /// 识别"已注册实例可赋值给查询类型"的近失情况并给出提示；正常路径不产生开销。
+        /// 此成员仅供诊断路径遍历已注册条目（如 <see cref="AbstractContext{T}" /> 在"未注册"异常中
+        /// 识别"已注册实例可赋值给查询类型"的近失情况）；正常路径不产生开销。
+        /// <para>
+        /// 与 <see cref="GetAll" /> 一致地返回调用时刻的物化快照：枚举期间修改定位器不会抛"集合已修改"异常，
+        /// 期间发生的注册/注销不影响已返回的枚举。物化分配仅发生在调用时（异常诊断等冷路径）。
+        /// </para>
         /// </remarks>
-        internal IEnumerable<KeyValuePair<Type, T>> GetAllEntries() => _registry;
+        public IEnumerable<KeyValuePair<Type, T>> GetAllEntries() =>
+            new List<KeyValuePair<Type, T>>(_registry);
     }
 }

@@ -36,7 +36,7 @@ namespace Runestone.AesirArchitecture
     ///     </para>
     ///     <para>
     ///     <b>域加载安全</b>：静态构造函数通过 <see cref="ResetStaticsAssistant.Register(Action)" />
-    ///     注册 <c>_instance = null</c> 重置回调。当 Unity 关闭 Domain Reload（Enter Play Mode Settings）
+    ///     注册"释放并置空单例"的重置回调。当 Unity 关闭 Domain Reload（Enter Play Mode Settings）
     ///     时，静态字段不会被运行时自动清零，该回调确保下次进入 Play 模式时单例被正确重建。
     ///     之所以经助手注册而非类内声明 <c>[RuntimeInitializeOnLoadMethod]</c>：泛型类中的该方法特性
     ///     会被 Unity 静默跳过（不执行也不报错），只能由非泛型的中心位置代为触发。
@@ -48,15 +48,24 @@ namespace Runestone.AesirArchitecture
     public abstract class AbstractContext<T> : IContext where T : AbstractContext<T>, new()
     {
         static T _instance;
-        GenericLocator<IModel> _modelLocator = new GenericLocator<IModel>();
-        GenericLocator<IService> _serviceLocator = new GenericLocator<IService>();
+
+        /// <summary>
+        /// 依赖 <see cref="IGenericLocator{T}" /> 抽象而非具体实现（DIP）：容器行为契约由接口定义，
+        /// 具体实现可替换而不影响 Context 逻辑。
+        /// </summary>
+        IGenericLocator<IModel> _modelLocator = new GenericLocator<IModel>();
+        IGenericLocator<IService> _serviceLocator = new GenericLocator<IService>();
 
         static AbstractContext()
         {
             ResetStaticsAssistant.Register(() =>
             {
-                _instance?.Dispose();
+                // 先摘除单例字段再释放：释放链路可能抛异常（如模块 OnDispose 访问已被上一局销毁的 MonoBehaviour），
+                // 先置空可保证下次访问 Instance 必定重建全新上下文，不会拿到已释放的空壳实例。
+                // 回调内不吞异常——ResetStaticsAssistant 已按回调逐个隔离异常并继续重置其余静态状态。
+                var instance = _instance;
                 _instance = null;
+                instance?.Dispose();
             });
         }
 
@@ -108,12 +117,23 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="TModel">要注册的 Model 接口类型，必须为引用类型并实现 <see cref="IModel" /></typeparam>
         /// <param name="model">要注册的 Model 实例，注册后会绑定到当前上下文</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="model" /> 为 null 时抛出。先于 <c>SetContext</c> 校验，
+        /// 避免以裸 <see cref="NullReferenceException" /> 掩盖"传入 null"这一真实原因。
+        /// </exception>
         /// <remarks>
         /// 运行时替换 Model 属测试/调试用途，替换后旧实例上的订阅不会迁移——已订阅的 View 需自行重新订阅。
         /// 首次注册不输出日志，仅动态替换时输出 Warning 提醒（详见 <see cref="LogReplacementWarning" />）。
         /// </remarks>
         public void RegisterModel<TModel>(TModel model) where TModel : class, IModel
         {
+            // 与 GenericLocator{T}.Register 的 null 校验对称：此处先于 SetContext 拦下，
+            // 否则 null 会先在 SetContext 上炸成裸 NullReferenceException，定位不到真实原因。
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model), "注册的 Model 实例不可为 null");
+            }
+
             if (_modelLocator.TryGet<TModel>(out var existing))
             {
                 LogReplacementWarning("Model", typeof(TModel).Name);
@@ -123,6 +143,8 @@ namespace Runestone.AesirArchitecture
             model.SetContext(this);
             _modelLocator.Register(model);
 
+            // 集体初始化尚未开始（Configure 阶段）：只登记，交由 Initialize() 按注册顺序统一初始化。
+            // 集体初始化完成后（运行时注册）：立即初始化，使新模块与既有模块状态一致。
             if (!Initialized)
             {
                 return;
@@ -137,12 +159,22 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <typeparam name="TService">要注册的 Service 接口类型，必须为引用类型并实现 <see cref="IService" /></typeparam>
         /// <param name="service">要注册的 Service 实例，注册后会绑定到当前上下文</param>
+        /// <exception cref="ArgumentNullException">
+        /// <paramref name="service" /> 为 null 时抛出。先于 <c>SetContext</c> 校验，
+        /// 避免以裸 <see cref="NullReferenceException" /> 掩盖"传入 null"这一真实原因。
+        /// </exception>
         /// <remarks>
         /// 运行时替换 Service 属测试/调试用途，替换后旧实例上的订阅不会迁移——已订阅方需自行重新订阅。
         /// 首次注册不输出日志，仅动态替换时输出 Warning 提醒（详见 <see cref="LogReplacementWarning" />）。
         /// </remarks>
         public void RegisterService<TService>(TService service) where TService : class, IService
         {
+            // 与 RegisterModel / GenericLocator{T}.Register 同款：先于 SetContext 拦下 null。
+            if (service == null)
+            {
+                throw new ArgumentNullException(nameof(service), "注册的 Service 实例不可为 null");
+            }
+
             if (_serviceLocator.TryGet<TService>(out var existing))
             {
                 LogReplacementWarning("Service", typeof(TService).Name);
@@ -152,6 +184,7 @@ namespace Runestone.AesirArchitecture
             service.SetContext(this);
             _serviceLocator.Register(service);
 
+            // 与 RegisterModel 同款：Configure 阶段只登记、运行时注册立即初始化。
             if (!Initialized)
             {
                 return;
@@ -217,35 +250,53 @@ namespace Runestone.AesirArchitecture
         /// <para>若上下文尚未初始化，此方法直接返回不做任何操作。</para>
         /// <para>释放后解除 <see cref="Instance" /> 的单例缓存——再次访问 <see cref="Instance" /> 将重建并重新初始化全新上下文，而非返回已释放的空壳实例。</para>
         /// <para><c>Reverse()</c> 在关停路径产生一次枚举分配，属可接受的一次性开销。</para>
+        /// <para>
+        /// <b>不可覆写</b>：本方法刻意非 <c>virtual</c>（模板方法），以保证"解除单例缓存 + 清空容器"这段
+        /// 框架级收尾永远被执行到底，不会被子类的部分实现跳过。自定义的释放逻辑请写入
+        /// <see cref="OnDispose" />——它是本类唯一的释放定制点。
+        /// </para>
+        /// <para>
+        /// <b>异常安全</b>：释放链路（<see cref="OnDispose" /> 与各模块的 <c>Dispose</c>，例如访问已被
+        /// 上一局销毁的 MonoBehaviour）抛出的异常照旧向上传播（fail-fast），但收尾不变量放在
+        /// <c>finally</c> 中执行——置 <c>Initialized</c> 为 <c>false</c> 并解除单例缓存。
+        /// 否则异常会让 <see cref="Instance" /> 长期指向半释放的上下文，且 <see cref="Initialize" />
+        /// 因 <c>Initialized</c> 早退而永不重建（与静态重置回调"先摘单例再释放"的硬化同构）。
+        /// </para>
         /// </remarks>
-        public virtual void Dispose()
+        public void Dispose()
         {
             if (!Initialized)
             {
                 return;
             }
 
-            OnDispose();
-
-            foreach (var service in _serviceLocator.GetAll().Reverse())
+            try
             {
-                service.Dispose();
+                OnDispose();
+
+                foreach (var service in _serviceLocator.GetAll().Reverse())
+                {
+                    service.Dispose();
+                }
+
+                foreach (var model in _modelLocator.GetAll().Reverse())
+                {
+                    model.Dispose();
+                }
+
+                // 经 IDisposable 契约清空容器（实现内为 Clear，语义见 IGenericLocator{T}）
+                _serviceLocator.Dispose();
+                _modelLocator.Dispose();
             }
-
-            foreach (var model in _modelLocator.GetAll().Reverse())
+            finally
             {
-                model.Dispose();
-            }
+                // 收尾不变量：无论释放链路是否抛异常都必须执行（语义见 remarks 的"异常安全"）
+                Initialized = false;
 
-            _serviceLocator.Clear();
-            _modelLocator.Clear();
-
-            Initialized = false;
-
-            // 释放后解除单例缓存，下次访问 Instance 按懒加载语义重建全新上下文（语义详见 Dispose remarks）
-            if (ReferenceEquals(_instance, this))
-            {
-                _instance = null;
+                if (ReferenceEquals(_instance, this))
+                {
+                    _instance = null;
+                }
             }
         }
 
@@ -324,7 +375,7 @@ namespace Runestone.AesirArchitecture
         /// 仅在异常路径执行（未注册时），正常路径零开销。
         /// 典型触发：按实现类注册、按接口查询（或反之）——键精确匹配失败但实例实际兼容。
         /// </remarks>
-        static string BuildNearMissHint<TQuery, TBase>(GenericLocator<TBase> locator)
+        static string BuildNearMissHint<TQuery, TBase>(IGenericLocator<TBase> locator)
             where TQuery : class where TBase : class
         {
             foreach (var entry in locator.GetAllEntries())
@@ -350,11 +401,18 @@ namespace Runestone.AesirArchitecture
         /// <list type="number">
         ///     <item>
         ///     调用 <see cref="Configure" />，让子类在其中通过 <see cref="RegisterModel{TModel}" /> 和
-        ///     <see cref="RegisterService{TService}" /> 注册所有模块
+        ///     <see cref="RegisterService{TService}" /> 注册所有模块。此阶段只登记，<b>不初始化</b>
+        ///     （<c>Initialized</c> 尚未置位，注册不触发初始化）
         ///     </item>
-        ///     <item>按注册顺序遍历并调用各 Model 的 <c>Initialize</c></item>
-        ///     <item>按注册顺序遍历并调用各 Service 的 <c>Initialize</c></item>
+        ///     <item>按注册顺序遍历并初始化全部 Model（跳过已初始化者）</item>
+        ///     <item>按注册顺序遍历并初始化全部 Service（跳过已初始化者）</item>
         /// </list>
+        /// </para>
+        /// <para>
+        /// <b>初始化期注册</b>：模块的 <c>OnInitialize</c> 中注册新模块时，<c>GetAll()</c> 的快照已经取定，
+        /// 新模块不在本轮快照内；此时 <c>Initialized</c> 仍为 <c>false</c>，故注册不会触发即时初始化。
+        /// 每一步都以「重复取快照直到没有未初始化模块」补齐，保证新增模块在本次 <see cref="Initialize" />
+        /// 返回前完成初始化且不重复初始化。
         /// </para>
         /// <para>
         /// 若已初始化则直接返回，保证幂等性。初始化过程中抛出的异常直接向上传播，不做回滚——
@@ -370,17 +428,45 @@ namespace Runestone.AesirArchitecture
 
             Configure();
 
-            foreach (var model in _modelLocator.GetAll())
-            {
-                model.Initialize();
-            }
-
-            foreach (var service in _serviceLocator.GetAll())
-            {
-                service.Initialize();
-            }
+            // 先全部 Model、后全部 Service 的两阶段顺序；各阶段内部按注册顺序初始化。
+            InitializePendingModules(_modelLocator);
+            InitializePendingModules(_serviceLocator);
 
             Initialized = true;
+        }
+
+        /// <summary>
+        /// 初始化容器内所有尚未初始化的模块，按注册顺序。
+        /// <para>
+        /// 重复取快照直到某一轮没有可初始化者为止：模块的 <c>OnInitialize</c> 中注册的新模块
+        /// 不在本轮快照内，由下一轮补齐（<see cref="ICanInitialize.Initialized" /> 使已初始化者被跳过，
+        /// 因此不会重复初始化）。
+        /// </para>
+        /// </summary>
+        /// <typeparam name="TBase">容器元素类型，须具备初始化契约</typeparam>
+        /// <param name="locator">目标容器（Model 容器或 Service 容器）</param>
+        static void InitializePendingModules<TBase>(IGenericLocator<TBase> locator)
+            where TBase : class, ICanInitialize
+        {
+            while (true)
+            {
+                var initializedAny = false;
+                foreach (var module in locator.GetAll())
+                {
+                    if (module.Initialized)
+                    {
+                        continue;
+                    }
+
+                    module.Initialize();
+                    initializedAny = true;
+                }
+
+                if (!initializedAny)
+                {
+                    return;
+                }
+            }
         }
 
         /// <summary>
@@ -389,7 +475,8 @@ namespace Runestone.AesirArchitecture
         protected abstract void Configure();
 
         /// <summary>
-        /// 子类可选覆写，在释放前执行自定义清理
+        /// 子类可选覆写，在释放前执行自定义清理。
+        /// <para>这是本类唯一的释放定制点——<see cref="Dispose" /> 非 <c>virtual</c>，不可覆写。</para>
         /// </summary>
         protected virtual void OnDispose() { }
     }

@@ -24,7 +24,8 @@ namespace Runestone.AesirArchitecture.Editor
     /// <para>
     /// 状态设计：远程版本 / 检测结果 / 更新日志均为序列化字段，更新导入触发域重载后窗口内容不丢失；
     /// 行视图模型（<see cref="PackageRow" />）在状态变化时一次性重建并重算显示文本与颜色，
-    /// OnGUI 期间零 LINQ、零字符串拼接、零磁盘 IO（行内按钮的 Owner 引用为非序列化，域重载后随重建回填）。
+    /// 稳态 OnGUI 期间零 LINQ、零字符串拼接、零磁盘 IO（行内按钮的 Owner 引用为非序列化，域重载后随重建回填）；
+    /// 例外是域重载后首帧的兜底 <c>RebuildRows()</c>（包数变化时的重建路径，含拼串与目标集重算）。
     /// </para>
     /// </summary>
     public class AesirUpdateWindowOdin : OdinEditorWindow
@@ -273,7 +274,7 @@ namespace Runestone.AesirArchitecture.Editor
         {
             base.OnEnable();
             _controller = new AesirUpdateController(_state, WindowTitle, OnViewChanged,
-                progress01 => _progress01 = progress01);
+                progress01 => _progress01 = progress01, Repaint);
             _controller.Initialize();
         }
 
@@ -304,7 +305,7 @@ namespace Runestone.AesirArchitecture.Editor
             EditorGUILayout.Space(3f);
         }
 
-        /// <summary>状态变化回调（重扫 / 忙碌切换 / 状态文本变更）：重建行视图模型并重绘。</summary>
+        /// <summary>结构变化回调（重扫 / 忙碌切换）：重建行视图模型并重绘。</summary>
         void OnViewChanged()
         {
             RebuildRows();

@@ -124,6 +124,44 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 "MonoViewController<T> 的 Command 写入与 Query 读取链路应闭环");
         }
 
+        [Test]
+        public void MonoView_ImplementsIViewOfT_DIMBindsContext()
+        {
+            var view = NewGameObject("TestViewDim").AddComponent<TestView>();
+
+            Assert.IsTrue(view is IView<TestContext>, "MonoView<T> 应实现 IView<TestContext>（DIM 绑定来源）");
+            Assert.AreSame(TestContext.Instance, ((IContextHolder)view).Context,
+                "IView<T> 的默认接口实现应把 Context 绑定到 AbstractContext<T>.Instance 单例");
+        }
+
+        [Test]
+        public void MonoViewController_ImplementsIControllerOfT_DIMBindsContext()
+        {
+            var controller = NewGameObject("TestViewControllerDim").AddComponent<TestViewController>();
+
+            Assert.IsFalse(controller is IView<TestContext>,
+                "VC 对的 View 角色保持非泛型 IView 声明（避免与 IController<T> 双 DIM 冲突）");
+            Assert.IsTrue(controller is IController<TestContext>,
+                "MonoViewController<T> 应额外获得 IController<TestContext> 可赋值性");
+            Assert.AreSame(TestContext.Instance, ((IContextHolder)controller).Context,
+                "IController<T> 的默认接口实现应把 Context 绑定到 AbstractContext<T>.Instance 单例");
+        }
+
+        [Test]
+        public void AesirAdapters_DeclareGenericRoleInterfaces()
+        {
+            // Aesir 家族实例化依赖 Odin 基类链（本测试程序集未引用 Sirenix），
+            // 此处经类型系统锁定声明面；DIM 绑定行为由上方 Mono 家族用例覆盖（同一接口实现）
+            Assert.IsTrue(typeof(IView<TestContext>).IsAssignableFrom(typeof(AesirView<TestContext>)),
+                "AesirView<T> 应实现 IView<T>");
+            Assert.IsTrue(typeof(IController<TestContext>).IsAssignableFrom(typeof(AesirViewController<TestContext>)),
+                "AesirViewController<T> 应实现 IController<T>");
+            Assert.IsTrue(typeof(IView<TestContext>).IsAssignableFrom(typeof(MonoView<TestContext>)),
+                "MonoView<T> 应实现 IView<T>");
+            Assert.IsTrue(typeof(IController<TestContext>).IsAssignableFrom(typeof(MonoViewController<TestContext>)),
+                "MonoViewController<T> 应实现 IController<T>");
+        }
+
         #endregion
 
         #region RemoveListener 触发器族

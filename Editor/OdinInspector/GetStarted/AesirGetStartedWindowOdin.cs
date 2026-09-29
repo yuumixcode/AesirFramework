@@ -19,7 +19,8 @@ namespace Runestone.AesirArchitecture.Editor
     /// 结构与动效参照 Odin Inspector 自带 Getting Started 窗口：页面栈导航（顶部面包屑 + 底部返回）、
     /// 概览区随页面进出垂直收起为常驻条带（点击条带卡片可在包之间水平滑动切换）、页面内容入场渐显；
     /// 绘制全部使用 SirenixEditorGUI / SirenixGUIStyles / SdfIcons 官方基础设施，样式静态懒加载，
-    /// OnGUI 期间零分配（显示文本均在扫描 / 进页时预计算）。
+    /// 包卡片与示例卡片的主要显示文本在扫描 / 进页时预计算；例外是示例卡的档位徽章与"无场景"提示
+    /// （<c>DrawSampleCard</c> 每帧现算，含一次 Substring），量级极小但严格意义上不在"零分配"之列。
     /// </para>
     /// <para>
     /// 数据层与 IMGUI 兜底窗口共用 <see cref="AesirGetStartedService" />；菜单入口为

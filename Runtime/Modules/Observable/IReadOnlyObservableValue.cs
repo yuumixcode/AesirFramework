@@ -48,5 +48,17 @@ namespace Runestone.AesirArchitecture
         /// 触发值变更通知，用于强制刷新监听方状态。
         /// </summary>
         void InvokeEvent();
+
+        /// <summary>
+        /// 清空所有监听。
+        /// </summary>
+        /// <remarks>
+        /// 清除全部监听引用，防止因监听者未释放导致的内存泄漏。清除的是监听者而非值本身。
+        /// <para>
+        /// 供持有只读接口的 View / Presenter 在对象池对象归还前统一摘除全部监听：
+        /// 实现类型均为 <c>sealed</c>，无法经继承补出该能力，只读接口暴露本成员是"只持有接口"场景下的唯一入口。
+        /// </para>
+        /// </remarks>
+        void ClearListeners();
     }
 }

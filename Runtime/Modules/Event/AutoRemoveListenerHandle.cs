@@ -16,6 +16,12 @@ namespace Runestone.AesirArchitecture
     /// 该句柄由 <see cref="MiniEvent.AddListener" /> 和
     /// <c>ObservableValue&lt;T&gt;.AddListener</c> 返回。
     /// </para>
+    /// <para>
+    /// <b>每个句柄只对应一次 <c>AddListener</c> 调用</b>：句柄捕获的是"本次注册所传入的回调"，
+    /// 注销时执行一次等价的 <c>RemoveListener</c>。这与原生 C# 事件的语义一致
+    /// （<c>+=</c> 允许同一方法组重复入列，<c>-=</c> 只摘除一个匹配项）——
+    /// 同一回调注册 N 次会得到 N 个句柄，需 Dispose 全部 N 个才彻底退订。
+    /// </para>
     /// </remarks>
     public struct AutoRemoveListenerHandle : IDisposable
     {

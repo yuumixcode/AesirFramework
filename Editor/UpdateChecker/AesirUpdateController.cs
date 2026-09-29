@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -34,6 +35,9 @@ namespace Runestone.AesirArchitecture.Editor
 
         readonly Action _viewChanged;
 
+        /// <summary>「仅重绘」回调（进度每 tick 与状态文本变更时触发，不重算列表）。</summary>
+        readonly Action _repaintRequested;
+
         /// <summary>
         /// 用户在进度条上点了「取消」（<see cref="SetProgress" /> 置位、单向保持）。
         /// 仅更新执行阶段把进度条渲染为可取消并探测此标记；下载循环每帧评估并中止请求。
@@ -45,17 +49,24 @@ namespace Runestone.AesirArchitecture.Editor
         /// </summary>
         /// <param name="state">状态载体（由窗口的 <c>[SerializeField]</c> 字段传入）。</param>
         /// <param name="progressTitle">进度对话框标题（两个窗口各自的标题文案）。</param>
-        /// <param name="viewChanged">状态变化后的视图刷新回调（重扫 / 忙碌切换 / 状态文本变更时触发）。</param>
+        /// <param name="viewChanged">结构变化后的视图刷新回调（重扫 / 忙碌切换时触发，窗口据此重算列表并重绘）。</param>
         /// <param name="progressChanged">进度变化回调（0-1；Odin 版据此更新窗口内进度条，IMGUI 版可忽略）。</param>
+        /// <param name="repaintRequested">
+        /// 「仅重绘」回调（进度每 tick 更新与状态文本变更时触发）。缺省回退到 <paramref name="viewChanged" />
+        /// （保持既有行为）；两个窗口都传纯 <c>Repaint</c>——下载期间进度回调密集，
+        /// 只重绘可避免每 tick 重算列表（Odin 版还会重建全部行视图模型）。
+        /// </param>
         public AesirUpdateController(UpdateState state,
             string progressTitle,
             Action viewChanged,
-            Action<float> progressChanged)
+            Action<float> progressChanged,
+            Action repaintRequested = null)
         {
             State = state;
             _progressTitle = progressTitle;
             _viewChanged = viewChanged;
             _progressChanged = progressChanged;
+            _repaintRequested = repaintRequested ?? viewChanged;
         }
 
         /// <summary>受控状态（窗口层只读）。</summary>
@@ -116,7 +127,7 @@ namespace Runestone.AesirArchitecture.Editor
 
                 SetStatus($"远程最新版本 {State.RemoteVersion}。" +
                           AesirUpdateService.BuildRouteText(State.RemoteSource, State.RemoteRouteKind));
-                Debug.Log($"[Aesir Updater] 远程最新版本 {State.RemoteVersion}\n" +
+                AesirArchitectureDebug.Log("AesirUpdater", $"远程最新版本 {State.RemoteVersion}\n" +
                           $"{AesirUpdateService.BuildDetectionSummary(State.RemoteSource, State.RemoteRouteKind, State.GitHubDirectAvailable)}\n" +
                           $"检测详情：\n{State.DetectionDetail}");
             }
@@ -127,9 +138,13 @@ namespace Runestone.AesirArchitecture.Editor
                 State.ChangelogText = "";
                 State.RemoteSource = "";
                 State.DetectionDetail = "";
+                // 线路与直连可用性同属「上一次检测结果」，失败时必须一并清空：否则界面仍会显示
+                // 上一次的线路名与「直连可用」提示，与眼前这次失败自相矛盾
+                State.RemoteRouteKind = default;
+                State.GitHubDirectAvailable = false;
                 Rescan();
                 SetStatus("检查更新失败：" + e.Message);
-                Debug.LogWarning($"[Aesir Updater] 检查更新失败：{e.Message}\n{e}");
+                AesirArchitectureDebug.LogWarning("AesirUpdater", $"检查更新失败：{e.Message}\n{e}");
             }
             finally
             {
@@ -171,7 +186,7 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             var confirmed = EditorUtility.DisplayDialog("确认更新",
-                AesirUpdateService.BuildUpdateAllConfirmation(targets, State.RemoteVersion, State.IsGitRepository),
+                BuildUpdateAllConfirmation(targets, State.RemoteVersion, State.IsGitRepository),
                 "开始更新", "取消");
             if (!confirmed)
             {
@@ -200,8 +215,7 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             var confirmed = EditorUtility.DisplayDialog("确认更新",
-                AesirUpdateService.BuildSingleUpdateConfirmation(package, State.RemoteVersion, State.Packages,
-                    State.IsGitRepository),
+                BuildSingleUpdateConfirmation(package, State.RemoteVersion, State.Packages, State.IsGitRepository),
                 "仅更新此包", "取消");
             if (!confirmed)
             {
@@ -233,20 +247,21 @@ namespace Runestone.AesirArchitecture.Editor
 
                 var result = await AesirUpdateService.UpdatePackagesAsync(State.Snapshot, targets,
                     (message, progress) => SetProgress(message, progress, cancellable: true),
+                    EditorUtility.ClearProgressBar,
                     () => _cancelRequested);
 
                 if (result.Cancelled)
                 {
                     // 用户取消：温和收尾，如实区分已导入（保持有效）与未更新的包
                     SetStatus(BuildCancelledStatus(result));
-                    Debug.Log($"[Aesir Updater] {State.Status}");
+                    AesirArchitectureDebug.Log("AesirUpdater", State.Status);
                     EditorUtility.DisplayDialog(_progressTitle,
-                        State.Status + "\n\n取消发生在下载阶段，项目文件未受影响，可稍后重新执行更新。", "好");
+                        State.Status + "\n\n取消在下载阶段生效（当前包未写入项目）；上方列出的已完成包保持有效，可稍后重新执行更新。", "好");
                 }
                 else
                 {
                     SetStatus($"更新完成（{State.RemoteVersion}）");
-                    Debug.Log($"[Aesir Updater] {State.Status}");
+                    AesirArchitectureDebug.Log("AesirUpdater", State.Status);
                     EditorUtility.DisplayDialog(_progressTitle,
                         $"已更新到 {State.RemoteVersion}。", "好");
                 }
@@ -254,7 +269,7 @@ namespace Runestone.AesirArchitecture.Editor
             catch (Exception e)
             {
                 SetStatus("更新失败：" + e.Message);
-                Debug.LogError($"[Aesir Updater] 更新失败：{e.Message}\n{e}");
+                AesirArchitectureDebug.LogError("AesirUpdater", $"更新失败：{e.Message}\n{e}");
                 EditorUtility.DisplayDialog(_progressTitle, State.Status, "好");
             }
             finally
@@ -304,6 +319,118 @@ namespace Runestone.AesirArchitecture.Editor
             return builder.ToString();
         }
 
+        #region 确认框文案（编排层职责——对话框措辞属表现层决策，数据层不混入 UI 文案）
+
+        /// <summary>
+        /// 构建「全部更新」确认框文本：逐包列示「本地 → 远程」，补装目标（本地未安装的已知包，
+        /// 见 <see cref="AesirUpdateService.ComputeUpdateTargets" />）显示「未安装 → vX（新安装）」。
+        /// <para>
+        /// 存在补装目标时前置缺包说明——「全部更新」的语义是让整个框架到达远程版本
+        /// （旧的更新、缺的安装），提示用户缺失的包也会被安装，并给出改用单包更新的路径；
+        /// 末尾附覆盖回滚、装回位置与前台运行提示，<paramref name="isGitRepository" /> 为
+        /// true 时追加开发仓库警告。
+        /// </para>
+        /// </summary>
+        internal static string BuildUpdateAllConfirmation(IReadOnlyList<AesirUpdateService.InstalledPackage> targets,
+            string remoteVersion,
+            bool isGitRepository)
+        {
+            var builder = new StringBuilder();
+            builder.Append("即将执行以下操作：\n\n");
+
+            var freshInstalls = new List<string>();
+            foreach (var pkg in targets)
+            {
+                builder.Append("    ").Append(pkg.DirName).Append("：");
+                if (AesirUpdateService.IsFreshInstall(pkg))
+                {
+                    builder.Append("未安装 → ").Append(remoteVersion).Append("（新安装）\n");
+                    freshInstalls.Add(pkg.DirName);
+                }
+                else
+                {
+                    builder.Append("v").Append(pkg.Version).Append(" → ").Append(remoteVersion).Append('\n');
+                }
+            }
+
+            if (freshInstalls.Count > 0)
+            {
+                builder.Append("\n注意：本项目当前未安装 ").Append(string.Join("、", freshInstalls))
+                    .Append("。「全部更新」在更新已安装包的同时，")
+                    .Append("还会从 GitHub Release 下载并安装上述标为（新安装）的包。\n")
+                    .Append("若您只需要更新已安装的包，请点「取消」，改用包列表中对应行的「更新」按钮。\n");
+            }
+
+            AppendUpdateCommonNotice(builder, isGitRepository);
+            builder.Append("\n确认开始更新？");
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// 构建「单包更新」确认框文本：列示目标包「本地 → 远程」；检测到另一已知包
+        /// （<see cref="AesirGetStartedService.KnownPackages" />）在场且落后于远程版本时，前置配套版本警告——
+        /// 两包按同版本配套发布，仅更新其一可能造成版本撕裂（编译错误 / 运行时 API 不匹配）；
+        /// 末尾附覆盖回滚、装回位置与前台运行提示。警告只提示不阻止，决定权在用户。
+        /// </summary>
+        /// <param name="allInstalled">本地已安装的全部包（配套版本检测用；单包入口由调用方传入扫描结果）。</param>
+        internal static string BuildSingleUpdateConfirmation(AesirUpdateService.InstalledPackage target,
+            string remoteVersion,
+            IReadOnlyList<AesirUpdateService.InstalledPackage> allInstalled,
+            bool isGitRepository)
+        {
+            var builder = new StringBuilder();
+            builder.Append("即将仅更新 ").Append(target.DirName).Append("：v").Append(target.Version)
+                .Append(" → ").Append(remoteVersion).Append('\n');
+
+            foreach (var known in AesirGetStartedService.KnownPackages)
+            {
+                if (known.DirName == target.DirName)
+                {
+                    continue;
+                }
+
+                var other = allInstalled?.FirstOrDefault(p => p != null && p.DirName == known.DirName);
+                if (other == null || AesirUpdateService.CompareVersion(other.Version, remoteVersion) >= 0)
+                {
+                    continue;
+                }
+
+                builder.Append("\n⚠ 配套版本警告：").Append(known.DirName).Append(" 与 ").Append(target.DirName)
+                    .Append(" 按同版本配套发布。当前 ").Append(known.DirName).Append(" 为 v").Append(other.Version)
+                    .Append("，仅更新 ").Append(target.DirName).Append(" 到 ").Append(remoteVersion)
+                    .Append(" 后两包版本将不一致，可能导致编译错误或运行时 API 不匹配。\n")
+                    .Append("建议点「取消」改用「全部更新」，将两个包一并更新到 ").Append(remoteVersion)
+                    .Append("。\n");
+                break;
+            }
+
+            AppendUpdateCommonNotice(builder, isGitRepository);
+            builder.Append("\n确认仍要仅更新 ").Append(target.DirName).Append(" 吗？");
+            return builder.ToString();
+        }
+
+        /// <summary>
+        /// 追加公共说明（覆盖回滚 / 装回默认位置 / 前台运行 / 开发仓库警告）；
+        /// 确认句由各入口自行拼接（全部更新与单包更新的措辞不同）。
+        /// </summary>
+        static void AppendUpdateCommonNotice(StringBuilder builder, bool isGitRepository)
+        {
+            builder.Append('\n')
+                .Append("包目录内的本地修改将被 Release 内容覆盖；如需回滚，可从 GitHub Releases 下载旧版本的 ")
+                .Append("unitypackage 重新导入（上一版本资产永久保留在 Releases 页面）。\n")
+                .Append("更新经 unitypackage 导入，始终装回默认位置 Assets/Runestone；" +
+                        "若曾移动过 Runestone，旧位置的副本需自行清理。\n")
+                .Append("更新期间请保持 Unity 窗口处于前台：编辑器失焦时下载与导入可能停滞，进度会长时间不动。\n");
+
+            if (isGitRepository)
+            {
+                builder.Append(
+                    "\n⚠ 检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，更新会覆盖本地源码，强烈建议取消。\n");
+            }
+        }
+
+        #endregion
+
         bool BeginBusy()
         {
             if (State.Busy)
@@ -341,8 +468,9 @@ namespace Runestone.AesirArchitecture.Editor
             SessionState.SetBool(BusySessionKey, false);
             EditorUtility.ClearProgressBar();
             EditorApplication.UnlockReloadAssemblies();
-            Debug.LogWarning("[Aesir Updater] 上一次更新/检测流程未正常收尾（域重载或编辑器中断），" +
-                             "已清理残留进度条与程序集重载锁。");
+            AesirArchitectureDebug.LogWarning("AesirUpdater",
+                "上一次更新/检测流程未正常收尾（域重载或编辑器中断），" +
+                "已清理残留进度条与程序集重载锁。");
         }
 
         /// <summary>
@@ -367,13 +495,16 @@ namespace Runestone.AesirArchitecture.Editor
                 EditorUtility.DisplayProgressBar(_progressTitle, message, progress01);
             }
 
-            _viewChanged?.Invoke();
+            // 进度 tick 只重绘：结构（包列表 / 更新目标）在下载期间不会变化，
+            // 每 tick 走一遍 _viewChanged 会让窗口反复重算列表（Odin 版还会重建全部行视图模型）
+            _repaintRequested?.Invoke();
         }
 
+        /// <summary>更新状态栏文本并重绘（文本变化不改结构，故只重绘）。</summary>
         void SetStatus(string message)
         {
             State.Status = message;
-            _viewChanged?.Invoke();
+            _repaintRequested?.Invoke();
         }
 
         /// <summary>

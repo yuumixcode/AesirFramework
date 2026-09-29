@@ -33,7 +33,7 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
     /// </para>
     /// </remarks>
     /// <seealso cref="ObservableValue{T}" />
-    public class ObservableValueAttributeProcessor<T> : OdinAttributeProcessor<ObservableValue<T>>
+    internal sealed class ObservableValueAttributeProcessor<T> : OdinAttributeProcessor<ObservableValue<T>>
     {
         /// <summary>
         /// 处理类自身的特性，隐藏标签并使其内联展示
