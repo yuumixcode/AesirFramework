@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Sirenix.Utilities;
 using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
@@ -139,7 +138,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         {
             if (derivedMemberData is not MemberData)
             {
-                Debug.LogError(derivedMemberData.GetType().Name + " 没有实现 IMemberData 接口");
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                    derivedMemberData.GetType().Name + " 没有实现 IMemberData 接口");
             }
 
             memberData = derivedMemberData as IMemberData;
@@ -260,7 +260,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return TypeCategory.Enum;
             }
 
-            Debug.LogError("出现不存在的 TypeCategory，需要补充枚举！");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "出现不存在的 TypeCategory，需要补充枚举！");
             return TypeCategory.Unknown;
         }
 
@@ -269,7 +269,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// </summary>
         public static string GetReadableTypeName(this Type type, bool useFullName = false)
         {
-            var targetTypeName = useFullName ? type.GetNiceFullName() : type.GetNiceName();
+            var targetTypeName = useFullName ? NiceTypeName.GetNiceFullName(type) : NiceTypeName.GetNiceName(type);
 
             if (TypeAnalyzerUtility.TypeAliasMap.TryGetValue(type, out var alias))
             {
@@ -404,7 +404,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                         stringBuilder.Append(", ");
                     }
 
-                    stringBuilder.Append(genericArguments[index].GetNiceName());
+                    stringBuilder.Append(NiceTypeName.GetNiceName(genericArguments[index]));
                 }
 
                 stringBuilder.Append(">");

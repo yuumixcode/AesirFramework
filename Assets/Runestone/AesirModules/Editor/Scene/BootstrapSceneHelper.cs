@@ -45,7 +45,8 @@ namespace Runestone.AesirModules.Editor
         {
             if (!silent)
             {
-                Debug.Log("BootstrapSceneHelper 执行 SetupBootstrapScene()");
+                AesirModulesDebug.Log(nameof(BootstrapSceneHelper), AesirModulesDebug.SceneModuleTag,
+                    "执行 SetupBootstrapScene()");
             }
 
             var scenes = EditorBuildSettings.scenes;
@@ -85,7 +86,8 @@ namespace Runestone.AesirModules.Editor
                     EditorBuildSettings.scenes = sceneList.ToArray();
                     if (!silent)
                     {
-                        Debug.Log($"[BootstrapSceneHelper] 移动 {currentBootstrapSceneName} 场景，修改其序号为 0 ！");
+                        AesirModulesDebug.Log(nameof(BootstrapSceneHelper), AesirModulesDebug.SceneModuleTag,
+                            $"移动 {currentBootstrapSceneName} 场景，修改其序号为 0 ！");
                     }
                 }
 
@@ -133,7 +135,8 @@ namespace Runestone.AesirModules.Editor
                 EditorBuildSettings.scenes = sceneList.ToArray();
                 if (!silent)
                 {
-                    Debug.Log($"[BootstrapSceneHelper] 添加 {path} 到 Build Settings，且序号设置为 0 ！");
+                    AesirModulesDebug.Log(nameof(BootstrapSceneHelper), AesirModulesDebug.SceneModuleTag,
+                        $"添加 {path} 到 Build Settings，且序号设置为 0 ！");
                 }
             }
         }

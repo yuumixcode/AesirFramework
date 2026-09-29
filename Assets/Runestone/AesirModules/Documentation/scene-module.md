@@ -101,7 +101,7 @@ Inspector 三态着色与一键修复（需 Odin）：Addressable 场景青色�
 
 ## 设计边界
 
-- **Odin Inspector 边界** — `SceneAssetWrapper` 的 Inspector 面板效果（拖拽赋值、着色、一键修复按钮）依赖 Odin Inspector；未安装 Odin 时仅保证 API 可用（`FromScenePath` 构造、编辑器下 `SceneAsset` 属性代码赋值、TryGet 家族），面板不支持。
+- **Odin Inspector 边界** — `SceneAssetWrapper` 的 Inspector 面板效果（拖拽赋值、着色、一键修复按钮）依赖 Odin Inspector；未安装 Odin 时仅保证 API 可用（`FromScenePath` 构造、编辑器下 `SceneAsset` 属性代码赋值、TryGet 家族），面板不支持——请改用代码构造引用，把场景加入 BuildSettings 请在 Build Settings 面板手动操作。
 - **Addressable 场景不经 SceneModule 加载** — wrapper 提供地址缓存（`Address` / `TryGetAddress`），加载/卸载请直接调用 Addressables API（如 `Addressables.LoadSceneAsync(wrapper.Address)`）。
 - **重复叠加同一路径后果自负** — Unity 会加载两个实例而追踪只记一条，卸载只移除其一；请勿对同一路径重复 `LoadSceneAdditive`。
 - **启动场景分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`：实例序列化字段优先、未赋值时回退配置资产 `SceneModuleConfigSO` 的全局启动场景），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 由编辑器 `BootstrapSceneHelper` 负责（默认关闭）。

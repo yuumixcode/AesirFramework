@@ -73,6 +73,19 @@ namespace Runestone.AesirModules.ScriptDocGenerator
     /// <summary>
     /// 解析成员数据的基类
     /// </summary>
+    /// <remarks>
+    /// 本类持有六个注释解析委托（<c>SummaryResolver</c> / <c>ParamSummariesResolver</c> /
+    /// <c>ReturnsSummaryResolver</c> / <c>RemarksResolver</c> / <c>ValueResolver</c> / <c>TypeParamsResolver</c>）：
+    /// 它们由编辑器侧 <c>SourceSummaryInitializer</c>（<c>[InitializeOnLoad]</c>，整文件 <c>#if UNITY_EDITOR</c>）
+    /// 在程序集加载时注入源文件解析实现，字段初值只是玩家运行时的兜底实现。
+    /// <para>
+    /// 因此**有意不纳入 <c>RuntimeInitializeOnLoadMethod</c> 静态重置**：Play 期没有任何写入点，
+    /// 不满足「Play 会写脏」这一前提；而关闭域重载时保留下来的恰是注入后的正确实现，
+    /// 若在 Play 入口复位成兜底实现，注入方（<c>[InitializeOnLoad]</c>）不会随之重跑，
+    /// 会让 ScriptDocGenerator 在后续编辑模式下静默降级（XML 注释解析全部失效、不报错），
+    /// 直到下一次真正的域重载才恢复——比不复位危险得多。玩家构建里注入器整体不存在，复位本就是空操作。
+    /// </para>
+    /// </remarks>
     [Serializable]
     public abstract class MemberData : IMemberData
     {
@@ -117,12 +130,14 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// Summary 解析委托。Editor 程序集在加载时注入源文件解析实现（基于 SourceScanner），
         /// 从源代码的 XML <c>/// &lt;summary&gt;</c> 注释中读取成员摘要。
         /// 默认回退到 [Summary] 特性，保持向后兼容。
+        /// 不参与 Play 期写入，故不纳入 RuntimeInitializeOnLoadMethod 静态重置（见类级备注）。
         /// </summary>
         public static Func<MemberInfo, string> SummaryResolver { get; set; } = ResolveSummaryFromAttribute;
 
         /// <summary>
         /// 参数级注释解析委托（XML <c>&lt;param&gt;</c> 标签），键为参数名，适用于方法与构造函数。
         /// Editor 程序集在加载时注入源文件解析实现；默认无参数级注释（返回 null）。
+        /// 不参与 Play 期写入，故不纳入 RuntimeInitializeOnLoadMethod 静态重置（见类级备注）。
         /// </summary>
         public static Func<MethodBase, IReadOnlyDictionary<string, string>> ParamSummariesResolver
         {
@@ -133,24 +148,28 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// <summary>
         /// 返回值注释解析委托（XML <c>&lt;returns&gt;</c> 标签），适用于方法。
         /// Editor 程序集在加载时注入源文件解析实现；默认无返回值注释（返回 null）。
+        /// 不参与 Play 期写入，故不纳入 RuntimeInitializeOnLoadMethod 静态重置（见类级备注）。
         /// </summary>
         public static Func<MethodInfo, string> ReturnsSummaryResolver { get; set; } = _ => null;
 
         /// <summary>
         /// 备注注释解析委托（XML <c>&lt;remarks&gt;</c> 标签）。
         /// Editor 程序集在加载时注入源文件解析实现；默认无备注注释（返回 null）。
+        /// 不参与 Play 期写入，故不纳入 RuntimeInitializeOnLoadMethod 静态重置（见类级备注）。
         /// </summary>
         public static Func<MemberInfo, string> RemarksResolver { get; set; } = _ => null;
 
         /// <summary>
         /// 属性值注释解析委托（XML <c>&lt;value&gt;</c> 标签），由属性数据类消费。
         /// Editor 程序集在加载时注入源文件解析实现；默认无注释（返回 null）。
+        /// 不参与 Play 期写入，故不纳入 RuntimeInitializeOnLoadMethod 静态重置（见类级备注）。
         /// </summary>
         public static Func<MemberInfo, string> ValueResolver { get; set; } = _ => null;
 
         /// <summary>
         /// 泛型参数注释解析委托（XML <c>&lt;typeparam&gt;</c> 标签），键为参数名，由类型数据类消费。
         /// Editor 程序集在加载时注入源文件解析实现；默认无注释（返回 null）。
+        /// 不参与 Play 期写入，故不纳入 RuntimeInitializeOnLoadMethod 静态重置（见类级备注）。
         /// </summary>
         public static Func<Type, IReadOnlyDictionary<string, string>> TypeParamsResolver { get; set; } = _ =>
             null;

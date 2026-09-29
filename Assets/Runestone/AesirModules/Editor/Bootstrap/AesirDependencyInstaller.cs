@@ -25,6 +25,10 @@ namespace Runestone.AesirModules.Editor.Bootstrap
     /// RAM 核心 asmdef 按程序集<b>名</b>引用（非 GUID），UPM 形态的 RAA 同名程序集同样能解析，
     /// Assets + UPM 混合形态可正常编译。
     /// </para>
+    /// <para>
+    /// 因此本类的少量控制台输出<b>有意保留裸 <c>Debug.Log</c></b>：日志门面 <c>AesirModulesDebug</c>
+    /// 位于 RAM 核心程序集，正是本例要避免的引用——补齐依赖期间该程序集可能根本不编译。
+    /// </para>
     /// </remarks>
     internal static class AesirDependencyInstaller
     {

@@ -67,15 +67,27 @@ namespace Runestone.AesirModules.Tests.Editor
         readonly List<Object> _createdAssets = new List<Object>();
         Scene _previewScene;
 
+        /// <summary>EventModule 的私有静态单例字段（测试显式接管，避免依赖 Instance 恰好回落到本用例实例）。</summary>
+        static readonly FieldInfo ModuleInstanceField =
+            typeof(EventModule).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static);
+
         [SetUp]
         public void SetUp()
         {
             _module = NewGameObject("TestEventModule").AddComponent<EventModule>();
+
+            // EditMode 下 AddComponent 不触发 Awake，静态单例不会被赋值；而用例经静态门面
+            // （EventModule.AddListener / AesirEventArgs.Invoke）操作、又断言实例字段（DynamicBindings 等），
+            // 若宿主工程里存在预放置的 EventModule，Instance 会解析到别人 —— 显式接管以消除该环境耦合。
+            ModuleInstanceField.SetValue(null, _module);
+            Assert.AreSame(_module, EventModule.Instance, "测试应独占静态单例");
         }
 
         [TearDown]
         public void TearDown()
         {
+            ModuleInstanceField.SetValue(null, null);
+
             foreach (var created in _createdObjects)
             {
                 if (created != null)
@@ -101,6 +113,50 @@ namespace Runestone.AesirModules.Tests.Editor
                 EditorSceneManager.ClosePreviewScene(_previewScene);
             }
         }
+
+        #region 单例查找与静态重置（07 号报告修复项的行为锁定）
+
+        [Test]
+        public void Instance_FindsInactivePreplacedModule()
+        {
+            // Unity 不对未激活物体调用 Awake，"先禁用、用到时再启用"式预放置的模块若被 Exclude 漏掉，
+            // 会被判为不存在而重复创建（Inspector 配置静默失效）。Instance 必须含未激活对象查找。
+            ModuleInstanceField.SetValue(null, null);
+
+            // SetUp 创建的模块此刻仍活在场景里，查找会先命中它（命中顺序不确定）——先销毁，
+            // 使本用例场景内只剩待查的未激活预放置实例，断言才真正指向"含未激活对象查找"这一契约。
+            Object.DestroyImmediate(_module);
+            var inactive = NewGameObject("InactiveEventModule");
+            inactive.SetActive(false);
+            var preplaced = inactive.AddComponent<EventModule>();
+
+            Assert.AreSame(preplaced, EventModule.Instance, "未激活的预放置实例应被 Instance 找到而非另建一个");
+        }
+
+        [Test]
+        public void DontDestroyOnLoad_DefaultsToTrue()
+        {
+            var probe = NewGameObject("DdolProbe").AddComponent<EventModule>();
+            var so = new SerializedObject(probe);
+            var prop = so.FindProperty("dontDestroyOnLoad");
+
+            Assert.IsNotNull(prop, "dontDestroyOnLoad 字段应存在且可序列化");
+            Assert.IsTrue(prop.boolValue, "默认 true：预放置根物体模块随场景卸载不再消失（跨场景持久）");
+        }
+
+        [Test]
+        public void ResetStatics_ClearsInstance()
+        {
+            var reset = typeof(EventModule).GetMethod("ResetStatics",
+                BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsNotNull(reset, "非泛型单例按铁律在类内声明 RuntimeInitializeOnLoadMethod 自重置");
+
+            reset.Invoke(null, null);
+
+            Assert.IsNull(ModuleInstanceField.GetValue(null), "静态重置后 _instance 应为 null");
+        }
+
+        #endregion
 
         /// <summary>创建 GameObject 并登记，TearDown 统一销毁。</summary>
         GameObject NewGameObject(string name)
@@ -623,6 +679,38 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.AreEqual(2, receivedSenders.Count, "外层与内层各命中一次");
             Assert.AreSame(_module.gameObject, receivedSenders[0], "首次命中来自内层分发");
             Assert.AreSame(outerSender, receivedSenders[1], "外层继续分发的订阅者应收到外层事件参数（重入覆写时此处会变成内层发布者）");
+        }
+
+        [Test]
+        public void ReentrantDispatch_SharedArgsInstance_OuterTailReceivesOuterSender()
+        {
+            // 07 号报告点名过的缺陷场景：**同一个**参数实例被内层重入分发覆写 Sender。
+            // 先前的用例内外层各 new 一个实例，两个实例的 Sender 互不影响 —— 断言在校正逻辑
+            // 存在与不存在时都成立（假绿）。此处显式复用同一实例，才能真正锁住 EventModule.cs 的逐订阅者校正。
+            var publisher = NewGameObject("SharedArgsPublisher");
+            var shadowSender = NewGameObject("ShadowSender");
+            var received = new List<object>();
+            var depth = 0;
+            var shared = new TestEventArgs();
+
+            EventModule.AddListener<TestEventArgs>(publisher, e =>
+            {
+                depth++;
+                if (depth == 1)
+                {
+                    // 复用同一实例、换发布者再发一次（depth 守卫防无限递归）
+                    e.Invoke(shadowSender);
+                }
+            });
+            EventModule.AddListener<TestEventArgs>(_module.gameObject, e => received.Add(e.Sender));
+
+            var outerSender = NewGameObject("OuterSender");
+            shared.Invoke(outerSender);
+
+            Assert.AreEqual(2, received.Count, "外层与内层各命中一次");
+            Assert.AreSame(shadowSender, received[0], "内层分发读到内层发布者");
+            Assert.AreSame(outerSender, received[1],
+                "共享参数实例被内层覆写 Sender 后，外层遍历必须逐订阅者校正回外层发布者");
         }
 
         [Test]

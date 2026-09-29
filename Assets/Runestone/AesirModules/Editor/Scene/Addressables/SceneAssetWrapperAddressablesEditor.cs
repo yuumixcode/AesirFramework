@@ -8,10 +8,10 @@ namespace Runestone.AesirModules.Editor.Addressables
     /// <see cref="SceneAssetWrapperAddressablesBridge" />，供 SceneAssetWrapper 的
     /// Inspector 工具（Addressable 着色、"加入 Addressables"按钮、地址实时核验）使用。
     /// <para>
-    /// 本程序集仅在项目安装了 com.unity.addressables 包（宏 AESIR_MODULES_ADDRESSABLES，
-    /// 由核心运行时程序集的 versionDefines 声明）时参与编译——
-    /// 卸载包后 defineConstraints 不满足，本程序集整体不编译，不产生任何错误；
-    /// 桥未注册时 SceneAssetWrapper 的所有 Addressables 编辑器功能自动隐藏。
+    /// 本程序集仅在项目安装了 com.unity.addressables 包（宏 AESIR_MODULES_ADDRESSABLES）时参与编译——
+    /// 该宏由核心运行时程序集与胶水程序集<b>各自</b>声明一份 <c>versionDefines</c>（belt-and-braces：
+    /// 不依赖单一声明位置的可见性）；卸载包后 <c>defineConstraints</c> 不满足，本程序集整体不编译，
+    /// 不产生任何错误；桥未注册时 SceneAssetWrapper 的所有 Addressables 编辑器功能自动隐藏。
     /// </para>
     /// </summary>
     [InitializeOnLoad]

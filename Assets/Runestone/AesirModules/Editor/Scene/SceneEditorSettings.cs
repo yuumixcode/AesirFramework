@@ -2,6 +2,7 @@
 using Sirenix.OdinInspector;
 #endif
 using UnityEditor;
+using UnityEngine;
 using FilePathAttribute = UnityEditor.FilePathAttribute;
 
 namespace Runestone.AesirModules.Editor
@@ -21,9 +22,19 @@ namespace Runestone.AesirModules.Editor
         FilePathAttribute.Location.ProjectFolder)]
     public class SceneEditorSettings : ScriptableSingleton<SceneEditorSettings>
     {
+        // ScriptableSingleton 的 Save 走 Unity 原生序列化（InternalEditorUtility.SaveToSerializedFileAndForget），
+        // 私有字段必须显式标记才会写入设置文件；漏标则文件里没有对应键，值只活在本进程内，
+        // 新会话/重启等重建单例的路径会静默回落到默认值。
+        [SerializeField]
         string _bootstrapperScenePath;
+
+        [SerializeField]
         bool _firstLoadBootstrapScene;
+
+        [SerializeField]
         string _previousScenePath;
+
+        [SerializeField]
         bool _setupBootstrapper;
 
 #if ODIN_INSPECTOR
@@ -36,6 +47,11 @@ namespace Runestone.AesirModules.Editor
             get => _setupBootstrapper;
             set
             {
+                if (_setupBootstrapper == value)
+                {
+                    return;
+                }
+
                 _setupBootstrapper = value;
                 Save(true);
             }
@@ -51,6 +67,11 @@ namespace Runestone.AesirModules.Editor
             get => _firstLoadBootstrapScene;
             set
             {
+                if (_firstLoadBootstrapScene == value)
+                {
+                    return;
+                }
+
                 _firstLoadBootstrapScene = value;
                 Save(true);
             }
@@ -66,6 +87,11 @@ namespace Runestone.AesirModules.Editor
             get => _bootstrapperScenePath;
             set
             {
+                if (_bootstrapperScenePath == value)
+                {
+                    return;
+                }
+
                 _bootstrapperScenePath = value;
                 Save(true);
             }
@@ -81,6 +107,11 @@ namespace Runestone.AesirModules.Editor
             get => _previousScenePath;
             set
             {
+                if (_previousScenePath == value)
+                {
+                    return;
+                }
+
                 _previousScenePath = value;
                 Save(true);
             }

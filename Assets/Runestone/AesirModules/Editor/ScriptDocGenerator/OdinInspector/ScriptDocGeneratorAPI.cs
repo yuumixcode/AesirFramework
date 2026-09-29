@@ -93,7 +93,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             var typeList = types?.Where(type => type != null).Distinct().ToList();
             if (typeList is not { Count: > 0 })
             {
-                Debug.LogError("[ScriptDocGeneratorAPI] 类型列表为空，无法生成文档");
+                AesirModulesDebug.LogError(nameof(ScriptDocGeneratorAPI),
+                    AesirModulesDebug.ScriptDocGeneratorTag, "类型列表为空，无法生成文档");
                 return result;
             }
 
@@ -128,15 +129,17 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             var assembly = ResolveScriptAssembly(assemblyName);
             if (assembly == null)
             {
-                Debug.LogError("[ScriptDocGeneratorAPI] 找不到目标程序集 '" + assemblyName +
-                               "'（支持程序集短名或 FullName）");
+                AesirModulesDebug.LogError(nameof(ScriptDocGeneratorAPI),
+                    AesirModulesDebug.ScriptDocGeneratorTag,
+                    "找不到目标程序集 '" + assemblyName + "'（支持程序集短名或 FullName）");
                 return result;
             }
 
             var typeDataList = ScriptDocGeneratorUtility.AnalyzeAssembly(assembly);
             if (typeDataList is not { Count: > 0 })
             {
-                Debug.LogWarning("[ScriptDocGeneratorAPI] 程序集 " + assemblyName + " 内没有可文档化类型");
+                AesirModulesDebug.LogWarning(nameof(ScriptDocGeneratorAPI),
+                    AesirModulesDebug.ScriptDocGeneratorTag, "程序集 " + assemblyName + " 内没有可文档化类型");
                 return result;
             }
 
@@ -166,8 +169,10 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
             if (!TryNormalizeAssetFolderPath(folderPath, out var normalizedFolder))
             {
-                Debug.LogError("[ScriptDocGeneratorAPI] 无效的脚本文件夹路径 '" + folderPath +
-                               "'：需要项目内 Assets/ 或 Packages/ 下的真实文件夹（支持绝对路径）");
+                AesirModulesDebug.LogError(nameof(ScriptDocGeneratorAPI),
+                    AesirModulesDebug.ScriptDocGeneratorTag,
+                    "无效的脚本文件夹路径 '" + folderPath +
+                    "'：需要项目内 Assets/ 或 Packages/ 下的真实文件夹（支持绝对路径）");
                 return result;
             }
 
@@ -177,8 +182,9 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 var hint = result.UnresolvedTypeNames.Count > 0
                     ? "（存在声明了但当前编译域内不存在的类型，可能被条件编译剔除）"
                     : string.Empty;
-                Debug.LogWarning("[ScriptDocGeneratorAPI] 文件夹 " + normalizedFolder +
-                                 " 内没有解析到可生成文档的类型" + hint);
+                AesirModulesDebug.LogWarning(nameof(ScriptDocGeneratorAPI),
+                    AesirModulesDebug.ScriptDocGeneratorTag,
+                    "文件夹 " + normalizedFolder + " 内没有解析到可生成文档的类型" + hint);
                 return result;
             }
 

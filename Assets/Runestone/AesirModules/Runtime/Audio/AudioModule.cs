@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Runestone.AesirArchitecture;
 using UnityEngine;
 
@@ -85,7 +86,7 @@ namespace Runestone.AesirModules
             // 钳制到 [0.01, 3]：pitch - jitter < 0 会产生负音调（Unity 负 pitch 为反向播放），
             // 下限取 0.01 而非 0（pitch = 0 在 Unity 中音源无声）
             source.pitch = Mathf.Clamp(pitch + Random.Range(-pitchJitter, pitchJitter), 0.01f, 3f);
-            source.volume = m._sfxVolume * m._masterVolume * m._sfxLocalVolumes[index];
+            source.volume = m._channelVolumes[Sfx.Index] * m._masterVolume * m._sfxLocalVolumes[index];
             source.Play();
         }
 
@@ -132,6 +133,31 @@ namespace Runestone.AesirModules
 
         #endregion
 
+        #region 通道
+
+        /// <summary>
+        /// BGM 通道。<see cref="AudioChannel.Index" /> 与 <see cref="Channels" /> 中的下标一致。
+        /// </summary>
+        public static readonly AudioChannel Bgm = new AudioChannel("Bgm", "BgmVolume", "BgmMute", 0);
+
+        /// <summary>
+        /// 音效通道。<see cref="AudioChannel.Index" /> 与 <see cref="Channels" /> 中的下标一致。
+        /// </summary>
+        public static readonly AudioChannel Sfx = new AudioChannel("Sfx", "SfxVolume", "SfxMute", 1);
+
+        /// <summary>
+        /// 全部音频通道（只读视图）。通道在此集中登记一次，音量/静音的存取、
+        /// PlayerPrefs 持久化与配置默认值载入均遍历本列表。
+        /// </summary>
+        /// <remarks>
+        /// 总音量与总静音是跨通道的总闸，不属于"通道"，仍由独立字段承载
+        /// （<see cref="MasterVolume" /> / <see cref="MasterMute" />）。
+        /// 新增通道时在 <see cref="AudioChannel.Index" /> 与本列表中同步登记同一位置。
+        /// </remarks>
+        public static readonly IReadOnlyList<AudioChannel> Channels = new[] { Bgm, Sfx };
+
+        #endregion
+
         #region 运行时状态
 
         AudioSource _bgmSource;
@@ -141,11 +167,13 @@ namespace Runestone.AesirModules
         bool _initialized;
 
         float _masterVolume = 1f;
-        float _bgmVolume = 1f;
-        float _sfxVolume = 1f;
         bool _masterMute;
-        bool _bgmMute;
-        bool _sfxMute;
+
+        /// <summary>各通道音量，下标与 <see cref="Channels" /> 对齐。</summary>
+        readonly float[] _channelVolumes = new float[Channels.Count];
+
+        /// <summary>各通道静音开关，下标与 <see cref="Channels" /> 对齐。</summary>
+        readonly bool[] _channelMutes = new bool[Channels.Count];
 
         /// <summary>BGM 淡入淡出系数（0-1），与通道音量、总音量相乘生效，淡变协程仅修改此值。</summary>
         float _bgmFadeFactor = 1f;
@@ -156,11 +184,13 @@ namespace Runestone.AesirModules
         string _prefsKey = DefaultPrefsKey;
 
         string MasterVolumeKey => _prefsKey + ".MasterVolume";
-        string BgmVolumeKey => _prefsKey + ".BgmVolume";
-        string SfxVolumeKey => _prefsKey + ".SfxVolume";
         string MasterMuteKey => _prefsKey + ".MasterMute";
-        string BgmMuteKey => _prefsKey + ".BgmMute";
-        string SfxMuteKey => _prefsKey + ".SfxMute";
+
+        /// <summary>通道音量持久化键（实际键名与旧实现逐字一致）。</summary>
+        string VolumeKey(AudioChannel channel) => _prefsKey + "." + channel.VolumeKeySuffix;
+
+        /// <summary>通道静音持久化键（实际键名与旧实现逐字一致）。</summary>
+        string MuteKey(AudioChannel channel) => _prefsKey + "." + channel.MuteKeySuffix;
 
         #endregion
 
@@ -179,9 +209,11 @@ namespace Runestone.AesirModules
                     return _instance;
                 }
 
-                // 尝试在已加载的场景中查找预放置的实例
+                // 尝试在已加载的场景中查找预放置的实例（含未激活对象：
+                // Unity 不对未激活物体调用 Awake，"随用随开"式预放置的音频模块若被 Exclude 漏掉，
+                // 会在这里被判为不存在而重复创建，Inspector 配置的 sfxSourceCount / config 从一开始就被忽略）
                 // 使用 FindAnyObjectByType 而非 FindFirstObjectByType，后者因依赖 InstanceID 排序在 Unity 6 中已废弃
-                _instance = FindAnyObjectByType<AudioModule>();
+                _instance = FindAnyObjectByType<AudioModule>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;
@@ -280,7 +312,11 @@ namespace Runestone.AesirModules
                 }
                 else
                 {
-                    m.StartBgmFade(m.FadeBgmRoutine(1f, fadeSeconds));
+                    m.StartBgmFade(m.FadeBgmRoutine(1f, fadeSeconds), () =>
+                    {
+                        m._bgmFadeFactor = 1f;
+                        m.ApplyVolumes();
+                    });
                 }
 
                 return;
@@ -296,7 +332,13 @@ namespace Runestone.AesirModules
                 return;
             }
 
-            m.StartBgmFade(m.SwitchBgmRoutine(clip, fadeSeconds));
+            m.StartBgmFade(m.SwitchBgmRoutine(clip, fadeSeconds), () =>
+            {
+                m._bgmFadeFactor = 1f;
+                m._bgmSource.clip = clip;
+                m._bgmSource.Play();
+                m.ApplyVolumes();
+            });
         }
 
         /// <summary>
@@ -316,7 +358,12 @@ namespace Runestone.AesirModules
                 return;
             }
 
-            m.StartBgmFade(m.StopBgmRoutine(fadeSeconds));
+            m.StartBgmFade(m.StopBgmRoutine(fadeSeconds), () =>
+            {
+                m._bgmFadeFactor = 0f;
+                m.ApplyVolumes();
+                m._bgmSource.Stop();
+            });
         }
 
         /// <summary>
@@ -387,18 +434,8 @@ namespace Runestone.AesirModules
         /// </summary>
         public static float BgmVolume
         {
-            get => Ready()._bgmVolume;
-            set
-            {
-                var m = Ready();
-                m._bgmVolume = Mathf.Clamp01(value);
-                if (m._persistVolumes)
-                {
-                    PlayerPrefs.SetFloat(m.BgmVolumeKey, m._bgmVolume);
-                }
-
-                m.ApplyVolumes();
-            }
+            get => Ready()._channelVolumes[Bgm.Index];
+            set => Ready().SetChannelVolume(Bgm, value);
         }
 
         /// <summary>
@@ -406,18 +443,8 @@ namespace Runestone.AesirModules
         /// </summary>
         public static float SfxVolume
         {
-            get => Ready()._sfxVolume;
-            set
-            {
-                var m = Ready();
-                m._sfxVolume = Mathf.Clamp01(value);
-                if (m._persistVolumes)
-                {
-                    PlayerPrefs.SetFloat(m.SfxVolumeKey, m._sfxVolume);
-                }
-
-                m.ApplyVolumes();
-            }
+            get => Ready()._channelVolumes[Sfx.Index];
+            set => Ready().SetChannelVolume(Sfx, value);
         }
 
         /// <summary>
@@ -444,18 +471,8 @@ namespace Runestone.AesirModules
         /// </summary>
         public static bool BgmMute
         {
-            get => Ready()._bgmMute;
-            set
-            {
-                var m = Ready();
-                m._bgmMute = value;
-                if (m._persistVolumes)
-                {
-                    PlayerPrefs.SetInt(m.BgmMuteKey, value ? 1 : 0);
-                }
-
-                m.ApplyMutes();
-            }
+            get => Ready()._channelMutes[Bgm.Index];
+            set => Ready().SetChannelMute(Bgm, value);
         }
 
         /// <summary>
@@ -463,23 +480,43 @@ namespace Runestone.AesirModules
         /// </summary>
         public static bool SfxMute
         {
-            get => Ready()._sfxMute;
-            set
-            {
-                var m = Ready();
-                m._sfxMute = value;
-                if (m._persistVolumes)
-                {
-                    PlayerPrefs.SetInt(m.SfxMuteKey, value ? 1 : 0);
-                }
-
-                m.ApplyMutes();
-            }
+            get => Ready()._channelMutes[Sfx.Index];
+            set => Ready().SetChannelMute(Sfx, value);
         }
 
         #endregion
 
         #region 内部实现
+
+        /// <summary>
+        /// 写入单个通道的音量并按配置持久化，随后统一刷新音源。
+        /// 所有通道音量的公开属性都收敛到此处（钳制、持久化、音源刷新三步只写一次）。
+        /// </summary>
+        void SetChannelVolume(AudioChannel channel, float value)
+        {
+            var volume = Mathf.Clamp01(value);
+            _channelVolumes[channel.Index] = volume;
+            if (_persistVolumes)
+            {
+                PlayerPrefs.SetFloat(VolumeKey(channel), volume);
+            }
+
+            ApplyVolumes();
+        }
+
+        /// <summary>
+        /// 写入单个通道的静音开关并按配置持久化，随后统一刷新音源。
+        /// </summary>
+        void SetChannelMute(AudioChannel channel, bool value)
+        {
+            _channelMutes[channel.Index] = value;
+            if (_persistVolumes)
+            {
+                PlayerPrefs.SetInt(MuteKey(channel), value ? 1 : 0);
+            }
+
+            ApplyMutes();
+        }
 
         /// <summary>
         /// 获取已完成初始化的单例，所有公开静态 API 的统一入口。
@@ -536,11 +573,15 @@ namespace Runestone.AesirModules
                 ? config.prefsKey
                 : DefaultPrefsKey;
             _masterVolume = config != null ? config.masterVolume : 1f;
-            _bgmVolume = config != null ? config.bgmVolume : 1f;
-            _sfxVolume = config != null ? config.sfxVolume : 1f;
             _masterMute = false;
-            _bgmMute = false;
-            _sfxMute = false;
+
+            // 通道默认值：来自配置资产（缺省 1f），静音一律先复位为不静音
+            var channelVolumes = config != null ? config.GetChannelVolumes() : null;
+            for (var i = 0; i < Channels.Count; i++)
+            {
+                _channelVolumes[i] = channelVolumes != null ? channelVolumes[i] : 1f;
+                _channelMutes[i] = false;
+            }
 
             if (!_persistVolumes)
             {
@@ -552,41 +593,42 @@ namespace Runestone.AesirModules
                 _masterVolume = PlayerPrefs.GetFloat(MasterVolumeKey);
             }
 
-            if (PlayerPrefs.HasKey(BgmVolumeKey))
-            {
-                _bgmVolume = PlayerPrefs.GetFloat(BgmVolumeKey);
-            }
-
-            if (PlayerPrefs.HasKey(SfxVolumeKey))
-            {
-                _sfxVolume = PlayerPrefs.GetFloat(SfxVolumeKey);
-            }
-
             if (PlayerPrefs.HasKey(MasterMuteKey))
             {
                 _masterMute = PlayerPrefs.GetInt(MasterMuteKey) == 1;
             }
 
-            if (PlayerPrefs.HasKey(BgmMuteKey))
+            // 通道持久化值按通道列表逐项覆盖配置默认值（键后缀来自 AudioChannel，键名与旧实现一致）
+            for (var i = 0; i < Channels.Count; i++)
             {
-                _bgmMute = PlayerPrefs.GetInt(BgmMuteKey) == 1;
-            }
+                var channel = Channels[i];
+                var volumeKey = VolumeKey(channel);
+                if (PlayerPrefs.HasKey(volumeKey))
+                {
+                    _channelVolumes[i] = PlayerPrefs.GetFloat(volumeKey);
+                }
 
-            if (PlayerPrefs.HasKey(SfxMuteKey))
-            {
-                _sfxMute = PlayerPrefs.GetInt(SfxMuteKey) == 1;
+                var muteKey = MuteKey(channel);
+                if (PlayerPrefs.HasKey(muteKey))
+                {
+                    _channelMutes[i] = PlayerPrefs.GetInt(muteKey) == 1;
+                }
             }
         }
 
         /// <summary>
         /// 将音量乘法链单点写入全部音源：BGM = 通道 × 总 × 淡变系数；SFX = 通道 × 总 × 局部音量。
         /// </summary>
+        /// <remarks>
+        /// 音源拓扑（BGM 专用源 / SFX 独占源组）与通道列表不同构，
+        /// 故此处仍按音源类型分支，通道音量本身取自 <see cref="Channels" /> 对齐的数组。
+        /// </remarks>
         void ApplyVolumes()
         {
-            _bgmSource.volume = _bgmVolume * _masterVolume * _bgmFadeFactor;
+            _bgmSource.volume = _channelVolumes[Bgm.Index] * _masterVolume * _bgmFadeFactor;
             for (var i = 0; i < _sfxSources.Length; i++)
             {
-                _sfxSources[i].volume = _sfxVolume * _masterVolume * _sfxLocalVolumes[i];
+                _sfxSources[i].volume = _channelVolumes[Sfx.Index] * _masterVolume * _sfxLocalVolumes[i];
             }
         }
 
@@ -595,10 +637,10 @@ namespace Runestone.AesirModules
         /// </summary>
         void ApplyMutes()
         {
-            _bgmSource.mute = _masterMute || _bgmMute;
+            _bgmSource.mute = _masterMute || _channelMutes[Bgm.Index];
             for (var i = 0; i < _sfxSources.Length; i++)
             {
-                _sfxSources[i].mute = _masterMute || _sfxMute;
+                _sfxSources[i].mute = _masterMute || _channelMutes[Sfx.Index];
             }
         }
 
@@ -649,9 +691,19 @@ namespace Runestone.AesirModules
             }
         }
 
-        void StartBgmFade(IEnumerator routine)
+        void StartBgmFade(IEnumerator routine, System.Action instantFallback)
         {
             StopBgmFade();
+
+            // 惰性启用的预放置模块：Instance 会（含未激活对象地）找到它，但未激活的 GameObject 上
+            // StartCoroutine 会被 Unity 静默丢弃，淡变协程根本不跑——BGM 会卡在旧系数上。
+            // 降级为瞬时到位：终态与淡变终点一致，仅丢失过渡过程。
+            if (!isActiveAndEnabled)
+            {
+                instantFallback();
+                return;
+            }
+
             _bgmFadeRoutine = StartCoroutine(routine);
         }
 
@@ -665,5 +717,50 @@ namespace Runestone.AesirModules
         }
 
         #endregion
+    }
+
+    /// <summary>
+    /// 音频通道描述符（不可变值对象）。音量/静音的存取、PlayerPrefs 持久化与配置默认值载入
+    /// 均以通道列表（<see cref="AudioModule.Channels" />）为唯一数据源遍历。
+    /// </summary>
+    /// <remarks>
+    /// <b>意图：</b>把"通道"从散落在字段声明、键名属性、静态属性、配置载入与 ApplyVolumes /
+    /// ApplyMutes 分支中的硬编码，收敛为一次性声明的数据。此前新增第 4 个通道需要改动约 20 处语句，
+    /// 且容易漏改持久化键；现在新增通道只需在 <see cref="AudioModule.Channels" /> 增加一项
+    /// （含 <see cref="Index" />，须与列表位置一致）并在 <see cref="AudioConfigSO.GetChannelVolumes" />
+    /// 追加对应默认值。
+    /// <para>
+    /// 不含音源持有信息：音源拓扑（BGM 专用源 / SFX 独占源组）与通道列表不同构，
+    /// 强行并入会让值对象反过来承担音源引用职责，故此处只描述"可被统一遍历的通道维度"。
+    /// </para>
+    /// </remarks>
+    public readonly struct AudioChannel
+    {
+        /// <summary>通道标识（日志与调试用）。</summary>
+        public string Id { get; }
+
+        /// <summary>PlayerPrefs 音量键后缀，实际键为 前缀 + "." + 该后缀。</summary>
+        public string VolumeKeySuffix { get; }
+
+        /// <summary>PlayerPrefs 静音键后缀，实际键为 前缀 + "." + 该后缀。</summary>
+        public string MuteKeySuffix { get; }
+
+        /// <summary>本通道在音量/静音数组与通道列表中的下标，须与列表位置一致。</summary>
+        public int Index { get; }
+
+        /// <summary>
+        /// 构造通道描述符。
+        /// </summary>
+        /// <param name="id">通道标识（日志与调试用）。</param>
+        /// <param name="volumeKeySuffix">PlayerPrefs 音量键后缀（不含前缀与分隔符）。</param>
+        /// <param name="muteKeySuffix">PlayerPrefs 静音键后缀（不含前缀与分隔符）。</param>
+        /// <param name="index">在通道列表中的下标。</param>
+        public AudioChannel(string id, string volumeKeySuffix, string muteKeySuffix, int index)
+        {
+            Id = id;
+            VolumeKeySuffix = volumeKeySuffix;
+            MuteKeySuffix = muteKeySuffix;
+            Index = index;
+        }
     }
 }

@@ -67,13 +67,18 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 场景加载完成事件（Single 与 Additive 均触发；参数为场景路径）。在 onCompleted 回调之前广播。
+        /// <para>
+        /// 静态共享：无论模块实例被重建多少次（宿主被卸载后 <see cref="Instance" /> 懒创建新实例），
+        /// 始终是同一个事件对象——DDOL 常驻系统持有的监听句柄不会因实例更替而静默失效。
+        /// </para>
         /// </summary>
-        MiniEvent<string> _sceneLoadedEvent = new MiniEvent<string>();
+        static readonly MiniEvent<string> _sceneLoadedEvent = new MiniEvent<string>();
 
         /// <summary>
         /// 场景卸载完成事件（参数为场景路径）。在 onUnloaded / onAllUnloaded 回调之前广播。
+        /// 静态共享的理由同 <see cref="_sceneLoadedEvent" />。
         /// </summary>
-        MiniEvent<string> _sceneUnloadedEvent = new MiniEvent<string>();
+        static readonly MiniEvent<string> _sceneUnloadedEvent = new MiniEvent<string>();
 
         /// <summary>
         /// 叠加场景路径列表，追踪所有经本模块 Additive 加载、尚未卸载的场景
@@ -251,20 +256,26 @@ namespace Runestone.AesirModules
         public static Scene LastLoadedScene => Instance._lastLoadedScene;
 
         /// <summary>
-        /// 叠加场景路径（只读，静态门面）。含所有经本模块 Additive 加载、尚未卸载的场景。
+        /// 叠加场景路径（只读快照，静态门面）。含所有经本模块 Additive 加载、尚未卸载的场景。
+        /// <para>
+        /// 返回 <see cref="_addedScenePaths" /> 的副本：调用方既无法回转 <c>List&lt;string&gt;</c> 修改模块状态，
+        /// 也不会在监听者于广播回调里触发 CompleteLoad / CompleteUnload 时被抛
+        /// <see cref="InvalidOperationException" />。本属性不在逐帧路径上（仅状态查询与测试断言使用），无需缓存。
+        /// </para>
         /// </summary>
-        public static IReadOnlyList<string> AddedScenePaths => Instance._addedScenePaths;
+        public static IReadOnlyList<string> AddedScenePaths => Instance._addedScenePaths.ToArray();
 
         /// <summary>
-        /// 场景加载完成事件（静态门面，经单例转发）。Single 与 Additive 均触发；参数为场景路径。
-        /// 在 onCompleted 回调之前广播。
+        /// 场景加载完成事件（静态门面）。Single 与 Additive 均触发；参数为场景路径。
+        /// 在 onCompleted 回调之前广播。事件对象为静态共享，访问不创建模块实例。
         /// </summary>
-        public static MiniEvent<string> SceneLoadedEvent => Instance._sceneLoadedEvent;
+        public static MiniEvent<string> SceneLoadedEvent => _sceneLoadedEvent;
 
         /// <summary>
-        /// 场景卸载完成事件（静态门面，经单例转发）。参数为场景路径。在 onUnloaded / onAllUnloaded 回调之前广播。
+        /// 场景卸载完成事件（静态门面）。参数为场景路径。在 onUnloaded / onAllUnloaded 回调之前广播。
+        /// 事件对象为静态共享，访问不创建模块实例。
         /// </summary>
-        public static MiniEvent<string> SceneUnloadedEvent => Instance._sceneUnloadedEvent;
+        public static MiniEvent<string> SceneUnloadedEvent => _sceneUnloadedEvent;
 
         /// <summary>
         /// 启动场景引用（静态门面，经单例转发）。编辑器 BootstrapSceneHelper 的工作流之外，
@@ -302,7 +313,8 @@ namespace Runestone.AesirModules
 
                 // 尝试在已加载的场景中查找预放置的实例
                 // 使用 FindAnyObjectByType 而非 FindFirstObjectByType，后者因依赖 InstanceID 排序在 Unity 6 中已废弃
-                _instance = FindAnyObjectByType<SceneModule>();
+                // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
+                _instance = FindAnyObjectByType<SceneModule>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;
@@ -317,10 +329,16 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 兼容 Enter Play Mode（跳过域重载）的静态状态重置。
         /// </summary>
+        /// <remarks>
+        /// 共享事件只清空监听者、不重建对象——保持「同一次 Play 内事件对象恒定」不变，
+        /// 同时避免上一轮 Play 的监听者泄漏到本轮（对齐重建实例时的清零效果）。
+        /// </remarks>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
             _instance = null;
+            _sceneLoadedEvent.Dispose();
+            _sceneUnloadedEvent.Dispose();
         }
 
         void Awake()
@@ -473,6 +491,20 @@ namespace Runestone.AesirModules
                 return false;
             }
 
+            // 仅剩一个"真实"场景时（Single 加载后叠加追踪被清空）卸载会由引擎直接报原始错误，
+            // 此处提前拦截并给出模块自身可操作的失败反馈。
+            // 注意不能直接用 SceneManager.sceneCount：它把 DontDestroyOnLoad 伪场景计入，
+            // 而本框架默认 DDOL 常驻（AesirModules / EventModule / AudioModule 均在 DDOL），
+            // 真实场景只剩一个时 sceneCount 通常为 2，直接比较会漏判。
+            if (CountLoadedRealScenes() <= 1)
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.SceneModuleTag,
+                    $"当前仅剩一个已加载场景，无法卸载: {scenePath}（请改用 Single 模式加载目标场景完成切换）");
+                onFailed?.Invoke();
+                operation = null;
+                return false;
+            }
+
             operation = SceneManager.UnloadSceneAsync(scenePath);
             if (operation == null)
             {
@@ -482,6 +514,32 @@ namespace Runestone.AesirModules
             }
 
             return true;
+        }
+
+        /// <summary>Unity 的 DontDestroyOnLoad 伪场景名——它不承载关卡内容，不计入"可卸载的真实场景"。</summary>
+        const string DontDestroyOnLoadSceneName = "DontDestroyOnLoad";
+
+        /// <summary>
+        /// 统计已加载的真实场景数量（排除 <see cref="DontDestroyOnLoadSceneName" /> 伪场景）。
+        /// </summary>
+        /// <remarks>
+        /// 直接用 <c>SceneManager.sceneCount</c> 会因 DDOL 常驻而虚高（见调用点的说明），
+        /// 故按场景逐个判定。
+        /// </remarks>
+        /// <returns>已加载且非 DDOL 伪场景的场景数量</returns>
+        static int CountLoadedRealScenes()
+        {
+            var count = 0;
+            for (var i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (scene.isLoaded && scene.name != DontDestroyOnLoadSceneName)
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         /// <summary>
