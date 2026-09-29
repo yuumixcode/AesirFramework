@@ -5,20 +5,21 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.31.0] - 2026-09-29
 
-- **`AesirSamplesBuildFilterTests` 补两条用例** — 「构建入口钩子已挂载 `BuildPlayerWindow`」（命门：钩子没挂上示例场景就会进包；字段按候选名跨版本容错、找不到时降级为跳过）与「可注入安装根的整条过滤链」（移动安装根 + PM 导入形态混合列表）
 ### Added
 
+- **`AesirSamplesBuildFilterTests` 补两条用例** — 「构建入口钩子已挂载 `BuildPlayerWindow`」（命门：钩子没挂上示例场景就会进包；字段按候选名跨版本容错、找不到时降级为跳过）与「可注入安装根的整条过滤链」（移动安装根 + PM 导入形态混合列表）
 - **`IView<T>` 泛型表现层接口（默认接口实现绑定）** — 对齐 `IController<T>` / `IPresenter<T>` 的 DIM 形态：声明泛型参数即自动绑定 `AbstractContext<T>.Instance` 单例。View 适配对（`AesirView<T>` / `MonoView<T>`）改经 `IView<T>` DIM 绑定并删除手写显式实现；VC 适配对（`AesirViewController<T>` / `MonoViewController<T>`）改用 `IController<T>` DIM（View 角色保持非泛型 `IView` 声明，避免与 `IView<T>` 双 DIM 冲突），实例额外获得 `IController<T>` 可赋值性。新增 ViewAndTriggerTests DIM 绑定与声明面用例
 - **`IGenericLocator<T>.GetAllEntries()` 诊断成员** — 近失识别等诊断路径经抽象取注册键值对；接口同时继承 `IDisposable`（清空注册）
+
+### Changed
 
 - **`AesirArchitecturePlayerLoop` → `AesirPlayerLoop`、`AesirArchitectureLifecyclePhase` → `AesirLifecyclePhase`（破坏性改名）** — 该类型是**跨包共用的框架级帧钩子工件**（RAA 对外的公共 API，RAM 侧零引用、无对照角色），按命名规范规则 1「跨包共用 → 直接 `Aesir` + 语义名、不带包名段」精简；同文件配套的私有嵌套子系统标识一并改名为 `AesirScriptRunBeforeUpdate` / `AesirScriptRunAfterUpdate`（其类型名被 PlayerLoop 测试断言）。宿主 `AesirArchitecture` 与日志门面 `AesirArchitectureDebug` **保持全名**——它们与 RAM 的 `AesirModules` / `AesirModulesDebug` 成对，属规则 2。文件名同步 `git mv`（`.meta` / GUID 不变）。**迁移**：调用点改 `AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, …)`；**RAM 侧零影响**（无消费点），对外部用户是编译期破坏性改名
 - **更新器窗口刷新回调拆分（进度 tick 不再重算列表）** — `AesirUpdateController` 构造器新增第 5 参「仅重绘」回调（可省，缺省回退既有结构变化回调），`SetProgress` / `SetStatus` 改走它：下载期间进度回调密集，此前每次 tick 都经 `_viewChanged` 让窗口重算列表（Odin 版还会重建全部行视图模型 + `Repaint`）
 - **`RemoveListenerHandleCollection` 收窄为 internal** — 该集合只服务 `RemoveListenerTrigger` / `RemoveListenerOnSceneUnloadedTrigger`（均为包内实现），公开签名只暴露 `AutoRemoveListenerHandle`，对外收窄以免多出一个无人使用的公开类型
 - **`AesirSamplesBuildFilter.FilterSampleScenes` 增加可注入安装根重载** — 生产重载读 `AesirAssetPaths.InstallRoots`（真实安装根），移动安装根形态的整条过滤链此前不可测；新增 `(scenes, installRoots, out removed)` 内部重载
 - **Getting Started IMGUI 兜底版补动作反馈 + 注释口径两处清理** — 兜底版「打开场景」「定位」此前丢弃 Service 返回值（成功 / 用户取消 / 退化路径零反馈），现复用 Service 层 Toast 文案真源经门面日志输出（与 Odin 版同源；用户在 Unity 保存面板取消时静默）；删 `AesirUpdateWindow._outdated` 死字段（唯一写入点、零读取）；`AesirGetStartedWindow` 菜单 priority 注释去掉已随 Aesir Inspector 迁出而失效的「-900（Inspector 组）」具体数字
-### Changed
 
 - **PlayMode 测试程序集解除 `ODIN_INSPECTOR` 门控（测试保护网归位）** — `Runestone.AesirArchitecture.Tests` 的 `defineConstraints` 含 `ODIN_INSPECTOR`，未装 Odin（或活动平台非 Editor）时整程序集静默不编译，3 个 PlayMode 用例在 Test Runner 中消失且无任何报错。移除该约束并保留 3 条 `Sirenix.*.dll` 预编译引用：Odin 环境下 `AesirMonoBehaviour` 等框架基类的基类链指向 `SerializedMonoBehaviour`，`MonoLifecycleProxyTests` 对该类型的任何使用都要求编译器解析基类（缺失即 CS0012），而**指向不存在程序集的预编译引用会被 Unity 静默忽略**（本仓实测：写入一个不存在的 dll 名既不报错也不影响编译），故保留引用在有 / 无 Odin 两种环境下同时成立。EditMode 程序集 `Runestone.AesirArchitecture.Tests.Editor` 有意不引用 Sirenix——其用例经类型系统断言（`typeof(...).IsAssignableFrom`）而非实例化 Odin 基类链类型
 - **`AbstractContext<T>.Dispose()` 由 `virtual` 收为非虚方法（破坏性）** — 类上同时存在 `public virtual void Dispose()` 与 `protected virtual void OnDispose()` 两个析构扩展点，且 `Dispose()` 实现携带了不属于"清理"语义的副作用（`ReferenceEquals(_instance, this)` 时清空单例缓存）。用户子类覆写 `Dispose()` 却漏调 `base.Dispose()` 是极常见写法，一旦发生：`_instance` 不清空、`Initialized` 仍为 true（它在 service/model 循环**之后**才置 false），下次访问 `Instance` 直接返回两个定位器都已被清空的旧 Context，之后每次 `GetModel` / `GetService` 都抛"未在 Context 中注册"——而那个 Model 明明还写在 `Configure()` 里。框架自身的 `CapabilityExtensionsTests` 正断言 dispose 后可重建的行为。`Dispose()` 改为模板方法的非虚实现，`OnDispose()` 成为唯一安全定制点，基类实现从此无法被部分应用。**已全仓核查 22 个 `AbstractContext<T>` 子类，无一覆写 `Dispose()`**（含用户侧 `Assets/Scripts/HUDContext.cs`），仓内无调用点断裂；外部消费者若覆写过需改为覆写 `OnDispose()`
@@ -42,6 +43,7 @@
 
 - **检查更新失败后仍显示上一次的线路与「直连可用」** — `CheckForUpdates` 的异常分支清空了快照 / 版本 / 日志 / 来源 / 检测详情，却漏了 `RemoteRouteKind` 与 `GitHubDirectAvailable`：失败后界面继续显示上一次的线路名与 CDN 延迟提示，与眼前这次失败自相矛盾。两字段一并复位（线路回落默认、直连可用性置 false）
 - **`RuntimeInitializeLoadType` 示例的五个开关只活在当前进程内** — `RuntimeInitializeLoadTypeSettings` 声明了 `[FilePath]` 却漏了五个私有字段的 `[SerializeField]`，而 setter 与 `EnableAll` / `DisableAll` 全部调 `Save(true)`：设置文件里一个键都没有，编辑器重启（重建单例）后回落为「全部 false」，示例的五个时机演示静默变成一条日志都不打。补 `[SerializeField]`（含 `Samples~/` 镜像）
+
 ### Fixed
 
 - **`ScriptingSymbolEditorUtilityTests` 改写真实宏定义符号导致 Test Runner 中途域重载** — 用例经 `EnsureScriptingDefineSymbol` / `RemoveScriptingDefineSymbol` 对**真实** `PlayerSettings` 做增删往返，每次变更都会请求 "Define symbols changed" 全量脚本重编译（Editor.log 实证：`[ScriptCompilation] Requested script compilation because: Define symbols changed` → `Reloading assemblies after finishing script compilation`），编译完成时本轮 EditMode 测试尚未结束，Test Runner 报 **Unexpected assembly reload happened while running tests** 并丢失运行上下文（控制台伴随 `[SceneHierarchyExpansionState] Save/Restore timing` 重载标记）。现将符号字符串的增删语义抽为纯函数 `ContainsSymbol` / `AddSymbol` / `RemoveSymbol`（internal，逻辑与原先内联实现逐字等价），`EnsureSymbolForTarget` / `RemoveSymbolForTarget` 改为"产物与现状相同即不写回"，测试改为纯逻辑断言 + `PlayerSettings` 只读查询（真实写入路径属手动验证项）
