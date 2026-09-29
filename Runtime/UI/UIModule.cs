@@ -39,6 +39,18 @@ namespace Runestone.AesirModules
         static UIModule _instance;
 
         /// <summary>
+        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// </summary>
+        /// <remarks>
+        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
+        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
+        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
+        /// <c>FindAnyObjectByType</c> 兜底重发现。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => _instance = null;
+
+        /// <summary>
         /// 面板实例注册表，键 = 面板实例的实际类型。
         /// 激活/停用状态由面板自身的 <see cref="IUIPanel.IsOpen" /> 承担，注册表不重复记录，
         /// 由此排除多表不一致的可能。Show/Hide/Get 须以同一实际类型调用；
@@ -54,6 +66,15 @@ namespace Runestone.AesirModules
 
         /// <summary>窗口实例注册表，键 = 窗口实例的实际类型（与面板注册表相互独立，键语义约定一致）。</summary>
         readonly Dictionary<Type, IUIWindow> _windowDict = new Dictionary<Type, IUIWindow>();
+
+        /// <summary>
+        /// 停用克隆模板缓存，键 = 来源预制体，值 = 该预制体的停用模板克隆体（见 <see cref="InstantiateInactive" />）。
+        /// 非序列化，随本组件实例存活；模板物体挂在本组件下，随本组件所属 GameObject（或场景卸载）一并回收。
+        /// </summary>
+        readonly Dictionary<GameObject, GameObject> _inactiveTemplates = new Dictionary<GameObject, GameObject>();
+
+        /// <summary>停用模板容器（模板克隆体的父物体），恒为停用；惰性创建，随本组件所属 GameObject 回收。</summary>
+        GameObject _templateContainer;
 
         /// <summary>
         /// 当前生效的窗口蒙版调度模式。运行状态字段（显式非序列化），
@@ -83,7 +104,8 @@ namespace Runestone.AesirModules
 
                 // 尝试在已加载的场景中查找预放置的实例
                 // 使用 FindAnyObjectByType 而非 FindFirstObjectByType，后者因依赖 InstanceID 排序在 Unity 6 中已废弃
-                _instance = FindAnyObjectByType<UIModule>();
+                // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
+                _instance = FindAnyObjectByType<UIModule>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;
@@ -96,9 +118,35 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
+        /// 非创建式单例获取：实例不存在时返回 <c>false</c>，<b>不触发懒创建</b>。
+        /// </summary>
+        /// <remarks>
+        /// 供"销毁/场景卸载阶段的自便捷入口"使用（面板/窗口的 <c>HideSelf</c> / <c>CloseSelf</c>）：
+        /// 此时模块往往已随场景销毁，若走 <see cref="Instance" /> 会在正在卸载的场景里重建
+        /// <c>[Aesir Modules]</c> 宿主并加入 DDOL，形成一个"单例存在但订阅与注册表全丢"的泄漏宿主。
+        /// 本方法只做"已存在即取用"，与 <c>RemovePanelRecord</c> / <c>RemoveWindowRecord</c> 的静态早退口径一致。
+        /// </remarks>
+        /// <param name="module">找到时输出现有实例；否则输出 <c>null</c></param>
+        /// <returns>存在可用实例则返回 <c>true</c></returns>
+        internal static bool TryGetExisting(out UIModule module)
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<UIModule>(FindObjectsInactive.Include);
+            }
+
+            module = _instance;
+            return _instance != null;
+        }
+
+        /// <summary>
         /// UI 专用相机。正交、depth=1、cullingMask=含 UI 层 (5) 和 TransparentFX 层 (1)。
         /// </summary>
-        public Camera UICamera => _uiRoot?.UICamera;
+        /// <remarks>
+        /// UIRoot 缺失或已销毁时返回 null：显式 <c>== null</c> 走 Unity 假 null 语义，
+        /// 避免 <c>?.</c> 绕过 <see cref="UnityEngine.Object" /> 的重载 <c>==</c> 而返回已销毁对象的相机。
+        /// </remarks>
+        public Camera UICamera => _uiRoot == null ? null : _uiRoot.UICamera;
 
         /// <summary>
         /// 窗口蒙版调度模式。初值来自 <see cref="UIModuleConfigSO" />（在 Project 窗口编辑配置资产即可调整，
@@ -155,9 +203,16 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 替换默认的面板资源加载器。
         /// </summary>
-        /// <param name="loader">自定义加载器。加载契约为同步语义（如同步缓存、Resources）；Addressables 等异步管线需自行预加载后同步返回。</param>
+        /// <param name="loader">自定义加载器。加载契约为同步语义（如同步缓存、Resources）；Addressables 等异步管线需自行预加载后同步返回。为空时记录错误并保留现有加载器。</param>
         public void RegisterAssetLoader(IUIAssetLoader loader)
         {
+            if (loader == null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    "注册资源加载器到 [UIModule] 中失败：loader 为空");
+                return;
+            }
+
             _loader = loader;
         }
 
@@ -243,7 +298,15 @@ namespace Runestone.AesirModules
                 return null;
             }
 
-            if (!_panelDict.TryGetValue(panelType, out var panel))
+            if (_panelDict.TryGetValue(panelType, out var panel) && IsDestroyedRecord(panel))
+            {
+                // 注册表自愈：条目对应实例已被销毁（子类遮蔽 OnDestroy 等反清理失效场景），
+                // 按"未注册"处理并走创建路径，否则后续 mono.transform 访问抛 MissingReferenceException
+                _panelDict.Remove(panelType);
+                panel = null;
+            }
+
+            if (panel == null)
             {
                 // 键语义诊断：注册表已存在派生实例时，按实际类型键约定拒绝本次调用，
                 // 防止以基类类型反复 Show 造成重复实例化
@@ -333,6 +396,14 @@ namespace Runestone.AesirModules
                 return;
             }
 
+            if (IsDestroyedRecord(panel))
+            {
+                // 注册表自愈：实例已销毁则关闭路径无对象可关（IsOpen 为 true 时 DestroyPanel 会抛
+                // MissingReferenceException），按幂等语义清条目后返回
+                _panelDict.Remove(panelType);
+                return;
+            }
+
             if (!panel.IsOpen)
             {
                 return;
@@ -414,7 +485,12 @@ namespace Runestone.AesirModules
                 return false;
             }
 
-            if (_panelDict.ContainsKey(panelType))
+            if (_panelDict.TryGetValue(panelType, out var registered) && IsDestroyedRecord(registered))
+            {
+                // 注册表自愈：残留的已销毁条目不算"已预热"，继续走预热创建路径
+                _panelDict.Remove(panelType);
+            }
+            else if (_panelDict.ContainsKey(panelType))
             {
                 return true;
             }
@@ -551,7 +627,15 @@ namespace Runestone.AesirModules
                 return null;
             }
 
-            if (!_windowDict.TryGetValue(windowType, out var window))
+            if (_windowDict.TryGetValue(windowType, out var window) && IsDestroyedRecord(window))
+            {
+                // 注册表自愈：条目对应实例已被销毁（子类遮蔽 OnDestroy 等反清理失效场景），
+                // 按"未注册"处理并走创建路径，否则后续 mono.transform 访问抛 MissingReferenceException
+                _windowDict.Remove(windowType);
+                window = null;
+            }
+
+            if (window == null)
             {
                 // 键语义诊断：注册表已存在派生实例时按实际类型键约定拒绝，防止重复实例化
                 var relatedKey = FindRegisteredRelatedWindowKey(windowType);
@@ -637,6 +721,16 @@ namespace Runestone.AesirModules
                 return;
             }
 
+            if (IsDestroyedRecord(window))
+            {
+                // 注册表自愈：实例已销毁则关闭路径无对象可关（IsOpen 为 true 时 DestroyWindow 会抛
+                // MissingReferenceException），按幂等语义清条目后重算蒙版
+                // （此路径本应由 RemoveWindowRecord 收尾，但实例已销毁说明该回调从未执行，故在此补偿）
+                _windowDict.Remove(windowType);
+                RefreshWindowMasks();
+                return;
+            }
+
             if (!window.IsOpen)
             {
                 return;
@@ -709,7 +803,12 @@ namespace Runestone.AesirModules
                 return false;
             }
 
-            if (_windowDict.ContainsKey(windowType))
+            if (_windowDict.TryGetValue(windowType, out var registeredWindow) && IsDestroyedRecord(registeredWindow))
+            {
+                // 注册表自愈：残留的已销毁条目不算"已预热"，继续走预热创建路径
+                _windowDict.Remove(windowType);
+            }
+            else if (_windowDict.ContainsKey(windowType))
             {
                 return true;
             }
@@ -900,27 +999,58 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// 以停用状态实例化面板预制体：克隆前临时停用源预制体，克隆后立即恢复。
-        /// 克隆体创建时不触发 Awake/OnEnable。
+        /// 以停用状态实例化预制体：克隆体创建时不触发 Awake/OnEnable。
+        /// <para>
+        /// 不对来源预制体做 SetActive(false) → 恢复 的临时切换：来源可能是 <c>Resources.Load</c> 得到的资产
+        /// 或用户注册的资产引用，属共享对象，在编辑器中改动其 activeSelf 会把资产标记为脏
+        /// （Project 窗口星号、改动可能留存到退出 Play 模式之后）。改为按来源预制体缓存一份停用模板克隆体，
+        /// 每个预制体至多克隆一次，此后 <c>Instantiate(template)</c> 因模板自身停用而天然不触发 Awake/OnEnable，
+        /// 来源资产全程只读。
+        /// </para>
+        /// <para>
+        /// <b>代价（有意承担的常驻开销）</b>：每个被实例化过的预制体各留一份完整层级克隆体
+        /// （挂在 <c>[UIModule]InactiveTemplates</c> 容器下）存活至本模块所属 GameObject 被销毁为止；
+        /// 模板持有来源预制体引用，故不会被 <c>Resources.UnloadUnusedAssets</c> 回收。
+        /// 面板/窗口预制体数量有限，该开销约等于"每个预制体多一份未激活实例"。
+        /// </para>
         /// </summary>
         GameObject InstantiateInactive(GameObject prefab)
         {
-            var wasActive = prefab.activeSelf;
-            if (!wasActive)
+            // 来源自身即停用：克隆体天然为停用，无需模板
+            if (!prefab.activeSelf)
             {
                 return Instantiate(prefab);
             }
 
-            prefab.SetActive(false);
-            try
+            return Instantiate(GetInactiveTemplate(prefab));
+        }
+
+        /// <summary>
+        /// 取指定来源预制体的停用模板克隆体，缺失时创建并缓存（每个预制体至多克隆一次）。
+        /// 模板挂在恒停用的容器下，随<b>本组件所属 GameObject</b>（或场景卸载）一并回收。
+        /// </summary>
+        GameObject GetInactiveTemplate(GameObject prefab)
+        {
+            // 模板本体被外部销毁时重建；键为已销毁来源预制体的陈旧条目不影响正确性（不再命中即重建）。
+            // 已知残留：来源预制体销毁后该键不清理，属"每个预制体一条"的有界条目
+            if (_inactiveTemplates.TryGetValue(prefab, out var template) && template != null)
             {
-                return Instantiate(prefab);
+                return template;
             }
-            finally
+
+            if (_templateContainer == null)
             {
-                // Instantiate 抛异常也必须恢复源预制体的激活状态
-                prefab.SetActive(true);
+                _templateContainer = new GameObject("[UIModule]InactiveTemplates");
+                _templateContainer.SetActive(false);
+                _templateContainer.transform.SetParent(transform, false);
             }
+
+            // 挂入停用容器（instantiateInWorldSpace: false——取预制体自身局部变换，不因容器位置产生偏移）
+            // 再显式停用：容器停用时克隆体不触发 Awake/OnEnable，显式 SetActive 兜底不依赖该行为
+            template = Instantiate(prefab, _templateContainer.transform, false);
+            template.SetActive(false);
+            _inactiveTemplates[prefab] = template;
+            return template;
         }
 
         /// <summary>
@@ -1014,13 +1144,23 @@ namespace Runestone.AesirModules
         /// </summary>
         void RefreshWindowMasks()
         {
+            // 遍历期间不改表：已销毁条目先登记键，遍历结束后统一移除
+            var destroyedKeys = new List<Type>();
+
             if (MaskMode == UIMaskMode.Stacked)
             {
                 foreach (var pair in _windowDict)
                 {
+                    if (IsDestroyedRecord(pair.Value))
+                    {
+                        destroyedKeys.Add(pair.Key);
+                        continue;
+                    }
+
                     pair.Value.SetMaskVisible(pair.Value.IsOpen);
                 }
 
+                RemoveDestroyedWindowRecords(destroyedKeys);
                 return;
             }
 
@@ -1033,6 +1173,15 @@ namespace Runestone.AesirModules
             foreach (var pair in _windowDict)
             {
                 var window = pair.Value;
+
+                // 注册表自愈：已销毁实例的 SetMaskVisible / GetSiblingIndex 会抛 MissingReferenceException，
+                // 跳过并登记待清理键（与 Show/Close 路径的自愈口径一致）
+                if (IsDestroyedRecord(window))
+                {
+                    destroyedKeys.Add(pair.Key);
+                    continue;
+                }
+
                 window.SetMaskVisible(false);
 
                 var mono = window as MonoBehaviour;
@@ -1053,6 +1202,28 @@ namespace Runestone.AesirModules
             }
 
             topWindow?.SetMaskVisible(true);
+            RemoveDestroyedWindowRecords(destroyedKeys);
+        }
+
+        /// <summary>
+        /// 注册表自愈：判断注册表条目对应实例是否已被销毁。
+        /// 必须走 Unity 重载的 <c>==</c>（假 null）判定，ReferenceEquals/原生运算符会绕过该语义。
+        /// </summary>
+        static bool IsDestroyedRecord(object record)
+        {
+            // is 为类型判定，已销毁的 MonoBehaviour 仍匹配；随后 == null 走 Unity 假 null 语义
+            return record is MonoBehaviour mono && mono == null;
+        }
+
+        /// <summary>
+        /// 移除注册表中实例已被销毁的窗口条目（遍历结束后调用，避免在遍历中改表）。
+        /// </summary>
+        void RemoveDestroyedWindowRecords(List<Type> destroyedKeys)
+        {
+            for (var i = 0; i < destroyedKeys.Count; i++)
+            {
+                _windowDict.Remove(destroyedKeys[i]);
+            }
         }
 
         void EnsureReady()

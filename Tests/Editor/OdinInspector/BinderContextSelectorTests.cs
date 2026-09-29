@@ -60,7 +60,10 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.That(values,
                 Does.Not.Contain(
                     "Runestone.AesirArchitecture.Samples.MvcQuick.SampleMvcQuickCounterContext"));
-            // Architecture 测试的嵌套 Context（[InternalContext] 标注）被排除
+            // Architecture 测试的嵌套 Context（[InternalContext] 标注）被排除。
+            // 注意：该类型属另一测试程序集（Runestone.AesirArchitecture.Tests.Editor），本程序集未引用它，
+            // 故只能按全名（反射扫描命中）断言——属跨程序集的字符串耦合：
+            // 重命名 Architecture 侧的嵌套测试 Context 时，本用例会以"断言仍通过"的方式静默失效（而非报错）。
             Assert.That(values,
                 Does.Not.Contain(
                     "Runestone.AesirArchitecture.Tests.Editor.AbstractContextInitializationTests+ThrowingModelContext"));

@@ -26,7 +26,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 ## 依赖
 
 - **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.30.0（必需）
-- **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。注意 **Scene 模块的 `SceneAssetWrapper` Inspector 面板效果（拖拽赋值、着色、一键修复按钮）依赖 Odin**；未安装 Odin 时仅保证 API 可用（`FromScenePath` 构造 / `SceneAsset` 代码赋值 / TryGet 家族），面板不支持。
+- **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。注意 **Scene 模块的 `SceneAssetWrapper` Inspector 面板效果（拖拽赋值、着色、一键修复按钮）依赖 Odin**；未安装 Odin 时仅保证 API 可用（`FromScenePath` 构造 / `SceneAsset` 代码赋值 / TryGet 家族），面板不支持——请改用代码构造引用，把场景加入 BuildSettings 请在 Build Settings 面板手动操作。
 
 ## 目录组织
 
@@ -98,7 +98,9 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest
 
 ### 快速开始
 
-1. 菜单 `GameObject → Aesir Modules → Create UIRoot` 创建带完整层级结构的 UI 根节点（或在场景中预放置挂载 `UIRoot` 的物体）。
+> 以下第 1 步是**可选的**。`UIRoot` 与 `UIModule` 在首次调用静态 API 时会自动创建（宿主 `[Aesir Modules]` 不存在亦会自建），手动创建仅用于想预先指定层级结构、`UICanvasConfigSO` 配置或相机参数的场景。示例 `Samples~/UI/01_BasicUsage` 即为"零预放置"用法。
+
+1. （可选）菜单 `GameObject → Aesir Modules → Create UIRoot` 创建带完整层级结构的 UI 根节点（或在场景中预放置挂载 `UIRoot` 的物体）。
 2. 创建面板预制体，根节点挂脚本继承 `AesirBasePanel`（MVP 模式继承 `AesirBasePanelView<TContext>`）。
 3. 注册预制体并显示面板：
 
@@ -482,7 +484,7 @@ public class LevelFlow : MonoBehaviour
 
 ### 设计边界
 
-- **Odin Inspector 边界** — `SceneAssetWrapper` 的 Inspector 面板效果依赖 Odin（经 AttributeProcessor 注入）；未安装 Odin 时仅保证 API 可用：`SceneAssetWrapper.FromScenePath(...)` 构造、编辑器下 `SceneAsset` 属性代码赋值、TryGet 家族读取，面板不支持。
+- **Odin Inspector 边界** — `SceneAssetWrapper` 的 Inspector 面板效果依赖 Odin（经 AttributeProcessor 注入）；未安装 Odin 时仅保证 API 可用：`SceneAssetWrapper.FromScenePath(...)` 构造、编辑器下 `SceneAsset` 属性代码赋值、TryGet 家族读取，面板不支持——请改用代码构造引用，把场景加入 BuildSettings 请在 Build Settings 面板手动操作。
 - **Addressable 场景不经 SceneModule 加载** — 安装 Addressables 后 wrapper 提供地址（`Address` / `TryGetAddress`），加载请直接调用 `Addressables.LoadSceneAsync(wrapper.Address)`，卸载同理走 Addressables API。
 - **重复叠加同一路径后果自负** — Unity 会加载两个场景实例而追踪列表按路径只记一条，`UnloadScene` 按路径只卸载其一，剩余实例脱离追踪；请勿对同一路径重复 `LoadSceneAdditive`。
 - **启动场景（Bootstrap）分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`：实例序列化字段优先、未赋值时回退配置资产 `SceneModuleConfigSO` 的全局启动场景），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 场景由编辑器 `BootstrapSceneHelper` 负责（`Tools → Aesir → Modules → Scene Module Settings` 中开启，默认关闭）。
@@ -524,7 +526,7 @@ Editor/UniTask/
 - `BinderAssistant` 挂在根面板上，「构建绑定单元」按标记增量维护绑定列表（每条记录组件类型、字段名、绑定路径），支持两种生成模式（默认「同一脚本增量」）：「同一脚本增量」只替换目标 `*.cs` 内「绑定字段（自动生成）」region 的内容（字段 + `BindComponents` 方法，类型与特性全限定、自包含），region 外内容归开发者所有，文件不存在时自动创建脚手架；「Partial 分部类」产出手写 partial `*.cs`（仅生成一次）与自动维护文件（后缀可选，默认 `.designer.cs`——Rider 中该后缀默认折叠，Rider 用户推荐）；生成脚本的绑定字段以 `TitleGroup`（「绑定字段（自动生成）」）分组标注自动生成；两种模式编译完成后都会自动挂载组件并执行一次绑定；
 - 生成脚本的基类可下拉选择：内置 `MonoBehaviour`、由 Binder 预选的 Aesir 面板/窗口家族（`AesirBasePanel`、`AesirBasePanelView<T>`、`AesirBasePanelViewController<T>`、`AesirBaseWindow`、`AesirBaseWindowView<T>`、`AesirBaseWindowViewController<T>`——核心程序集无法反向引用 Odin 程序集标注特性，故由 Binder 经 typeof 内置；Canvas 根物体上默认基类直指 `AesirBaseWindow`、默认脚本名后缀取 `Window`，面板根保持 `Panel`，物体名已带对应后缀时不重复拼接），以及用户以 `[BinderBaseType]` 标记的类（需引用 `Runestone.AesirModules.OdinInspector`）；选择 Aesir 泛型面板/窗口基类后在「Context 类型」下拉中选择项目内 AbstractContext 派生类（占位不会写进生成代码）；
 - 命名空间默认值与 partial 后缀候选列表经 ScriptableSingleton 在编辑器阶段持久化；
-- 生成逻辑为纯文本拼装，配套 EditMode 测试程序集 `Runestone.AesirModules.Tests.Editor`（包根 `Tests/Editor/`）；`IComponentBinder` 保留为自定义绑定器扩展点。
+- 生成逻辑为纯文本拼装，配套 EditMode 测试程序集 `Runestone.AesirModules.Tests.Editor.OdinInspector`（包根 `Tests/Editor/OdinInspector/`；Binder 依赖 Odin 类型，其测试随该 Odin 门控程序集编译）；`IComponentBinder` 保留为自定义绑定器扩展点。
 
 ## 脚本文档生成模块（需 Odin）
 

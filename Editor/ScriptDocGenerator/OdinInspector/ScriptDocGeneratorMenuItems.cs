@@ -15,7 +15,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             var monoScript = SelectionMonoScripts.First();
             var targetType = monoScript.GetClass();
             ScriptDocGeneratorPanelSO.Instance.TargetType = targetType;
-            Debug.Log("设置 Script Doc Generator 的 Target Type 为：" + targetType.FullName);
+            AesirModulesDebug.Log(AesirModulesDebug.ScriptDocGeneratorTag,
+                "设置 Script Doc Generator 的 Target Type 为：" + targetType.FullName);
         }
 
         [MenuItem(AddScriptToTargetTypeAndOpenWindowMenuName, false,
@@ -42,7 +43,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             so.TemporaryTypes = temporaryTypes.Distinct().ToList();
             foreach (var type in types)
             {
-                Debug.Log("添加到 Script Doc Generator 的 Temporary Types：" + type.FullName);
+                AesirModulesDebug.Log(AesirModulesDebug.ScriptDocGeneratorTag,
+                    "添加到 Script Doc Generator 的 Temporary Types：" + type.FullName);
             }
         }
 

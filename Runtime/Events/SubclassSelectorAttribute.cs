@@ -12,7 +12,8 @@ namespace Runestone.AesirModules
     /// <see cref="AesirEventArgs" /> 具体子类的场景使用。
     /// </para>
     /// <para>
-    /// 候选类型要求：非抽象、非泛型定义、标记 <c>[Serializable]</c>、
+    /// 候选类型要求：非抽象、非泛型定义、继承 <c>[Serializable]</c>（自身或基类声明均可——
+    /// 基类已标注时派生类无需重复标注，与 Unity 序列化规则一致）、
     /// 非 <see cref="UnityEngine.Object" /> 派生；标有
     /// <see cref="ExcludeSubclassSelectorAttribute" /> 的类型不出现在下拉中。
     /// </para>
