@@ -225,6 +225,28 @@ namespace Runestone.AesirModules
             }
         }
 
+        /// <summary>
+        /// 非创建式单例获取：实例不存在时返回 <c>false</c>，<b>不触发懒创建</b>
+        /// （与 <see cref="UIModule.TryGetExisting" /> 同款）。
+        /// </summary>
+        /// <remarks>
+        /// 供"只读状态查询"使用：<see cref="IsBgmPlaying" /> / <see cref="CurrentBgm" /> 这类查询在模块从未被使用过时
+        /// 本就有确定答案（没在播放 / 无片段），旧实现却会为此创建模块、连带创建 9 个 AudioSource 并加入 DDOL。
+        /// 需要实例提供能力的入口（播放、音量、暂停）仍走 <see cref="Ready" />。
+        /// </remarks>
+        /// <param name="module">找到时输出现有实例；否则输出 <c>null</c></param>
+        /// <returns>存在可用实例则返回 <c>true</c></returns>
+        internal static bool TryGetExisting(out AudioModule module)
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<AudioModule>(FindObjectsInactive.Include);
+            }
+
+            module = _instance;
+            return _instance != null;
+        }
+
         void Awake()
         {
             if (_instance != null && _instance != this)
@@ -369,12 +391,33 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 当前背景音乐片段。停止播放后仍保留最后一次播放的片段，未播放过时为 null。
         /// </summary>
-        public static AudioClip CurrentBgm => Ready()._bgmSource.clip;
+        /// <remarks>
+        /// 只读查询，<b>不创建模块实例</b>：模块不存在（从未播放过任何音频）时返回 null。
+        /// </remarks>
+        public static AudioClip CurrentBgm
+        {
+            get
+            {
+                TryGetExisting(out var m);
+                return m != null && m._initialized ? m._bgmSource.clip : null;
+            }
+        }
 
         /// <summary>
         /// 背景音乐是否正在播放。
         /// </summary>
-        public static bool IsBgmPlaying => Ready()._bgmSource.isPlaying;
+        /// <remarks>
+        /// 只读查询，<b>不创建模块实例</b>：模块不存在或尚未初始化时返回 <c>false</c>
+        /// （没有音频源，等价于"没在播放"）。
+        /// </remarks>
+        public static bool IsBgmPlaying
+        {
+            get
+            {
+                TryGetExisting(out var m);
+                return m != null && m._initialized && m._bgmSource.isPlaying;
+            }
+        }
 
         #endregion
 
@@ -413,6 +456,12 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 总音量（0-1），与各通道音量相乘生效。设置即时生效，并按配置持久化到 PlayerPrefs。
         /// </summary>
+        /// <remarks>
+        /// <b>读取会确保模块实例存在</b>（与 <c>IsBgmPlaying</c> / <c>CurrentBgm</c> 不同）：音量与静音的"有效值"
+        /// 由配置资产决定（<c>AudioConfigSO</c> 的默认音量 / 持久化开关 / PlayerPrefs 键前缀都挂在模块实例的序列化字段上），
+        /// 无实例时无法还原该配置——非创建式取值只可能返回代码默认值，与项目配置矛盾（静默给出错误音量）。
+        /// 故本组（音量与静音）保持创建式取值，只读播放状态则走非创建式。
+        /// </remarks>
         public static float MasterVolume
         {
             get => Ready()._masterVolume;
@@ -432,6 +481,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 背景音乐通道音量（0-1），与总音量相乘生效。设置即时生效，并按配置持久化。
         /// </summary>
+        /// <remarks>读取会确保模块实例存在（取值语义见 <see cref="MasterVolume" />）。</remarks>
         public static float BgmVolume
         {
             get => Ready()._channelVolumes[Bgm.Index];
@@ -441,6 +491,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 音效通道音量（0-1），与总音量相乘生效。设置即时生效，并按配置持久化。
         /// </summary>
+        /// <remarks>读取会确保模块实例存在（取值语义见 <see cref="MasterVolume" />）。</remarks>
         public static float SfxVolume
         {
             get => Ready()._channelVolumes[Sfx.Index];
@@ -450,6 +501,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 总静音开关（总闸，与各通道静音相或生效）。设置即时生效，并按配置持久化。
         /// </summary>
+        /// <remarks>读取会确保模块实例存在（取值语义见 <see cref="MasterVolume" />）。</remarks>
         public static bool MasterMute
         {
             get => Ready()._masterMute;
@@ -469,6 +521,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 背景音乐静音开关，与总静音相或生效。设置即时生效，并按配置持久化。
         /// </summary>
+        /// <remarks>读取会确保模块实例存在（取值语义见 <see cref="MasterVolume" />）。</remarks>
         public static bool BgmMute
         {
             get => Ready()._channelMutes[Bgm.Index];
@@ -478,6 +531,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 音效静音开关，与总静音相或生效。设置即时生效，并按配置持久化。
         /// </summary>
+        /// <remarks>读取会确保模块实例存在（取值语义见 <see cref="MasterVolume" />）。</remarks>
         public static bool SfxMute
         {
             get => Ready()._channelMutes[Sfx.Index];

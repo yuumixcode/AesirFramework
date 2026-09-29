@@ -833,5 +833,20 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
         }
 
         #endregion
+
+        #region 只读状态查询不创建实例
+
+        [Test]
+        public void ReadOnlyStateQueries_WithoutInstance_DoNotCreateAudioModule()
+        {
+            // 前置：本用例不创建模块（其余用例的实例已由 TearDown 销毁），静态单例此时为 Unity 假 null
+            Assert.IsFalse(AudioModule.IsBgmPlaying, "无实例时背景音乐必然未在播放");
+            Assert.IsNull(AudioModule.CurrentBgm, "无实例时当前 BGM 片段应为 null");
+
+            Assert.IsFalse(AudioModule.TryGetExisting(out _), "只读状态查询不得创建音频模块实例");
+            Assert.IsNull(GameObject.Find("[Aesir Modules]"), "只读状态查询不得创建 [Aesir Modules] 宿主");
+        }
+
+        #endregion
     }
 }
