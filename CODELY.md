@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.31.0 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期（AesirPlayerLoop）、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.31.0 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.31.1 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期（AesirPlayerLoop）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.31.1 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.31.0）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.31.1）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.31.0）
+## Aesir Architecture（0.31.1）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -156,7 +156,7 @@
 
 ---
 
-## Aesir Modules（0.31.0）
+## Aesir Modules（0.31.1）
 
 ### UI 框架
 

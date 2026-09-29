@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.31.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.31.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.31.1** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.31.1** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -29,6 +29,28 @@ versions follow [Semantic Versioning](https://semver.org/).
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.31.1] - 2026-09-29
+
+---
+
+**仓库级变更 / Repository-wide**
+
+- **文档补丁版本（两包源码与 0.31.0 一致，无功能变更）** — 本轮内容全部落在公开文档站（AesirFramework-Docs）与仓库记忆，源码零改动：① **Scripting API 页全量重生成**至 0.31.0 口径（RAA 131 页 / RAM 153 页，9 个程序集 284 类型）——新增 `IView<T>`、`AesirPlayerLoop` 家族、`AudioChannel`、`SceneModuleUniTask`、`NiceTypeName`、`SceneModuleSettingsWindow(Odin)` 等页，移除 `Internal/ListExtensions`、`Editor/SceneManagerWindow`；② **修复站点侧栏 API 导航缺陷**——导航路径前缀重复（`architecture/scripting-api/architecture/scripting-api/…`）导致全部 API 链接 404，修复后 284 条导航目标全部有效且与页面一一对应；③ **内容页对齐 0.31.0 共 27 处**（示例总数 9/10 → 11、`RuntimeInitializeLoadType` 的登记状态与程序集约束、已删除的 `RegisterCustomLifecycle` 用法示例、`AesirPlayerLoop` 自愈按帧节流口径、双注册表收 internal、Binder 编辑器工具链不随 Player 打包、包不再声明测试框架依赖，以及 `IView<T>` / `GetAllEntries` / `ClearListeners` 接口面 / `EventModule` DDOL / `BinderEditorSettings` 持久化 / `Channels` / `AudioChannel` 等新能力补录）；④ **补第三方素材出处**——PlaneWar 示例使用的 Vertical 2D Shooting BE4（Goldmetal）在站点补上版权与授权口径（与包内 `Third Party Notices.md` 对齐）
+
+### [architecture] Aesir Architecture
+
+**Changed**
+
+- **文档同步（无代码变更）** — 源码与 0.31.0 一致；本次仅同步公开文档站与仓库记忆
+
+### [modules] Aesir Modules
+
+**Changed**
+
+- **文档同步（无代码变更）** — 源码与 0.31.0 一致；本次仅同步公开文档站与仓库记忆
 
 ---
 
