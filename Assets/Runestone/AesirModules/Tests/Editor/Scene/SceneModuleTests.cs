@@ -483,5 +483,26 @@ namespace Runestone.AesirModules.Tests.Editor
         }
 
         #endregion
+
+        #region 只读状态查询不创建实例
+
+        [Test]
+        public void StateReads_WithoutInstance_DoNotCreateModuleOrHost()
+        {
+            // 前置：销毁 SetUp 注入的模块并清空静态单例，模拟"本模块从未被使用过"
+            Object.DestroyImmediate(_host);
+            _host = null;
+            ResetInstanceToNull();
+
+            Assert.AreEqual(0, SceneModule.AddedScenePaths.Count, "无实例时叠加追踪应为空列表");
+            Assert.AreEqual(default(Scene), SceneModule.LastLoadedScene, "无实例时最后加载场景应为 default");
+            // 启动场景引用的取值取决于配置资产是否配了全局启动场景，故只断言"读取本身安全"，不断言非空
+            _ = SceneModule.BootstrapSceneAssetWrapper;
+
+            Assert.IsFalse(SceneModule.TryGetExisting(out _), "只读状态查询不得创建模块实例");
+            Assert.IsNull(GameObject.Find("[Aesir Modules]"), "只读状态查询不得创建 [Aesir Modules] 宿主");
+        }
+
+        #endregion
     }
 }

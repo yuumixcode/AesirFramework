@@ -9,11 +9,12 @@
 
 ### Added
 
+- **UniTask 驱动链 PlayMode 测试程序集** — 新增 `Runestone.AesirModules.Tests.UniTask`（`Tests/Runtime/UniTask/`），覆盖 `SceneModuleUniTask` 的 8 个公开 API：单参 / wrapper 重载加载、叠加加载不改激活场景、卸载与批量卸载（空追踪 no-op）、无效路径抛 `InvalidOperationException` 且不触发事件、入口即取消（同步抛、不发起加载）、加载中取消（仅中止等待、底层流程继续完成）、宿主销毁（`destroyCancellationToken` 链接生效、等待方以取消收场不悬挂）、`onProgress` 单调不减且不超过归一化上限。程序集带 `defineConstraints`（`UNITY_INCLUDE_TESTS` + `AESIR_MODULES_UNITASK`）——**未装 UniTask 的工程整体不编译、回归计数不变**；`namespace` 停在 `Runestone.AesirModules.Tests` 以避免 `UniTask` 段遮蔽 `Cysharp.Threading.Tasks.UniTask`（CS0118）。场景卫生沿用既有四件套（`IPrebuildSetup` / `IPostBuildCleanup` + 域加载兜底清扫 + 场景按文件名定位），与 `SceneModulePlayModeTests` 共享 `TestScenes/` 夹具
 - **日志门面补 `ScriptDocGeneratorTag`** — ScriptDocGenerator 模块的日志此前散落在裸 `Debug.Log*` 与多种前缀（含无前缀）上，收敛时需要一个模块标识
 - **测试守护网新增三处** — `UIRootTests`（`CreateInputModule` 静态重置）、`AesirEventUtilityTests`（绑定键缓存静态重置）、`UIRootPlayModeTests`（重复实例只销毁自身组件——该行为在 EditMode 下不可断言：`Destroy` 被引擎拒绝且两种销毁粒度都是 no-op，故落在 PlayMode 程序集）
+### Fixed
 
 - **`SceneEditorSettings` 四个私有字段漏 `[SerializeField]`** — 类上声明了 `[FilePath]`，但四个字段都没带标记 → 设置文件里没有对应键，值只活在当前进程内，重建单例（编辑器重启 / 切项目）即回落默认：Bootstrapper 搜集与强制加载开关静默失效。补标记（`using UnityEngine;` 同步补上）
-### Fixed
 
 - **UIRoot 四层 Canvas 引用表漏序列化**（数据层）— `_layerCanvases` 声明为 `readonly` 且缺 `[SerializeField]`，Unity 两个条件都不满足，四层 Canvas 引用表**永远以空列表进入运行时**（其上方注释却宣称"随场景序列化持久"）。层子物体一旦改名，`EnsurePresetLayers` 既找不到引用也找不到同名物体 → 新建重复 Canvas，同 `sortingOrder` 双 Canvas 叠加渲染；`EnsureUICamera` / `EnsureEventSystem` 的"引用非空即跳过"快路径也永久失效，退化为每帧全场景扫描。改为 `[SerializeField] [HideInInspector] private List<LayerCanvasEntry> layerCanvases`，与同类 `uiCamera` / `eventSystem` / `uiCanvasConfigSO` 对齐
 - **面板 / 窗口的销毁反清理可被子类屏蔽**（内存 + 稳定崩溃）— `AesirBasePanel` / `AesirBaseWindow` 的 `OnDestroy` 是 private 非 virtual，而两者的 XML 注释正建议子类自己写 `OnDestroy` 解除事件——写了就屏蔽基类版本，`UIModule.RemovePanelRecord` / `RemoveWindowRecord` 永不执行，注册表残留已销毁实例，之后每次 `ShowPanel` / `OpenWindow` 抛 `MissingReferenceException` 且无自愈路径。双重修复：① 改 `protected virtual` 并在 remarks 强制子类调 `base.OnDestroy()`；② `UIModule` 新增按 Unity 假 null 驱逐已销毁记录的自愈（面板 Show/Hide/Prewarm、窗口 Open/Close/Prewarm 与 `RefreshWindowMasks` 双循环）
