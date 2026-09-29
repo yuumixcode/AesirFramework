@@ -11,8 +11,12 @@ namespace Runestone.AesirArchitecture
     /// 的共享底层实现，统一管理多个 <see cref="AutoRemoveListenerHandle" /> 的批量移除。
     /// 通过将句柄收集到同一集合中，在生命周期事件触发时一次性调用 <see cref="RemoveAllListeners" />
     /// 即可完成全部监听的清理，无需逐个手动移除。
+    /// <para>
+    /// internal：本集合只服务上述两个触发器（均为包内实现），公开签名只暴露
+    /// <see cref="AutoRemoveListenerHandle" />——对外收窄以免多出一个无人使用的公开类型。
+    /// </para>
     /// </remarks>
-    public sealed class RemoveListenerHandleCollection
+    internal sealed class RemoveListenerHandleCollection
     {
         readonly List<AutoRemoveListenerHandle> _handles = new List<AutoRemoveListenerHandle>();
 

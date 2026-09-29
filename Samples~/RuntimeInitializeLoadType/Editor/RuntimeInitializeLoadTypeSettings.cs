@@ -13,12 +13,23 @@ namespace Runestone.AesirArchitecture.Samples
     public class RuntimeInitializeLoadTypeSettings : ScriptableSingleton<RuntimeInitializeLoadTypeSettings>
     {
         const string ProjectFilePath = "ScriptableSingleton/AesirArchitecture/Samples";
+
+        // ScriptableSingleton 的 Save 走 Unity 原生序列化（InternalEditorUtility.SaveToSerializedFileAndForget），
+        // 私有字段必须显式标记才会写入设置文件；漏标则五个开关只活在当前进程内，
+        // 编辑器重启（重建单例）后静默回落为「全部 false」，本示例的五个时机演示会变成一条日志都不打。
+        [SerializeField]
         bool _executeOnAfterAssembliesLoaded;
 
+        [SerializeField]
         bool _executeOnAfterSceneLoad;
+
+        [SerializeField]
         bool _executeOnBeforeSceneLoad;
+
+        [SerializeField]
         bool _executeOnBeforeSplashScreen;
 
+        [SerializeField]
         bool _executeOnSubsystemRegistration;
 
         [Title("是否输出对应时机的日志")]

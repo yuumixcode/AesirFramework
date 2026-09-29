@@ -48,7 +48,8 @@ namespace Runestone.AesirArchitecture
                 }
 
                 // 尝试在已加载的场景中查找预放置的实例
-                _instance = FindAnyObjectByType<RemoveListenerOnSceneUnloadedTrigger>();
+                // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
+                _instance = FindAnyObjectByType<RemoveListenerOnSceneUnloadedTrigger>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;
@@ -80,32 +81,36 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 重置所有实例状态：清空场景句柄桶、取消订阅场景事件
+        /// 重置所有实例状态：逐桶执行全部句柄的移除回调、清空场景句柄桶、取消订阅场景事件
         /// </summary>
         /// <remarks>
-        /// 由 <see cref="ResetStatics" /> 和 <see cref="OnDestroy" /> 内部调用，
-        /// 确保无论域重载还是组件销毁，都走同一条完整重置路径。
+        /// 由 <see cref="OnDestroy" /> 调用。宿主关闭 DDOL 随所在场景卸载销毁时，其余已加载场景的桶中句柄
+        /// 必须逐一执行移除（与 <see cref="RemoveListenerOnDestroyTrigger" /> / <see cref="RemoveListenerOnDisableTrigger" />
+        /// 的终止语义对称），否则对应监听会永久残留在目标事件上。
         /// </remarks>
         void ClearState()
         {
+            foreach (var collection in _sceneHandles.Values)
+            {
+                collection.RemoveAllListeners();
+            }
+
             _sceneHandles.Clear();
             SceneManager.sceneUnloaded -= OnSceneUnloaded;
         }
 
         /// <summary>
-        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置
+        /// 域加载时重置静态单例引用，兼容关闭 Domain Reload 的 Play 模式设置
         /// </summary>
         /// <remarks>
         /// 由 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c> 自动触发，无需手动调用。
+        /// 仅清静态引用即可：SubsystemRegistration 时机上，上一 Play 会话的实例已随场景销毁
+        /// （Unity fake-null 使 <c>_instance != null</c> 恒不成立），运行期清理实际由
+        /// <see cref="OnDestroy" /> → <see cref="ClearState" /> 承担。
         /// </remarks>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            if (_instance != null)
-            {
-                _instance.ClearState();
-            }
-
             _instance = null;
         }
 

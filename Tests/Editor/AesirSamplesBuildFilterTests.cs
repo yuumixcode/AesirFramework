@@ -1,5 +1,7 @@
+using System.Reflection;
 using NUnit.Framework;
 using Runestone.AesirArchitecture.Editor;
+using UnityEditor;
 
 namespace Runestone.AesirArchitecture.Tests.Editor
 {
@@ -11,8 +13,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// 两类形态的示例场景匹配，非示例路径不误伤，混合列表过滤保持保留序。
     /// </summary>
     /// <remarks>
-    /// 构建入口回调（RegisterBuildPlayerHandler 链路与日志输出）涉及真实构建流程，不在单测范围，
-    /// 由编辑器内手动验证；本类只锁定路径匹配与列表过滤的纯逻辑。
+    /// 覆盖范围：路径匹配 / 列表过滤的纯逻辑 + 「构建入口钩子已挂载」的注册断言（命门，钩子没挂上示例场景就会进包）。
+    /// 真实构建流程（钩子内转交 <c>DefaultBuildMethods.BuildPlayer</c> 与日志输出）不在单测范围，由编辑器内手动验证。
     /// </remarks>
     public class AesirSamplesBuildFilterTests
     {
@@ -179,6 +181,87 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             CollectionAssert.AreEqual(new[] { "Assets/Scenes/Game.unity", "Assets/Scenes/Menu.unity" }, kept);
             Assert.AreEqual(0, removed.Count);
+        }
+
+        [Test]
+        public void FilterSampleScenes_InjectableRoots_FiltersChainAfterMovedInstallRoot()
+        {
+            // 可注入重载：把整条过滤链放到"移动后的安装根"上验证——
+            // 生产重载读真实安装根（本仓为 Assets/Runestone），移动形态只能经此重载覆盖
+            var movedRoots = new[] { "Assets/ThirdParty/Runestone" };
+            var scenes = new[]
+            {
+                "Assets/Scenes/Game.unity",
+                "Assets/ThirdParty/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity",
+                "Assets/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity",
+                // PM 导入形态不受安装根移动影响，仍应被剔除
+                "Assets/Samples/Aesir Modules/0.30.0/Events/01_KeyPress/scene.unity"
+            };
+
+            var kept = AesirSamplesBuildFilter.FilterSampleScenes(scenes, movedRoots, out var removed);
+
+            CollectionAssert.AreEqual(new[] { "Assets/Scenes/Game.unity",
+                "Assets/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity" }, kept);
+            CollectionAssert.AreEqual(new[]
+            {
+                "Assets/ThirdParty/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity",
+                "Assets/Samples/Aesir Modules/0.30.0/Events/01_KeyPress/scene.unity"
+            }, removed);
+        }
+
+        [Test]
+        public void OnBuildPlayer_HookIsRegisteredOnBuildPlayerWindow()
+        {
+            // 构建剔除的命门是钩子确实挂上了 Build Settings 窗口的构建入口
+            // （RegisterBuildPlayerHandler 是覆盖式注册，域加载后由 [InitializeOnLoadMethod] 重注册）
+            var field = FindHandlerField();
+            // Unity 版本更名会让该私有字段找不到：降级为跳过而非误报失败
+            Assume.That(field, Is.Not.Null, "未找到 BuildPlayerWindow 的构建入口处理委托字段");
+
+            var previous = field.GetValue(null);
+            try
+            {
+                field.SetValue(null, null);
+                InvokeInitializeOnLoadMethods();
+
+                Assert.IsNotNull(field.GetValue(null),
+                    "域加载期应把构建入口钩子挂到 Build Settings 窗口（否则示例场景会进玩家构建）");
+            }
+            finally
+            {
+                field.SetValue(null, previous);
+            }
+        }
+
+        /// <summary>按候选名查找 <see cref="BuildPlayerWindow" /> 的构建入口处理委托字段（跨版本更名容错）。</summary>
+        static FieldInfo FindHandlerField()
+        {
+            foreach (var name in new[] { "buildPlayerHandler", "s_BuildPlayerHandler", "m_BuildPlayerHandler" })
+            {
+                var field = typeof(BuildPlayerWindow).GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
+                if (field != null)
+                {
+                    return field;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 手动触发 <see cref="AesirSamplesBuildFilter" /> 的 <c>[InitializeOnLoadMethod]</c>（域已加载过，不会自动重跑）。
+        /// </summary>
+        static void InvokeInitializeOnLoadMethods()
+        {
+            var methods = typeof(AesirSamplesBuildFilter).GetMethods(
+                BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Public);
+            foreach (var method in methods)
+            {
+                if (method.GetCustomAttribute<InitializeOnLoadMethodAttribute>() != null)
+                {
+                    method.Invoke(null, null);
+                }
+            }
         }
 
         #endregion

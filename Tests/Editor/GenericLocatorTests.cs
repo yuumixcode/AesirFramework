@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 
 namespace Runestone.AesirArchitecture.Tests.Editor
@@ -155,6 +156,46 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.AreSame(a, locator.GetByType(typeof(ItemA)));
             Assert.IsNull(locator.GetByType(typeof(ItemB)));
             AesirArchitectureDebug.LogTestInfo("GetByType: 按 Type 正确查询");
+        }
+
+        /// <summary>
+        /// 验证两个注册入口对 null 实例对称抛 <see cref="ArgumentNullException" />（fail-fast，不静默登记 null 值）。
+        /// </summary>
+        [Test]
+        public void Register_NullInstance_Throws()
+        {
+            var locator = new GenericLocator<IItem>();
+
+            Assert.Throws<ArgumentNullException>(() => locator.Register<ItemA>(null),
+                "泛型注册入口对 null 应抛 ArgumentNullException");
+            Assert.Throws<ArgumentNullException>(() => locator.Register(typeof(ItemA), null),
+                "Type 注册入口对 null 实例应抛 ArgumentNullException");
+            Assert.Throws<ArgumentNullException>(() => locator.Register(null, new ItemA()),
+                "Type 注册入口对 null 键应抛 ArgumentNullException");
+            AesirArchitectureDebug.LogTestInfo("Register: null 对称抛 ArgumentNullException");
+        }
+
+        /// <summary>
+        /// 验证 <see cref="GenericLocator{T}.GetAll" /> 返回调用时刻的快照：
+        /// 枚举期间注册新条目不抛"集合已修改"异常，新条目不参与本轮枚举、可被下一次 GetAll 看到。
+        /// </summary>
+        [Test]
+        public void GetAll_ReturnsSnapshot_EnumerationSurvivesMidwayRegistration()
+        {
+            var locator = new GenericLocator<IItem>();
+            locator.Register(new ItemA());
+
+            var enumerated = new List<IItem>();
+            foreach (var item in locator.GetAll())
+            {
+                enumerated.Add(item);
+                // 枚举中途注册：快照语义下不应抛 InvalidOperationException
+                locator.Register(new ItemB());
+            }
+
+            Assert.AreEqual(1, enumerated.Count, "中途注册的条目不应出现在本轮枚举（快照语义）");
+            Assert.AreEqual(2, new List<IItem>(locator.GetAll()).Count, "中途注册的条目应被下一次 GetAll 看到");
+            AesirArchitectureDebug.LogTestInfo("GetAll: 快照语义，枚举期间注册安全");
         }
 
         /// <summary>

@@ -15,7 +15,7 @@ namespace Runestone.AesirArchitecture.Editor
     ///     </para>
     ///     <para>
     ///     覆盖 <see cref="ObservableList{T}" />、<see cref="ObservableDictionary{TKey, TValue}" />、
-    ///     <see cref="ObservableHashSet{T}" />、<see cref="ObservableQueue{T}" /> 四种集合。
+    ///     <see cref="ObservableHashSet{T}" /> 三种集合。
     ///     </para>
     /// </remarks>
     internal static class ObservableCollectionDrawerHelper
@@ -70,18 +70,6 @@ namespace Runestone.AesirArchitecture.Editor
     /// <summary>可观察集合（HashSet）的内联调试面板。</summary>
     [DrawerPriority()]
     internal sealed class ObservableHashSetDrawer<T> : OdinValueDrawer<ObservableHashSet<T>>
-    {
-        /// <inheritdoc />
-        protected override void DrawPropertyLayout(GUIContent label)
-        {
-            ObservableCollectionDrawerHelper.DrawSummary(ValueEntry.SmartValue);
-            CallNextDrawer(label);
-        }
-    }
-
-    /// <summary>可观察队列的内联调试面板。</summary>
-    [DrawerPriority()]
-    internal sealed class ObservableQueueDrawer<T> : OdinValueDrawer<ObservableQueue<T>>
     {
         /// <inheritdoc />
         protected override void DrawPropertyLayout(GUIContent label)

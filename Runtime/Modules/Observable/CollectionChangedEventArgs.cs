@@ -10,7 +10,7 @@ namespace Runestone.AesirArchitecture
     /// 普通（非 ref）只读结构体，可自由存入集合与闭包；事件经 <see cref="MiniEvent{T}" /> 分发，
     /// 回调以值传递接收（结构体按字段拷贝，无堆分配）。
     /// <para>
-    /// 各 <see cref="Action" /> 携带的字段：
+    /// 各 <see cref="NotifyCollectionChangedAction" /> 携带的字段：
     /// <see cref="NotifyCollectionChangedAction.Add" /> → <see cref="NewItem" /> / <see cref="NewStartingIndex" />；
     /// <see cref="NotifyCollectionChangedAction.Remove" /> → <see cref="OldItem" /> /
     /// <see cref="OldStartingIndex" />；

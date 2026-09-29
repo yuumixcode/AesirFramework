@@ -39,8 +39,9 @@ namespace Runestone.AesirArchitecture.Editor
             options.scenes = FilterSampleScenes(options.scenes, out var removedScenes);
             if (removedScenes.Count > 0)
             {
-                Debug.Log("[Aesir Build] 已从本次构建剔除 " + removedScenes.Count + " 个 Aesir 示例场景（示例不进玩家构建）：\n" +
-                          string.Join("\n", removedScenes));
+                AesirArchitectureDebug.Log("AesirBuild",
+                    "已从本次构建剔除 " + removedScenes.Count + " 个 Aesir 示例场景（示例不进玩家构建）：\n" +
+                    string.Join("\n", removedScenes));
             }
 
             BuildPlayerWindow.DefaultBuildMethods.BuildPlayer(options);
@@ -83,6 +84,8 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             // Assets 安装形态：定位到的安装根（可移动）下任意层级的 Samples 段
+            // 注意：规则按路径匹配，用户若把游戏场景放进安装根内的某层 Samples/ 目录也会被剔除本次构建
+            // （只输出 [Aesir Build] 日志，不修改 Build Settings 持久数据）
             if (installRoots == null)
             {
                 return false;
@@ -106,13 +109,25 @@ namespace Runestone.AesirArchitecture.Editor
         /// <param name="scenes">本次构建的场景路径列表。</param>
         /// <param name="removedScenes">被剔除的示例场景路径（按出现顺序）。</param>
         /// <returns>剔除后的场景列表。</returns>
-        internal static string[] FilterSampleScenes(string[] scenes, out List<string> removedScenes)
+        internal static string[] FilterSampleScenes(string[] scenes, out List<string> removedScenes) =>
+            FilterSampleScenes(scenes, AesirAssetPaths.InstallRoots, out removedScenes);
+
+        /// <summary>
+        /// <see cref="FilterSampleScenes(string[], out List{string})" /> 的可注入重载（测试用）：
+        /// 按给定安装根列表判定，使「移动安装根后的整条过滤链」可测。
+        /// </summary>
+        /// <param name="scenes">本次构建的场景路径列表。</param>
+        /// <param name="installRoots">本地安装根列表（项目相对路径）。</param>
+        /// <param name="removedScenes">被剔除的示例场景路径（按出现顺序）。</param>
+        /// <returns>剔除后的场景列表。</returns>
+        internal static string[] FilterSampleScenes(string[] scenes, IReadOnlyList<string> installRoots,
+            out List<string> removedScenes)
         {
             removedScenes = new List<string>();
             var kept = new List<string>(scenes.Length);
             foreach (var scene in scenes)
             {
-                if (IsSampleScene(scene))
+                if (IsSampleScene(scene, installRoots))
                 {
                     removedScenes.Add(scene);
                 }

@@ -56,13 +56,33 @@ namespace Runestone.AesirArchitecture
         /// <remarks>
         /// 此方法由 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c> 自动触发，
         /// 在 Unity 进入 Play Mode 或域重载时自动执行，无需手动调用。
+        /// <para>
+        /// <b>异常隔离</b>：每个回调各自独立 try/catch——回调多半是泛型单例的释放，
+        /// 任一模块的释放逻辑抛异常（典型场景：Disable Domain Reload 下
+        /// <c>OnDispose</c> 访问已被上一局销毁的 MonoBehaviour）只影响它自己。
+        /// 不中断遍历，保证后续注册的静态单例仍能被正确重置，不因一处失败而全部残留上一局状态。
+        /// </para>
         /// </remarks>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStaticsAll()
         {
             foreach (var callback in ResetStaticsCallbacks)
             {
-                callback?.Invoke();
+                if (callback == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    callback.Invoke();
+                }
+                catch (Exception exception)
+                {
+                    AesirArchitectureDebug.LogWarning(
+                        $"[ResetStatics] 静态重置回调 {callback.Method.DeclaringType?.FullName}.{callback.Method.Name} 执行失败，" +
+                        $"已跳过该回调并继续重置其余静态状态：{exception}");
+                }
             }
         }
 

@@ -2,11 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using Runestone.AesirArchitecture.Internal;
+using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
     /// <summary>
-    /// 可观察集合实现。
+    /// 可观察哈希集合实现。
     /// <para>Model 层持有可写实例，View 层通过 <see cref="IReadOnlyObservableHashSet{T}" /> 只读订阅。</para>
     /// </summary>
     /// <typeparam name="T">元素类型</typeparam>
@@ -15,15 +17,16 @@ namespace Runestone.AesirArchitecture
     /// （直接多播调用）。注意：订阅路径（<see cref="AddListener" /> / 句柄创建）有与监听者数量成正比的委托分配，
     /// 勿在每帧订阅场景使用。
     /// <para>
-    /// <c>[SerializeField]</c> 标记 set 字段——Unity 原生不序列化 <see cref="HashSet{T}" />，
-    /// 安装 Odin Inspector 后该字段可被 Odin 序列化，便于在 Inspector 中编辑初始元素（与 <see cref="ObservableDictionary{TKey, TValue}" />
+    /// <c>[SerializeField]</c> 标记 set 字段——Unity 原生不序列化 <see cref="HashSet{T}" />（该标记对 Unity 序列化无效果），
+    /// 安装 Odin Inspector 且宿主走 Odin 序列化（如 <see cref="AesirMonoBehaviour" /> 派生组件）时，
+    /// 该字段可被 Odin 序列化管线接管，便于在 Inspector 中编辑初始元素（与 <see cref="ObservableDictionary{TKey, TValue}" />
     /// 行为一致）。
     /// </para>
     /// <para>
     /// 变更通知为单一事件（<see cref="AddListener" />）：写操作完成后才触发，监听者回调中读取到的集合已是变更后的状态；
     /// 无变更的操作不通知（Add 重复元素、Remove 不存在的元素、Clear 空集合）；
     /// 批量操作（AddRange / RemoveRange）逐项通知实际变更的元素；
-    /// <see cref="Clear" /> 以 <see cref="NotifyCollectionChangedAction.Reset" /> 通知。
+    /// <see cref="Clear" /> 以 <see cref="System.Collections.Specialized.NotifyCollectionChangedAction.Reset" /> 通知。
     /// 集合无索引概念，载荷索引固定 -1。
     /// </para>
     /// <para>
@@ -39,6 +42,7 @@ namespace Runestone.AesirArchitecture
         readonly MiniEvent<CollectionChangedEventArgs<T>> _changedEvent =
             new MiniEvent<CollectionChangedEventArgs<T>>();
 
+        [SerializeField]
         HashSet<T> set = new HashSet<T>();
 
         /// <summary>
@@ -164,6 +168,10 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <param name="itemsToAdd">要添加的元素序列。</param>
         /// <exception cref="ArgumentNullException"><paramref name="itemsToAdd" /> 为 null 时抛出。</exception>
+        /// <remarks>
+        /// 先经 <see cref="Internal.CloneCollection{T}" /> 物化源序列再写入——源为集合自身时
+        /// 直接枚举会在首次写入后触发内部 HashSet 的版本检查异常并留下部分变更，与 ObservableList 的批量操作统一"先克隆后写入"。
+        /// </remarks>
         public void AddRange(IEnumerable<T> itemsToAdd)
         {
             if (itemsToAdd == null)
@@ -171,9 +179,12 @@ namespace Runestone.AesirArchitecture
                 throw new ArgumentNullException(nameof(itemsToAdd));
             }
 
-            foreach (var item in itemsToAdd)
+            using (var clone = new CloneCollection<T>(itemsToAdd))
             {
-                Add(item);
+                foreach (var item in clone.Span)
+                {
+                    Add(item);
+                }
             }
         }
 
@@ -200,6 +211,7 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <param name="itemsToRemove">要移除的元素序列。</param>
         /// <exception cref="ArgumentNullException"><paramref name="itemsToRemove" /> 为 null 时抛出。</exception>
+        /// <remarks>先物化源序列再写入（与 <see cref="AddRange(IEnumerable{T})" /> 同因：源为集合自身时避免枚举中断）。</remarks>
         public void RemoveRange(IEnumerable<T> itemsToRemove)
         {
             if (itemsToRemove == null)
@@ -207,9 +219,12 @@ namespace Runestone.AesirArchitecture
                 throw new ArgumentNullException(nameof(itemsToRemove));
             }
 
-            foreach (var item in itemsToRemove)
+            using (var clone = new CloneCollection<T>(itemsToRemove))
             {
-                Remove(item);
+                foreach (var item in clone.Span)
+                {
+                    Remove(item);
+                }
             }
         }
 

@@ -22,7 +22,7 @@ namespace Runestone.AesirArchitecture
     ///     </item>
     /// </list>
     /// </remarks>
-    public enum AesirArchitectureLifecyclePhase
+    public enum AesirLifecyclePhase
     {
         /// <summary>
         /// 逻辑帧开始：在 PlayerLoop.Update 之前执行，架构优先运算
@@ -43,7 +43,7 @@ namespace Runestone.AesirArchitecture
     /// <para>
     /// <b>注入自愈</b>：PlayerLoop 注入可能被第三方 SDK 用其缓存的副本调用 <c>PlayerLoop.SetPlayerLoop</c> 覆盖，
     /// 导致钩子静默失效。框架通过 <see cref="EnsureInjected" /> 自愈：域加载时与每次 <see cref="Register" /> 时
-    /// 检测并补插缺失的注入点（注册即自愈）；用户也可手动调用。
+    /// 检测并补插缺失的注入点（注册即自愈，检测每帧至多一次）；用户也可手动调用。
     /// </para>
     /// </summary>
     /// <remarks>
@@ -63,19 +63,24 @@ namespace Runestone.AesirArchitecture
     ///     确保在 Disable Domain Reload 模式下也能正确重建钩子系统。
     ///     </para>
     /// </remarks>
-    public static class AesirArchitecturePlayerLoop
+    public static class AesirPlayerLoop
     {
-        static readonly Dictionary<AesirArchitectureLifecyclePhase, List<HookEntry>> Hooks =
-            new Dictionary<AesirArchitectureLifecyclePhase, List<HookEntry>>();
+        static readonly Dictionary<AesirLifecyclePhase, List<HookEntry>> Hooks =
+            new Dictionary<AesirLifecyclePhase, List<HookEntry>>();
 
         static readonly List<Action> PendingCommands = new List<Action>();
         static bool _invoking;
         static bool _sortDirty;
         static long _nextInsertionIndex;
 
-        /// <summary>待重排的阶段列表（与 <see cref="_sortDirty" /> 配合：只重排发生注册的阶段，不碰其余列表）。</summary>
-        static readonly List<AesirArchitectureLifecyclePhase> DirtyPhases =
-            new List<AesirArchitectureLifecyclePhase>();
+        /// <summary>
+        /// Register 路径上一次执行自愈检测的帧号，-1 表示本帧尚未检测过（域加载与 Reset 后重置）。
+        /// </summary>
+        static int _lastEnsureFrame = -1;
+
+        /// <summary>待重排的阶段列表（配合 _sortDirty 待重排标志：只重排发生注册的阶段，不碰其余列表）。</summary>
+        static readonly List<AesirLifecyclePhase> DirtyPhases =
+            new List<AesirLifecyclePhase>();
 
         /// <summary>
         /// 自动初始化：在域加载时将自定义子系统注入 PlayerLoop
@@ -93,33 +98,46 @@ namespace Runestone.AesirArchitecture
         /// <remarks>
         /// PlayerLoop 注入的自愈入口，幂等可重复调用。第三方 SDK 若使用其缓存的 PlayerLoop 副本调用
         /// <c>PlayerLoop.SetPlayerLoop</c>，会连同框架注入的两个子系统一起抹掉，
-        /// 导致 <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate" /> /
-        /// <see cref="AesirArchitectureLifecyclePhase.AfterUpdate" /> 钩子静默失效。
+        /// 导致 <see cref="AesirLifecyclePhase.BeforeUpdate" /> /
+        /// <see cref="AesirLifecyclePhase.AfterUpdate" /> 钩子静默失效。
         /// 此方法通过 <see cref="PlayerLoopUtility.ContainsSystem{TTarget}" /> 检测后仅补插缺失的子系统，
         /// 并保留当前 PlayerLoop 中第三方已有的其他修改。调用时机：
         /// <list type="bullet">
-        ///     <item><see cref="Initialize" /> 在域加载时调用；</item>
-        ///     <item><see cref="Register" /> 每次注册回调时调用（注册即自愈）；</item>
-        ///     <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用。</item>
+        ///     <item><see cref="Initialize" /> 在域加载时调用（无条件检测）；</item>
+        ///     <item><see cref="Register" /> 每帧至多调用一次（同一帧内的重复注册复用检测结果）；</item>
+        ///     <item>用户在已知第三方 SDK 修改 PlayerLoop 后也可手动调用（无条件检测）。</item>
         /// </list>
+        /// <para>
+        /// 手动调用本方法不受 <see cref="Register" /> 的每帧限流约束，可在同一帧内立即触发一次完整检测。
+        /// </para>
+        /// <para>
+        /// <b>为什么要限流</b>：本方法内两次 <c>ContainsSystem&lt;T&gt;</c> 各自调用一次
+        /// <c>PlayerLoop.GetCurrentPlayerLoop()</c>，会把整棵 PlayerLoop 树从原生侧完整 marshall 到托管对象
+        /// （每层一次 <c>PlayerLoopSystem[]</c> 分配）。注册是启动期冷路径，若逐次自愈，N 个注册方就是 2N 次全树拷贝；
+        /// 且稳态（每帧新增注册的运行期场景）会因每次注册都做整树封送而无法守住"零分配"承诺
+        /// （限流消除的正是这项自愈检测成本，<see cref="Register" /> 返回句柄时的闭包分配不在其列）。
+        /// 故 <see cref="Register" /> 经 <c>EnsureInjectedIfStaleThisFrame</c> 以 <c>Time.frameCount</c> 限流：
+        /// 同一帧内只有第一次注册付检测成本，跨帧的第一次注册必定重新检测——第三方 SDK 覆盖 PlayerLoop 后，
+        /// 最迟下一帧的注册即完成自愈，不会留下永久失效的窗口。
+        /// </para>
         /// </remarks>
         public static void EnsureInjected()
         {
             // 两个注入点各自独立检查，避免一个缺失导致另一个也跳过
-            if (!PlayerLoopUtility.ContainsSystem<AesirArchitectureScriptRunBeforeUpdate>())
+            if (!PlayerLoopUtility.ContainsSystem<AesirScriptRunBeforeUpdate>())
             {
                 PlayerLoopUtility.InsertSystemBefore<Update>(new PlayerLoopSystem
                 {
-                    type = typeof(AesirArchitectureScriptRunBeforeUpdate),
+                    type = typeof(AesirScriptRunBeforeUpdate),
                     updateDelegate = OnBeforeUpdate
                 });
             }
 
-            if (!PlayerLoopUtility.ContainsSystem<AesirArchitectureScriptRunAfterUpdate>())
+            if (!PlayerLoopUtility.ContainsSystem<AesirScriptRunAfterUpdate>())
             {
                 PlayerLoopUtility.InsertSystemAfter<PostLateUpdate>(new PlayerLoopSystem
                 {
-                    type = typeof(AesirArchitectureScriptRunAfterUpdate),
+                    type = typeof(AesirScriptRunAfterUpdate),
                     updateDelegate = OnAfterUpdate
                 });
             }
@@ -137,7 +155,7 @@ namespace Runestone.AesirArchitecture
         /// <param name="callback">每帧执行的回调委托，必须为非空委托实例</param>
         /// <param name="order">执行优先级，值越小越先执行；同 order 时按注册顺序执行</param>
         /// <returns>自动注销句柄，Dispose 时注销本次注册（与手动 <see cref="Unregister" /> 等效，重复调用安全）</returns>
-        public static AutoRemoveListenerHandle Register(AesirArchitectureLifecyclePhase phase,
+        public static AutoRemoveListenerHandle Register(AesirLifecyclePhase phase,
             Action callback,
             int order = 0)
         {
@@ -146,8 +164,8 @@ namespace Runestone.AesirArchitecture
                 throw new ArgumentNullException(nameof(callback));
             }
 
-            // 注册即自愈：若注入点已被第三方 SDK 覆盖，此处补插缺失的子系统（幂等，已注入时仅为两次树遍历检测）
-            EnsureInjected();
+            // 一行调用，限流原理与代价见 EnsureInjected 的 remarks
+            EnsureInjectedIfStaleThisFrame();
 
             if (_invoking)
             {
@@ -162,6 +180,24 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
+        /// 同一帧内至多自愈一次（<see cref="Register" /> 的自愈入口）。
+        /// </summary>
+        /// <remarks>
+        /// 整树封送的成本与限流的取舍理由见 <see cref="EnsureInjected" /> 的 remarks。
+        /// </remarks>
+        static void EnsureInjectedIfStaleThisFrame()
+        {
+            var frame = Time.frameCount;
+            if (frame == _lastEnsureFrame)
+            {
+                return;
+            }
+
+            _lastEnsureFrame = frame;
+            EnsureInjected();
+        }
+
+        /// <summary>
         /// 注销回调。
         /// <para>
         /// 必须传入注册时的同一委托实例，匿名函数无法通过此方法注销。
@@ -173,8 +209,14 @@ namespace Runestone.AesirArchitecture
         /// 若在回调遍历期间调用此方法，注销操作不会立即执行，而是被缓存到待处理命令列表中，
         /// 待当前阶段所有回调遍历结束后才统一执行，以避免遍历期间修改集合导致异常。
         /// </remarks>
-        public static void Unregister(AesirArchitectureLifecyclePhase phase, Action callback)
+        public static void Unregister(AesirLifecyclePhase phase, Action callback)
         {
+            // 与 Register 的 null 校验对称：匿名/空委托本就无法经此注销，误传 null 多为 bug，静默吞掉会掩盖问题
+            if (callback == null)
+            {
+                throw new ArgumentNullException(nameof(callback));
+            }
+
             if (_invoking)
             {
                 PendingCommands.Add(() => RemoveHook(phase, callback));
@@ -199,25 +241,28 @@ namespace Runestone.AesirArchitecture
             DirtyPhases.Clear();
             _sortDirty = false;
             _nextInsertionIndex = 0;
+
+            // 自愈限流一并复位：域加载与测试隔离后，本帧的首次 Register 必定重新走完整检测
+            _lastEnsureFrame = -1;
         }
 
         /// <summary>
         /// 获取指定阶段的已注册回调数量（测试观察用）
         /// </summary>
-        internal static int GetHookCount(AesirArchitectureLifecyclePhase phase) =>
+        internal static int GetHookCount(AesirLifecyclePhase phase) =>
             Hooks.TryGetValue(phase, out var list) ? list.Count : 0;
 
         /// <summary>
         /// BeforeUpdate 阶段的 PlayerLoop 回调入口，供测试直接触发
         /// </summary>
-        internal static void OnBeforeUpdate() => InvokeHooks(AesirArchitectureLifecyclePhase.BeforeUpdate);
+        internal static void OnBeforeUpdate() => InvokeHooks(AesirLifecyclePhase.BeforeUpdate);
 
         /// <summary>
         /// AfterUpdate 阶段的 PlayerLoop 回调入口，供测试直接触发
         /// </summary>
-        internal static void OnAfterUpdate() => InvokeHooks(AesirArchitectureLifecyclePhase.AfterUpdate);
+        internal static void OnAfterUpdate() => InvokeHooks(AesirLifecyclePhase.AfterUpdate);
 
-        static void AddHook(AesirArchitectureLifecyclePhase phase, Action callback, int order)
+        static void AddHook(AesirLifecyclePhase phase, Action callback, int order)
         {
             if (!Hooks.TryGetValue(phase, out var list))
             {
@@ -230,7 +275,7 @@ namespace Runestone.AesirArchitecture
             MarkDirty(phase);
         }
 
-        static void RemoveHook(AesirArchitectureLifecyclePhase phase, Action callback)
+        static void RemoveHook(AesirLifecyclePhase phase, Action callback)
         {
             if (!Hooks.TryGetValue(phase, out var list))
             {
@@ -260,7 +305,7 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 标记指定阶段的回调列表待重排（去重登记，避免同一阶段重复占位）。
         /// </summary>
-        static void MarkDirty(AesirArchitectureLifecyclePhase phase)
+        static void MarkDirty(AesirLifecyclePhase phase)
         {
             _sortDirty = true;
             if (!DirtyPhases.Contains(phase))
@@ -293,7 +338,7 @@ namespace Runestone.AesirArchitecture
             _sortDirty = false;
         }
 
-        static void InvokeHooks(AesirArchitectureLifecyclePhase phase)
+        static void InvokeHooks(AesirLifecyclePhase phase)
         {
             if (!Hooks.TryGetValue(phase, out var list) || list.Count == 0)
             {
@@ -329,15 +374,15 @@ namespace Runestone.AesirArchitecture
         /// 让 <c>PlayerLoopUtility.ContainsSystem&lt;T&gt;</c> 能够检测自定义子系统是否已注入，
         /// 避免重复注入。不包含任何运行时逻辑。
         /// </remarks>
-        struct AesirArchitectureScriptRunBeforeUpdate { }
+        struct AesirScriptRunBeforeUpdate { }
 
         /// <summary>
         /// PlayerLoop 子系统 type 标识，在 PostLateUpdate 之后执行
         /// </summary>
         /// <remarks>
-        /// 与 <see cref="AesirArchitectureScriptRunBeforeUpdate" /> 同构的空类型标识，不包含任何运行时逻辑。
+        /// 与 <see cref="AesirScriptRunBeforeUpdate" /> 同构的空类型标识，不包含任何运行时逻辑。
         /// </remarks>
-        struct AesirArchitectureScriptRunAfterUpdate { }
+        struct AesirScriptRunAfterUpdate { }
 
         /// <summary>
         /// 回调条目，记录单个生命周期回调及其排序信息

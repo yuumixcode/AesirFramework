@@ -10,13 +10,12 @@ namespace Runestone.AesirArchitecture
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///     通过 <see cref="Instance" /> 访问实例方法 <see cref="AddListener" />、<see cref="RemoveListener" /> 等，
-    ///     或通过 <see cref="MonoLifecycleProxyExtensions" /> 扩展方法快捷调用。
+    ///     通过 <see cref="Instance" /> 访问实例方法 <see cref="AddListener" />、<see cref="RemoveListener" /> 等。
     ///     </para>
     ///     <para>
     ///     <b>可排序监听列表</b>：每个事件维护一个 <see cref="List{T}" /> 存储 <see cref="ListenerEntry" />，
     ///     使用 Order + InsertionIndex 稳定排序，按排序结果依次调用回调。
-    ///     与 <see cref="AesirArchitecturePlayerLoop" /> 的排序机制一致。
+    ///     与 <see cref="AesirPlayerLoop" /> 的排序机制一致。
     ///     </para>
     ///     <para>
     ///     <b>快照语义</b>：与原生 C# 多播委托一致，每趟遍历基于调用开始时的监听列表进行。
@@ -32,7 +31,7 @@ namespace Runestone.AesirArchitecture
     ///     <para>
     ///     <b>PlayerLoop 集成</b>：<see cref="MonoLifecycleEvent.BeforeUpdate" /> 和
     ///     <see cref="MonoLifecycleEvent.AfterUpdate" />
-    ///     通过注册到 <see cref="AesirArchitecturePlayerLoop" /> 实现，Awake 时注册、OnDestroy 时注销。
+    ///     通过注册到 <see cref="AesirPlayerLoop" /> 实现，Awake 时注册、OnDestroy 时注销。
     ///     </para>
     ///     <para>
     ///     <b>ICustomXXX 自动注册</b>：调用 <see cref="RegisterAuto(object)" /> 传入实现了任意
@@ -41,14 +40,14 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     /// <seealso cref="MonoLifecycleEvent" />
     /// <seealso cref="ICustomFixedUpdate" />
-    /// <seealso cref="AesirArchitecturePlayerLoop" />
+    /// <seealso cref="AesirPlayerLoop" />
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-998)]
     public sealed class MonoLifecycleProxy : AesirMonoBehaviour
     {
         static MonoLifecycleProxy _instance;
 
-        /// <summary>待重排的事件列表（与 <see cref="_sortDirty" /> 配合：只重排发生增删的事件，不碰其余列表）。</summary>
+        /// <summary>待重排的事件列表（配合 _sortDirty 待重排标志：只重排发生增删的事件，不碰其余列表）。</summary>
         readonly List<MonoLifecycleEvent> _dirtyEvents = new List<MonoLifecycleEvent>();
 
         readonly List<PendingChange> _pendingChanges = new List<PendingChange>();
@@ -62,16 +61,26 @@ namespace Runestone.AesirArchitecture
         bool _playerLoopRegistered;
         bool _sortDirty;
 
+        /// <summary>
+        /// Unity 逐帧回调入口：把 MonoBehaviour 的帧回调转发为对应的 <see cref="MonoLifecycleEvent" />。
+        /// </summary>
+        /// <remarks>
+        /// 本代理是 DDOL 懒创建单例且不对外暴露引用，四个帧回调私有不 virtual——对外只暴露
+        /// <see cref="MonoLifecycleEvent" /> 事件与 <c>ICustomUpdate</c> 等注册接口，因此刻意不写 XML
+        /// （Unity 消息方法，且语义完全由上面的 remarks 覆盖）。
+        /// </remarks>
         void Update()
         {
             InvokeEvent(MonoLifecycleEvent.Update);
         }
 
+        /// <summary>Unity 逐帧回调入口：转发 <see cref="MonoLifecycleEvent.FixedUpdate" />。见 <see cref="Update" /> 的 remarks。</summary>
         void FixedUpdate()
         {
             InvokeEvent(MonoLifecycleEvent.FixedUpdate);
         }
 
+        /// <summary>Unity 逐帧回调入口：转发 <see cref="MonoLifecycleEvent.LateUpdate" />。见 <see cref="Update" /> 的 remarks。</summary>
         void LateUpdate()
         {
             InvokeEvent(MonoLifecycleEvent.LateUpdate);
@@ -101,8 +110,7 @@ namespace Runestone.AesirArchitecture
         /// 重置所有实例状态：清空监听、注销 PlayerLoop
         /// </summary>
         /// <remarks>
-        /// 由 <see cref="ResetStatics" /> 和 <see cref="OnDestroy" /> 内部调用，
-        /// 确保无论域重载还是组件销毁，都走同一条完整重置路径，不会遗漏 PlayerLoop 注销等清理步骤。
+        /// 由 <see cref="OnDestroy" /> 调用——组件销毁时走完整重置路径，不遗漏 PlayerLoop 注销等清理步骤。
         /// </remarks>
         void ClearState()
         {
@@ -111,21 +119,17 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 域加载时重置静态单例并清空监听，兼容关闭 Domain Reload 的 Play 模式设置
+        /// 域加载时重置静态单例引用，兼容关闭 Domain Reload 的 Play 模式设置
         /// </summary>
         /// <remarks>
         /// 由 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]</c> 自动触发，无需手动调用。
-        /// 关闭 Domain Reload 时静态字段不会自动清零，此方法确保下次进入 Play 模式时单例被重新查找/创建，
-        /// 不残留上一次 Play 会话的引用与监听。
+        /// 仅清静态引用即可：SubsystemRegistration 时机上，上一 Play 会话的实例已随场景销毁
+        /// （Unity fake-null 使 <c>_instance != null</c> 恒不成立，开 Domain Reload 时字段本已清零），
+        /// 运行期清理实际由 <see cref="OnDestroy" /> → <see cref="ClearState" /> 承担。
         /// </remarks>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            if (_instance != null)
-            {
-                _instance.ClearState();
-            }
-
             _instance = null;
         }
 
@@ -287,11 +291,11 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
-        /// 获取指定事件当前的监听者数量
+        /// 获取指定事件当前的监听者数量（调试用途，与 <see cref="AesirPlayerLoop.GetHookCount" /> 同为 internal 观察口径）
         /// </summary>
         /// <param name="evt">目标生命周期事件类型</param>
         /// <returns>已注册的监听者数量；若该事件无监听者则返回 0</returns>
-        public int GetListenerCount(MonoLifecycleEvent evt) =>
+        internal int GetListenerCount(MonoLifecycleEvent evt) =>
             _sortedListeners.TryGetValue(evt, out var list) ? list.Count : 0;
 
         /// <summary>
@@ -413,9 +417,9 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate,
                 OnBeforeUpdate);
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.AfterUpdate, OnAfterUpdate);
+            AesirPlayerLoop.Register(AesirLifecyclePhase.AfterUpdate, OnAfterUpdate);
             _playerLoopRegistered = true;
         }
 
@@ -426,9 +430,9 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            AesirArchitecturePlayerLoop.Unregister(AesirArchitectureLifecyclePhase.BeforeUpdate,
+            AesirPlayerLoop.Unregister(AesirLifecyclePhase.BeforeUpdate,
                 OnBeforeUpdate);
-            AesirArchitecturePlayerLoop.Unregister(AesirArchitectureLifecyclePhase.AfterUpdate,
+            AesirPlayerLoop.Unregister(AesirLifecyclePhase.AfterUpdate,
                 OnAfterUpdate);
             _playerLoopRegistered = false;
         }
@@ -450,7 +454,7 @@ namespace Runestone.AesirArchitecture
         /// <remarks>
         /// <see cref="InsertionIndex" /> 是自增序号，当多个条目的 <see cref="Order" /> 相同时，
         /// 使用 InsertionIndex 作为次级排序键，确保相同优先级的回调按注册顺序执行，实现稳定排序。
-        /// 与 <see cref="AesirArchitecturePlayerLoop" /> 的 HookEntry 结构一致。
+        /// 与 <see cref="AesirPlayerLoop" /> 的 HookEntry 结构一致。
         /// </remarks>
         struct ListenerEntry
         {
@@ -493,7 +497,8 @@ namespace Runestone.AesirArchitecture
                 }
 
                 // 尝试在已加载的场景中查找预放置的实例
-                _instance = FindAnyObjectByType<MonoLifecycleProxy>();
+                // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
+                _instance = FindAnyObjectByType<MonoLifecycleProxy>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;
