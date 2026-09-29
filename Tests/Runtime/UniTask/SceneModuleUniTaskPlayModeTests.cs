@@ -145,32 +145,141 @@ namespace Runestone.AesirModules.Tests
 
         #endregion
 
+        #region 生命周期卫生（SetUp / TearDown）
+
+        /// <summary>锚场景名：运行时创建的空场景，不随包分发、与宿主工程无关。</summary>
+        const string AnchorSceneName = "AesirUniTaskTestAnchor";
+
+        static Scene _originalActiveScene;
+
+        /// <summary>备好锚场景、清扫测试场景实例，随后捕获原始激活场景（供 <see cref="TearDown" /> 还原）。</summary>
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            EnsureAnchorScene();
+            yield return SweepTestScenes();
+            _originalActiveScene = SceneManager.GetActiveScene();
+            yield return null;
+        }
+
+        /// <summary>清扫本用例遗留的测试场景实例并还原激活场景（BuildSettings 登记由 <see cref="IPostBuildCleanup" /> 负责）。</summary>
+        [UnityTearDown]
+        public IEnumerator TearDown()
+        {
+            yield return SweepTestScenes();
+
+            if (_originalActiveScene.IsValid() && _originalActiveScene.isLoaded)
+            {
+                SceneManager.SetActiveScene(_originalActiveScene);
+            }
+
+            yield return null;
+        }
+
+        /// <summary>
+        /// 保证锚场景存在（按名查找，不存在则运行时创建）：它使 <c>sceneCount &gt; 1</c> 恒成立，
+        /// 于是每次都能把测试场景实例清扫干净。
+        /// </summary>
+        static void EnsureAnchorScene()
+        {
+            for (var i = 0; i < SceneManager.sceneCount; i++)
+            {
+                if (SceneManager.GetSceneAt(i).name == AnchorSceneName)
+                {
+                    return;
+                }
+            }
+
+            SceneManager.CreateScene(AnchorSceneName);
+        }
+
+        /// <summary>
+        /// 卸载所有已加载的测试场景实例（按 <see cref="Scene" /> 句柄逐个卸载）。
+        /// </summary>
+        /// <remarks>
+        ///     <para>
+        ///     为什么必须清扫：Single 加载会卸载全部旧场景，本套件与前序套件
+        ///     （<see cref="SceneModulePlayModeTests" />）的 Single 用例都会"留下"它加载的那个场景。该遗留实例
+        ///     一旦与后续用例的叠加目标同路径，叠加加载就会产出**第二个实例**——模块追踪按路径粒度只记一条、
+        ///     按路径卸载只移除其一（见 <see cref="SceneModule.LoadSceneAdditive" /> 的约定），断言随之被污染：
+        ///     实测遗留 B 时"卸载后场景应消失"必然失败，探针逐帧枚举证实 <c>scenes=[B, A, B]</c>
+        ///     （卸载本身在两条驱动路径上时机一致，同帧即反映实例减少，故失败与驱动无关）。
+        ///     </para>
+        ///     <para>
+        ///     锚场景是清扫能力的前提：Unity 拒绝卸载最后一个已加载场景，仅有"唯一遗留测试场景"时它无法被
+        ///     清除。锚场景令本套件**与用例次序、与前序套件遗留解耦**（协程套件改用 <c>[Order]</c> 次序规避
+        ///     同一问题，本套件用锚场景根治）。按句柄而非路径卸载：同路径多实例时路径卸载行为不可控。
+        ///     </para>
+        /// </remarks>
+        static IEnumerator SweepTestScenes()
+        {
+            while (SceneManager.sceneCount > 1)
+            {
+                var target = default(Scene);
+                for (var i = 0; i < SceneManager.sceneCount; i++)
+                {
+                    var scene = SceneManager.GetSceneAt(i);
+                    if (scene.name == SceneAName || scene.name == SceneBName)
+                    {
+                        target = scene;
+                        break;
+                    }
+                }
+
+                if (!target.IsValid())
+                {
+                    yield break;
+                }
+
+                yield return SceneManager.UnloadSceneAsync(target);
+            }
+        }
+
+        #endregion
+
         #region 用例
 
         [UnityTest]
         public IEnumerator LoadSceneSingleAsync_Path_SucceedsAndClearsTracking()
         {
             var loadedCount = 0;
-            void OnLoaded(string _) => loadedCount++;
+            var progressReachedOne = false;
+            var progressReachedOneBeforeEvent = false;
+            void OnLoaded(string _)
+            {
+                loadedCount++;
+                progressReachedOneBeforeEvent = progressReachedOne;
+            }
+
             SceneModule.SceneLoadedEvent.AddListener(OnLoaded);
             var progress = new List<float>();
             try
             {
-                yield return Await(SceneModuleUniTask.LoadSceneSingleAsync(SceneAPath, progress.Add));
+                yield return Await(SceneModuleUniTask.LoadSceneSingleAsync(SceneAPath, p =>
+                {
+                    progress.Add(p);
+                    if (p >= 1f - 1e-3f)
+                    {
+                        progressReachedOne = true;
+                    }
+                }));
 
                 Assert.AreEqual(SceneAPath, SceneManager.GetActiveScene().path, "Single 加载后激活场景应为目标");
                 Assert.AreEqual(1, loadedCount, "SceneLoadedEvent 应恰好触发一次");
                 Assert.AreEqual(0, SceneModule.AddedScenePaths.Count, "Single 加载成功后应清空叠加追踪");
 
-                // #9 onProgress：至少报告一次、单调不减、末值不超过归一化上限（progressCap 默认 0.9）
+                // #9 onProgress：至少报告一次、单调不减、归一化到 1.0 收尾（CompleteLoad 收尾 onProgress(1f)，
+                // 与协程驱动路径一致——加载期间按 progressCap 归一化，故中间值不超过 1）
                 Assert.Greater(progress.Count, 0, "onProgress 应至少报告一次");
                 for (var i = 1; i < progress.Count; i++)
                 {
                     Assert.GreaterOrEqual(progress[i], progress[i - 1], "进度应单调不减");
+                    Assert.LessOrEqual(progress[i], 1f + 1e-4f, "归一化进度不应超过 1");
                 }
 
-                Assert.LessOrEqual(progress[progress.Count - 1], SceneModuleConfigSO.Instance.progressCap + 1e-4f,
-                    "进度末值应不超过 progressCap（归一化上限）");
+                Assert.GreaterOrEqual(progress[progress.Count - 1], 1f - 1e-3f,
+                    "进度末值应归一化到 1.0（0.9 激活上限归一化，CompleteLoad 收尾）");
+                Assert.IsTrue(progressReachedOneBeforeEvent, "事件广播时进度应已报告到 1.0（onProgress(1f) 先于广播）");
             }
             finally
             {
