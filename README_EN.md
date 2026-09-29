@@ -59,9 +59,9 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 ### Core Mechanics at a Glance
 
 - **`ObservableValue<T>` reactive property** — Models hold writable instances; Views subscribe read-only via `IReadOnlyObservableValue<T>`; `AddListenerAndInvoke` synchronizes the initial value on subscription
-- **Observable collection family** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` / `ObservableQueue<T>` expose a single-track change notification API: `AddListener(Action<CollectionChangedEventArgs<T>>)` covering Add / Remove / Replace / Move / Reset semantics (no notification on no-op writes, per-item notification for batch operations, Sort / Reverse / Clear collapse to Reset)
+- **Observable collection family** — `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` expose a single-track change notification API: `AddListener(Action<CollectionChangedEventArgs<T>>)` covering Add / Remove / Replace / Move / Reset semantics (no notification on no-op writes, per-item notification for batch operations, Sort / Reverse / Clear collapse to Reset); queues and other collection shapes are covered by the upstream library
 - **`MiniEvent` / `MiniEvent<T>`** — Zero-allocation lightweight events (direct multicast invocation, native C# fail-fast semantics); returns `AutoRemoveListenerHandle` for automatic cleanup, with auto-unsubscribe on GameObject destroy / scene unload
-- **Native PlayerLoop lifecycle** — `AesirArchitecturePlayerLoop` injects `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour; `EnsureInjected()` self-heals after third-party SDKs rewrite the PlayerLoop
+- **Native PlayerLoop lifecycle** — `AesirPlayerLoop` injects `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour; `EnsureInjected()` self-heals after third-party SDKs rewrite the PlayerLoop
 - **Explicit DDOL decision** — Root singletons expose a serialized `dontDestroyOnLoad` field governing both pre-placed and runtime-created instances (persistent by default; when disabled the instance dies with its scene — Inspector warning + runtime reminder, additive multi-scene loading is up to you)
 - **Domain Reload safety (iron rule)** — All statics explicitly reset (RIOLM inside non-generic classes / `ResetStaticsAssistant` for generic ones); no residue across Play Mode re-entry
 - **Pure C# core + MonoBehaviour adapters** — The Engine layer has zero MonoBehaviour dependencies; `MonoView<T>` / `MonoViewController<T>` etc. serve as adapters; Odin is an optional enhancement, never a runtime prerequisite
@@ -284,7 +284,7 @@ AesirFramework/                            # this repo
 
 ## ✅ Quality & CI
 
-- **Tests** — 803 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
+- **Tests** — 810 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
 - **CI (GitHub Actions)** —
   - `auto-release.yml`: every push to `main` publishes a GitHub Release (three unitypackages plus the update-info.json / files-manifest used by the in-package updater)
   - `auto-publish-branches.yml`: per-package subtree split rolling the evergreen branches `AesirArchitecture-latest` / `AesirModules-latest` forward (enter the Git URL once and it keeps updating), plus automatic cleanup of obsolete version branches

@@ -59,6 +59,56 @@ jobs:
           # 将子目录拆分为独立分支（包内容成为分支根目录）
           git subtree split --prefix="$PACKAGE_DIR" --branch "$BRANCH"
 
+          # ── 分发裁剪：UPM 产物只保留 Package Manager 认的那一份 ──────────
+          # monorepo 内为方便开发与 Assets 目录安装，同时保留两套镜像：
+          #   Samples/        开发可见 + 随 unitypackage 导出
+          #   Samples~/       Package Manager「Import」的唯一来源
+          #   Documentation/  开发可见 + 随 unitypackage 导出
+          #   Documentation~/ Package Manager 隐藏副本
+          # 两者带完全相同的 .meta GUID。若原样推到 UPM 分支：
+          #   ① 非 ~ 的 Samples/ 会被 Unity 正常索引 → 每个消费工程无条件
+          #      多出 11~16 个样例程序集与约 75 个脚本、12 个场景/预制体；
+          #   ② 用户经 Package Manager 导入样例时 GUID 被保留，与已被索引的
+          #      Samples/ 副本撞车，同一项目内两个资产共用一个 GUID。
+          # 故 UPM 分支剔除开发侧副本，只留 Package Manager 认的 ~ 版。
+          # （unitypackage 侧由 build_unitypackage.py 的 _is_ignored_name
+          #   过滤 ~ 目录，方向与此处相反，两条分发线互为补集）
+          git checkout "$BRANCH"
+          REMOVED=0
+          for DEV_DIR in Samples Documentation; do
+            if [ -e "$DEV_DIR" ]; then
+              echo "🧹 Removing dev-only folder from UPM branch: $DEV_DIR"
+              git rm -r -q --ignore-unmatch "$DEV_DIR"
+              # 目录自带的 .meta 同样剔除（Documentation/ 在 monorepo 内带 .meta）
+              if [ -f "$DEV_DIR.meta" ]; then
+                git rm -q --ignore-unmatch "$DEV_DIR.meta"
+              fi
+              REMOVED=1
+            fi
+          done
+          if [ "$REMOVED" -eq 1 ]; then
+            git commit -q -m "chore: 剔除开发侧 Samples/ 与 Documentation/ 镜像（UPM 分发只保留 ~ 版）"
+          fi
+
+          # ── 校验：UPM 分支不得残留开发侧副本 ────────────────────────────
+          LEFTOVER=""
+          for DEV_DIR in Samples Documentation; do
+            [ -e "$DEV_DIR" ] && LEFTOVER="$LEFTOVER $DEV_DIR"
+            [ -e "$DEV_DIR.meta" ] && LEFTOVER="$LEFTOVER $DEV_DIR.meta"
+          done
+          if [ -n "$LEFTOVER" ]; then
+            echo "::error::$BRANCH still contains dev-only entries:$LEFTOVER — UPM 分发裁剪失败"
+            exit 1
+          fi
+          # 反向校验：必须保留 Package Manager 的样例来源
+          for KEEP_DIR in Samples~ Documentation~; do
+            if [ ! -d "$KEEP_DIR" ]; then
+              echo "::error::$BRANCH is missing $KEEP_DIR — Package Manager 样例/文档入口会被切断"
+              exit 1
+            fi
+          done
+          echo "✅ 分发裁剪校验通过（保留 Samples~ / Documentation~，已剔除 Samples/ / Documentation/）"
+
           # 强制推送到远端（分支名固定，滚动指向最新提交）
           git push origin "$BRANCH" --force
 

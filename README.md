@@ -59,9 +59,9 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 ### 核心机制速览
 
 - **`ObservableValue<T>` 响应式属性** — Model 持有可写实例，View 经 `IReadOnlyObservableValue<T>` 只读订阅；`AddListenerAndInvoke` 订阅即同步初始值
-- **可观察集合家族（ObservableCollections 轻量内置子集）** — 四种高频集合（List / Dictionary / HashSet / Queue）+ 单轨变更通知：`AddListener(Action<CollectionChangedEventArgs<T>>)` 覆盖 Add / Remove / Replace / Move / Reset 全语义（无变更不通知、批量操作逐项通知、Sort / Reverse / Clear 统一 Reset）+ Odin 内联调试面板
+- **可观察集合家族（ObservableCollections 轻量内置子集）** — 三种高频集合（List / Dictionary / HashSet）+ 单轨变更通知：`AddListener(Action<CollectionChangedEventArgs<T>>)` 覆盖 Add / Remove / Replace / Move / Reset 全语义（无变更不通知、批量操作逐项通知、Sort / Reverse / Clear 统一 Reset）+ Odin 内联调试面板；队列等其他集合形态用上游库
 - **`MiniEvent` / `MiniEvent<T>`** — 零分配轻量事件（直接多播调用，原生 C# fail-fast 语义）；返回 `AutoRemoveListenerHandle` 自动清理，支持随 GameObject 销毁 / 场景卸载自动注销
-- **PlayerLoop 原生生命周期** — `AesirArchitecturePlayerLoop` 注入 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour；第三方 SDK 覆盖 PlayerLoop 后 `EnsureInjected()` 自愈
+- **PlayerLoop 原生生命周期** — `AesirPlayerLoop` 注入 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour；第三方 SDK 覆盖 PlayerLoop 后 `EnsureInjected()` 自愈
 - **DDOL 显式决策** — 根单例的 `dontDestroyOnLoad` 序列化字段统一控制预放置 / 运行时两种来源（默认跨场景持久；关闭时随场景卸载销毁，Inspector 警告 + 运行时提醒，多场景叠加加载自行处理）
 - **Domain Reload 安全（铁律）** — 静态变量全部显式重置（非泛型类内 RIOLM / 泛型类经 `ResetStaticsAssistant`），反复进出 Play Mode 无残留
 - **纯 C# 核心 + MonoBehaviour 适配** — Engine 层零 MonoBehaviour 依赖；`MonoView<T>` / `MonoViewController<T>` 等作为适配层，Odin 可选增强而非运行前置
@@ -287,7 +287,7 @@ AesirFramework/                            # 你现在看到的仓库
 
 ## ✅ 质量与 CI
 
-- **测试** — EditMode 测试 803 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
+- **测试** — EditMode 测试 810 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
 - **CI（GitHub Actions）** —
   - `auto-release.yml`：每次推送 `main` 自动发布 GitHub Release（三个 unitypackage + 更新器所需的 update-info.json / files-manifest）
   - `auto-publish-branches.yml`：按包目录 subtree split 滚动更新常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`（Git URL 一次输入持续更新），并自动清理废弃的版本分支
