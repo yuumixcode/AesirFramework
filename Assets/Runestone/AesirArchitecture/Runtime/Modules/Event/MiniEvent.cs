@@ -15,9 +15,6 @@ namespace Runestone.AesirArchitecture
     /// <see cref="RemoveListenerExtensions" /> 绑定到 Unity 生命周期事件。
     /// </para>
     /// <para>
-    /// <see cref="GetListeners" /> 返回当前委托调用列表，可用于调试或检查已注册的监听者数量。
-    /// </para>
-    /// <para>
     /// 与 C# <c>event</c> 关键字的区别：<see cref="MiniEvent" /> 提供 <see cref="Dispose" /> 方法，
     /// 可主动清空所有委托引用，适合在响应式系统中随宿主对象一起释放资源，
     /// 而 C# event 没有内置的清空机制。
@@ -94,9 +91,6 @@ namespace Runestone.AesirArchitecture
     /// <see cref="AddListener" /> 返回 <see cref="AutoRemoveListenerHandle" />，
     /// 支持使用 using 语句在作用域结束时自动移除监听，或通过
     /// <see cref="RemoveListenerExtensions" /> 绑定到 Unity 生命周期事件。
-    /// </para>
-    /// <para>
-    /// <see cref="GetListeners" /> 返回当前委托调用列表，可用于调试或检查已注册的监听者数量。
     /// </para>
     /// <para>
     /// 与 C# <c>event</c> 关键字的区别：<see cref="MiniEvent{T}" /> 提供 <see cref="Dispose" /> 方法，

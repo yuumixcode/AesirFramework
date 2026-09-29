@@ -12,7 +12,8 @@ namespace Runestone.AesirArchitecture.Editor
     /// <para>
     /// 机制参照 Odin Inspector 的 SirenixAssetPaths（OdinPathLookup.asset 锚点）：每包包根放一个
     /// <see cref="AesirPathLookup" /> 锚点资产，文件夹移动时 .meta GUID 保持不变，依次按
-    /// 「默认安装根 → 锚点 GUID 查询 → 锚点类型搜索」三级定位（一级命中即止、逐级变慢）。
+    /// 「默认安装根（磁盘存在性）→ 锚点 GUID 查询 → 锚点类型搜索」三级定位，逐级变慢且逐级兜底：
+    /// 第二级**始终执行**（多安装根是常态，需要逐个锚点收集），仅第三级在第二级无果时才跑。
     /// </para>
     /// <para>
     /// 结果在静态构造期解析一次，域重载后自动重解析；移动含脚本的 Runestone 目录必然触发域重载，
@@ -67,19 +68,36 @@ namespace Runestone.AesirArchitecture.Editor
                 roots.Add(DefaultInstallRoot);
             }
 
-            // ② 锚点 GUID 定位
-            var foundByGuid = CollectFromLookupAsset(
-                AssetDatabase.GUIDToAssetPath(ArchitectureLookupAssetGuid), roots);
-            foundByGuid |= CollectFromLookupAsset(
-                AssetDatabase.GUIDToAssetPath(ModulesLookupAssetGuid), roots);
-
-            // ③ 类型搜索兜底——正常路径（GUID 定位成功）零 FindAssets 开销
-            if (!foundByGuid)
+            // ②③ 触碰 AssetDatabase 的两级定位需要护栏：本方法在静态字段初始化器内运行，
+            // 曾在 ScriptableObject 构造期被误触发并抛 UnityException
+            // （"GUIDToAssetPath is not allowed to be called from a ScriptableObject constructor"）——
+            // 不设护栏时一次误触发会让 .NET 把本类型标记为初始化失败，此后直到下次域重载，
+            // 所有消费端（更新器菜单 validate / 双窗口 / Getting Started / 构建剔除）的每次访问
+            // 都重抛 TypeInitializationException，属会话级硬故障。降级为单次可恢复的路径降级：
+            // 留下警告、已收集的根照常返回（默认根存在时至少覆盖默认位置）。
+            try
             {
-                foreach (var guid in AssetDatabase.FindAssets("t:" + nameof(AesirPathLookup)))
+                // ② 锚点 GUID 定位
+                var foundByGuid = CollectFromLookupAsset(
+                    AssetDatabase.GUIDToAssetPath(ArchitectureLookupAssetGuid), roots);
+                foundByGuid |= CollectFromLookupAsset(
+                    AssetDatabase.GUIDToAssetPath(ModulesLookupAssetGuid), roots);
+
+                // ③ 类型搜索兜底——正常路径（GUID 定位成功）零 FindAssets 开销
+                if (!foundByGuid)
                 {
-                    CollectFromLookupAsset(AssetDatabase.GUIDToAssetPath(guid), roots);
+                    foreach (var guid in AssetDatabase.FindAssets("t:" + nameof(AesirPathLookup)))
+                    {
+                        CollectFromLookupAsset(AssetDatabase.GUIDToAssetPath(guid), roots);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                AesirArchitectureDebug.LogWarning("AesirAssetPaths",
+                    $"安装根锚点定位被跳过（{e.GetType().Name}: {e.Message}）。\n" +
+                    "本次域内安装根仅含默认位置 Assets/Runestone（若存在）；" +
+                    "若曾移动 Runestone 目录，相关窗口与构建剔除将在下次域重载后恢复精确路径。");
             }
 
             return roots.ToArray();

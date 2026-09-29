@@ -34,7 +34,7 @@ namespace Runestone.AesirArchitecture.Editor
 
         // priority -980：菜单排序键（越小越靠上）。父菜单 priority 由子项最小值决定，本项即
         // Tools/Aesir 组的最小值——-980 大于 Tools/Odin 组的 -1000，故 Aesir 组稳定排在 Odin 组之后；
-        // 与组内次小值 -900（Inspector 组）差值超过 10，Unity 自动在其间插入独立分割线
+        // 与组内次小 priority 差值超过 10，Unity 自动在其间插入独立分割线（置顶 + 独立分割线）
         [MenuItem(MenuPath, false, -980)]
         static void Open()
         {
@@ -178,12 +178,22 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 if (GUILayout.Button("打开场景", GUILayout.Width(80)))
                 {
-                    AesirGetStartedService.OpenSampleScene(sample);
+                    // 反馈文案复用 Odin 版 Toast 的同一真源（Service 层构造），只把输出通道换成门面日志；
+                    // 返回 false = 用户在 Unity 的保存面板上取消（Unity 自身已给交互），静默即可
+                    if (AesirGetStartedService.OpenSampleScene(sample))
+                    {
+                        AesirArchitectureDebug.Log("AesirGetStarted",
+                            AesirGetStartedService.BuildOpenSceneToastMessage(sample));
+                    }
                 }
 
                 if (GUILayout.Button("定位", GUILayout.Width(52)))
                 {
-                    AesirGetStartedService.PingSample(sample);
+                    if (AesirGetStartedService.PingSample(sample))
+                    {
+                        AesirArchitectureDebug.Log("AesirGetStarted",
+                            AesirGetStartedService.BuildPingToastMessage(sample));
+                    }
                 }
             }
             else if (sample.IsImported)
@@ -191,7 +201,11 @@ namespace Runestone.AesirArchitecture.Editor
                 EditorGUILayout.LabelField("代码示例 · 无独立场景", EditorStyles.miniLabel, GUILayout.Width(110));
                 if (GUILayout.Button("定位", GUILayout.Width(52)))
                 {
-                    AesirGetStartedService.PingSample(sample);
+                    if (AesirGetStartedService.PingSample(sample))
+                    {
+                        AesirArchitectureDebug.Log("AesirGetStarted",
+                            AesirGetStartedService.BuildPingToastMessage(sample));
+                    }
                 }
             }
             else
@@ -204,7 +218,7 @@ namespace Runestone.AesirArchitecture.Editor
                     {
                         case AesirGetStartedService.AesirSampleImportResult.Imported:
                             Scan(); // 卡片即时切换为已导入态
-                            Debug.Log($"[Aesir GetStarted] {message}");
+                            AesirArchitectureDebug.Log("AesirGetStarted", message);
                             break;
 
                         case AesirGetStartedService.AesirSampleImportResult.Cancelled:

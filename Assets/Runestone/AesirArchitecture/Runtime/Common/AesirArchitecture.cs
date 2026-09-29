@@ -64,7 +64,7 @@ namespace Runestone.AesirArchitecture
         public new bool DontDestroyOnLoad => dontDestroyOnLoad;
 
         /// <summary>
-        /// 获取全局唯一的架构管理器实例
+        /// 获取全局唯一的架构宿主实例（框架根 GameObject 持有者，承载 [Aesir Architecture] 宿主物体）
         /// </summary>
         /// <remarks>
         /// 优先在已加载场景中查找预放置的实例；未找到时运行时创建，
@@ -79,7 +79,8 @@ namespace Runestone.AesirArchitecture
                     return _instance;
                 }
 
-                _instance = FindAnyObjectByType<AesirArchitecture>();
+                // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
+                _instance = FindAnyObjectByType<AesirArchitecture>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;

@@ -9,13 +9,13 @@ namespace Runestone.AesirArchitecture
     /// <remarks>
     /// 与 <see cref="AesirViewController{T}" /> 功能相同，但直接继承 <c>MonoBehaviour</c> 而非 <see cref="AesirMonoBehaviour" />，
     /// 不依赖 Odin 序列化。适用于不需要 Odin Inspector 特性的项目或需要最小依赖的场景。
+    /// 上下文绑定经 <see cref="IController{T}" /> 的默认接口实现（DIM）自动指向 <see cref="AbstractContext{T}.Instance" /> 单例。
     /// </remarks>
     /// <seealso cref="AesirViewController{T}" />
     /// <seealso cref="IView" />
-    /// <seealso cref="IController" />
-    public abstract class MonoViewController<T> : MonoBehaviour, IView, IController
+    /// <seealso cref="IController{T}" />
+    public abstract class MonoViewController<T> : MonoBehaviour, IView, IController<T>
         where T : AbstractContext<T>, new()
     {
-        IContext IContextHolder.Context => AbstractContext<T>.Instance;
     }
 }
