@@ -118,6 +118,23 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
+        /// 验证 RemoveRange 传入集合自身时正常终止：源序列先物化再写入，
+        /// 不因首次移除后的枚举器版本检查中断（此前为部分变更 + InvalidOperationException）。
+        /// </summary>
+        [Test]
+        public void RemoveRange_SelfAsSource_MaterializesFirst()
+        {
+            var set = new ObservableHashSet<int> { 1, 2, 3 };
+            var received = new List<CollectionChangedEventArgs<int>>();
+            set.AddListener(received.Add);
+
+            Assert.DoesNotThrow(() => set.RemoveRange(set), "源为集合自身时应先物化再写入，不抛枚举异常");
+            Assert.AreEqual(3, received.Count, "移除自身应逐项清空全部元素");
+            Assert.AreEqual(0, set.Count);
+            AesirArchitectureDebug.LogTestInfo("RemoveRange: 自身作为源安全（先物化）");
+        }
+
+        /// <summary>
         /// 验证监听句柄 Dispose 后不再收到通知，ClearListeners 清空全部监听。
         /// </summary>
         [Test]

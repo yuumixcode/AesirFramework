@@ -34,8 +34,8 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <param name="items">要添加的元素序列。</param>
         /// <remarks>
-        /// 每添加一项触发一次 Add 通知；如需"整体刷新一次通知"的语义，可先 <see cref="ICollection{T}.Clear" /> 再逐项
-        /// <see cref="ICollection{T}.Add" />。
+        /// 每添加一项触发一次 Add 通知；需要"清空后重建"语义时可先 <see cref="ICollection{T}.Clear" />
+        /// （触发一次 Reset）再逐项添加——共 Reset + N×Add 次通知，监听方按 Reset"重建视图"处理后逐项接收增量。
         /// </remarks>
         void AddRange(IEnumerable<T> items);
     }

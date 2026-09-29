@@ -26,9 +26,6 @@ namespace Runestone.AesirArchitecture
     [DisallowMultipleComponent]
     public sealed class RemoveListenerOnDestroyTrigger : RemoveListenerTrigger
     {
-        /// <summary>
-        /// Unity 在销毁此 MonoBehaviour 所在的 GameObject 时自动调用，执行所有已注册监听的移除操作。
-        /// </summary>
         void OnDestroy() => RemoveAllListeners();
     }
 }

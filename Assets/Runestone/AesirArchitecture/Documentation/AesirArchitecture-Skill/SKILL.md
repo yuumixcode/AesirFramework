@@ -30,11 +30,11 @@ RAA（Runestone Aesir Architecture）是 Unity/团结引擎的渐进式 MVC/MVP 
 
 ### 三档分级
 
-| 档位 | Model 注册 | Model 暴露面 | 写入路径 | 读取路径 | 文件数 |
+| 档位 | Model 注册 | Model 暴露面 | 写入路径 | 读取路径 | 文件数（按脚本计，MVC/MVP 各取其数） |
 |------|-----------|-------------|---------|---------|--------|
-| **Quick** | 具体类 | 可写 `ObservableValue` 直接公开 | 直改 `ObservableValue` | 直读 `.Value` | ~3-4 |
+| **Quick** | 具体类 | 可写 `ObservableValue` 只读属性暴露 | 直改 `ObservableValue` | 直读 `.Value` | ~3-4 |
 | **Standard** | 具体类 | 只读接口 `IReadOnlyObservableValue<T>` + 写方法 | 调 Model 写方法 | 直读 `.Value` | ~4-5 |
-| **Strict** | 接口 | 只读接口 + 写方法 | `ExecuteCommand` | `ExecuteQuery`（加工值）/ 直读（原始值） | ~7-10 |
+| **Strict** | 接口 | 只读接口 + 写方法 | `ExecuteCommand` | `ExecuteQuery`（加工值）/ 直读（原始值） | ~10-11 |
 
 **选择建议**：从 Standard 起步；原型阶段可用 Quick；需要 CQRS 严格分离时用 Strict。
 
@@ -73,14 +73,17 @@ public class GameContext : AbstractContext<GameContext>
 }
 ```
 
+> 示例 / 测试等框架内部 Context 会额外标注 `[InternalContext]`——被标记的类型不会出现在用户工作流的 Context 选择器（如 AesirModules Binder 的「Context 类型」下拉）。业务项目的 Context **不要**带该标记。
+
 ### Model — 数据层
 
 ```csharp
-// Quick: 可写 ObservableValue 直接公开，不定义接口
+// Quick: 私有字段 + 只读属性暴露（公开可变字段属封装倒退，与官方示例同款写法）
 [Serializable]
 public sealed class CounterModel : AbstractModel
 {
-    [SerializeField] public ObservableValue<int> count = new(0);
+    [SerializeField] ObservableValue<int> count = new(0);
+    public ObservableValue<int> Count => count;
 }
 
 // Standard/Strict: 只读暴露 + 写方法

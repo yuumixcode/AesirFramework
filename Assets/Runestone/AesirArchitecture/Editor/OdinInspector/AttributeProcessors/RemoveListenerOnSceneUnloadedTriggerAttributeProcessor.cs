@@ -16,7 +16,7 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
     /// 宿主（含本组件）会随所在场景卸载销毁，此后其他场景卸载将不再自动清理监听 —
     /// 使用该配置时需自行处理多场景叠加（Additive）加载下的生命周期。
     /// </remarks>
-    public class RemoveListenerOnSceneUnloadedTriggerAttributeProcessor :
+    internal sealed class RemoveListenerOnSceneUnloadedTriggerAttributeProcessor :
         OdinAttributeProcessor<RemoveListenerOnSceneUnloadedTrigger>
     {
         const string HostDontDestroyOnLoadDisabledWarning =

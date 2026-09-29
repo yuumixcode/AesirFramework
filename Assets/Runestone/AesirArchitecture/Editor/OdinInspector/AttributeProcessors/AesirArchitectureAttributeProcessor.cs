@@ -17,7 +17,7 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
     ///     <item>字段级 Info 信息框：<c>dontDestroyOnLoad</c> 开关的取值含义说明（恒显示，替代运行时 Tooltip）。</item>
     /// </list>
     /// </remarks>
-    public class AesirArchitectureAttributeProcessor : OdinAttributeProcessor<AesirArchitecture>
+    internal sealed class AesirArchitectureAttributeProcessor : OdinAttributeProcessor<AesirArchitecture>
     {
         /// <summary>
         /// DDOL 开关的取值含义说明文案（字段级 Info 信息框内容）。

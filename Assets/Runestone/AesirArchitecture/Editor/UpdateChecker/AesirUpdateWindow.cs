@@ -90,9 +90,6 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>共享编排控制器（非序列化，OnEnable 重建并接管 _state）。</summary>
         AesirUpdateController _controller;
 
-        /// <summary>过期包缓存（视图回调时重算，避免 OnGUI 每帧 LINQ）。</summary>
-        List<AesirUpdateService.InstalledPackage> _outdated = new List<AesirUpdateService.InstalledPackage>();
-
         /// <summary>「全部更新」目标缓存（待更新包 + 缺失的已知包补装；决定工具栏按钮可见性）。</summary>
         List<AesirUpdateService.InstalledPackage> _updateTargets =
             new List<AesirUpdateService.InstalledPackage>();
@@ -105,14 +102,14 @@ namespace Runestone.AesirArchitecture.Editor
 
         void OnEnable()
         {
-            _controller = new AesirUpdateController(_state, ProgressTitle, OnViewChanged, _ => { });
+            // 第 5 参 = 「仅重绘」回调：进度/状态文本变化只 Repaint，不重算列表（避免下载每 tick 走一遍 LINQ）
+            _controller = new AesirUpdateController(_state, ProgressTitle, OnViewChanged, _ => { }, Repaint);
             _controller.Initialize();
         }
 
-        /// <summary>状态变化回调（重扫 / 忙碌切换 / 状态文本变更）：重算缓存并重绘。</summary>
+        /// <summary>结构变化回调（重扫 / 忙碌切换）：重算「全部更新」目标缓存并重绘。</summary>
         void OnViewChanged()
         {
-            _outdated = _controller.OutdatedPackages();
             _updateTargets = _controller.UpdateTargets();
             Repaint();
         }

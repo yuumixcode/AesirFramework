@@ -157,6 +157,24 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
+        /// 验证模块 OnInitialize 期间注册的新模块在**同一次 Initialize 调用内**被补齐初始化：
+        /// 集体初始化尚未完成时注册只登记不初始化（<see cref="AbstractContext{T}.RegisterModel{TModel}" /> 的
+        /// 判据是 <c>Initialized</c>），而 <see cref="Runestone.AesirArchitecture.IGenericLocator{T}.GetAll" />
+        /// 返回快照、新模块不在本轮快照内，故由 <c>InitializePendingModules</c> 重复取快照补齐 ——
+        /// 既不重复初始化，也不会漏掉新注册者。
+        /// </summary>
+        [Test]
+        public void Context_Initialize_RegisterDuringOnInitialize_InitializedInSameCall()
+        {
+            var context = new RegisteringContext();
+            context.Initialize();
+
+            Assert.AreEqual("R0.Init,R1.Init", string.Join(",", OrderLog),
+                "遍历期注册的模块在同一次 Initialize 内补齐（注册者先、被注册者紧随），且各自只初始化一次");
+            AesirArchitectureDebug.LogTestInfo("初始化期注册: 同轮补齐初始化，枚举无异常、无重复初始化");
+        }
+
+        /// <summary>
         /// 验证框架根单例的静态重置方法存在且能清空静态字段。
         /// </summary>
         /// <remarks>
@@ -269,6 +287,34 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             {
                 // 按实现类注册（而非接口）——制造"实现类注册、接口查询"的近失场景
                 RegisterModel(new NearMissModel());
+            }
+        }
+
+        class RegisteringModel : AbstractModel
+        {
+            readonly RegisteringContext _context;
+
+            public RegisteringModel(RegisteringContext context) => _context = context;
+
+            protected override void OnInitialize()
+            {
+                OrderLog.Add("R0.Init");
+                // 初始化遍历进行中注册新模块：此前懒枚举会抛 InvalidOperationException
+                _context.RegisterModel(new RegisteredLaterModel());
+            }
+        }
+
+        class RegisteredLaterModel : AbstractModel
+        {
+            protected override void OnInitialize() => OrderLog.Add("R1.Init");
+        }
+
+        [InternalContext]
+        class RegisteringContext : AbstractContext<RegisteringContext>
+        {
+            protected override void Configure()
+            {
+                RegisterModel(new RegisteringModel(this));
             }
         }
     }

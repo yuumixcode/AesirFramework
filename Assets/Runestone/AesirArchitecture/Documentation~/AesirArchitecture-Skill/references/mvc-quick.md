@@ -38,8 +38,11 @@ using Runestone.AesirArchitecture;
 [Serializable]
 public sealed class CounterModel : AbstractModel
 {
+    // 私有字段 + 只读属性暴露——公开可变字段属封装倒退（与官方示例 SampleMvcQuickCounterModel 同款写法）
     [SerializeField]
-    public ObservableValue<int> count = new ObservableValue<int>(0);
+    ObservableValue<int> count = new ObservableValue<int>(0);
+
+    public ObservableValue<int> Count => count;
 }
 ```
 
@@ -64,7 +67,7 @@ public class CounterPanel : MonoViewController<CounterContext>
         // GetModel 缓存为字段，避免每帧字典查找
         _model = this.GetModel<CounterModel>();
         // AddListenerAndInvoke: 订阅并立即触发一次（拿到当前值）
-        _model.count.AddListenerAndInvoke(UpdateCountText)
+        _model.Count.AddListenerAndInvoke(UpdateCountText)
             .RemoveListenerWhenGameObjectOnDestroyed(gameObject);
     }
 
@@ -84,9 +87,9 @@ public class CounterPanel : MonoViewController<CounterContext>
     }
 
     // 直改 ObservableValue（快捷档特有写法）
-    void Increase() => _model.count.Value++;
-    void Decrease() => _model.count.Value--;
-    void ResetCounter() => _model.count.Value = 0;
+    void Increase() => _model.Count.Value++;
+    void Decrease() => _model.Count.Value--;
+    void ResetCounter() => _model.Count.Value = 0;
 
     public void UpdateCountText(int count)
     {
@@ -99,7 +102,7 @@ public class CounterPanel : MonoViewController<CounterContext>
 ## 数据流
 
 ```
-按钮点击 → 面板直改 count.Value → ObservableValue 通知 → 面板刷新
+按钮点击 → 面板直改 Count.Value → ObservableValue 通知 → 面板刷新
 ```
 
 ## 升级路径

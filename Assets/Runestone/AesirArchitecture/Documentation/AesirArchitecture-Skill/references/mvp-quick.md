@@ -38,8 +38,11 @@ using Runestone.AesirArchitecture;
 [Serializable]
 public sealed class CounterModel : AbstractModel
 {
+    // 私有字段 + 只读属性暴露——公开可变字段属封装倒退（与官方示例 SampleMvpQuickCounterModel 同款写法）
     [SerializeField]
-    public ObservableValue<int> count = new ObservableValue<int>(0);
+    ObservableValue<int> count = new ObservableValue<int>(0);
+
+    public ObservableValue<int> Count => count;
 }
 ```
 
@@ -130,25 +133,25 @@ public sealed class CounterPresenter : IPresenter<CounterContext>
 
     public void SyncInitialValue()
     {
-        _view.UpdateCount(_model.count.Value);
+        _view.UpdateCount(_model.Count.Value);
     }
 
     void OnIncreaseClicked()
     {
-        _model.count.Value++;
-        _view.UpdateCount(_model.count.Value);
+        _model.Count.Value++;
+        _view.UpdateCount(_model.Count.Value);
     }
 
     void OnDecreaseClicked()
     {
-        _model.count.Value--;
-        _view.UpdateCount(_model.count.Value);
+        _model.Count.Value--;
+        _view.UpdateCount(_model.Count.Value);
     }
 
     void OnResetClicked()
     {
-        _model.count.Value = 0;
-        _view.UpdateCount(_model.count.Value);
+        _model.Count.Value = 0;
+        _view.UpdateCount(_model.Count.Value);
     }
 
     public void Dispose()

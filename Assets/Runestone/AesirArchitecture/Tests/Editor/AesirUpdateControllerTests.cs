@@ -43,6 +43,10 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [TearDown]
         public void TearDown()
         {
+            // 兜底解锁：本套用例会刻意复现“更新收尾异常导致重载锁泄漏”，若被测方法在异常路径漏解锁，
+            // 编辑器会话的重载锁会永久卡住（后续编译 / 测试全线阻塞）。用例检测缺陷的代价不该是让整批测试失去诊断能力。
+            EditorApplication.UnlockReloadAssemblies();
+
             SessionState.SetBool(BusySessionKey, false);
         }
 

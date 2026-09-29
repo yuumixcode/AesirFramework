@@ -140,14 +140,13 @@ namespace Runestone.AesirArchitecture.Editor
         static bool EnsureSymbolForTarget(NamedBuildTarget target, string symbol)
         {
             var current = PlayerSettings.GetScriptingDefineSymbols(target);
-            if (ContainsSymbol(current, symbol))
+            var updated = AddSymbol(current, symbol);
+            if (updated == current)
             {
                 return false;
             }
 
-            var newSymbols = string.IsNullOrEmpty(current) ? symbol : current + ";" + symbol;
-
-            PlayerSettings.SetScriptingDefineSymbols(target, newSymbols);
+            PlayerSettings.SetScriptingDefineSymbols(target, updated);
             return true;
         }
 
@@ -158,31 +157,26 @@ namespace Runestone.AesirArchitecture.Editor
         static bool RemoveSymbolForTarget(NamedBuildTarget target, string symbol)
         {
             var current = PlayerSettings.GetScriptingDefineSymbols(target);
-            if (!ContainsSymbol(current, symbol))
+            var updated = RemoveSymbol(current, symbol);
+            if (updated == current)
             {
                 return false;
             }
 
-            var symbols = current.Split(';');
-            var result = new List<string>(symbols.Length);
-            foreach (var s in symbols)
-            {
-                var trimmed = s.Trim();
-                if (trimmed != symbol)
-                {
-                    result.Add(trimmed);
-                }
-            }
-
-            PlayerSettings.SetScriptingDefineSymbols(target, string.Join(";", result.ToArray()));
+            PlayerSettings.SetScriptingDefineSymbols(target, updated);
             return true;
         }
 
         /// <summary>
         /// 检查分号分隔的符号字符串中是否包含指定宏定义符号。
         /// </summary>
+        /// <remarks>
+        /// 纯字符串判定，不触碰 <see cref="PlayerSettings" /> —— 写入宏定义符号会触发
+        /// "Define symbols changed" 全量脚本重编译与域重载，测试期间发生会中断 Test Runner，
+        /// 故与 <see cref="PlayerSettings" /> 解耦的这段语义由纯函数承载。
+        /// </remarks>
         /// <returns>若包含则返回 <c>true</c>，否则返回 <c>false</c></returns>
-        static bool ContainsSymbol(string symbols, string symbol)
+        internal static bool ContainsSymbol(string symbols, string symbol)
         {
             if (string.IsNullOrEmpty(symbols))
             {
@@ -199,6 +193,53 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// 在分号分隔的符号字符串末尾追加宏定义符号（幂等）。
+        /// </summary>
+        /// <remarks>
+        /// 与此前内联实现等价：已存在（忽略两侧空白）时原样返回 <paramref name="symbols" />，
+        /// 调用方据此判断"是否需要写回 <see cref="PlayerSettings" />"。
+        /// </remarks>
+        /// <returns>追加后的符号字符串；符号已存在时返回原字符串</returns>
+        internal static string AddSymbol(string symbols, string symbol)
+        {
+            if (ContainsSymbol(symbols, symbol))
+            {
+                return symbols;
+            }
+
+            return string.IsNullOrEmpty(symbols) ? symbol : symbols + ";" + symbol;
+        }
+
+        /// <summary>
+        /// 从分号分隔的符号字符串中移除宏定义符号，其余条目两侧空白一并清理。
+        /// </summary>
+        /// <remarks>
+        /// 符号不存在时原样返回 <paramref name="symbols" />（调用方据此跳过写回）；
+        /// 移除最后一项时返回空字符串（与"全部移除"语义一致，而非 <c>null</c>）。
+        /// </remarks>
+        /// <returns>移除后的符号字符串；符号不存在时返回原字符串</returns>
+        internal static string RemoveSymbol(string symbols, string symbol)
+        {
+            if (!ContainsSymbol(symbols, symbol))
+            {
+                return symbols;
+            }
+
+            var parts = symbols.Split(';');
+            var result = new List<string>(parts.Length);
+            foreach (var part in parts)
+            {
+                var trimmed = part.Trim();
+                if (trimmed != symbol)
+                {
+                    result.Add(trimmed);
+                }
+            }
+
+            return string.Join(";", result.ToArray());
         }
     }
 }

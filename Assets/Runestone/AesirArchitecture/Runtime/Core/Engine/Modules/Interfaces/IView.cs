@@ -21,4 +21,19 @@ namespace Runestone.AesirArchitecture
     /// </para>
     /// </remarks>
     public interface IView : IContextHolder, ICanGetModel, ICanGetService { }
+
+    /// <summary>
+    /// 泛型表现层接口。绑定指定上下文类型，实现者自动获得 <see cref="IContextHolder.Context" /> 绑定。
+    /// </summary>
+    /// <typeparam name="T">上下文类型，必须继承自 <see cref="AbstractContext{T}" /> 并提供无参构造。</typeparam>
+    /// <remarks>
+    /// 通过默认接口实现（DIM）将 <see cref="IContextHolder.Context" /> 自动绑定到
+    /// <see cref="AbstractContext{T}.Instance" /> 单例，无需手动注入上下文。
+    /// 此设计使 View 与具体上下文类型解耦——只需声明泛型参数即可获得对应模块的全局只读访问权，
+    /// 能力面仍由非泛型 <see cref="IView" /> 约束（不含命令执行入口）。
+    /// </remarks>
+    public interface IView<T> : IView where T : AbstractContext<T>, new()
+    {
+        IContext IContextHolder.Context => AbstractContext<T>.Instance;
+    }
 }

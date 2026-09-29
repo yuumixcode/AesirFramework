@@ -7,7 +7,7 @@ using UnityEngine.PlayerLoop;
 namespace Runestone.AesirArchitecture.Tests.Editor
 {
     /// <summary>
-    /// 验证 <see cref="AesirArchitecturePlayerLoop" /> 与 <see cref="PlayerLoopUtility" /> 在自定义系统插入和生命周期回调方面的正确性。
+    /// 验证 <see cref="AesirPlayerLoop" /> 与 <see cref="PlayerLoopUtility" /> 在自定义系统插入和生命周期回调方面的正确性。
     /// <para>测试覆盖三个维度：PlayerLoop 子系统的插入位置、描述输出准确性、以及回调注册/排序/清除的行为。</para>
     /// </summary>
     /// <remarks>
@@ -20,22 +20,22 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     ///     确保测试间副作用隔离，不会污染全局 PlayerLoop 状态。
     ///     </para>
     /// </remarks>
-    /// <seealso cref="AesirArchitecturePlayerLoop" />
+    /// <seealso cref="AesirPlayerLoop" />
     /// <seealso cref="PlayerLoopUtility" />
-    /// <seealso cref="AesirArchitectureLifecyclePhase" />
-    public class AesirArchitecturePlayerLoopTests
+    /// <seealso cref="AesirLifecyclePhase" />
+    public class AesirPlayerLoopTests
     {
         /// <summary>
-        /// 框架注入的 BeforeUpdate 子系统类型名。与 <c>AesirArchitecturePlayerLoop</c> 内部私有嵌套结构体同名，
+        /// 框架注入的 BeforeUpdate 子系统类型名。与 <c>AesirPlayerLoop</c> 内部私有嵌套结构体同名，
         /// 测试无法直接引用私有类型，故以名称匹配。若内部类型重命名，此常量需同步更新。
         /// </summary>
-        const string BeforeUpdateSystemName = "AesirArchitectureScriptRunBeforeUpdate";
+        const string BeforeUpdateSystemName = "AesirScriptRunBeforeUpdate";
 
         /// <summary>
-        /// 框架注入的 AfterUpdate 子系统类型名。与 <c>AesirArchitecturePlayerLoop</c> 内部私有嵌套结构体同名，
+        /// 框架注入的 AfterUpdate 子系统类型名。与 <c>AesirPlayerLoop</c> 内部私有嵌套结构体同名，
         /// 测试无法直接引用私有类型，故以名称匹配。若内部类型重命名，此常量需同步更新。
         /// </summary>
-        const string AfterUpdateSystemName = "AesirArchitectureScriptRunAfterUpdate";
+        const string AfterUpdateSystemName = "AesirScriptRunAfterUpdate";
 
         PlayerLoopSystem _originalLoop;
 
@@ -50,7 +50,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void SetUp()
         {
             _originalLoop = PlayerLoop.GetCurrentPlayerLoop();
-            AesirArchitecturePlayerLoop.Reset();
+            AesirPlayerLoop.Reset();
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void TearDown()
         {
             PlayerLoop.SetPlayerLoop(_originalLoop);
-            AesirArchitecturePlayerLoop.Reset();
+            AesirPlayerLoop.Reset();
         }
 
         /// <summary>
@@ -77,7 +77,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 导致依赖帧初始状态的逻辑读取到已被 Update 修改过的数据。
         /// </remarks>
         /// <seealso cref="PlayerLoopUtility.InsertSystemBefore{TTarget}" />
-        /// <seealso cref="AesirArchitecturePlayerLoop" />
+        /// <seealso cref="AesirPlayerLoop" />
         [Test]
         public void InsertSystemBefore_TargetExists_InsertsBefore()
         {
@@ -99,7 +99,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// AfterUpdate 回调将读取到尚未完成 LateUpdate 的中间状态。
         /// </remarks>
         /// <seealso cref="PlayerLoopUtility.InsertSystemAfter{TTarget}" />
-        /// <seealso cref="AesirArchitecturePlayerLoop" />
+        /// <seealso cref="AesirPlayerLoop" />
         [Test]
         public void InsertSystemAfter_TargetExists_InsertsAfter()
         {
@@ -186,35 +186,35 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitectureLifecyclePhase.BeforeUpdate" /> 和
-        /// <see cref="AesirArchitectureLifecyclePhase.AfterUpdate" /> 两个阶段的注册互不干扰。
+        /// 验证 <see cref="AesirLifecyclePhase.BeforeUpdate" /> 和
+        /// <see cref="AesirLifecyclePhase.AfterUpdate" /> 两个阶段的注册互不干扰。
         /// <para>预期：两个阶段各自计数为 1，注册到一阶段的回调不出现在另一阶段。</para>
         /// </summary>
         /// <remarks>
-        /// 框架使用 <c>Dictionary&lt;AesirArchitectureLifecyclePhase, List&lt;HookEntry&gt;&gt;</c> 按阶段隔离回调。
+        /// 框架使用 <c>Dictionary&lt;AesirLifecyclePhase, List&lt;HookEntry&gt;&gt;</c> 按阶段隔离回调。
         /// 如果阶段隔离失败（如键冲突或共享列表），注册到 BeforeUpdate 的回调可能在 AfterUpdate 阶段也被执行，
         /// 导致同一逻辑被重复调用或在不正确的帧阶段执行。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
-        /// <seealso cref="AesirArchitecturePlayerLoop.GetHookCount" />
-        /// <seealso cref="AesirArchitectureLifecyclePhase" />
+        /// <seealso cref="AesirPlayerLoop.Register" />
+        /// <seealso cref="AesirPlayerLoop.GetHookCount" />
+        /// <seealso cref="AesirLifecyclePhase" />
         [Test]
         public void Register_BeforeAndAfterUpdate_AreDistinct()
         {
-            AesirArchitecturePlayerLoop.Reset();
+            AesirPlayerLoop.Reset();
 
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, () => { });
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.AfterUpdate, () => { });
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, () => { });
+            AesirPlayerLoop.Register(AesirLifecyclePhase.AfterUpdate, () => { });
 
             Assert.AreEqual(1,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate));
+                AesirPlayerLoop.GetHookCount(AesirLifecyclePhase.BeforeUpdate));
             Assert.AreEqual(1,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.AfterUpdate));
+                AesirPlayerLoop.GetHookCount(AesirLifecyclePhase.AfterUpdate));
             AesirArchitectureDebug.LogTestInfo("Register(BeforeUpdate/AfterUpdate): 两个阶段注册互不干扰，各自计数为 1");
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitecturePlayerLoop.Reset" /> 清除之前注册的所有回调。
+        /// 验证 <see cref="AesirPlayerLoop.Reset" /> 清除之前注册的所有回调。
         /// <para>预期：清除后回调计数归零。</para>
         /// </summary>
         /// <remarks>
@@ -222,19 +222,19 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 用于在域重载后清理 Disable Domain Reload 模式下残留的静态状态。
         /// 如果清理失败，旧的回调引用将指向已销毁的对象，在帧循环中触发空引用异常或调用已失效的逻辑。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Reset" />
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
+        /// <seealso cref="AesirPlayerLoop.Reset" />
+        /// <seealso cref="AesirPlayerLoop.Register" />
         [Test]
         public void Clear_RemovesAllRegisteredHooks()
         {
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, () => { });
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, () => { });
             Assert.AreEqual(1,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate));
+                AesirPlayerLoop.GetHookCount(AesirLifecyclePhase.BeforeUpdate));
 
-            AesirArchitecturePlayerLoop.Reset();
+            AesirPlayerLoop.Reset();
 
             Assert.AreEqual(0,
-                AesirArchitecturePlayerLoop.GetHookCount(AesirArchitectureLifecyclePhase.BeforeUpdate));
+                AesirPlayerLoop.GetHookCount(AesirLifecyclePhase.BeforeUpdate));
             AesirArchitectureDebug.LogTestInfo("Clear: 成功清除之前注册的所有回调");
         }
 
@@ -249,25 +249,25 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 此测试直接调用 <c>OnBeforeUpdate</c>（通过 InternalsVisibleTo 可见）模拟帧触发，
         /// 避免依赖真实 PlayerLoop 帧循环的时间不确定性。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
-        /// <seealso cref="AesirArchitecturePlayerLoop.OnBeforeUpdate" />
+        /// <seealso cref="AesirPlayerLoop.Register" />
+        /// <seealso cref="AesirPlayerLoop.OnBeforeUpdate" />
         [Test]
         public void Register_SameOrder_ExecutesInRegistrationOrder()
         {
             var executionOrder = new List<int>();
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(1));
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(2));
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(3), -1);
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(4), 1);
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate,
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate,
                 () => executionOrder.Add(5));
 
             // 直接调用 internal 方法（通过 InternalsVisibleTo），替代反射
-            AesirArchitecturePlayerLoop.OnBeforeUpdate();
+            AesirPlayerLoop.OnBeforeUpdate();
 
             // 预期顺序: Order -1 → Order 0(按注册) → Order 1
             var expected = new[] { 3, 1, 2, 5, 4 };
@@ -276,7 +276,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitecturePlayerLoop.EnsureInjected" /> 在注入点被第三方覆盖后能重新补插缺失的子系统。
+        /// 验证 <see cref="AesirPlayerLoop.EnsureInjected" /> 在注入点被第三方覆盖后能重新补插缺失的子系统。
         /// <para>预期：注入成功后被模拟覆盖抹掉，调用 <c>EnsureInjected</c> 后两个子系统恢复存在。</para>
         /// </summary>
         /// <remarks>
@@ -288,11 +288,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 均位于 PlayerLoop 根层级，注入点也在根层级。
         /// </para>
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.EnsureInjected" />
+        /// <seealso cref="AesirPlayerLoop.EnsureInjected" />
         [Test]
         public void EnsureInjected_AfterThirdPartyWipe_ReinjectsMissingSystems()
         {
-            AesirArchitecturePlayerLoop.EnsureInjected();
+            AesirPlayerLoop.EnsureInjected();
 
             var loop = PlayerLoop.GetCurrentPlayerLoop();
             Assert.IsTrue(LoopContainsNamed(ref loop, BeforeUpdateSystemName), "注入后应包含 BeforeUpdate 子系统");
@@ -304,7 +304,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsFalse(LoopContainsNamed(ref loop, BeforeUpdateSystemName), "模拟覆盖后 BeforeUpdate 子系统应缺失");
             Assert.IsFalse(LoopContainsNamed(ref loop, AfterUpdateSystemName), "模拟覆盖后 AfterUpdate 子系统应缺失");
 
-            AesirArchitecturePlayerLoop.EnsureInjected();
+            AesirPlayerLoop.EnsureInjected();
 
             loop = PlayerLoop.GetCurrentPlayerLoop();
             Assert.IsTrue(LoopContainsNamed(ref loop, BeforeUpdateSystemName), "自愈后应重新包含 BeforeUpdate 子系统");
@@ -313,21 +313,21 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>
-        /// 验证 <see cref="AesirArchitecturePlayerLoop.Register" /> 在注入点被第三方覆盖后触发自愈补插。
+        /// 验证 <see cref="AesirPlayerLoop.Register" /> 在注入点被第三方覆盖后触发自愈补插。
         /// <para>预期：覆盖后调用 <c>Register</c>，两个注入点均恢复存在。</para>
         /// </summary>
         /// <remarks>
-        /// <c>Register</c> 内部调用 <see cref="AesirArchitecturePlayerLoop.EnsureInjected" />（注册即自愈），
+        /// <c>Register</c> 内部调用 <see cref="AesirPlayerLoop.EnsureInjected" />（注册即自愈），
         /// 覆盖"覆盖发生后、周期性检测到来之前"的时间窗口内新注册回调的场景。
         /// </remarks>
-        /// <seealso cref="AesirArchitecturePlayerLoop.Register" />
+        /// <seealso cref="AesirPlayerLoop.Register" />
         [Test]
         public void Register_AfterThirdPartyWipe_HealsInjection()
         {
-            AesirArchitecturePlayerLoop.EnsureInjected();
+            AesirPlayerLoop.EnsureInjected();
             WipeAesirSystems();
 
-            AesirArchitecturePlayerLoop.Register(AesirArchitectureLifecyclePhase.BeforeUpdate, () => { });
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, () => { });
 
             var loop = PlayerLoop.GetCurrentPlayerLoop();
             Assert.IsTrue(LoopContainsNamed(ref loop, BeforeUpdateSystemName),

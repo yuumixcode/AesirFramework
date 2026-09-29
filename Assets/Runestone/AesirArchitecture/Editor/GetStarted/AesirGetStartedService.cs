@@ -21,16 +21,15 @@ namespace Runestone.AesirArchitecture.Editor
     /// 直接调用 Unity Package Manager 的 Sample API 导入（<see cref="ConfirmAndImportUpmSample" />）。
     /// </para>
     /// <para>
-    /// 示例元数据（显示名 / 描述 / 顺序 / 档位）以各包 package.json 的 samples 清单为唯一真源，
-    /// 本类不做逐示例硬编码登记——新增示例只需更新 package.json，窗口自动跟进。
+    /// 示例<b>清单</b>（出现与否、路径、显示名、描述）以各包 package.json 的 samples 列表为唯一真源——
+    /// 新增示例只需更新 package.json，窗口自动跟进。而分组 / 顺序 / 档位徽章是<b>代码侧展示启发式</b>
+    /// （登记点即 <see cref="GetSampleGroup" /> / <c>GetGroupOrder</c> / <c>GetSampleBadge</c> 三个方法，
+    /// 未命中启发式的示例落入默认分组）——需自定义分组归属时改这三个登记点，而非 package.json。
     /// </para>
     /// </summary>
     public static class AesirGetStartedService
     {
         #region 常量
-
-        /// <summary>Aesir 包的 package.json name 前缀（识别本框架包）。</summary>
-        public const string PackageIdPrefix = "cn.runestone.aesir.";
 
         /// <summary>UPM Git URL 安装的包缓存根目录（项目相对路径，Unity 不导入）。</summary>
         public const string PackageCacheRootPath = "Library/PackageCache";
@@ -59,14 +58,21 @@ namespace Runestone.AesirArchitecture.Editor
 
             /// <summary>package.json name（包唯一标识）。</summary>
             public string Id;
+
+            /// <summary>包目录名（Release 资产命名与默认安装目录名；更新器的补装与差集清理亦按此定位）。</summary>
+            public string DirName;
         }
 
-        /// <summary>已公开发布的 Aesir 包（顺序即概览卡片顺序）。</summary>
+        /// <summary>
+        /// 已公开发布的 Aesir 包唯一登记（顺序即概览卡片顺序）。更新器（补装目标 / 配套版本警告 /
+        /// Release 资产定位）与 Getting Started 概览卡片共用本登记——新增公开包只改此处。
+        /// </summary>
         public static readonly AesirKnownPackage[] KnownPackages =
         {
             new AesirKnownPackage
             {
                 Id = "cn.runestone.aesir.architecture",
+                DirName = "AesirArchitecture",
                 DisplayName = "Aesir Architecture",
                 Description = "渐进式 MVC 架构框架：能力接口组合、Command/Query 读写分发、MiniEvent 轻量事件与 " +
                               "ObservableValue 响应式属性、PlayerLoop 生命周期与帧粒度时间调度。可独立安装。"
@@ -74,6 +80,7 @@ namespace Runestone.AesirArchitecture.Editor
             new AesirKnownPackage
             {
                 Id = "cn.runestone.aesir.modules",
+                DirName = "AesirModules",
                 DisplayName = "Aesir Modules",
                 Description = "功能模块集合：轻量级 UI 框架（面板生命周期与四层 Canvas）、事件模块（订阅者过滤器与 " +
                               "SO 资产化）、音频模块与场景模块。依赖 Aesir Architecture。"
@@ -257,14 +264,14 @@ namespace Runestone.AesirArchitecture.Editor
                 // PackageCache 根目录按目录名前缀先过滤，避免逐包读 package.json
                 var dirName = Path.GetFileName(dir);
                 if (installType == AesirInstallType.Upm &&
-                    !dirName.StartsWith(PackageIdPrefix, StringComparison.Ordinal))
+                    !dirName.StartsWith(AesirAssetPaths.PackageIdPrefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
 
                 var meta = TryReadPackageMeta(dir);
                 if (meta == null || string.IsNullOrEmpty(meta.name) ||
-                    !meta.name.StartsWith(PackageIdPrefix, StringComparison.Ordinal))
+                    !meta.name.StartsWith(AesirAssetPaths.PackageIdPrefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -395,6 +402,10 @@ namespace Runestone.AesirArchitecture.Editor
         #region 分组与档位
 
         /// <summary>示例分组标题（渐进式教学顺序：MVC → MVP → 功能演示 → 实战 → 各模块）。</summary>
+        /// <remarks>
+        /// 展示启发式的登记点之一：按显示名前缀归类，未命中任何前缀的示例落入「功能演示」默认组。
+        /// 新增教学分组时在此追加前缀规则，并同步 <c>GetGroupOrder</c> 的排序键。
+        /// </remarks>
         public static string GetSampleGroup(AesirSampleInfo sample)
         {
             var name = sample.DisplayName ?? string.Empty;
@@ -770,8 +781,8 @@ namespace Runestone.AesirArchitecture.Editor
             }
             catch (Exception e)
             {
-                Debug.LogWarning(
-                    $"[Aesir GetStarted] 解析 package.json 失败，已跳过该目录：{packageDirAbsPath}\n{e.Message}");
+                AesirArchitectureDebug.LogWarning("AesirGetStarted",
+                    $"解析 package.json 失败，已跳过该目录：{packageDirAbsPath}\n{e.Message}");
                 return null;
             }
         }
