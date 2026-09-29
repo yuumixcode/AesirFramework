@@ -253,7 +253,17 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 最后一个已经加载的场景，Scene 结构体（静态门面，经单例转发）。
         /// </summary>
-        public static Scene LastLoadedScene => Instance._lastLoadedScene;
+        /// <remarks>
+        /// 只读查询，<b>不创建模块实例</b>：无实例时返回 <c>default</c>（等价于"本模块尚未加载过任何场景"）。
+        /// </remarks>
+        public static Scene LastLoadedScene
+        {
+            get
+            {
+                TryGetExisting(out var module);
+                return module != null ? module._lastLoadedScene : default;
+            }
+        }
 
         /// <summary>
         /// 叠加场景路径（只读快照，静态门面）。含所有经本模块 Additive 加载、尚未卸载的场景。
@@ -263,7 +273,17 @@ namespace Runestone.AesirModules
         /// <see cref="InvalidOperationException" />。本属性不在逐帧路径上（仅状态查询与测试断言使用），无需缓存。
         /// </para>
         /// </summary>
-        public static IReadOnlyList<string> AddedScenePaths => Instance._addedScenePaths.ToArray();
+        /// <remarks>
+        /// 只读查询，<b>不创建模块实例</b>：无实例时返回空列表（等价于"没有本模块加载的叠加场景"）。
+        /// </remarks>
+        public static IReadOnlyList<string> AddedScenePaths
+        {
+            get
+            {
+                TryGetExisting(out var module);
+                return module != null ? (IReadOnlyList<string>)module._addedScenePaths.ToArray() : Array.Empty<string>();
+            }
+        }
 
         /// <summary>
         /// 场景加载完成事件（静态门面）。Single 与 Additive 均触发；参数为场景路径。
@@ -287,7 +307,9 @@ namespace Runestone.AesirModules
         {
             get
             {
-                var instanceScene = Instance.bootstrapScene;
+                // 只读查询，不创建模块实例：无实例时直接回退配置资产的全局启动场景
+                TryGetExisting(out var module);
+                var instanceScene = module != null ? module.bootstrapScene : null;
                 return instanceScene != null ? instanceScene : SceneModuleConfigSO.Instance.bootstrapScene;
             }
         }
@@ -324,6 +346,30 @@ namespace Runestone.AesirModules
                 _instance = AesirModules.GetOrAddChild<SceneModule>();
                 return _instance;
             }
+        }
+
+        /// <summary>
+        /// 非创建式单例获取：实例不存在时返回 <c>false</c>，<b>不触发懒创建</b>
+        /// （与 <see cref="UIModule.TryGetExisting" /> 同款）。
+        /// </summary>
+        /// <remarks>
+        /// 供"只读状态查询"使用：读 <see cref="LastLoadedScene" /> / <see cref="AddedScenePaths" /> /
+        /// <see cref="BootstrapSceneAssetWrapper" /> 这类纯状态时不应凭空造出 <c>[Aesir Modules]</c> 宿主——
+        /// 旧行为在场景卸载、编辑器工具或"启动即查询"的调用点会留下一个跟着 DDOL 走的空壳模块
+        /// （其 Inspector 配置与运行状态全为默认值，却看起来像已就绪）。
+        /// 写操作（加载 / 卸载 / 设置激活场景）仍走 <see cref="Instance" />：它们本就需要一个模块宿主。
+        /// </remarks>
+        /// <param name="module">找到时输出现有实例；否则输出 <c>null</c></param>
+        /// <returns>存在可用实例则返回 <c>true</c></returns>
+        internal static bool TryGetExisting(out SceneModule module)
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<SceneModule>(FindObjectsInactive.Include);
+            }
+
+            module = _instance;
+            return _instance != null;
         }
 
         /// <summary>

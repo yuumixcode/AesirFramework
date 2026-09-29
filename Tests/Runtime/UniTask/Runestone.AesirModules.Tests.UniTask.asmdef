@@ -1,0 +1,29 @@
+{
+  "name": "Runestone.AesirModules.Tests.UniTask",
+  "rootNamespace": "Runestone.AesirModules.Tests",
+  "references": [
+    "Runestone.AesirArchitecture",
+    "Runestone.AesirModules",
+    "Runestone.AesirModules.UniTask",
+    "UniTask",
+    "UnityEngine.TestRunner"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Sirenix.OdinInspector.Attributes.dll",
+    "Sirenix.Serialization.dll",
+    "Sirenix.Serialization.Config.dll",
+    "Sirenix.Utilities.dll"
+  ],
+  "autoReferenced": false,
+  "defineConstraints": [
+    "UNITY_INCLUDE_TESTS",
+    "AESIR_MODULES_UNITASK"
+  ],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
