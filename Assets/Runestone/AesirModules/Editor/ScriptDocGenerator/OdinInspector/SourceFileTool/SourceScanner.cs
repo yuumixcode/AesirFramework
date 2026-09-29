@@ -720,8 +720,10 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             // fail-closed：跳过并告警——该成员的文档请写在接口声明处（接口页会展示）。
             if (memberName.Contains('.'))
             {
-                Debug.LogWarning("[ScriptDocGenerator] 检测到显式接口实现成员（" + declText.Trim() +
-                                 "）：其 XML 文档无法自动关联（源码端拿不到接口命名空间限定，且裸名可能错配同名公开成员），已跳过。" + "请把该成员的文档写在接口声明处。");
+                AesirModulesDebug.LogWarning(nameof(SourceScanner), AesirModulesDebug.ScriptDocGeneratorTag,
+                    "检测到显式接口实现成员（" + declText.Trim() +
+                    "）：其 XML 文档无法自动关联（源码端拿不到接口命名空间限定，且裸名可能错配同名公开成员），已跳过。" +
+                    "请把该成员的文档写在接口声明处。");
                 return;
             }
 

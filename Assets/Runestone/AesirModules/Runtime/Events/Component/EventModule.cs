@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection;
 using Runestone.AesirArchitecture;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Runestone.AesirModules
 {
@@ -26,7 +25,9 @@ namespace Runestone.AesirModules
     /// <para>
     /// <b>快照语义与重入安全</b>：每趟分发基于注册表快照迭代——回调内退订/注册只影响后续分发，
     /// 不干扰本趟；回调内同步发布事件（重入）使用独立的迭代缓冲区与参数数组，
-    /// 外层分发不受覆写影响。性能计时（executionMsLimit）仅对顶层分发生效。
+    /// 外层分发不受覆写影响。发布者同理按快照校正：内层分发覆写共享参数实例的
+    /// <see cref="AesirEventArgs.Sender" /> 后，外层遍历会把 Sender 重新校正回本趟发布者，
+    /// 过滤器判定与订阅者读取均不受内层污染。性能计时（executionMsLimit）仅对顶层分发生效。
     /// 排序为 Priority 主键 + 注册序号次键的稳定排序，同优先级按注册顺序执行。
     /// </para>
     /// <para>
@@ -34,17 +35,53 @@ namespace Runestone.AesirModules
     /// </para>
     /// </summary>
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-999)]
     [AddComponentMenu("Aesir Modules/Event Module")]
     public class EventModule : AesirMonoBehaviour
     {
+        /// <summary>
+        /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效。
+        /// </summary>
+        /// <remarks>
+        /// 默认 true（跨场景持久）。与 <see cref="AudioModule" /> 的 <c>dontDestroyOnLoad</c>
+        /// 同名同义，保持包内单例的生命周期决策一致。
+        /// <para>
+        /// <b>为什么预放置路径同样需要它：</b>本模块的双注册表（AttributeBindings / DynamicBindings）
+        /// 是实例字段，随模块本体一同存亡。预放置实例若不加入 DDOL，场景卸载时
+        /// <see cref="OnDestroy" /> 会把单例置空、注册表随之丢失，跨场景常驻的订阅者
+        /// 再也收不到任何事件，其 <see cref="AutoRemoveListenerHandle" /> 闭包也会捕获已死的实例。
+        /// 运行时自动创建的实例挂载在 [Aesir Modules] 宿主下（非根物体），DDOL 跟随宿主决策，
+        /// 本字段不参与判断。
+        /// </para>
+        /// <para>
+        /// <b>行为变更提示</b>：本字段为后续版本新增，默认 <c>true</c>——场景里已放置的根物体
+        /// <see cref="EventModule" /> 从下一个会话起会被迁入 DDOL 场景（此前随场景卸载销毁）。
+        /// 需要"随场景卸载"的旧行为请显式取消勾选。
+        /// </para>
+        /// </remarks>
+        [SerializeField]
+        bool dontDestroyOnLoad = true;
+
         #region 公开 API — 事件触发
 
         /// <summary>
         /// 触发事件。合并两个注册表的订阅者，按优先级排序后依次调用。
+        /// <para>
+        /// 走非创建式获取：订阅表是<b>实例字段</b>，因此"不存在实例"等价于"不存在任何订阅者"，
+        /// 分发无事可做——若走 <see cref="Instance" /> 会在场景卸载等时机重建 DDOL 宿主
+        /// （详见 <see cref="TryGetExisting" /> 的说明）。
+        /// </para>
         /// </summary>
         public static void InvokeEvent<TEventArgs>(object sender, TEventArgs eventArgs)
-            where TEventArgs : AesirEventArgs =>
-            Instance.RaiseEvent(sender, eventArgs);
+            where TEventArgs : AesirEventArgs
+        {
+            if (!TryGetExisting(out var module))
+            {
+                return;
+            }
+
+            module.RaiseEvent(sender, eventArgs);
+        }
 
         #endregion
 
@@ -90,7 +127,10 @@ namespace Runestone.AesirModules
                 return;
             }
 
-            eventArgs.SetSender(sender);
+            // 本趟分发的发布者快照。共享参数实例（缓存复用的 _evt、AesirEventArgsSO 资产内实例）
+            // 的 Sender 会被内层（重入）分发覆写，外层遍历期间一律以此快照为准
+            var dispatchSender = sender;
+            eventArgs.SetSender(dispatchSender);
 
             var key = AesirEventUtility.GetEventBindingKey(eventArgs);
 
@@ -164,6 +204,14 @@ namespace Runestone.AesirModules
                         continue;
                     }
 
+                    // 重入安全：前一个订阅者回调内的内层分发可能已把共享参数实例的 Sender
+                    // 覆写为内层发布者。以本趟快照重新校正（引用相等即无操作），
+                    // 使过滤器与订阅者读到的始终是外层发布者
+                    if (!ReferenceEquals(eventArgs.Sender, dispatchSender))
+                    {
+                        eventArgs.SetSender(dispatchSender);
+                    }
+
                     try
                     {
                         if (filters != null && !PassFilters(filters, eventArgs, binding))
@@ -173,16 +221,18 @@ namespace Runestone.AesirModules
 
                         binding.Invoke(invokeArgs);
                     }
-                    catch (TargetInvocationException ex)
-                    {
-                        AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag,
-                            $"订阅者 {binding.Subscriber} 处理事件 " +
-                            $"{AesirEventUtility.GetEventName<TEventArgs>()} 时出错：" +
-                            $"{ex.InnerException?.Message}");
-                    }
                     catch (Exception ex)
                     {
-                        AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag, $"事件分发异常：{ex.Message}");
+                        // 分发路径已无 MethodInfo.Invoke（Attribute 订阅走表达式树委托、
+                        // Script 订阅走委托直调），不存在 TargetInvocationException 包装，
+                        // 其诊断信息在此统一补齐：订阅者身份 + 事件名 + 内层异常（若有）
+                        var inner = ex.InnerException != null
+                            ? $"，内层异常：{ex.InnerException.Message}"
+                            : string.Empty;
+                        AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag,
+                            $"事件分发异常：{ex.Message}" +
+                            $"（订阅者 {binding.Subscriber}，事件 " +
+                            $"{AesirEventUtility.GetEventName<TEventArgs>()}{inner}）");
                     }
                 }
             }
@@ -217,6 +267,10 @@ namespace Runestone.AesirModules
         /// 逐个执行过滤器检查，任一过滤器不通过即拦截该订阅者。
         /// 接收具体 <see cref="List{T}" /> 避免接口枚举装箱分配。
         /// </summary>
+        /// <remarks>
+        /// 调用方保证 <paramref name="eventArgs" /> 的 <see cref="AesirEventArgs.Sender" />
+        /// 已是本趟分发的发布者（遍历中按快照校正），过滤器可直接据此判定。
+        /// </remarks>
         static bool PassFilters(List<ISubscriberFilter> filters,
             AesirEventArgs eventArgs,
             BindingInfo binding)
@@ -272,9 +326,11 @@ namespace Runestone.AesirModules
                     return _instance;
                 }
 
-                // 尝试在已加载的场景中查找预放置的实例
+                // 尝试在已加载的场景中查找预放置的实例（含未激活对象：
+                // Unity 不对未激活物体调用 Awake，"随用随开"式预放置的模块若被 Exclude 漏掉，
+                // 会在这里被判为不存在而重复创建，Inspector 配置值从一开始就被忽略）
                 // 使用 FindAnyObjectByType 而非 FindFirstObjectByType，后者因依赖 InstanceID 排序在 Unity 6 中已废弃
-                _instance = FindAnyObjectByType<EventModule>();
+                _instance = FindAnyObjectByType<EventModule>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;
@@ -284,6 +340,28 @@ namespace Runestone.AesirModules
                 _instance = AesirModules.GetOrAddChild<EventModule>();
                 return _instance;
             }
+        }
+
+        /// <summary>
+        /// 非创建式单例获取：实例不存在时返回 <c>false</c>，<b>不触发懒创建</b>。
+        /// </summary>
+        /// <remarks>
+        /// 供 <see cref="InvokeEvent{TEventArgs}" /> 使用：订阅表是实例字段，没有实例就没有订阅者，
+        /// 分发无事可做。若走 <see cref="Instance" />，在场景卸载/退出等时机触发"发布事件"会在正在卸载的
+        /// 场景里重建 <c>[Aesir Modules]</c> 宿主并加入 DDOL，留下一个没有注册表的泄漏宿主。
+        /// 订阅侧（<see cref="AddListener(object)" /> 等）仍需创建语义，不受本方法影响。
+        /// </remarks>
+        /// <param name="module">找到时输出现有实例；否则输出 <c>null</c></param>
+        /// <returns>存在可用实例则返回 <c>true</c></returns>
+        internal static bool TryGetExisting(out EventModule module)
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<EventModule>(FindObjectsInactive.Include);
+            }
+
+            module = _instance;
+            return _instance != null;
         }
 
         void Awake()
@@ -296,6 +374,12 @@ namespace Runestone.AesirModules
             }
 
             _instance = this;
+
+            // 非根物体（运行时自动创建于 [Aesir Modules] 宿主下）时 DDOL 跟随宿主，本字段不参与判断
+            if (dontDestroyOnLoad && transform.root == transform)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
         }
 
         void OnDestroy()
@@ -306,6 +390,26 @@ namespace Runestone.AesirModules
             }
         }
 
+        /// <summary>
+        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// </summary>
+        /// <remarks>
+        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
+        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
+        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
+        /// <c>FindAnyObjectByType</c> 兜底重发现。
+        /// <para>
+        /// 不依赖 Unity fake-null 隐式救援：<c>Instance</c> 入口的 <c>_instance != null</c>
+        /// 恰好能识别已销毁对象，但那是运算符重载的副作用而非显式重置，
+        /// 与包内铁律（fake-null 隐式重置已废弃）不符。
+        /// </para>
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            _instance = null;
+        }
+
         #endregion
 
         #region 注册表
@@ -313,13 +417,20 @@ namespace Runestone.AesirModules
         /// <summary>
         /// Attribute 订阅注册表。以事件类型 AssemblyQualifiedName 为键。
         /// </summary>
-        public Dictionary<string, List<BindingInfo>> AttributeBindings =
+        /// <remarks>
+        /// internal：注册表是实现细节（订阅/退订必须经公开 API 走同一套绑定键与死引用清理），
+        /// 包外不可见；包内测试经 <c>InternalsVisibleTo</c> 访问。
+        /// </remarks>
+        internal Dictionary<string, List<BindingInfo>> AttributeBindings =
             new Dictionary<string, List<BindingInfo>>();
 
         /// <summary>
         /// Script 订阅注册表。以事件类型 AssemblyQualifiedName 为键。
         /// </summary>
-        public Dictionary<string, List<BindingInfo>> DynamicBindings =
+        /// <remarks>
+        /// internal 的理由同 <see cref="AttributeBindings" />。
+        /// </remarks>
+        internal Dictionary<string, List<BindingInfo>> DynamicBindings =
             new Dictionary<string, List<BindingInfo>>();
 
         /// <summary>
@@ -433,9 +544,10 @@ namespace Runestone.AesirModules
                         var bindingKey = ResolveBindingKey(attr, method);
                         if (string.IsNullOrEmpty(bindingKey))
                         {
-                            Debug.LogWarning($"方法 {method.Name}（{subscriber.GetType().Name}）无法确定监听的事件类型。" +
-                                             "请通过 [AesirListener(typeof(MyEventArgs))] 显式指定，" +
-                                             "或为方法添加一个 AesirEventArgs 子类参数。");
+                            AesirModulesDebug.LogWarning(AesirModulesDebug.EventModuleTag,
+                                $"方法 {method.Name}（{subscriber.GetType().Name}）无法确定监听的事件类型。" +
+                                "请通过 [AesirListener(typeof(MyEventArgs))] 显式指定，" +
+                                "或为方法添加一个 AesirEventArgs 子类参数。");
                             continue;
                         }
 
@@ -448,7 +560,8 @@ namespace Runestone.AesirModules
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"绑定 {method.Name}（{subscriber.GetType().Name}）时出错：{e.Message}");
+                    AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag,
+                        $"绑定 {method.Name}（{subscriber.GetType().Name}）时出错：{e.Message}");
                 }
             }
         }
@@ -537,10 +650,6 @@ namespace Runestone.AesirModules
             }
 
             var eventType = eventArgs.GetType();
-            if (!typeof(AesirEventArgs).IsAssignableFrom(eventType))
-            {
-                throw new ArgumentException($"类型 {eventType.Name} 不是有效的 AesirEventArgs。");
-            }
 
             // Delegate.CreateDelegate 把 Action<AesirEventArgs> 重新包成 Action<TEventArgs>
             var wrapperType = typeof(Action<>).MakeGenericType(eventType);

@@ -24,6 +24,20 @@ namespace Runestone.AesirModules
         static readonly Dictionary<Type, string> KeyCache = new Dictionary<Type, string>();
 
         /// <summary>
+        /// 域加载时清空绑定键缓存，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// </summary>
+        /// <remarks>
+        /// 缓存值是 <see cref="Type.AssemblyQualifiedName" />，纯派生数据、无外部注入——
+        /// 清空后下次查询按需重建，行为与跨会话复用完全等价（与「编辑器注入的静态能力」不同，
+        /// 那类静态在关闭域重载时反而必须保留，不适用本重置）。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            KeyCache.Clear();
+        }
+
+        /// <summary>
         /// 检测对象是否为 Unity 假 null（已销毁但引用未置空）。
         /// </summary>
         /// <param name="obj">待检测的对象。</param>

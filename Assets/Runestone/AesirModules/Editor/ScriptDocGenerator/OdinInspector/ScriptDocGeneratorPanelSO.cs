@@ -275,7 +275,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             if (selectedMonoScript)
             {
                 _targetType = selectedMonoScript.GetClass();
-                Debug.Log("识别到 Type: " + _targetType + "，已更新 TargetType");
+                AesirModulesDebug.Log(AesirModulesDebug.ScriptDocGeneratorTag,
+                    "识别到 Type: " + _targetType + "，已更新 TargetType");
             }
         }
 
@@ -303,7 +304,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 so.Types = _temporaryTypes;
                 ProjectWindowUtil.CreateAsset(so, filePathWithExtension);
                 ScriptDocGeneratorEditorUtility.PingAndSelectAsset(filePathWithExtension);
-                Debug.Log("请更改资源名称，避免下次生成时覆盖内容");
+                AesirModulesDebug.Log(AesirModulesDebug.ScriptDocGeneratorTag, "请更改资源名称，避免下次生成时覆盖内容");
             }
 
             var image2 = SdfIcons.CreateTransparentIconTexture(SdfIconType.GearFill, Color.white, 24, 24, 0);
@@ -352,7 +353,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 case TypeSource.SingleType:
                     if (_targetType == null)
                     {
-                        Debug.LogError("请选择有效的目标类型");
+                        AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "请选择有效的目标类型");
                         return;
                     }
 
@@ -361,7 +362,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 case TypeSource.MultipleTypes:
                     if (!typesCache && _temporaryTypes.Count <= 0)
                     {
-                        Debug.LogError("设置有效的 Type 对象列表或者设置 TypeCacheSO 资源");
+                        AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                            "设置有效的 Type 对象列表或者设置 TypeCacheSO 资源");
                         return;
                     }
 
@@ -373,7 +375,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 case TypeSource.SingleAssembly:
                     if (targetAssemblyFullName is null or NoneAssembly)
                     {
-                        Debug.LogError("请选择目标程序集，不能为 " + NoneAssembly);
+                        AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                            "请选择目标程序集，不能为 " + NoneAssembly);
                         return;
                     }
 
@@ -382,7 +385,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 case TypeSource.MultipleAssemblies:
                     if (selectedAssemblyFullNames is not { Count: > 0 })
                     {
-                        Debug.LogError("请选择至少一个目标程序集");
+                        AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "请选择至少一个目标程序集");
                         return;
                     }
 
@@ -390,7 +393,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     selectedAssemblyFullNames.RemoveAll(name => name == NoneAssembly);
                     if (selectedAssemblyFullNames.Count == 0)
                     {
-                        Debug.LogError("请选择有效的目标程序集，不能为 " + NoneAssembly);
+                        AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                            "请选择有效的目标程序集，不能为 " + NoneAssembly);
                         return;
                     }
 

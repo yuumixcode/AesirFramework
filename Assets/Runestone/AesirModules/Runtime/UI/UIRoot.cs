@@ -42,12 +42,34 @@ namespace Runestone.AesirModules
         internal const int UILayerIndex = 5;
         const int TransparentFXLayerIndex = 1;
         const int UILayerMask = (1 << UILayerIndex) | (1 << TransparentFXLayerIndex);
-        internal const string LayerCanvasesFieldName = nameof(_layerCanvases);
+        internal const string LayerCanvasesFieldName = nameof(layerCanvases);
         internal const string UICanvasConfigFieldName = nameof(uiCanvasConfigSO);
         internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
 
         static UIRoot _instance;
         static UICanvasConfigSO _defaultCanvasConfig;
+
+        /// <summary>
+        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// </summary>
+        /// <remarks>
+        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
+        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
+        /// <c>_defaultCanvasConfig</c> 是运行时按需创建的默认配置资产（见 <c>CreateDefault</c>），
+        /// 非场景引用：解除引用后交由 GC 回收（无强引用），下次访问 <c>DefaultCanvasConfig</c> 时重建。
+        /// <c>CreateInputModule</c> 由 Runestone.AesirModules.InputSystem 程序集注册（<c>InputSystemModuleHook</c>：
+        /// 编辑器 <c>[InitializeOnLoad]</c> 静态构造 + 运行时 <c>BeforeSceneLoad</c> 两级注册），
+        /// 此处清空不会丢注册——本重置跑在 <c>SubsystemRegistration</c>，早于 <c>BeforeSceneLoad</c>。
+        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
+        /// <c>FindAnyObjectByType</c> 兜底重发现。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            _instance = null;
+            _defaultCanvasConfig = null;
+            CreateInputModule = null;
+        }
 
         static readonly Dictionary<UILayer, int> LayerSortOrders = new Dictionary<UILayer, int>
         {
@@ -88,7 +110,9 @@ namespace Runestone.AesirModules
         /// Inspector 呈现（仅运行时显示）由 <c>UIRootAttributeProcessor</c> 注入；
         /// <see cref="HideInInspector" /> 兜底非 Odin 环境的默认 Inspector，运行时代码不持有 Inspector 样式特性。
         /// </remarks>
-        readonly List<LayerCanvasEntry> _layerCanvases = new List<LayerCanvasEntry>();
+        [SerializeField]
+        [HideInInspector]
+        List<LayerCanvasEntry> layerCanvases = new List<LayerCanvasEntry>();
 
         /// <summary>
         /// 自定义输入模块创建回调。
@@ -109,7 +133,8 @@ namespace Runestone.AesirModules
 
                 // 尝试在已加载的场景中查找预放置的实例
                 // 使用 FindAnyObjectByType 而非 FindFirstObjectByType，后者因依赖 InstanceID 排序在 Unity 6 中已废弃
-                _instance = FindAnyObjectByType<UIRoot>();
+                // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
+                _instance = FindAnyObjectByType<UIRoot>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;
@@ -145,7 +170,10 @@ namespace Runestone.AesirModules
         {
             if (_instance != null && _instance != this)
             {
-                Destroy(gameObject);
+                // 对齐 RAA 与 RAM 其余模块的销毁粒度（AesirArchitecture / MonoLifecycleProxy / UIModule /
+                // AudioModule / EventModule / SceneModule）：只销毁本组件，不连带销毁用户物体上的其它组件，
+                // 也不连带销毁已按约定搭好的四层 Canvas 层级
+                Destroy(this);
                 return;
             }
 
@@ -250,7 +278,7 @@ namespace Runestone.AesirModules
                 return;
             }
 
-            foreach (var entry in _layerCanvases)
+            foreach (var entry in layerCanvases)
             {
                 if (entry.canvas == null)
                 {
@@ -294,7 +322,8 @@ namespace Runestone.AesirModules
             }
 
             // 全场景检查而非仅检查 UIRoot 自身子物体，避免宿主场景已有 EventSystem 时重复创建导致输入事件行为未定义
-            if (FindAnyObjectByType<EventSystem>() != null)
+            // 含未激活对象：被禁用的既有 EventSystem 同样属于"已存在"，Exclude 会让人误判缺失而再造一个
+            if (FindAnyObjectByType<EventSystem>(FindObjectsInactive.Include) != null)
             {
                 return;
             }
@@ -325,30 +354,56 @@ namespace Runestone.AesirModules
 
                 var layerName = layer + "Layer";
 
-                // 兼容旧版已搭建层级：引用缺失时按约定名回收既有子物体，避免重复创建
+                // 兼容旧版已搭建层级：引用缺失时按约定名回收既有子物体，避免重复创建；
+                // 同名子物体存在但缺少 Canvas 时就地补齐（既不重复创建，也不静默跳过——跳过会让该层永久缺失）
                 var existing = FindChild(layerName);
                 if (existing != null)
                 {
-                    var existingCanvas = existing.GetComponent<Canvas>();
-                    if (existingCanvas != null)
-                    {
-                        SetLayerCanvas(layer, existingCanvas);
-                    }
-
+                    SetLayerCanvas(layer, BuildLayerCanvas(existing, layer));
                     continue;
                 }
 
                 var layerGo = new GameObject(layerName);
                 layerGo.transform.SetParent(transform, false);
-                layerGo.AddComponent<RectTransform>();
-                var newCanvas = layerGo.AddComponent<Canvas>();
-                newCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-                newCanvas.worldCamera = uiCamera;
-                newCanvas.sortingOrder = LayerSortOrders[layer];
-                layerGo.AddComponent<CanvasScaler>();
-                layerGo.AddComponent<GraphicRaycaster>();
-                SetLayerCanvas(layer, newCanvas);
+                SetLayerCanvas(layer, BuildLayerCanvas(layerGo.transform, layer));
             }
+        }
+
+        /// <summary>
+        /// 在指定层物体上补齐并配置层 Canvas（新建层与"同名子物体缺少 Canvas"的修复路径共用，
+        /// 避免两条路径行为漂移）。已具备的组件不重复添加。
+        /// </summary>
+        Canvas BuildLayerCanvas(Transform layerTransform, UILayer layer)
+        {
+            var layerGo = layerTransform.gameObject;
+
+            // 层根须为 RectTransform：新建层由普通 GameObject 转换，已是 RectTransform 的既有层跳过
+            if (!(layerTransform is RectTransform))
+            {
+                layerGo.AddComponent<RectTransform>();
+            }
+
+            var canvas = layerGo.GetComponent<Canvas>();
+            if (canvas == null)
+            {
+                canvas = layerGo.AddComponent<Canvas>();
+            }
+
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = uiCamera;
+            canvas.sortingOrder = LayerSortOrders[layer];
+
+            if (layerGo.GetComponent<CanvasScaler>() == null)
+            {
+                layerGo.AddComponent<CanvasScaler>();
+            }
+
+            if (layerGo.GetComponent<GraphicRaycaster>() == null)
+            {
+                layerGo.AddComponent<GraphicRaycaster>();
+            }
+
+            return canvas;
         }
 
         internal static void SetLayerRecursively(Transform root, int layer)
@@ -365,7 +420,7 @@ namespace Runestone.AesirModules
         /// </summary>
         Canvas FindLayerCanvas(UILayer layer)
         {
-            foreach (var entry in _layerCanvases)
+            foreach (var entry in layerCanvases)
             {
                 if (entry.layer == layer)
                 {
@@ -381,16 +436,16 @@ namespace Runestone.AesirModules
         /// </summary>
         void SetLayerCanvas(UILayer layer, Canvas canvas)
         {
-            for (var i = 0; i < _layerCanvases.Count; i++)
+            for (var i = 0; i < layerCanvases.Count; i++)
             {
-                if (_layerCanvases[i].layer == layer)
+                if (layerCanvases[i].layer == layer)
                 {
-                    _layerCanvases[i] = new LayerCanvasEntry(layer, canvas);
+                    layerCanvases[i] = new LayerCanvasEntry(layer, canvas);
                     return;
                 }
             }
 
-            _layerCanvases.Add(new LayerCanvasEntry(layer, canvas));
+            layerCanvases.Add(new LayerCanvasEntry(layer, canvas));
         }
 
         /// <summary>

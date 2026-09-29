@@ -6,8 +6,6 @@
     "Runestone.AesirModules",
     "Runestone.AesirModules.Editor",
     "Runestone.AesirModules.Editor.Bootstrap",
-    "Runestone.AesirModules.OdinInspector",
-    "Runestone.AesirModules.Editor.OdinInspector",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],
@@ -26,8 +24,7 @@
   ],
   "autoReferenced": false,
   "defineConstraints": [
-    "UNITY_INCLUDE_TESTS",
-    "ODIN_INSPECTOR"
+    "UNITY_INCLUDE_TESTS"
   ],
   "versionDefines": [],
   "noEngineReferences": false

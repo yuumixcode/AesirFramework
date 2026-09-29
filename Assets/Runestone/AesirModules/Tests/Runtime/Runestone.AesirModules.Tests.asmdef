@@ -19,8 +19,7 @@
   ],
   "autoReferenced": false,
   "defineConstraints": [
-    "UNITY_INCLUDE_TESTS",
-    "ODIN_INSPECTOR"
+    "UNITY_INCLUDE_TESTS"
   ],
   "versionDefines": [],
   "noEngineReferences": false

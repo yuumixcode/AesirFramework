@@ -25,7 +25,7 @@ namespace Runestone.AesirModules
         /// 加载场景并等待完成。Single 模式：卸载全部场景、重设激活场景、加载成功后清空叠加追踪（失败时保留）。
         /// </summary>
         /// <param name="scenePath">场景路径（须已登记 BuildSettings）。</param>
-        /// <param name="onProgress">逐帧进度回调（0-1，已按 0.9 激活上限归一化），随等待期间持续报告。</param>
+        /// <param name="onProgress">逐帧进度回调（0-1，已按 <c>SceneModuleConfigSO.progressCap</c> 归一化，默认 0.9），随等待期间持续报告。</param>
         /// <param name="cancellationToken">取消令牌（仅中止等待，流程本身继续完成）。</param>
         public static UniTask LoadSceneSingleAsync(string scenePath,
             Action<float> onProgress = null,

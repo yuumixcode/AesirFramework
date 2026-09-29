@@ -35,7 +35,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         {
             if (!relativePath.StartsWith("Assets"))
             {
-                Debug.LogError("相对路径必须以 Assets 开头");
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "相对路径必须以 Assets 开头");
                 return;
             }
 

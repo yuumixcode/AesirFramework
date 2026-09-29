@@ -12,6 +12,8 @@ namespace Runestone.AesirModules.Editor
     /// <para>
     /// 维护规则：游戏工程以 UPM 包（<c>com.cysharp.unitask</c>）安装 UniTask 时，
     /// 宏由核心程序集与适配程序集的 versionDefines 全权管理（装/卸自动生效），本维护器不干预全局符号；
+    /// 已知边界：UPM 判定依赖 Package Manager 的已注册包列表，若 <c>delayCall</c> 触发时列表尚未就绪会误判为
+    /// 非 UPM 形态而写入全局宏，此后 UPM 形态只返回"不干预"、不会回收该残留（功能无害，属 ProjectSettings 残留）；
     /// 其他安装形态（unitypackage / DLL 导入）按「域内是否存在 UniTask 程序集」
     /// 增删全局符号——存在则补齐，不存在则移除。
     /// </para>

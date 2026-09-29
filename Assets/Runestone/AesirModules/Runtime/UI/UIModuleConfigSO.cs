@@ -67,7 +67,7 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 注册配置加载器，替代 Resources 兜底（注册后 <see cref="Instance" /> 只经加载器解析）。
-        /// 须在 <see cref="UIModule" /> 首次实例化（其 Awake 读取配置）之前调用，
+        /// 须在 <see cref="UIModule" /> 首次<b>消费配置</b>（读取 <c>MaskMode</c>，其惰性解析首次访问）之前调用，
         /// 例如 <c>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]</c> 或首个场景的引导脚本中。
         /// </summary>
         /// <param name="loader">同步加载器（加载契约与 <see cref="IUIAssetLoader" /> 同为同步语义）；返回 null 时按内存默认配置兜底。</param>

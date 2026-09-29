@@ -5,10 +5,11 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Runestone.AesirArchitecture;
-using Sirenix.OdinInspector;
 using UnityEngine;
 using Object = UnityEngine.Object;
+// Odin / UnityEditor 只在编辑器侧使用：本程序集是全平台程序集，Player 构建不应依赖 Odin 运行时程序集
 #if UNITY_EDITOR
+using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEditor.SceneManagement;
@@ -25,14 +26,18 @@ namespace Runestone.AesirModules
         /// partial 分部类: 生成自动维护文件（后缀可选，默认 <c>.designer.cs</c>，整体覆盖）+
         /// 手写 partial <c>*.cs</c>（仅首次生成）。
         /// </summary>
+#if UNITY_EDITOR
         [InspectorName("Partial 分部类")]
+#endif
         PartialClass,
 
         /// <summary>
         /// 同一脚本增量: 只替换目标脚本内「绑定字段（自动生成）」region 的内容（含 BindComponents 方法），
         /// region 外的内容归开发者所有。
         /// </summary>
+#if UNITY_EDITOR
         [InspectorName("同一脚本增量")]
+#endif
         SameScriptIncrement
     }
 
@@ -64,6 +69,7 @@ namespace Runestone.AesirModules
     /// 占位不会写进生成代码）。
     /// </para>
     /// </summary>
+#if UNITY_EDITOR
     [DetailedInfoBox("Binder 使用说明（工作流 / 自动检查时机）",
         "【工作流】\n" +
         "① 在需要绑定引用的子物体上挂 BinderTag 标记（可通过层级右键菜单「GameObject/Aesir/添加 BinderTag 标记」快速添加），默认绑定 1 个组件，用「绑定组件数量」声明要绑定的组件个数；\n" +
@@ -72,99 +78,144 @@ namespace Runestone.AesirModules
         "④ 编译完成后自动把生成脚本挂载到当前物体并执行一次绑定。\n" + "\n【自动检查时机】\n" + "「开启自动检查」在以下时机执行：\n" +
         "① 脚本重编译完成后（每次进入 Play、修改脚本触发编译等都会重编译）；\n" + "② 点击「构建绑定单元」或「检查绑定」按钮时。\n" +
         "注意：在编辑器内移动物体层级不会实时触发检查——路径漂移会在下次重编译或手动点击「检查绑定」时提示。")]
+#endif
     [DisallowMultipleComponent]
     public class BinderAssistant : AesirMonoBehaviour
     {
         /// <summary>EditorPrefs 键: 待自动挂载的物体 InstanceID。</summary>
+#if UNITY_EDITOR
         const string PendingBindInstanceIdKey = "AesirModules.BinderAssistant.PendingBind.InstanceId";
 
         /// <summary>EditorPrefs 键: 待自动挂载的脚本类型完整名称。</summary>
         const string PendingBindTypeKey = "AesirModules.BinderAssistant.PendingBind.TypeFullName";
 
-        /// <summary>已扫描的 AbstractContext 派生类缓存（域重载自动失效）。</summary>
+        /// <summary>
+        /// 已扫描的 AbstractContext 派生类缓存。
+        /// </summary>
+        /// <remarks>
+        /// 有意不随 Play 重置，也不做显式失效：缓存的更新时机与"域内类型集合的更新时机"天然绑定——
+        /// 新增/删除 <c>AbstractContext</c> 派生类必须先经过脚本编译，而编译必然触发真正的域重载，
+        /// 静态字段随之归零、缓存自然重扫。反过来，关闭 Domain Reload 的 Play 会话不会改变类型集合，
+        /// 故不存在"缓存过期却未重扫"的可达场景（<c>[InitializeOnLoadMethod]</c> 在关闭域重载时同样不会重跑，
+        /// 加清除入口在该场景下也无效）。
+        /// </remarks>
         static List<ValueDropdownItem<string>> _contextTypeChoicesCache;
+#endif
 
+#if UNITY_EDITOR
         [PropertyOrder(-10)]
         [HorizontalGroup("状态")]
         [ToggleLeft]
         [LabelText("开启自动检查")]
+#endif
         public bool OpenAutoValidate = true;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [LabelText("生成模式")]
+#endif
         public BinderScriptMode ScriptMode = BinderScriptMode.SameScriptIncrement;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [LabelText("命名空间: ")]
         [InlineButton(nameof(DefaultNamespace), "默认")]
+#endif
         public string TargetNamespace;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [LabelText("脚本名: ")]
         [InlineButton(nameof(DefaultScriptName), "默认")]
+#endif
         public string ScriptName;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [ValueDropdown(nameof(GetBaseTypes))]
         [LabelText("基类: ")]
+#endif
         public string BaseType;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsAesirGenericUiBase))]
         [ValueDropdown(nameof(GetContextTypeChoices))]
         [LabelText("Context 类型: ")]
         [InfoBox("$NoContextHint", InfoMessageType.Warning, nameof(NoContextAvailable))]
+#endif
         public string ContextTypeName;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsUserGenericBase))]
         [LabelText("泛型参数: ")]
+#endif
         public string BaseTypeArguments;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsPartialMode))]
         [ValueDropdown(nameof(GetPartialSuffixOptions))]
         [LabelText("生成文件后缀: ")]
         [Tooltip("Rider 中 .designer.cs 是默认折叠的，Rider 用户推荐使用")]
         [OnValueChanged(nameof(SaveDefaultPartialSuffix))]
+#endif
         public string PartialSuffix = ".designer.cs";
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [LabelText("目标文件夹: ")]
         [InlineButton(nameof(DefaultFolderPath), "默认")]
         [FolderPath]
+#endif
         public string FolderPath;
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [LabelText("附加 using 命名空间")]
+#endif
         public List<string> CustomNamespaces = new List<string>();
 
+#if UNITY_EDITOR
         [InfoBox("$ErrorHint", InfoMessageType.Error, nameof(HasError))]
         [Title("绑定单元列表")]
         [TableList(AlwaysExpanded = true, IsReadOnly = true)]
+#endif
         public List<BinderInfo> Units = new List<BinderInfo>();
 
+#if UNITY_EDITOR
         /// <summary>最近一次校验的错误明细，供 Inspector 错误提示框展示。</summary>
         List<string> _lastValidationErrors;
+#endif
 
+#if UNITY_EDITOR
         [PropertyOrder(-9)]
         [HorizontalGroup("状态")]
         [ShowInInspector]
         [ReadOnly]
         [LabelText("当前绑定信息有错误")]
+#endif
         public bool HasError { get; private set; }
 
+#if UNITY_EDITOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsPartialMode))]
         [LabelText("可选后缀列表（编辑器持久化）")]
         [ShowInInspector]
         [OnValueChanged(nameof(SavePartialSuffixes))]
         public List<string> PartialSuffixList => BinderEditorSettings.Settings.PartialSuffixes;
+#endif
 
         /// <summary>
         /// 当前物体在场景层级中的绝对路径
         /// </summary>
         public string HierarchyPath => BinderHierarchyUtility.GetAbsolutePath(transform);
+
+#if UNITY_EDITOR
+        // 下下下 编辑器侧工具链（Inspector 绘制、AppDomain 扫描、脚本生成与文件写入）。
+        // 依赖 Odin；所有具体类型（BinderCodeGenerator / BinderEditorSettings 等）都在本程序集内、
+        // 由 #if UNITY_EDITOR 收拢，故整段以 UNITY_EDITOR 包裹，Player 构建不再携带。
 
         /// <summary>当前是否为 partial 分部类模式。</summary>
         bool IsPartialMode => ScriptMode == BinderScriptMode.PartialClass;
@@ -210,12 +261,10 @@ namespace Runestone.AesirModules
 
         void Reset()
         {
-#if UNITY_EDITOR
             // 命名空间默认值取最近一次成功生成的命名空间（ScriptableSingleton 持久化）
             TargetNamespace = BinderEditorSettings.Settings.LastNamespace;
             PartialSuffix = BinderEditorSettings.Settings.DefaultPartialSuffix;
             ScriptMode = BinderScriptMode.SameScriptIncrement;
-#endif
             DefaultScriptName();
             // 根节点为 Canvas（Canvas 根窗口）时默认基类直指 Aesir 窗口基类，面板根保持 MonoBehaviour
             BaseType = GetComponent<Canvas>() != null
@@ -226,11 +275,7 @@ namespace Runestone.AesirModules
 
         void DefaultNamespace()
         {
-#if UNITY_EDITOR
             TargetNamespace = BinderEditorSettings.Settings.LastNamespace;
-#else
-            TargetNamespace = "Game";
-#endif
         }
 
         void DefaultScriptName()
@@ -420,7 +465,6 @@ namespace Runestone.AesirModules
         /// </summary>
         public ValueDropdownList<string> GetPartialSuffixOptions()
         {
-#if UNITY_EDITOR
             var list = new ValueDropdownList<string>();
             foreach (var suffix in BinderEditorSettings.Settings.PartialSuffixes)
             {
@@ -428,23 +472,16 @@ namespace Runestone.AesirModules
             }
 
             return list;
-#else
-            return new ValueDropdownList<string> { { ".designer.cs", ".designer.cs" } };
-#endif
         }
 
         void SaveDefaultPartialSuffix()
         {
-#if UNITY_EDITOR
             BinderEditorSettings.Settings.SetDefaultPartialSuffix(PartialSuffix);
-#endif
         }
 
         void SavePartialSuffixes()
         {
-#if UNITY_EDITOR
             BinderEditorSettings.Settings.Save();
-#endif
         }
 
         [ButtonGroup("操作")]
@@ -504,11 +541,9 @@ namespace Runestone.AesirModules
 
             try
             {
-#if UNITY_EDITOR
                 EnsureFolderExists(FolderPath);
                 // 记录最近使用的命名空间，作为新建 BinderAssistant 的默认值（ScriptableSingleton 持久化）
                 BinderEditorSettings.Settings.SetLastNamespace(TargetNamespace);
-#endif
                 var config = BuildCodeGenConfig();
 
                 if (IsPartialMode)
@@ -520,14 +555,12 @@ namespace Runestone.AesirModules
                     WriteIncrementalScript(config);
                 }
 
-#if UNITY_EDITOR
                 // 暂存目标物体与脚本类型，编译完成后由 AttachToGameObject 自动挂载并绑定
                 EditorPrefs.SetInt(PendingBindInstanceIdKey, gameObject.GetInstanceID());
                 EditorPrefs.SetString(PendingBindTypeKey, ResolvePendingBindTypeName());
 
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-#endif
             }
             catch (Exception ex)
             {
@@ -555,10 +588,8 @@ namespace Runestone.AesirModules
                 controllerCreated = true;
             }
 
-#if UNITY_EDITOR
             AssetDatabase.ImportAsset(generatedPath);
             AssetDatabase.ImportAsset(controllerPath);
-#endif
             AesirModulesDebug.Log(this, AesirModulesDebug.ObjectBinderTag,
                 controllerCreated
                     ? $"成功生成脚本: {generatedPath}（含首次生成的 {controllerPath}）"
@@ -596,9 +627,7 @@ namespace Runestone.AesirModules
                     $"已增量更新绑定 region: {scriptPath}");
             }
 
-#if UNITY_EDITOR
             AssetDatabase.ImportAsset(scriptPath);
-#endif
         }
 
         [ButtonGroup("操作")]
@@ -793,7 +822,6 @@ namespace Runestone.AesirModules
                 .ToList();
         }
 
-#if UNITY_EDITOR
         /// <summary>
         /// 脚本重编译后自动校验所有 BinderAssistant 的绑定信息是否有效。
         /// 检查项: 引用是否丢失、标记是否缺失、层级路径是否与实际层级一致、配置与字段名是否合法。

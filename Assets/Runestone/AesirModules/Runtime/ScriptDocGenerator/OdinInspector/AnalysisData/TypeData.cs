@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using Sirenix.Utilities;
 using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
@@ -213,7 +212,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 var invokeMethod = type.GetMethod("Invoke");
                 if (invokeMethod == null)
                 {
-                    Debug.LogError("无法获取委托的 Invoke 方法");
+                    AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "无法获取委托的 Invoke 方法");
                 }
 
                 sb.Append(ReflectionUtility.GetReturnType(invokeMethod).GetReadableTypeName());
@@ -256,7 +255,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
 
                 if (type.IsGenericType)
                 {
-                    sb.Append(" " + type.GetGenericConstraintsString(true));
+                    sb.Append(" " + NiceTypeName.GetGenericConstraintsString(type, true));
                 }
             }
 

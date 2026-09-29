@@ -61,7 +61,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return new TypeData(type, filter, factory ?? this);
             }
 
-            Debug.LogError("Type is null");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "Type is null");
             return null;
         }
 
@@ -76,7 +76,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return new ConstructorData(constructorInfo, filter);
             }
 
-            Debug.LogError("ConstructorInfo is null");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "ConstructorInfo is null");
             return null;
         }
 
@@ -90,7 +90,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return new EventData(eventInfo, filter);
             }
 
-            Debug.LogError("EventInfo is null");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "EventInfo is null");
             return null;
         }
 
@@ -104,7 +104,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return new MethodData(methodInfo, filter);
             }
 
-            Debug.LogError("MethodInfo is null");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "MethodInfo is null");
             return null;
         }
 
@@ -118,7 +118,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return new PropertyData(propertyInfo, filter);
             }
 
-            Debug.LogError("PropertyInfo is null");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "PropertyInfo is null");
             return null;
         }
 
@@ -132,7 +132,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return new FieldData(fieldInfo, filter);
             }
 
-            Debug.LogError("FieldInfo is null");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "FieldInfo is null");
             return null;
         }
     }

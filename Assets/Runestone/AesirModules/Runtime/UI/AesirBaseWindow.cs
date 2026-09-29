@@ -43,7 +43,15 @@ namespace Runestone.AesirModules
         Transform _maskTransform;
         Canvas _canvas;
 
-        void OnDestroy()
+        /// <summary>
+        /// 实例被销毁时的反清理回调（向 <see cref="UIModule" /> 注销注册表条目并重算蒙版）。
+        /// </summary>
+        /// <remarks>
+        /// 子类覆写本方法时必须调用 <c>base.OnDestroy()</c>：Unity 的消息派发只调用最派生类型的声明，
+        /// 不调用 <c>base</c> 会使注册表残留已销毁实例。注册表另有自愈兜底
+        /// （命中已销毁条目时按未注册处理并重建），但仍应保留 base 调用以维持时序与开销。
+        /// </remarks>
+        protected virtual void OnDestroy()
         {
             // 实例被销毁（外部 Destroy / 场景卸载 / DestroyWindow）时反向通知 UIModule 清理注册表并重算蒙版
             UIModule.RemoveWindowRecord(this);
@@ -160,7 +168,20 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 便捷关闭自身，等价于 <c>UIModule.Instance.CloseWindow(GetType())</c>。
+        /// <para>
+        /// 走非创建式获取：窗口销毁/场景卸载阶段 UIModule 可能已随之消失，此时"关闭自己"无对象可关，
+        /// 静默返回即可——若走 <see cref="UIModule.Instance" /> 会重建 DDOL 宿主（详见
+        /// <see cref="UIModule.TryGetExisting" /> 的说明）。
+        /// </para>
         /// </summary>
-        protected void CloseSelf() => UIModule.Instance.CloseWindow(GetType());
+        protected void CloseSelf()
+        {
+            if (!UIModule.TryGetExisting(out var module))
+            {
+                return;
+            }
+
+            module.CloseWindow(GetType());
+        }
     }
 }

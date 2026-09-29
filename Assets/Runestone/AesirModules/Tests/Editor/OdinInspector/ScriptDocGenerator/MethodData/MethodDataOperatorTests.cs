@@ -14,18 +14,24 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
             .Select(x => UnitTestAnalysisFactory.Default.CreateMethodData(x)).ToArray();
 
         [Test]
-        public void OutputInfoAndData()
+        public void Analysis_ProducesMemberDataForEveryMethod()
         {
-            foreach (var methodInfo in TestClassMethodInfos)
-            {
-                Debug.Log(methodInfo.Name);
-            }
+            // 原为"只打日志不断言"的用例（对缺陷完全不敏感）——改为锁定"每个方法都被解析出成员数据"
+            Assert.IsNotEmpty(TestClassMethodInfos, "前置：测试类应有方法可解析");
+            Assert.AreEqual(TestClassMethodInfos.Length, TestClassMethodDataArray.Length,
+                "每个 MethodInfo 都应产出一条 IMethodData");
 
             foreach (var methodData in TestClassMethodDataArray)
             {
                 var memberData = (IMemberData)methodData;
-                Debug.Log(memberData.Name);
+                Assert.IsNotNull(memberData, "成员数据不应为 null");
+                Assert.IsNotEmpty(memberData.Name, "成员名不应为空");
             }
+
+            CollectionAssert.Contains(
+                TestClassMethodDataArray.Select(x => ((IMemberData)x).Name).ToArray(),
+                "op_Addition",
+                "运算符方法也应作为成员参与分析");
         }
 
         [Test]
