@@ -160,7 +160,7 @@ public interface IUIAssetLoader
 ## 测试与维护
 
 - 面板生命周期状态机由 `Tests/Editor/UI/UIModuleTests.cs` 锁定（17 用例：三路 Show、Hide 双分叉、Prewarm 幂等、键语义诊断、RemovePanelRecord 反清理、缺层中止、生命周期顺序、注册时序（OnShow 内递归 Show 不重复实例化、OnShow 抛异常不泄漏）、Awake/OnEnable 推迟到 Show 激活的生命周期契约）；
-- 窗口生命周期与蒙版机制由 `Tests/Editor/UI/UIModuleWindowTests.cs` 锁定（17 用例：挂载接线、sortingOrder 应用、UI 层递归、生命周期契约、Close 双分叉、键语义、Panel↔Window 跨契约互斥、根缺 Canvas 中止、反清理，蒙版单遮重算 / 同序 tie / 叠遮独立 / 点击蒙版 / 无 Mask 子物体无操作）；Binder 窗口感知由 `Tests/Editor/BinderAssistantWindowTests.cs` 锁定（5 用例：默认脚本名后缀、默认基类、后缀去重、基类下拉窗口家族、Context 下拉触发）；
+- 窗口生命周期与蒙版机制由 `Tests/Editor/UI/UIModuleWindowTests.cs` 锁定（17 用例：挂载接线、sortingOrder 应用、UI 层递归、生命周期契约、Close 双分叉、键语义、Panel↔Window 跨契约互斥、根缺 Canvas 中止、反清理，蒙版单遮重算 / 同序 tie / 叠遮独立 / 点击蒙版 / 无 Mask 子物体无操作）；Binder 窗口感知由 `Tests/Editor/OdinInspector/BinderAssistantWindowTests.cs` 锁定（5 用例：默认脚本名后缀、默认基类、后缀去重、基类下拉窗口家族、Context 下拉触发）；
 - 单例配置资产由 `Tests/Editor/UI/UIModuleConfigSOTests.cs` 锁定（10 用例：Resources 解析与缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复兜底、加载器返回 null 落内存默认、CreateDefault 默认值、UIModule 蒙版初值取自配置、运行时切换不改写资产）；
 - Binder 代码生成器另有 20 用例（`BinderCodeGeneratorTests` 14 + `BinderContextSelectorTests` 1 + `BinderHierarchyUtilityTests` 5）；
 - 修改 UIModule 状态机或 UIRoot 层级构建逻辑时，先跑对应 EditMode 测试。

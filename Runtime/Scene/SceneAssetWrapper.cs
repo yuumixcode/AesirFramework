@@ -463,18 +463,62 @@ namespace Runestone.AesirModules
 #endif
 
         /// <summary>
-        /// 判断此引用与另一引用是否指向同一场景：优先比较 GUID，其次比较路径（均忽略大小写）。
+        /// 判断此引用与另一引用是否指向同一场景：优先按场景路径认定（均忽略大小写），
+        /// 任一侧路径缺失时回退到场景 GUID。
+        /// <para>
+        /// 路径优先是为了与 <see cref="GetHashCode" /> 使用同一主键——哈希必然按路径取值
+        /// （Player 构建下 <see cref="FromScenePath" /> 构造的实例没有 GUID、反序列化实例带 GUID，
+        /// 若哈希取 GUID 则同路径的两侧哈希不等）。判等与哈希主键不一致会违反哈希契约：
+        /// 同一场景在 <see cref="System.Collections.Generic.Dictionary{TKey,TValue}" /> /
+        /// <see cref="System.Collections.Generic.HashSet{T}" /> 中会出现两个条目且查找漏命中。
+        /// </para>
+        /// <para>
+        /// 取舍说明：路径优先意味着"场景被移动后残留的陈旧路径"与"新路径"被视为两个不同引用
+        /// （一致的 false negative），而不是"GUID 相同即相等、哈希却不同"（不一致的 true-positive）。
+        /// 需要跨改名稳定识别时，请依赖 <c>sceneGuid</c> 锚点自愈把路径写回后再比较。
+        /// </para>
         /// </summary>
-        public bool Equals(SceneAssetWrapper other) =>
-            other != null &&
-            string.Equals(IdentityKey, other.IdentityKey, StringComparison.OrdinalIgnoreCase);
+        public bool Equals(SceneAssetWrapper other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            if (!string.IsNullOrEmpty(scenePath) && !string.IsNullOrEmpty(other.scenePath))
+            {
+                return string.Equals(scenePath, other.scenePath, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // 任一侧无路径（例如仅由 GUID 反查得到）时回退到 GUID
+            if (!string.IsNullOrEmpty(sceneGuid) && !string.IsNullOrEmpty(other.sceneGuid))
+            {
+                return string.Equals(sceneGuid, other.sceneGuid, StringComparison.OrdinalIgnoreCase);
+            }
+
+            // 两侧都没有任何身份信息（路径与 GUID 俱空）：指向同一"无目标"状态，彼此相等。
+            // 与哈希一致（键为空串，两侧哈希相同），也保持空引用包装器可作字典键的既有语义。
+            if (string.IsNullOrEmpty(scenePath) && string.IsNullOrEmpty(sceneGuid)
+                && string.IsNullOrEmpty(other.scenePath) && string.IsNullOrEmpty(other.sceneGuid))
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         /// <inheritdoc cref="Equals(SceneAssetWrapper)" />
         public override bool Equals(object obj) => Equals(obj as SceneAssetWrapper);
 
-        /// <inheritdoc cref="Equals(SceneAssetWrapper)" />
-        public override int GetHashCode() =>
-            StringComparer.OrdinalIgnoreCase.GetHashCode(IdentityKey);
+        /// <summary>
+        /// 哈希一律取场景路径（与 <see cref="Equals(SceneAssetWrapper)" /> 的主键一致）；
+        /// 路径缺失时退回 GUID。
+        /// </summary>
+        public override int GetHashCode()
+        {
+            var key = string.IsNullOrEmpty(scenePath) ? sceneGuid : scenePath;
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(key ?? string.Empty);
+        }
 
         /// <summary>空引用之间相等。</summary>
         public static bool operator ==(SceneAssetWrapper left, SceneAssetWrapper right) =>
@@ -483,9 +527,6 @@ namespace Runestone.AesirModules
         /// <summary>空引用之间相等。</summary>
         public static bool operator !=(SceneAssetWrapper left, SceneAssetWrapper right) =>
             !(left == right);
-
-        /// <summary>身份键：优先 GUID，其次路径；空引用时为空字符串。</summary>
-        string IdentityKey => string.IsNullOrEmpty(sceneGuid) ? scenePath : sceneGuid;
 
         #endregion
 
@@ -634,6 +675,15 @@ namespace Runestone.AesirModules
                     recovered.EndsWith(".unity", StringComparison.OrdinalIgnoreCase))
                 {
                     scenePath = recovered;
+                    // 与主分支对称：自愈路径同样要回写 Addressables 地址，
+                    // 否则「悬空但仍是 Addressable」的场景会退化为 Unsafe，Address 抛 SceneNotAddressableException
+                    if (SceneAssetWrapperAddressablesBridge.IsAvailable)
+                    {
+                        sceneAddress = SceneAssetWrapperAddressablesBridge.GetAddressHandler(recovered) ??
+                                       string.Empty;
+                    }
+
+                    // 桥不可用（未装 Addressables）时保留原地址，不清空
                 }
             }
         }

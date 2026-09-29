@@ -29,5 +29,12 @@ namespace Runestone.AesirModules
         [Tooltip("PlayerPrefs 键前缀 — 实际键为 前缀.MasterVolume 等；留空时回退 AesirAudio")]
         [SerializeField]
         internal string prefsKey = "AesirAudio";
+
+        /// <summary>
+        /// 按 <see cref="AudioChannel" /> 通道顺序返回各通道的默认音量。
+        /// 新增通道时在 <see cref="bgmVolume" /> / <see cref="sfxVolume" /> 一列末尾补一项即可，
+        /// 载入方（<c>AudioModule.LoadVolumesFromConfig</c>）按通道列表下标读取，不做分支。
+        /// </summary>
+        internal float[] GetChannelVolumes() => new[] { bgmVolume, sfxVolume };
     }
 }

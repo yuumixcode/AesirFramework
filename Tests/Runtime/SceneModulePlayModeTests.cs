@@ -149,8 +149,16 @@ namespace Runestone.AesirModules.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            // SceneB 只会在叠加用例中被加载，此时必有其他场景共存，可安全卸载
-            if (SceneManager.GetSceneByPath(SceneBPath).isLoaded)
+            // 经模块卸载（而非裸 SceneManager.UnloadSceneAsync）：模块账本 _addedScenePaths 才会同步移出，
+            // 否则追踪列表跨用例残留，被 LoadSceneAdditive 的去重"恰好"掩盖。
+            if (SceneManager.GetSceneByPath(SceneBPath).isLoaded
+                && SceneModule.AddedScenePaths.Contains(SceneBPath))
+            {
+                var unloaded = false;
+                SceneModule.UnloadScene(SceneBPath, onUnloaded: () => unloaded = true);
+                yield return WaitUntil(() => unloaded, "TearDown 应经模块卸载 SceneB");
+            }
+            else if (SceneManager.GetSceneByPath(SceneBPath).isLoaded)
             {
                 yield return SceneManager.UnloadSceneAsync(SceneBPath);
             }
@@ -173,7 +181,7 @@ namespace Runestone.AesirModules.Tests
         /// Single 成功路径：进度归一化到 1.0 → SceneLoadedEvent → onCompleted 的顺序；激活场景切换；
         /// 叠加追踪清空；LastLoadedScene 更新；模块 DDOL 存活（Single 卸载全部旧场景不杀模块）。
         /// </summary>
-        [Order(4)]
+        [Order(5)]
         [UnityTest]
         public IEnumerator LoadSceneSingle_SuccessPath_CallbacksInOrder_ActiveSceneSwitched_ModuleSurvives()
         {
@@ -345,7 +353,7 @@ namespace Runestone.AesirModules.Tests
         /// 修复前内层与外层共用复用快照缓冲，内层 finally Clear 会清空外层正在迭代的列表，
         /// 外层提前退出、剩余场景漏卸而 onAllUnloaded 仍误报完成。修复后内外两层各自完整完成。
         /// </summary>
-        [Order(3)]
+        [Order(4)]
         [UnityTest]
         public IEnumerator UnloadAllAddedScenes_ReentrantUnloadDuringBroadcast_BothBatchesComplete()
         {
@@ -391,16 +399,27 @@ namespace Runestone.AesirModules.Tests
         /// <summary>
         /// 逐帧等待条件成立，超时断言失败（防止用例挂死拖垮整个批跑）。
         /// </summary>
+        /// <remarks>
+        /// 双判据：墙钟（<see cref="Time.realtimeSinceStartup" /> 差值，不受 <c>timeScale</c> 影响）加帧数上限。
+        /// 此前只用 <c>elapsed += Time.unscaledDeltaTime</c> 累加——batchmode 下该值实测可能恒为 0，
+        /// 累加器永不增长会让"防挂死"守卫本身失效（条件不成立即无限挂起）。
+        /// </remarks>
         static IEnumerator WaitUntil(Func<bool> condition, string timeoutMessage, float timeoutSeconds = 30f)
         {
-            var elapsed = 0f;
-            while (!condition() && elapsed < timeoutSeconds)
+            var startTime = Time.realtimeSinceStartup;
+            var frameBudget = Mathf.Max(1, (int)(timeoutSeconds / Mathf.Max(Time.fixedDeltaTime, 0.005f)) * 4);
+            var frames = 0;
+            while (!condition()
+                   && Time.realtimeSinceStartup - startTime < timeoutSeconds
+                   && frames < frameBudget)
             {
-                elapsed += Time.unscaledDeltaTime;
+                frames++;
                 yield return null;
             }
 
-            Assert.IsTrue(condition(), timeoutMessage + $"（等待 {elapsed:F1}s 超时）");
+            Assert.IsTrue(condition(),
+                timeoutMessage +
+                $"（等待 {Time.realtimeSinceStartup - startTime:F1}s / {frames} 帧超时）");
         }
     }
 }

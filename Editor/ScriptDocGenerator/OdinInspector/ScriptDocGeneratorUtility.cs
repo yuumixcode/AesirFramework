@@ -8,7 +8,10 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
+// 本模块整体位于 Odin 门控程序集，测试随所在程序集分为基线（Runestone.AesirModules.Tests.Editor）
+// 与 Odin 门控（Runestone.AesirModules.Tests.Editor.OdinInspector）两份声明。
 [assembly: InternalsVisibleTo("Runestone.AesirModules.Tests.Editor")]
+[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests.Editor.OdinInspector")]
 
 namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 {
@@ -70,7 +73,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             {
                 if (TypeAnalyzerUtility.IsGeneratedInternalType(targetType))
                 {
-                    Debug.LogError("目标类型是编译器或 Unity 生成的内部类型，不支持为其生成文档：" + targetType.FullName);
+                    AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                        "目标类型是编译器或 Unity 生成的内部类型，不支持为其生成文档：" + targetType.FullName);
                     return null;
                 }
 
@@ -79,7 +83,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return AnalysisDataFactory.CreateTypeData(targetType, AnalysisDataFactory);
             }
 
-            Debug.LogError("请选择有效的目标类型");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "请选择有效的目标类型");
             return null;
         }
 
@@ -87,7 +91,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         {
             if (types is not { Count: > 0 })
             {
-                Debug.LogError("设置有效的 Type 对象列表");
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "设置有效的 Type 对象列表");
                 return null;
             }
 
@@ -104,7 +108,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 return AnalyzeMultipleTypes(typesCache.Types);
             }
 
-            Debug.LogError("TypesCacheSO 为空或不包含有效的 Type 对象");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                "TypesCacheSO 为空或不包含有效的 Type 对象");
             return null;
         }
 
@@ -112,7 +117,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         {
             if (string.IsNullOrEmpty(assemblyFullName) || assemblyFullName == NoneAssembly)
             {
-                Debug.LogError("请选择目标程序集，不能为 " + NoneAssembly);
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                    "请选择目标程序集，不能为 " + NoneAssembly);
                 return null;
             }
 
@@ -126,7 +132,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         {
             if (assemblyFullNames is not { Count: > 0 })
             {
-                Debug.LogError("请选择至少一个目标程序集");
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "请选择至少一个目标程序集");
                 return null;
             }
 
@@ -135,7 +141,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
             if (assemblyFullNames.Count == 0)
             {
-                Debug.LogError("请选择有效的目标程序集，不能为 " + NoneAssembly);
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                    "请选择有效的目标程序集，不能为 " + NoneAssembly);
                 return null;
             }
 
@@ -167,7 +174,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         {
             if (typeData == null || !generatorSettings || string.IsNullOrEmpty(targetFolderPath))
             {
-                Debug.LogError("参数无效，无法生成文档");
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "参数无效，无法生成文档");
                 return;
             }
 
@@ -204,7 +211,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             if (typeDataCollection is not { Count: > 0 } || !generatorSettings ||
                 string.IsNullOrEmpty(targetFolderPath))
             {
-                Debug.LogError("参数无效，无法生成文档");
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "参数无效，无法生成文档");
                 return;
             }
 
@@ -243,7 +250,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         {
             if (typeData == null || !generatorSettings || string.IsNullOrEmpty(targetFolderPath))
             {
-                Debug.LogError("参数无效，无法生成文档");
+                AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "参数无效，无法生成文档");
                 return null;
             }
 

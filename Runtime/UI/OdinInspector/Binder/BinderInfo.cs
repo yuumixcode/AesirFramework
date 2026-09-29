@@ -1,5 +1,7 @@
 using System;
+#if UNITY_EDITOR
 using Sirenix.OdinInspector;
+#endif
 using UnityEngine;
 
 namespace Runestone.AesirModules
@@ -19,34 +21,42 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 被绑定组件所在的 GameObject 引用。
         /// </summary>
+#if UNITY_EDITOR
         [TableColumnWidth(160)]
         [LabelText("物体")]
+#endif
         public GameObject LabelObj;
 
         /// <summary>
         /// 组件类型的完整名称（含命名空间），作为代码生成时 <c>GetComponent&lt;T&gt;()</c> 的泛型参数；
         /// 选择 <c>GameObject</c> 表示绑定物体本身。
         /// </summary>
+#if UNITY_EDITOR
         [TableColumnWidth(160)]
         [LabelText("组件类型")]
         [ValueDropdown(nameof(GetTypesString))]
+#endif
         public string ComponentFullName = "UnityEngine.Transform";
 
         /// <summary>
         /// 生成脚本中的字段名（camelCase）。默认值为「物体名_类型简称」，可手动修改；
         /// 重复字段名会在校验时报错。
         /// </summary>
+#if UNITY_EDITOR
         [TableColumnWidth(170)]
         [LabelText("字段名")]
         [InlineButton(nameof(DefaultFieldName), "默认")]
+#endif
         public string FieldName;
 
         /// <summary>
         /// 相对于 <see cref="BinderAssistant" /> 的 <c>transform.Find()</c> 路径，
         /// 由 <see cref="UpdatePath" /> 自动计算；空字符串表示绑定 Assistant 自身所在物体。
         /// </summary>
+#if UNITY_EDITOR
         [LabelText("路径")]
         [DisplayAsString]
+#endif
         public string HierarchyPath;
 
         /// <summary>
@@ -60,19 +70,28 @@ namespace Runestone.AesirModules
         public BinderInfo(BinderAssistant assistant, BinderTag tagObj)
         {
             LabelObj = tagObj.SelfObj;
+#if UNITY_EDITOR
+            // 默认字段名由编辑器程序集中的代码生成器合成，Player 构建不参与
             DefaultFieldName();
+#endif
             UpdatePath(assistant);
         }
 
         /// <summary>
         /// 将字段名重置为默认值: 「物体名_类型简称」的 camelCase 形式（如 <c>playButton_Button</c>）。
         /// 可能与其他单元重名，重名会在校验时报错。
+        /// <para>
+        /// 仅编辑器可用：依赖运行时可见程序集 <c>Runestone.AesirModules.OdinInspector</c> 内、
+        /// 由 <c>#if UNITY_EDITOR</c> 收拢的代码生成器。
+        /// </para>
         /// </summary>
+#if UNITY_EDITOR
         public void DefaultFieldName()
         {
             var objectName = LabelObj ? LabelObj.name : "Element";
             FieldName = BinderCodeGenerator.ComposeDefaultFieldName(objectName, ComponentFullName);
         }
+#endif
 
         /// <summary>
         /// 更新相对于 BinderAssistant 的层级路径。
@@ -92,7 +111,9 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 获取 <see cref="LabelObj" /> 上可绑定的组件类型下拉列表（含 GameObject 自身）。
+        /// 仅编辑器可用（返回 Odin 的 <c>ValueDropdownList</c>）。
         /// </summary>
+#if UNITY_EDITOR
         ValueDropdownList<string> GetTypesString()
         {
             var list = new ValueDropdownList<string>();
@@ -109,5 +130,6 @@ namespace Runestone.AesirModules
 
             return list;
         }
+#endif
     }
 }

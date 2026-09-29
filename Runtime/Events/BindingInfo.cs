@@ -156,7 +156,8 @@ namespace Runestone.AesirModules
             }
             else
             {
-                Debug.LogError($"DynamicBindingInfo: 参数类型不匹配，期望 {typeof(TEventArgs).Name}。");
+                AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag,
+                    $"DynamicBindingInfo: 参数类型不匹配，期望 {typeof(TEventArgs).Name}。");
             }
         }
     }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -308,6 +309,40 @@ namespace Runestone.AesirModules.Tests.Editor
             var right = new SceneAssetWrapper();
 
             Assert.IsFalse(left == right);
+        }
+
+        [Test]
+        public void EqualsAndHashCode_ShareSameKey_AcrossConstructionPaths()
+        {
+            // 判等与哈希必须使用同一主键：Player 构建下 FromScenePath 构造的实例没有 GUID、
+            // 反序列化实例带 GUID，若哈希取 GUID 而判等取路径，同路径的两侧哈希就不相等
+            // → Dictionary/HashSet 会给同一场景留两个条目并漏命中。
+            var fromPath = SceneAssetWrapper.FromScenePath(SampleScenePath);
+            var guidLess = new SceneAssetWrapper();
+            SetPrivateField(guidLess, "sceneGuid", string.Empty);
+            SetPrivateField(guidLess, "scenePath", SampleScenePath);
+
+            Assert.IsTrue(fromPath == guidLess, "一侧无 GUID 时按路径判等（Player 构建兜底）");
+            Assert.AreEqual(fromPath.GetHashCode(), guidLess.GetHashCode(),
+                "判等为 true 的两个引用必须哈希相等（否则违反哈希契约）");
+
+            var set = new HashSet<SceneAssetWrapper> { fromPath, guidLess };
+            Assert.AreEqual(1, set.Count, "同一场景不得在集合中占两个条目");
+        }
+
+        [Test]
+        public void Equals_SameGuidDifferentPath_TreatedAsDifferentReference()
+        {
+            // 路径优先的取舍：陈旧路径与新路径视为不同引用（一致的 false negative），
+            // 而不是"GUID 相同即相等、哈希却按路径不同"（不一致的 true-positive）。
+            var fresh = SceneAssetWrapper.FromScenePath(SampleScenePath);
+            var stale = new SceneAssetWrapper();
+            SetPrivateField(stale, "sceneGuid", AssetDatabase.AssetPathToGUID(SampleScenePath));
+            SetPrivateField(stale, "scenePath", "Assets/Stale/MovedSampleScene.unity");
+
+            Assert.IsFalse(fresh == stale, "同 GUID 但路径不同 → 按路径判为不同引用");
+            Assert.AreNotEqual(fresh.GetHashCode(), stale.GetHashCode(),
+                "哈希随判等主键（路径），与上述判等结论一致");
         }
 
         [Test]

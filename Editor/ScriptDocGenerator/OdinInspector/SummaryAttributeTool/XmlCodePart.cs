@@ -371,9 +371,9 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// 块内非首成员持有 [Summary] 时的跳过告警（fail-closed——不乱改用户代码）。
         /// </summary>
         static void LogNonFirstMemberWarning(string operation) =>
-            Debug.LogWarning("[ScriptDocGenerator] " + operation +
-                             "：检测到代码块内非首成员持有 [Summary] 特性，无法安全判断归属，已跳过该代码块。" +
-                             "请为该成员补充独立的 XML 注释块，或手动调整 [Summary] 位置。");
+            AesirModulesDebug.LogWarning(nameof(XmlCodePart), AesirModulesDebug.ScriptDocGeneratorTag,
+                operation + "：检测到代码块内非首成员持有 [Summary] 特性，无法安全判断归属，已跳过该代码块。" +
+                "请为该成员补充独立的 XML 注释块，或手动调整 [Summary] 位置。");
 
         /// <summary>
         /// 转义文本中会破坏 C# 字符串字面量的字符：先转义反斜杠，再转义双引号。

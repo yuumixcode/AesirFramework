@@ -3,16 +3,23 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using FilePathAttribute = UnityEditor.FilePathAttribute;
 
 namespace Runestone.AesirModules
 {
     /// <summary>
-    /// Binder 编辑器持久化设置（ScriptableSingleton，随编辑器会话持久存储）。
-    /// <para>
-    /// 保存 partial 分部类模式的可选文件后缀列表、默认后缀与最近使用的命名空间，
-    /// 供新建 BinderAssistant 的默认值与后缀下拉共用。
-    /// </para>
+    /// Binder 编辑器持久化设置（ScriptableSingleton）：保存 partial 分部类模式的可选文件后缀列表、
+    /// 默认后缀与最近使用的命名空间，供新建 BinderAssistant 的默认值与后缀下拉共用。
     /// </summary>
+    /// <remarks>
+    /// 落盘路径为项目根 <c>ScriptableSingleton/AesirModules/BinderEditorSettings.asset</c>（已被 .gitignore 覆盖）。
+    /// <c>ScriptableSingleton</c> 走 Unity 原生序列化，故除 <see cref="FilePathAttribute" /> 外，
+    /// 每个持久字段还需 <c>[SerializeField]</c>，且写盘必须调用基类 <c>Save(true)</c>——
+    /// 仅 <c>EditorUtility.SetDirty</c> / <c>AssetDatabase.SaveAssets</c> 对本单例无效（它不是资产）。
+    /// </remarks>
+    // 遵循项目约定：ScriptableSingleton 设置资产统一放 ScriptableSingleton/ 前缀目录
+    [FilePath("ScriptableSingleton/AesirModules/BinderEditorSettings.asset",
+        FilePathAttribute.Location.ProjectFolder)]
     public class BinderEditorSettings : ScriptableSingleton<BinderEditorSettings>
     {
         const string FallbackNamespace = "Game";
@@ -29,8 +36,8 @@ namespace Runestone.AesirModules
         string lastNamespace = FallbackNamespace;
 
         /// <summary>
-        /// 实例访问器。标准 Unity 的 ScriptableSingleton 暴露大写 <c>Instance</c>，
-        /// 团结引擎为小写 <c>instance</c>，此处经反射做双引擎兼容并缓存。
+        /// 实例访问器。Unity 的 <c>ScriptableSingleton&lt;T&gt;</c> 暴露小写 <c>instance</c> 属性
+        /// （双引擎一致），此处仍按大写/小写双探测并缓存，以免依赖单一拼写。
         /// </summary>
         public static BinderEditorSettings Settings
         {
@@ -66,7 +73,7 @@ namespace Runestone.AesirModules
         public string LastNamespace => lastNamespace;
 
         /// <summary>
-        /// 更新最近使用的命名空间（由生成流程调用，随后统一 SaveAssets 落盘）。
+        /// 更新最近使用的命名空间（由生成流程调用，随即写盘）。
         /// </summary>
         public void SetLastNamespace(string targetNamespace)
         {
@@ -76,7 +83,7 @@ namespace Runestone.AesirModules
             }
 
             lastNamespace = targetNamespace;
-            EditorUtility.SetDirty(this);
+            Save(true);
         }
 
         /// <summary>
@@ -108,12 +115,12 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// 立即落盘（后缀列表编辑为低频操作，直接 SaveAssets 保证持久化）。
+        /// 立即落盘（后缀列表编辑为低频操作，直接写入设置文件保证持久化）。
         /// </summary>
         public void Save()
         {
             EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
+            Save(true);
         }
     }
 }

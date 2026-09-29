@@ -175,7 +175,8 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void GenerateDocsForType_NullType_ReportsErrorAndReturnsEmptyResult()
         {
-            LogAssert.Expect(LogType.Error, "请选择有效的目标类型");
+            // 日志经 AesirModulesDebug 输出（带 <color> 富文本前缀），故用 Regex 做子串匹配
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("请选择有效的目标类型"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForType(null,
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
@@ -187,7 +188,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void GenerateDocsForTypes_EmptyList_ReportsError()
         {
-            LogAssert.Expect(LogType.Error, "[ScriptDocGeneratorAPI] 类型列表为空，无法生成文档");
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("类型列表为空，无法生成文档"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForTypes(Array.Empty<Type>(),
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
@@ -210,7 +211,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         public void GenerateDocsForAssembly_MissingAssembly_ReportsError()
         {
             LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
-                @"\[ScriptDocGeneratorAPI\] 找不到目标程序集"));
+                @"找不到目标程序集"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForAssembly("NoSuch.Aesir.Assembly",
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
@@ -237,7 +238,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         public void GenerateDocsForFolder_InvalidPath_ReportsError()
         {
             LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
-                @"\[ScriptDocGeneratorAPI\] 无效的脚本文件夹路径"));
+                @"无效的脚本文件夹路径"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForFolder("Library/PackageManager",
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);

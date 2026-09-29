@@ -108,13 +108,19 @@ namespace Runestone.AesirModules.Editor
         /// UnityEngine.Object 派生与标有 <see cref="ExcludeSubclassSelectorAttribute" /> 的类型，
         /// 按命名空间 + 类名排序。
         /// </summary>
+        /// <remarks>
+        /// <c>[Serializable]</c> 以 <c>inherit: true</c> 判定：对齐 Unity 自身的序列化规则——
+        /// 属性由基类声明时（如 <see cref="AesirEventArgs" /> 已标注），派生类无需重复标注即可被
+        /// <c>[SerializeReference]</c> 序列化。用 <c>inherit: false</c> 只查类型自身声明，
+        /// 会把全部未重复标注的正常事件参数子类误判为不可选。
+        /// </remarks>
         static List<Type> GetFilteredTypes(Type baseType)
         {
             var result = new List<Type>();
             foreach (var type in TypeCache.GetTypesDerivedFrom(baseType))
             {
                 if (type.IsAbstract || type.IsGenericTypeDefinition ||
-                    !type.IsDefined(typeof(SerializableAttribute), false) ||
+                    !type.IsDefined(typeof(SerializableAttribute), true) ||
                     typeof(Object).IsAssignableFrom(type) ||
                     type.IsDefined(typeof(ExcludeSubclassSelectorAttribute), false))
                 {
