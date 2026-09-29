@@ -24,6 +24,12 @@
     "UNITY_INCLUDE_TESTS",
     "AESIR_MODULES_UNITASK"
   ],
-  "versionDefines": [],
+  "versionDefines": [
+    {
+      "name": "com.cysharp.unitask",
+      "expression": "",
+      "define": "AESIR_MODULES_UNITASK"
+    }
+  ],
   "noEngineReferences": false
 }
