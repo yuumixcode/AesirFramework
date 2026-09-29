@@ -284,7 +284,7 @@ AesirFramework/                            # this repo
 
 ## ✅ Quality & CI
 
-- **Tests** — 810 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
+- **Tests** — 818 EditMode tests (in-package updater, Context, the Observable family, etc.); PlayMode tests cover MonoLifecycleProxy snapshot semantics, lifecycle event ordering, the Scene module's real load/unload paths, and more; CLI usage below in [Development Setup](#️-development-setup)
 - **CI (GitHub Actions)** —
   - `auto-release.yml`: every push to `main` publishes a GitHub Release (three unitypackages plus the update-info.json / files-manifest used by the in-package updater)
   - `auto-publish-branches.yml`: per-package subtree split rolling the evergreen branches `AesirArchitecture-latest` / `AesirModules-latest` forward (enter the Git URL once and it keeps updating), plus automatic cleanup of obsolete version branches

@@ -287,7 +287,7 @@ AesirFramework/                            # 你现在看到的仓库
 
 ## ✅ 质量与 CI
 
-- **测试** — EditMode 测试 810 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
+- **测试** — EditMode 测试 818 个（含包内更新器、Context、Observable 家族等），PlayMode 测试覆盖 MonoLifecycleProxy 快照语义、生命周期事件顺序、场景模块真实加载/卸载路径等；命令行跑法见[开发环境](#️-开发环境)
 - **CI（GitHub Actions）** —
   - `auto-release.yml`：每次推送 `main` 自动发布 GitHub Release（三个 unitypackage + 更新器所需的 update-info.json / files-manifest）
   - `auto-publish-branches.yml`：按包目录 subtree split 滚动更新常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`（Git URL 一次输入持续更新），并自动清理废弃的版本分支
