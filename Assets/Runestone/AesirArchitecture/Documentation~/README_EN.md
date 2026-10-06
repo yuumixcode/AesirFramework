@@ -3,7 +3,7 @@
 > A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.31.1-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.31.2-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
@@ -66,7 +66,7 @@ Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFram
 - **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
 - Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.31.1`).
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.31.2`).
 >
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
 

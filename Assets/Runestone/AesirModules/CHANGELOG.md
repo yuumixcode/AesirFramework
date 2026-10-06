@@ -5,6 +5,10 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.31.2] - 2026-10-06
+
+- **版本同步发布（无功能变更）** — 本包源码与 0.31.1 一致。本次为 RAA 侧 `IGenericLocator<T>` 冗余 `Dispose()` 声明的编译告警修复同步（详见根 CHANGELOG）
+
 ## [0.31.1] - 2026-09-29
 
 - **版本同步发布（无功能变更）** — 本包源码与 0.31.0 一致。本次为文档补丁：公开文档站的 Scripting API 页全量重生成至 0.31.0 口径（RAM 153 页，新增 `AudioChannel` / `SceneModuleUniTask` 等页）、内容页对齐 0.31.0 共 27 处（详见根 CHANGELOG）
