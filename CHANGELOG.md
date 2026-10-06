@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.31.2] - 2026-10-06
+
+### Changed
+
+- **`IGenericLocator<T>` 删除冗余的 `Dispose()` 声明** — 接口本已继承 `IDisposable`，另行声明同名同签名的成员只是隐藏继承成员（编译告警 `CS0108: 'IGenericLocator<T>.Dispose()' hides inherited member 'IDisposable.Dispose()'`），并非新增契约。删除后接口契约完全不变（`IDisposable.Dispose()` 仍在），实现类与调用点零改动；原声明上承载的语义文档（清空仅解除注册关系、不销毁被注册的实例；`AbstractContext<T>.Dispose` 只持有接口抽象、需经接口而非具体实现清空）上移到接口级 `<remarks>`，注释信息无损失
+
 ## [0.31.1] - 2026-09-29
 
 - **版本同步发布（无功能变更）** — 本包源码与 0.31.0 一致。本次为文档补丁：公开文档站的 Scripting API 页全量重生成至 0.31.0 口径（新增 `IView<T>` 等页）、内容页对齐 0.31.0 共 27 处、补第三方素材出处（详见根 CHANGELOG）
