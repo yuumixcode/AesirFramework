@@ -17,21 +17,16 @@ namespace Runestone.AesirArchitecture
     ///     注册与查询须使用相同的类型参数。若以具体类型注册（如 <c>Register&lt;Sword&gt;</c>），
     ///     再以接口类型查询（如 <c>Get&lt;IWeapon&gt;</c>），将返回 <c>null</c>。
     ///     </para>
+    ///     <para>
+    ///     继承 <see cref="IDisposable" /> 而非另行声明 <c>Dispose</c>，目的是让"清空容器"成为契约的一部分：
+    ///     <see cref="AbstractContext{T}.Dispose" /> 只持有 <c>IGenericLocator&lt;T&gt;</c> 抽象，
+    ///     需要经接口而非具体实现清空。清空仅解除注册关系，不销毁被注册的实例——
+    ///     实例的释放由调用方（如 Context 逆序 Dispose 模块）负责。
+    ///     </para>
     /// </remarks>
     /// <seealso cref="GenericLocator{T}" />
     public interface IGenericLocator<T> : IDisposable where T : class
     {
-        /// <summary>
-        /// 释放定位器：清空全部注册（等价于清空容器，<see cref="AbstractContext{T}" /> 的收尾即依赖此语义），
-        /// 不销毁被注册的实例——实例的释放由调用方（如 Context 逆序 Dispose 模块）负责。
-        /// </summary>
-        /// <remarks>
-        /// 声明为继承 <see cref="IDisposable" /> 的目的是让"清空容器"成为契约的一部分：
-        /// <see cref="AbstractContext{T}.Dispose" /> 只持有 <c>IGenericLocator&lt;T&gt;</c> 抽象，
-        /// 需要经接口而非具体实现清空。
-        /// </remarks>
-        void Dispose();
-
         /// <summary>
         /// 注册实例，以 <c>typeof(TItem)</c> 作为键。重复注册将覆盖已有实例。
         /// </summary>
