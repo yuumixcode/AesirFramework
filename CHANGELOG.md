@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.31.1** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.31.1** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.31.2** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.31.2** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -29,6 +29,28 @@ versions follow [Semantic Versioning](https://semver.org/).
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.31.2] - 2026-10-06
+
+---
+
+**仓库级变更 / Repository-wide**
+
+- **编译告警清理** — RAA 的 `IGenericLocator<T>` 删除与 `IDisposable.Dispose()` 签名完全相同的冗余声明，消除 `CS0108` 告警；接口契约、实现类与调用点零变化。文档站同步该 API 页（方法摘要表 / 成员详情段 / 类级备注）
+
+### [architecture] Aesir Architecture
+
+**Changed**
+
+- **`IGenericLocator<T>` 删除冗余的 `Dispose()` 声明（编译告警修复）** — 接口已继承 `IDisposable`，另行声明同名同签名成员只是隐藏继承成员并触发 `CS0108`；删除后契约不变（`IDisposable.Dispose()` 仍在），原声明上的语义文档（清空仅解除注册关系、不销毁被注册的实例；`AbstractContext<T>.Dispose` 经接口而非具体实现清空）上移到接口级 `<remarks>`
+
+### [modules] Aesir Modules
+
+**Changed**
+
+- **文档同步（无代码变更）** — 源码与 0.31.1 一致；本次仅随 RAA 的告警修复同步版本号
 
 ---
 

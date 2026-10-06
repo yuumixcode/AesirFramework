@@ -16,20 +16,20 @@
 
 | 包名 | 包 ID | 版本 | 命名空间 | 说明 |
 |------|------|------|---------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.31.1 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期（AesirPlayerLoop）、纯 C# 架构根 + MonoBehaviour 适配层 |
-| Aesir Modules | `cn.runestone.aesir.modules` | 0.31.1 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | 0.31.2 | `Runestone.AesirArchitecture` | 渐进式 MVC 架构框架 — 能力接口组合、命令/查询模式、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 生命周期（AesirPlayerLoop）、纯 C# 架构根 + MonoBehaviour 适配层 |
+| Aesir Modules | `cn.runestone.aesir.modules` | 0.31.2 | `Runestone.AesirModules` | 功能模块 — 轻量级 UI 框架（Manager-of-Managers 单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块 + 音频模块 + 场景模块 + 脚本文档生成模块（需 Odin） |
 
 > **Aesir Inspector 已独立**：迁出为独立公开仓库，定位为专门面向 Odin Inspector 开发者的学习工具包，不再随本仓库分发。
 
 ### 依赖关系
 
 - **Aesir Architecture** — 不依赖任何 Aesir 子包，可独立安装
-- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.31.1）
+- **Aesir Modules** — 依赖 `cn.runestone.aesir.architecture`（0.31.2）
 - **Aesir Inspector** — 独立公开仓库，与本仓库无依赖关系
 
 ---
 
-## Aesir Architecture（0.31.1）
+## Aesir Architecture（0.31.2）
 
 > 框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
@@ -156,7 +156,7 @@
 
 ---
 
-## Aesir Modules（0.31.1）
+## Aesir Modules（0.31.2）
 
 ### UI 框架
 
@@ -521,6 +521,7 @@ undefined
 - [2026-09-29 13:34:02] 禁止给「编辑器 [InitializeOnLoad] 注入的静态能力」加 Play 期静态复位（RIOLM SubsystemRegistration）——2026-09-29 用户裁决：`MemberData` 六个解析委托（SummaryResolver/ParamSummariesResolver/ReturnsSummaryResolver/RemarksResolver/ValueResolver/TypeParamsResolver，MemberData.cs:121-155，由 SourceSummaryInitializer 注入）属此类，已从 Docs/AesirFramework/全仓锐评/10-终审修复优化方案.md 的 P1 撤回（改为 6 条 XML 声明）。Why: 这类静态只被编辑器侧注入器写、Play 期零写入点，不满足"Play 会写脏"前提；关闭域重载时残留的正是正确注入值，而 RIOLM 在每次进 Play 都会跑、[InitializeOnLoad] 却不会重跑 → 复位会把注入永久打回 fallback，使 SDG 静默降级（生成文档少注释不报错），直到下次真域重载；玩家构建立根本没有注入器，复位是纯 no-op。How to apply: 评估"静态重置遗漏清单"时先问该静态在 Play 期是否有写入点——没有则判"有意保留 + 注释声明"，勿按清单惯性补 ResetStatics；同逻辑下 P1-4（BinderAssistant._contextTypeChoicesCache 挂 [InitializeOnLoadMethod] 清除）也已标注需先取证（缓存失效与类型集合变化天然绑定于编译→域重载，关闭域重载时该修法同样不重跑）。
 - [2026-09-29 13:39:03] [2026-09-29] Aesir 两包类型命名规范（用户裁决）：①**跨包共用**（一个实现、两包都用，或框架级公共工件）→ 命名直接 `Aesir` + 语义名，不带 `Architecture`/`Modules` 包名段（如 AesirMonoBehaviour / MiniEvent / AesirPlayerLoop）；②**两包各自拥有一份同类角色** → 用完整包名 `AesirArchitecture` / `AesirModules` + 语义名（宿主单例 AesirArchitecture↔AesirModules、日志门面 AesirArchitectureDebug↔AesirModulesDebug、宿主 Processor AesirArchitectureAttributeProcessor↔AesirModulesAttributeProcessor）；③单包自有且无对照角色 → 维持现状；命名空间/包名/程序集名不动。**Why:** 用户 2026-09-29 指令「如果两个包共用就不需要细分，直接 Aesir 开头；只有两包都属于自己的这种类才加完整包名」，并点名 `AesirArchitecturePlayerLoop` → `AesirPlayerLoop`。分界依据是「有没有第二个包的对照实现」，不是「当前是否被第二个包引用」（PlayerLoop 在 RAM 零引用仍属规则 1）。**How to apply:** 新增跨包/包内类型按此定名；改名属对外破坏性变更，须走 CHANGELOG Changed + 版本 bump，并同步 README/Skill/双份 Documentation/文档站 API 页与 nav/CODELY.md；方案文档 `Docs/AesirFramework/全仓锐评/10-终审修复优化方案.md` 附录 D 为权威口径（含改名清单与影响面）。
 - [2026-09-29 16:00:07] [2026-09-29] PlayMode 场景测试卫生技法（本轮实测，优于 [Order] 次序约束）：**"锚场景 + 按 Scene 句柄逐个卸载"**——SetUp 先 `SceneManager.CreateScene("XxxTestAnchor")`（运行时空场景，不随包分发、与宿主工程无关）使 `sceneCount > 1` 恒成立，再用 while 循环按 `SceneManager.GetSceneAt(i).name` 找出测试场景并 `UnloadSceneAsync(Scene)` 逐个卸载。**Why:** Single 加载会留下"唯一已加载场景"，Unity 拒绝卸载最后一个场景 → 该遗留实例与后续用例的叠加目标同路径时，叠加加载产出**第二个实例**（模块追踪按路径粒度只记一条、**按路径卸载只移除其一**），"卸载后场景应消失"类断言必然失败；症状与驱动实现无关（协程/UniTask 卸载时机实测一致，同帧即反映实例减少）。逐帧枚举场景管理器的临时探针是唯一可信定性手段（`GetSceneByPath().isLoaded` 在遗留实例在场时会给出误导性 True，`sceneCount` 与 `isLoaded` 可自相矛盾）。**How to apply:** 新建 PlayMode 场景套件一律带锚场景卫生（协程套件 `SceneModulePlayModeTests` 仍用 `[Order]` 把 Single 用例压末位，属可工作的旧方案）；断言"某场景已消失"前先确认套件无同学例/前序套件的遗留实例；探针类用完必删（含 Unity 自动生成的 .cs.meta）。
+- [2026-09-29 21:35:25] 【纠正 2026-09-29 21:31 条目的末句】文档站内容页的**落点标注统一改用当前版本号**——用户 2026-09-29 明示「文档站替换」并选定「5 处全部改为 0.31.1」，已落地（modules.md / features.md / observable.md / events.md / ui.md，站点除 changelog 历史段外不再出现旧版本号；AesirFramework-Docs 2545922）。**Why:** 该条曾判定「内容页落点标注属历史、不得随发版替换」，被用户否决——站点单一版本快照的口径优先于落点精确性由用户决定。**How to apply:** 下次发版做站点版本同步时，把内容页里的「<旧版本> 起/自 <旧版本>/已于 <旧版本>」一并替换为新版本号；**但主仓侧规则不同**：`CODELY.md` 的特性小节括号（如「Getting Started 窗口（0.24.0）」）仍是引入版本标注、**不**随发版替换，且 CHANGELOG 历史段永不改写。
 
 ### Project
 - [2026-08-15 22:20:30] AttributeOverviewPro 子资产重构已完成并合并到 main（2026-07-25）：~194 个独立 .asset 文件合并为 3 个文件 — AttributeOverviewDatabase.asset（DatabaseSO + 70 PanelSO 子资产）、UnityExamples.asset（Unity 原生序列化 ExampleSO）、OdinExamples.asset（Odin 序列化 ExampleSO）。按序列化方式分离存储。初始化超时 bug 已修复（批量创建跳过逐次 SaveAssets）。
@@ -708,6 +709,7 @@ undefined
 - [2026-09-29 15:59:58] [2026-09-29] **本条覆盖 2026-09-29 14:48:32 条目的「真实 UniTask 运行验证仍待环境」「PlayMode batchmode 门禁 23 条未跑」两处**：装 UniTask 后已完成真实运行验证，新基线 = **EditMode 三程序集 820 total/818 pass/0 fail/2 skip**（Addressables 自适应）、**PlayMode 三程序集 31/31 全绿**（RAA 17 + RAM 6 + RAM Tests.UniTask 8 条首次真跑）、BuildSettings 零残留、refresh 0 错 0 警。**batchmode 退出码语义（实测修正旧记忆"编译错误时退出码仍为 0"的延伸）**：`-testPlatform playmode -runTests` 全绿返回 0，**有用例失败返回 2**——不可只看退出码，需解析 `-testResults` XML（`root.total/passed/failed`）；Unity 在本机可直连 GitHub clone（UPM 走系统 git），`-logFile` 与 `-testResults` 路径均已被 .gitignore 覆盖（playmode-test.log / TestResults*.xml）。**How to apply:** 后续 PlayMode 门禁照此跑；编辑器内跑 PlayMode 仍会误触发 PlayerLauncher（本引擎已知缺陷），必须退编辑器走 batchmode，跑完用 `open -na "<Unity.app>" --args -projectPath <项目>` 重启 + `unity_refresh` 重连 Bridge（本轮实证可行）。
 - [2026-09-29 16:21:23] 0.31.0 已正式发布（2026-09-29，主仓 3 提交推送：8647207 UniTask 批次 / 8d1d920 README+记忆 / e662ce1 版本批；CI 回写 a32e68a 已 pull）：Release v0.31.0 非 draft 三资产（AesirArchitecture/AesirFramework/AesirModules-v0.31.0.unitypackage），latest 双分支滚动到 0.31.0 且远端只剩 main+2 latest，update-info.json 已回写；文档站 b02293c 已推送、Deploy Zensical success。**新验证基线：EditMode 三程序集 820 total/818 pass/0 fail/2 skip（编辑器内 TestRunnerApi 三段式）+ PlayMode batchmode 31/31（退出码 0）**；BuildSettings 零残留、工作树干净、sync-samples 零漂移。**本轮新增发版事实/坑**：① 分发裁剪首次生效——`auto-publish-branches.yml` 在 subtree split 后 `git rm -r Samples Documentation`，latest 分支根目录只有 `Samples~` / `Documentation~`（已验证）；② 两包 CHANGELOG 的 [Unreleased] 常被多会话追加成"变更类条目误置于 Added / Fixed"（本轮发现 RAA 5 条、RAM 10 条），发版轮转时要按节归位；根 CHANGELOG 的 `| **旧版本** |` 定向替换不会误伤历史段；③ 文档站站点 changelog 的 [Unreleased] 同样需转正（含补齐分发裁剪/测试程序集划分等仓库级条目），并清理已删类型的 API 页（本轮删 MonoLifecycleProxyExtensions 页 + nav + 索引行 + 调用方摘要）。**遗留**：文档站 Scripting API 页仍是 0.24/0.25 代生成（RAA 131 / RAM 149 页），0.31.0 的 IView<T>、IGetAllEntries、GetAllEntries、AesirPlayerLoop 成员等未全量重生成——重生成流程见 2026-09-25 13:54 条目（清本地 ScriptDocGenerator → exec_editor_script 直调 Utility → rsync → 重跑索引/nav 脚本 → build --strict；索引/nav 重建脚本是 ad-hoc 未入库需重写）。
 - [2026-09-29 21:23:29] 文档站 0.31.0 同步已全量完成（2026-09-29 晚，AesirFramework-Docs 推送 5 提交：b02293c 版本口径+changelog 转正 / 6b9d0f0 API 全量重生成+导航前缀修复 / 75cd103 内容页 27 处修正 + 更早两批；Deploy Zensical 三次 success）。**三件事的落地形态**：① **API 页全量重生成**（RAA 131 页 / RAM 153 页，9 个程序集 284 类型）——流程=清空项目根 `ScriptDocGenerator/Runestone` → `exec_editor_script` 内**纯反射**调 `ScriptDocGeneratorUtility.AnalyzeMultipleAssemblies(List<string> FullName)` + `GenerateMultipleTypeDocs(list, ZensicalScriptingAPISettingsSO.Instance, ScriptDocGeneratorPanelSO.DefaultDocFolderPath)`（直接反射即可；坑：不要用 `MakeGenericType(batch[0].GetType())` 重建列表——analyze 返回的是 `List<ITypeData>`，重建会得到 `List<TypeData>` 而抛类型转换异常，直接传 analyze 的返回值即可）→ `rsync -a --delete` 到站点 RAA/RAM 目录；新增页=IView{T}/AudioChannel/SceneModuleUniTask/NiceTypeName/SceneModuleSettingsWindow(Odin)/AesirSingletonAssetInitializer/AesirGetStartedService 嵌套类型，删除页=Internal/ListExtensions、Editor/SceneManagerWindow。② **索引与导航重建脚本已归档** `.codely-cli/memory/docs-site-rebuild-api-nav.py`（gitignore 内，本机可复用；规则=index 按命名空间 H2（ASCII 升序）→ 种类 H3（类/结构体/接口/枚举/委托，`static class`/`abstract class`/`sealed class` 均归「类」）→ 名称小写升序，摘要取「## 声明」csharp 块后首段、>90 字截 88+…、空则「—」，表格用 `<div class="api-summary-table" markdown="1">` 包裹；nav 分组**按程序集**（标签=程序集全名）、组内按文件路径 ASCII 排序、条目标签取页面 front matter title）。③ **修复既有导航 bug**：zeniscal.toml 的 API 导航路径前缀重复（`architecture/scripting-api/architecture/scripting-api/...`），侧栏全部 API 链接线上 404 而 build --strict 不报错——现已修为单前缀，并加「nav 目标存在性 + 页面是否全被 nav 收录」校验（284 条 0 缺失）。**站点内容页复核结论（27 条已全部落地，勿重做）**：A 组 6 条事实性错误（示例总数 9/10→11、RuntimeInitializeLoadType 已登记却被写成「未注册」、两处已删 `RegisterCustomLifecycle` 用法示例）；B 组 6 处口径偏移（AesirPlayerLoop 自愈按帧节流 ×4、双注册表 internal、Binder 出 Player 构建、包不再声明 test-framework）；C 组 10 项补全（IView&lt;T&gt;、GetAllEntries/快照语义、inactive 查找、ClearListeners 接口面、EventModule DDOL、Binder 设置持久化、Addressables versionDefines ×2、示例清单、Channels/AudioChannel、测试数 800+）。**How to apply:** 下次 API 变更后重生成照①②执行（脚本+规则已归档，勿再重写）；**站点内容页用审计子代理（general-purpose，只读）对照包内 README/模块文档/CHANGELOG 出报告，再由主会话统一落地**——本轮 20 页审计 27 条命中率很高，比主会话逐页精读省一半以上上下文。
+- [2026-09-29 21:31:40] 0.31.1 已正式发布（2026-09-29，主仓 2 提交推送：a85804b 记忆批 / 7720f8e 版本批 + CI 回写 28ca377 已 pull）：Release **v0.31.1** 非 draft 三资产，latest 双分支滚动到 0.31.1，远端仍只剩 main + 2 latest；文档站 366f870 已推送且 Deploy Zensical success。**性质**：文档补丁版——两包源码与 0.31.0 **逐字节一致**（本轮改动只有 package.json 版本号 + 三份 CHANGELOG + 6 份 README/镜像 + CODELY.md 正文），发版内容是"文档站三批同步"的对外固化（API 页全量重生成至 0.31.0 口径、站点侧栏导航前缀缺陷修复、内容页 27 处对齐、第三方素材出处）。**门禁**：refresh 0 错 0 警 + EditMode 三程序集 820 total/818 pass/0 fail/2 skip（与 0.31.0 基线一致）；**PlayMode 31/31 沿用 0.31.0 基线未复跑**（判据=本轮零 .cs/.asmdef/.unity 改动，程序集二进制与已通过门禁时完全一致）——后续纯文档补丁版可照此豁免，但凡含代码/测试/asmdef 改动必须重跑 batchmode。**发版坑（本轮新增）**：版本降级同步脚本的替换清单必须**显式包含根 CHANGELOG 的 `| **<旧版本>** |` 表格行**——本轮脚本照抄 0.31.0 那批时漏了它（只改了 package.json/README/CODELY），提交前靠 grep 版本表才发现并补；另：内容页里的「0.31.0 起…」是**变更落点版本的历史标注**，补丁版不得批量替换为新版本号（同 CODELY.md 特性小节括号的规则）。
 
 ### Reference
 - [2026-08-15 22:20:34] AttributeOverviewPro 资产精简方案文档位于 Docs/AttributeOverviewPro-AssetReduction-Plan.md — 包含现状分析、可行性评估、子资产架构设计、详细实现步骤、验证步骤和备选方案。
