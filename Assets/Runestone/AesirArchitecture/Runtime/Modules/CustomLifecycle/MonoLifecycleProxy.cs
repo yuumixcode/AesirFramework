@@ -417,8 +417,7 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate,
-                OnBeforeUpdate);
+            AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, OnBeforeUpdate);
             AesirPlayerLoop.Register(AesirLifecyclePhase.AfterUpdate, OnAfterUpdate);
             _playerLoopRegistered = true;
         }
@@ -430,10 +429,8 @@ namespace Runestone.AesirArchitecture
                 return;
             }
 
-            AesirPlayerLoop.Unregister(AesirLifecyclePhase.BeforeUpdate,
-                OnBeforeUpdate);
-            AesirPlayerLoop.Unregister(AesirLifecyclePhase.AfterUpdate,
-                OnAfterUpdate);
+            AesirPlayerLoop.Unregister(AesirLifecyclePhase.BeforeUpdate, OnBeforeUpdate);
+            AesirPlayerLoop.Unregister(AesirLifecyclePhase.AfterUpdate, OnAfterUpdate);
             _playerLoopRegistered = false;
         }
 

@@ -49,7 +49,8 @@ namespace Runestone.AesirArchitecture
 
                 // 尝试在已加载的场景中查找预放置的实例
                 // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
-                _instance = FindAnyObjectByType<RemoveListenerOnSceneUnloadedTrigger>(FindObjectsInactive.Include);
+                _instance =
+                    FindAnyObjectByType<RemoveListenerOnSceneUnloadedTrigger>(FindObjectsInactive.Include);
                 if (_instance != null)
                 {
                     return _instance;

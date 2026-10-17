@@ -159,6 +159,21 @@ namespace Runestone.AesirArchitecture
         }
 
         /// <summary>
+        /// 获取所有已注册键值对（诊断用途，近失识别专用）。
+        /// </summary>
+        /// <remarks>
+        /// 正常查询请使用 <see cref="Get{TItem}" /> / <see cref="TryGet{TItem}" />。
+        /// 此成员仅供诊断路径遍历已注册条目（如 <see cref="AbstractContext{T}" /> 在"未注册"异常中
+        /// 识别"已注册实例可赋值给查询类型"的近失情况）；正常路径不产生开销。
+        /// <para>
+        /// 与 <see cref="GetAll" /> 一致地返回调用时刻的物化快照：枚举期间修改定位器不会抛"集合已修改"异常，
+        /// 期间发生的注册/注销不影响已返回的枚举。物化分配仅发生在调用时（异常诊断等冷路径）。
+        /// </para>
+        /// </remarks>
+        public IEnumerable<KeyValuePair<Type, T>> GetAllEntries() =>
+            new List<KeyValuePair<Type, T>>(_registry);
+
+        /// <summary>
         /// 检查是否已注册指定类型的实例（内部调试与测试用）。
         /// </summary>
         /// <typeparam name="TItem">要检查的实例类型，必须为 <typeparamref name="T" /> 的子类型。</typeparam>
@@ -182,20 +197,5 @@ namespace Runestone.AesirArchitecture
         /// <returns>已注册的实例；若未注册则返回 <c>null</c>。</returns>
         internal T GetByType(Type type) =>
             _registry.GetValueOrDefault(type);
-
-        /// <summary>
-        /// 获取所有已注册键值对（诊断用途，近失识别专用）。
-        /// </summary>
-        /// <remarks>
-        /// 正常查询请使用 <see cref="Get{TItem}" /> / <see cref="TryGet{TItem}" />。
-        /// 此成员仅供诊断路径遍历已注册条目（如 <see cref="AbstractContext{T}" /> 在"未注册"异常中
-        /// 识别"已注册实例可赋值给查询类型"的近失情况）；正常路径不产生开销。
-        /// <para>
-        /// 与 <see cref="GetAll" /> 一致地返回调用时刻的物化快照：枚举期间修改定位器不会抛"集合已修改"异常，
-        /// 期间发生的注册/注销不影响已返回的枚举。物化分配仅发生在调用时（异常诊断等冷路径）。
-        /// </para>
-        /// </remarks>
-        public IEnumerable<KeyValuePair<Type, T>> GetAllEntries() =>
-            new List<KeyValuePair<Type, T>>(_registry);
     }
 }

@@ -30,6 +30,8 @@ namespace Runestone.AesirArchitecture
     [DefaultExecutionOrder(-999)]
     public class AesirArchitecture : AesirMonoBehaviour
     {
+        static AesirArchitecture _instance;
+
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景（仅根物体生效；预放置为子物体时本字段不参与判断，DDOL 跟随宿主）。
         /// </summary>
@@ -44,8 +46,6 @@ namespace Runestone.AesirArchitecture
         /// </remarks>
         [SerializeField]
         bool dontDestroyOnLoad = true;
-
-        static AesirArchitecture _instance;
 
         /// <summary>
         /// DDOL 开关字段名，提供给 Odin Inspector 使用。

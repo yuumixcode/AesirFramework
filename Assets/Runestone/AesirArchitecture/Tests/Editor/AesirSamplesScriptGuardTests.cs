@@ -39,13 +39,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             // 防止扫描路径逻辑损坏后"0 个文件 = 通过"的假绿
             if (AesirAssetPaths.InstallRoots.Count > 0)
             {
-                Assert.Greater(scannedRuntimeScripts, 0,
-                    "扫描到 0 个运行时示例脚本——扫描逻辑可能已损坏");
+                Assert.Greater(scannedRuntimeScripts, 0, "扫描到 0 个运行时示例脚本——扫描逻辑可能已损坏");
             }
 
             Assert.IsEmpty(violations,
-                "存在未整文件 #if UNITY_EDITOR 包裹的运行时示例脚本（玩家构建将包含示例类型）:\n" +
-                string.Join("\n", violations));
+                "存在未整文件 #if UNITY_EDITOR 包裹的运行时示例脚本（玩家构建将包含示例类型）:\n" + string.Join("\n", violations));
         }
 
         #region 扫描实现
@@ -82,21 +80,21 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>扫描一个示例目录：运行时程序集内每个 .cs 必须整文件包裹，无 asmdef 归属视为违规。</summary>
-        static void ScanDirectory(string projectRelativeDir, List<string> violations,
+        static void ScanDirectory(string projectRelativeDir,
+            List<string> violations,
             ref int scannedRuntimeScripts)
         {
             var absoluteDir = ToAbsolute(projectRelativeDir);
 
             // asmdef 注册表：目录绝对路径 → 是否 Editor-only（includePlatforms 含 Editor）
             var asmdefs = new Dictionary<string, bool>();
-            foreach (var asmdefPath in Directory.GetFiles(
-                         absoluteDir, "*.asmdef", SearchOption.AllDirectories))
+            foreach (var asmdefPath in Directory.GetFiles(absoluteDir, "*.asmdef",
+                         SearchOption.AllDirectories))
             {
                 asmdefs[Path.GetDirectoryName(asmdefPath)] = IsEditorOnlyAssembly(asmdefPath);
             }
 
-            foreach (var scriptPath in Directory.GetFiles(
-                         absoluteDir, "*.cs", SearchOption.AllDirectories))
+            foreach (var scriptPath in Directory.GetFiles(absoluteDir, "*.cs", SearchOption.AllDirectories))
             {
                 if (!TryFindNearestAsmdef(scriptPath, asmdefs, out var editorOnly))
                 {
@@ -139,7 +137,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         }
 
         /// <summary>从脚本所在目录逐级向上找最近 asmdef；找不到返回 false（示例脚本必须归属程序集）。</summary>
-        static bool TryFindNearestAsmdef(string scriptPath, Dictionary<string, bool> asmdefs,
+        static bool TryFindNearestAsmdef(string scriptPath,
+            Dictionary<string, bool> asmdefs,
             out bool editorOnly)
         {
             var directory = Path.GetDirectoryName(scriptPath);
@@ -174,8 +173,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 last = line.TrimStart();
             }
 
-            return first != null &&
-                   first.StartsWith("#if UNITY_EDITOR", StringComparison.Ordinal) &&
+            return first != null && first.StartsWith("#if UNITY_EDITOR", StringComparison.Ordinal) &&
                    last.StartsWith("#endif", StringComparison.Ordinal);
         }
 

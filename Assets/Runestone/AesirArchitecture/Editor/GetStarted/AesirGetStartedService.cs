@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.PackageManager.UI;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -17,7 +18,7 @@ namespace Runestone.AesirArchitecture.Editor
     /// <c>Samples/</c>）；② 嵌入式包（<c>Packages/</c> 目录下的包源码）；③ UPM Git URL 安装
     /// （包源在 <see cref="PackageCacheRootPath" />）。后两种 UPM 形态的示例须导入到
     /// <c>Assets/Samples/&lt;包显示名&gt;/&lt;版本&gt;/&lt;示例显示名&gt;/</c>，未导入的条目仍保留在清单中
-    ///（<see cref="AesirSampleInfo.IsImported" /> 为 false），由窗口的「导入 Sample」按钮经确认框
+    /// （<see cref="AesirSampleInfo.IsImported" /> 为 false），由窗口的「导入 Sample」按钮经确认框
     /// 直接调用 Unity Package Manager 的 Sample API 导入（<see cref="ConfirmAndImportUpmSample" />）。
     /// </para>
     /// <para>
@@ -53,14 +54,14 @@ namespace Runestone.AesirArchitecture.Editor
             /// <summary>包定位描述（概览卡片文案）。</summary>
             public string Description;
 
+            /// <summary>包目录名（Release 资产命名与默认安装目录名；更新器的补装与差集清理亦按此定位）。</summary>
+            public string DirName;
+
             /// <summary>包显示名（概览卡片标题）。</summary>
             public string DisplayName;
 
             /// <summary>package.json name（包唯一标识）。</summary>
             public string Id;
-
-            /// <summary>包目录名（Release 资产命名与默认安装目录名；更新器的补装与差集清理亦按此定位）。</summary>
-            public string DirName;
         }
 
         /// <summary>
@@ -227,12 +228,14 @@ namespace Runestone.AesirArchitecture.Editor
             var installRoots = AesirAssetPaths.InstallRoots;
             for (var i = 0; i < installRoots.Count; i++)
             {
-                CollectPackages(Path.Combine(projectRoot ?? throw new InvalidOperationException(), installRoots[i]), AesirInstallType.AssetsCopy,
-                    packages, i > 0, installRoots[i]);
+                CollectPackages(
+                    Path.Combine(projectRoot ?? throw new InvalidOperationException(), installRoots[i]),
+                    AesirInstallType.AssetsCopy, packages, i > 0, installRoots[i]);
             }
 
             // ② 嵌入式包：Packages/*/package.json（file: 安装形态不在此列，属可接受的覆盖缺口）
-            CollectPackages(Path.Combine(projectRoot ?? throw new InvalidOperationException(), "Packages"), AesirInstallType.Embedded, packages, true);
+            CollectPackages(Path.Combine(projectRoot ?? throw new InvalidOperationException(), "Packages"),
+                AesirInstallType.Embedded, packages, true);
 
             // ③ UPM Git 安装：Library/PackageCache/cn.runestone.aesir.*@*/
             CollectPackages(Path.Combine(projectRoot, PackageCacheRootPath), AesirInstallType.Upm, packages,
@@ -601,11 +604,11 @@ namespace Runestone.AesirArchitecture.Editor
             /// <summary>示例显示名（package.json samples.displayName，与清单同源的匹配键）。</summary>
             public string DisplayName;
 
-            /// <summary>是否已导入（导入目录已存在于 Assets/Samples）。</summary>
-            public bool IsImported;
-
             /// <summary>执行导入，返回是否成功（真实实现等价无参 Sample.Import()）。</summary>
             public Func<bool> Import;
+
+            /// <summary>是否已导入（导入目录已存在于 Assets/Samples）。</summary>
+            public bool IsImported;
         }
 
         /// <summary>UPM 示例导入的落地路径（与 ResolveSamples 判定已导入用的路径同源，单一格式真源）。</summary>
@@ -646,7 +649,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// Sample API 把示例导入到 <c>Assets/Samples/&lt;包显示名&gt;/&lt;版本&gt;/&lt;示例显示名&gt;/</c>；
         /// 取消返回 <see cref="AesirSampleImportResult.Cancelled" />，不动文件系统。
         /// </summary>
-        public static AesirSampleImportResult ConfirmAndImportUpmSample(AesirSampleInfo sample, out string message)
+        public static AesirSampleImportResult ConfirmAndImportUpmSample(AesirSampleInfo sample,
+            out string message)
         {
             if (!EditorUtility.DisplayDialog(ImportConfirmTitle, BuildImportConfirmMessage(sample),
                     ImportConfirmOkButton, ImportConfirmCancelButton))
@@ -682,7 +686,8 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 foreach (var h in handles)
                 {
-                    if (h == null || !string.Equals(h.DisplayName, sample.DisplayName, StringComparison.Ordinal))
+                    if (h == null || !string.Equals(h.DisplayName, sample.DisplayName,
+                            StringComparison.Ordinal))
                     {
                         continue;
                     }
@@ -717,7 +722,7 @@ namespace Runestone.AesirArchitecture.Editor
         static List<UpmSampleHandle> FindUpmSamplesDefault(string packageId, string version)
         {
             var result = new List<UpmSampleHandle>();
-            var found = UnityEditor.PackageManager.UI.Sample.FindByPackage(packageId, version);
+            var found = Sample.FindByPackage(packageId, version);
             if (found == null)
             {
                 return result;

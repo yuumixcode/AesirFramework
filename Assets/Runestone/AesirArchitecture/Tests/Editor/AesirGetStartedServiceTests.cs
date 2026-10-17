@@ -19,13 +19,14 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
         #region 夹具构造
 
-        static AesirGetStartedService.AesirPackageInfo CreateUpmPackage() => new AesirGetStartedService.AesirPackageInfo
-        {
-            Id = PackageId,
-            DisplayName = PackageDisplayName,
-            Version = PackageVersion,
-            InstallType = AesirGetStartedService.AesirInstallType.Upm
-        };
+        static AesirGetStartedService.AesirPackageInfo CreateUpmPackage() =>
+            new AesirGetStartedService.AesirPackageInfo
+            {
+                Id = PackageId,
+                DisplayName = PackageDisplayName,
+                Version = PackageVersion,
+                InstallType = AesirGetStartedService.AesirInstallType.Upm
+            };
 
         static AesirGetStartedService.AesirSampleInfo CreateSample(
             AesirGetStartedService.AesirPackageInfo pkg,
@@ -39,8 +40,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 RelativeDir = "Counter-Mvc-Quick"
             };
 
-        static AesirGetStartedService.UpmSampleHandle Handle(
-            string displayName,
+        static AesirGetStartedService.UpmSampleHandle Handle(string displayName,
             bool isImported,
             Func<bool> import) =>
             new AesirGetStartedService.UpmSampleHandle
@@ -94,8 +94,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             var sample = CreateSample(CreateUpmPackage());
 
-            Assert.AreEqual(
-                $"Assets/Samples/{PackageDisplayName}/{PackageVersion}/{SampleName}",
+            Assert.AreEqual($"Assets/Samples/{PackageDisplayName}/{PackageVersion}/{SampleName}",
                 AesirGetStartedService.GetUpmSampleImportPath(sample));
         }
 
@@ -109,8 +108,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var sample = CreateSample(CreateUpmPackage());
             var importCalls = 0;
 
-            var result = AesirGetStartedService.ImportUpmSample(sample, out var message,
-                (id, version) => new List<AesirGetStartedService.UpmSampleHandle>
+            var result = AesirGetStartedService.ImportUpmSample(sample, out var message, (id, version) =>
+                new List<AesirGetStartedService.UpmSampleHandle>
                 {
                     Handle(SampleName, false, () =>
                     {
@@ -130,8 +129,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var sample = CreateSample(CreateUpmPackage());
             var importCalls = 0;
 
-            var result = AesirGetStartedService.ImportUpmSample(sample, out var message,
-                (id, version) => new List<AesirGetStartedService.UpmSampleHandle>
+            var result = AesirGetStartedService.ImportUpmSample(sample, out var message, (id, version) =>
+                new List<AesirGetStartedService.UpmSampleHandle>
                 {
                     Handle(SampleName, true, () =>
                     {
@@ -150,8 +149,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             var sample = CreateSample(CreateUpmPackage());
 
-            var result = AesirGetStartedService.ImportUpmSample(sample, out var message,
-                (id, version) => new List<AesirGetStartedService.UpmSampleHandle>
+            var result = AesirGetStartedService.ImportUpmSample(sample, out var message, (id, version) =>
+                new List<AesirGetStartedService.UpmSampleHandle>
                 {
                     Handle(SampleName, false, FailingImport())
                 });
@@ -166,8 +165,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             // 匹配键为 Ordinal 精确比较——大小写或全角差异的显示名不得误命中
             var sample = CreateSample(CreateUpmPackage());
 
-            var result = AesirGetStartedService.ImportUpmSample(sample, out var message,
-                (id, version) => new List<AesirGetStartedService.UpmSampleHandle>
+            var result = AesirGetStartedService.ImportUpmSample(sample, out var message, (id, version) =>
+                new List<AesirGetStartedService.UpmSampleHandle>
                 {
                     Handle(SampleName.ToLowerInvariant(), false, FailingImport())
                 });
@@ -183,8 +182,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             // 空清单
             Assert.AreEqual(AesirGetStartedService.AesirSampleImportResult.NotFound,
-                AesirGetStartedService.ImportUpmSample(sample, out _, (id, version) =>
-                    new List<AesirGetStartedService.UpmSampleHandle>()));
+                AesirGetStartedService.ImportUpmSample(sample, out _,
+                    (id, version) => new List<AesirGetStartedService.UpmSampleHandle>()));
 
             // finder 返回 null（真实 API 异常形态同样不得抛 NRE）
             Assert.AreEqual(AesirGetStartedService.AesirSampleImportResult.NotFound,
@@ -192,8 +191,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             // 清单含 null 条目（跳过而非中断）
             Assert.AreEqual(AesirGetStartedService.AesirSampleImportResult.NotFound,
-                AesirGetStartedService.ImportUpmSample(sample, out _, (id, version) =>
-                    new List<AesirGetStartedService.UpmSampleHandle> { null }));
+                AesirGetStartedService.ImportUpmSample(sample, out _,
+                    (id, version) => new List<AesirGetStartedService.UpmSampleHandle> { null }));
         }
 
         [Test]
@@ -203,13 +202,12 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             string seenId = null;
             string seenVersion = null;
 
-            AesirGetStartedService.ImportUpmSample(sample, out _,
-                (id, version) =>
-                {
-                    seenId = id;
-                    seenVersion = version;
-                    return new List<AesirGetStartedService.UpmSampleHandle>();
-                });
+            AesirGetStartedService.ImportUpmSample(sample, out _, (id, version) =>
+            {
+                seenId = id;
+                seenVersion = version;
+                return new List<AesirGetStartedService.UpmSampleHandle>();
+            });
 
             Assert.AreEqual(PackageId, seenId);
             Assert.AreEqual(PackageVersion, seenVersion);

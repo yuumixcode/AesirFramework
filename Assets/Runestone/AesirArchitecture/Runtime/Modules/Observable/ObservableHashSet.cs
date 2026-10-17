@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Runestone.AesirArchitecture.Internal;
-using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
@@ -42,7 +41,6 @@ namespace Runestone.AesirArchitecture
         readonly MiniEvent<CollectionChangedEventArgs<T>> _changedEvent =
             new MiniEvent<CollectionChangedEventArgs<T>>();
 
-        [SerializeField]
         HashSet<T> set = new HashSet<T>();
 
         /// <summary>
@@ -146,6 +144,18 @@ namespace Runestone.AesirArchitecture
         /// <inheritdoc cref="IObservableCollection{T}.RemoveListener" />
         public void RemoveListener(Action<CollectionChangedEventArgs<T>> callback) =>
             _changedEvent.RemoveListener(callback);
+
+        /// <summary>
+        /// 清空所有变更监听。
+        /// </summary>
+        /// <remarks>
+        /// 清除全部监听引用，防止因监听者未释放导致的内存泄漏。
+        /// 与 <see cref="Clear" /> 不同——后者清空的是集合元素。
+        /// </remarks>
+        public void ClearListeners()
+        {
+            _changedEvent.Dispose();
+        }
 
         /// <summary>
         /// 添加元素，实际添加时触发 Add 通知（参数为该元素）。
@@ -260,18 +270,6 @@ namespace Runestone.AesirArchitecture
         /// </summary>
         /// <returns>元素枚举器。</returns>
         public Enumerator GetEnumerator() => new Enumerator(set.GetEnumerator());
-
-        /// <summary>
-        /// 清空所有变更监听。
-        /// </summary>
-        /// <remarks>
-        /// 清除全部监听引用，防止因监听者未释放导致的内存泄漏。
-        /// 与 <see cref="Clear" /> 不同——后者清空的是集合元素。
-        /// </remarks>
-        public void ClearListeners()
-        {
-            _changedEvent.Dispose();
-        }
 
         /// <summary>
         /// 元素枚举器。
