@@ -233,42 +233,6 @@ namespace TJGenerators
             StartNameEditingIfProjectWindowExists(doCreate, defaultNameForDialog, icon, null);
         }
 
-        internal static void CreateAnimationClipAssetWithCallback(string defaultName)
-        {
-            string folder = PathUtils.GetProjectBrowserInsertionFolderAssetPath();
-            if (string.IsNullOrWhiteSpace(defaultName))
-                defaultName = "New Sprite Sequence.anim";
-            string fileName = Path.GetFileName(defaultName.Trim().Replace('\\', '/'));
-            if (string.IsNullOrEmpty(fileName))
-                fileName = "New Sprite Sequence.anim";
-
-            string defaultNameForDialog = Path.GetFileName(
-                AssetDatabase.GenerateUniqueAssetPath($"{folder}/{fileName}")
-            );
-
-            var icon = EditorGUIUtility.ObjectContent(null, typeof(AnimationClip))?.image as Texture2D;
-            var doCreate = ScriptableObject.CreateInstance<DoCreateTJGeneratorsAsset>();
-            doCreate.action = (path, resourceFile) =>
-            {
-                path = AssetDatabase.GenerateUniqueAssetPath(path);
-
-                var clip = new AnimationClip();
-                AssetDatabase.CreateAsset(clip, path);
-                AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-
-                var loaded = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
-                if (loaded != null)
-                {
-                    Selection.activeObject = loaded;
-                    EditorGUIUtility.PingObject(loaded);
-                }
-
-                EditorApplication.delayCall += () => TJGeneratorsSpriteSequenceWindow.OpenForAsset(path);
-            };
-
-            StartNameEditingIfProjectWindowExists(doCreate, defaultNameForDialog, icon, null);
-        }
-
         internal static void CreatePrefabAssetWithCallback(string defaultName, bool enableLabel, GameObject sceneParentForInstance)
         {
             var icon = EditorGUIUtility.ObjectContent(null, typeof(GameObject))?.image as Texture2D;

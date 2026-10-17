@@ -1,6 +1,6 @@
 {
   "name": "TJGenerators",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "mcpServers": {
     "TJGenerators": {
       "httpUrl": "https://ai-generator.tuanjie.cn/mcp"

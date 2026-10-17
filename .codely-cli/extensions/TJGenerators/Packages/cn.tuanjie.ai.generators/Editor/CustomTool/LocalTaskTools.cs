@@ -30,10 +30,6 @@ namespace UnityTcp.Editor.Tools
                 Ids = () => MaterialTaskTracker.GetAllTasks().Select(t => t.TaskId), Query = GenerateMaterialTool.QueryMaterialStatus },
             new Source { Type = "skybox", Contains = id => SkyboxTaskTracker.GetTask(id) != null,
                 Ids = () => SkyboxTaskTracker.GetAllTasks().Select(t => t.TaskId), Query = GenerateSkyboxTool.QuerySkyboxStatus },
-            new Source { Type = "sprite_sequence", Contains = id => SpriteSequenceTaskTracker.GetTask(id) != null,
-                Ids = () => SpriteSequenceTaskTracker.GetAllTasks().Select(t => t.TaskId), Query = GenerateSpriteSequenceTool.QuerySpriteSequenceStatus },
-            new Source { Type = "auto_sprite_sequence", Contains = id => AutoSpriteSequenceTaskTracker.GetTask(id) != null,
-                Ids = () => AutoSpriteSequenceTaskTracker.GetAllTasks().Select(t => t.TaskId), Query = GenerateImageTool.Query2DSpriteSequenceAutoStatus },
             new Source { Type = "terrain", Contains = id => TerrainTaskTracker.GetTask(id) != null,
                 Ids = () => TerrainTaskTracker.GetAllTasks().Select(t => t.TaskId), Query = GenerateTerrainTool.QueryTerrainStatus },
             new Source { Type = "terrain_apply", Contains = id => TerrainApplyTaskTracker.GetTask(id) != null,
@@ -54,8 +50,6 @@ namespace UnityTcp.Editor.Tools
             var result = JObject.FromObject(source.Query(new JObject { ["task_id"] = id, ["read_only"] = readOnly }));
             result["task_id"] = id; // Terrain also retains its original apply_task_id field.
             result["task_type"] = source.Type;
-            if (source.Type == "sprite_sequence") result["route"] = "legacy_sprite_sequence";
-            if (source.Type == "auto_sprite_sequence") result["route"] = "auto_frontier_sequence";
             return result;
         }
 
@@ -69,8 +63,8 @@ namespace UnityTcp.Editor.Tools
 
         [ExecuteCustomTool.CustomTool("query_local_task",
             "Query ONE Unity-local generation, import or post-processing task. Required: task_id (use the apply_task_id value for terrain application); " +
-            "optional task_type disambiguates recovered IDs. Types: image, image_layers, sprite, material, skybox (legacy), sprite_sequence, " +
-            "auto_sprite_sequence, terrain, terrain_apply, model_import, image_import, audio_import, video_import. " +
+            "optional task_type disambiguates recovered IDs. Types: image, image_layers, sprite, material, skybox (legacy), " +
+            "terrain, terrain_apply, model_import, image_import, audio_import, video_import. " +
             "Returns original status, progress, asset paths and type-specific fields, plus task_type. UI Kit stages live in image/image_layers; " +
             "skybox MCP downloads use image_import. MCP-originated generation IDs must go to MCP check_task instead. " +
             "Wait between checks, keep the same task ID while pending, and verify real assets before reporting completion.")]

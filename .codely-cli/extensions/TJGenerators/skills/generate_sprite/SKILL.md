@@ -43,7 +43,7 @@ Output: PNG 自动导入为 **Sprite (`TextureImporterType.Sprite`)**，保存�
 
 ## 角色与动画衔接
 
-仅静态精灵执行本 skill；用户要求动画且没有参考图时，同一执行者先完成本 skill，再加载 `unity-sprite-sequence-generation`，把真实 `image_path` 传入序列帧步骤。已有图直接进入序列帧 skill。
+仅静态精灵执行本 skill；用户要求 2D 帧动画时，改用 MCP `generate_sprite_animation`（4×4 精灵表）或八向 `generate_eight_dir_sprite`，不要再调用已移除的 `generate_sprite_sequence`。
 
 角色在 2048px / PPU=100 时可用 `localScale=0.10`，小道具 `0.05`、大角色 `0.20`；用户的尺寸要求优先。记录实际 scale，后续动画保持一致。SpriteRenderer 用空 GameObject，复用同名精灵目标，不加到带 MeshRenderer 的 Cube/Plane/Quad 上。
 
@@ -70,7 +70,7 @@ Output: PNG 自动导入为 **Sprite (`TextureImporterType.Sprite`)**，保存�
 - 3D 模型 → `generate_3d_model`
 - 天空盒 → `generate_skybox`
 - 表面材质（PBR） → `generate_material`
-- 帧动画序列 → `generate_sprite_sequence`
+- 帧动画序列 → MCP `generate_sprite_animation`；八向动作 → MCP `generate_eight_dir_sprite`
 
 ## 工具
 

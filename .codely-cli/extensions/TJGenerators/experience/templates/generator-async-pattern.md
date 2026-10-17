@@ -43,7 +43,7 @@ MCP `check_task` 只接收 MCP 提交得到的 ID；Unity 原生生成和本地�
 
 调用 skill 指定的 Unity custom tool，记录它返回的 task ID；MCP task ID 与 Unity task ID 不可互换。
 
-本地只暴露 `query_local_task`、`list_local_tasks` 和 `list_session_assets`。query 传 `task_id`，Terrain 应用传 apply_task_id 的值（兼容同名参数）；恢复 ID 有歧义时加 `task_type`。list 支持 `task_type`、`status`、`offset`、`limit`，返回完整状态和产物字段。类型包括 image/image_layers（含 UI Kit 两阶段）、sprite、material、skybox（旧任务）、sprite_sequence、auto_sprite_sequence、terrain、terrain_apply、model_import、image_import、audio_import、video_import；路由任务不重复列出其底层任务。
+本地只暴露 `query_local_task`、`list_local_tasks` 和 `list_session_assets`。query 传 `task_id`，Terrain 应用传 apply_task_id 的值（兼容同名参数）；恢复 ID 有歧义时加 `task_type`。list 支持 `task_type`、`status`、`offset`、`limit`，返回完整状态和产物字段。类型包括 image/image_layers（含 UI Kit 两阶段）、sprite、material、skybox（旧任务）、terrain、terrain_apply、model_import、image_import、audio_import、video_import。
 
 在当前执行者中前台等待最多 30 秒，再调用该任务的 `query_local_task` 一次；进行中则再次等待后查询。`queued`、`running`、`generating`、`processing`、`downloading`、`importing`、`rigging`、`generating_motion`、`recovering` 都不是成功。不要结束子代理来等待通知。
 

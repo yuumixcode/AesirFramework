@@ -1,6 +1,6 @@
 # TJGenerators for Unity
 
-TJGenerators for Unity 是一款强大的 AI 内容生成插件，集成团结 AI 平台的多模态生成能力，无缝嵌入 Unity 编辑器工作流。支持 3D 模型、天空盒、2D 精灵、表面材质、2D 动作/精灵表序列帧、背景音乐、音效、语音合成与声音克隆、图片放大、Game UI Kit、视频、3D 世界等多种游戏资产的 AI 生成，帮助开发者和创作者大幅提升内容创作效率。
+TJGenerators for Unity 是一款强大的 AI 内容生成插件，集成团结 AI 平台的多模态生成能力，无缝嵌入 Unity 编辑器工作流。支持 3D 模型、天空盒、2D 精灵、表面材质、2D 精灵表序列帧、背景音乐、音效、语音合成与声音克隆、图片放大、Game UI Kit、视频、3D 世界等多种游戏资产的 AI 生成，帮助开发者和创作者大幅提升内容创作效率。
 
 Codely 扩展通过 skills 指导执行，耗时任务按需委托内置 `general-purpose` 子代理，不再注册按资产类型划分的专属代理。MCP 提供生成与轮询指引，Unity custom tools 保留导入和后处理能力；任务在真实资产验证后交付。委托、等待及中断续接规则见 [共享执行约定](extension/experience/templates/generator-async-pattern.md)。
 
@@ -36,7 +36,7 @@ Codely 扩展通过 skills 指导执行，耗时任务按需委托内置 `genera
 
 ### 🖼️ 图片生成
 
-> **Agent（Codely 扩展）链路说明**：图片生成 / 图片分层 / 图片放大的提交与轮询已迁移到后端 MCP（`generate_image` / `generate_image_layers` / `upscale_image` + `check_task`），Unity 侧通过 CustomTool `import_image_from_url`（单图 GUID 稳定占位 / 多图图层模式，含域重载幂等恢复）完成下载导入与后处理。序列帧族（`generate_frontier_sequence` / `generate_2d_sprite_sequence_*`）与 `generate_game_ui_kit` 仍走 Unity 内置链路；编辑器窗口不受影响。
+> **Agent（Codely 扩展）链路说明**：图片生成 / 图片分层 / 图片放大的提交与轮询已迁移到后端 MCP（`generate_image` / `generate_image_layers` / `upscale_image` + `check_task`），Unity 侧通过 CustomTool `import_image_from_url`（单图 GUID 稳定占位 / 多图图层模式，含域重载幂等恢复）完成下载导入与后处理。2D 序列帧走 MCP `generate_sprite_animation` / 八向 `generate_eight_dir_sprite`；Unity 编辑器仍保留精灵表序列帧窗口。`generate_game_ui_kit` 仍走 Unity 内置链路。
 
 | 生成器 | 功能 | 特点 |
 |--------|------|------|
@@ -96,14 +96,13 @@ Codely 扩展通过 skills 指导执行，耗时任务按需委托内置 `genera
 
 | 入口 | 生成器 | 功能 |
 |------|--------|------|
-| **2D 动作序列帧** | **2D 序列帧** | 图生角色动作序列帧（待机、向前跑、向后跑等），输出多帧 Sprite + AnimationClip |
 | **2D 精灵表序列帧** | **Frontier Game Design** | 生成 4×4 整图精灵表，自动绿幕抠图、网格切割并导出 AnimationClip；支持 prompt 模板与参考图 |
 
 ### ⚙️ 架构特性
 
 - **配置驱动架构**：所有生成器通过 JSON 配置文件定义，添加新生成器无需编写 C# 代码
 - **公开 C# API**：支持在编辑器脚本中调用生成功能
-- **任务恢复机制**：编辑器意外关闭后自动恢复进行中的任务；CustomTool（图片、精灵、材质、天空盒、地形、2D 序列帧、Game UI Kit 等）在 Domain Reload 后亦可自动恢复未完成流程——3D 模型 / 图片 / 视频 / 音频导入任务的 URL 为永久 CDN 链接且下载路径确定性分配，重载后幂等重跑（导入完成段为 at-least-once，带防重入守卫）；任务持久化 `sessionId` 以便按会话恢复与通知
+- **任务恢复机制**：编辑器意外关闭后自动恢复进行中的任务；CustomTool（图片、精灵、材质、天空盒、地形、Game UI Kit 等）在 Domain Reload 后亦可自动恢复未完成流程——3D 模型 / 图片 / 视频 / 音频导入任务的 URL 为永久 CDN 链接且下载路径确定性分配，重载后幂等重跑（导入完成段为 at-least-once，带防重入守卫）；任务持久化 `sessionId` 以便按会话恢复与通知
 - **Play 模式保护**：Unity 播放期间禁用生成、资产搜索、下载及场景放置操作，避免退出播放后生成内容被丢弃；提示文案可点击直接退出 Play Mode
 - **Placeholder 自动清理**：生成失败或取消时自动移除 Prefab 内残留 Placeholder 子对象；`AI/工具/清理占位 GameObject` 可批量扫描项目 Prefab 清理
 - **历史记录管理**：按资产隔离历史记录，支持快速复用与在 Project 中定位；写入 `sessionId` 便于按 Agent 会话分组，可通过 `list_session_assets` CustomTool 查询
@@ -141,7 +140,6 @@ Codely 扩展通过 skills 指导执行，耗时任务按需委托内置 `genera
 | `AI/生成/生成表面材质` | 打开表面材质生成窗口 |
 | `AI/生成/生成精灵` | 打开 2D 精灵生成窗口 |
 | `AI/生成/生成图片` | 打开图片生成窗口 |
-| `AI/生成/生成2D动作序列帧` | 打开 2D 动作序列帧生成窗口（图生 idle / 跑等动作） |
 | `AI/生成/生成2D精灵表序列帧` | 打开 2D 精灵表序列帧生成窗口（整图切割为序列帧） |
 | `AI/生成/生成音频` | 打开背景音乐生成窗口 |
 | `AI/生成/生成视频` | 打开视频生成窗口（含特效视频绿幕工作流） |
@@ -168,7 +166,6 @@ Codely 扩展通过 skills 指导执行，耗时任务按需委托内置 `genera
 | `Assets/Create/2D/生成2D精灵` | 创建 2D 精灵生成占位资产 |
 | `Assets/Create/2D/生成图片` | 创建图片生成占位资产 |
 | `GameObject/2D Object/生成2D精灵` | 在场景中挂接 2D 精灵生成流程 |
-| `Assets/Create/2D/生成2D动作序列帧` | 创建 2D 动作序列帧占位资产 |
 | `Assets/Create/Audio/生成音频` | 创建音频生成占位资产 |
 
 ### 快速开始
@@ -358,7 +355,6 @@ Editor/
     │   ├── TJGeneratorsModelSelectorWindow.cs
     │   ├── TJGeneratorsMusicWindow.cs
     │   ├── TJGeneratorsSkyboxWindow.cs
-    │   ├── TJGeneratorsSpriteSequenceWindow.cs
     │   ├── TJGeneratorsSpriteWindow.cs
     │   ├── TJGeneratorsTexturePatternSelectorWindow.cs
     │   ├── TJGeneratorsVideoWindow.cs

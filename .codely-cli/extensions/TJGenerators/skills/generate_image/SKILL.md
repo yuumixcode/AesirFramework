@@ -64,7 +64,7 @@ Output: PNG/JPEG imported as **Texture2D (Default type, alphaIsTransparency)**, 
 - 透明背景 sprite（图标、物品、立绘）→ `generate_sprite`（未迁移，仍走 Unity）
 - 一张图拆多图层 → `generate_image_layers`（本 skill 的分层版流程）
 - 放大已有图片 → `upscale_image`（本 skill 的放大版流程）
-- 序列帧 spritesheet → `generate_frontier_sequence` / `generate_2d_sprite_sequence_*`（未迁移，仍走 Unity）
+- 序列帧 spritesheet → MCP `generate_sprite_animation` / `generate_eight_dir_sprite`（Unity CustomTool 序列帧入口已移除）
 - 天空盒 / 音频 / 3D → 各自 skill
 
 > 用户说"用火山模型"/"用 SeeDream"时 `provider=seedream`；没有点名模型则省略 `provider`。

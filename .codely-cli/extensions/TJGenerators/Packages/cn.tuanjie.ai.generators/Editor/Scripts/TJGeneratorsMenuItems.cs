@@ -87,19 +87,6 @@ namespace TJGenerators
 #endif
 
 #if TUANJIE_1 || TUANJIE_2 || TJGENERATORS_DEBUG
-        [MenuItem("AI/生成/生成2D动作序列帧", false, 2005)]
-        public static void CreateAIGeneratedSpriteSequence() { TJGeneratorsL10n.SetLanguage(TJGeneratorsL10n.Language.Chinese); TJGeneratorsAssetCreation.CreateAnimationClipAssetWithCallback("New Sprite Sequence.anim"); }
-        [MenuItem("AI/生成/生成2D动作序列帧", true)]
-        public static bool Validate_CreateAIGeneratedSpriteSequence() => ValidateNotInPlayMode();
-#endif
-#if !(TUANJIE_1 || TUANJIE_2) || TJGENERATORS_DEBUG
-        [MenuItem("AI/Generate/2D Action Sequence", false, 2105)]
-        public static void CreateAIGeneratedSpriteSequence_En() { TJGeneratorsL10n.SetLanguage(TJGeneratorsL10n.Language.English); TJGeneratorsAssetCreation.CreateAnimationClipAssetWithCallback("New Sprite Sequence.anim"); }
-        [MenuItem("AI/Generate/2D Action Sequence", true)]
-        public static bool Validate_CreateAIGeneratedSpriteSequence_En() => ValidateNotInPlayMode();
-#endif
-
-#if TUANJIE_1 || TUANJIE_2 || TJGENERATORS_DEBUG
         [MenuItem("AI/生成/生成2D精灵表序列帧", false, 2006)]
         public static void OpenSpriteSheetSequenceWindow() { TJGeneratorsL10n.SetLanguage(TJGeneratorsL10n.Language.Chinese); TJGeneratorsAssetCreation.CreateImageAssetWithCallback("New Image.jpg", openAsSpriteSheetSequence: true); }
         [MenuItem("AI/生成/生成2D精灵表序列帧", true)]
@@ -526,19 +513,6 @@ namespace TJGenerators
         public static void CreateTJGeneratorsImage_En() { TJGeneratorsL10n.SetLanguage(TJGeneratorsL10n.Language.English); TJGeneratorsAssetCreation.CreateImageAssetWithCallback("New Image.jpg"); }
         [MenuItem("Assets/Create/2D/Image", true)]
         public static bool Validate_CreateTJGeneratorsImage_En() => ValidateNotInPlayMode();
-#endif
-
-#if TUANJIE_1 || TUANJIE_2 || TJGENERATORS_DEBUG
-        [MenuItem("Assets/Create/2D/生成2D动作序列帧", false, -198)]
-        public static void CreateTJGeneratorsSpriteSequence() { TJGeneratorsL10n.SetLanguage(TJGeneratorsL10n.Language.Chinese); TJGeneratorsAssetCreation.CreateAnimationClipAssetWithCallback("New Sprite Sequence.anim"); }
-        [MenuItem("Assets/Create/2D/生成2D动作序列帧", true)]
-        public static bool Validate_CreateTJGeneratorsSpriteSequence() => ValidateNotInPlayMode();
-#endif
-#if !(TUANJIE_1 || TUANJIE_2) || TJGENERATORS_DEBUG
-        [MenuItem("Assets/Create/2D/2D Action Sequence", false, -198)]
-        public static void CreateTJGeneratorsSpriteSequence_En() { TJGeneratorsL10n.SetLanguage(TJGeneratorsL10n.Language.English); TJGeneratorsAssetCreation.CreateAnimationClipAssetWithCallback("New Sprite Sequence.anim"); }
-        [MenuItem("Assets/Create/2D/2D Action Sequence", true)]
-        public static bool Validate_CreateTJGeneratorsSpriteSequence_En() => ValidateNotInPlayMode();
 #endif
 
         #endregion

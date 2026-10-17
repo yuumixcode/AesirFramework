@@ -270,25 +270,13 @@ namespace TJGenerators
             return true;
         }
 
+        /// <summary>
+        /// AnimationClip header no longer offers legacy image2seq generation.
+        /// Still claim the target so Prefab header controls do not mis-apply.
+        /// </summary>
         private static bool TryDrawAnimationClipHeaderControls(Editor editor)
         {
-            if (!(editor.target is AnimationClip animationClip))
-                return false;
-
-            string clipPath = AssetDatabase.GetAssetPath(animationClip);
-            if (!string.IsNullOrEmpty(clipPath)
-                && clipPath.EndsWith(".anim", StringComparison.OrdinalIgnoreCase))
-            {
-                var clipAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(clipPath);
-                if (!TJGeneratorsGenerationLabel.HasSpriteSheetLabel(clipAsset))
-                {
-                    DrawAIGenerateHeaderButton(
-                        TJGeneratorsL10n.L("使用 TJGenerators AI 生成2D动作序列帧"),
-                        () => TJGeneratorsSpriteSequenceWindow.OpenForAsset(clipPath));
-                }
-            }
-
-            return true;
+            return editor.target is AnimationClip;
         }
 
         private static bool TryDrawPrefabHeaderControls(Editor editor)

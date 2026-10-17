@@ -117,7 +117,7 @@ MCP 段轮询纪律见 [3d-model-generation mcp.md §check_task](../generate_3d_
 
 不适用：
 - 通用静态 3D 物件（不要动作）→ `generate_3d_model` 普通导入（不加 `add_motion`）
-- 仅 2D 帧动画 → `generate_sprite_sequence`
+- 仅 2D 帧动画 → MCP `generate_sprite_animation` / `generate_eight_dir_sprite`
 - 非 Humanoid（四足等）→ 本 skill 不支持
 
 ---

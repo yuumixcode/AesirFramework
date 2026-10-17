@@ -31,7 +31,7 @@ description: 将 Unity 资产放入当前场景，支持自然语言描述位置
 | VideoClip（`.mp4`） | `import_video_from_url`（MCP `generate_video` / `generate_effect_video` 生成后落地） | `VideoPlayer`（绿幕特效视频配 ChromaKey 材质 + RenderTexture） |
 | Material（`.mat`） | `generate_material` | `Renderer.sharedMaterial = material` |
 | Cubemap Skybox（`.mat`） | MCP `generate_skybox` → `import_image_from_url(import_type="skybox")` | Built-in / URP: `RenderSettings.skybox = material`；HDRP 使用 HDRI Sky Volume |
-| AnimationClip（`.anim`） | `generate_sprite_sequence` | `AnimatorController + Animator` |
+| AnimationClip（`.anim`） | MCP `generate_sprite_animation` / `generate_eight_dir_sprite` 切帧后 | `AnimatorController + Animator` |
 | Texture2D / Image（`.png` / `.jpg`） | `generate_image` | 赋给 `Material.mainTexture`，或创建 `RawImage` |
 | Heightmap（`.png`）→ Terrain | `generate_terrain` | 调用 `apply_terrain_heightmap` |
 | TerrainData（`.asset`） | 已有地形资源 | `Terrain.CreateTerrainGameObject` |
