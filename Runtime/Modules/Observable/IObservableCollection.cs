@@ -13,7 +13,8 @@ namespace Runestone.AesirArchitecture
     /// <para>
     /// 变更通知为单轨事件（内部由 <see cref="MiniEvent{T}" /> 承载）：无变更的写操作不通知
     /// （索引器赋相同值、Remove 不存在的元素、Clear 空集合等）；批量操作逐项通知；
-    /// Sort / Reverse / Clear 以 <see cref="System.Collections.Specialized.NotifyCollectionChangedAction.Reset" /> 通知（无附加字段）。
+    /// Sort / Reverse / Clear 以 <see cref="System.Collections.Specialized.NotifyCollectionChangedAction.Reset" />
+    /// 通知（无附加字段）。
     /// </para>
     /// <para>
     /// <see cref="AddListener" /> 返回 <see cref="AutoRemoveListenerHandle" />，

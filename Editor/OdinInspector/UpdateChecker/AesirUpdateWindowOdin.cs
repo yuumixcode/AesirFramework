@@ -67,13 +67,6 @@ namespace Runestone.AesirArchitecture.Editor
             [HideInInspector]
             public bool UpdateEnabled = true;
 
-            /// <summary>
-            /// 所属窗口（行内按钮回调用）。非序列化：Odin 序列化不保存、域重载后由
-            /// <see cref="RebuildRows" /> 重新注入（OnEnable → Initialize → Rescan → RebuildRows 必经）。
-            /// </summary>
-            [NonSerialized]
-            public AesirUpdateWindowOdin Owner;
-
             [HorizontalGroup("Row", 0.42f)]
             [EnableGUI]
             [DisplayAsString(false, 13)]
@@ -92,6 +85,13 @@ namespace Runestone.AesirArchitecture.Editor
             [HideLabel]
             [GUIColor(nameof(StatusColor))]
             public string Remote;
+
+            /// <summary>
+            /// 所属窗口（行内按钮回调用）。非序列化：Odin 序列化不保存、域重载后由
+            /// <see cref="RebuildRows" /> 重新注入（OnEnable → Initialize → Rescan → RebuildRows 必经）。
+            /// </summary>
+            [NonSerialized]
+            public AesirUpdateWindowOdin Owner;
 
             /// <summary>
             /// 行内单包更新按钮——只需更新某一个包的用户入口；配套版本风险（另一包落后时）由确认框提示，
@@ -201,8 +201,9 @@ namespace Runestone.AesirArchitecture.Editor
         [InfoBox(InfoText)]
         [InfoBox(GitWarningText, InfoMessageType.Warning, VisibleIf = nameof(IsGitRepository))]
         [InfoBox("$" + nameof(NoPackageText), InfoMessageType.Warning, VisibleIf = nameof(HasNoPackages))]
-        [InfoBox("$" + nameof(DetectionSummaryText), InfoMessageType.Info, VisibleIf = nameof(HasDetectionResult))]
-        [InfoBox("$" + nameof(CdnDelayHintText), InfoMessageType.Warning, VisibleIf = nameof(HasCdnDelayHint))]
+        [InfoBox("$" + nameof(DetectionSummaryText), VisibleIf = nameof(HasDetectionResult))]
+        [InfoBox("$" + nameof(CdnDelayHintText), InfoMessageType.Warning,
+            VisibleIf = nameof(HasCdnDelayHint))]
         // [EnableGUI] 必须保留：Odin 对不可编辑属性（[ReadOnly] 或只读属性）会推入 GUI.enabled=false，
         // 于是挂在同一属性链上的 InfoBox、列表标签与行文本统统被渲染成"禁用灰"（用户明确反馈）。
         // 其 Super 优先级 2.0 高于 InfoBox（Wrapper 10001）与 GUIColor（Super 0.5），因此包在最外层，

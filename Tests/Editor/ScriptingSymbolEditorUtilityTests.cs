@@ -148,7 +148,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void HasScriptingDefineSymbol_MatchesSelectedTargetEntries()
         {
             var symbols = GetSelectedTargetSymbols();
-            Assert.IsNotEmpty(symbols, "当前构建目标应至少含一个宏定义符号（AESIR_ARCHITECTURE 由 EnsureAesirArchitectureDefine 确保）");
+            Assert.IsNotEmpty(symbols,
+                "当前构建目标应至少含一个宏定义符号（AESIR_ARCHITECTURE 由 EnsureAesirArchitectureDefine 确保）");
 
             var first = symbols.Split(';')[0].Trim();
             Assert.IsTrue(ScriptingSymbolEditorUtility.HasScriptingDefineSymbol(first),

@@ -200,8 +200,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             var kept = AesirSamplesBuildFilter.FilterSampleScenes(scenes, movedRoots, out var removed);
 
-            CollectionAssert.AreEqual(new[] { "Assets/Scenes/Game.unity",
-                "Assets/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity" }, kept);
+            CollectionAssert.AreEqual(new[]
+            {
+                "Assets/Scenes/Game.unity",
+                "Assets/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity"
+            }, kept);
             CollectionAssert.AreEqual(new[]
             {
                 "Assets/ThirdParty/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity",
@@ -224,8 +227,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 field.SetValue(null, null);
                 InvokeInitializeOnLoadMethods();
 
-                Assert.IsNotNull(field.GetValue(null),
-                    "域加载期应把构建入口钩子挂到 Build Settings 窗口（否则示例场景会进玩家构建）");
+                Assert.IsNotNull(field.GetValue(null), "域加载期应把构建入口钩子挂到 Build Settings 窗口（否则示例场景会进玩家构建）");
             }
             finally
             {
@@ -236,9 +238,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// <summary>按候选名查找 <see cref="BuildPlayerWindow" /> 的构建入口处理委托字段（跨版本更名容错）。</summary>
         static FieldInfo FindHandlerField()
         {
-            foreach (var name in new[] { "buildPlayerHandler", "s_BuildPlayerHandler", "m_BuildPlayerHandler" })
+            foreach (var name in new[]
+                         { "buildPlayerHandler", "s_BuildPlayerHandler", "m_BuildPlayerHandler" })
             {
-                var field = typeof(BuildPlayerWindow).GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
+                var field =
+                    typeof(BuildPlayerWindow).GetField(name, BindingFlags.NonPublic | BindingFlags.Static);
                 if (field != null)
                 {
                     return field;

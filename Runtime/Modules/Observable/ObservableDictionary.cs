@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
@@ -39,7 +38,6 @@ namespace Runestone.AesirArchitecture
         readonly MiniEvent<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>> _changedEvent =
             new MiniEvent<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>>();
 
-        [SerializeField]
         Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
 
         /// <summary>
@@ -249,12 +247,6 @@ namespace Runestone.AesirArchitecture
             _changedEvent.RemoveListener(callback);
 
         /// <summary>
-        /// 返回遍历键值对的结构体枚举器，foreach 具体类型时零分配。
-        /// </summary>
-        /// <returns>键值对枚举器。</returns>
-        public Enumerator GetEnumerator() => new Enumerator(dictionary.GetEnumerator());
-
-        /// <summary>
         /// 清空所有变更监听。
         /// </summary>
         /// <remarks>
@@ -265,6 +257,12 @@ namespace Runestone.AesirArchitecture
         {
             _changedEvent.Dispose();
         }
+
+        /// <summary>
+        /// 返回遍历键值对的结构体枚举器，foreach 具体类型时零分配。
+        /// </summary>
+        /// <returns>键值对枚举器。</returns>
+        public Enumerator GetEnumerator() => new Enumerator(dictionary.GetEnumerator());
 
         /// <summary>
         /// 键值对枚举器。

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine;
 
 namespace Runestone.AesirArchitecture.Editor
 {
@@ -120,7 +119,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// <param name="installRoots">本地安装根列表（项目相对路径）。</param>
         /// <param name="removedScenes">被剔除的示例场景路径（按出现顺序）。</param>
         /// <returns>剔除后的场景列表。</returns>
-        internal static string[] FilterSampleScenes(string[] scenes, IReadOnlyList<string> installRoots,
+        internal static string[] FilterSampleScenes(string[] scenes,
+            IReadOnlyList<string> installRoots,
             out List<string> removedScenes)
         {
             removedScenes = new List<string>();
