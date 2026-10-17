@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Runestone.AesirModules.Editor.Bootstrap;
 
@@ -26,8 +27,7 @@ namespace Runestone.AesirModules.Tests.Editor
             // 因此 URL 不得包含版本号——发版后无需回改本断言。
             Assert.AreEqual("https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest",
                 AesirDependencyInstaller.DependencyGitUrl);
-            Assert.IsFalse(System.Text.RegularExpressions.Regex.IsMatch(
-                AesirDependencyInstaller.DependencyGitUrl, @"-v\d"),
+            Assert.IsFalse(Regex.IsMatch(AesirDependencyInstaller.DependencyGitUrl, @"-v\d"),
                 "依赖 URL 不得锚定随发版删除的版本分支");
         }
 
@@ -39,8 +39,8 @@ namespace Runestone.AesirModules.Tests.Editor
         public void GetPackageRootFromAssetPath_ExtractsParentDirectory()
         {
             Assert.AreEqual(ArchitecturePackageRoot,
-                AesirDependencyInstaller.GetPackageRootFromAssetPath(
-                    ArchitecturePackageRoot + "/AesirPathLookup.asset"));
+                AesirDependencyInstaller.GetPackageRootFromAssetPath(ArchitecturePackageRoot +
+                                                                     "/AesirPathLookup.asset"));
         }
 
         [TestCase(null)]
@@ -88,11 +88,11 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.IsFalse(AesirDependencyInstaller.ContainsArchitectureName(null));
             Assert.IsFalse(AesirDependencyInstaller.ContainsArchitectureName(new string[] { }));
             Assert.IsFalse(AesirDependencyInstaller.ContainsArchitectureName(
-                new string[] { "com.unity.test-framework" }));
+                new[] { "com.unity.test-framework" }));
             Assert.IsFalse(AesirDependencyInstaller.ContainsArchitectureName(
-                new string[] { "cn.runestone.aesir.modules" }));
-            Assert.IsTrue(AesirDependencyInstaller.ContainsArchitectureName(
-                new string[] { "com.unity.test-framework", "cn.runestone.aesir.architecture" }));
+                new[] { "cn.runestone.aesir.modules" }));
+            Assert.IsTrue(AesirDependencyInstaller.ContainsArchitectureName(new[]
+                { "com.unity.test-framework", "cn.runestone.aesir.architecture" }));
         }
 
         [Test]

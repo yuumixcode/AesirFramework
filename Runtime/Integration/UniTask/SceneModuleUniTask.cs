@@ -34,10 +34,8 @@ namespace Runestone.AesirModules
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = new UniTaskCompletionSource();
-            SceneModule.LoadSceneSingle(scenePath,
-                () => source.TrySetResult(),
-                () => source.TrySetException(BuildFailureException("场景加载")),
-                onProgress);
+            SceneModule.LoadSceneSingle(scenePath, () => source.TrySetResult(),
+                () => source.TrySetException(BuildFailureException("场景加载")), onProgress);
             return AwaitWithCancellation(source, cancellationToken);
         }
 
@@ -52,10 +50,8 @@ namespace Runestone.AesirModules
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = new UniTaskCompletionSource();
-            SceneModule.LoadSceneSingle(sceneRef,
-                () => source.TrySetResult(),
-                () => source.TrySetException(BuildFailureException("场景加载")),
-                onProgress);
+            SceneModule.LoadSceneSingle(sceneRef, () => source.TrySetResult(),
+                () => source.TrySetException(BuildFailureException("场景加载")), onProgress);
             return AwaitWithCancellation(source, cancellationToken);
         }
 
@@ -72,10 +68,8 @@ namespace Runestone.AesirModules
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = new UniTaskCompletionSource();
-            SceneModule.LoadSceneAdditive(scenePath,
-                () => source.TrySetResult(),
-                () => source.TrySetException(BuildFailureException("场景加载")),
-                onProgress);
+            SceneModule.LoadSceneAdditive(scenePath, () => source.TrySetResult(),
+                () => source.TrySetException(BuildFailureException("场景加载")), onProgress);
             return AwaitWithCancellation(source, cancellationToken);
         }
 
@@ -90,10 +84,8 @@ namespace Runestone.AesirModules
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = new UniTaskCompletionSource();
-            SceneModule.LoadSceneAdditive(sceneRef,
-                () => source.TrySetResult(),
-                () => source.TrySetException(BuildFailureException("场景加载")),
-                onProgress);
+            SceneModule.LoadSceneAdditive(sceneRef, () => source.TrySetResult(),
+                () => source.TrySetException(BuildFailureException("场景加载")), onProgress);
             return AwaitWithCancellation(source, cancellationToken);
         }
 
@@ -101,13 +93,13 @@ namespace Runestone.AesirModules
         /// 卸载场景并等待完成。若该场景在叠加追踪列表中则自动移出。
         /// 场景不存在等失败情形抛出 <see cref="InvalidOperationException" />。
         /// </summary>
-        public static UniTask UnloadSceneAsync(string scenePath, CancellationToken cancellationToken = default)
+        public static UniTask UnloadSceneAsync(string scenePath,
+            CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = new UniTaskCompletionSource();
-            SceneModule.UnloadScene(scenePath,
-                () => source.TrySetResult(),
+            SceneModule.UnloadScene(scenePath, () => source.TrySetResult(),
                 () => source.TrySetException(BuildFailureException("场景卸载")));
             return AwaitWithCancellation(source, cancellationToken);
         }
@@ -115,13 +107,13 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 卸载场景并等待完成。通过 <see cref="SceneAssetWrapper" /> 指定场景。
         /// </summary>
-        public static UniTask UnloadSceneAsync(SceneAssetWrapper sceneRef, CancellationToken cancellationToken = default)
+        public static UniTask UnloadSceneAsync(SceneAssetWrapper sceneRef,
+            CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = new UniTaskCompletionSource();
-            SceneModule.UnloadScene(sceneRef,
-                () => source.TrySetResult(),
+            SceneModule.UnloadScene(sceneRef, () => source.TrySetResult(),
                 () => source.TrySetException(BuildFailureException("场景卸载")));
             return AwaitWithCancellation(source, cancellationToken);
         }
@@ -135,8 +127,7 @@ namespace Runestone.AesirModules
             cancellationToken.ThrowIfCancellationRequested();
 
             var source = new UniTaskCompletionSource();
-            SceneModule.ReloadScene(
-                () => source.TrySetResult(),
+            SceneModule.ReloadScene(() => source.TrySetResult(),
                 () => source.TrySetException(BuildFailureException("场景重载")));
             return AwaitWithCancellation(source, cancellationToken);
         }
@@ -158,13 +149,15 @@ namespace Runestone.AesirModules
         /// 主动取消或宿主被销毁（内部流程静默中止、完成回调不再触发）时，等待方以
         /// <see cref="OperationCanceledException" /> 收场，不会无限悬挂。
         /// </summary>
-        static async UniTask AwaitWithCancellation(UniTaskCompletionSource source, CancellationToken cancellationToken)
+        static async UniTask AwaitWithCancellation(UniTaskCompletionSource source,
+            CancellationToken cancellationToken)
         {
             var host = SceneModule.Instance;
 
             using (var linked = CancellationTokenSource.CreateLinkedTokenSource(
                        cancellationToken, host.destroyCancellationToken))
-            using (linked.Token.Register(static state => ((UniTaskCompletionSource)state).TrySetCanceled(), source))
+            using (linked.Token.Register(static state => ((UniTaskCompletionSource)state).TrySetCanceled(),
+                       source))
             {
                 await source.Task;
             }
@@ -173,9 +166,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 构造失败异常。失败的具体原因已由 SceneModule 输出错误日志，异常消息仅指引排查方向。
         /// </summary>
-        static InvalidOperationException BuildFailureException(string operation)
-        {
-            return new InvalidOperationException($"{operation}失败（具体原因见 Console 的 SceneModule 错误日志）。");
-        }
+        static InvalidOperationException BuildFailureException(string operation) =>
+            new InvalidOperationException($"{operation}失败（具体原因见 Console 的 SceneModule 错误日志）。");
     }
 }

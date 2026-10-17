@@ -3,13 +3,13 @@
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an event module, audio management, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.31.2-blue.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.32.0-blue.svg)](../CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.31.2`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.32.0`)
 
 ## Modules
 
@@ -25,8 +25,8 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.31.2 (required)
-- **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed. Note that **the `SceneAssetWrapper` Inspector experience of the Scene module (drag-assign, coloring, one-click fix buttons) requires Odin**; without Odin, only the API surface is guaranteed (construct via `FromScenePath`, assign `SceneAsset` in code, use the TryGet family) — the panel is not supported, so construct the reference in code and add scenes to BuildSettings manually in the Build Settings panel.
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.32.0 (required)
+- **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed. Odin is a panel styling enhancement only: the Scene module's `SceneAssetWrapper` drag-assign, coloring and one-click fix buttons are provided by the Odin processor panel when Odin is installed, and by a native PropertyDrawer fallback (equivalent information) when not; `SceneModuleConfigSO` settings are editable in both environments (native CustomEditor fallback without Odin). The pure-code path (`FromScenePath` construction / `SceneAsset` code assignment / TryGet family) always works.
 
 ## Directory Layout
 
@@ -410,7 +410,7 @@ Editor/Audio/                     # joins the core editor assembly (layer-root a
 |------|------|
 | `SceneModule` | Scene management singleton: Single/Additive loading (completion/failure/progress callbacks), unloading, reload, active-scene switching, `SceneLoadedEvent` / `SceneUnloadedEvent` lifecycle broadcast, DDOL serialized setting |
 | `SceneModuleConfigSO` | Module-global config asset (singleton): global bootstrap-scene fallback + load-progress normalization cap; the editor auto-creates it under Resources (`SceneModuleConfig/SceneModuleConfig`) and a custom loader can replace the Resources fallback |
-| `SceneAssetWrapper` | Serializable scene reference: GUID-anchor self-healing (rename/move immune, broken-ref recovery), state-machine validation (`State` / `UnsafeReason`), `TryGet` safe-read family; address-query capability extends automatically when Addressables is installed. The Inspector panel experience (drag-assign, coloring, one-click fixes) requires Odin Inspector; without Odin, only the API surface is guaranteed. Functional design references [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference) |
+| `SceneAssetWrapper` | Serializable scene reference: GUID-anchor self-healing (rename/move immune, broken-ref recovery), state-machine validation (`State` / `UnsafeReason`), `TryGet` safe-read family; address-query capability extends automatically when Addressables is installed. Inspector experience (drag-assign, coloring, one-click fixes): Odin processor panel when Odin is installed, native PropertyDrawer fallback otherwise. Functional design references [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference) |
 | `SceneAssetWrapperState` / `SceneAssetWrapperUnsafeReason` | Reference state (Regular/Addressable/Unsafe) and unsafe-reason enums |
 | `SceneAssetWrapperAddressablesBridge` | Addressables editor capability static bridge (zero Addressables dependency in the core assembly; hidden automatically when the package is absent) |
 | `SceneAssetWrapperException` family | Four dedicated exceptions (empty reference / creation failure / package absent / not addressable), each message carries "fix / avoid" guidance |
@@ -487,11 +487,11 @@ public class LevelFlow : MonoBehaviour
 }
 ```
 
-3. Editor validation: wrapper fields ship with tri-state coloring (Addressable cyan / dangling & missing-from-build red / disabled yellow / normal white) and one-click fix buttons (add to Build Settings / enable / make Addressable).
+3. Editor validation: wrapper fields ship with tri-state coloring (Addressable cyan / dangling & missing-from-build red / disabled yellow / normal white) and one-click fix buttons (add to Build Settings / enable / make Addressable). With Odin installed these come from the Odin processor panel; without Odin a native PropertyDrawer fallback provides the same capability.
 
 ### Design Boundaries
 
-- **Odin Inspector boundary** — the `SceneAssetWrapper` Inspector panel effects depend on Odin (injected via AttributeProcessor); without Odin only the API surface is guaranteed: construct via `SceneAssetWrapper.FromScenePath(...)`, assign the `SceneAsset` property in code (editor only), read via the TryGet family. The panel is not supported.
+- **Odin Inspector boundary** — Odin is a panel styling enhancement only: `SceneAssetWrapper` Inspector effects (drag-assign, coloring, one-click fixes) come from the Odin processor panel when installed, and from the native PropertyDrawer fallback (`SceneAssetWrapperDrawer`) otherwise; `SceneModuleConfigSO` settings remain editable in both environments (native `SceneModuleConfigSOEditor` fallback without Odin). The pure-code path (`FromScenePath` construction, `SceneAsset` code assignment, TryGet family) always works.
 - **Addressable scenes are not loaded by SceneModule** — with Addressables installed the wrapper provides the address (`Address` / `TryGetAddress`); load and unload directly through the Addressables API (`Addressables.LoadSceneAsync(wrapper.Address)`).
 - **Do not additive-load the same path twice** — Unity loads two scene instances while tracking records one path; `UnloadScene` unloads only one of them and the leftover instance escapes tracking.
 - **Bootstrap split of duties** — at runtime `SceneModule` only holds the `bootstrapScene` reference for user code to read (`BootstrapSceneAssetWrapper`: the instance serialized field wins; when unset it falls back to the global bootstrap scene on the `SceneModuleConfigSO` config asset) and performs no automatic flow; Build Settings index 0 and force-opening the Bootstrap scene on Play are handled by the editor `BootstrapSceneHelper` (enabled in `Tools → Aesir → Modules → Scene Module Settings`, off by default).

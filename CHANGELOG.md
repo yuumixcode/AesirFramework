@@ -5,6 +5,26 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.32.0] - 2026-10-17
+
+### Added
+
+- **无 Odin 环境的 Scene/配置 Inspector 兜底** — 新增 `SceneAssetWrapperDrawer`（原生 PropertyDrawer）与 `SceneModuleConfigSOEditor`（原生 CustomEditor），均 `#if !ODIN_INSPECTOR` 包裹（Odin 在场时整体剔除、面板效果仍由 Odin Processor 提供）：未安装 Odin 时 `SceneAssetWrapper` 也能在 Inspector 拖拽赋值、看状态行（与 Odin 版同源着色）并使用"添加到 BuildSettings / 启用"一键修复；`SceneModuleConfigSO` 的启动场景与进度上限可在 Project 窗口直接编辑（此前两个 internal 字段无任何可视编辑途径，Inspector 只剩空面板）。配套：一键修复方法与着色方法从 private 放宽为 internal（`nameof` 绑定与既有测试反射不受影响），Runtime 程序集补 `InternalsVisibleTo("Runestone.AesirModules.Editor")`
+- **`Show<T>(string path)` / `Open<T>(string path)` 重载** — 位置参数直接传资源路径：`Show<T>("UI/Xxx")` 的字符串此前会命中 `object payload` 形参被吞掉、随后报"未注册预制体且未提供 path"且不揭示真实原因；新重载消除该陷阱（原 `payload, path` 双参版不变）
+- **外部场景卸载自动对账** — SceneModule 订阅 `SceneManager.sceneUnloaded`：经原生 `SceneManager` API 卸载掉叠加追踪中的场景时自动移出记账并告警（此前完全绕过记账、`AddedScenePaths` 持续虚报，只能等下次批量卸载才自愈）；顺带在宿主失活/销毁时配平批量卸载的重入深度（协程被中断时 finally 不保证执行）
+
+### Changed
+
+- **查询类静态 API 不再创建模块实例** — `UIModule.Get<T>()` / `ContainPrefab<T>()` / `GetWindow<T>()` / `ContainWindowPrefab<T>()` 改经 `TryGetExisting` 非创建式取值：无实例（场景卸载、启动即查询、编辑器期探测）时返回 `null` / `false`，不再凭空创建 `[Aesir Modules]` 宿主树（与 SceneModule / AudioModule 的既有口径对齐）
+- **Single 加载并发互斥** — 进行中的 Single 期间收到新 Single 请求：同路径幂等忽略（告警、不触发回调，回调交给进行中的那次）；异路径拒绝并触发 `onFailed`（此前两个 Single 各起一条流程，先完成者取回已被后者换掉的场景，产生伪错误、事件双广播）
+- **裸场景名与完整路径双支持** — `LoadSceneSingle` / `LoadSceneAdditive` 记账取回场景时按路径查找失败后按名回退（`LoadSceneAsync` 本身两者都接受）：传裸名不再产生"加载完成但未能按路径取回有效场景"伪错误；**推荐完整资产路径**（`Assets/.../Xxx.unity`，BuildSettings 粒度即路径、无重名歧义）
+- **面板克隆子树递归归入 UI 层** — 面板实例化对齐窗口侧的 `SetLayerRecursively`：GameObject.layer 不随父级继承，预制体内非 UGUI 渲染器（如 SpriteRenderer）此前会因 layer 0 被 UICamera 的 cullingMask 挡掉不渲染，与窗口行为不对称
+- **引用注册后带 path 调用给出诊断** — 经 `RegisterPrefab` / `RegisterWindowPrefab` 注册的条目再带 `path` 调用 Show/Open 时输出"path 被忽略"警告（此前静默失效）；加载器初始化收敛为惰性（Edit Mode 下 `AddComponent` 不触发 Awake 时首次 path 加载不再 NRE）；面板/窗口的加载失败文案按契约分派，不再一律写"面板"
+
+### Fixed
+
+- **失活预放置的 SceneModule 实例不再被采纳** — 预放置模块所在 GameObject 处于失活状态时跳过（失活物体无法启动协程，采纳会让首次加载直接抛 UnityException），改为运行时新建并告警；UI 示例场景（SampleForUIBasic）主相机 cullingMask 排除 UI 层与 TransparentFX（此前 Everything 与自家"主相机须排除 UI 层"规则相悖，照抄示例即 UI 双渲染）
+
 ## [0.31.2] - 2026-10-06
 
 - **版本同步发布（无功能变更）** — 本包源码与 0.31.1 一致。本次为 RAA 侧 `IGenericLocator<T>` 冗余 `Dispose()` 声明的编译告警修复同步（详见根 CHANGELOG）

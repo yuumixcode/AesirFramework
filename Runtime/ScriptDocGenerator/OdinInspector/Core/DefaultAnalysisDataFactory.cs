@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
 {

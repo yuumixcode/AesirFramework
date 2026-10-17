@@ -1,5 +1,4 @@
 using UnityEditor;
-using UnityEngine;
 
 namespace Runestone.AesirModules.Editor
 {
@@ -11,7 +10,7 @@ namespace Runestone.AesirModules.Editor
     /// <remarks>
     /// 创建逻辑与 UI 模块共用 <see cref="AesirSingletonAssetInitializer" />（单一真源）。
     /// </remarks>
-    static class SceneModuleConfigAssetInitializer
+    internal static class SceneModuleConfigAssetInitializer
     {
         /// <summary>资产固定创建目录（相对项目根）。</summary>
         internal const string AssetDirectory = "Assets/Resources/SceneModuleConfig";

@@ -18,6 +18,6 @@ namespace Runestone.AesirModules
         /// 叠遮模式：每个窗口的蒙版独立生效，多窗口叠加时透明度逐层叠加。
         /// </summary>
         [InspectorName("叠遮模式")]
-        Stacked = 1,
+        Stacked = 1
     }
 }

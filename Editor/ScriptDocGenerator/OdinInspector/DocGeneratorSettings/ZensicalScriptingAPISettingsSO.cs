@@ -45,8 +45,10 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     return _instance;
                 }
 
-                _instance = ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ZensicalScriptingAPISettingsSO>(
-                    ConfigName, ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "ZensicalScriptingAPI");
+                _instance =
+                    ScriptDocGeneratorEditorUtility
+                        .GetOrCreateEditorScriptableObject<ZensicalScriptingAPISettingsSO>(ConfigName,
+                            ScriptDocGeneratorPaths.GeneratorSettingsFolderPath, "ZensicalScriptingAPI");
                 return _instance;
             }
         }

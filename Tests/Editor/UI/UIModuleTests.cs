@@ -611,5 +611,112 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         }
 
         #endregion
+
+        #region 路径重载 / 查询非创建式 / 面板层递归
+
+        /// <summary>记录收到的路径并返回指定对象的假加载器（注入 UIModule 验证 path 路由）。</summary>
+        class FakeLoader : IUIAssetLoader
+        {
+            readonly Func<string, GameObject> _load;
+            readonly List<string> _receivedPaths = new List<string>();
+
+            public FakeLoader(Func<string, GameObject> load) => _load = load;
+
+            public IReadOnlyList<string> ReceivedPaths => _receivedPaths;
+
+            public GameObject Load(string path)
+            {
+                _receivedPaths.Add(path);
+                return _load(path);
+            }
+        }
+
+        [Test]
+        public void Show_StringOverload_RoutesToPathNotPayload()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+
+            var fakePrefab = NewGameObject("PathOverloadPrefab");
+            fakePrefab.AddComponent<TestPanel>();
+            var loader = new FakeLoader(p => fakePrefab);
+            module.RegisterAssetLoader(loader);
+
+            // 位置参数字符串——编译期应选择 Show<T>(string path) 重载，进 path 而非被 object payload 吞掉
+            TestPanel shown = null;
+            CaptureLogs(() => shown = UIModule.Show<TestPanel>("Fake/UI/Panel"));
+
+            CollectionAssert.AreEqual(new[] { "Fake/UI/Panel" }, loader.ReceivedPaths,
+                "字符串应路由进 path 形参（经加载器到达），而非命中 object payload 重载后报'未注册且未提供 path'");
+            Assert.IsNotNull(shown, "path 分支加载成功应产出面板实例");
+            Track(shown.gameObject);
+        }
+
+        [Test]
+        public void ResolvePrefab_ReferenceRegisteredWithPath_LogsIgnoredDiagnostic()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+
+            var prefabGo = NewGameObject("RefRegPrefab");
+            prefabGo.AddComponent<TestPanel>();
+            module.RegisterPanelPrefab<TestPanel>(prefabGo);
+
+            TestPanel shown = null;
+            var logs = CaptureLogs(() => shown = module.ShowPanel<TestPanel>(null, "Fake/Whatever"));
+
+            Assert.IsNotNull(shown, "引用注册条目存在时应正常打开");
+            Track(shown.gameObject);
+            AssertHasLog(logs, LogType.Warning, "经引用注册，本次传入的 path", "引用注册后带 path 调用应给出'path 被忽略'诊断，不再静默失效");
+        }
+
+        [Test]
+        public void StaticQueries_WithoutModule_DoNotCreateHost()
+        {
+            // 前置：清空静态单例并销毁任何遗留宿主（防御性清理，确保"从未有过模块"的前提）
+            typeof(UIModule).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static)
+                .SetValue(null, null);
+            foreach (var leftover in Object.FindObjectsByType<AesirModules>(FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(leftover.gameObject);
+            }
+
+            var panel = UIModule.Get<TestPanel>();
+            var contained = UIModule.ContainPrefab<TestPanel>();
+
+            Assert.IsNull(panel, "无实例时 Get 应返回 null 而非凭空创建宿主树");
+            Assert.IsFalse(contained, "无实例时 ContainPrefab 应返回 false");
+            Assert.AreEqual(0,
+                Object.FindObjectsByType<AesirModules>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                    .Length, "查询静态 API 不得创建 [Aesir Modules] 宿主树");
+        }
+
+        [Test]
+        public void Show_PanelSubtreeGetsUILayerRecursively()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+
+            var prefabGo = NewGameObject("LayerPrefab");
+            prefabGo.AddComponent<TestPanel>();
+            var child = NewGameObject("Child");
+            child.transform.SetParent(prefabGo.transform, false);
+            Assert.AreEqual(0, child.layer, "前置：预制体子物体默认非 UI 层");
+
+            module.RegisterPanelPrefab<TestPanel>(prefabGo);
+
+            TestPanel shown = null;
+            CaptureLogs(() => shown = UIModule.Show<TestPanel>());
+
+            Assert.IsNotNull(shown);
+            Track(shown.gameObject);
+            var clonedChild = shown.transform.Find("Child");
+            Assert.IsNotNull(clonedChild, "克隆体应包含预制体的子层级");
+            Assert.AreEqual(UIRoot.UILayerIndex, clonedChild.gameObject.layer,
+                "面板克隆体子树应整体归入 UI 层（对齐窗口侧，非 UGUI 渲染器缺这步会被 UICamera 挡掉）");
+        }
+
+        #endregion
     }
 }

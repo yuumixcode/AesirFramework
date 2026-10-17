@@ -28,10 +28,8 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
                 Assert.IsNotEmpty(memberData.Name, "成员名不应为空");
             }
 
-            CollectionAssert.Contains(
-                TestClassMethodDataArray.Select(x => ((IMemberData)x).Name).ToArray(),
-                "op_Addition",
-                "运算符方法也应作为成员参与分析");
+            CollectionAssert.Contains(TestClassMethodDataArray.Select(x => ((IMemberData)x).Name).ToArray(),
+                "op_Addition", "运算符方法也应作为成员参与分析");
         }
 
         [Test]

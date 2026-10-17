@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using Runestone.AesirModules.ScriptDocGenerator.Editor;
 using UnityEditor;
@@ -35,6 +36,20 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
             {
                 Directory.Delete(_tempOutputFolder, true);
             }
+        }
+
+        [Test]
+        public void FindAllSettings_ContainsBothBuiltInPresets()
+        {
+            // 先访问两个预设确保已创建，再断言枚举结果包含它们
+            var defaults = ScriptDocGeneratorAPI.DefaultSettings;
+            var zensical = ScriptDocGeneratorAPI.ZensicalSettings;
+
+            var all = ScriptDocGeneratorAPI.FindAllSettings();
+
+            Assert.That(all, Has.Count.GreaterThanOrEqualTo(2));
+            Assert.That(all, Does.Contain(defaults));
+            Assert.That(all, Does.Contain(zensical));
         }
 
         #region 程序集解析
@@ -91,8 +106,8 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         {
             Assert.That(ScriptDocGeneratorAPI.TryNormalizeAssetFolderPath(null, out _), Is.False);
             Assert.That(ScriptDocGeneratorAPI.TryNormalizeAssetFolderPath("  ", out _), Is.False);
-            Assert.That(ScriptDocGeneratorAPI.TryNormalizeAssetFolderPath("/Applications", out _),
-                Is.False, "项目外绝对路径 AssetDatabase 索引不到，必须拒绝");
+            Assert.That(ScriptDocGeneratorAPI.TryNormalizeAssetFolderPath("/Applications", out _), Is.False,
+                "项目外绝对路径 AssetDatabase 索引不到，必须拒绝");
             Assert.That(ScriptDocGeneratorAPI.TryNormalizeAssetFolderPath("Assets/NoSuchFolder", out _),
                 Is.False, "不存在的目录必须拒绝");
             Assert.That(ScriptDocGeneratorAPI.TryNormalizeAssetFolderPath("Library/PackageManager", out _),
@@ -114,12 +129,10 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
 
             // 普通异常类不是 UnityEngine.Object 派生，MonoScript.GetClass 拿不到——
             // 该用例锁定"源码扫描 + 简单名索引"路径必须覆盖普通 C# 类型
-            Assert.That(types.Select(type => type.Name),
-                Does.Contain(nameof(SceneAssetWrapperException)));
+            Assert.That(types.Select(type => type.Name), Does.Contain(nameof(SceneAssetWrapperException)));
             Assert.That(types.Select(type => type.Name),
                 Does.Contain(nameof(EmptySceneAssetWrapperException)));
-            Assert.That(result.UnresolvedTypeNames, Is.Empty,
-                "Exceptions 目录下类型全部在当前编译域内，不应有未解析项");
+            Assert.That(result.UnresolvedTypeNames, Is.Empty, "Exceptions 目录下类型全部在当前编译域内，不应有未解析项");
         }
 
         [Test]
@@ -176,7 +189,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         public void GenerateDocsForType_NullType_ReportsErrorAndReturnsEmptyResult()
         {
             // 日志经 AesirModulesDebug 输出（带 <color> 富文本前缀），故用 Regex 做子串匹配
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("请选择有效的目标类型"));
+            LogAssert.Expect(LogType.Error, new Regex("请选择有效的目标类型"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForType(null,
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
@@ -188,7 +201,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void GenerateDocsForTypes_EmptyList_ReportsError()
         {
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("类型列表为空，无法生成文档"));
+            LogAssert.Expect(LogType.Error, new Regex("类型列表为空，无法生成文档"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForTypes(Array.Empty<Type>(),
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
@@ -199,8 +212,9 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void GenerateDocsForAssembly_BootstrapShortName_GeneratesDocs()
         {
-            var result = ScriptDocGeneratorAPI.GenerateDocsForAssembly("Runestone.AesirModules.Editor.Bootstrap",
-                ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
+            var result = ScriptDocGeneratorAPI.GenerateDocsForAssembly(
+                "Runestone.AesirModules.Editor.Bootstrap", ScriptDocGeneratorAPI.DefaultSettings,
+                _tempOutputFolder);
 
             Assert.That(result.Success, Is.True, "Bootstrap 程序集应至少为 AesirDependencyInstaller 生成文档");
             Assert.That(result.GeneratedCount, Is.GreaterThanOrEqualTo(1));
@@ -210,8 +224,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void GenerateDocsForAssembly_MissingAssembly_ReportsError()
         {
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
-                @"找不到目标程序集"));
+            LogAssert.Expect(LogType.Error, new Regex(@"找不到目标程序集"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForAssembly("NoSuch.Aesir.Assembly",
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
@@ -237,8 +250,7 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         [Test]
         public void GenerateDocsForFolder_InvalidPath_ReportsError()
         {
-            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex(
-                @"无效的脚本文件夹路径"));
+            LogAssert.Expect(LogType.Error, new Regex(@"无效的脚本文件夹路径"));
 
             var result = ScriptDocGeneratorAPI.GenerateDocsForFolder("Library/PackageManager",
                 ScriptDocGeneratorAPI.DefaultSettings, _tempOutputFolder);
@@ -247,20 +259,6 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         }
 
         #endregion
-
-        [Test]
-        public void FindAllSettings_ContainsBothBuiltInPresets()
-        {
-            // 先访问两个预设确保已创建，再断言枚举结果包含它们
-            var defaults = ScriptDocGeneratorAPI.DefaultSettings;
-            var zensical = ScriptDocGeneratorAPI.ZensicalSettings;
-
-            var all = ScriptDocGeneratorAPI.FindAllSettings();
-
-            Assert.That(all, Has.Count.GreaterThanOrEqualTo(2));
-            Assert.That(all, Does.Contain(defaults));
-            Assert.That(all, Does.Contain(zensical));
-        }
 
         #region 夹具定位
 

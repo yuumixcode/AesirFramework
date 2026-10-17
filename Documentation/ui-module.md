@@ -29,8 +29,9 @@ SettingWindow / LoadingWindow …  # 窗口实例（根节点自带 Canvas，sor
 
 ```
 ResolvePrefab → InstantiateInactive（停用克隆，不触发 Awake/OnEnable）
-→ 挂载到所属层 Canvas → Initialize（OnInit，此时组件仍停用）
-→ Show（OnShow → 默认 SetActive(true) → 此刻 Awake/OnEnable 才触发）
+→ 挂载到所属层 Canvas → 子树递归归入 UI 层（对齐窗口侧；layer 不随父级继承，
+   预制体内非 UGUI 渲染器缺这步会被 UICamera 的 cullingMask 挡掉）
+→ Initialize（OnInit，此时组件仍停用） → Show（OnShow → 默认 SetActive(true) → 此刻 Awake/OnEnable 才触发）
 ```
 
 该顺序保证：`OnEnable` 可以安全访问 `OnInit` 之后才有值的引用（基类成员、绑定数据等在组件激活前已就绪）。代价是 `OnInit` 语义上**取代**了 Awake 的初始化角色——子类应把传统 Awake 逻辑放进 `OnInit`，覆写 `Awake` 的执行时机会晚于 `OnInit`。
@@ -89,6 +90,13 @@ UIModule.RegisterWindowPrefab<SettingWindow>(prefab);
 ```
 
 实例侧对应 `OpenWindow` / `CloseWindow` / `GetWindow` / `PrewarmWindow` / `RegisterWindowPrefab`（Type 签名长名）。注册表语义与面板一致：实例实际类型为键、键语义诊断同款；窗口与面板**共用同一份预制体注册表与资源加载器**（类型系统天然分桶），但两套入口跨契约互斥——Panel 类型误入窗口入口（或反之）会报错并指向正确入口，不会误报「未挂载组件」或产生歧义实例。
+
+### path 传参与查询语义
+
+- **资源路径传参**：`Show<T>()` / `Open<T>()` 均有 `path:` 双参版与 **`Show<T>(string path)` 单参重载**——位置参数直接传路径（`Show<T>("UI/Xxx")`）即可命中 path 形参；此前的陷阱是字符串会被第一形参 `object payload` 吞掉、随后报"未注册且未提供 path"且不揭示真因，新重载已消除。`path` 经加载器加载后自动注册，后续同类型直接 `Show<T>()` 不必再传。
+- **经引用注册后带 path 调用**：输出"path 被忽略"警告（引用注册条目不走 path 加载）。
+- **查询类静态 API 为纯查询**：`Get<T>()` / `ContainPrefab<T>()` / `GetWindow<T>()` / `ContainWindowPrefab<T>()` 无模块实例时返回 `null` / `false`，**不创建** `[Aesir Modules]` 宿主树——编辑器期探测"面板是否在场"可放心调用。
+- **生命周期错配告警**：UIRoot 常驻（DDOL）而模块实例可能随场景卸载被重建——新建同类型面板/窗口时若 UIRoot 子树存在不在本实例注册表中的同类实例（上一场景遗留），输出警告提示共存风险。
 
 ### 蒙版机制（单遮 / 叠遮）
 

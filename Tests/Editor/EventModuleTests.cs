@@ -709,8 +709,7 @@ namespace Runestone.AesirModules.Tests.Editor
 
             Assert.AreEqual(2, received.Count, "外层与内层各命中一次");
             Assert.AreSame(shadowSender, received[0], "内层分发读到内层发布者");
-            Assert.AreSame(outerSender, received[1],
-                "共享参数实例被内层覆写 Sender 后，外层遍历必须逐订阅者校正回外层发布者");
+            Assert.AreSame(outerSender, received[1], "共享参数实例被内层覆写 Sender 后，外层遍历必须逐订阅者校正回外层发布者");
         }
 
         [Test]

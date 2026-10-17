@@ -47,86 +47,6 @@ namespace Runestone.AesirModules.Tests
 
         static string SceneBPath => _sceneBPath ??= ResolveTestScenePath(SceneBName);
 
-        #region BuildSettings 登记（编辑模式预构建 / 清理阶段）
-
-        /// <summary>
-        /// 进入 Play 前的编辑模式阶段：把测试场景登记为 BuildSettings enabled 条目（追加到列表末尾）。
-        /// </summary>
-        /// <remarks>
-        /// 登记前先按文件名剔除既有同名条目——上次运行被强杀遗留的条目、包被移动后指向旧路径的条目都在此回收，
-        /// 保证登记后每个测试场景恰好一个 enabled 条目、且指向本次解析出的真实路径。
-        /// </remarks>
-        void IPrebuildSetup.Setup()
-        {
-            var testPaths = new[] { SceneAPath, SceneBPath };
-            EditorBuildSettings.scenes = EditorBuildSettings.scenes
-                .Where(scene => !IsTestScenePath(scene.path))
-                .Concat(testPaths.Select(path => new EditorBuildSettingsScene(path, true)))
-                .ToArray();
-        }
-
-        /// <summary>
-        /// 退出 Play 后的编辑模式阶段：摘除测试场景条目，还原宿主工程 BuildSettings。
-        /// </summary>
-        /// <remarks>
-        /// 登记时统一追加到列表末尾，摘除后列表与登记前逐位一致。测试场景路径是测试私有资产，宿主工程不可能
-        /// 合法登记它们，"按名剔除"即等价于完整还原，且无需依赖跨域重载存活的状态（预构建与清理分处两个域）。
-        /// </remarks>
-        void IPostBuildCleanup.Cleanup() => UnregisterTestScenes();
-
-        /// <summary>
-        /// 域加载兜底清扫：测试运行被强杀（编辑器崩溃、进程被 kill）会留下已登记条目，
-        /// 编辑模式域加载即清扫，保证测试场景永远不会进入玩家构建。
-        /// 进入 / 处于 PlayMode 时跳过——预构建阶段刚登记的条目正被本次运行使用。
-        /// </summary>
-        [InitializeOnLoadMethod]
-        static void SweepStaleTestScenesOnDomainLoad()
-        {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                return;
-            }
-
-            UnregisterTestScenes();
-        }
-
-        /// <summary>按名剔除测试场景条目（幂等：无残留时不写盘）。</summary>
-        static void UnregisterTestScenes()
-        {
-            var scenes = EditorBuildSettings.scenes;
-            var kept = scenes.Where(scene => !IsTestScenePath(scene.path)).ToArray();
-            if (kept.Length != scenes.Length)
-            {
-                EditorBuildSettings.scenes = kept;
-            }
-        }
-
-        static bool IsTestScenePath(string path)
-        {
-            var name = Path.GetFileNameWithoutExtension(path);
-            return name == SceneAName || name == SceneBName;
-        }
-
-        /// <summary>
-        /// 按文件名在 AssetDatabase 中定位测试场景资产（随包安装形态自适应）。
-        /// </summary>
-        static string ResolveTestScenePath(string sceneName)
-        {
-            foreach (var guid in AssetDatabase.FindAssets("t:Scene " + sceneName))
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                if (string.Equals(Path.GetFileNameWithoutExtension(path), sceneName, StringComparison.Ordinal))
-                {
-                    return path;
-                }
-            }
-
-            Assert.Fail($"未找到测试场景资产 {sceneName}.unity——应随测试程序集位于 TestScenes/ 目录");
-            return null;
-        }
-
-        #endregion
-
         /// <summary>
         /// 捕获原始激活场景，并校验预构建阶段已完成登记（未登记时给出明确诊断，而非留待加载静默失败）。
         /// </summary>
@@ -151,11 +71,11 @@ namespace Runestone.AesirModules.Tests
         {
             // 经模块卸载（而非裸 SceneManager.UnloadSceneAsync）：模块账本 _addedScenePaths 才会同步移出，
             // 否则追踪列表跨用例残留，被 LoadSceneAdditive 的去重"恰好"掩盖。
-            if (SceneManager.GetSceneByPath(SceneBPath).isLoaded
-                && SceneModule.AddedScenePaths.Contains(SceneBPath))
+            if (SceneManager.GetSceneByPath(SceneBPath).isLoaded &&
+                SceneModule.AddedScenePaths.Contains(SceneBPath))
             {
                 var unloaded = false;
-                SceneModule.UnloadScene(SceneBPath, onUnloaded: () => unloaded = true);
+                SceneModule.UnloadScene(SceneBPath, () => unloaded = true);
                 yield return WaitUntil(() => unloaded, "TearDown 应经模块卸载 SceneB");
             }
             else if (SceneManager.GetSceneByPath(SceneBPath).isLoaded)
@@ -407,20 +327,99 @@ namespace Runestone.AesirModules.Tests
         static IEnumerator WaitUntil(Func<bool> condition, string timeoutMessage, float timeoutSeconds = 30f)
         {
             var startTime = Time.realtimeSinceStartup;
-            var frameBudget = Mathf.Max(1, (int)(timeoutSeconds / Mathf.Max(Time.fixedDeltaTime, 0.005f)) * 4);
+            var frameBudget =
+                Mathf.Max(1, (int)(timeoutSeconds / Mathf.Max(Time.fixedDeltaTime, 0.005f)) * 4);
             var frames = 0;
-            while (!condition()
-                   && Time.realtimeSinceStartup - startTime < timeoutSeconds
-                   && frames < frameBudget)
+            while (!condition() && Time.realtimeSinceStartup - startTime < timeoutSeconds &&
+                   frames < frameBudget)
             {
                 frames++;
                 yield return null;
             }
 
             Assert.IsTrue(condition(),
-                timeoutMessage +
-                $"（等待 {Time.realtimeSinceStartup - startTime:F1}s / {frames} 帧超时）");
+                timeoutMessage + $"（等待 {Time.realtimeSinceStartup - startTime:F1}s / {frames} 帧超时）");
         }
+
+        #region BuildSettings 登记（编辑模式预构建 / 清理阶段）
+
+        /// <summary>
+        /// 进入 Play 前的编辑模式阶段：把测试场景登记为 BuildSettings enabled 条目（追加到列表末尾）。
+        /// </summary>
+        /// <remarks>
+        /// 登记前先按文件名剔除既有同名条目——上次运行被强杀遗留的条目、包被移动后指向旧路径的条目都在此回收，
+        /// 保证登记后每个测试场景恰好一个 enabled 条目、且指向本次解析出的真实路径。
+        /// </remarks>
+        void IPrebuildSetup.Setup()
+        {
+            var testPaths = new[] { SceneAPath, SceneBPath };
+            EditorBuildSettings.scenes = EditorBuildSettings.scenes
+                .Where(scene => !IsTestScenePath(scene.path))
+                .Concat(testPaths.Select(path => new EditorBuildSettingsScene(path, true))).ToArray();
+        }
+
+        /// <summary>
+        /// 退出 Play 后的编辑模式阶段：摘除测试场景条目，还原宿主工程 BuildSettings。
+        /// </summary>
+        /// <remarks>
+        /// 登记时统一追加到列表末尾，摘除后列表与登记前逐位一致。测试场景路径是测试私有资产，宿主工程不可能
+        /// 合法登记它们，"按名剔除"即等价于完整还原，且无需依赖跨域重载存活的状态（预构建与清理分处两个域）。
+        /// </remarks>
+        void IPostBuildCleanup.Cleanup() => UnregisterTestScenes();
+
+        /// <summary>
+        /// 域加载兜底清扫：测试运行被强杀（编辑器崩溃、进程被 kill）会留下已登记条目，
+        /// 编辑模式域加载即清扫，保证测试场景永远不会进入玩家构建。
+        /// 进入 / 处于 PlayMode 时跳过——预构建阶段刚登记的条目正被本次运行使用。
+        /// </summary>
+        [InitializeOnLoadMethod]
+        static void SweepStaleTestScenesOnDomainLoad()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                return;
+            }
+
+            UnregisterTestScenes();
+        }
+
+        /// <summary>按名剔除测试场景条目（幂等：无残留时不写盘）。</summary>
+        static void UnregisterTestScenes()
+        {
+            var scenes = EditorBuildSettings.scenes;
+            var kept = scenes.Where(scene => !IsTestScenePath(scene.path)).ToArray();
+            if (kept.Length != scenes.Length)
+            {
+                EditorBuildSettings.scenes = kept;
+            }
+        }
+
+        static bool IsTestScenePath(string path)
+        {
+            var name = Path.GetFileNameWithoutExtension(path);
+            return name == SceneAName || name == SceneBName;
+        }
+
+        /// <summary>
+        /// 按文件名在 AssetDatabase 中定位测试场景资产（随包安装形态自适应）。
+        /// </summary>
+        static string ResolveTestScenePath(string sceneName)
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:Scene " + sceneName))
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                if (string.Equals(Path.GetFileNameWithoutExtension(path), sceneName,
+                        StringComparison.Ordinal))
+                {
+                    return path;
+                }
+            }
+
+            Assert.Fail($"未找到测试场景资产 {sceneName}.unity——应随测试程序集位于 TestScenes/ 目录");
+            return null;
+        }
+
+        #endregion
     }
 }
 #endif

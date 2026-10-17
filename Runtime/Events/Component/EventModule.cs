@@ -230,8 +230,7 @@ namespace Runestone.AesirModules
                             ? $"，内层异常：{ex.InnerException.Message}"
                             : string.Empty;
                         AesirModulesDebug.LogError(AesirModulesDebug.EventModuleTag,
-                            $"事件分发异常：{ex.Message}" +
-                            $"（订阅者 {binding.Subscriber}，事件 " +
+                            $"事件分发异常：{ex.Message}" + $"（订阅者 {binding.Subscriber}，事件 " +
                             $"{AesirEventUtility.GetEventName<TEventArgs>()}{inner}）");
                     }
                 }
