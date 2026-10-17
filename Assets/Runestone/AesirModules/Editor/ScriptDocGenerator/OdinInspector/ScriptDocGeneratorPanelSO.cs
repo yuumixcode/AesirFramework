@@ -35,12 +35,13 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         static ValueDropdownList<string> _currentDomainAssemblies;
 
+        static ScriptDocGeneratorPanelSO _instance;
+
         [PropertyOrder(90)]
         [SerializeField]
         [LabelText("调试检查模式")]
         [Tooltip("仅当需要检查类型分析的中间产物 TypeData（即单个成员的解析结果）时才开启，日常生成文档无需开启。\n" +
-                 "开启后窗口会渲染类型分析的中间产物（完整成员树），可展开检查每一个成员的解析结果；\n" +
-                 "程序集模式下分析的类足够多时，整图渲染会明显拖慢窗口。")]
+                 "开启后窗口会渲染类型分析的中间产物（完整成员树），可展开检查每一个成员的解析结果；\n" + "程序集模式下分析的类足够多时，整图渲染会明显拖慢窗口。")]
         bool debugInspectionMode;
 
         [PropertyOrder(2)]
@@ -102,8 +103,6 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
         public static string DefaultDocFolderPath => ScriptDocGeneratorPaths.DefaultDocFolderPath;
 
-        static ScriptDocGeneratorPanelSO _instance;
-
         /// <summary>
         /// 面板单例访问。解析结果按域缓存：缺失资产的解析会执行 CreateAsset 与 AssetDatabase.Refresh，
         /// 每次都重新解析会把这类重操作带进绘制回调等高频路径。
@@ -117,8 +116,10 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     return _instance;
                 }
 
-                _instance = ScriptDocGeneratorEditorUtility.GetOrCreateEditorScriptableObject<ScriptDocGeneratorPanelSO>(
-                    ConfigName, ScriptDocGeneratorPaths.PanelConfigFolderPath, "ScriptDocGenerator");
+                _instance =
+                    ScriptDocGeneratorEditorUtility
+                        .GetOrCreateEditorScriptableObject<ScriptDocGeneratorPanelSO>(ConfigName,
+                            ScriptDocGeneratorPaths.PanelConfigFolderPath, "ScriptDocGenerator");
                 return _instance;
             }
         }
@@ -609,13 +610,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                     // 勿写 @$value 前缀——InfoBox 挂在 bool 字段上，$value 指该字段的布尔值，
                     // 会报 "Unable to locate identifier ... in context of type 'System.bool'"
                     attributes.Add(new InfoBoxAttribute(
-                        "需要检查中间过程的 TypeData（即成员分析的单个解析结果）时才开启调试检查模式，日常生成文档无需开启。",
-                        InfoMessageType.Info, "@" + nameof(ShowDebugModeUsageHint)));
-                    attributes.Add(new InfoBoxAttribute(
-                        "已开启调试检查模式：窗口会显示类型分析的中间产物 TypeData，可展开检查每一个成员的解析结果。",
+                        "需要检查中间过程的 TypeData（即成员分析的单个解析结果）时才开启调试检查模式，日常生成文档无需开启。", InfoMessageType.Info,
+                        "@" + nameof(ShowDebugModeUsageHint)));
+                    attributes.Add(new InfoBoxAttribute("已开启调试检查模式：窗口会显示类型分析的中间产物 TypeData，可展开检查每一个成员的解析结果。",
                         InfoMessageType.Info, "@" + nameof(ShowDebugModeEnabledHint)));
-                    attributes.Add(new InfoBoxAttribute(
-                        "程序集模式下分析的类足够多时，一次性渲染数百个类型的完整成员树会导致窗口明显卡顿，一般情况请勿开启。",
+                    attributes.Add(new InfoBoxAttribute("程序集模式下分析的类足够多时，一次性渲染数百个类型的完整成员树会导致窗口明显卡顿，一般情况请勿开启。",
                         InfoMessageType.Warning, "@" + nameof(ShowAssemblyDebugWarning)));
                 }
             }

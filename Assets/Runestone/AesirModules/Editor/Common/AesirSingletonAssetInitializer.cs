@@ -26,8 +26,10 @@ namespace Runestone.AesirModules.Editor
         /// <param name="resourcePath">Resources 兜底路径（不含扩展名）。</param>
         /// <param name="assetDirectory">资产固定创建目录（相对项目根）。</param>
         /// <param name="logTag">创建成功后的门面日志前缀（按模块归属，如 <c>UIModuleTag</c> / <c>SceneModuleTag</c>）。</param>
-        internal static void EnsureSingletonAsset<T>(string assetPath, string resourcePath,
-            string assetDirectory, string logTag) where T : ScriptableObject
+        internal static void EnsureSingletonAsset<T>(string assetPath,
+            string resourcePath,
+            string assetDirectory,
+            string logTag) where T : ScriptableObject
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {
@@ -59,8 +61,7 @@ namespace Runestone.AesirModules.Editor
             var config = ScriptableObject.CreateInstance<T>();
             AssetDatabase.CreateAsset(config, assetPath);
             AssetDatabase.SaveAssets();
-            AesirModulesDebug.Log(logTag,
-                $"已自动创建 {typeof(T).Name} 配置资产（Resources 兜底路径）：{assetPath}");
+            AesirModulesDebug.Log(logTag, $"已自动创建 {typeof(T).Name} 配置资产（Resources 兜底路径）：{assetPath}");
         }
     }
 }

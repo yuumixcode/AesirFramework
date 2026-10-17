@@ -30,7 +30,8 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
         /// <summary>跨平台中文动态字体：候选探测顺序 Windows → macOS → Linux，全部不可用时回退内置字体。</summary>
         static Font CreateChineseFont()
         {
-            var candidates = new[] { "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "WenQuanYi Zen Hei" };
+            var candidates = new[]
+                { "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "WenQuanYi Zen Hei" };
             var installedFonts = Font.GetOSInstalledFontNames();
             foreach (var candidate in candidates)
             {

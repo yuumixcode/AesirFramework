@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using Runestone.AesirArchitecture;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -35,13 +36,6 @@ namespace Runestone.AesirModules
     public class SceneModule : AesirMonoBehaviour
     {
         /// <summary>
-        /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效；
-        /// 运行时自动创建于 <see cref="AesirModules" /> 宿主下时跟随宿主的 DDOL 决策，本字段不参与判断。
-        /// </summary>
-        [SerializeField]
-        bool dontDestroyOnLoad = true;
-
-        /// <summary>
         /// 预设的启动场景名称（运行时 BootstrapSceneHelper 共用的单一事实来源）。
         /// 仅供编辑器 BootstrapSceneHelper 按名称搜集启动场景使用，本模块运行时不做自动搜索。
         /// </summary>
@@ -50,20 +44,6 @@ namespace Runestone.AesirModules
             "Bootstrap", "BootstrapScene", "Bootstrapper", "BootstrapperScene", "bootstrap_scene",
             "bootstrap", "bootstrapper_scene", "bootstrapper"
         };
-
-#if ODIN_INSPECTOR
-        [DetailedInfoBox("预放置须知",
-            "建议保持 Dont Destroy On Load 开启：Single 加载会卸载所有旧场景，关闭 DDOL 的本模块实例将随场景销毁，进行中的加载回调会随流程一并中断。")]
-        [LabelText("自定义启动场景")]
-#endif
-        [SerializeField]
-        SceneAssetWrapper bootstrapScene;
-
-        /// <summary>
-        /// 最后一个已经加载的场景。MonoBehaviour 运行状态一律使用显式非序列化字段（自动属性 backing field
-        /// 会被场景序列化残留，跨 Play 污染状态）。
-        /// </summary>
-        Scene _lastLoadedScene;
 
         /// <summary>
         /// 场景加载完成事件（Single 与 Additive 均触发；参数为场景路径）。在 onCompleted 回调之前广播。
@@ -81,6 +61,21 @@ namespace Runestone.AesirModules
         static readonly MiniEvent<string> _sceneUnloadedEvent = new MiniEvent<string>();
 
         /// <summary>
+        /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效；
+        /// 运行时自动创建于 <see cref="AesirModules" /> 宿主下时跟随宿主的 DDOL 决策，本字段不参与判断。
+        /// </summary>
+        [SerializeField]
+        bool dontDestroyOnLoad = true;
+
+#if ODIN_INSPECTOR
+        [DetailedInfoBox("预放置须知",
+            "建议保持 Dont Destroy On Load 开启：Single 加载会卸载所有旧场景，关闭 DDOL 的本模块实例将随场景销毁，进行中的加载回调会随流程一并中断。")]
+        [LabelText("自定义启动场景")]
+#endif
+        [SerializeField]
+        SceneAssetWrapper bootstrapScene;
+
+        /// <summary>
         /// 叠加场景路径列表，追踪所有经本模块 Additive 加载、尚未卸载的场景
         /// </summary>
         readonly List<string> _addedScenePaths = new List<string>();
@@ -91,6 +86,18 @@ namespace Runestone.AesirModules
         /// 每个场景卸载成功即同步移出追踪，批量卸载期间 <see cref="AddedScenePaths" /> 始终反映真实状态。
         /// </summary>
         readonly List<string> _unloadSnapshotBuffer = new List<string>();
+
+        /// <summary>
+        /// 最后一个已经加载的场景。MonoBehaviour 运行状态一律使用显式非序列化字段（自动属性 backing field
+        /// 会被场景序列化残留，跨 Play 污染状态）。
+        /// </summary>
+        Scene _lastLoadedScene;
+
+        /// <summary>
+        /// 进行中的 Single 加载路径（null = 无）。<see cref="BeginLoad" /> 据此拒绝并发的第二个 Single 请求：
+        /// 两个 Single 各自记账会让先完成者取回已被后者卸掉的场景（伪错误 + 事件双广播）。
+        /// </summary>
+        string _pendingSingleLoadPath;
 
         /// <summary>
         /// 批量卸载重入深度。<see cref="SceneUnloadedEvent" /> 的监听者回调内再调 UnloadAllAddedScenes 时，
@@ -174,7 +181,9 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 卸载场景（静态门面）。通过 <see cref="SceneAssetWrapper" /> 指定场景。
         /// </summary>
-        public static void UnloadScene(SceneAssetWrapper sceneRef, Action onUnloaded = null, Action onFailed = null)
+        public static void UnloadScene(SceneAssetWrapper sceneRef,
+            Action onUnloaded = null,
+            Action onFailed = null)
         {
             if (sceneRef == null || !sceneRef.TryGetScenePath(out var path))
             {
@@ -281,7 +290,9 @@ namespace Runestone.AesirModules
             get
             {
                 TryGetExisting(out var module);
-                return module != null ? (IReadOnlyList<string>)module._addedScenePaths.ToArray() : Array.Empty<string>();
+                return module != null
+                    ? (IReadOnlyList<string>)module._addedScenePaths.ToArray()
+                    : Array.Empty<string>();
             }
         }
 
@@ -333,10 +344,8 @@ namespace Runestone.AesirModules
                     return _instance;
                 }
 
-                // 尝试在已加载的场景中查找预放置的实例
-                // 使用 FindAnyObjectByType 而非 FindFirstObjectByType，后者因依赖 InstanceID 排序在 Unity 6 中已废弃
-                // 含未激活对象：未激活的预放置实例不被 Awake 赋值，Exclude 会让它被判为不存在而重复创建（Inspector 配置随之失效）
-                _instance = FindAnyObjectByType<SceneModule>(FindObjectsInactive.Include);
+                // 尝试在已加载的场景中查找预放置的实例（只采纳激活状态下的实例——失活物体无法启动协程）
+                _instance = FindUsableExisting();
                 if (_instance != null)
                 {
                     return _instance;
@@ -365,11 +374,41 @@ namespace Runestone.AesirModules
         {
             if (_instance == null)
             {
-                _instance = FindAnyObjectByType<SceneModule>(FindObjectsInactive.Include);
+                _instance = FindUsableExisting();
             }
 
             module = _instance;
             return _instance != null;
+        }
+
+        /// <summary>
+        /// 在已加载场景中查找可用的预放置实例（含未激活搜索，但只采纳激活状态下的实例）。
+        /// </summary>
+        /// <remarks>
+        /// 含未激活对象搜索的原因：未激活的预放置实例不会被 Awake 赋值到 <see cref="_instance" />，
+        /// Exclude 搜索会让它被判为不存在而重复创建。但失活物体无法启动协程
+        /// （<c>StartCoroutine</c> 对未激活物体抛 UnityException），采纳失活实例会让首次加载直接崩溃，
+        /// 故找到的全部失活时跳过并提示，仍走运行时新建路径。
+        /// </remarks>
+        static SceneModule FindUsableExisting()
+        {
+            // 使用 FindObjectsByType 而非 FindAnyObjectByType：需遍历挑出激活实例（后者依赖 InstanceID 排序，Unity 6 已废弃其近亲 FindFirstObjectByType）
+            var found = FindObjectsByType<SceneModule>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (var i = 0; i < found.Length; i++)
+            {
+                if (found[i].gameObject.activeInHierarchy)
+                {
+                    return found[i];
+                }
+            }
+
+            if (found.Length > 0)
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.SceneModuleTag,
+                    "检测到失活状态下的 SceneModule 预放置实例，已跳过（失活物体无法启动加载协程）——请激活该物体或移除该预放置组件，模块已改为运行时新建。");
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -402,6 +441,43 @@ namespace Runestone.AesirModules
             if (dontDestroyOnLoad && transform.root == transform)
             {
                 DontDestroyOnLoad(gameObject);
+            }
+        }
+
+        void OnEnable()
+        {
+            // 外部（原生 SceneManager API）卸载场景时的记账对账：本模块自己的卸载流程先经 CompleteUnload
+            // 移出追踪（此处的 RemoveAll 幂等），只有绕过本模块的卸载会在这里真正移除并告警。
+            SceneManager.sceneUnloaded += ReconcileUnloadedScene;
+        }
+
+        void OnDisable()
+        {
+            SceneManager.sceneUnloaded -= ReconcileUnloadedScene;
+
+            // 物体失活/销毁会中断所有协程且协程 finally 不保证执行——在此配平批量卸载的重入状态，
+            // 防止宿主被杀后 _unloadDepth 残留（UniTask 分支有语言级 finally 保证，此处兜底协程分支）
+            _unloadDepth = 0;
+            _unloadSnapshotBuffer.Clear();
+        }
+
+        /// <summary>
+        /// 引擎场景卸载对账：从叠加追踪列表移出被卸载场景的路径。
+        /// 覆盖两条路径——外部原生 <c>SceneManager.UnloadSceneAsync</c> 卸掉追踪中的场景（防 <see cref="AddedScenePaths" /> 虚报）、
+        /// 外部 Single 加载杀掉全部追踪场景（引擎对每个被卸场景都会广播一次，逐一对账即全部清干净）。
+        /// </summary>
+        internal void ReconcileUnloadedScene(Scene scene)
+        {
+            var path = scene.path;
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+
+            if (_addedScenePaths.RemoveAll(p => p == path) > 0)
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.SceneModuleTag,
+                    $"检测到经外部 API 卸载的追踪场景，已自动移出叠加追踪: {path}（请统一经 SceneModule 卸载，避免记账失真）");
             }
         }
 
@@ -502,13 +578,33 @@ namespace Runestone.AesirModules
 
         /// <summary>
         /// 校验加载入参并取得 <see cref="AsyncOperation" />（协程与 UniTask 两条驱动路径共用）。
+        /// Single 模式带并发互斥：进行中时同路径请求幂等忽略（回调交给进行中的那次）、异路径请求拒绝并走失败回调。
         /// </summary>
-        static bool BeginLoad(string scenePath, LoadSceneMode mode, Action onFailed, out AsyncOperation operation)
+        bool BeginLoad(string scenePath, LoadSceneMode mode, Action onFailed, out AsyncOperation operation)
         {
             if (string.IsNullOrEmpty(scenePath))
             {
                 AesirModulesDebug.LogError(AesirModulesDebug.SceneModuleTag, $"无效场景路径: {scenePath}");
                 onFailed?.Invoke();
+                operation = null;
+                return false;
+            }
+
+            if (mode == LoadSceneMode.Single && _pendingSingleLoadPath != null)
+            {
+                if (string.Equals(_pendingSingleLoadPath, scenePath, StringComparison.Ordinal))
+                {
+                    // 幂等忽略：进行中的那次加载会广播事件并触发回调，重复请求直接丢弃
+                    AesirModulesDebug.LogWarning(AesirModulesDebug.SceneModuleTag,
+                        $"Single 场景加载进行中，忽略重复请求: {scenePath}");
+                }
+                else
+                {
+                    AesirModulesDebug.LogError(AesirModulesDebug.SceneModuleTag,
+                        $"Single 场景加载进行中，拒绝新的 Single 加载: {scenePath}（进行中: {_pendingSingleLoadPath}）。请在完成回调后再发起下一次切换。");
+                    onFailed?.Invoke();
+                }
+
                 operation = null;
                 return false;
             }
@@ -519,6 +615,11 @@ namespace Runestone.AesirModules
                 AesirModulesDebug.LogError(AesirModulesDebug.SceneModuleTag, $"无法加载场景: {scenePath}");
                 onFailed?.Invoke();
                 return false;
+            }
+
+            if (mode == LoadSceneMode.Single)
+            {
+                _pendingSingleLoadPath = scenePath;
             }
 
             return true;
@@ -596,20 +697,25 @@ namespace Runestone.AesirModules
         {
             onProgress?.Invoke(1f);
 
-            _lastLoadedScene = SceneManager.GetSceneByPath(scenePath);
             if (mode == LoadSceneMode.Single)
             {
                 // Single 加载已卸载全部旧场景，叠加追踪随之失效——加载成功后才清空（失败时保留旧追踪）
                 _addedScenePaths.Clear();
+                _pendingSingleLoadPath = null;
+            }
+
+            _lastLoadedScene = ResolveLoadedScene(scenePath);
+            if (mode == LoadSceneMode.Single)
+            {
                 if (_lastLoadedScene.IsValid())
                 {
                     SceneManager.SetActiveScene(_lastLoadedScene);
                 }
                 else
                 {
-                    // 路径大小写/归一化差异时 GetSceneByPath 可能取回无效 Scene——记录错误而非抛异常
+                    // 路径大小写/归一化差异或按名重名时两个查找都取不回——记录错误而非抛异常
                     AesirModulesDebug.LogError(AesirModulesDebug.SceneModuleTag,
-                        $"场景加载完成但未能按路径取回有效场景，跳过激活: {scenePath}");
+                        $"场景加载完成但未能按路径或名称取回有效场景，跳过激活: {scenePath}");
                 }
             }
             else if (!_addedScenePaths.Contains(scenePath))
@@ -620,6 +726,26 @@ namespace Runestone.AesirModules
 
             _sceneLoadedEvent.Invoke(scenePath);
             onCompleted?.Invoke();
+        }
+
+        /// <summary>
+        /// 按入参取回已加载的场景：<c>LoadSceneAsync</c> 同时接受完整资产路径（<c>Assets/.../Xxx.unity</c>）与裸场景名，
+        /// 记账取回时先按路径查、失败再按名称回退——保证两种传参下 <see cref="LastLoadedScene" />、
+        /// 激活场景设置与事件广播全部正常（推荐完整路径：BuildSettings 粒度即路径，含目录防重名歧义）。
+        /// </summary>
+        internal static Scene ResolveLoadedScene(string scenePath)
+        {
+            var scene = SceneManager.GetSceneByPath(scenePath);
+            if (!scene.IsValid())
+            {
+                // 裸名（仅场景名）加载时 GetSceneByPath 取不回——按名回退（名字从入参提取，裸名入参本身就是名字）
+                var sceneName = scenePath.EndsWith(".unity", StringComparison.OrdinalIgnoreCase)
+                    ? Path.GetFileNameWithoutExtension(scenePath)
+                    : scenePath;
+                scene = SceneManager.GetSceneByName(sceneName);
+            }
+
+            return scene;
         }
 
         /// <summary>
@@ -635,10 +761,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 取批量卸载的迭代快照：重入（嵌套调用）时改用局部快照，顶层复用共享缓冲（Clear 保留容量）。
         /// </summary>
-        List<string> AcquireUnloadSnapshot()
-        {
-            return _unloadDepth > 0 ? new List<string>() : _unloadSnapshotBuffer;
-        }
+        List<string> AcquireUnloadSnapshot() => _unloadDepth > 0 ? new List<string>() : _unloadSnapshotBuffer;
 
         #region 协程驱动（默认实现）
 
@@ -714,6 +837,7 @@ namespace Runestone.AesirModules
         #endregion
 
 #if AESIR_MODULES_UNITASK
+
         #region UniTask 驱动（工程包含 UniTask 时替代协程实现）
 
         /// <summary>
@@ -813,6 +937,7 @@ namespace Runestone.AesirModules
         }
 
         #endregion
+
 #endif
 
         #endregion

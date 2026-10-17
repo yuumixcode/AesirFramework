@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 {
@@ -721,8 +720,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             if (memberName.Contains('.'))
             {
                 AesirModulesDebug.LogWarning(nameof(SourceScanner), AesirModulesDebug.ScriptDocGeneratorTag,
-                    "检测到显式接口实现成员（" + declText.Trim() +
-                    "）：其 XML 文档无法自动关联（源码端拿不到接口命名空间限定，且裸名可能错配同名公开成员），已跳过。" +
+                    "检测到显式接口实现成员（" + declText.Trim() + "）：其 XML 文档无法自动关联（源码端拿不到接口命名空间限定，且裸名可能错配同名公开成员），已跳过。" +
                     "请把该成员的文档写在接口声明处。");
                 return;
             }

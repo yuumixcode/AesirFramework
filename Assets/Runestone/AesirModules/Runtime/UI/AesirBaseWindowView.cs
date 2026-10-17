@@ -9,7 +9,8 @@ namespace Runestone.AesirModules
     /// Context 作为 Model 和 Service 的聚合容器，在窗口与业务逻辑之间充当数据中转站。
     /// </para>
     /// <para>
-    /// 继承链：<see cref="AesirBaseWindowView{T}" /> → <see cref="AesirBaseWindow" /> → <see cref="AesirMonoBehaviour" />。
+    /// 继承链：<see cref="AesirBaseWindowView{T}" /> → <see cref="AesirBaseWindow" /> →
+    /// <see cref="AesirMonoBehaviour" />。
     /// 子类通过 <c>Context</c> 属性（由 <see cref="IView" /> 接口定义）访问 Context 中持有的 Model / Service。
     /// </para>
     /// <example>

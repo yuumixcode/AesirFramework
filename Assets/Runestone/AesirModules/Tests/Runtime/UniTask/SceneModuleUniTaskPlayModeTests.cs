@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using NUnit.Framework;
@@ -11,6 +12,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
 
 namespace Runestone.AesirModules.Tests
 {
@@ -58,9 +60,8 @@ namespace Runestone.AesirModules.Tests
         {
             EditorBuildSettings.scenes = EditorBuildSettings.scenes
                 .Where(scene => !IsTestScenePath(scene.path))
-                .Concat(new[] { SceneAPath, SceneBPath }
-                    .Select(path => new EditorBuildSettingsScene(path, true)))
-                .ToArray();
+                .Concat(new[] { SceneAPath, SceneBPath }.Select(path =>
+                    new EditorBuildSettingsScene(path, true))).ToArray();
         }
 
         void IPostBuildCleanup.Cleanup() => UnregisterTestScenes();
@@ -245,6 +246,7 @@ namespace Runestone.AesirModules.Tests
             var loadedCount = 0;
             var progressReachedOne = false;
             var progressReachedOneBeforeEvent = false;
+
             void OnLoaded(string _)
             {
                 loadedCount++;
@@ -319,7 +321,12 @@ namespace Runestone.AesirModules.Tests
 
             var unloadedCount = 0;
             var eventCount = 0;
-            void OnUnloaded(string _) => eventCount++;
+
+            void OnUnloaded(string _)
+            {
+                eventCount++;
+            }
+
             SceneModule.SceneUnloadedEvent.AddListener(OnUnloaded);
             try
             {
@@ -347,14 +354,18 @@ namespace Runestone.AesirModules.Tests
         public IEnumerator LoadSceneSingleAsync_InvalidPath_ThrowsInvalidOperationException()
         {
             var loadedCount = 0;
-            void OnLoaded(string _) => loadedCount++;
+
+            void OnLoaded(string _)
+            {
+                loadedCount++;
+            }
+
             SceneModule.SceneLoadedEvent.AddListener(OnLoaded);
             try
             {
                 Exception caught = null;
                 // SceneModule 会输出错误日志（门面前缀带富文本），用 Regex 子串兜住，否则判为 Unexpected log
-                LogAssert.Expect(LogType.Error,
-                    new System.Text.RegularExpressions.Regex("无效场景路径"));
+                LogAssert.Expect(LogType.Error, new Regex("无效场景路径"));
 
                 yield return Await(SceneModuleUniTask.LoadSceneSingleAsync(string.Empty), e => caught = e);
 
@@ -372,7 +383,12 @@ namespace Runestone.AesirModules.Tests
         public IEnumerator LoadSceneSingleAsync_AlreadyCancelled_ThrowsSynchronouslyWithoutLoading()
         {
             var loadedCount = 0;
-            void OnLoaded(string _) => loadedCount++;
+
+            void OnLoaded(string _)
+            {
+                loadedCount++;
+            }
+
             SceneModule.SceneLoadedEvent.AddListener(OnLoaded);
             try
             {
@@ -418,7 +434,7 @@ namespace Runestone.AesirModules.Tests
             Assert.IsNotNull(host, "前置：模块宿主存在");
 
             // 销毁宿主组件：await 侧的 destroyCancellationToken 链接应让等待方以取消收场（不无限悬挂）
-            UnityEngine.Object.Destroy(host);
+            Object.Destroy(host);
 
             Exception caught = null;
             yield return Await(task, e => caught = e);

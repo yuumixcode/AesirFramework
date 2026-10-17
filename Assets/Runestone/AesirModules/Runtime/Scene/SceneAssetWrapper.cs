@@ -498,8 +498,8 @@ namespace Runestone.AesirModules
 
             // 两侧都没有任何身份信息（路径与 GUID 俱空）：指向同一"无目标"状态，彼此相等。
             // 与哈希一致（键为空串，两侧哈希相同），也保持空引用包装器可作字典键的既有语义。
-            if (string.IsNullOrEmpty(scenePath) && string.IsNullOrEmpty(sceneGuid)
-                && string.IsNullOrEmpty(other.scenePath) && string.IsNullOrEmpty(other.sceneGuid))
+            if (string.IsNullOrEmpty(scenePath) && string.IsNullOrEmpty(sceneGuid) &&
+                string.IsNullOrEmpty(other.scenePath) && string.IsNullOrEmpty(other.sceneGuid))
             {
                 return true;
             }
@@ -636,11 +636,27 @@ namespace Runestone.AesirModules
         public bool CanEnableInBuild => DisabledInBuildSettings && !IsAddressable;
 
         /// <summary>
-        /// 场景引用已悬空：SceneAsset 对象引用丢失但路径缓存仍在（场景被移动/删除或引用断链）。
-        /// Inspector 中以红色提示，可通过重新拖拽场景或右键菜单 Reset Scene 修复。
+        /// 场景引用已悬空：SceneAsset 对象引用丢失，且经 GUID 自愈回写的路径也定位不到场景资产
+        /// （资产被删除或移出工程）。Inspector 中以红色提示，可通过重新拖拽场景修复。
+        /// <para>
+        /// 对象引用断链但资产仍可经路径定位（场景被移动后的 GUID 自愈成功）时<b>不算悬空</b>——
+        /// 加载完全可用，只是面板上建议重新拖拽一次以恢复对象引用。
+        /// </para>
         /// </summary>
-        public bool IsDangling =>
-            sceneAsset == null && !string.IsNullOrEmpty(scenePath);
+        public bool IsDangling
+        {
+            get
+            {
+                EditorSyncFromAsset();
+                if (sceneAsset != null || string.IsNullOrEmpty(scenePath))
+                {
+                    return false;
+                }
+
+                // 对象引用断链但资产仍可经路径定位（含 GUID 自愈回写的路径）——可正常加载，不算悬空
+                return AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) == null;
+            }
+        }
 
         /// <summary>是否显示"加入 Addressables"修复按钮（需要安装 Addressables 包且场景当前不可寻址）。</summary>
         public bool CanMakeAddressable =>
@@ -695,7 +711,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 把当前场景加入 BuildSettings。已有条目时绝不重复添加，只确保启用。
         /// </summary>
-        void AddCurrentSceneToBuildSettings()
+        internal void AddCurrentSceneToBuildSettings()
         {
             EditorSyncFromAsset();
             if (string.IsNullOrEmpty(scenePath))
@@ -737,7 +753,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 启用 BuildSettings 中被禁用的当前场景条目。
         /// </summary>
-        void EnableCurrentSceneInBuildSettings()
+        internal void EnableCurrentSceneInBuildSettings()
         {
             EditorSyncFromAsset();
             if (string.IsNullOrEmpty(scenePath))
@@ -777,7 +793,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 把当前场景加入 Addressables 默认组（需要安装 Addressables 包）。
         /// </summary>
-        void AddSceneToAddressables()
+        internal void AddSceneToAddressables()
         {
             if (!SceneAssetWrapperAddressablesBridge.IsAvailable)
             {
@@ -804,7 +820,7 @@ namespace Runestone.AesirModules
                 $"已把场景加入 Addressables 默认组：{scenePath}（Address: {address}）");
         }
 
-        void ResetScene()
+        internal void ResetScene()
         {
             SceneAsset = null;
         }
@@ -812,7 +828,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 着色优先级：Addressable（青）＞ 引用悬空（红）＝ 未加入 Build（红）＞ 被禁用（黄）＞ 正常（白）。
         /// </summary>
-        Color GetSceneAssetColor()
+        internal Color GetSceneAssetColor()
         {
             if (IsAddressable)
             {

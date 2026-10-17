@@ -35,6 +35,32 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             Assert.Fail(message + $"（未捕获到 {type} 日志，实际日志数 {logs.Count}）");
         }
 
+        #region 查询非创建式
+
+        [Test]
+        public void StaticWindowQueries_WithoutModule_DoNotCreateHost()
+        {
+            // 前置：清空静态单例并销毁任何遗留宿主（防御性清理，确保"从未有过模块"的前提）
+            typeof(UIModule).GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static)
+                .SetValue(null, null);
+            foreach (var leftover in Object.FindObjectsByType<AesirModules>(FindObjectsInactive.Include,
+                         FindObjectsSortMode.None))
+            {
+                Object.DestroyImmediate(leftover.gameObject);
+            }
+
+            var window = UIModule.GetWindow<TestWindow>();
+            var contained = UIModule.ContainWindowPrefab<TestWindow>();
+
+            Assert.IsNull(window, "无实例时 GetWindow 应返回 null 而非凭空创建宿主树");
+            Assert.IsFalse(contained, "无实例时 ContainWindowPrefab 应返回 false");
+            Assert.AreEqual(0,
+                Object.FindObjectsByType<AesirModules>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                    .Length, "窗口查询静态 API 不得创建 [Aesir Modules] 宿主树");
+        }
+
+        #endregion
+
         #region 测试窗口
 
         /// <summary>记录生命周期回调顺序的测试窗口。</summary>
@@ -199,7 +225,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             var window = prefabGo.AddComponent<WindowB>();
             SetSortingOrder(window, sortingOrder);
             SetDestroyOnHide(window, false);
-            AddMaskChild(prefabGo, true);
+            AddMaskChild(prefabGo);
             UIModule.RegisterWindowPrefab<WindowB>(prefabGo);
             return window;
         }
@@ -398,7 +424,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
 
             Assert.IsFalse(LifecycleStateWindow.ActiveSelfDuringInit,
                 "OnInit 执行时窗口物体应为停用状态（Awake/OnEnable 推迟到 Show 激活才触发，与面板同一契约）");
-            Assert.IsTrue(((MonoBehaviour)window).gameObject.activeSelf, "Show 完成后窗口物体应已激活");
+            Assert.IsTrue(window.gameObject.activeSelf, "Show 完成后窗口物体应已激活");
         }
 
         #endregion
@@ -623,7 +649,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             CreateRegisteredWindowPrefab(module);
 
             var window = module.OpenWindow<TestWindow>();
-            var windowGo = ((MonoBehaviour)window).gameObject;
+            var windowGo = window.gameObject;
 
             // 模拟外部 Destroy（如场景卸载）：EditMode 下组件 OnDestroy 回调不保证触发，
             // 反清理由运行时 OnDestroy → UIModule.RemoveWindowRecord 驱动，
@@ -682,14 +708,14 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         {
             var module = CreateModule();
             TrackUIRoot();
-            CreateRegisteredWindowPrefab(module, 500);
+            CreateRegisteredWindowPrefab(module);
             CreateRegisteredWindowBPrefab(module, 600);
             module.MaskMode = UIMaskMode.Single;
 
             var windowA = module.OpenWindow<TestWindow>();
             var windowB = module.OpenWindow<WindowB>();
-            var goA = ((MonoBehaviour)windowA).gameObject;
-            var goB = ((MonoBehaviour)windowB).gameObject;
+            var goA = windowA.gameObject;
+            var goB = windowB.gameObject;
 
             Assert.IsFalse(IsMaskActive(goA).Value, "单遮模式下最高层是 WindowB(600)，A 的蒙版应关闭");
             Assert.IsTrue(IsMaskActive(goB).Value, "单遮模式下最高层可见窗口的蒙版应开启");
@@ -709,14 +735,14 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         {
             var module = CreateModule();
             TrackUIRoot();
-            CreateRegisteredWindowPrefab(module, 500);
+            CreateRegisteredWindowPrefab(module);
             CreateRegisteredWindowBPrefab(module, 500);
             module.MaskMode = UIMaskMode.Single;
 
             var windowA = module.OpenWindow<TestWindow>();
             var windowB = module.OpenWindow<WindowB>();
-            var goA = ((MonoBehaviour)windowA).gameObject;
-            var goB = ((MonoBehaviour)windowB).gameObject;
+            var goA = windowA.gameObject;
+            var goB = windowB.gameObject;
 
             Assert.IsFalse(IsMaskActive(goA).Value, "同 sortingOrder 时后打开的 B（sibling 靠后）应拥有蒙版");
             Assert.IsTrue(IsMaskActive(goB).Value, "同 sortingOrder 时后打开的窗口为最高层");
@@ -730,14 +756,14 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         {
             var module = CreateModule();
             TrackUIRoot();
-            CreateRegisteredWindowPrefab(module, 500);
+            CreateRegisteredWindowPrefab(module);
             CreateRegisteredWindowBPrefab(module, 600);
             module.MaskMode = UIMaskMode.Stacked;
 
             var windowA = module.OpenWindow<TestWindow>();
             var windowB = module.OpenWindow<WindowB>();
-            var goA = ((MonoBehaviour)windowA).gameObject;
-            var goB = ((MonoBehaviour)windowB).gameObject;
+            var goA = windowA.gameObject;
+            var goB = windowB.gameObject;
 
             Assert.IsTrue(IsMaskActive(goA).Value, "叠遮模式下每个打开窗口的蒙版独立生效");
             Assert.IsTrue(IsMaskActive(goB).Value, "叠遮模式下每个打开窗口的蒙版独立生效");
@@ -768,12 +794,12 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             SetDestroyOnHide(window, false);
             SetCloseOnMaskClick(window, true);
 
-            var maskButton = ((MonoBehaviour)window).transform.Find("Mask").GetComponent<Button>();
+            var maskButton = window.transform.Find("Mask").GetComponent<Button>();
             Assert.IsNotNull(maskButton, "蒙版子物体应已接线 Button（Initialize 时挂接 onClick）");
             maskButton.onClick.Invoke();
 
             Assert.IsFalse(window.IsOpen, "点击蒙版应经 closeOnMaskClick 关闭窗口");
-            Assert.IsFalse(((MonoBehaviour)window).gameObject.activeSelf, "隐藏分叉应停用窗口物体");
+            Assert.IsFalse(window.gameObject.activeSelf, "隐藏分叉应停用窗口物体");
         }
 
         [Test]
@@ -786,7 +812,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             var window = module.OpenWindow<TestWindow>();
             SetDestroyOnHide(window, false);
 
-            var maskButton = ((MonoBehaviour)window).transform.Find("Mask").GetComponent<Button>();
+            var maskButton = window.transform.Find("Mask").GetComponent<Button>();
             maskButton.onClick.Invoke();
 
             Assert.IsTrue(window.IsOpen, "closeOnMaskClick 默认关闭，点击蒙版不应关闭窗口");
@@ -797,7 +823,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         {
             var module = CreateModule();
             TrackUIRoot();
-            CreateRegisteredWindowPrefab(module, 500, withMask: false);
+            CreateRegisteredWindowPrefab(module, 500, false);
 
             TestWindow window = null;
             var logs = CaptureLogs(() => window = module.OpenWindow<TestWindow>());

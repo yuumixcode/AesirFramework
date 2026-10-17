@@ -12,7 +12,8 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
     [AddComponentMenu("")]
     public class SampleUILoadingWindow : AesirBaseWindow
     {
-        [SerializeField] Text loadingText;
+        [SerializeField]
+        Text loadingText;
 
         Coroutine _autoCloseRoutine;
 

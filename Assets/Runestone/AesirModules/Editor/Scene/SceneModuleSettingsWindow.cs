@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,25 +24,7 @@ namespace Runestone.AesirModules.Editor
         /// Odin 版窗口的打开委托（由 Odin 程序集经 [InitializeOnLoadMethod] 注册；
         /// 未安装 Odin Inspector 时为 null，菜单打开本原生兜底窗口）。
         /// </summary>
-        public static System.Action OdinWindowOpener { get; private set; }
-
-        /// <summary>注册 Odin 版窗口的打开方式（域重载清空静态委托后由 Odin 程序集重新注册）。</summary>
-        public static void RegisterOdinWindowOpener(System.Action opener) => OdinWindowOpener = opener;
-
-        [MenuItem(MenuPath)]
-        static void Open()
-        {
-            if (OdinWindowOpener != null)
-            {
-                OdinWindowOpener();
-                return;
-            }
-
-            var window = GetWindow<SceneModuleSettingsWindow>();
-            window.titleContent = new GUIContent("Scene Module Settings");
-            window.minSize = new Vector2(500f, 300f);
-            window.Show();
-        }
+        public static Action OdinWindowOpener { get; private set; }
 
         void OnGUI()
         {
@@ -54,8 +37,7 @@ namespace Runestone.AesirModules.Editor
             EditorGUILayout.BeginVertical(EditorStyles.inspectorFullWidthMargins);
 
             EditorGUI.BeginChangeCheck();
-            var setupBootstrapper = EditorGUILayout.Toggle(
-                new GUIContent("是否自动搜集项目中的 Bootstrapper 场景并注册"),
+            var setupBootstrapper = EditorGUILayout.Toggle(new GUIContent("是否自动搜集项目中的 Bootstrapper 场景并注册"),
                 settings.SetupBootstrapper);
             if (EditorGUI.EndChangeCheck())
             {
@@ -63,8 +45,7 @@ namespace Runestone.AesirModules.Editor
             }
 
             EditorGUI.BeginChangeCheck();
-            var firstLoad = EditorGUILayout.Toggle(
-                new GUIContent("是否强制优先加载 Bootstrapper 场景"),
+            var firstLoad = EditorGUILayout.Toggle(new GUIContent("是否强制优先加载 Bootstrapper 场景"),
                 settings.FirstLoadBootstrapScene);
             if (EditorGUI.EndChangeCheck())
             {
@@ -89,6 +70,24 @@ namespace Runestone.AesirModules.Editor
             EditorGUILayout.EndVertical();
 
             EditorGUIUtility.labelWidth = prevLabelWidth;
+        }
+
+        /// <summary>注册 Odin 版窗口的打开方式（域重载清空静态委托后由 Odin 程序集重新注册）。</summary>
+        public static void RegisterOdinWindowOpener(Action opener) => OdinWindowOpener = opener;
+
+        [MenuItem(MenuPath)]
+        static void Open()
+        {
+            if (OdinWindowOpener != null)
+            {
+                OdinWindowOpener();
+                return;
+            }
+
+            var window = GetWindow<SceneModuleSettingsWindow>();
+            window.titleContent = new GUIContent("Scene Module Settings");
+            window.minSize = new Vector2(500f, 300f);
+            window.Show();
         }
 
         static string NullOrEmpty(string path) =>

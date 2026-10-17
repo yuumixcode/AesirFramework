@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
 {
@@ -260,7 +259,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
                 return TypeCategory.Enum;
             }
 
-            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag, "出现不存在的 TypeCategory，需要补充枚举！");
+            AesirModulesDebug.LogError(AesirModulesDebug.ScriptDocGeneratorTag,
+                "出现不存在的 TypeCategory，需要补充枚举！");
             return TypeCategory.Unknown;
         }
 
@@ -269,7 +269,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         /// </summary>
         public static string GetReadableTypeName(this Type type, bool useFullName = false)
         {
-            var targetTypeName = useFullName ? NiceTypeName.GetNiceFullName(type) : NiceTypeName.GetNiceName(type);
+            var targetTypeName =
+                useFullName ? NiceTypeName.GetNiceFullName(type) : NiceTypeName.GetNiceName(type);
 
             if (TypeAnalyzerUtility.TypeAliasMap.TryGetValue(type, out var alias))
             {

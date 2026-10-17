@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Runestone.AesirArchitecture;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Runestone.AesirModules
 {
@@ -28,6 +30,12 @@ namespace Runestone.AesirModules
     [DefaultExecutionOrder(-999)]
     public class AudioModule : AesirMonoBehaviour
     {
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
+
+        const string DefaultPrefsKey = "AesirAudio";
+
+        static AudioModule _instance;
+
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效。
         /// </summary>
@@ -43,12 +51,6 @@ namespace Runestone.AesirModules
         /// </remarks>
         [SerializeField]
         bool dontDestroyOnLoad = true;
-
-        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
-
-        const string DefaultPrefsKey = "AesirAudio";
-
-        static AudioModule _instance;
 
         #region 公开 API — SFX
 
@@ -745,7 +747,7 @@ namespace Runestone.AesirModules
             }
         }
 
-        void StartBgmFade(IEnumerator routine, System.Action instantFallback)
+        void StartBgmFade(IEnumerator routine, Action instantFallback)
         {
             StopBgmFade();
 

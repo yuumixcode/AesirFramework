@@ -11,15 +11,20 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
     [AddComponentMenu("")]
     public class SampleUIControlPanel : AesirBasePanel
     {
-        [SerializeField] Button settingButton;
+        [SerializeField]
+        Button settingButton;
 
-        [SerializeField] Button stackedButton;
+        [SerializeField]
+        Button stackedButton;
 
-        [SerializeField] Button loadingButton;
+        [SerializeField]
+        Button loadingButton;
 
-        [SerializeField] Button maskModeButton;
+        [SerializeField]
+        Button maskModeButton;
 
-        [SerializeField] Button closeAllButton;
+        [SerializeField]
+        Button closeAllButton;
 
         protected override void OnInit()
         {
@@ -61,7 +66,8 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
         {
             var module = UIModule.Instance;
             module.MaskMode = module.MaskMode == UIMaskMode.Single ? UIMaskMode.Stacked : UIMaskMode.Single;
-            SampleUIHud.Log($"蒙版模式切换为：{(module.MaskMode == UIMaskMode.Single ? "单遮（仅最高层窗口持有蒙版）" : "叠遮（各窗口蒙版独立生效）")}");
+            SampleUIHud.Log(
+                $"蒙版模式切换为：{(module.MaskMode == UIMaskMode.Single ? "单遮（仅最高层窗口持有蒙版）" : "叠遮（各窗口蒙版独立生效）")}");
         }
     }
 }

@@ -36,6 +36,9 @@ namespace Runestone.AesirModules.Editor
         /// <summary>UniTask 适配程序集与核心宏分支共用的脚本宏定义符号。</summary>
         internal const string DefineName = "AESIR_MODULES_UNITASK";
 
+        /// <summary>UniTask 的 UPM 包名（该安装形态由 versionDefines 全权管理宏）。</summary>
+        internal const string UniTaskUpmPackageName = "com.cysharp.unitask";
+
         /// <summary>
         /// UniTask 的程序集名白名单（检测域内 UniTask 时按名称匹配）：
         /// UPM 包 / unitypackage / asmdef 源码安装的程序集名为 <c>UniTask</c>
@@ -49,14 +52,9 @@ namespace Runestone.AesirModules.Editor
             "Cysharp.Threading.Tasks"
         };
 
-        /// <summary>UniTask 的 UPM 包名（该安装形态由 versionDefines 全权管理宏）。</summary>
-        internal const string UniTaskUpmPackageName = "com.cysharp.unitask";
-
-        static AesirUniTaskDefineKeeper()
-        {
+        static AesirUniTaskDefineKeeper() =>
             // 推迟到编辑器空闲首帧再同步宏：静态构造函数运行于程序集注册/域重载期间，此时机写宏（触发重编译）属于重入
             EditorApplication.delayCall += SyncDefine;
-        }
 
         /// <summary>
         /// 全局宏同步决策（纯函数，供测试锁定矩阵）：<see langword="null" /> 表示不干预
