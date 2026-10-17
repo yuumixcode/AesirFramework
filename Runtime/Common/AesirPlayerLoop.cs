@@ -79,8 +79,7 @@ namespace Runestone.AesirArchitecture
         static int _lastEnsureFrame = -1;
 
         /// <summary>待重排的阶段列表（配合 _sortDirty 待重排标志：只重排发生注册的阶段，不碰其余列表）。</summary>
-        static readonly List<AesirLifecyclePhase> DirtyPhases =
-            new List<AesirLifecyclePhase>();
+        static readonly List<AesirLifecyclePhase> DirtyPhases = new List<AesirLifecyclePhase>();
 
         /// <summary>
         /// 自动初始化：在域加载时将自定义子系统注入 PlayerLoop

@@ -13,24 +13,24 @@ namespace Runestone.AesirArchitecture.Tests.Editor
     /// <c>RecoverFromInterruptedRun</c>）的 EditMode 测试。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 「AesirUpdater.Busy」是控制器内的私有 SessionState 键，本类以字面量锁定键名——
-    /// 控制器侧一旦改名，兜底判断与标记写入会静默失配，本测试据字面量即刻变红。
-    /// </para>
-    /// <para>
-    /// 更新执行的完整链路涉及网络下载与 unitypackage 导入，不在单测范围；
-    /// 收尾阶段「先解锁再清标记」的顺序与异常路径下的锁配平由代码结构保证，
-    /// 另经编辑器内注毒探针验证（收尾异常时 UnlockReloadAssemblies 仍执行、标记时序正确）。
-    /// </para>
+    ///     <para>
+    ///     「AesirUpdater.Busy」是控制器内的私有 SessionState 键，本类以字面量锁定键名——
+    ///     控制器侧一旦改名，兜底判断与标记写入会静默失配，本测试据字面量即刻变红。
+    ///     </para>
+    ///     <para>
+    ///     更新执行的完整链路涉及网络下载与 unitypackage 导入，不在单测范围；
+    ///     收尾阶段「先解锁再清标记」的顺序与异常路径下的锁配平由代码结构保证，
+    ///     另经编辑器内注毒探针验证（收尾异常时 UnlockReloadAssemblies 仍执行、标记时序正确）。
+    ///     </para>
     /// </remarks>
     public class AesirUpdateControllerTests
     {
         /// <summary>忙碌标记的 SessionState 键（与控制器内私有常量字面量对齐）。</summary>
         const string BusySessionKey = "AesirUpdater.Busy";
 
-        AesirUpdateController.UpdateState _state;
-
         AesirUpdateController _controller;
+
+        AesirUpdateController.UpdateState _state;
 
         [SetUp]
         public void SetUp()
@@ -73,8 +73,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
 
             // 先持一把锁，与兜底收尾的 Unlock 配平——测试会话不留下未配对的解锁
             EditorApplication.LockReloadAssemblies();
-            LogAssert.Expect(LogType.Warning, new Regex(
-                "上一次更新/检测流程未正常收尾（域重载或编辑器中断），已清理残留进度条与程序集重载锁"));
+            LogAssert.Expect(LogType.Warning, new Regex("上一次更新/检测流程未正常收尾（域重载或编辑器中断），已清理残留进度条与程序集重载锁"));
             method.Invoke(null, null);
 
             Assert.IsFalse(SessionState.GetBool(BusySessionKey, false), "兜底收尾后忙碌标记应被清除");
@@ -89,10 +88,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             LogAssert.NoUnexpectedReceived();
         }
 
-        bool InvokeBeginBusy()
-        {
-            return (bool)InvokePrivate("BeginBusy");
-        }
+        bool InvokeBeginBusy() => (bool)InvokePrivate("BeginBusy");
 
         void InvokeEndBusy()
         {

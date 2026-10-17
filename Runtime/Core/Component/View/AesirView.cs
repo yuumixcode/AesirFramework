@@ -13,7 +13,5 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     /// <seealso cref="MonoView{T}" />
     /// <seealso cref="IView{T}" />
-    public abstract class AesirView<T> : AesirMonoBehaviour, IView<T> where T : AbstractContext<T>, new()
-    {
-    }
+    public abstract class AesirView<T> : AesirMonoBehaviour, IView<T> where T : AbstractContext<T>, new() { }
 }

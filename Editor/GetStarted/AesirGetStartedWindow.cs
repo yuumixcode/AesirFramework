@@ -118,7 +118,8 @@ namespace Runestone.AesirArchitecture.Editor
         void DrawToolbar()
         {
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Aesir Framework 示例导航 — 点击「打开场景」保存当前场景并进入示例；「定位」在 Project 窗口选中示例文件夹；" +
+            EditorGUILayout.LabelField(
+                "Aesir Framework 示例导航 — 点击「打开场景」保存当前场景并进入示例；「定位」在 Project 窗口选中示例文件夹；" +
                 "UPM / 嵌入式安装的未导入示例经「导入 Sample」确认后导入。", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button("刷新", EditorStyles.toolbarButton, GUILayout.Width(60)))
@@ -225,7 +226,8 @@ namespace Runestone.AesirArchitecture.Editor
                             break; // 用户在确认框取消，无需提示
 
                         default:
-                            EditorUtility.DisplayDialog(AesirGetStartedService.ImportConfirmTitle, message, "确定");
+                            EditorUtility.DisplayDialog(AesirGetStartedService.ImportConfirmTitle, message,
+                                "确定");
                             break;
                     }
                 }

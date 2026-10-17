@@ -28,11 +28,9 @@ namespace Runestone.AesirArchitecture.Editor
     {
         const string Symbol = "AESIR_ARCHITECTURE";
 
-        static EnsureAesirArchitectureDefine()
-        {
+        static EnsureAesirArchitectureDefine() =>
             // 推迟到编辑器空闲首帧再确保宏：静态构造函数运行于程序集注册/域重载期间，此时机写宏（触发重编译）属于重入
             EditorApplication.delayCall += Ensure;
-        }
 
         static void Ensure()
         {

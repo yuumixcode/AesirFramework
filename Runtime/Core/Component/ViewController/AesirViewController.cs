@@ -16,7 +16,5 @@ namespace Runestone.AesirArchitecture
     /// <seealso cref="IView" />
     /// <seealso cref="IController{T}" />
     public abstract class AesirViewController<T> : AesirMonoBehaviour, IView, IController<T>
-        where T : AbstractContext<T>, new()
-    {
-    }
+        where T : AbstractContext<T>, new() { }
 }

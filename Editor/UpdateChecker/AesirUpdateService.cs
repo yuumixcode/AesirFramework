@@ -105,7 +105,6 @@ namespace Runestone.AesirArchitecture.Editor
         /// ——目录名、包 id、显示名与描述齐全；本类与 Getting Started 概览卡片共用同一份登记。
         /// 目录名同时是 Release 资产命名（&lt;目录名&gt;-v&lt;版本&gt;.unitypackage）与默认安装目录名。
         /// </summary>
-
         /// <summary>
         /// GitHub Raw 内容地址前缀（CHANGELOG 拉取的兜底源；大陆可达性不如 jsDelivr，排在最后）。
         /// </summary>
@@ -288,7 +287,8 @@ namespace Runestone.AesirArchitecture.Editor
                 }
 
                 var (name, version) = ParsePackageJson(pkgJsonPath);
-                if (string.IsNullOrEmpty(name) || !name.StartsWith(AesirAssetPaths.PackageIdPrefix, StringComparison.Ordinal))
+                if (string.IsNullOrEmpty(name) ||
+                    !name.StartsWith(AesirAssetPaths.PackageIdPrefix, StringComparison.Ordinal))
                 {
                     continue;
                 }
@@ -610,7 +610,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// GitHub 镜像站前缀（第三方代理 raw.githubusercontent.com；「前缀 + 完整 GitHub 地址」形态）。
         /// 顺序即尝试顺序——直连不通时镜像站仍返回实时内容。
         /// </summary>
-        public static readonly string[] GitHubMirrorPrefixes = { "https://ghproxy.net/", "https://gh-proxy.com/" };
+        public static readonly string[] GitHubMirrorPrefixes =
+            { "https://ghproxy.net/", "https://gh-proxy.com/" };
 
         /// <summary>jsDelivr CDN 上的 update-info.json 地址（分支引用，缓存最长约 12 小时）。</summary>
         public static string BuildJsDelivrUpdateInfoUrl(string domain) =>
@@ -634,9 +635,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// 连接状态文案：直连可用 = 本次结果 100% 实时；否则说明结果来自兜底线路。
         /// </summary>
         public static string BuildConnectionStatusText(bool gitHubDirectAvailable) =>
-            gitHubDirectAvailable
-                ? "GitHub 直连：可用 —— 版本信息 100% 实时。"
-                : "GitHub 直连：不可用 —— 已通过兜底线路获取，结果可能不是最新。";
+            gitHubDirectAvailable ? "GitHub 直连：可用 —— 版本信息 100% 实时。" : "GitHub 直连：不可用 —— 已通过兜底线路获取，结果可能不是最新。";
 
         /// <summary>获取线路文案：最终结果是经哪条线路拿到的（直连 / 镜像站 / CDN 中转）。</summary>
         public static string BuildRouteText(string routeName, ReleaseRouteKind kind) =>
@@ -644,8 +643,7 @@ namespace Runestone.AesirArchitecture.Editor
 
         /// <summary>CDN 中转延迟提示（仅当结果来自 CDN 中转时展示）。</summary>
         public static string BuildCdnDelayHintText() =>
-            "本次版本信息经 CDN 中转获取，可能有数小时延迟（jsDelivr 分支缓存最长约 12 小时）。" +
-            "如需确认是否为最新版，请点「打开 Releases 页面」查看。";
+            "本次版本信息经 CDN 中转获取，可能有数小时延迟（jsDelivr 分支缓存最长约 12 小时）。" + "如需确认是否为最新版，请点「打开 Releases 页面」查看。";
 
         /// <summary>检测结果摘要（连接状态 + 获取线路两行，界面合并展示）。</summary>
         public static string BuildDetectionSummary(string routeName,
@@ -703,8 +701,8 @@ namespace Runestone.AesirArchitecture.Editor
                     return true;
                 }
 
-                attempts.Add(RecordAttempt(name, kind, false,
-                    $"跳过：整轮检测已超时（{DetectionTotalTimeoutSeconds} 秒）", Stopwatch.StartNew()));
+                attempts.Add(RecordAttempt(name, kind, false, $"跳过：整轮检测已超时（{DetectionTotalTimeoutSeconds} 秒）",
+                    Stopwatch.StartNew()));
                 return false;
             }
 
@@ -714,8 +712,8 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 snapshot = await TryTagSourceAsync("GitHub API", ReleaseRouteKind.GitHubDirect,
                     async () => ExtractJsonField(
-                        await fetchTextAsync(LatestReleaseApiUrl, DetectionAttemptTimeoutSeconds), "tag_name"),
-                    attempts);
+                        await fetchTextAsync(LatestReleaseApiUrl, DetectionAttemptTimeoutSeconds),
+                        "tag_name"), attempts);
             }
 
             if (snapshot == null && HasBudget("GitHub 重定向", ReleaseRouteKind.GitHubDirect))
@@ -776,7 +774,8 @@ namespace Runestone.AesirArchitecture.Editor
                     ? $"版本检测超时（超过 {DetectionTotalTimeoutSeconds} 秒）"
                     : "所有更新源均不可用";
                 throw new Exception(headline + "：\n" +
-                                    new ReleaseCheckResult { Attempts = attempts.ToArray() }.BuildAttemptsLog());
+                                    new ReleaseCheckResult
+                                        { Attempts = attempts.ToArray() }.BuildAttemptsLog());
             }
 
             // tag-only 结果（API / 302）补齐文件清单：清单缺失会跳过"差集清理残留"。
@@ -881,8 +880,7 @@ namespace Runestone.AesirArchitecture.Editor
                 if (totalBudget.IsExpired(clock()))
                 {
                     attempts.Add(RecordAttempt(name, kind, false,
-                        $"跳过补齐清单：整轮检测已超时（{DetectionTotalTimeoutSeconds} 秒）",
-                        Stopwatch.StartNew()));
+                        $"跳过补齐清单：整轮检测已超时（{DetectionTotalTimeoutSeconds} 秒）", Stopwatch.StartNew()));
                     return;
                 }
 
@@ -899,8 +897,7 @@ namespace Runestone.AesirArchitecture.Editor
                     if (CompareVersion(info.tag, snapshot.Tag) != 0)
                     {
                         attempts.Add(RecordAttempt(name, kind, false,
-                            $"补齐清单：该源版本 {info.tag} 与本次检测 {snapshot.Tag} 不一致，跳过（不采用陈旧清单）",
-                            stopwatch));
+                            $"补齐清单：该源版本 {info.tag} 与本次检测 {snapshot.Tag} 不一致，跳过（不采用陈旧清单）", stopwatch));
                         return;
                     }
 
@@ -1036,7 +1033,8 @@ namespace Runestone.AesirArchitecture.Editor
         /// （各检测源有各自的超时基线，不给默认值以防新调用方不慎超出 5 秒检测基线）。
         /// 除 <c>request.timeout</c>（无数据超时）外再加墙钟硬上限：超时即 <c>Abort</c> 并抛超时异常。
         /// </summary>
-        public static async Task<string> GetTextAsync(string url, int timeoutSeconds,
+        public static async Task<string> GetTextAsync(string url,
+            int timeoutSeconds,
             Func<double> clock = null)
         {
             clock ??= DefaultClock;
@@ -1101,7 +1099,8 @@ namespace Runestone.AesirArchitecture.Editor
                 if (totalBudget.IsExpired(now))
                 {
                     request.Abort();
-                    throw new Exception($"下载超时（总时长超过 {timeoutSeconds} 秒，已下载 {request.downloadProgress:P0}）：{url}");
+                    throw new Exception(
+                        $"下载超时（总时长超过 {timeoutSeconds} 秒，已下载 {request.downloadProgress:P0}）：{url}");
                 }
 
                 var progress = request.downloadProgress;
@@ -1113,8 +1112,7 @@ namespace Runestone.AesirArchitecture.Editor
                 else if (now - lastProgressAt >= stallTimeoutSeconds)
                 {
                     request.Abort();
-                    throw new Exception(
-                        $"下载超时（连续 {stallTimeoutSeconds} 秒无进展，已下载 {progress:P0}）：{url}");
+                    throw new Exception($"下载超时（连续 {stallTimeoutSeconds} 秒无进展，已下载 {progress:P0}）：{url}");
                 }
 
                 onProgress?.Invoke(progress);
@@ -1161,12 +1159,8 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 try
                 {
-                    return await DownloadBytesAsync(url,
-                        p => onProgress?.Invoke(name, p),
-                        DownloadTimeoutSeconds,
-                        DownloadStallTimeoutSeconds,
-                        null,
-                        isCanceled);
+                    return await DownloadBytesAsync(url, p => onProgress?.Invoke(name, p),
+                        DownloadTimeoutSeconds, DownloadStallTimeoutSeconds, null, isCanceled);
                 }
                 catch (OperationCanceledException)
                 {
@@ -1179,9 +1173,8 @@ namespace Runestone.AesirArchitecture.Editor
                 }
             }
 
-            throw new Exception($"unitypackage 全部下载线路均失败（{assetName}）：\n" +
-                                string.Join("\n", errors) + "\n\n" +
-                                $"自助方案：打开 {ReleasesPageUrl} 手动下载 {assetName}，" +
+            throw new Exception($"unitypackage 全部下载线路均失败（{assetName}）：\n" + string.Join("\n", errors) +
+                                "\n\n" + $"自助方案：打开 {ReleasesPageUrl} 手动下载 {assetName}，" +
                                 "下载完成后双击导入本项目即可完成更新；或待网络恢复后重试本更新器。");
         }
 
@@ -1759,8 +1752,7 @@ namespace Runestone.AesirArchitecture.Editor
                 {
                     bytes = await DownloadUnityPackageAsync(snapshot, pkg.DirName,
                         (route, p) => onProgress?.Invoke($"[{pkg.DirName}] 经{route}下载 {assetName} ...",
-                            progressBase + progressSpan * p),
-                        isCanceled);
+                            progressBase + progressSpan * p), isCanceled);
                 }
                 catch (OperationCanceledException)
                 {
@@ -1794,8 +1786,7 @@ namespace Runestone.AesirArchitecture.Editor
                 if (!Directory.Exists(ToAbsolutePath(pkg.AssetsPath)))
                 {
                     AesirArchitectureDebug.LogError("AesirUpdater",
-                        $"{pkg.DirName}: 导入后未找到包目录 {pkg.AssetsPath}，" +
-                        "导入可能已失败。本次未执行残留清理与清单登记；" +
+                        $"{pkg.DirName}: 导入后未找到包目录 {pkg.AssetsPath}，" + "导入可能已失败。本次未执行残留清理与清单登记；" +
                         $"如需恢复，请从 {ReleasesPageUrl} 重新下载对应版本的 unitypackage 导入。");
                     continue;
                 }

@@ -52,10 +52,7 @@ namespace Runestone.AesirArchitecture.Editor
         // Assets 形态安装（含与 UPM 混合并存）时照常显示，更新器只管辖 Assets 副本。
         // 扫描为纯本地目录 IO（锚点定位安装根 + 解析 package.json），菜单展开频率下开销可忽略
         [MenuItem(MenuPath, true)]
-        static bool ValidateMenuVisible()
-        {
-            return AesirUpdateService.ScanInstalledPackagesFromAllRoots().Count > 0;
-        }
+        static bool ValidateMenuVisible() => AesirUpdateService.ScanInstalledPackagesFromAllRoots().Count > 0;
 
         [MenuItem(MenuPath, false, 1100)]
         static void Open()
@@ -161,8 +158,8 @@ namespace Runestone.AesirArchitecture.Editor
             EditorGUILayout.HelpBox(
                 "更新范围：本地安装的 Aesir 包（复制 / unitypackage 导入，默认位置 Assets/Runestone，" + "可自由移动到项目任意文件夹）。\n" +
                 "经 Package Manager（Git URL）安装的副本不在本工具管辖内，请使用 Package Manager 更新。\n" +
-                "版本检测按「直连 GitHub → 镜像站 → CDN 中转」顺序兜底，能直连 GitHub 即为 100% 最新；" +
-                "本次实际线路见下方检测结果。", MessageType.Info);
+                "版本检测按「直连 GitHub → 镜像站 → CDN 中转」顺序兜底，能直连 GitHub 即为 100% 最新；" + "本次实际线路见下方检测结果。",
+                MessageType.Info);
 
             if (_state.IsGitRepository)
             {

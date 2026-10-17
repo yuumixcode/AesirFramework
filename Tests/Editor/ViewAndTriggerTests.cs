@@ -154,11 +154,13 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             // 此处经类型系统锁定声明面；DIM 绑定行为由上方 Mono 家族用例覆盖（同一接口实现）
             Assert.IsTrue(typeof(IView<TestContext>).IsAssignableFrom(typeof(AesirView<TestContext>)),
                 "AesirView<T> 应实现 IView<T>");
-            Assert.IsTrue(typeof(IController<TestContext>).IsAssignableFrom(typeof(AesirViewController<TestContext>)),
+            Assert.IsTrue(
+                typeof(IController<TestContext>).IsAssignableFrom(typeof(AesirViewController<TestContext>)),
                 "AesirViewController<T> 应实现 IController<T>");
             Assert.IsTrue(typeof(IView<TestContext>).IsAssignableFrom(typeof(MonoView<TestContext>)),
                 "MonoView<T> 应实现 IView<T>");
-            Assert.IsTrue(typeof(IController<TestContext>).IsAssignableFrom(typeof(MonoViewController<TestContext>)),
+            Assert.IsTrue(
+                typeof(IController<TestContext>).IsAssignableFrom(typeof(MonoViewController<TestContext>)),
                 "MonoViewController<T> 应实现 IController<T>");
         }
 
