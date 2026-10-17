@@ -17,8 +17,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.31.2` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.31.2` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.32.0` |
+| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.32.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -134,7 +134,7 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 | Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest` |
 | Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest` |
 
-> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.31.2` (swap `path` for the desired package directory; tags are kept forever).
+> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0` (swap `path` for the desired package directory; tags are kept forever).
 >
 > **Both packages must be added separately**: UPM does not support Git URL dependencies inside a package (official Unity limitation). Adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture — you can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 
@@ -239,9 +239,8 @@ Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Asset
 | Document | Location |
 |---|---|
 | Architecture tutorial (中文 / English) | Each package's `README.md` / `Documentation/README_EN.md` |
-| Event-mechanism decision table (choosing between ObservableValue / MiniEvent / collections / EventModule) | [`AesirArchitecture/Documentation/事件机制决策表.md`](./Assets/Runestone/AesirArchitecture/Documentation/事件机制决策表.md) |
-| Common pitfalls (10 frequent traps and fixes) | [`AesirArchitecture/Documentation/常见陷阱清单.md`](./Assets/Runestone/AesirArchitecture/Documentation/常见陷阱清单.md) |
-| AI coding guide (for AI assistants generating RAA-style code) | [`AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md) |
+| AI coding guide (full framework: RAA architecture + RAM module quick reference + six-tier templates + pitfalls & event decision tables + jam playbook) | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
+| AI boot-scene skill (project bootstrap: create boot scene + bootstrap script in one step) | [`AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md) |
 | Event module detailed manual | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
 | Changelogs (repo-level aggregate / per-package) | Root [`CHANGELOG.md`](./CHANGELOG.md) and each package's `CHANGELOG.md` |
 
