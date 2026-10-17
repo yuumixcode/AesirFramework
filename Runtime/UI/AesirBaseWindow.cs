@@ -40,8 +40,14 @@ namespace Runestone.AesirModules
         [SerializeField]
         bool closeOnMaskClick;
 
-        Transform _maskTransform;
         Canvas _canvas;
+
+        Transform _maskTransform;
+
+        /// <summary>
+        /// 窗口根 Canvas（懒缓存）。
+        /// </summary>
+        public Canvas Canvas => _canvas != null ? _canvas : _canvas = GetComponent<Canvas>();
 
         /// <summary>
         /// 实例被销毁时的反清理回调（向 <see cref="UIModule" /> 注销注册表条目并重算蒙版）。
@@ -71,11 +77,6 @@ namespace Runestone.AesirModules
         /// 当前是否处于打开状态。由 <see cref="UIModule" /> 驱动。
         /// </summary>
         public bool IsOpen { get; private set; }
-
-        /// <summary>
-        /// 窗口根 Canvas（懒缓存）。
-        /// </summary>
-        public Canvas Canvas => _canvas != null ? _canvas : _canvas = GetComponent<Canvas>();
 
         void IUIWindow.Initialize()
         {

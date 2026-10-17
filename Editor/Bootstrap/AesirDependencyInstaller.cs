@@ -65,10 +65,7 @@ namespace Runestone.AesirModules.Editor.Bootstrap
         // validate：RAA 缺失时才显示——Assets 正常双包安装 RAA 在场不出现；
         // UPM 单装本包（无法声明包内依赖）或 Assets 只导入本包时出现，一键补装 RAA
         [MenuItem(MenuPath, true)]
-        static bool ValidateMenuVisible()
-        {
-            return !IsArchitectureInstalled();
-        }
+        static bool ValidateMenuVisible() => !IsArchitectureInstalled();
 
         // priority 998：Modules 组内最前（组内现有 Script Doc Generator 999、Scene Editor Settings 1000）；
         // 组级 priority 取子项最小值 998，与 Architecture 组（995）差 ≤10 不产生分割线
@@ -77,19 +74,15 @@ namespace Runestone.AesirModules.Editor.Bootstrap
         {
             if (_addRequest != null && !_addRequest.IsCompleted)
             {
-                EditorUtility.DisplayDialog("安装进行中",
-                    "上一个 Aesir Architecture 安装请求仍在进行，请稍候。", "确定");
+                EditorUtility.DisplayDialog("安装进行中", "上一个 Aesir Architecture 安装请求仍在进行，请稍候。", "确定");
                 return;
             }
 
-            var message =
-                "检测到 Aesir Architecture (RAA) 缺失，AesirModules 核心程序集当前无法编译。\n\n" +
-                "将安装：Aesir Architecture（latest 常驻分支最新版，与 AesirModules 同号发版）\n" +
-                $"Git URL：{DependencyGitUrl}\n" +
-                "安装方式：Package Manager（安装到 Packages/，作为 UPM 包管理）\n" +
-                "安装完成后 AesirModules 核心程序集将自动恢复编译。\n" +
-                "（需要可访问 GitHub 的网络环境）\n\n" +
-                "是否继续安装？";
+            var message = "检测到 Aesir Architecture (RAA) 缺失，AesirModules 核心程序集当前无法编译。\n\n" +
+                          "将安装：Aesir Architecture（latest 常驻分支最新版，与 AesirModules 同号发版）\n" +
+                          $"Git URL：{DependencyGitUrl}\n" +
+                          "安装方式：Package Manager（安装到 Packages/，作为 UPM 包管理）\n" +
+                          "安装完成后 AesirModules 核心程序集将自动恢复编译。\n" + "（需要可访问 GitHub 的网络环境）\n\n" + "是否继续安装？";
             if (!EditorUtility.DisplayDialog("安装 Aesir 依赖", message, "安装", "取消"))
             {
                 return;
@@ -137,8 +130,8 @@ namespace Runestone.AesirModules.Editor.Bootstrap
             {
                 SessionState.SetBool(InstallPendingKey, false);
                 EditorUtility.DisplayDialog("安装失败",
-                    "Aesir Architecture 安装失败：\n" + _addRequest.Error.message +
-                    "\n\n请检查网络（需可访问 GitHub）后重试。", "确定");
+                    "Aesir Architecture 安装失败：\n" + _addRequest.Error.message + "\n\n请检查网络（需可访问 GitHub）后重试。",
+                    "确定");
             }
 
             _addRequest = null;
@@ -149,10 +142,8 @@ namespace Runestone.AesirModules.Editor.Bootstrap
         #region RAA 安装检测
 
         /// <summary>RAA 是否已安装：UPM 注册（含间接依赖）或 Assets 形态锚点定位，任一命中即视为已安装。</summary>
-        internal static bool IsArchitectureInstalled()
-        {
-            return IsRegisteredInPackageManager() || HasArchitectureLookupAsset();
-        }
+        internal static bool IsArchitectureInstalled() =>
+            IsRegisteredInPackageManager() || HasArchitectureLookupAsset();
 
         /// <summary>UPM 形态检测：包注册列表（含直接与间接依赖）中是否含 RAA。</summary>
         internal static bool IsRegisteredInPackageManager()

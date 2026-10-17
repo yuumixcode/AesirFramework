@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace Runestone.AesirModules.Tests.Editor
 {
@@ -14,10 +14,7 @@ namespace Runestone.AesirModules.Tests.Editor
     public class BinderAssistantWindowTests
     {
         /// <summary>AddComponent 触发 Reset 后，读取助手上的公开配置字段做断言。</summary>
-        static BinderAssistant CreateAssistant(GameObject host)
-        {
-            return host.AddComponent<BinderAssistant>();
-        }
+        static BinderAssistant CreateAssistant(GameObject host) => host.AddComponent<BinderAssistant>();
 
         [Test]
         public void DefaultScriptName_CanvasRoot_AppendsWindowSuffixAndWindowBaseType()
@@ -27,8 +24,7 @@ namespace Runestone.AesirModules.Tests.Editor
 
             var assistant = CreateAssistant(host);
 
-            Assert.AreEqual("SettingWindow", assistant.ScriptName,
-                "Canvas 根物体上的默认脚本名应追加 Window 后缀");
+            Assert.AreEqual("SettingWindow", assistant.ScriptName, "Canvas 根物体上的默认脚本名应追加 Window 后缀");
             Assert.AreEqual(typeof(AesirBaseWindow).FullName, assistant.BaseType,
                 "Canvas 根物体上的默认基类应指向 AesirBaseWindow");
             Object.DestroyImmediate(host);
@@ -41,8 +37,7 @@ namespace Runestone.AesirModules.Tests.Editor
 
             var assistant = CreateAssistant(host);
 
-            Assert.AreEqual("SettingPanel", assistant.ScriptName,
-                "非 Canvas 根物体上的默认脚本名应追加 Panel 后缀");
+            Assert.AreEqual("SettingPanel", assistant.ScriptName, "非 Canvas 根物体上的默认脚本名应追加 Panel 后缀");
             Assert.AreEqual(typeof(MonoBehaviour).FullName, assistant.BaseType,
                 "非 Canvas 根物体上的默认基类保持 MonoBehaviour");
             Object.DestroyImmediate(host);
@@ -52,8 +47,7 @@ namespace Runestone.AesirModules.Tests.Editor
         public void DefaultScriptName_AlreadySuffixedObjectName_DoesNotDuplicateSuffix()
         {
             var panelHost = new GameObject("ScorePanel");
-            Assert.AreEqual("ScorePanel", CreateAssistant(panelHost).ScriptName,
-                "物体名已以 Panel 结尾时不应重复拼接");
+            Assert.AreEqual("ScorePanel", CreateAssistant(panelHost).ScriptName, "物体名已以 Panel 结尾时不应重复拼接");
             Object.DestroyImmediate(panelHost);
 
             var windowHost = new GameObject("LoadingWindow");
@@ -87,9 +81,8 @@ namespace Runestone.AesirModules.Tests.Editor
             var assistant = CreateAssistant(host);
             assistant.BaseType = "Runestone.AesirModules.AesirBaseWindowView<T>";
 
-            var property = typeof(BinderAssistant)
-                .GetProperty("IsAesirGenericUiBase",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var property = typeof(BinderAssistant).GetProperty("IsAesirGenericUiBase",
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsNotNull(property, "IsAesirGenericUiBase 应存在（私有属性）");
             Assert.IsTrue((bool)property.GetValue(assistant), "窗口泛型基类应触发 Context 下拉");
 

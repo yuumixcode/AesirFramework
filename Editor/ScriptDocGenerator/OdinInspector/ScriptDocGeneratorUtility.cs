@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using UnityEditor;
-using UnityEngine;
 
 // 本模块整体位于 Odin 门控程序集，测试随所在程序集分为基线（Runestone.AesirModules.Tests.Editor）
 // 与 Odin 门控（Runestone.AesirModules.Tests.Editor.OdinInspector）两份声明。
@@ -187,8 +186,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 
             // 覆盖确认需要目标路径：先做轻量路径计算，再交写入核心（含增量合并）
             var filePath = ComputeTypeDocFilePath(typeData, generatorSettings, targetFolderPath);
-            if (File.Exists(filePath) &&
-                !EditorUtility.DisplayDialog("提示",
+            if (File.Exists(filePath) && !EditorUtility.DisplayDialog("提示",
                     "已经存在该文档，继续生成将覆盖部分内容，保留首个 " + IdentifierCn + " 之后的内容，是否继续生成？", "确认", "取消"))
             {
                 return;
@@ -255,7 +253,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             }
 
             var markdownText = BuildDocMarkdown(typeData, generatorSettings);
-            var filePathWithExtensions = ComputeTypeDocFilePath(typeData, generatorSettings, targetFolderPath);
+            var filePathWithExtensions =
+                ComputeTypeDocFilePath(typeData, generatorSettings, targetFolderPath);
 
             if (File.Exists(filePathWithExtensions))
             {

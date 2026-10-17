@@ -1,8 +1,8 @@
 using System;
+using UnityEngine;
 #if UNITY_EDITOR
 using Sirenix.OdinInspector;
 #endif
-using UnityEngine;
 
 namespace Runestone.AesirModules
 {

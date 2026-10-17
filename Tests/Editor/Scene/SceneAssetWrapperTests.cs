@@ -38,14 +38,14 @@ namespace Runestone.AesirModules.Tests.Editor
         static string _wrapperCsPath;
         static string _minimalSceneFixturePath;
 
-        /// <summary>测试前的 BuildSettings 状态，TearDown 时恢复。</summary>
-        EditorBuildSettingsScene[] _savedScenes;
-
         /// <summary>测试场景资产是否由本次 SetUp 创建（宿主工程原本没有时才为 true，TearDown 据此还原）。</summary>
         bool _createdTestScene;
 
         /// <summary>本次 SetUp 创建的最高层目录（父级已存在时为 null），TearDown 删除它即回收其下全部新建子目录。</summary>
         string _createdTestSceneFolder;
+
+        /// <summary>测试前的 BuildSettings 状态，TearDown 时恢复。</summary>
+        EditorBuildSettingsScene[] _savedScenes;
 
         /// <summary>
         /// SceneAssetWrapper 源码路径，用于取一个"非场景资产"的 GUID。按文件名定位，不写死 Assets 相对路径。
@@ -76,6 +76,19 @@ namespace Runestone.AesirModules.Tests.Editor
             RemoveTestSceneIfCreated();
         }
 
+        /// <summary>
+        /// 装了 Addressables 包时恢复真实桥注册（SetUp/TearDown 的 Unregister 会把它一并清掉），
+        /// 保证测试后 Inspector 的 Addressables 功能立即可用。经反射访问，未装包时类型不存在、自动跳过，
+        /// 测试程序集对可选的胶水程序集保持零编译期引用。
+        /// </summary>
+        static void RestoreRealBridgeIfAvailable()
+        {
+            var glueType = Type.GetType(
+                "Runestone.AesirModules.Editor.Addressables.SceneAssetWrapperAddressablesEditor, " +
+                "Runestone.AesirModules.Editor.Addressables");
+            glueType?.GetMethod("Register", BindingFlags.Public | BindingFlags.Static)?.Invoke(null, null);
+        }
+
         #region 测试场景准备 / 还原
 
         /// <summary>
@@ -94,7 +107,8 @@ namespace Runestone.AesirModules.Tests.Editor
                 return;
             }
 
-            _createdTestSceneFolder = CreateFolderIfMissing(Path.GetDirectoryName(SampleScenePath).Replace('\\', '/'));
+            _createdTestSceneFolder =
+                CreateFolderIfMissing(Path.GetDirectoryName(SampleScenePath).Replace('\\', '/'));
             AssetDatabase.CopyAsset(MinimalSceneFixturePath, SampleScenePath);
             _createdTestScene = true;
         }
@@ -140,7 +154,8 @@ namespace Runestone.AesirModules.Tests.Editor
             foreach (var guid in AssetDatabase.FindAssets($"t:{filterType} {assetName}"))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                if (string.Equals(Path.GetFileNameWithoutExtension(path), assetName, StringComparison.Ordinal))
+                if (string.Equals(Path.GetFileNameWithoutExtension(path), assetName,
+                        StringComparison.Ordinal))
                 {
                     return path;
                 }
@@ -151,19 +166,6 @@ namespace Runestone.AesirModules.Tests.Editor
         }
 
         #endregion
-
-        /// <summary>
-        /// 装了 Addressables 包时恢复真实桥注册（SetUp/TearDown 的 Unregister 会把它一并清掉），
-        /// 保证测试后 Inspector 的 Addressables 功能立即可用。经反射访问，未装包时类型不存在、自动跳过，
-        /// 测试程序集对可选的胶水程序集保持零编译期引用。
-        /// </summary>
-        static void RestoreRealBridgeIfAvailable()
-        {
-            var glueType = Type.GetType(
-                "Runestone.AesirModules.Editor.Addressables.SceneAssetWrapperAddressablesEditor, " +
-                "Runestone.AesirModules.Editor.Addressables");
-            glueType?.GetMethod("Register", BindingFlags.Public | BindingFlags.Static)?.Invoke(null, null);
-        }
 
         #region 反射辅助
 
@@ -323,8 +325,7 @@ namespace Runestone.AesirModules.Tests.Editor
             SetPrivateField(guidLess, "scenePath", SampleScenePath);
 
             Assert.IsTrue(fromPath == guidLess, "一侧无 GUID 时按路径判等（Player 构建兜底）");
-            Assert.AreEqual(fromPath.GetHashCode(), guidLess.GetHashCode(),
-                "判等为 true 的两个引用必须哈希相等（否则违反哈希契约）");
+            Assert.AreEqual(fromPath.GetHashCode(), guidLess.GetHashCode(), "判等为 true 的两个引用必须哈希相等（否则违反哈希契约）");
 
             var set = new HashSet<SceneAssetWrapper> { fromPath, guidLess };
             Assert.AreEqual(1, set.Count, "同一场景不得在集合中占两个条目");
@@ -341,8 +342,7 @@ namespace Runestone.AesirModules.Tests.Editor
             SetPrivateField(stale, "scenePath", "Assets/Stale/MovedSampleScene.unity");
 
             Assert.IsFalse(fresh == stale, "同 GUID 但路径不同 → 按路径判为不同引用");
-            Assert.AreNotEqual(fresh.GetHashCode(), stale.GetHashCode(),
-                "哈希随判等主键（路径），与上述判等结论一致");
+            Assert.AreNotEqual(fresh.GetHashCode(), stale.GetHashCode(), "哈希随判等主键（路径），与上述判等结论一致");
         }
 
         [Test]
@@ -584,6 +584,32 @@ namespace Runestone.AesirModules.Tests.Editor
             var wrapper = SceneAssetWrapper.FromScenePath(SampleScenePath);
 
             Assert.Throws<SceneNotAddressableException>(() => _ = wrapper.Address);
+        }
+
+        #endregion
+
+        #region IsDangling 判定（GUID 自愈后的状态信号）
+
+        [Test]
+        public void IsDangling_AfterReferenceLoss_WhenAssetStillExists_ReturnsFalse()
+        {
+            // 构造"对象引用断链但路径与 GUID 仍在"的形态（编辑器操作/脚本赋值/场景移动后可出现）
+            var wrapper = new SceneAssetWrapper();
+            SetPrivateField(wrapper, "scenePath", SampleScenePath);
+            SetPrivateField(wrapper, "sceneGuid", AssetDatabase.AssetPathToGUID(SampleScenePath));
+
+            Assert.IsFalse(wrapper.IsDangling, "GUID 自愈后资产仍可经路径定位——可正常加载，不应被误判为悬空（红色状态信号自相矛盾的修复回归）");
+            Assert.AreEqual(SceneAssetWrapperState.Regular, wrapper.State, "资产仍存在且在 BuildSettings 时状态应为可加载");
+        }
+
+        [Test]
+        public void IsDangling_WhenAssetGone_ReturnsTrue()
+        {
+            var wrapper = new SceneAssetWrapper();
+            SetPrivateField(wrapper, "scenePath", "Assets/NoSuch/Deleted.unity");
+            SetPrivateField(wrapper, "sceneGuid", string.Empty);
+
+            Assert.IsTrue(wrapper.IsDangling, "路径与 GUID 都定位不到资产（资产被删除/移出工程）才是真正的悬空");
         }
 
         #endregion

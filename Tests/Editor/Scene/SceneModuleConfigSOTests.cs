@@ -85,8 +85,7 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
             SceneModuleConfigSO.RegisterConfigLoader(() => null);
 
             Assert.Throws<InvalidOperationException>(
-                () => SceneModuleConfigSO.RegisterConfigLoader(() => null),
-                "重复注册加载器视为初始化错误，应 fail-fast");
+                () => SceneModuleConfigSO.RegisterConfigLoader(() => null), "重复注册加载器视为初始化错误，应 fail-fast");
         }
 
         [Test]
@@ -115,7 +114,8 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
             SceneModuleConfigSO.UnregisterConfigLoader();
 
             Assert.AreSame(LoadResourceConfig(), SceneModuleConfigSO.Instance, "注销后应重新按 Resources 兜底解析");
-            Assert.DoesNotThrow(() => SceneModuleConfigSO.RegisterConfigLoader(() => null), "注销应清空加载器，允许重新注册");
+            Assert.DoesNotThrow(() => SceneModuleConfigSO.RegisterConfigLoader(() => null),
+                "注销应清空加载器，允许重新注册");
         }
 
         [Test]
@@ -156,8 +156,7 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
             var instanceScene = new SceneAssetWrapper();
             SetPrivateBootstrapScene(module, instanceScene);
 
-            Assert.AreSame(instanceScene, SceneModule.BootstrapSceneAssetWrapper,
-                "实例序列化字段非 null 时应优先于配置资产");
+            Assert.AreSame(instanceScene, SceneModule.BootstrapSceneAssetWrapper, "实例序列化字段非 null 时应优先于配置资产");
         }
 
         [Test]
@@ -187,8 +186,7 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
         static SceneModuleConfigSO LoadResourceConfig()
         {
             var config = Resources.Load<SceneModuleConfigSO>(SceneModuleConfigSO.ResourcePath);
-            Assert.IsNotNull(config,
-                $"Resources 兜底资产缺失（{SceneModuleConfigSO.ResourcePath}），请先刷新编辑器让初始化器创建");
+            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{SceneModuleConfigSO.ResourcePath}），请先刷新编辑器让初始化器创建");
             return config;
         }
 
@@ -213,7 +211,8 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
 
         static void SetPrivateBootstrapScene(SceneModule module, SceneAssetWrapper value)
         {
-            var field = typeof(SceneModule).GetField("bootstrapScene", BindingFlags.NonPublic | BindingFlags.Instance);
+            var field = typeof(SceneModule).GetField("bootstrapScene",
+                BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(field, "私有字段 bootstrapScene 不存在");
             field.SetValue(module, value);
         }

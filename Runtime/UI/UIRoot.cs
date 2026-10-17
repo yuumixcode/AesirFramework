@@ -24,6 +24,29 @@ namespace Runestone.AesirModules
     [DefaultExecutionOrder(-999)]
     public class UIRoot : AesirMonoBehaviour
     {
+        internal const int UILayerIndex = 5;
+        const int TransparentFXLayerIndex = 1;
+        const int UILayerMask = (1 << UILayerIndex) | (1 << TransparentFXLayerIndex);
+        internal const string LayerCanvasesFieldName = nameof(layerCanvases);
+        internal const string UICanvasConfigFieldName = nameof(uiCanvasConfigSO);
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
+
+        static UIRoot _instance;
+        static UICanvasConfigSO _defaultCanvasConfig;
+
+        static readonly Dictionary<UILayer, int> LayerSortOrders = new Dictionary<UILayer, int>
+        {
+            { UILayer.Background, 100 },
+            { UILayer.Normal, 200 },
+            { UILayer.Popup, 300 },
+            { UILayer.Top, 400 }
+        };
+
+        /// <summary>
+        /// 层级枚举值缓存。静态初始化一次，避免每次构建调用 <see cref="Enum.GetValues" /> 产生装箱分配。
+        /// </summary>
+        static readonly UILayer[] PresetLayers = (UILayer[])Enum.GetValues(typeof(UILayer));
+
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景（仅根物体生效；预放置为子物体时本字段不参与判断，DDOL 跟随宿主）。
         /// </summary>
@@ -38,51 +61,6 @@ namespace Runestone.AesirModules
         /// </remarks>
         [SerializeField]
         bool dontDestroyOnLoad = true;
-
-        internal const int UILayerIndex = 5;
-        const int TransparentFXLayerIndex = 1;
-        const int UILayerMask = (1 << UILayerIndex) | (1 << TransparentFXLayerIndex);
-        internal const string LayerCanvasesFieldName = nameof(layerCanvases);
-        internal const string UICanvasConfigFieldName = nameof(uiCanvasConfigSO);
-        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
-
-        static UIRoot _instance;
-        static UICanvasConfigSO _defaultCanvasConfig;
-
-        /// <summary>
-        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
-        /// </summary>
-        /// <remarks>
-        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
-        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
-        /// <c>_defaultCanvasConfig</c> 是运行时按需创建的默认配置资产（见 <c>CreateDefault</c>），
-        /// 非场景引用：解除引用后交由 GC 回收（无强引用），下次访问 <c>DefaultCanvasConfig</c> 时重建。
-        /// <c>CreateInputModule</c> 由 Runestone.AesirModules.InputSystem 程序集注册（<c>InputSystemModuleHook</c>：
-        /// 编辑器 <c>[InitializeOnLoad]</c> 静态构造 + 运行时 <c>BeforeSceneLoad</c> 两级注册），
-        /// 此处清空不会丢注册——本重置跑在 <c>SubsystemRegistration</c>，早于 <c>BeforeSceneLoad</c>。
-        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
-        /// <c>FindAnyObjectByType</c> 兜底重发现。
-        /// </remarks>
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics()
-        {
-            _instance = null;
-            _defaultCanvasConfig = null;
-            CreateInputModule = null;
-        }
-
-        static readonly Dictionary<UILayer, int> LayerSortOrders = new Dictionary<UILayer, int>
-        {
-            { UILayer.Background, 100 },
-            { UILayer.Normal, 200 },
-            { UILayer.Popup, 300 },
-            { UILayer.Top, 400 }
-        };
-
-        /// <summary>
-        /// 层级枚举值缓存。静态初始化一次，避免每次构建调用 <see cref="Enum.GetValues" /> 产生装箱分配。
-        /// </summary>
-        static readonly UILayer[] PresetLayers = (UILayer[])Enum.GetValues(typeof(UILayer));
 
         [SerializeField]
         UICanvasConfigSO uiCanvasConfigSO;
@@ -166,6 +144,22 @@ namespace Runestone.AesirModules
             }
         }
 
+        /// <summary>
+        /// 统一 Canvas 配置（层 Canvas 与窗口接线共用）。未设置时回退默认配置。
+        /// </summary>
+        internal UICanvasConfigSO CanvasConfig
+        {
+            get
+            {
+                if (uiCanvasConfigSO == null)
+                {
+                    EnsureCanvasConfig();
+                }
+
+                return uiCanvasConfigSO;
+            }
+        }
+
         void Awake()
         {
             if (_instance != null && _instance != this)
@@ -198,6 +192,28 @@ namespace Runestone.AesirModules
             {
                 _instance = null;
             }
+        }
+
+        /// <summary>
+        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// </summary>
+        /// <remarks>
+        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
+        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
+        /// <c>_defaultCanvasConfig</c> 是运行时按需创建的默认配置资产（见 <c>CreateDefault</c>），
+        /// 非场景引用：解除引用后交由 GC 回收（无强引用），下次访问 <c>DefaultCanvasConfig</c> 时重建。
+        /// <c>CreateInputModule</c> 由 Runestone.AesirModules.InputSystem 程序集注册（<c>InputSystemModuleHook</c>：
+        /// 编辑器 <c>[InitializeOnLoad]</c> 静态构造 + 运行时 <c>BeforeSceneLoad</c> 两级注册），
+        /// 此处清空不会丢注册——本重置跑在 <c>SubsystemRegistration</c>，早于 <c>BeforeSceneLoad</c>。
+        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
+        /// <c>FindAnyObjectByType</c> 兜底重发现。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            _instance = null;
+            _defaultCanvasConfig = null;
+            CreateInputModule = null;
         }
 
         void Initialize()
@@ -235,22 +251,6 @@ namespace Runestone.AesirModules
             }
 
             return canvas.transform;
-        }
-
-        /// <summary>
-        /// 统一 Canvas 配置（层 Canvas 与窗口接线共用）。未设置时回退默认配置。
-        /// </summary>
-        internal UICanvasConfigSO CanvasConfig
-        {
-            get
-            {
-                if (uiCanvasConfigSO == null)
-                {
-                    EnsureCanvasConfig();
-                }
-
-                return uiCanvasConfigSO;
-            }
         }
 
         void EnsureUIComponents()

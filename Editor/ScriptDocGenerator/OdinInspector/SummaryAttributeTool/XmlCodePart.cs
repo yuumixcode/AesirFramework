@@ -1,7 +1,6 @@
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
-using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator.Editor
 {

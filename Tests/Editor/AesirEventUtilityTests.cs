@@ -21,13 +21,11 @@ namespace Runestone.AesirModules.Tests.Editor
             typeof(AesirEventUtility).GetMethod("ResetStatics", BindingFlags.NonPublic | BindingFlags.Static)
                 .Invoke(null, null);
 
-            Assert.AreEqual(0, cache.Count,
-                "域加载期重置必须清空绑定键缓存——缓存是纯派生数据（AssemblyQualifiedName），清空后下次查询按需重建");
+            Assert.AreEqual(0, cache.Count, "域加载期重置必须清空绑定键缓存——缓存是纯派生数据（AssemblyQualifiedName），清空后下次查询按需重建");
         }
 
         static Dictionary<Type, string> GetKeyCache() =>
             (Dictionary<Type, string>)typeof(AesirEventUtility)
-                .GetField("KeyCache", BindingFlags.NonPublic | BindingFlags.Static)
-                .GetValue(null);
+                .GetField("KeyCache", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
     }
 }

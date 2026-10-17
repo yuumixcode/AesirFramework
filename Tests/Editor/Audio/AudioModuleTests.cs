@@ -84,6 +84,21 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
 
         #endregion
 
+        #region 只读状态查询不创建实例
+
+        [Test]
+        public void ReadOnlyStateQueries_WithoutInstance_DoNotCreateAudioModule()
+        {
+            // 前置：本用例不创建模块（其余用例的实例已由 TearDown 销毁），静态单例此时为 Unity 假 null
+            Assert.IsFalse(AudioModule.IsBgmPlaying, "无实例时背景音乐必然未在播放");
+            Assert.IsNull(AudioModule.CurrentBgm, "无实例时当前 BGM 片段应为 null");
+
+            Assert.IsFalse(AudioModule.TryGetExisting(out _), "只读状态查询不得创建音频模块实例");
+            Assert.IsNull(GameObject.Find("[Aesir Modules]"), "只读状态查询不得创建 [Aesir Modules] 宿主");
+        }
+
+        #endregion
+
         #region 环境管理
 
         readonly List<GameObject> _createdObjects = new List<GameObject>();
@@ -830,21 +845,6 @@ namespace Runestone.AesirModules.Tests.Editor.Audio
             Assert.IsFalse(routine.MoveNext(), "淡出完成后协程应结束");
             Assert.IsFalse(bgmSource.isPlaying, "淡出完成后停止播放");
             Assert.AreSame(clip, bgmSource.clip, "停止后片段保留");
-        }
-
-        #endregion
-
-        #region 只读状态查询不创建实例
-
-        [Test]
-        public void ReadOnlyStateQueries_WithoutInstance_DoNotCreateAudioModule()
-        {
-            // 前置：本用例不创建模块（其余用例的实例已由 TearDown 销毁），静态单例此时为 Unity 假 null
-            Assert.IsFalse(AudioModule.IsBgmPlaying, "无实例时背景音乐必然未在播放");
-            Assert.IsNull(AudioModule.CurrentBgm, "无实例时当前 BGM 片段应为 null");
-
-            Assert.IsFalse(AudioModule.TryGetExisting(out _), "只读状态查询不得创建音频模块实例");
-            Assert.IsNull(GameObject.Find("[Aesir Modules]"), "只读状态查询不得创建 [Aesir Modules] 宿主");
         }
 
         #endregion

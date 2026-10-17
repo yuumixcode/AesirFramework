@@ -32,8 +32,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
         /// <summary>单行摘要（含未解析类型提示），便于日志与 AI 助手回显。</summary>
         public override string ToString()
         {
-            var summary = "脚本文档生成结果：" + GeneratedFiles.Count + " 个文档 → " + OutputFolder +
-                          "（设置：" + SettingsName + "）";
+            var summary = "脚本文档生成结果：" + GeneratedFiles.Count + " 个文档 → " + OutputFolder + "（设置：" +
+                          SettingsName + "）";
             if (UnresolvedTypeNames.Count > 0)
             {
                 summary += "；未解析类型 " + UnresolvedTypeNames.Count + " 个：" +

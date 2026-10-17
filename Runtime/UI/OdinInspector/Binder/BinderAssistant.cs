@@ -82,26 +82,6 @@ namespace Runestone.AesirModules
     [DisallowMultipleComponent]
     public class BinderAssistant : AesirMonoBehaviour
     {
-        /// <summary>EditorPrefs 键: 待自动挂载的物体 InstanceID。</summary>
-#if UNITY_EDITOR
-        const string PendingBindInstanceIdKey = "AesirModules.BinderAssistant.PendingBind.InstanceId";
-
-        /// <summary>EditorPrefs 键: 待自动挂载的脚本类型完整名称。</summary>
-        const string PendingBindTypeKey = "AesirModules.BinderAssistant.PendingBind.TypeFullName";
-
-        /// <summary>
-        /// 已扫描的 AbstractContext 派生类缓存。
-        /// </summary>
-        /// <remarks>
-        /// 有意不随 Play 重置，也不做显式失效：缓存的更新时机与"域内类型集合的更新时机"天然绑定——
-        /// 新增/删除 <c>AbstractContext</c> 派生类必须先经过脚本编译，而编译必然触发真正的域重载，
-        /// 静态字段随之归零、缓存自然重扫。反过来，关闭 Domain Reload 的 Play 会话不会改变类型集合，
-        /// 故不存在"缓存过期却未重扫"的可达场景（<c>[InitializeOnLoadMethod]</c> 在关闭域重载时同样不会重跑，
-        /// 加清除入口在该场景下也无效）。
-        /// </remarks>
-        static List<ValueDropdownItem<string>> _contextTypeChoicesCache;
-#endif
-
 #if UNITY_EDITOR
         [PropertyOrder(-10)]
         [HorizontalGroup("状态")]
@@ -212,6 +192,26 @@ namespace Runestone.AesirModules
         /// </summary>
         public string HierarchyPath => BinderHierarchyUtility.GetAbsolutePath(transform);
 
+        /// <summary>EditorPrefs 键: 待自动挂载的物体 InstanceID。</summary>
+#if UNITY_EDITOR
+        const string PendingBindInstanceIdKey = "AesirModules.BinderAssistant.PendingBind.InstanceId";
+
+        /// <summary>EditorPrefs 键: 待自动挂载的脚本类型完整名称。</summary>
+        const string PendingBindTypeKey = "AesirModules.BinderAssistant.PendingBind.TypeFullName";
+
+        /// <summary>
+        /// 已扫描的 AbstractContext 派生类缓存。
+        /// </summary>
+        /// <remarks>
+        /// 有意不随 Play 重置，也不做显式失效：缓存的更新时机与"域内类型集合的更新时机"天然绑定——
+        /// 新增/删除 <c>AbstractContext</c> 派生类必须先经过脚本编译，而编译必然触发真正的域重载，
+        /// 静态字段随之归零、缓存自然重扫。反过来，关闭 Domain Reload 的 Play 会话不会改变类型集合，
+        /// 故不存在"缓存过期却未重扫"的可达场景（<c>[InitializeOnLoadMethod]</c> 在关闭域重载时同样不会重跑，
+        /// 加清除入口在该场景下也无效）。
+        /// </remarks>
+        static List<ValueDropdownItem<string>> _contextTypeChoicesCache;
+#endif
+
 #if UNITY_EDITOR
         // 下下下 编辑器侧工具链（Inspector 绘制、AppDomain 扫描、脚本生成与文件写入）。
         // 依赖 Odin；所有具体类型（BinderCodeGenerator / BinderEditorSettings 等）都在本程序集内、
@@ -226,9 +226,11 @@ namespace Runestone.AesirModules
         /// </summary>
         bool IsAesirGenericUiBase =>
             BaseType != null && (BaseType.StartsWith("Runestone.AesirModules.AesirBasePanelView<") ||
-                                 BaseType.StartsWith("Runestone.AesirModules.AesirBasePanelViewController<") ||
+                                 BaseType.StartsWith(
+                                     "Runestone.AesirModules.AesirBasePanelViewController<") ||
                                  BaseType.StartsWith("Runestone.AesirModules.AesirBaseWindowView<") ||
-                                 BaseType.StartsWith("Runestone.AesirModules.AesirBaseWindowViewController<"));
+                                 BaseType.StartsWith(
+                                     "Runestone.AesirModules.AesirBaseWindowViewController<"));
 
         /// <summary>
         /// 基类候选是否为用户自定义泛型基类（非 Aesir 面板/窗口家族的泛型占位），决定「泛型参数」文本框的显示。

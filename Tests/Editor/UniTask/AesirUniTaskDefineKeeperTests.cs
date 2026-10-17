@@ -1,9 +1,12 @@
+using System;
+using System.IO;
 using System.Linq;
-using UnityEngine;
 using NUnit.Framework;
 using Runestone.AesirModules.Editor;
 using UnityEditor;
 using UnityEditor.Build;
+using UnityEngine;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace Runestone.AesirModules.Tests.Editor
 {
@@ -30,6 +33,71 @@ namespace Runestone.AesirModules.Tests.Editor
     /// </remarks>
     public class AesirUniTaskDefineKeeperTests
     {
+        /// <summary>
+        /// 按文件名经 AssetDatabase 定位程序集定义资产（Assets / UPM 安装形态自适应）；
+        /// asmdef 文本经 <see cref="TextAsset" /> 基类加载（派生的 AssemblyDefinitionAsset 在引擎内部命名空间，勿直接引用）。
+        /// </summary>
+        static TextAsset LoadAsmdefAsset(string asmdefName)
+        {
+            return AssetDatabase.FindAssets("t:AssemblyDefinitionAsset").Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => Path.GetFileNameWithoutExtension(path) == asmdefName)
+                .Select(path => AssetDatabase.LoadAssetAtPath<TextAsset>(path))
+                .FirstOrDefault(asset => asset != null);
+        }
+
+        /// <summary>指定名称的程序集是否已加载进当前域。</summary>
+        static bool IsAssemblyLoaded(string assemblyName)
+        {
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .Any(assembly => assembly.GetName().Name == assemblyName);
+        }
+
+        /// <summary>适配程序集（Runestone.AesirModules.UniTask）是否已加载进当前域。</summary>
+        static bool IsAdapterAssemblyLoaded() => IsAssemblyLoaded("Runestone.AesirModules.UniTask");
+
+        /// <summary>
+        /// UPM 注册表中是否存在 <c>com.cysharp.unitask</c>——UPM 形态由各程序集的 versionDefines 提供宏、
+        /// 维护器有意不写全局宏，故全局宏缺席在此形态下属预期。
+        /// </summary>
+        static bool IsUpmPackageRegistered()
+        {
+            return PackageInfo.GetAllRegisteredPackages()
+                .Any(package => package.name == "com.cysharp.unitask");
+        }
+
+        /// <summary>当前选中构建目标的宏列表是否包含 AESIR_MODULES_UNITASK。</summary>
+        static bool IsDefinePresent()
+        {
+            var target =
+                NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            return PlayerSettings.GetScriptingDefineSymbols(target).Split(';').Any(symbol =>
+                symbol.Trim() == AesirUniTaskDefineKeeper.DefineName);
+        }
+
+        /// <summary>asmdef JSON 的引用列表子集（供 <see cref="JsonUtility" /> 解析）。</summary>
+        [Serializable]
+        class AsmdefReferences
+        {
+            public string[] references;
+        }
+
+        /// <summary>asmdef JSON 的门控子集（<c>defineConstraints</c> + <c>versionDefines</c>）。</summary>
+        [Serializable]
+        class AsmdefGating
+        {
+            public string[] defineConstraints;
+            public VersionDefine[] versionDefines;
+        }
+
+        /// <summary>asmdef JSON 的单条 <c>versionDefines</c> 项。</summary>
+        [Serializable]
+        class VersionDefine
+        {
+            public string name;
+            public string expression;
+            public string define;
+        }
+
         #region 决策矩阵
 
         [Test]
@@ -74,17 +142,15 @@ namespace Runestone.AesirModules.Tests.Editor
             }
             else
             {
-                Assert.IsFalse(definePresent,
-                    "AESIR_MODULES_UNITASK 存在但适配程序集未加载——versionDefines / 宏维护器链路断裂");
+                Assert.IsFalse(definePresent, "AESIR_MODULES_UNITASK 存在但适配程序集未加载——versionDefines / 宏维护器链路断裂");
             }
         }
 
         [Test]
         public void IsUniTaskAssemblyLoaded_MatchesDomainState()
         {
-            var expected = System.AppDomain.CurrentDomain.GetAssemblies()
-                .Any(assembly => AesirUniTaskDefineKeeper.UniTaskAssemblyNames
-                    .Contains(assembly.GetName().Name));
+            var expected = AppDomain.CurrentDomain.GetAssemblies().Any(assembly =>
+                AesirUniTaskDefineKeeper.UniTaskAssemblyNames.Contains(assembly.GetName().Name));
             Assert.AreEqual(expected, AesirUniTaskDefineKeeper.IsUniTaskAssemblyLoaded(),
                 "程序集检测应与域内实际状态一致（白名单任一命中）");
         }
@@ -134,10 +200,10 @@ namespace Runestone.AesirModules.Tests.Editor
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(path => new { Path = path, Asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path) })
                 .Where(item => item.Asset != null)
-                .Select(item => new { item.Path, Asmdef = JsonUtility.FromJson<AsmdefGating>(item.Asset.text) })
-                .Where(item => item.Asmdef.defineConstraints != null &&
-                               item.Asmdef.defineConstraints.Contains(AesirUniTaskDefineKeeper.DefineName))
-                .ToArray();
+                .Select(item => new
+                    { item.Path, Asmdef = JsonUtility.FromJson<AsmdefGating>(item.Asset.text) }).Where(item =>
+                    item.Asmdef.defineConstraints != null &&
+                    item.Asmdef.defineConstraints.Contains(AesirUniTaskDefineKeeper.DefineName)).ToArray();
 
             Assert.IsNotEmpty(gated,
                 $"应至少存在一个以 {AesirUniTaskDefineKeeper.DefineName} 作约束的程序集（适配程序集 / 门控测试程序集）");
@@ -148,7 +214,7 @@ namespace Runestone.AesirModules.Tests.Editor
                     item.Asmdef.versionDefines != null && item.Asmdef.versionDefines.Any(versionDefine =>
                         versionDefine.name == "com.cysharp.unitask" &&
                         versionDefine.define == AesirUniTaskDefineKeeper.DefineName),
-                    $"{System.IO.Path.GetFileName(item.Path)} 以 {AesirUniTaskDefineKeeper.DefineName} 作 defineConstraints，" +
+                    $"{Path.GetFileName(item.Path)} 以 {AesirUniTaskDefineKeeper.DefineName} 作 defineConstraints，" +
                     "但未声明 com.cysharp.unitask 的 versionDefines——versionDefines 只对声明它的程序集生效" +
                     "（不会成为全局宏），漏声明会被静默排除出编译管线（用例整体消失、总数不变）");
             }
@@ -170,71 +236,5 @@ namespace Runestone.AesirModules.Tests.Editor
         }
 
         #endregion
-
-        /// <summary>
-        /// 按文件名经 AssetDatabase 定位程序集定义资产（Assets / UPM 安装形态自适应）；
-        /// asmdef 文本经 <see cref="TextAsset" /> 基类加载（派生的 AssemblyDefinitionAsset 在引擎内部命名空间，勿直接引用）。
-        /// </summary>
-        static TextAsset LoadAsmdefAsset(string asmdefName)
-        {
-            return AssetDatabase.FindAssets("t:AssemblyDefinitionAsset")
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(path => System.IO.Path.GetFileNameWithoutExtension(path) == asmdefName)
-                .Select(path => AssetDatabase.LoadAssetAtPath<TextAsset>(path))
-                .FirstOrDefault(asset => asset != null);
-        }
-
-        /// <summary>asmdef JSON 的引用列表子集（供 <see cref="JsonUtility" /> 解析）。</summary>
-        [System.Serializable]
-        class AsmdefReferences
-        {
-            public string[] references;
-        }
-
-        /// <summary>asmdef JSON 的门控子集（<c>defineConstraints</c> + <c>versionDefines</c>）。</summary>
-        [System.Serializable]
-        class AsmdefGating
-        {
-            public string[] defineConstraints;
-            public VersionDefine[] versionDefines;
-        }
-
-        /// <summary>asmdef JSON 的单条 <c>versionDefines</c> 项。</summary>
-        [System.Serializable]
-        class VersionDefine
-        {
-            public string name;
-            public string expression;
-            public string define;
-        }
-
-        /// <summary>指定名称的程序集是否已加载进当前域。</summary>
-        static bool IsAssemblyLoaded(string assemblyName)
-        {
-            return System.AppDomain.CurrentDomain.GetAssemblies()
-                .Any(assembly => assembly.GetName().Name == assemblyName);
-        }
-
-        /// <summary>适配程序集（Runestone.AesirModules.UniTask）是否已加载进当前域。</summary>
-        static bool IsAdapterAssemblyLoaded() => IsAssemblyLoaded("Runestone.AesirModules.UniTask");
-
-        /// <summary>
-        /// UPM 注册表中是否存在 <c>com.cysharp.unitask</c>——UPM 形态由各程序集的 versionDefines 提供宏、
-        /// 维护器有意不写全局宏，故全局宏缺席在此形态下属预期。
-        /// </summary>
-        static bool IsUpmPackageRegistered()
-        {
-            return UnityEditor.PackageManager.PackageInfo.GetAllRegisteredPackages()
-                .Any(package => package.name == "com.cysharp.unitask");
-        }
-
-        /// <summary>当前选中构建目标的宏列表是否包含 AESIR_MODULES_UNITASK。</summary>
-        static bool IsDefinePresent()
-        {
-            var target = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-            return PlayerSettings.GetScriptingDefineSymbols(target)
-                .Split(';')
-                .Any(symbol => symbol.Trim() == AesirUniTaskDefineKeeper.DefineName);
-        }
     }
 }
