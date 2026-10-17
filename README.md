@@ -17,8 +17,8 @@
 
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
-| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.31.2` |
-| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期、Canvas 根窗口与蒙版）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.31.2` |
+| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.32.0` |
+| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期、Canvas 根窗口与蒙版）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.32.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
 
@@ -135,7 +135,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest` |
 | Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest` |
 
-> `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.31.2`（`path` 换成对应包目录，tag 永久保留）。
+> `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0`（`path` 换成对应包目录，tag 永久保留）。
 >
 > **两个包需要分别添加**：UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），仅添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败——可随后经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装。
 
@@ -242,9 +242,8 @@ UI 框架提供 Manager-of-Managers 单例、四层 Canvas 层级（`UILayer`）
 | 文档 | 位置 |
 |---|---|
 | 架构教学（中文/英文） | 各包 `README.md` / `Documentation/README_EN.md` |
-| 事件机制决策表（ObservableValue / MiniEvent / 集合 / EventModule 怎么选） | [`AesirArchitecture/Documentation/事件机制决策表.md`](./Assets/Runestone/AesirArchitecture/Documentation/事件机制决策表.md) |
-| 常见陷阱清单（10 条高频坑与修法） | [`AesirArchitecture/Documentation/常见陷阱清单.md`](./Assets/Runestone/AesirArchitecture/Documentation/常见陷阱清单.md) |
-| AI 编码指南（供 AI 助手按 RAA 规范生成代码） | [`AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirArchitecture-Skill/SKILL.md) |
+| AI 编码指南（全框架：RAA 架构 + RAM 模块速查 + 六档模板 + 陷阱清单与事件决策表 + jam 实战手册） | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
+| AI 启动场景 Skill（项目初始化：一键创建启动场景 + 启动脚本） | [`AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md) |
 | 事件模块详细手册 | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
 | 变更日志（仓库级聚合 / 各包子包） | 根 [`CHANGELOG.md`](./CHANGELOG.md) 及各包 `CHANGELOG.md` |
 
