@@ -74,6 +74,27 @@ namespace Runestone.AesirModules.Tests.Editor
 
         #endregion
 
+        #region 只读状态查询不创建实例
+
+        [Test]
+        public void StateReads_WithoutInstance_DoNotCreateModuleOrHost()
+        {
+            // 前置：销毁 SetUp 注入的模块并清空静态单例，模拟"本模块从未被使用过"
+            Object.DestroyImmediate(_host);
+            _host = null;
+            ResetInstanceToNull();
+
+            Assert.AreEqual(0, SceneModule.AddedScenePaths.Count, "无实例时叠加追踪应为空列表");
+            Assert.AreEqual(default(Scene), SceneModule.LastLoadedScene, "无实例时最后加载场景应为 default");
+            // 启动场景引用的取值取决于配置资产是否配了全局启动场景，故只断言"读取本身安全"，不断言非空
+            _ = SceneModule.BootstrapSceneAssetWrapper;
+
+            Assert.IsFalse(SceneModule.TryGetExisting(out _), "只读状态查询不得创建模块实例");
+            Assert.IsNull(GameObject.Find("[Aesir Modules]"), "只读状态查询不得创建 [Aesir Modules] 宿主");
+        }
+
+        #endregion
+
         #region 反射辅助
 
         static void SetInstanceTo(SceneModule module)
@@ -478,29 +499,92 @@ namespace Runestone.AesirModules.Tests.Editor
             var wrapper = MakeWrapperWithPath("Assets/Fake/Bootstrap.unity");
             SetPrivateField(_module, "bootstrapScene", wrapper);
 
-            Assert.AreSame(wrapper, SceneModule.BootstrapSceneAssetWrapper,
-                "静态门面应转发单例的自定义启动场景引用");
+            Assert.AreSame(wrapper, SceneModule.BootstrapSceneAssetWrapper, "静态门面应转发单例的自定义启动场景引用");
         }
 
         #endregion
 
-        #region 只读状态查询不创建实例
+        #region Single 并发互斥 / 裸名回退 / 外部卸载对账
+
+        /// <summary>
+        /// 经反射调用私有 <c>BeginLoad</c>（互斥分支在 LoadSceneAsync 之前返回，EditMode 安全不触发真实加载）。
+        /// </summary>
+        static bool InvokeBeginLoad(SceneModule module,
+            string path,
+            LoadSceneMode mode,
+            Action onFailed,
+            out AsyncOperation operation)
+        {
+            var method = typeof(SceneModule).GetMethod("BeginLoad",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(method, "私有方法 BeginLoad 不存在");
+            var args = new object[] { path, mode, onFailed, null };
+            var result = (bool)method.Invoke(module, args);
+            operation = args[3] as AsyncOperation;
+            return result;
+        }
 
         [Test]
-        public void StateReads_WithoutInstance_DoNotCreateModuleOrHost()
+        public void BeginLoad_ConcurrentSingle_SamePath_IgnoredSilentlyWithoutFailed()
         {
-            // 前置：销毁 SetUp 注入的模块并清空静态单例，模拟"本模块从未被使用过"
-            Object.DestroyImmediate(_host);
-            _host = null;
-            ResetInstanceToNull();
+            SetPrivateField(_module, "_pendingSingleLoadPath", "Assets/Fake/Single.unity");
+            var failedInvoked = false;
 
-            Assert.AreEqual(0, SceneModule.AddedScenePaths.Count, "无实例时叠加追踪应为空列表");
-            Assert.AreEqual(default(Scene), SceneModule.LastLoadedScene, "无实例时最后加载场景应为 default");
-            // 启动场景引用的取值取决于配置资产是否配了全局启动场景，故只断言"读取本身安全"，不断言非空
-            _ = SceneModule.BootstrapSceneAssetWrapper;
+            LogAssert.Expect(LogType.Warning, new Regex("Single 场景加载进行中，忽略重复请求"));
+            var ok = InvokeBeginLoad(_module, "Assets/Fake/Single.unity", LoadSceneMode.Single,
+                () => failedInvoked = true, out var operation);
 
-            Assert.IsFalse(SceneModule.TryGetExisting(out _), "只读状态查询不得创建模块实例");
-            Assert.IsNull(GameObject.Find("[Aesir Modules]"), "只读状态查询不得创建 [Aesir Modules] 宿主");
+            Assert.IsFalse(ok, "进行中的同路径 Single 请求应被幂等忽略");
+            Assert.IsNull(operation, "被忽略的请求不应持有异步操作");
+            Assert.IsFalse(failedInvoked, "幂等忽略不触发失败回调（回调交给进行中的那次加载）");
+        }
+
+        [Test]
+        public void BeginLoad_ConcurrentSingle_DifferentPath_RejectedWithFailed()
+        {
+            SetPrivateField(_module, "_pendingSingleLoadPath", "Assets/Fake/First.unity");
+            var failedInvoked = false;
+
+            LogAssert.Expect(LogType.Error, new Regex("Single 场景加载进行中，拒绝新的 Single 加载"));
+            var ok = InvokeBeginLoad(_module, "Assets/Fake/Second.unity", LoadSceneMode.Single,
+                () => failedInvoked = true, out var operation);
+
+            Assert.IsFalse(ok, "进行中的异路径 Single 请求应被拒绝");
+            Assert.IsNull(operation, "被拒绝的请求不应发起异步加载");
+            Assert.IsTrue(failedInvoked, "拒绝路径必须触发 onFailed，调用方能获得确定性反馈");
+        }
+
+        [Test]
+        public void ReconcileUnloadedScene_RemovesExternallyUnloadedTrackedPath()
+        {
+            var activeScene = SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(activeScene.path))
+            {
+                Assert.Ignore("当前激活场景无有效路径（未保存场景），跳过对账用例");
+            }
+
+            var addedPaths = (List<string>)typeof(SceneModule)
+                .GetField("_addedScenePaths", BindingFlags.NonPublic | BindingFlags.Instance)
+                .GetValue(_module);
+            addedPaths.Add(activeScene.path);
+            Assert.IsTrue(addedPaths.Contains(activeScene.path), "前置：路径已入叠加追踪");
+
+            LogAssert.Expect(LogType.Warning, new Regex("经外部 API 卸载的追踪场景"));
+            _module.ReconcileUnloadedScene(activeScene);
+
+            Assert.IsFalse(addedPaths.Contains(activeScene.path), "外部卸载对账应把被卸载场景的路径移出叠加追踪");
+        }
+
+        [Test]
+        public void ResolveLoadedScene_UnknownPathOrName_ReturnsDefaultWithoutThrowing()
+        {
+            // 完整路径取不回（未加载）：按名回退同样落空——断言安全返回 default 而非抛异常
+            var byPath = SceneModule.ResolveLoadedScene("Assets/NoSuch/Scene.unity");
+            Assert.IsFalse(byPath.IsValid(), "未知完整路径应返回无效场景");
+
+            // 裸名入参本身就是名字，直接按名查找——同样安全返回
+            var byName = SceneModule.ResolveLoadedScene("NoSuchSceneName");
+            Assert.IsFalse(byName.IsValid(), "未知裸名应返回无效场景");
         }
 
         #endregion

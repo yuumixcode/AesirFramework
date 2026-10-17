@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
-using UnityEngine;
 
 namespace Runestone.AesirModules.ScriptDocGenerator
 {

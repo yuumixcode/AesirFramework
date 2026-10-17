@@ -77,7 +77,7 @@ await SceneModuleUniTask.UnloadAllAddedScenesAsync();
 ## SceneAssetWrapper
 
 ```csharp
-// Inspector 拖拽赋值（需 Odin），或代码构造：
+// Inspector 拖拽赋值（装 Odin 走 Processor 面板；未装 Odin 走原生 PropertyDrawer 兜底，等价可用），或代码构造：
 var wrapper = SceneAssetWrapper.FromScenePath("Assets/Scenes/Gameplay.unity");
 
 // 状态校验（加载前判断）
@@ -91,17 +91,27 @@ var name = wrapper.SceneName;
 var address = wrapper.Address; // Addressable 场景
 ```
 
-Inspector 三态着色与一键修复（需 Odin）：Addressable 场景青色；引用悬空（SceneAsset 丢失但路径残留）红色 + Error 信息框；未加入 BuildSettings 红色 + "添加到 BuildSettings"按钮；已加入但被禁用黄色 + "启用"按钮。
+Inspector 状态提示与一键修复：Addressable 场景青色；引用悬空（路径与 GUID 都定位不到资产，资产被删除或移出工程）红色；未加入 BuildSettings 红色 + "添加到 BuildSettings"按钮；已加入但被禁用黄色 + "启用"按钮。装 Odin 时由 Processor 面板呈现（含悬空 Error 信息框）；未装 Odin 时由原生 PropertyDrawer 兜底（拖拽框 + 状态行 + 修复按钮，等价信息量）。
+
+> **引用悬空的判定口径**：对象引用断链但 GUID 能自愈回路径、且资产仍可定位（场景被移动/重命名后的常态）**不算悬空**——加载完全可用，建议重新拖拽一次恢复对象引用；只有资产真正消失（删除/移出工程）才红色提示。
 
 ## 生命周期与 DDOL
 
 - 预放置为根物体时受 `dontDestroyOnLoad` 字段（默认开）控制 DDOL；关闭时 Inspector 显示警告信息框（运行时不输出日志）——Single 加载会卸载所有旧场景，关闭 DDOL 的实例将随场景销毁并中断进行中的加载回调。
 - 运行时自动创建的实例挂在 `[Aesir Modules]` 宿主下，跟随宿主的 DDOL 决策。
 - 重复实例只销毁自身组件（`Destroy(this)`），不连带销毁宿主物体。
+- **预放置实例须处于激活状态**：失活物体无法启动加载协程，模块查找到失活预放置时跳过（运行时新建 + 告警）。
+
+## 并发与外部 API 交互
+
+- **Single 加载并发互斥**：进行中的 Single 期间收到同路径请求幂等忽略（告警留痕，回调交给进行中的那次）；异路径请求拒绝并触发 `onFailed`。
+- **路径与裸名双支持**：加载入参同时接受完整资产路径（`Assets/.../Xxx.unity`）与裸场景名（记账取回时按名回退）；推荐完整路径（BuildSettings 粒度即路径，无重名歧义）。
+- **外部原生 API 卸载自动对账**：模块订阅引擎 `sceneUnloaded`，原生 `SceneManager` 卸载掉追踪中的场景时自动移出记账并告警——但**仍请统一经 SceneModule 加载/卸载**，外部 Single 加载杀掉全部场景时 `LastLoadedScene` 不会更新（对账只覆盖卸载方向）。
+- **模块实例被重建时叠加追踪归零**（DDOL 关闭、宿主随场景卸载）：静态事件对象不受影响，但 `_addedScenePaths` / `LastLoadedScene` 随旧实例消亡——多场景叠加状态下切换 DDOL 配置会丢失叠加追踪，属已知边界。
 
 ## 设计边界
 
-- **Odin Inspector 边界** — `SceneAssetWrapper` 的 Inspector 面板效果（拖拽赋值、着色、一键修复按钮）依赖 Odin Inspector；未安装 Odin 时仅保证 API 可用（`FromScenePath` 构造、编辑器下 `SceneAsset` 属性代码赋值、TryGet 家族），面板不支持——请改用代码构造引用，把场景加入 BuildSettings 请在 Build Settings 面板手动操作。
+- **Odin Inspector 边界** — Odin 只是面板样式增强：`SceneAssetWrapper` 的 Inspector 拖拽赋值、状态着色与一键修复按钮，装 Odin 时由 Processor 面板提供，**未装 Odin 时由原生 PropertyDrawer 兜底（等价信息量）**；`SceneModuleConfigSO` 的启动场景与进度上限在两种环境下都可在 Project 窗口直接编辑（未装 Odin 由原生 CustomEditor 兜底）。纯代码路径（`FromScenePath` 构造、TryGet 家族）始终可用。
 - **Addressable 场景不经 SceneModule 加载** — wrapper 提供地址缓存（`Address` / `TryGetAddress`），加载/卸载请直接调用 Addressables API（如 `Addressables.LoadSceneAsync(wrapper.Address)`）。
 - **重复叠加同一路径后果自负** — Unity 会加载两个实例而追踪只记一条，卸载只移除其一；请勿对同一路径重复 `LoadSceneAdditive`。
 - **启动场景分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`：实例序列化字段优先、未赋值时回退配置资产 `SceneModuleConfigSO` 的全局启动场景），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 由编辑器 `BootstrapSceneHelper` 负责（默认关闭）。
@@ -109,7 +119,7 @@ Inspector 三态着色与一键修复（需 Odin）：Addressable 场景青色�
 
 ## 测试与维护
 
-- 数据层与行为层 EditMode 用例位于 `Tests/Editor/Scene/`（`SceneAssetWrapperTests` 27 + `SceneModuleTests` 24（含静态门面契约：类型不得再暴露公开实例 API、门面转发单例状态）+ 测试场景卫生守护 1，协程经手动 `MoveNext` 驱动模拟；与包级 EditMode 程序集 `Runestone.AesirModules.Tests.Editor` 合并编译）。测试场景由 SetUp 准备：宿主工程缺失时从包内最小场景夹具（随测试分发）临时复制、TearDown 按“谁创建谁删除”还原（含空目录），测试不依赖宿主工程恰好存在某个场景；涉及的资产路径一律按文件名经 AssetDatabase 定位，不写死 Assets 相对路径。
+- 数据层与行为层 EditMode 用例位于 `Tests/Editor/Scene/`（`SceneAssetWrapperTests` 29（含 IsDangling 判定：GUID 自愈后资产仍存在不算悬空）+ `SceneModuleTests` 28（含静态门面契约：类型不得再暴露公开实例 API、门面转发单例状态；Single 并发互斥、裸名回退、外部卸载对账）+ 测试场景卫生守护 1，协程经手动 `MoveNext` 驱动模拟；与包级 EditMode 程序集 `Runestone.AesirModules.Tests.Editor` 合并编译）。测试场景由 SetUp 准备：宿主工程缺失时从包内最小场景夹具（随测试分发）临时复制、TearDown 按“谁创建谁删除”还原（含空目录），测试不依赖宿主工程恰好存在某个场景；涉及的资产路径一律按文件名经 AssetDatabase 定位，不写死 Assets 相对路径。
 - 真实加载/卸载成功路径由包根 `Tests/Runtime/SceneModulePlayModeTests.cs`（PlayMode 程序集 `Runestone.AesirModules.Tests`）覆盖：Single 回调顺序（进度 1.0 归一化 → `SceneLoadedEvent` → onCompleted）、激活场景切换与追踪清空、模块 DDOL 存活、Additive 追踪、`UnloadAllAddedScenes` 全量卸载、广播期间嵌套叠加的快照迭代语义。测试场景为 `TestScenes/` 下两个最小 .unity；BuildSettings 登记走 `IPrebuildSetup`（进入 Play 前的编辑模式阶段登记 enabled 条目）与 `IPostBuildCleanup`（退出 Play 后摘除），条目仅存在于本次运行期间——不进玩家构建、不污染宿主工程配置；不能在 PlayMode 内登记（`LoadSceneAsync` 校验的是进入 Play 时固化的构建场景列表）且 disabled 条目运行时不可加载，均实测；域加载另有兜底清扫，回收被强杀运行遗留的条目。Single 用例以 `[Order]` 固定末位执行（其会留下唯一已加载场景，先跑会污染后续用例）。
 - UniTask 驱动链由包根 `Tests/Runtime/UniTask/SceneModuleUniTaskPlayModeTests.cs`（PlayMode 程序集 `Runestone.AesirModules.Tests.UniTask`，`UNITY_INCLUDE_TESTS` + `AESIR_MODULES_UNITASK` 双约束——未装 UniTask 的工程整体不编译）覆盖 8 用例：路径 / wrapper 重载加载、叠加加载不改激活场景、卸载与批量卸载（空追踪 no-op）、无效路径抛 `InvalidOperationException`、入口即取消、加载中取消（仅中止等待）、宿主销毁（不悬挂）、`onProgress` 单调不减且收尾归一化到 1.0。该套件自带场景卫生：运行时创建空"锚场景"使 `sceneCount > 1` 恒成立，再按 Scene 句柄逐个卸载测试场景实例——因此与用例次序、与前序套件遗留彻底解耦（无需 `[Order]` 约束；按路径卸载在同路径多实例时行为不可控，会留下实例污染"卸载后场景应消失"断言）。
 - 单例配置资产由 `Tests/Editor/Scene/SceneModuleConfigSOTests.cs` 锁定（11 用例：Resources 解析与缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复兜底、加载器返回 null 落内存默认、CreateDefault 默认值、启动场景兜底回退矩阵——实例字段优先 / 配置兜底 / 双双未配置返回 null）。

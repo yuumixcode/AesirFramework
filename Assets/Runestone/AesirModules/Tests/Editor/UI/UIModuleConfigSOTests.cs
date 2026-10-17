@@ -82,8 +82,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         {
             UIModuleConfigSO.RegisterConfigLoader(() => null);
 
-            Assert.Throws<InvalidOperationException>(
-                () => UIModuleConfigSO.RegisterConfigLoader(() => null),
+            Assert.Throws<InvalidOperationException>(() => UIModuleConfigSO.RegisterConfigLoader(() => null),
                 "重复注册加载器视为初始化错误，应 fail-fast");
         }
 
@@ -165,8 +164,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         static UIModuleConfigSO LoadResourceConfig()
         {
             var config = Resources.Load<UIModuleConfigSO>(UIModuleConfigSO.ResourcePath);
-            Assert.IsNotNull(config,
-                $"Resources 兜底资产缺失（{UIModuleConfigSO.ResourcePath}），请先刷新编辑器让初始化器创建");
+            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{UIModuleConfigSO.ResourcePath}），请先刷新编辑器让初始化器创建");
             return config;
         }
 

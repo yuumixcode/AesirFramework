@@ -25,19 +25,14 @@ namespace Runestone.AesirModules.Tests.Editor
         [Test]
         public void BuildSettings_DoesNotPermanentlyContainTestScenes()
         {
-            var testScenes = EditorBuildSettings.scenes
-                .Where(scene => IsUnderTestFolder(scene.path))
-                .Select(scene => scene.path)
-                .ToArray();
+            var testScenes = EditorBuildSettings.scenes.Where(scene => IsUnderTestFolder(scene.path))
+                .Select(scene => scene.path).ToArray();
 
             Assert.IsEmpty(testScenes,
                 "测试场景不得常驻 EditorBuildSettings（会被打进玩家构建）：" + string.Join(", ", testScenes));
         }
 
         /// <summary>测试场景位于包内 <c>Tests/</c> 目录——Assets 安装与 Packages 安装两种形态都覆盖。</summary>
-        static bool IsUnderTestFolder(string path)
-        {
-            return path.Replace('\\', '/').Contains("/Tests/");
-        }
+        static bool IsUnderTestFolder(string path) => path.Replace('\\', '/').Contains("/Tests/");
     }
 }

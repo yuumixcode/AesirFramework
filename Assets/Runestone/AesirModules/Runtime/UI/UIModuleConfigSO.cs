@@ -11,11 +11,15 @@ namespace Runestone.AesirModules
     /// <remarks>
     /// 单例 <see cref="Instance" /> 的解析顺序：
     /// <list type="number">
-    /// <item><see cref="RegisterConfigLoader" /> 注册的加载器——注册后 Resources 兜底不再执行，
-    /// 用于彻底放弃 Resources 的项目（如 Addressables 或代码内构造配置）；</item>
-    /// <item>Resources 兜底（<see cref="ResourcePath" />，编辑器在编辑模式域加载时自动创建该资产，
-    /// 见编辑器程序集 <c>UIModuleConfigAssetInitializer</c>）；</item>
-    /// <item>内存默认实例——前两级均未命中时以代码默认值创建，仅存在于内存、不持久化。</item>
+    ///     <item>
+    ///     <see cref="RegisterConfigLoader" /> 注册的加载器——注册后 Resources 兜底不再执行，
+    ///     用于彻底放弃 Resources 的项目（如 Addressables 或代码内构造配置）；
+    ///     </item>
+    ///     <item>
+    ///     Resources 兜底（<see cref="ResourcePath" />，编辑器在编辑模式域加载时自动创建该资产，
+    ///     见编辑器程序集 <c>UIModuleConfigAssetInitializer</c>）；
+    ///     </item>
+    ///     <item>内存默认实例——前两级均未命中时以代码默认值创建，仅存在于内存、不持久化。</item>
     /// </list>
     /// 运行时经 <see cref="UIModule.MaskMode" /> 的切换只覆盖 UIModule 的内存值，不改写本资产。
     /// </remarks>
@@ -24,6 +28,9 @@ namespace Runestone.AesirModules
         /// <summary>Resources 兜底路径（相对任意 Resources 根，不含扩展名）。资产固定位于 Assets/Resources/UIModuleConfig/UIModuleConfig.asset。</summary>
         public const string ResourcePath = "UIModuleConfig/UIModuleConfig";
 
+        static UIModuleConfigSO _instance;
+        static Func<UIModuleConfigSO> _configLoader;
+
         /// <summary>
         /// 窗口蒙版调度模式：单遮 = 仅最高层可见窗口的蒙版生效；叠遮 = 各窗口蒙版独立生效。
         /// 运行时可经 <see cref="UIModule.MaskMode" /> 临时切换。
@@ -31,9 +38,6 @@ namespace Runestone.AesirModules
         [Tooltip("窗口蒙版调度模式：单遮 = 仅最高层可见窗口的蒙版生效；叠遮 = 各窗口蒙版独立生效。运行时可经 UIModule.MaskMode 临时切换")]
         [SerializeField]
         internal UIMaskMode maskMode = UIMaskMode.Single;
-
-        static UIModuleConfigSO _instance;
-        static Func<UIModuleConfigSO> _configLoader;
 
         /// <summary>
         /// 全局单例。按类 remarks 声明的顺序解析并缓存；缓存失效（资产被销毁的 Unity 假 null）时自动重新解析。

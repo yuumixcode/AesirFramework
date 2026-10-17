@@ -11,16 +11,21 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
     public class SampleUIBoot : MonoBehaviour
     {
         [Header("面板预制体")]
-        [SerializeField] GameObject controlPanelPrefab;
+        [SerializeField]
+        GameObject controlPanelPrefab;
 
-        [SerializeField] GameObject hudPrefab;
+        [SerializeField]
+        GameObject hudPrefab;
 
         [Header("窗口预制体（Canvas 根）")]
-        [SerializeField] GameObject settingWindowPrefab;
+        [SerializeField]
+        GameObject settingWindowPrefab;
 
-        [SerializeField] GameObject stackedWindowPrefab;
+        [SerializeField]
+        GameObject stackedWindowPrefab;
 
-        [SerializeField] GameObject loadingWindowPrefab;
+        [SerializeField]
+        GameObject loadingWindowPrefab;
 
         void Start()
         {

@@ -13,17 +13,28 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
     /// 面向自动化脚本与 AI 助手直接调用：不需要打开面板、不需要任何点击。
     /// </summary>
     /// <remarks>
-    /// <para>与面板共用同一套分析与写入核心（<see cref="ScriptDocGeneratorUtility" />），
-    /// 但全程无确认弹窗、不自动打开生成结果。覆盖语义与面板"多程序集模式"一致：
-    /// 已存在的文档按增量规则合并（保留 Front Matter 与 <c>## Additional Notes</c> 之后的手写内容），未存在则新建。</para>
-    /// <para>调用示例（AI / 自动化）：
-    /// <br />- 为程序集生成 Zensical 文档：<c>ScriptDocGeneratorAPI.GenerateDocsForAssembly("Runestone.AesirModules", ScriptDocGeneratorAPI.ZensicalSettings)</c>
-    /// <br />- 为文件夹内全部脚本生成默认文档：<c>ScriptDocGeneratorAPI.GenerateDocsForFolder("Assets/Runestone/AesirModules/Runtime/Scene")</c>
-    /// <br />- 为单个类型生成文档：<c>ScriptDocGeneratorAPI.GenerateDocsForType(typeof(SomeClass))</c></para>
-    /// <para>settings 传 null 使用 <see cref="DefaultSettings" />；outputFolder 传 null 使用
-    /// <see cref="DefaultOutputFolder" />（项目根 <c>ScriptDocGenerator/</c>，Assets 外不产生 .meta）。
-    /// 自定义生成器：继承 <see cref="DocGeneratorSettingsSO" /> 创建设置资产后传入，
-    /// 或经 <see cref="FindAllSettings" /> 枚举项目内已有设置资产。</para>
+    ///     <para>
+    ///     与面板共用同一套分析与写入核心（<see cref="ScriptDocGeneratorUtility" />），
+    ///     但全程无确认弹窗、不自动打开生成结果。覆盖语义与面板"多程序集模式"一致：
+    ///     已存在的文档按增量规则合并（保留 Front Matter 与 <c>## Additional Notes</c> 之后的手写内容），未存在则新建。
+    ///     </para>
+    ///     <para>
+    ///     调用示例（AI / 自动化）：
+    ///     <br />- 为程序集生成 Zensical 文档：
+    ///     <c>
+    ///     ScriptDocGeneratorAPI.GenerateDocsForAssembly("Runestone.AesirModules",
+    ///     ScriptDocGeneratorAPI.ZensicalSettings)
+    ///     </c>
+    ///     <br />- 为文件夹内全部脚本生成默认文档：
+    ///     <c>ScriptDocGeneratorAPI.GenerateDocsForFolder("Assets/Runestone/AesirModules/Runtime/Scene")</c>
+    ///     <br />- 为单个类型生成文档：<c>ScriptDocGeneratorAPI.GenerateDocsForType(typeof(SomeClass))</c>
+    ///     </para>
+    ///     <para>
+    ///     settings 传 null 使用 <see cref="DefaultSettings" />；outputFolder 传 null 使用
+    ///     <see cref="DefaultOutputFolder" />（项目根 <c>ScriptDocGenerator/</c>，Assets 外不产生 .meta）。
+    ///     自定义生成器：继承 <see cref="DocGeneratorSettingsSO" /> 创建设置资产后传入，
+    ///     或经 <see cref="FindAllSettings" /> 枚举项目内已有设置资产。
+    ///     </para>
     /// </remarks>
     public static class ScriptDocGeneratorAPI
     {
@@ -44,10 +55,8 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             AssetDatabase.FindAssets("t:" + nameof(DocGeneratorSettingsSO))
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Where(path => path.EndsWith(".asset", StringComparison.OrdinalIgnoreCase))
-                .Select(AssetDatabase.LoadAssetAtPath<DocGeneratorSettingsSO>)
-                .Where(settings => settings)
-                .OrderBy(settings => settings.name, StringComparer.Ordinal)
-                .ToList();
+                .Select(AssetDatabase.LoadAssetAtPath<DocGeneratorSettingsSO>).Where(settings => settings)
+                .OrderBy(settings => settings.name, StringComparer.Ordinal).ToList();
 
         /// <summary>
         /// 为单个类型生成脚本文档。
@@ -171,8 +180,7 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
             {
                 AesirModulesDebug.LogError(nameof(ScriptDocGeneratorAPI),
                     AesirModulesDebug.ScriptDocGeneratorTag,
-                    "无效的脚本文件夹路径 '" + folderPath +
-                    "'：需要项目内 Assets/ 或 Packages/ 下的真实文件夹（支持绝对路径）");
+                    "无效的脚本文件夹路径 '" + folderPath + "'：需要项目内 Assets/ 或 Packages/ 下的真实文件夹（支持绝对路径）");
                 return result;
             }
 

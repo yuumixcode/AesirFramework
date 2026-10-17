@@ -21,6 +21,9 @@ namespace Runestone.AesirModules
     [DisallowMultipleComponent]
     public class AesirModules : AesirMonoBehaviour
     {
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
+        static AesirModules _instance;
+
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景。
         /// </summary>
@@ -39,21 +42,6 @@ namespace Runestone.AesirModules
         /// </remarks>
         [SerializeField]
         bool dontDestroyOnLoad = true;
-
-        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
-        static AesirModules _instance;
-
-        /// <summary>
-        /// 兼容 Enter Play Mode（跳过域重载）的静态状态重置。
-        /// </summary>
-        /// <remarks>
-        /// 显式清空而非依赖 <c>Instance</c> getter 的隐式 fake-null 重置（已被包内判定为废弃机制）。
-        /// </remarks>
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics()
-        {
-            _instance = null;
-        }
 
         /// <summary>
         /// 获取全局唯一的架构管理器实例
@@ -112,6 +100,18 @@ namespace Runestone.AesirModules
             {
                 _instance = null;
             }
+        }
+
+        /// <summary>
+        /// 兼容 Enter Play Mode（跳过域重载）的静态状态重置。
+        /// </summary>
+        /// <remarks>
+        /// 显式清空而非依赖 <c>Instance</c> getter 的隐式 fake-null 重置（已被包内判定为废弃机制）。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            _instance = null;
         }
 
         /// <summary>

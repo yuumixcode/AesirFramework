@@ -11,9 +11,11 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
     [AddComponentMenu("")]
     public class SampleUISettingWindow : AesirBaseWindow
     {
-        [SerializeField] Text titleText;
+        [SerializeField]
+        Text titleText;
 
-        [SerializeField] Button closeButton;
+        [SerializeField]
+        Button closeButton;
 
         protected override void OnInit()
         {

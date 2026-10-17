@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Runestone.AesirArchitecture;
+using UnityEngine;
 #if UNITY_EDITOR
 using Sirenix.OdinInspector;
 #endif
-using UnityEngine;
 
 namespace Runestone.AesirModules
 {

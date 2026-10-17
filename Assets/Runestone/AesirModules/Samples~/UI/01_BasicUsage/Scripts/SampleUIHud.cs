@@ -13,11 +13,12 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
     [AddComponentMenu("")]
     public class SampleUIHud : AesirBasePanel
     {
-        [SerializeField] Text logText;
-
         static readonly List<string> Logs = new List<string>();
 
         static SampleUIHud _instance;
+
+        [SerializeField]
+        Text logText;
 
         void OnEnable()
         {

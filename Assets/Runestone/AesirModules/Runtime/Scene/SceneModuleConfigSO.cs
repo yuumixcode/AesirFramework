@@ -11,18 +11,28 @@ namespace Runestone.AesirModules
     /// <remarks>
     /// 单例 <see cref="Instance" /> 的解析顺序：
     /// <list type="number">
-    /// <item><see cref="RegisterConfigLoader" /> 注册的加载器——注册后 Resources 兜底不再执行，
-    /// 用于彻底放弃 Resources 的项目（如 Addressables 或代码内构造配置）；</item>
-    /// <item>Resources 兜底（<see cref="ResourcePath" />，编辑器在编辑模式域加载时自动创建该资产，
-    /// 见编辑器程序集 <c>SceneModuleConfigAssetInitializer</c>）；</item>
-    /// <item>内存默认实例——前两级均未命中时以代码默认值创建，仅存在于内存、不持久化。</item>
+    ///     <item>
+    ///     <see cref="RegisterConfigLoader" /> 注册的加载器——注册后 Resources 兜底不再执行，
+    ///     用于彻底放弃 Resources 的项目（如 Addressables 或代码内构造配置）；
+    ///     </item>
+    ///     <item>
+    ///     Resources 兜底（<see cref="ResourcePath" />，编辑器在编辑模式域加载时自动创建该资产，
+    ///     见编辑器程序集 <c>SceneModuleConfigAssetInitializer</c>）；
+    ///     </item>
+    ///     <item>内存默认实例——前两级均未命中时以代码默认值创建，仅存在于内存、不持久化。</item>
     /// </list>
     /// 加载进度上限（<see cref="progressCap" />）在每次加载时读取，运行时修改本资产对后续加载立即生效。
     /// </remarks>
     public class SceneModuleConfigSO : AesirScriptableObject
     {
-        /// <summary>Resources 兜底路径（相对任意 Resources 根，不含扩展名）。资产固定位于 Assets/Resources/SceneModuleConfig/SceneModuleConfig.asset。</summary>
+        /// <summary>
+        /// Resources 兜底路径（相对任意 Resources 根，不含扩展名）。资产固定位于
+        /// Assets/Resources/SceneModuleConfig/SceneModuleConfig.asset。
+        /// </summary>
         public const string ResourcePath = "SceneModuleConfig/SceneModuleConfig";
+
+        static SceneModuleConfigSO _instance;
+        static Func<SceneModuleConfigSO> _configLoader;
 
         /// <summary>
         /// 自定义启动场景（全局兜底）。预放置 <see cref="SceneModule" /> 的序列化字段未赋值（null）时，
@@ -40,9 +50,6 @@ namespace Runestone.AesirModules
         [Tooltip("场景加载进度的归一化上限（0-1，默认 0.9）——Unity 场景激活前进度停在 0.9，onProgress 按本值归一化")]
         [SerializeField]
         internal float progressCap = 0.9f;
-
-        static SceneModuleConfigSO _instance;
-        static Func<SceneModuleConfigSO> _configLoader;
 
         /// <summary>
         /// 全局单例。按类 remarks 声明的顺序解析并缓存；缓存失效（资产被销毁的 Unity 假 null）时自动重新解析。

@@ -19,6 +19,9 @@ namespace Runestone.AesirModules
     [DefaultExecutionOrder(-999)]
     public class UIModule : AesirMonoBehaviour
     {
+        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
+        static UIModule _instance;
+
         /// <summary>
         /// 是否将本物体加入 DontDestroyOnLoad 场景。仅在本物体为根物体（场景预放置）时生效。
         /// </summary>
@@ -35,20 +38,12 @@ namespace Runestone.AesirModules
         [SerializeField]
         bool dontDestroyOnLoad = true;
 
-        internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
-        static UIModule _instance;
-
         /// <summary>
-        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// 停用克隆模板缓存，键 = 来源预制体，值 = 该预制体的停用模板克隆体（见 <see cref="InstantiateInactive" />）。
+        /// 非序列化，随本组件实例存活；模板物体挂在本组件下，随本组件所属 GameObject（或场景卸载）一并回收。
         /// </summary>
-        /// <remarks>
-        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
-        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
-        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
-        /// <c>FindAnyObjectByType</c> 兜底重发现。
-        /// </remarks>
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => _instance = null;
+        readonly Dictionary<GameObject, GameObject> _inactiveTemplates =
+            new Dictionary<GameObject, GameObject>();
 
         /// <summary>
         /// 面板实例注册表，键 = 面板实例的实际类型。
@@ -67,14 +62,7 @@ namespace Runestone.AesirModules
         /// <summary>窗口实例注册表，键 = 窗口实例的实际类型（与面板注册表相互独立，键语义约定一致）。</summary>
         readonly Dictionary<Type, IUIWindow> _windowDict = new Dictionary<Type, IUIWindow>();
 
-        /// <summary>
-        /// 停用克隆模板缓存，键 = 来源预制体，值 = 该预制体的停用模板克隆体（见 <see cref="InstantiateInactive" />）。
-        /// 非序列化，随本组件实例存活；模板物体挂在本组件下，随本组件所属 GameObject（或场景卸载）一并回收。
-        /// </summary>
-        readonly Dictionary<GameObject, GameObject> _inactiveTemplates = new Dictionary<GameObject, GameObject>();
-
-        /// <summary>停用模板容器（模板克隆体的父物体），恒为停用；惰性创建，随本组件所属 GameObject 回收。</summary>
-        GameObject _templateContainer;
+        IUIAssetLoader _loader;
 
         /// <summary>
         /// 当前生效的窗口蒙版调度模式。运行状态字段（显式非序列化），
@@ -86,7 +74,9 @@ namespace Runestone.AesirModules
         /// <summary><see cref="_maskMode" /> 是否已从配置解析。</summary>
         bool _maskModeResolved;
 
-        IUIAssetLoader _loader;
+        /// <summary>停用模板容器（模板克隆体的父物体），恒为停用；惰性创建，随本组件所属 GameObject 回收。</summary>
+        GameObject _templateContainer;
+
         UIRoot _uiRoot;
 
         /// <summary>
@@ -115,28 +105,6 @@ namespace Runestone.AesirModules
                 _instance = AesirModules.GetOrAddChild<UIModule>();
                 return _instance;
             }
-        }
-
-        /// <summary>
-        /// 非创建式单例获取：实例不存在时返回 <c>false</c>，<b>不触发懒创建</b>。
-        /// </summary>
-        /// <remarks>
-        /// 供"销毁/场景卸载阶段的自便捷入口"使用（面板/窗口的 <c>HideSelf</c> / <c>CloseSelf</c>）：
-        /// 此时模块往往已随场景销毁，若走 <see cref="Instance" /> 会在正在卸载的场景里重建
-        /// <c>[Aesir Modules]</c> 宿主并加入 DDOL，形成一个"单例存在但订阅与注册表全丢"的泄漏宿主。
-        /// 本方法只做"已存在即取用"，与 <c>RemovePanelRecord</c> / <c>RemoveWindowRecord</c> 的静态早退口径一致。
-        /// </remarks>
-        /// <param name="module">找到时输出现有实例；否则输出 <c>null</c></param>
-        /// <returns>存在可用实例则返回 <c>true</c></returns>
-        internal static bool TryGetExisting(out UIModule module)
-        {
-            if (_instance == null)
-            {
-                _instance = FindAnyObjectByType<UIModule>(FindObjectsInactive.Include);
-            }
-
-            module = _instance;
-            return _instance != null;
         }
 
         /// <summary>
@@ -198,6 +166,40 @@ namespace Runestone.AesirModules
             {
                 _instance = null;
             }
+        }
+
+        /// <summary>
+        /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
+        /// </summary>
+        /// <remarks>
+        /// 非泛型类按框架铁律在类内声明 <c>[RuntimeInitializeOnLoadMethod]</c> 自重置，
+        /// 而非经 <see cref="ResetStaticsAssistant" />（该助手仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过）。
+        /// 仅清空静态引用：既有物体仍留在场景中，下次 <see cref="Instance" /> 访问经
+        /// <c>FindAnyObjectByType</c> 兜底重发现。
+        /// </remarks>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => _instance = null;
+
+        /// <summary>
+        /// 非创建式单例获取：实例不存在时返回 <c>false</c>，<b>不触发懒创建</b>。
+        /// </summary>
+        /// <remarks>
+        /// 供"销毁/场景卸载阶段的自便捷入口"使用（面板/窗口的 <c>HideSelf</c> / <c>CloseSelf</c>）：
+        /// 此时模块往往已随场景销毁，若走 <see cref="Instance" /> 会在正在卸载的场景里重建
+        /// <c>[Aesir Modules]</c> 宿主并加入 DDOL，形成一个"单例存在但订阅与注册表全丢"的泄漏宿主。
+        /// 本方法只做"已存在即取用"，与 <c>RemovePanelRecord</c> / <c>RemoveWindowRecord</c> 的静态早退口径一致。
+        /// </remarks>
+        /// <param name="module">找到时输出现有实例；否则输出 <c>null</c></param>
+        /// <returns>存在可用实例则返回 <c>true</c></returns>
+        internal static bool TryGetExisting(out UIModule module)
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<UIModule>(FindObjectsInactive.Include);
+            }
+
+            module = _instance;
+            return _instance != null;
         }
 
         /// <summary>
@@ -551,6 +553,17 @@ namespace Runestone.AesirModules
             Instance.ShowPanel<T>(payload, path);
 
         /// <summary>
+        /// 静态快捷：打开面板（资源路径版本）。<c>Show&lt;T&gt;("UI/Xxx")</c> 的字符串经本重载进入
+        /// <paramref name="path" /> 形参——消除位置参数版中路径被 <c>object payload</c> 吞掉、
+        /// 随后报"未注册预制体且未提供 path"且不揭示真实原因的陷阱。
+        /// </summary>
+        /// <typeparam name="T">面板类型，须继承 <see cref="AesirBasePanel" />。</typeparam>
+        /// <param name="path">资源路径，用于加载预制体。使用 UIAssetLoader 加载。</param>
+        /// <returns>面板实例。</returns>
+        public static T Show<T>(string path) where T : MonoBehaviour, IUIPanel =>
+            Instance.ShowPanel<T>(null, path);
+
+        /// <summary>
         /// 静态快捷：打开面板（强类型 payload 版本，同 <see cref="ShowPanel{TPanel, TPayload}(TPayload, string)" />）。
         /// </summary>
         /// <typeparam name="TPanel">面板类型。</typeparam>
@@ -569,10 +582,22 @@ namespace Runestone.AesirModules
         public static void Hide<T>() where T : MonoBehaviour, IUIPanel =>
             Instance.HidePanel<T>();
 
-        public static T Get<T>() where T : MonoBehaviour, IUIPanel => Instance.GetPanel<T>();
+        /// <summary>
+        /// 静态快捷：获取已注册的面板实例。
+        /// </summary>
+        /// <remarks>
+        /// 纯查询<b>不创建模块实例</b>：无实例（如场景卸载、启动即查询、编辑器期探测）时返回 <c>null</c>，
+        /// 不再凭空造出 <c>[Aesir Modules]</c> 宿主树。
+        /// </remarks>
+        public static T Get<T>() where T : MonoBehaviour, IUIPanel =>
+            TryGetExisting(out var module) ? module.GetPanel<T>() : null;
 
+        /// <summary>
+        /// 静态快捷：面板类型对应的预制体是否已注册。
+        /// </summary>
+        /// <remarks>纯查询<b>不创建模块实例</b>（理由同 <see cref="Get{T}" />）。</remarks>
         public static bool ContainPrefab<T>() where T : MonoBehaviour, IUIPanel =>
-            Instance.ContainPrefabAsset<T>();
+            TryGetExisting(out var module) && module.ContainPrefabAsset<T>();
 
         /// <summary>
         /// 静态快捷：预热面板。
@@ -592,7 +617,8 @@ namespace Runestone.AesirModules
         /// <param name="payload">传递给 OnShow 的数据。</param>
         /// <param name="path">可选的资源路径。注册表中不存在时通过加载器加载，加载后自动注册到注册表。</param>
         /// <returns>窗口实例，失败返回 null。</returns>
-        public T OpenWindow<T>(object payload = null, string path = null) where T : MonoBehaviour, IUIWindow =>
+        public T OpenWindow<T>(object payload = null, string path = null)
+            where T : MonoBehaviour, IUIWindow =>
             OpenWindow(typeof(T), payload, path) as T;
 
         /// <summary>
@@ -803,7 +829,8 @@ namespace Runestone.AesirModules
                 return false;
             }
 
-            if (_windowDict.TryGetValue(windowType, out var registeredWindow) && IsDestroyedRecord(registeredWindow))
+            if (_windowDict.TryGetValue(windowType, out var registeredWindow) &&
+                IsDestroyedRecord(registeredWindow))
             {
                 // 注册表自愈：残留的已销毁条目不算"已预热"，继续走预热创建路径
                 _windowDict.Remove(windowType);
@@ -873,6 +900,16 @@ namespace Runestone.AesirModules
             Instance.OpenWindow(typeof(T), payload, path) as T;
 
         /// <summary>
+        /// 静态快捷：打开窗口（资源路径版本）。<c>Open&lt;T&gt;("UI/Xxx")</c> 的字符串经本重载进入
+        /// <paramref name="path" /> 形参——消除位置参数版中路径被 <c>object payload</c> 吞掉的陷阱（同 <see cref="Show{T}(string)" />）。
+        /// </summary>
+        /// <typeparam name="T">窗口类型。</typeparam>
+        /// <param name="path">资源路径，用于加载预制体。使用 UIAssetLoader 加载。</param>
+        /// <returns>窗口实例，失败返回 null。</returns>
+        public static T Open<T>(string path) where T : MonoBehaviour, IUIWindow =>
+            Instance.OpenWindow(typeof(T), null, path) as T;
+
+        /// <summary>
         /// 静态快捷：关闭窗口。
         /// </summary>
         /// <typeparam name="T">窗口类型。</typeparam>
@@ -882,10 +919,9 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 静态快捷：获取已注册的窗口实例。
         /// </summary>
-        /// <typeparam name="T">窗口类型。</typeparam>
-        /// <returns>窗口实例，未注册返回 null。</returns>
+        /// <remarks>纯查询<b>不创建模块实例</b>（理由同 <see cref="Get{T}" />）。</remarks>
         public static T GetWindow<T>() where T : MonoBehaviour, IUIWindow =>
-            Instance.GetWindow(typeof(T)) as T;
+            TryGetExisting(out var module) ? module.GetWindow(typeof(T)) as T : null;
 
         /// <summary>
         /// 静态快捷：预热窗口。
@@ -907,9 +943,9 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 静态快捷：窗口类型对应的预制体是否已注册。
         /// </summary>
-        /// <typeparam name="T">窗口类型。</typeparam>
+        /// <remarks>纯查询<b>不创建模块实例</b>（理由同 <see cref="Get{T}" />）。</remarks>
         public static bool ContainWindowPrefab<T>() where T : MonoBehaviour, IUIWindow =>
-            Instance.ContainWindowPrefabAsset(typeof(T));
+            TryGetExisting(out var module) && module.ContainWindowPrefabAsset(typeof(T));
 
         // ---------------- 内部辅助 ----------------
 
@@ -940,7 +976,10 @@ namespace Runestone.AesirModules
         /// </summary>
         IUIPanel InstantiateAndAttach(Type panelType, string path)
         {
-            var prefab = ResolvePrefab(panelType, path);
+            // 生命周期错配检测：注册表无记录而 UIRoot 子树已有同类型实例时告警（见 WarnIfOrphanExists）
+            WarnIfOrphanExists(panelType);
+
+            var prefab = ResolvePrefab(panelType, path, false);
             if (prefab == null)
             {
                 return null;
@@ -966,6 +1005,9 @@ namespace Runestone.AesirModules
 
             panelGo.transform.SetParent(root, false);
             panelGo.transform.SetAsLastSibling();
+            // 对齐窗口侧：克隆体子树整体归入 UI 层（GameObject.layer 不随父级继承，
+            // 预制体内非 UGUI 渲染器（如 SpriteRenderer）缺这步会被 UICamera 的 cullingMask 挡掉不渲染）
+            UIRoot.SetLayerRecursively(panelGo.transform, UIRoot.UILayerIndex);
             return panel;
         }
 
@@ -979,7 +1021,8 @@ namespace Runestone.AesirModules
         /// 键语义诊断（窗口侧）：查找窗口注册表中以 windowType 为基类或接口的实例键（仅精确未命中时调用）。
         /// 返回 null 表示注册表无关联实例，调用方按幂等语义静默处理。
         /// </summary>
-        Type FindRegisteredRelatedWindowKey(Type windowType) => FindRegisteredRelatedKey(_windowDict, windowType);
+        Type FindRegisteredRelatedWindowKey(Type windowType) =>
+            FindRegisteredRelatedKey(_windowDict, windowType);
 
         /// <summary>
         /// 键语义诊断通用实现：在注册表中查找以指定类型为基类或接口的实例键（仅精确未命中时调用）。
@@ -1087,7 +1130,10 @@ namespace Runestone.AesirModules
         /// </summary>
         IUIWindow InstantiateWindowAndAttach(Type windowType, string path)
         {
-            var prefab = ResolvePrefab(windowType, path);
+            // 生命周期错配检测：注册表无记录而 UIRoot 子树已有同类型实例时告警（见 WarnIfOrphanExists）
+            WarnIfOrphanExists(windowType);
+
+            var prefab = ResolvePrefab(windowType, path, true);
             if (prefab == null)
             {
                 return null;
@@ -1209,11 +1255,9 @@ namespace Runestone.AesirModules
         /// 注册表自愈：判断注册表条目对应实例是否已被销毁。
         /// 必须走 Unity 重载的 <c>==</c>（假 null）判定，ReferenceEquals/原生运算符会绕过该语义。
         /// </summary>
-        static bool IsDestroyedRecord(object record)
-        {
+        static bool IsDestroyedRecord(object record) =>
             // is 为类型判定，已销毁的 MonoBehaviour 仍匹配；随后 == null 走 Unity 假 null 语义
-            return record is MonoBehaviour mono && mono == null;
-        }
+            record is MonoBehaviour mono && mono == null;
 
         /// <summary>
         /// 移除注册表中实例已被销毁的窗口条目（遍历结束后调用，避免在遍历中改表）。
@@ -1234,16 +1278,36 @@ namespace Runestone.AesirModules
             }
         }
 
-        GameObject ResolvePrefab(Type panelType, string path)
+        /// <summary>
+        /// 解析面板/窗口类型对应的预制体：注册表命中直接返回（带诊断），否则经加载器按 path 加载并自动注册。
+        /// </summary>
+        /// <param name="panelType">面板或窗口类型（按 <paramref name="isWindow" /> 决定诊断文案）。</param>
+        /// <param name="path">资源路径。</param>
+        /// <param name="isWindow">是否窗口侧调用（诊断文案分派"面板/窗口"）。</param>
+        GameObject ResolvePrefab(Type panelType, string path, bool isWindow)
         {
+            var kindName = isWindow ? "窗口" : "面板";
             if (_prefabDict.TryGetValue(panelType, out var prefab))
             {
-                // 已按 path A 加载并缓存后，再以 path B 调用：缓存命中使换路径静默失效——给出诊断
-                if (path != null && _prefabSourcePaths.TryGetValue(panelType, out var usedPath) &&
-                    usedPath != path)
+                if (path != null)
                 {
-                    AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
-                        $"面板 {panelType.Name} 的预制体已按 path（{usedPath}）加载并缓存，" + $"本次传入的 path（{path}）被忽略");
+                    if (_prefabSourcePaths.TryGetValue(panelType, out var usedPath))
+                    {
+                        // 已按 path A 加载并缓存后，再以 path B 调用：缓存命中使换路径静默失效——给出诊断
+                        if (usedPath != path)
+                        {
+                            AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                                $"{kindName} {panelType.Name} 的预制体已按 path（{usedPath}）加载并缓存，" +
+                                $"本次传入的 path（{path}）被忽略");
+                        }
+                    }
+                    else
+                    {
+                        // 经引用注册（RegisterPrefab / RegisterWindowPrefab）的条目不走 path 加载——
+                        // path 被静默忽略会让调用方误以为已按新路径加载，给出诊断
+                        AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                            $"{kindName} {panelType.Name} 的预制体经引用注册，本次传入的 path（{path}）被忽略");
+                    }
                 }
 
                 return prefab;
@@ -1251,7 +1315,9 @@ namespace Runestone.AesirModules
 
             if (path != null)
             {
-                prefab = _loader.Load(path);
+                // _loader 常规在 Awake 初始化——Edit Mode 下 AddComponent 不触发 Awake（未激活预放置同理），
+                // 惰性兜底避免该场景下首次 path 加载直接 NRE
+                prefab = (_loader ??= new ResourcesUILoader()).Load(path);
                 if (prefab != null)
                 {
                     _prefabDict[panelType] = prefab;
@@ -1260,8 +1326,32 @@ namespace Runestone.AesirModules
                 }
             }
 
-            AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag, $"面板 {panelType.Name} 未注册预制体且未提供 path");
+            AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                $"{kindName} {panelType.Name} 未注册预制体且未提供 path");
             return null;
+        }
+
+        /// <summary>
+        /// 生命周期错配告警：UIRoot 常驻（DDOL）而模块实例可能随场景卸载被重建——上一实例的注册表随它销毁清零，
+        /// 但挂在 DDOL UIRoot 下的面板/窗口实例仍存活。此时新建同类型实例会与该"孤儿"共存双份
+        /// （孤儿不在本实例注册表中，Hide / Close 管不到它）。仅在新建路径调用；命中时告警一次，不阻止创建。
+        /// </summary>
+        void WarnIfOrphanExists(Type uiType)
+        {
+            var uiRoot = _uiRoot != null ? _uiRoot : UIRoot.Instance;
+            if (uiRoot == null)
+            {
+                return;
+            }
+
+            var orphans = uiRoot.transform.GetComponentsInChildren(uiType, true);
+            if (orphans is { Length: > 0 })
+            {
+                AesirModulesDebug.LogWarning(AesirModulesDebug.UIModuleTag,
+                    $"检测到 UIRoot 下存在未受本实例管理的 {uiType.Name} 实例（{orphans[0].name}）——" +
+                    "它可能来自已卸载场景的旧模块实例（或场景手工摆放），本次新建后两者将共存，" +
+                    "Hide/Close 无法作用于该实例；请经 FindObjectsByType 排查并自行处理。");
+            }
         }
 
         IEnumerator PrewarmAllInternal(Action onComplete)
