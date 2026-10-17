@@ -94,7 +94,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 {
                     File.Delete(stateAbs);
                     if (Directory.Exists(stateDirAbs) &&
-                        !Enumerable.Any(Directory.EnumerateFileSystemEntries(stateDirAbs)))
+                        !Directory.EnumerateFileSystemEntries(stateDirAbs).Any())
                     {
                         Directory.Delete(stateDirAbs);
                     }
@@ -194,8 +194,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 "Assets/Runestone/AesirArchitecture/New.cs"
             };
 
-            var stale = AesirUpdateService.ComputeStaleFiles(
-                previous, current, "Assets/Runestone/AesirArchitecture", "AesirArchitecture");
+            var stale = AesirUpdateService.ComputeStaleFiles(previous, current,
+                "Assets/Runestone/AesirArchitecture", "AesirArchitecture");
 
             // 只保留本包范围内、新版清单中不存在的条目；Modules 的 B.cs 不归本次清理
             CollectionAssert.AreEqual(new[] { "Assets/Runestone/AesirArchitecture/Old/Old.cs" }, stale);
@@ -206,7 +206,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             // 首次安装 / 无历史记录时没有任何删除依据，必须返回空（宁可残留不误删）
             var stale = AesirUpdateService.ComputeStaleFiles(null,
-                new[] { "Assets/Runestone/AesirArchitecture/A.cs" }, "Assets/Runestone/AesirArchitecture", "AesirArchitecture");
+                new[] { "Assets/Runestone/AesirArchitecture/A.cs" }, "Assets/Runestone/AesirArchitecture",
+                "AesirArchitecture");
 
             Assert.IsEmpty(stale);
         }
@@ -217,12 +218,13 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             // 远程 update-info.json 半截 JSON / 缺 files 字段会被反序列化成空清单——
             // 若无守卫，上次清单内的全部文件都会被判为残留而整包删光（数据损坏级路径）。
             // 与 previousFiles 守卫对称：新清单为空 = 没有删除依据，返回空列表。
-            var previous = new[] { "Assets/Runestone/AesirArchitecture/A.cs", "Assets/Runestone/AesirArchitecture/B.cs" };
+            var previous = new[]
+                { "Assets/Runestone/AesirArchitecture/A.cs", "Assets/Runestone/AesirArchitecture/B.cs" };
 
-            var fromNull = AesirUpdateService.ComputeStaleFiles(previous, null, "Assets/Runestone/AesirArchitecture",
-                "AesirArchitecture");
-            var fromEmpty = AesirUpdateService.ComputeStaleFiles(previous,
-                new string[0], "Assets/Runestone/AesirArchitecture", "AesirArchitecture");
+            var fromNull = AesirUpdateService.ComputeStaleFiles(previous, null,
+                "Assets/Runestone/AesirArchitecture", "AesirArchitecture");
+            var fromEmpty = AesirUpdateService.ComputeStaleFiles(previous, new string[0],
+                "Assets/Runestone/AesirArchitecture", "AesirArchitecture");
 
             Assert.IsEmpty(fromNull, "新清单为 null 时不得产生任何删除条目");
             Assert.IsEmpty(fromEmpty, "新清单为空数组时不得产生任何删除条目");
@@ -243,9 +245,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var stale = AesirUpdateService.ComputeStaleFiles(previous, current,
                 "Assets/ThirdParty/Runestone/AesirArchitecture", "AesirArchitecture");
 
-            CollectionAssert.AreEqual(
-                new[] { "Assets/ThirdParty/Runestone/AesirArchitecture/Old/Old.cs" }, stale,
-                "差集条目应按本地安装根给出，供 DeleteStaleEntries 直接删除");
+            CollectionAssert.AreEqual(new[] { "Assets/ThirdParty/Runestone/AesirArchitecture/Old/Old.cs" },
+                stale, "差集条目应按本地安装根给出，供 DeleteStaleEntries 直接删除");
         }
 
         [Test]
@@ -503,8 +504,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         /// 同步驱动一次检测并返回结果。fake 源返回的均是已完成 Task，管线内无真实等待，
         /// 故不会阻塞主线程（Unity 自带 nunit 被裁剪，async Task 用例可能被静默忽略成假通过，一律同步写）。
         /// </summary>
-        static AesirUpdateService.ReleaseCheckResult RunCheck(
-            Func<string, int, Task<string>> fetchTextAsync,
+        static AesirUpdateService.ReleaseCheckResult RunCheck(Func<string, int, Task<string>> fetchTextAsync,
             Func<Task<string>> probeLatestTagAsync,
             Func<double> clock = null) =>
             AesirUpdateService.CheckLatestReleaseAsync(fetchTextAsync, probeLatestTagAsync, clock)
@@ -527,13 +527,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void TimeoutConstants_AreBoundedAndConsistent()
         {
             Assert.Greater(AesirUpdateService.DetectionTotalTimeoutSeconds,
-                AesirUpdateService.DetectionAttemptTimeoutSeconds,
-                "整轮检测预算必须大于单次尝试超时，否则第一层就可能被整轮预算掐掉");
+                AesirUpdateService.DetectionAttemptTimeoutSeconds, "整轮检测预算必须大于单次尝试超时，否则第一层就可能被整轮预算掐掉");
             Assert.LessOrEqual(AesirUpdateService.DetectionTotalTimeoutSeconds, 60,
                 "整轮检测预算不应超过一分钟（进度条不能长时间挂着）");
             Assert.LessOrEqual(AesirUpdateService.DownloadStallTimeoutSeconds,
-                AesirUpdateService.DownloadTimeoutSeconds,
-                "无进展超时不应大于下载总上限");
+                AesirUpdateService.DownloadTimeoutSeconds, "无进展超时不应大于下载总上限");
         }
 
         [Test]
@@ -541,7 +539,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             // 预算自首次 clock() 起算：首次返回 0 建立预算，其后一律返回超限值 → 全部源都应被跳过
             var calls = 0;
-            Func<double> clock = () => calls++ == 0 ? 0d : AesirUpdateService.DetectionTotalTimeoutSeconds + 1;
+            Func<double> clock = () =>
+                calls++ == 0 ? 0d : AesirUpdateService.DetectionTotalTimeoutSeconds + 1;
 
             Exception caught = null;
             try
@@ -595,8 +594,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             var result = RunCheck(
                 FakeTextSource(new Dictionary<string, string> { [FirstCdnUrl] = UpdateInfoCurrentJson }),
-                UnreachableProbe(),
-                () => 0d);
+                UnreachableProbe(), () => 0d);
 
             Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.CdnRelay, result.RouteKind);
             Assert.IsFalse(result.Attempts.Any(a => a.Detail != null && a.Detail.Contains("跳过")),
@@ -606,13 +604,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void CheckLatestRelease_DirectApiSucceeds_ReportsGitHubDirectAndEnrichesManifest()
         {
-            var result = RunCheck(
-                FakeTextSource(new Dictionary<string, string>
-                {
-                    [AesirUpdateService.LatestReleaseApiUrl] = ApiResponseJson,
-                    [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoCurrentJson
-                }),
-                UnreachableProbe());
+            var result = RunCheck(FakeTextSource(new Dictionary<string, string>
+            {
+                [AesirUpdateService.LatestReleaseApiUrl] = ApiResponseJson,
+                [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoCurrentJson
+            }), UnreachableProbe());
 
             Assert.AreEqual("v0.25.1", result.Snapshot.Tag);
             Assert.AreEqual("GitHub API", result.RouteName, "直连层首个成功源应为 GitHub API");
@@ -627,12 +623,10 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void CheckLatestRelease_ApiFails_FallsBackToRedirectProbe()
         {
-            var result = RunCheck(
-                FakeTextSource(new Dictionary<string, string>
-                {
-                    [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoCurrentJson
-                }),
-                () => Task.FromResult("v0.25.1"));
+            var result = RunCheck(FakeTextSource(new Dictionary<string, string>
+            {
+                [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoCurrentJson
+            }), () => Task.FromResult("v0.25.1"));
 
             Assert.AreEqual("GitHub 重定向", result.RouteName);
             Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.GitHubDirect, result.RouteKind);
@@ -648,7 +642,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 FakeTextSource(new Dictionary<string, string> { [FirstMirrorUrl] = UpdateInfoCurrentJson }),
                 UnreachableProbe());
 
-            Assert.AreEqual("镜像 " + new Uri(AesirUpdateService.GitHubMirrorPrefixes[0]).Host, result.RouteName);
+            Assert.AreEqual("镜像 " + new Uri(AesirUpdateService.GitHubMirrorPrefixes[0]).Host,
+                result.RouteName);
             Assert.AreEqual(AesirUpdateService.ReleaseRouteKind.GitHubMirror, result.RouteKind);
             Assert.IsFalse(result.GitHubDirectAvailable, "直连层全失败时连接状态应为不可用");
             Assert.IsNotNull(result.Snapshot.Info, "镜像站同样带文件清单");
@@ -665,7 +660,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsFalse(result.GitHubDirectAvailable);
             StringAssert.Contains("jsDelivr", result.RouteName);
             // 兜底顺序：直连三源 + 两个镜像站都在 CDN 之前被尝试过
-            var cdnIndex = result.Attempts.ToList().FindIndex(a => a.Kind == AesirUpdateService.ReleaseRouteKind.CdnRelay);
+            var cdnIndex = result.Attempts.ToList()
+                .FindIndex(a => a.Kind == AesirUpdateService.ReleaseRouteKind.CdnRelay);
             Assert.AreEqual(5, cdnIndex, "CDN 中转必须排在直连三源与两个镜像站之后");
         }
 
@@ -692,19 +688,16 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void CheckLatestRelease_TagOnly_RejectsStaleManifest()
         {
-            var result = RunCheck(
-                FakeTextSource(new Dictionary<string, string>
-                {
-                    [AesirUpdateService.LatestReleaseApiUrl] = ApiResponseJson,
-                    // 直连 raw 仍缓存着旧版本（发布后数分钟内可能出现）
-                    [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoStaleJson
-                }),
-                UnreachableProbe());
+            var result = RunCheck(FakeTextSource(new Dictionary<string, string>
+            {
+                [AesirUpdateService.LatestReleaseApiUrl] = ApiResponseJson,
+                // 直连 raw 仍缓存着旧版本（发布后数分钟内可能出现）
+                [AesirUpdateService.GitHubRawUpdateInfoUrl] = UpdateInfoStaleJson
+            }), UnreachableProbe());
 
             Assert.AreEqual("v0.25.1", result.Snapshot.Tag);
             Assert.IsNull(result.Snapshot.Info, "版本不一致的清单不得采用（错配清单会误删文件）");
-            Assert.IsTrue(result.Attempts.Any(a => !a.Succeeded && a.Detail.Contains("不一致")),
-                "拒绝陈旧清单应留痕");
+            Assert.IsTrue(result.Attempts.Any(a => !a.Succeeded && a.Detail.Contains("不一致")), "拒绝陈旧清单应留痕");
         }
 
         [Test]
@@ -1000,7 +993,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
                 Pkg("AesirModules", "cn.runestone.aesir.modules", "0.20.0")
             };
 
-            var message = AesirUpdateController.BuildSingleUpdateConfirmation(target, "v0.21.0", installed, false);
+            var message =
+                AesirUpdateController.BuildSingleUpdateConfirmation(target, "v0.21.0", installed, false);
 
             StringAssert.Contains("即将仅更新 AesirArchitecture", message);
             StringAssert.Contains("配套版本警告", message);
@@ -1016,8 +1010,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var target = Pkg("AesirArchitecture", "cn.runestone.aesir.architecture", "0.20.0");
 
             // 另一已知包已是远程版本：不警告
-            var withUpToDatePeer = AesirUpdateController.BuildSingleUpdateConfirmation(
-                target, "v0.21.0",
+            var withUpToDatePeer = AesirUpdateController.BuildSingleUpdateConfirmation(target, "v0.21.0",
                 new List<AesirUpdateService.InstalledPackage>
                 {
                     target,
@@ -1026,8 +1019,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             StringAssert.DoesNotContain("配套版本警告", withUpToDatePeer);
 
             // 单包项目（另一已知包未安装）：不警告
-            var singlePackageProject = AesirUpdateController.BuildSingleUpdateConfirmation(
-                target, "v0.21.0", new List<AesirUpdateService.InstalledPackage> { target }, false);
+            var singlePackageProject = AesirUpdateController.BuildSingleUpdateConfirmation(target, "v0.21.0",
+                new List<AesirUpdateService.InstalledPackage> { target }, false);
             StringAssert.DoesNotContain("配套版本警告", singlePackageProject);
         }
 

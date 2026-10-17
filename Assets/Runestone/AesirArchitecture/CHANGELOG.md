@@ -5,6 +5,18 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.32.0] - 2026-10-17
+
+### Added
+
+- **AI Skill 文档集整合（AesirFramework-Skill）** — 新建全框架 AI 编码指南（`Documentation/AesirFramework-Skill/`），整合收编项目全部 AI 相关文档：原 AesirArchitecture-Skill 六档模板（MVC/MVP × Quick/Standard/Strict）与 core-api 速查、常见陷阱清单（10 条）、事件机制决策表、Jam 实战手册（工程约定 / JamTimer / GameFlowModel / JamInput / UI 资产生成器 / 自检脚本 / 反模式清单，原私有规范文档首次随包分发）与新增 RAM 四模块 API 速查（UI/Scene/Event/Audio，基于 0.31.x 源码逐项实证）。**档位口径按最新裁决修订：默认按最低档（Quick）执行**——具体类注册、可写 `ObservableValue` 直接暴露、不建 Model/Service 接口、不做只读 property 包装、不用 Command/Query；升档为加法，触发条件成表
+- **AI 启动场景 Skill（AesirBootScene-Skill）** — `Documentation/AesirBootScene-Skill/`：项目初始化阶段一键创建启动场景（主菜单场景）+ 启动脚本——空场景 + 唯一 `GameBootstrap` 物体（挂启动脚本 + AudioListener，无 Main Camera，杜绝编辑器 AudioListener 警告与重复渲染），登记 Build Settings index 0；含幂等的 `BootSceneBuilder` 编辑器脚本模板与六项验证清单
+
+### Removed
+
+- **AesirArchitecture-Skill / 常见陷阱清单.md / 事件机制决策表.md（独立文档收编）** — 三者内容已全部收编进 AesirFramework-Skill 的 SKILL.md 与 references/（用户拷走单个 skill 目录即自包含可用）；独立副本按裁决删除，README 文档地图与结构树同步改指新 skill
+- **产品文档精简：内部文档迁出产品包** — `Documentation/` 收敛为纯产品文档三类（英文 README / 使用文档 / AI Skill）：内部审查报告 `Docs/Architecture-Review.md` 与演进记录 `设计变更记录.md` 迁至开发者私有文档仓（Aesir-Docs），不再随 unitypackage 分发；README 结构树同步移除对应条目、`Documentation~` 镜像同步移除；后续废弃机制的历史演进记录改写入私有仓的《设计变更记录》
+
 ## [0.31.2] - 2026-10-06
 
 ### Changed

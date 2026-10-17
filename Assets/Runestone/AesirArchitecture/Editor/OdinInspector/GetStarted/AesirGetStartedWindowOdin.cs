@@ -263,11 +263,15 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>OdinEditorWindow.toasts 私有字段缓存（Odin 未公开 Toast 队列 API，上限机制须经反射访问）。</summary>
         static FieldInfo _toastsField;
 
-        /// <summary>弹右下角 Toast：先按 <see cref="MaxToasts" /> 收敛队列，再入队并记录动画活跃期（时长 + 0.5s 淡出 + 滑入余量）。默认绿色（成功动作），<paramref name="toastColor" /> 可覆盖为引导 / 失败色。</summary>
+        /// <summary>
+        /// 弹右下角 Toast：先按 <see cref="MaxToasts" /> 收敛队列，再入队并记录动画活跃期（时长 + 0.5s 淡出 + 滑入余量）。默认绿色（成功动作），
+        /// <paramref name="toastColor" /> 可覆盖为引导 / 失败色。
+        /// </summary>
         void ShowBottomRightToast(SdfIconType icon, string message, Color? toastColor = null)
         {
             DismissOldestToastsOverLimit();
-            ShowToast(ToastPosition.BottomRight, icon, message, toastColor ?? Color.green, ToastDurationSeconds);
+            ShowToast(ToastPosition.BottomRight, icon, message, toastColor ?? Color.green,
+                ToastDurationSeconds);
             _toastDriveDeadline = EditorApplication.timeSinceStartup + ToastDurationSeconds + 1.5f;
         }
 
@@ -1208,7 +1212,8 @@ namespace Runestone.AesirArchitecture.Editor
                         .AlignCenterY(buttonHeight);
                     // 按钮样式用 Button 而非 MiniButton——MiniButton 的背景不随 rect 高度拉伸（恒 ~18px 高
                     // 且锚在 rect 顶部），加大 rect 只扩点击区不涨可见高度；Button 随 rect 完整渲染
-                    if (GUI.Button(buttonRect, sample.IsImported ? "打开场景" : "导入 Sample", SirenixGUIStyles.Button))
+                    if (GUI.Button(buttonRect, sample.IsImported ? "打开场景" : "导入 Sample",
+                            SirenixGUIStyles.Button))
                     {
                         if (sample.IsImported)
                         {

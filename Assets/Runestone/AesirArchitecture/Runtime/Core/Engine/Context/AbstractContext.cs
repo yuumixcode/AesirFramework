@@ -54,6 +54,7 @@ namespace Runestone.AesirArchitecture
         /// 具体实现可替换而不影响 Context 逻辑。
         /// </summary>
         IGenericLocator<IModel> _modelLocator = new GenericLocator<IModel>();
+
         IGenericLocator<IService> _serviceLocator = new GenericLocator<IService>();
 
         static AbstractContext()

@@ -43,7 +43,7 @@ namespace Runestone.AesirArchitecture.Editor
     }
 
     /// <summary>可观察列表的内联调试面板。</summary>
-    [DrawerPriority()]
+    [DrawerPriority]
     internal sealed class ObservableListDrawer<T> : OdinValueDrawer<ObservableList<T>>
     {
         /// <inheritdoc />
@@ -55,7 +55,7 @@ namespace Runestone.AesirArchitecture.Editor
     }
 
     /// <summary>可观察字典的内联调试面板。</summary>
-    [DrawerPriority()]
+    [DrawerPriority]
     internal sealed class
         ObservableDictionaryDrawer<TKey, TValue> : OdinValueDrawer<ObservableDictionary<TKey, TValue>>
     {
@@ -68,7 +68,7 @@ namespace Runestone.AesirArchitecture.Editor
     }
 
     /// <summary>可观察集合（HashSet）的内联调试面板。</summary>
-    [DrawerPriority()]
+    [DrawerPriority]
     internal sealed class ObservableHashSetDrawer<T> : OdinValueDrawer<ObservableHashSet<T>>
     {
         /// <inheritdoc />

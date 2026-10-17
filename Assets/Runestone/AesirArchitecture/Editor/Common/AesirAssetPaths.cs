@@ -96,8 +96,7 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 AesirArchitectureDebug.LogWarning("AesirAssetPaths",
                     $"安装根锚点定位被跳过（{e.GetType().Name}: {e.Message}）。\n" +
-                    "本次域内安装根仅含默认位置 Assets/Runestone（若存在）；" +
-                    "若曾移动 Runestone 目录，相关窗口与构建剔除将在下次域重载后恢复精确路径。");
+                    "本次域内安装根仅含默认位置 Assets/Runestone（若存在）；" + "若曾移动 Runestone 目录，相关窗口与构建剔除将在下次域重载后恢复精确路径。");
             }
 
             return roots.ToArray();

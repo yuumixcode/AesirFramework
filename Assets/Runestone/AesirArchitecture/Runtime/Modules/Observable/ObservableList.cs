@@ -218,6 +218,18 @@ namespace Runestone.AesirArchitecture
             _changedEvent.RemoveListener(callback);
 
         /// <summary>
+        /// 清空所有变更监听。
+        /// </summary>
+        /// <remarks>
+        /// 清除全部监听引用，防止因监听者未释放导致的内存泄漏。
+        /// 与 <see cref="Clear" /> 不同——后者清空的是列表元素。
+        /// </remarks>
+        public void ClearListeners()
+        {
+            _changedEvent.Dispose();
+        }
+
+        /// <summary>
         /// 批量添加数组元素，逐项触发 Add 通知。
         /// </summary>
         /// <param name="itemsToAdd">要添加的元素数组。</param>
@@ -390,18 +402,6 @@ namespace Runestone.AesirArchitecture
             }
 
             _changedEvent.Invoke(CollectionChangedEventArgs<T>.Reset());
-        }
-
-        /// <summary>
-        /// 清空所有变更监听。
-        /// </summary>
-        /// <remarks>
-        /// 清除全部监听引用，防止因监听者未释放导致的内存泄漏。
-        /// 与 <see cref="Clear" /> 不同——后者清空的是列表元素。
-        /// </remarks>
-        public void ClearListeners()
-        {
-            _changedEvent.Dispose();
         }
 
         /// <summary>
