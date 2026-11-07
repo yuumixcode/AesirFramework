@@ -124,11 +124,11 @@ InitTestScene*.unity*
 .codelyignore
 .com-unity-codely.json
 
-# 开发文档
-/Docs/
+# 开发笔记仓库（Aesir-Notebook，独立 git 仓库，内容不入主仓）
+/Aesir-Notebook/
 
-# 公开文档站点仓库（AesirFramework-Docs，独立 git 仓库，内容不入主仓）
-/AesirFramework-Docs/
+# 公开产品站点仓库（AesirFramework-Site，独立 git 仓库，内容不入主仓）
+/AesirFramework-Site/
 
 # 第三方付费素材原件（Goldmetal，PlaneWar 示例内已有自包含拷贝，原件不分发）
 /Assets/Vertical 2D Shooting BE4/
