@@ -29,7 +29,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsTrue(AesirSamplesBuildFilter.IsSampleScene(
                 "Assets/Runestone/AesirModules/Samples/Events/02_Filters/Scene/SampleForEventFilters.unity"));
             Assert.IsTrue(AesirSamplesBuildFilter.IsSampleScene(
-                "Assets/Runestone/AesirArchitecture/Samples/PlaneWar/Scene/SampleForPlaneWarMono.unity"));
+                "Assets/Runestone/AesirArchitecture/Samples/AesirTimer/Scene/AesirTimerSample.unity"));
         }
 
         [Test]
@@ -162,7 +162,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var kept = AesirSamplesBuildFilter.FilterSampleScenes(new[]
             {
                 "Assets/Runestone/AesirArchitecture/Samples/MiniEvent/Scene/MiniEventSample.unity",
-                "Assets/Samples/Aesir Architecture/0.23.0/PlaneWar/Scene/SampleForPlaneWarMono.unity"
+                "Assets/Samples/Aesir Architecture/0.23.0/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity"
             }, out var removed);
 
             Assert.AreEqual(0, kept.Length);

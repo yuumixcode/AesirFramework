@@ -943,8 +943,6 @@ namespace Runestone.AesirArchitecture.Editor
                     return SdfIconType.Diagram3Fill;
                 case "MVP 计数器 · 渐进式":
                     return SdfIconType.PersonWorkspace;
-                case "实战示例":
-                    return SdfIconType.Joystick;
                 case "事件模块":
                     return SdfIconType.BroadcastPin;
                 case "音频模块":
