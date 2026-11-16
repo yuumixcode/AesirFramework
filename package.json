@@ -74,6 +74,11 @@
       "displayName": "RuntimeInitializeLoadType（初始化时机）",
       "description": "RuntimeInitializeLoadType 初始化时机示例：在 SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad 五个阶段输出日志演示执行顺序，触发开关由设置窗口控制（Tools → Aesir → Architecture → Samples → RuntimeInitializeLoadType）。",
       "path": "Samples~/RuntimeInitializeLoadType"
+    },
+    {
+      "displayName": "AesirTimer（计时器）",
+      "description": "AesirTimer 用法演示：Countdown 一次性延时与冷却、NextFrame 下一帧、Every 按间隔重复（有限次 / 无限），以及 Pause / Resume / Restart / Cancel 与「每帧只读查询画进度条」。面板只读 Remaining / Progress / RemainingExecutions，没有任何驱动代码；配套 Tools → Aesir → Architecture → Timer Debugger 可看同一批实例的运行时快照，另含一个不继承 MonoBehaviour 的纯 C# 冷却模型。",
+      "path": "Samples~/AesirTimer"
     }
   ]
 }

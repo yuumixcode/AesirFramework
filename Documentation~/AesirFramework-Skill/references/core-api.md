@@ -176,6 +176,59 @@ AesirPlayerLoop.EnsureInjected();
 > `Register` 注册回调时会自动检测 PlayerLoop 注入状态并补插。
 > 可用阶段：`BeforeUpdate`（Update 前）、`AfterUpdate`（PostLateUpdate 后）。
 
+## AesirTimer — 计时器原语
+
+框架驱动的计时器（`Runtime/Modules/Timer`）：创建即开始、到期自动出队或按间隔重复，**每个计时器是一个独立实例**，可随时查询 `Remaining` / `Progress` / `RemainingExecutions`。
+不需要 MonoBehaviour、也不需要协程，供纯 C# 的 Model / Service / Command 使用。
+
+```csharp
+// ① 一次性延时
+AesirTimer.Countdown(3f, () => _model.Refresh());
+
+// ② 技能冷却 + 进度条（View 每帧读 Progress，不需要有人驱动）
+_cooldown = AesirTimer.Countdown(5f);
+float progress = _cooldown.Progress;   // 0 → 1
+bool ready = _cooldown.IsFinished;
+_cooldown.Restart();                   // 复用同一实例，不换引用
+
+// ③ 下一帧执行一次
+AesirTimer.NextFrame(() => RebuildLayout());
+
+// ④ 每 0.5 秒结算一次伤害，共 6 次（省略 repeatCount 即无限）
+AesirTimer.Every(0.5f, () => _model.TickDamage(), repeatCount: 6);
+
+// ⑤ 实例级暂停（全局暂停仍用 Time.timeScale）
+_cooldown.Pause();
+_cooldown.Resume();
+
+// ⑥ 不受 Time.timeScale 影响（暂停菜单 / UI 动画）
+AesirTimer.Countdown(0.2f, FadeOut, unscaled: true);
+
+// ⑦ 中途取消
+var timer = AesirTimer.Countdown(10f, OnTimeout);
+timer.Cancel();                        // 与 timer.Dispose() 等价
+```
+
+**选路径只看一个问题：你有每帧回调吗？**
+
+| 场景 | 用什么 |
+|------|--------|
+| MonoBehaviour 内部的计时（每帧判定） | 本地 `float` 字段 + `Update` |
+| 纯 C# 类需要每帧逻辑 | `MonoLifecycleProxy` + `ICustomUpdate` |
+| 纯 C# 类只需要"到点做一件事" / "冷却进度" / "按间隔重复" | **`AesirTimer`** |
+| 需要协程语义（多段等待、依赖对象或动画） | 驱动方挂 GameObject 用协程 |
+
+> - 没有 `Start()` / `Tick()`：工厂方法即开始；全局暂停靠 `Time.timeScale`（默认时间源跟随缩放，`unscaled` 不受影响），单实例暂停用 `Pause()` / `Resume()`。
+> - `Every` 的首次回调在 `interval` 之后；`repeatCount < 0` 无限、`0` 表示一次也不执行、有限次数用尽自动出队转 `IsFinished`。
+> - `Every` **一帧卡顿跨越多个间隔只回调一次**（不补发），避免"越慢越忙"的回调雪崩。
+> - `NextFrame` 落在"此后第一次结算"：在 `Update` / 协程 / 到期回调里创建 → 下一帧执行；在 `AfterAssembliesLoaded` 里创建 → 当帧结算。
+> - 到期自动出队，**不需要 Dispose**，也不会泄漏；但取消必须持有引用（丢弃引用即放弃 `Cancel` 的能力）。
+> - 同一次结算内多个到期按创建顺序回调；在到期回调里新建的计时器下一帧才推进。
+> - 需要**正计时（秒表）**用 `Time.time` 差值，不要用计时器——永远不结束的计时器是泄漏源；无限重复的 `Every` 必须能在合适时机 `Cancel`。
+> - 需要另一种时长就新建实例（框架不做对象池）；同一冷却位复用请用 `Restart()`（同时重置执行计数与暂停态）。
+> - 运行时排查看 `Tools → Aesir → Architecture → Timer Debugger`（Odin / IMGUI 双版本）：状态、形态、时间源、剩余、进度、已执行 / 还剩几次、存活时长、回调归属，并可按时间或按帧调低拉取频率以降低调试开销；编辑模式下没有数据源，面板数据恒为零。
+> - 想在自己组件的 Inspector 里看计时器：字段是普通（非 `[SerializeReference]`）引用时，给组件写自定义 Inspector，读 `Progress` / `Remaining` / `RemainingExecutions` 画即可（`Samples/AesirTimer` 的 `AesirTimerSampleInspector` 是完整范例：数据抽成一行结构，运行时面板与 Inspector 各用一套样式）。
+
 ## AesirArchitecture — MonoBehaviour 宿主单例
 
 ```csharp

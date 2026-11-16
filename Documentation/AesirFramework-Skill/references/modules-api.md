@@ -48,7 +48,7 @@ UIModule.RegisterWindowPrefab<T>(GameObject prefab);           UIModule.ContainW
 
 - `path` 传入后经 `ResourcesUILoader` 加载并**自动注册**，后续同类型直接 `Show<T>()` 不必再给 path。
 - 实例键 = 预制体**根组件类型**：`Show<HudPanel>()` 的 `HudPanel` 必须与根节点上的组件类型完全一致。
-- **未注册且无 path 不抛异常**：只 `LogError` 并返回 null——所以路径常量要过自检脚本（见 jam-playbook.md 第 5 节）。
+- **未注册且无 path 不抛异常**：只 `LogError` 并返回 null——所以路径常量要集中定义并能在自检时核对。
 
 ### 三个必知陷阱
 
@@ -87,7 +87,7 @@ SceneModule.LoadSceneSingle(string path, Action onCompleted = null, Action onFai
 SceneModule.LoadSceneAdditive(string path, Action onCompleted = null, Action onFailed = null, Action<float> onProgress = null);
 SceneModule.UnloadScene(string path, Action onUnloaded = null, Action onFailed = null);
 SceneModule.UnloadAllAddedScenes(Action onAllUnloaded = null, Action onFailed = null);
-SceneModule.ReloadScene(Action onCompleted = null, Action onFailed = null);   // 重开（先 GameContext.Instance.Dispose()，见 jam-playbook）
+SceneModule.ReloadScene(Action onCompleted = null, Action onFailed = null);   // 重开（先 GameContext.Instance.Dispose()）
 SceneModule.SetActiveScene(string path);        // 多场景工作流：指定激活场景（光照/新增物体归属）
 SceneModule.LastLoadedScene;                    // 最近一次 Single/Reload 加载的场景路径
 SceneModule.AddedScenePaths;                   // 叠加加载追踪中的路径列表

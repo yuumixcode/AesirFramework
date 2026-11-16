@@ -50,6 +50,13 @@ namespace Runestone.AesirArchitecture
         static T _instance;
 
         /// <summary>
+        /// 初始化重入守卫标记。仅在 <see cref="Instance" /> 同步创建 → 初始化期间为 true，
+        /// try/finally 保证退出即复位（含初始化抛异常路径），故静止态恒为 false、无跨域残留，
+        /// 无需列入 <see cref="ResetStaticsAssistant" /> 重置回调。
+        /// </summary>
+        static bool _initializing;
+
+        /// <summary>
         /// 依赖 <see cref="IGenericLocator{T}" /> 抽象而非具体实现（DIP）：容器行为契约由接口定义，
         /// 具体实现可替换而不影响 Context 逻辑。
         /// </summary>
@@ -83,8 +90,11 @@ namespace Runestone.AesirArchitecture
         /// 应修复根因而非优雅降级。
         /// </para>
         /// <para>
-        /// <b>重入约定</b>：<see cref="Configure" /> 及各模块的初始化方法中禁止访问 <c>Instance</c>，
-        /// 否则会因单例尚未发布而递归创建第二个上下文实例。
+        /// <b>重入约定</b>：<see cref="Configure" /> 及各模块的初始化方法中禁止访问 <c>Instance</c>。
+        /// 单例在 <see cref="Initialize" /> 完成后才发布，初始化期间访问 <c>Instance</c> 会再次触发
+        /// 创建 → 初始化 → 访问的无限递归，最终栈溢出（<see cref="StackOverflowException" /> 不可捕获、直接崩溃进程）。
+        /// 为此 <see cref="Instance" /> 设重入守卫：初始化期间检测到重入即抛含修复提示的
+        /// <see cref="InvalidOperationException" />，把不可诊断的栈溢出转为可操作的快速失败。
         /// </para>
         /// <para>
         /// 该属性返回具体上下文类型 <typeparamref name="T" />，
@@ -100,10 +110,26 @@ namespace Runestone.AesirArchitecture
                     return _instance;
                 }
 
-                var context = new T();
-                context.Initialize();
-                _instance = context;
-                return context;
+                if (_initializing)
+                {
+                    throw new InvalidOperationException(
+                        $"{typeof(T).Name} 初始化期间检测到对 Instance 的重入访问。Configure 与各模块初始化方法内" +
+                        "禁止访问 Instance——单例尚未发布，重入会无限递归直至栈溢出。请改为经构造/方法参数传递依赖，" +
+                        "或把对 Instance 的访问推迟到初始化完成之后。");
+                }
+
+                _initializing = true;
+                try
+                {
+                    var context = new T();
+                    context.Initialize();
+                    _instance = context;
+                    return context;
+                }
+                finally
+                {
+                    _initializing = false;
+                }
             }
         }
 

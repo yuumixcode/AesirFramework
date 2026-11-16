@@ -2,6 +2,7 @@
 
 > 被动视图 + Presenter 直改 Model。不建 View 接口、不建 Model 接口。~3-4 个文件。
 > 与 MVC-Quick 的 Model 完全一致；差异在 View 是被动视图（不继承 `MonoView<T>`），刷新由 Presenter 推送。
+> MVP 是 Unity 官方最佳实践所教授的严格分层范式；模式选择与"为什么暂不提供 MVVM"见 [mode-decisions](mode-decisions.md)。
 
 ## 文件清单
 

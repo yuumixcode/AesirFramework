@@ -393,7 +393,9 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 触发 Reset 通知（少于 2 个元素时重排无变化，跳过）。
         /// </summary>
-        /// <remarks>供 Sort / Reverse 复用；Clear 已自行判空，不经此路径。</remarks>
+        /// <remarks>供 Sort / Reverse 复用；Clear 已自行判空，不经此路径。
+        /// <para><b>「无变更不通知」的已知例外</b>：Sort / Reverse 只要元素数 ≥ 2 就发 Reset，不预先检测序列是否真的改变（已排序列表再 Sort、回文列表再 Reverse 仍会通知）。这是有意的粗粒度取舍——预检测需额外一趟 O(n) 比较且依赖比较器语义，而 Reset 本就是「整体重建」信号，订阅者按全量刷新处理即可，不必假设序列一定变化。</para>
+        /// </remarks>
         void NotifyReset()
         {
             if (items.Count < 2)

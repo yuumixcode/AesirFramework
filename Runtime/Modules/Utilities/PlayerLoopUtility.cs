@@ -175,7 +175,8 @@ namespace Runestone.AesirArchitecture
             if (system.type != null)
             {
                 var indent = new string(' ', depth * 4);
-                var isAesir = system.type.Name.StartsWith("AesirArchitecture");
+                // 前缀须与 AesirPlayerLoop 注入的系统类型名（AesirScriptRunBeforeUpdate / AfterUpdate）一致
+                var isAesir = system.type.Name.StartsWith("AesirScriptRun");
                 var name = system.type.Name;
                 var prefix = isAesir ? "[Aesir Architecture] " : string.Empty;
                 sb.AppendLine($"{indent}{prefix}{name}");

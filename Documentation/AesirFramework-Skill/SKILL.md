@@ -1,6 +1,6 @@
 ---
 name: aesir-framework
-description: AesirFramework（RAA 架构框架 + RAM 功能模块）的 AI 编码指南。为 Unity/团结引擎项目用 Aesir 框架写游戏代码时使用——覆盖 Context/Model/View/Controller 组织与默认最低档（Quick）写法、六档分级模板、UI（Panel 默认/Window 进阶）、场景一行切换、事件机制（ObservableValue/MiniEvent/EventModule）、音频、jam 快速开发实战。触发场景：用户提到 Aesir、AesirFramework、RAA、RAM、AbstractContext、ObservableValue、MiniEvent、UIModule、SceneModule、AudioModule，或要求"用 Aesir 框架写"、"按 Aesir 架构组织代码"、"搭游戏骨架"。
+description: AesirFramework（RAA 架构框架 + RAM 功能模块）的 AI 编码指南。为 Unity/团结引擎项目用 Aesir 框架写游戏代码时使用——覆盖 Context/Model/View/Controller 组织与默认最低档（Quick）写法、六档分级模板、模式选择决策（MVC 首推 / MVP 官方范式 / 暂不提供 MVVM）、UI（Panel 默认/Window 进阶）、场景一行切换、事件机制（ObservableValue/MiniEvent/EventModule）、音频。触发场景：用户提到 Aesir、AesirFramework、RAA、RAM、AbstractContext、ObservableValue、MiniEvent、UIModule、SceneModule、AudioModule，或要求"用 Aesir 框架写"、"按 Aesir 架构组织代码"、"搭游戏骨架"。
 ---
 
 # AesirFramework AI 编码指南
@@ -15,6 +15,7 @@ AesirFramework 是 **game 快速使用框架**：渐进式 MVC/MVP 架构（RAA�
 2. **默认按最低档（Quick，最宽松档位）执行**：不建 Model/Service 接口、不做只读 property 包装、不用 Command/Query；持有与注册 Model/Service 一律用**具体类**（`RegisterModel(new PlayerModel())`，引用字段 `PlayerModel _player`）。AI 时代，需要扩展性时再升级（升档是加法，见文末）。
 3. **UI 与场景管理是框架核心两件套**，都有"零配置默认路径"（下文速查）。
 4. **资产加载默认 `Resources`**（demo 级最简；`IUIAssetLoader` 可替换是进阶能力，不碰就不存在）。
+5. **暂不提供 MVVM**（2026-11-16 裁决）：快速开发首推 MVC，MVP 是 Unity 官方最佳实践范式（可选）。用户要求"用 MVVM 写"时，说明决策并引导到 MVC/MVP，不擅自引入 ViewModel 层或绑定引擎。完整论述见 [references/mode-decisions.md](references/mode-decisions.md)。
 
 ## 默认写法：Quick 档三件套
 
@@ -58,7 +59,7 @@ public class PlayerPanel : MonoViewController<GameContext>
 }
 ```
 
-**Context 访问方式**：View 基类内用 `this.GetModel<T>()`；世界物体/其它脚本用 `GameContext.Instance.GetModel<T>()`（纯 C# 单例懒加载，不随场景卸载销毁——重开必须先 `GameContext.Instance.Dispose()`，见 [references/jam-playbook.md](references/jam-playbook.md) 第 3.4 节）。
+**Context 访问方式**：View 基类内用 `this.GetModel<T>()`；世界物体/其它脚本用 `GameContext.Instance.GetModel<T>()`（纯 C# 单例懒加载，不随场景卸载销毁——重开必须先 `GameContext.Instance.Dispose()`）。
 
 ## 六档分级（默认 Quick，按需升档）
 
@@ -69,8 +70,9 @@ public class PlayerPanel : MonoViewController<GameContext>
 | Strict | 接口 | 只读接口 + 写方法 | `ExecuteCommand` | ~10-11 |
 
 - MVC（推荐）：View 基类 `MonoViewController<T>`（Quick）/ `MonoView<T>`（Standard+）
-- MVP（可选）：View 纯 `MonoBehaviour`，Presenter 推送刷新
-- **升档是加法不是重写**：Quick → Standard 收窄暴露 + 加写方法；→ Strict 叠加接口与 Command/Query。升档触发条件（写入逻辑 >30 行 / 跨多 View 同一操作 / 运行期替换实现）见 jam-playbook 第 7 节。
+- MVP（可选，Unity 官方最佳实践所教授的严格分层范式）：View 纯 `MonoBehaviour`，Presenter 推送刷新
+- MVVM：**暂不提供**（架构决策，非遗漏）——模式选择与理由见 [mode-decisions](references/mode-decisions.md)
+- **升档是加法不是重写**：Quick → Standard 收窄暴露 + 加写方法；→ Strict 叠加接口与 Command/Query。升档触发条件：写入逻辑 >30 行 / 跨多 View 同一操作 / 运行期替换实现。
 
 完整模板按需加载：[mvc-quick](references/mvc-quick.md) / [mvc-standard](references/mvc-standard.md) / [mvc-strict](references/mvc-strict.md) / [mvp-quick](references/mvp-quick.md) / [mvp-standard](references/mvp-standard.md) / [mvp-strict](references/mvp-strict.md)。
 
@@ -129,9 +131,9 @@ SceneModule.LoadSceneSingle("Assets/Scenes/Gameplay.unity",
 
 1. 装两个包（Git URL 两条都要加）。
 2. **创建启动场景**：用 `AesirBootScene-Skill`（同目录 `../AesirBootScene-Skill/SKILL.md`）——一键产出 `Boot.unity`（只含启动脚本 + AudioListener，无相机）+ `GameBootstrap.cs`，登记 Build Settings index 0。
-3. 建目录结构与缺口补件（JamTimer / JamInput / GameFlowModel / UIPaths / GameConfig / JamFonts）：按 [references/jam-playbook.md](references/jam-playbook.md) 第 1、3 节。
+3. 建目录结构（`Context/` `Model/` `Controller/` `View/` `Core/`）。延时与冷却直接用框架的 `AesirTimer`（见 [references/core-api.md](references/core-api.md)），不要自己抄一个计时器类。
 4. 写 Context + 第一个 Model + 第一个面板，跑通闭环。
-5. 写自检脚本（jam-playbook 第 5 节）。
+5. 自检一遍：Console 无编译错误、启动场景能进、第一个面板能正常打开。
 
 ## references 索引
 
@@ -140,9 +142,9 @@ SceneModule.LoadSceneSingle("Assets/Scenes/Gameplay.unity",
 | [mvc-quick.md](references/mvc-quick.md) | 默认档完整模板（Context/Model/Panel 三件套） | 写第一个系统时 |
 | [mvc-standard.md](references/mvc-standard.md) / [mvc-strict.md](references/mvc-strict.md) | MVC 中间/严格档模板 | 升档时 |
 | [mvp-quick.md](references/mvp-quick.md) / [mvp-standard.md](references/mvp-standard.md) / [mvp-strict.md](references/mvp-strict.md) | MVP 三档模板 | 选 MVP 模式时 |
-| [core-api.md](references/core-api.md) | ObservableValue / MiniEvent / Context / PlayerLoop / 能力矩阵 | 需要辅助模块细节时 |
+| [mode-decisions.md](references/mode-decisions.md) | 模式选择决策：MVC 首推 / MVP 官方范式 / 为什么暂不提供 MVVM + 重评触发条件 | 选模式时、用户要求 MVVM 时 |
+| [core-api.md](references/core-api.md) | ObservableValue / MiniEvent / Context / PlayerLoop / AesirTimer / 能力矩阵 | 需要辅助模块细节时 |
 | [modules-api.md](references/modules-api.md) | RAM 四模块 API 白名单（UI/Scene/Event/Audio）+ 陷阱 | 写 UI/场景/音频时 |
-| [jam-playbook.md](references/jam-playbook.md) | jam/快速开发实战：工程约定、缺口补件、UI 生成器、自检、反模式 | 快速开发/jam 场景开工时 |
 | [pitfalls.md](references/pitfalls.md) | 10 条高频陷阱（现象+原因+修法） | 排错时 |
 | [event-decisions.md](references/event-decisions.md) | 事件机制决策表 | 选通知机制时 |
 
@@ -153,4 +155,4 @@ SceneModule.LoadSceneSingle("Assets/Scenes/Gameplay.unity",
 - Command：`XxxCommand : AbstractCommand`；Query：`GetXxxQuery : AbstractQuery<TResult>`（升档才用）
 - ObservableValue：私有 `[SerializeField]` 字段 `camelCase`，对外属性 `PascalCase`
 - 事件参数载体（EventModule）：`XxxEventArgs : AesirEventArgs`；MVP View 事件无 On 前缀
-- 目录：`Context/` `Model/` `Controller/` `View/` `Core/`（业务工程约定，见 jam-playbook 第 1.1 节）
+- 目录：`Context/` `Model/` `Controller/` `View/` `Core/`（业务工程约定）

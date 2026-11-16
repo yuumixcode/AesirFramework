@@ -18,6 +18,9 @@ namespace Runestone.AesirArchitecture
     {
         IContext _context;
 
+        /// <summary>已释放标记，保证 <see cref="Dispose" /> 幂等（与 <c>AbstractContext.Dispose</c> 的释放守卫同构）。</summary>
+        bool _disposed;
+
         /// <summary>
         /// 是否已初始化（只读）
         /// </summary>
@@ -40,9 +43,17 @@ namespace Runestone.AesirArchitecture
         /// <remarks>
         /// 先调用 <see cref="OnDispose" /> 执行子类清理逻辑，随后断开上下文引用并将
         /// <see cref="Initialized" /> 重置为 <c>false</c>（重置语义见该属性说明）。
+        /// <para>幂等：重复调用直接早退，<see cref="OnDispose" /> 只执行一次——与 <c>AbstractContext.Dispose</c>
+        /// 的释放守卫同构，避免框架生命周期释放与手动释放叠加时重复取消订阅 / 重复释放资源。</para>
         /// </remarks>
         public void Dispose()
         {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
             OnDispose();
             _context = null;
             Initialized = false;

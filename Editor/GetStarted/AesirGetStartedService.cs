@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.PackageManager.UI;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Object = UnityEngine.Object;
 
 namespace Runestone.AesirArchitecture.Editor
@@ -534,8 +535,11 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>
         /// 打开示例场景：先保存当前打开的场景一次（无未保存修改时为空操作），再切换到示例场景。
         /// <para>
-        /// 当前场景从未保存过（无路径）时由 Unity Save 面板兜底，用户在面板中取消保存则中止切换
-        /// （避免丢失未保存的改动）；无场景 / 未导入示例退化为 <see cref="PingSample" /> 定位。
+        /// 有资产路径的场景静默落盘——示例导航是高频浏览动作，不为正常场景弹确认框；无路径的临时场景
+        /// （新建未保存 / 崩溃恢复出的 <c>Temp/__Backupscenes</c> 场景）无法静默保存
+        /// （<see cref="EditorSceneManager.SaveOpenScenes" /> 会让 Unity 弹出另存为面板强制命名），
+        /// 故跳过它们并改用 Unity 打开场景的标准询问（不保存 / 取消 / 保存，取消则中止切换）。
+        /// 无场景 / 未导入示例退化为 <see cref="PingSample" /> 定位。
         /// </para>
         /// </summary>
         /// <returns>是否已实际打开示例场景（保存被取消或示例不可打开时为 false，不产生切换）。</returns>
@@ -547,13 +551,38 @@ namespace Runestone.AesirArchitecture.Editor
                 return false;
             }
 
-            if (!EditorSceneManager.SaveOpenScenes())
+            if (!SaveModifiedScenes())
             {
                 return false;
             }
 
             EditorSceneManager.OpenScene(sample.ScenePath, OpenSceneMode.Single);
             return true;
+        }
+
+        /// <summary>
+        /// 保存切换前所有已修改的场景：有资产路径的静默落盘，无路径的临时场景交回 Unity 的保存询问
+        /// （用户选取消则整体中止）。
+        /// </summary>
+        static bool SaveModifiedScenes()
+        {
+            var hasDirtyUntitledScene = false;
+            for (var i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (string.IsNullOrEmpty(scene.path))
+                {
+                    hasDirtyUntitledScene |= scene.isDirty;
+                    continue;
+                }
+
+                if (scene.isDirty && !EditorSceneManager.SaveScene(scene))
+                {
+                    return false;
+                }
+            }
+
+            return !hasDirtyUntitledScene || EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
         }
 
         /// <summary>在 Project 窗口选中并 Ping 示例根目录文件夹（未导入时打开 Package Manager）。</summary>
@@ -587,9 +616,9 @@ namespace Runestone.AesirArchitecture.Editor
         public static string BuildPingToastMessage(AesirSampleInfo sample) =>
             $"已在 Project 窗口选中示例文件夹：{sample.RootPath}";
 
-        /// <summary>打开场景动作的 Toast 提示文本（告知示例场景已打开、切换前的场景已保存）。</summary>
+        /// <summary>打开场景动作的 Toast 提示文本（告知示例场景已打开）。</summary>
         public static string BuildOpenSceneToastMessage(AesirSampleInfo sample) =>
-            $"已打开示例场景：{sample.ScenePath}，切换前的场景已保存";
+            $"已打开示例场景：{sample.ScenePath}";
 
         #endregion
 
