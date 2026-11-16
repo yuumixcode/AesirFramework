@@ -3,10 +3,10 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.32.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
-[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
+[![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
 >
@@ -66,7 +66,7 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 - **下载直连失败自动切换镜像站代理**，全部线路失败时弹窗给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效；
 - 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装 Odin Inspector 时更新器为 Odin 界面。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后用同一 URL 重新添加（`latest` 分支名永久固定，无需随发版修改；需钉死旧版本时改用 Release tag，如 `?path=Assets/Runestone/AesirArchitecture#v0.32.0`）。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后用同一 URL 重新添加（`latest` 分支名永久固定，无需随发版修改；需钉死旧版本时改用 Release tag，如 `?path=Assets/Runestone/AesirArchitecture#v0.33.0`）。
 >
 > **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
 
@@ -254,15 +254,11 @@ this.ExecuteCommand<AddScoreCommand>();
 | `AesirTimer` | 计时器用法：`Countdown` 延时与冷却、`NextFrame`、`Every` 有限 / 无限重复、`Pause` / `Resume` / `Restart` / `Cancel`；面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条（无驱动代码），另含一个不继承 MonoBehaviour 的纯 C# 冷却模型；动作在自定义 Inspector 里点按钮触发（`ContextMenu` 走同一批方法），运行时面板与 Inspector 共用同一份行数据 | 无 |
 | `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示，开关经设置窗口控制（`Tools → Aesir → Architecture → Samples`） | 无 |
 
-### 实战示例
-
-| 示例 | 说明 | 依赖 |
-|------|------|------|
-| `PlaneWar` | 纵版射击飞机大战（Mono 版）：自包含素材的完整小游戏，演示 MiniEvent、ObservableValue 与 MonoLifecycleProxy 在真实玩法中的组合运用 | 无 |
+> **PlaneWar 不在包内**：纵版射击完整游戏案例已迁出为宿主工程的 `Assets/PlaneWar/`（源码仓库内可见，不随包分发、不进示例清单与 Getting Started 面板），详见仓库根 `Assets/PlaneWar/README.md`。
 
 ## 可观察集合（ObservableCollections 轻量内置子集）
 
-> 本模块的集合类型命名参考 [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT），便于对照上游文档。本模块是上游的**高频子集**（面向独立游戏的精简定位），不是全量复刻；变更通知为本项目自有约定（单轨事件，**与上游语义不一致**）。完整说明见 [`Documentation/observable-collections.md`](Documentation/observable-collections.md)。
+> 本模块的集合类型命名参考 [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT），便于对照上游文档。本模块是上游的**高频子集**（面向独立游戏的精简定位），不是全量复刻；变更通知为本项目自有约定（单轨事件，**与上游语义不一致**）。完整说明见 [`Documentation~/observable-collections.md`](Documentation~/observable-collections.md)。
 
 **集合家族**：`ObservableList<T>`、`ObservableDictionary<TKey, TValue>`、`ObservableHashSet<T>`，统一实现 `IObservableCollection<T>`（`AddListener` / `RemoveListener`）。队列等更多集合形态直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)。
 
@@ -290,7 +286,7 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 
 **重度需求用上游**：同步视图与过滤器、R3 响应式集成、环形缓冲区 / 栈 / 交替索引列表、WPF 类平台的 `INotifyCollectionChanged` 绑定、可写视图回写——直接使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（两套体系不混用）。
 
-**可与上游共存**：程序集、UPM 包名与命名空间三层完全隔离，同一项目可同时安装两库（程序集 `ObservableCollections` vs `Runestone.AesirArchitecture`）；同一源文件同时 `using` 两个命名空间并裸引用同名类型（三种集合与相关接口）时会产生 CS0104，用命名空间别名或完全限定名解决。详见 `Documentation/observable-collections.md` 的「与上游共存」。
+**可与上游共存**：程序集、UPM 包名与命名空间三层完全隔离，同一项目可同时安装两库（程序集 `ObservableCollections` vs `Runestone.AesirArchitecture`）；同一源文件同时 `using` 两个命名空间并裸引用同名类型（三种集合与相关接口）时会产生 CS0104，用命名空间别名或完全限定名解决。详见 `Documentation~/observable-collections.md` 的「与上游共存」。
 
 ## 架构总览
 
@@ -347,12 +343,11 @@ cn.runestone.aesir.architecture/
 ├── package.json
 ├── AesirPathLookup.asset             # 安装位置锚点资产（Runestone 可移动到项目任意文件夹，勿删）
 ├── README.md                       # 本文件（中文）
-├── Documentation/                  # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
-│   ├── README_EN.md               # English version
-│   ├── observable-collections.md  # 可观察集合：语义定稿与上游差异清单
-│   ├── AesirFramework-Skill/      # AI 编码指南（SKILL.md + 六档模板 + 模块速查 + 陷阱）
-│   └── AesirBootScene-Skill/       # AI 启动场景 Skill（创建启动场景 + 启动脚本）
-├── Documentation~/                 # 文档镜像（Git URL 安装隐藏副本，无 .meta）
+├── README_EN.md                    # English version
+├── Documentation~/                 # 使用文档（尾随 `~`：AssetDatabase 不可见、不进 unitypackage、无 .meta）
+│   └── observable-collections.md   # 可观察集合：语义定稿与上游差异清单
+├── TuanjieCowork~/                 # AI 技能导流（AssetDatabase 不可见、不进 unitypackage、无 .meta）
+│   └── README.md                   # 技能已统一到仓库根扩展 .codely-cli/extensions/AesirFrameworkGame/：下载与安装说明
 ├── CHANGELOG.md
 ├── LICENSE.md
 ├── Runtime/
@@ -427,7 +422,6 @@ cn.runestone.aesir.architecture/
 │   ├── ObservableCollections/     # 可观察集合（List / Dictionary / HashSet）使用示例
 │   ├── MiniEvent/                 # MiniEvent 使用案例
 │   ├── AesirTimer/                # AesirTimer 使用案例（延时 / 冷却 / 重复 / 暂停 + 只读查询面板 + 自定义 Inspector）
-│   ├── PlaneWar/                  # 纵版射击飞机大战（Mono 版实战示例）
 │   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType 各阶段重置演示（Editor-only 工具，菜单 Tools → Aesir → Architecture → Samples）
 ├── Samples~/                      # 示例源镜像（Git URL 安装后经 Package Manager 按需导入；构建时自动剔除）
 └── Third Party Notices.md          # 第三方许可声明
@@ -446,7 +440,7 @@ cn.runestone.aesir.architecture/
 - **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
 - **纯 C# 层的延时手段** — 框架刻意**不**提供帧级调度器。纯 C# 类需要每帧回调时用 `MonoLifecycleProxy`（`ICustomUpdate` / `ICustomFixedUpdate` / `ICustomLateUpdate`，零场景物体、DDOL 自动建宿主），需要协程时把驱动方挂在 GameObject 上——两者都是 Unity 原生心智模型，无需第三套调度 API
 - **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
-- **集合可观察全家桶** — 内置 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根 `Third Party Notices.md`）的**高频子集**：三种集合（List / Dictionary / HashSet）+ 单轨变更通知。队列等其他集合形态、同步视图与过滤器、R3 响应式、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged` 绑定层、可写视图**不做**——需要时直接使用上游库（两套体系不混用，详见 `Documentation/observable-collections.md`）
+- **集合可观察全家桶** — 内置 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根 `Third Party Notices.md`）的**高频子集**：三种集合（List / Dictionary / HashSet）+ 单轨变更通知。队列等其他集合形态、同步视图与过滤器、R3 响应式、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged` 绑定层、可写视图**不做**——需要时直接使用上游库（两套体系不混用，详见 `Documentation~/observable-collections.md`）
 - **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
 
 ### 编写约定（违反时 fail-fast 报错，框架不做兜底）

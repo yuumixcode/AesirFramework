@@ -113,16 +113,42 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
+# macOS 资源叉
+.DS_Store
+
 # 团结引擎 AI Codely 本地工具链
-# 入库：Codely Bridge 包缓存 + TJGenerators 扩展（与 Bridge 强绑定），保证克隆后功能一致
-# 忽略：CLI 设置（应用自动重写，易变）、其余扩展、Skill、UnityInsight 索引缓存、自动保存、工具输出、剪贴板等运行时数据
+# 入库：设置、项目记忆、项目 Skill、自研扩展 AesirFrameworkGame（架构与 AI 用法全量）
+# 其余扩展一律不入库（可从 .codely-cli/RESTORE.md 的 URL 重装），运行时数据与凭证不入库
 .codely-cli/*
-!.codely-cli/extensions
+!.codely-cli/settings.json
+!.codely-cli/memory.md
+!.codely-cli/memory/
+!.codely-cli/skills/
+!.codely-cli/RESTORE.md
+!.codely-cli/extensions/
 .codely-cli/extensions/*
-!.codely-cli/extensions/TJGenerators
+!.codely-cli/extensions/AesirFrameworkGame/
+.codely-cli/UnityInsight/
+.codely-cli/auto-saves/
+.codely-cli/tool-outputs/
+.codely-cli/tmp/
+
+# 凭证兜底：即使落在已放开的 Skill / 扩展目录内也不入库
+.codely-cli/**/*token*.json
+.codely-cli/**/*secret*
+.codely-cli/**/*oauth*
+.codely-cli/**/*credential*
+.codely-cli/**/.env*
+.codely-cli/**/*.pem
+.codely-cli/**/*.p12
+.codely-cli/**/*.key
+
 .codely/
 .codelyignore
 .com-unity-codely.json
+
+# Codely Bridge 本地包缓存（安装时生成，可从 Unity 包管理器重建）
+/.codely.packages/
 
 # 开发笔记仓库（Aesir-Notebook，独立 git 仓库，内容不入主仓）
 /Aesir-Notebook/
@@ -130,11 +156,11 @@ InitTestScene*.unity*
 # 公开产品站点仓库（AesirFramework-Site，独立 git 仓库，内容不入主仓）
 /AesirFramework-Site/
 
-# 第三方付费素材原件（Goldmetal，PlaneWar 示例内已有自包含拷贝，原件不分发）
+# 第三方免费素材原件（Goldmetal，PlaneWar 示例内已有自包含拷贝，原件不分发）
 /Assets/Vertical 2D Shooting BE4/
 /Assets/Vertical 2D Shooting BE4.meta
 
-# ScriptableSingleton（如 RuntimeInitializeLoadType 示例）写入项目根目录的设置资产，运行时生成，不入库
+# ScriptableSingleton（如 RuntimeInitializeLoadType 示例）写入项目根目录的设置资产，本机编辑器产物，不入库
 /ScriptableSingleton/
 
 # ScriptDocGenerator 默认文档输出目录（项目根，Assets 外），生成物不入库
@@ -143,13 +169,7 @@ InitTestScene*.unity*
 # Codely 工具截图输出
 /screenshots/
 
-# ScriptDocGenerator 运行时再生成的设置资产（ScriptableSingleton 旧位置；API 文档已迁文档站 AesirFramework-Docs，不入库）
-/Assets/Editor Default Resources/
-/Assets/Editor Default Resources.meta
 
 TestResults*.xml
 /playmode-test.log
 
-# 模块配置资产（编辑器自动创建，消费者项目由初始化器生成，不入库）
-/Assets/Resources/
-/Assets/Resources.meta

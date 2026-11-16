@@ -1,0 +1,5 @@
+{
+  "name": "UnityGameDevWorkflow",
+  "version": "1.0.0",
+  "description": "Unity 游戏开发全流程工作流扩展，提供 Planner → Developer → Debugger 三阶段 AI 驱动的游戏开发管线。包含教程规划、资产生成与游戏构建执行、以及基于 30+ 经验文档的调试知识库，帮助开发者高效完成 Unity 游戏从规划到可运行的全流程。"
+}

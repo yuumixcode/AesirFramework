@@ -19,8 +19,8 @@
 
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
-| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.32.0` |
-| **Aesir Modules** | UI 框架（单门面多注册表、四层 Canvas、面板生命周期、Canvas 根窗口与蒙版）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.32.0` |
+| **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.33.0` |
+| **Aesir Modules** | UI 框架（单门面多注册表、四层 Canvas、面板生命周期、Canvas 根窗口与蒙版）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.33.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
 
@@ -28,7 +28,7 @@
 
 ## 🏛️ Aesir Architecture（RAA）——架构框架
 
-**RAA 是一个以"Unity 原生优先"为核心理念的渐进式 MVC 架构**。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的分层规范。框架以 **MVC 为主要模式**（`IController` 是推荐的快速开发入口），`IPresenter`（MVP）作为可选的严格分层模式——MVP 正是 Unity 官方最佳实践所教授的范式（[官方教程](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)）。**暂不提供 MVVM**：其核心增量是数据绑定引擎，与框架轻量、Unity 原生优先的定位不符，`ObservableValue<T>` 已覆盖状态通知需求——这是经调研评估后的架构决策，完整论述与重评触发条件见[模式选择决策](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/references/mode-decisions.md)。
+**RAA 是一个以"Unity 原生优先"为核心理念的渐进式 MVC 架构**。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的分层规范。框架以 **MVC 为主要模式**（`IController` 是推荐的快速开发入口），`IPresenter`（MVP）作为可选的严格分层模式——MVP 正是 Unity 官方最佳实践所教授的范式（[官方教程](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)）。**暂不提供 MVVM**：其核心增量是数据绑定引擎，与框架轻量、Unity 原生优先的定位不符，`ObservableValue<T>` 已覆盖状态通知需求——这是经调研评估后的架构决策，完整论述与重评触发条件见[模式选择决策](./.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md)。
 
 ### 架构角色与能力接口
 
@@ -56,7 +56,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | **第二课 · 标准档** | 只读暴露 + 写方法 | Controller 直调写方法 | Presenter 直调写方法 |
 | **第三课 · 严格档** | 接口注册 + 只读暴露 + 写方法 | Command 写 + Query 加工读 | Command 写 + Query 读 |
 
-快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / ObservableCollections / MiniEvent / AesirTimer / PlaneWar / RuntimeInitializeLoadType 六个实战与进阶示例，逐课可导入（第一次接触建议从 Counter-Mvc-Quick 开始）。
+快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / ObservableCollections / MiniEvent / AesirTimer / RuntimeInitializeLoadType 五个进阶示例，逐课可导入（第一次接触建议从 Counter-Mvc-Quick 开始）；另有不随包分发的完整游戏案例 `Assets/PlaneWar/`（纵版射击，宿主工程内可玩）。
 
 ### 核心机制速览
 
@@ -142,7 +142,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 > **国内加速**：CNB 是主仓库，GitHub 是其镜像——两条线路内容一致，大陆网络推荐 CNB 线路（无需代理直连）。本文所有 GitHub Git URL 均可把 `github.com/yuumixcode` 换成 `cnb.cool/runestone-game` 得到 CNB 等价线路，分支 / tag / `?path=` 参数不变（方式 3、方式 4 同理）。
 >
-> `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0`（`path` 换成对应包目录；**历史已发布版本的 tag 永久保留**，当前在研版本的 tag 会随每次 push `main` 滚动刷新、待版本号 bump 后才冻结为永久历史 tag——钉版本请钉已发布的历史稳定版）。
+> `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.33.0`（`path` 换成对应包目录；**历史已发布版本的 tag 永久保留**，当前在研版本的 tag 会随每次 push `main` 滚动刷新、待版本号 bump 后才冻结为永久历史 tag——钉版本请钉已发布的历史稳定版）。
 >
 > **两个包需要分别添加**：UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），仅添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败——可随后经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装。
 
@@ -228,7 +228,7 @@ public class CounterContext : AbstractContext<CounterContext>
 
 > **注意**：示例脚本整体包在 `#if UNITY_EDITOR` 内（编辑器内正常编译运行，玩家构建自动剔除）——请勿把示例脚本抄进运行时程序集。
 
-完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md)（English）。
+完整指南见 [`Assets/Runestone/AesirArchitecture/README.md`](./Assets/Runestone/AesirArchitecture/README.md)（中文）/ [`README_EN.md`](./Assets/Runestone/AesirArchitecture/README_EN.md)（English）。
 
 ### Aesir Modules — 一个 `Show<T>()` 打开面板
 
@@ -240,7 +240,7 @@ UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "确�
 
 UI 框架提供单门面 + 多注册表单例、四层 Canvas 层级（`UILayer`）、面板生命周期（激活 → 停用缓存 → 销毁）与可插拔资源加载器（默认 Resources，可换 Addressables）。
 
-完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirModules/Documentation/README_EN.md)（English）。
+完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`README_EN.md`](./Assets/Runestone/AesirModules/README_EN.md)（English）。
 
 ---
 
@@ -248,13 +248,13 @@ UI 框架提供单门面 + 多注册表单例、四层 Canvas 层级（`UILayer`
 
 | 文档 | 位置 |
 |---|---|
-| 架构教学（中文/英文） | 各包 `README.md` / `Documentation/README_EN.md` |
-| AI 编码指南（全框架：RAA 架构 + RAM 模块速查 + 六档模板 + 陷阱清单与事件决策表） | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
-| AI 启动场景 Skill（项目初始化：一键创建启动场景 + 启动脚本） | [`AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md) |
-| 事件模块详细手册 | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
+| 架构教学（中文/英文） | 各包 `README.md` / `README_EN.md` |
+| AI 技能包（团结 Cowork / Codely CLI 直接安装：11 个技能——路由 / 5 篇架构 / 启动场景 / UI·事件·音频·场景 + 2 篇实战模板） | [`.codely-cli/extensions/AesirFrameworkGame/`](./.codely-cli/extensions/AesirFrameworkGame/)（下载与安装见 [`TuanjieCowork~/README.md`](./Assets/Runestone/AesirArchitecture/TuanjieCowork~/README.md)） |
+| 事件模块详细手册 | [`AesirModules/Documentation~/event-module.md`](./Assets/Runestone/AesirModules/Documentation~/event-module.md) |
 | 变更日志（仓库级聚合 / 各包子包） | 根 [`CHANGELOG.md`](./CHANGELOG.md) 及各包 `CHANGELOG.md` |
 
-> 包内 `Documentation/` 随 unitypackage 一并导出（不进玩家构建）；Git URL 安装的用户可经 Package Manager 读取 `Documentation~/` 镜像内容。
+> 使用文档只在 `Documentation~/`（`~` 结尾的目录对 AssetDatabase 不可见、不进 unitypackage、不进玩家构建）——unitypackage 用户请读文档站或克隆仓库；英文说明在包根 `README_EN.md`。
+> AI 技能包只存在于仓库根的扩展 `.codely-cli/extensions/AesirFrameworkGame/`（既不被 AssetDatabase 导入，也不进 unitypackage）——包内 `TuanjieCowork~/` 只留一份说明怎么下载与安装的 `README.md`。
 
 ---
 
@@ -277,16 +277,16 @@ AesirFramework/                            # 你现在看到的仓库
     │   ├── Runtime/  Editor/  Tests/
     │   ├── Samples/                       # 示例（仓库内直接可见可运行）
     │   ├── Samples~/                      # 示例源（Git URL 安装后按需导入）
-    │   ├── Documentation/                 # 文档主位（Assets 可见、随 unitypackage 导出）
-    │   ├── Documentation~/                # 文档镜像（Git URL 安装隐藏副本）
-    │   └── README.md  CHANGELOG.md  package.json
+    │   ├── Documentation~/                # 使用文档（AssetDatabase 不可见、不进 unitypackage）
+    │   ├── TuanjieCowork~/README.md       # AI 技能下载与安装说明（技能本体在仓库根扩展）
+    │   └── README.md  README_EN.md  CHANGELOG.md  package.json
     └── AesirModules/                      # 依赖 Architecture
         ├── Runtime/  Editor/
         ├── Samples/                       # 示例（仓库内直接可见可运行）
         ├── Samples~/                      # 示例源（Git URL 安装后按需导入）
-        ├── Documentation/                 # 文档主位（Assets 可见、随 unitypackage 导出）
-        ├── Documentation~/                # 文档镜像（Git URL 安装隐藏副本）
-        └── README.md  CHANGELOG.md  package.json
+        ├── Documentation~/                # 使用文档（AssetDatabase 不可见、不进 unitypackage）
+        ├── TuanjieCowork~/README.md       # 同上（指向同一个整包扩展）
+        └── README.md  README_EN.md  CHANGELOG.md  package.json
 ```
 
 ---
@@ -354,8 +354,8 @@ Copyright (c) 2026 Yuumix
 ## 🔗 推荐链接
 
 - **Aesir Inspector** — 独立公开仓库，专门面向 [Odin Inspector](https://odininspector.com/) 开发者的学习工具包：[yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
-- **ObservableCollections** — Cysharp 出品的高性能可观察集合与同步视图库（MIT）。Aesir Architecture 内置其**高频子集**（四种集合 / `CollectionChanged`，见 `Documentation/observable-collections.md`）；需要同步视图、R3 响应式、环形缓冲区、XAML 绑定等完整能力时直接使用上游：[Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- **ObservableCollections** — Cysharp 出品的高性能可观察集合与同步视图库（MIT）。Aesir Architecture 内置其**高频子集**（四种集合 / `CollectionChanged`，见 `Documentation~/observable-collections.md`）；需要同步视图、R3 响应式、环形缓冲区、XAML 绑定等完整能力时直接使用上游：[Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **Eflatun.SceneReference** — 强类型、可靠的 Unity 场景引用方案（MIT）。Aesir Modules Scene 模块的 `SceneAssetWrapper` 吸收了其功能设计（GUID 锚点自愈、状态机校验、`TryGet` 安全读取家族等）：[starikcetin/Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
 - **QFramework** — liangxiegame 出品的 Unity 游戏开发框架（MIT）：能力接口组合、Command/Query、事件与工具链一应俱全，配套完整教程与案例。Aesir Architecture 的架构分层思路与包内更新器（参考其 PackageKit「版本记录随包走」并增强差集清理）均受其启发：[liangxiegame/QFramework](https://github.com/liangxiegame/QFramework)
-- **Vertical 2D Shooting（Goldmetal）** — 韩国 Goldmetal 基础教程 BE4 配套的纵版射击 2D 素材包（标注 Goldmetal 出处即可自由使用，含商用）。Aesir Architecture 的 PlaneWar 示例内含该素材的自包含拷贝：[Goldmetal Studio](https://www.goldmetal.co.kr)
+- **Vertical 2D Shooting（Goldmetal）** — 韩国 Goldmetal 基础教程 BE4 配套的纵版射击 2D 素材包（标注 Goldmetal 出处即可自由使用，含商用）。本仓库的完整游戏案例 `Assets/PlaneWar` 内含该素材的自包含拷贝（不随包分发）：[Goldmetal Studio](https://www.goldmetal.co.kr)
 - **作者主页**: [yuumixcode](https://github.com/yuumixcode)

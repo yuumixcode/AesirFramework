@@ -19,8 +19,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.32.0` |
-| **Aesir Modules** | UI framework (single facade + multiple registries, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.32.0` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.33.0` |
+| **Aesir Modules** | UI framework (single facade + multiple registries, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.33.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -28,7 +28,7 @@
 
 ## 🏛️ Aesir Architecture (RAA) — Architecture Framework
 
-**RAA is a progressive MVC architecture built on a "Unity-native-first" philosophy.** It does not build a parallel system to the engine; instead it deeply integrates with Unity's PlayerLoop, ScriptableObject, and Editor API — staying lightweight while providing clear layering for small to medium-large projects. The framework is **MVC-first** (`IController` is the recommended entry point for rapid development); `IPresenter` (MVP) is an optional pattern for stricter layering — MVP is exactly the pattern taught by Unity's official best practices ([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)). **MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts with the framework's lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state notification — this is an evaluated architecture decision; see [Mode Selection Decisions](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/references/mode-decisions.md) for the full rationale and re-evaluation triggers.
+**RAA is a progressive MVC architecture built on a "Unity-native-first" philosophy.** It does not build a parallel system to the engine; instead it deeply integrates with Unity's PlayerLoop, ScriptableObject, and Editor API — staying lightweight while providing clear layering for small to medium-large projects. The framework is **MVC-first** (`IController` is the recommended entry point for rapid development); `IPresenter` (MVP) is an optional pattern for stricter layering — MVP is exactly the pattern taught by Unity's official best practices ([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)). **MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts with the framework's lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state notification — this is an evaluated architecture decision; see [Mode Selection Decisions](./.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md) for the full rationale and re-evaluation triggers.
 
 ### Architecture Roles & Capability Interfaces
 
@@ -56,7 +56,7 @@ RAA's most distinctive feature is **tiered progression** — from the minimal co
 | **Lesson 2 · Standard** | Read-only exposure + write methods | Controller calls write methods | Presenter calls write methods |
 | **Lesson 3 · Strict** | Interface registration + read-only + write methods | Command writes + Query processed reads | Command writes + Query reads |
 
-Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + six hands-on/advanced samples (ObservableValue / ObservableCollections / MiniEvent / AesirTimer / PlaneWar / RuntimeInitializeLoadType), importable lesson by lesson (start from Counter-Mvc-Quick if this is your first contact).
+Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + five advanced samples (ObservableValue / ObservableCollections / MiniEvent / AesirTimer / RuntimeInitializeLoadType), importable lesson by lesson (start from Counter-Mvc-Quick if this is your first contact); a complete game case lives outside the package at `Assets/PlaneWar/` (vertical shooter, playable inside the host project).
 
 ### Core Mechanics at a Glance
 
@@ -141,7 +141,7 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 
 > **Mainland China acceleration**: CNB is the primary repository and GitHub is its mirror — both routes serve identical content; users in mainland China are recommended to use the CNB route (direct access, no proxy needed). Every GitHub Git URL in this document has a CNB equivalent: replace `github.com/yuumixcode` with `cnb.cool/runestone-game`, keeping the branch / tag / `?path=` parameters unchanged (same for Options 3 and 4).
 >
-> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0` (swap `path` for the desired package directory; **tags of published historical versions are kept forever**, while the in-development version's tag rolls forward on every push to `main` and freezes only after the version number is bumped — pin published stable versions).
+> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.33.0` (swap `path` for the desired package directory; **tags of published historical versions are kept forever**, while the in-development version's tag rolls forward on every push to `main` and freezes only after the version number is bumped — pin published stable versions).
 >
 > **Both packages must be added separately**: UPM does not support Git URL dependencies inside a package (official Unity limitation). Adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture — you can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 
@@ -225,7 +225,7 @@ The Standard tier (read-only Model exposure + write methods) and Strict tier (in
 
 > **Note**: sample scripts are wrapped in `#if UNITY_EDITOR` (compiled in-editor, stripped from player builds) — do not copy sample scripts into runtime assemblies.
 
-Full guide: [`Assets/Runestone/AesirArchitecture/Documentation/README_EN.md`](./Assets/Runestone/AesirArchitecture/Documentation/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文).
+Full guide: [`Assets/Runestone/AesirArchitecture/README_EN.md`](./Assets/Runestone/AesirArchitecture/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirArchitecture/README.md) (中文).
 
 ### Aesir Modules — Show a Panel with `Show<T>()`
 
@@ -237,7 +237,7 @@ UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "Conf
 
 The UI framework provides a single-facade singleton (multiple registries), a 4-layer Canvas hierarchy (`UILayer`), panel lifecycle (active → deactivated cache → destroyed), a pluggable asset loader (Resources by default, Addressables-ready), and Canvas-root windows with masks — a second UI form beside panels (`AesirBaseWindow`, `UIModule.Open<T>()` / `Close<T>()`, prefab root carries its own Canvas mounted directly under UIRoot with `sortingOrder` 500 always above the panel layers; the `Mask` child blocks all input below with single/stacked scheduling and close-on-click).
 
-Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Assets/Runestone/AesirModules/Documentation/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
+Full guide: [`Assets/Runestone/AesirModules/README_EN.md`](./Assets/Runestone/AesirModules/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
 
 ---
 
@@ -245,13 +245,13 @@ Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Asset
 
 | Document | Location |
 |---|---|
-| Architecture tutorial (中文 / English) | Each package's `README.md` / `Documentation/README_EN.md` |
-| AI coding guide (full framework: RAA architecture + RAM module quick reference + six-tier templates + pitfalls & event decision tables) | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
-| AI boot-scene skill (project bootstrap: create boot scene + bootstrap script in one step) | [`AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md) |
-| Event module detailed manual | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
+| Architecture tutorial (中文 / English) | Each package's `README.md` / `README_EN.md` |
+| AI skill pack (installable into Tuanjie Cowork / Codely CLI: 11 skills — router / 5 architecture / boot-scene / UI·Events·Audio·Scene — plus 2 hands-on templates) | [`.codely-cli/extensions/AesirFrameworkGame/`](./.codely-cli/extensions/AesirFrameworkGame/) (download & install: [`TuanjieCowork~/README.md`](./Assets/Runestone/AesirArchitecture/TuanjieCowork~/README.md)) |
+| Event module detailed manual | [`AesirModules/Documentation~/event-module.md`](./Assets/Runestone/AesirModules/Documentation~/event-module.md) |
 | Changelogs (repo-level aggregate / per-package) | Root [`CHANGELOG.md`](./CHANGELOG.md) and each package's `CHANGELOG.md` |
 
-> The in-package `Documentation/` folder ships with the unitypackage (excluded from player builds); Git URL users can read the `Documentation~/` mirror contents via the Package Manager.
+> Usage docs live only under `Documentation~/` (`~`-suffixed folders are invisible to the AssetDatabase, never ship in the unitypackage and never enter player builds) — unitypackage users should read the documentation site or clone the repository; the English guide sits at the package root as `README_EN.md`.
+> AI skills live only in the repository-root extension `.codely-cli/extensions/AesirFrameworkGame/` (never imported by the AssetDatabase, never in the unitypackage) — each package's `TuanjieCowork~/` keeps a single `README.md` explaining how to download and install it.
 
 ---
 
@@ -274,16 +274,16 @@ AesirFramework/                            # this repo
     │   ├── Runtime/  Editor/  Tests/
     │   ├── Samples/                       # samples (directly visible & runnable in this repo)
     │   ├── Samples~/                      # sample sources (import on demand after Git URL install)
-    │   ├── Documentation/                 # docs master (visible in Assets, shipped in unitypackage)
-    │   ├── Documentation~/                # docs mirror (hidden copy for Git URL installs)
-    │   └── README.md  CHANGELOG.md  package.json
+    │   ├── Documentation~/                # usage docs (invisible to the AssetDatabase, not in the unitypackage)
+    │   ├── TuanjieCowork~/README.md       # how to download & install the AI skills (skills live in the repo-root extension)
+    │   └── README.md  README_EN.md  CHANGELOG.md  package.json
     └── AesirModules/                      # depends on Architecture
         ├── Runtime/  Editor/
         ├── Samples/                       # samples (directly visible & runnable in this repo)
         ├── Samples~/                      # sample sources (import on demand after Git URL install)
-        ├── Documentation/                 # docs master (visible in Assets, shipped in unitypackage)
-        ├── Documentation~/                # docs mirror (hidden copy for Git URL installs)
-        └── README.md  CHANGELOG.md  package.json
+        ├── Documentation~/                # usage docs (invisible to the AssetDatabase, not in the unitypackage)
+        ├── TuanjieCowork~/README.md       # same (points at the same all-in-one extension)
+        └── README.md  README_EN.md  CHANGELOG.md  package.json
 ```
 
 ---
@@ -351,10 +351,10 @@ See root [`LICENSE`](./LICENSE) for details.
 ## 🔗 Recommended Links
 
 - **Aesir Inspector** — separate public repository, a learning toolkit for [Odin Inspector](https://odininspector.com/) developers: [yuumixcode/AesirInspector](https://github.com/yuumixcode/AesirInspector)
-- **ObservableCollections** — high-performance observable collections and synchronized views by Cysharp (MIT). Aesir Architecture ships a **high-frequency subset** of it (four collections / `CollectionChanged` — see `Documentation/observable-collections.md`); for synchronized views, R3 reactive integration, ring buffers, XAML binding and other full capabilities use upstream directly: [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- **ObservableCollections** — high-performance observable collections and synchronized views by Cysharp (MIT). Aesir Architecture ships a **high-frequency subset** of it (four collections / `CollectionChanged` — see `Documentation~/observable-collections.md`); for synchronized views, R3 reactive integration, ring buffers, XAML binding and other full capabilities use upstream directly: [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 - **Eflatun.SceneReference** — strongly typed, robust and reliable scene references for Unity (MIT). `SceneAssetWrapper` in the Aesir Modules Scene module absorbed its functional design (GUID-anchor self-healing, state-machine validation, the `TryGet` safe-read family, etc.): [starikcetin/Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference)
 - **QFramework** — a Unity game development framework by liangxiegame (MIT): capability interface composition, Command/Query, events and tooling in one package, with full tutorials and case studies. Both the layered architecture of Aesir Architecture and its in-package updater (inspired by its PackageKit's "version record travels with the package", enhanced with precise diff cleanup) owe their design to it: [liangxiegame/QFramework](https://github.com/liangxiegame/QFramework)
-- **Vertical 2D Shooting (Goldmetal)** — a vertical-scrolling 2D shooting sprite pack bundled with Goldmetal's BE4 basics course (free to use, including commercially, as long as Goldmetal is credited). The PlaneWar sample in Aesir Architecture contains a self-contained copy of these sprites: [Goldmetal Studio](https://www.goldmetal.co.kr)
+- **Vertical 2D Shooting (Goldmetal)** — a vertical-scrolling 2D shooting sprite pack bundled with Goldmetal's BE4 basics course (free to use, including commercially, as long as Goldmetal is credited). The complete game case at `Assets/PlaneWar/` in this repository contains a self-contained copy of these sprites (not shipped with the package): [Goldmetal Studio](https://www.goldmetal.co.kr)
 - **Author homepage**: [yuumixcode](https://github.com/yuumixcode)
 
 
