@@ -86,6 +86,14 @@ namespace Runestone.AesirModules
         [SerializeField]
         internal LayerMask blockingMask = -1;
 
+        [Tooltip("世界空间预设：Dynamic Pixels Per Unit — 世界空间下每 Unity 单位对应的像素数，越大 UI 在世界中的物理尺寸越小")]
+        [SerializeField]
+        internal float worldSpaceDynamicPixelsPerUnit = 100f;
+
+        [Tooltip("世界空间预设：参考像素每单位 — 世界空间 CanvasScaler 的参考像素密度，影响字体与精灵的基准尺寸")]
+        [SerializeField]
+        internal float worldSpaceReferencePixelsPerUnit = 100f;
+
         internal bool ScaleModeIsConstantPixelSize => scaleMode == CanvasScaler.ScaleMode.ConstantPixelSize;
 
         internal bool ScaleModeIsScaleWithScreenSize =>
@@ -99,7 +107,30 @@ namespace Runestone.AesirModules
             screenMatchMode == CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
 
         /// <summary>
+        /// 创建一份用于<b>世界空间 UI</b> 的配置实例（不持久化为资产）。
+        /// <para>
+        /// 与 <see cref="CreateDefault" />（屏幕空间预设）平行：渲染模式为 <see cref="RenderMode.WorldSpace" />，
+        /// 缩放模式为 <see cref="CanvasScaler.ScaleMode.ConstantPixelSize" />（世界空间下 Screen Space 缩放模式无意义），
+        /// 其余射线检测与着色器通道字段沿用默认值。可直接赋给 <see cref="UIRoot.WorldSpaceCanvasConfig" />，
+        /// 或由自定义配置加载器返回。
+        /// </para>
+        /// </summary>
+        /// <returns>已应用世界空间预设的配置实例。</returns>
+        public static UICanvasConfigSO CreateWorldSpaceDefault()
+        {
+            var config = CreateInstance<UICanvasConfigSO>();
+            config.renderMode = RenderMode.WorldSpace;
+            config.scaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+            return config;
+        }
+
+        /// <summary>
         /// 将本资产的所有配置统一应用到目标 Canvas 及其关联的 CanvasScaler 和 GraphicRaycaster。
+        /// <para>
+        /// 世界空间渲染模式（<see cref="RenderMode.WorldSpace" />）下由 Canvas 自身驱动缩放，
+        /// 本方法跳过 CanvasScaler 的 uiScaleMode 写入——避免 <c>Scale With Screen Size</c> 等屏幕空间模式
+        /// 在世界空间下产生非预期的面板尺寸；世界空间缩放字段改由 <see cref="ApplyToWorldSpaceCanvas" /> 统一配置。
+        /// </para>
         /// </summary>
         /// <param name="canvas">目标 Canvas。</param>
         public void ApplyToCanvas(Canvas canvas)
@@ -115,6 +146,11 @@ namespace Runestone.AesirModules
             canvas.sortingLayerName = sortingLayerName;
             canvas.additionalShaderChannels = additionalShaderChannels;
             canvas.vertexColorAlwaysGammaSpace = vertexColorAlwaysGammaSpace;
+
+            if (renderMode == RenderMode.WorldSpace)
+            {
+                return;
+            }
 
             var scaler = canvas.GetComponent<CanvasScaler>();
             if (scaler != null)
@@ -143,6 +179,58 @@ namespace Runestone.AesirModules
                 }
 
                 scaler.referencePixelsPerUnit = referencePixelsPerUnit;
+            }
+
+            var raycaster = canvas.GetComponent<GraphicRaycaster>();
+            if (raycaster != null)
+            {
+                raycaster.ignoreReversedGraphics = ignoreReversedGraphics;
+                raycaster.blockingObjects = blockingObjects;
+                raycaster.blockingMask = blockingMask;
+            }
+        }
+
+        /// <summary>
+        /// 将本资产的<b>世界空间预设</b>应用到目标 Canvas。
+        /// <para>
+        /// 设置渲染模式为 <see cref="RenderMode.WorldSpace" />，把 RectTransform 转为等比例缩放的正方形像素网格
+        /// （世界空间 UGUI 的标准做法，避免非等比宽高导致 UI 元素拉伸变形），并按
+        /// <see cref="worldSpaceDynamicPixelsPerUnit" /> / <see cref="worldSpaceReferencePixelsPerUnit" /> 配置密度。
+        /// 不做世界空间定位、不指定相机——跟随目标由 <see cref="WorldSpaceUICanvas" /> 负责。
+        /// </para>
+        /// <para>
+        /// 若 Canvas 上有 <see cref="CanvasScaler" />，其 uiScaleMode 会被设为
+        /// <see cref="CanvasScaler.ScaleMode.ConstantPixelSize" />（世界空间下其它模式无意义）；
+        /// <see cref="GraphicRaycaster" /> 沿用本资产的射线相关字段。
+        /// </para>
+        /// </summary>
+        /// <param name="canvas">目标 Canvas，通常挂在 <see cref="WorldSpaceUICanvas" /> 所在物体上。</param>
+        public void ApplyToWorldSpaceCanvas(Canvas canvas)
+        {
+            if (canvas == null)
+            {
+                return;
+            }
+
+            canvas.renderMode = RenderMode.WorldSpace;
+            canvas.pixelPerfect = pixelPerfect;
+            canvas.sortingLayerName = sortingLayerName;
+            canvas.additionalShaderChannels = additionalShaderChannels;
+            canvas.vertexColorAlwaysGammaSpace = vertexColorAlwaysGammaSpace;
+
+            var rect = canvas.transform as RectTransform;
+            if (rect != null)
+            {
+                rect.localScale = Vector3.one / worldSpaceDynamicPixelsPerUnit;
+                rect.sizeDelta = new Vector2(worldSpaceReferencePixelsPerUnit, worldSpaceReferencePixelsPerUnit);
+            }
+
+            var scaler = canvas.GetComponent<CanvasScaler>();
+            if (scaler != null)
+            {
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+                scaler.referencePixelsPerUnit = worldSpaceReferencePixelsPerUnit;
+                scaler.dynamicPixelsPerUnit = worldSpaceDynamicPixelsPerUnit;
             }
 
             var raycaster = canvas.GetComponent<GraphicRaycaster>();

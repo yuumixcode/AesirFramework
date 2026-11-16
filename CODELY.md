@@ -195,6 +195,7 @@ public class HUDContext : AbstractContext<HUDContext>
   - 蒙版：初值在 `UIModuleConfigSO` 单例资产，运行时经 `MaskMode` 切换；蒙版点击走 `AesirBaseWindow.OnMaskClicked()` 虚方法，`closeOnMaskClick`（默认 false）。层级枚举 `UIMaskMode`。
   - 命名规范：窗口类/脚本/预制体以 `Window` 结尾（不用 `XxxCanvas`，会被误读为 Canvas 派生类）。
 - **`UIRoot`** — 构建四层 Canvas 层级；层 Canvas / UICamera / EventSystem 为序列化引用持久化（`UICanvasConfigSO`）。
+  - **世界空间 UI Canvas 预设** — `WorldSpaceUICanvas`（Add Component → Aesir Modules → UI）：`RenderMode.WorldSpace` + RectTransform/CanvasScaler/GraphicRaycaster 自动接线，默认 sortingOrder 450（面板层 100–400 与窗口 ≥500 之间）；`FollowTarget`（空=跟随父级）+ `PositionOffset` + `FaceCamera`/`Billboard` 控制跟随与朝向，子树归入 UI 层(5)；`UIRoot.CreateWorldSpaceCanvas(target, name, config)` 运行时创建。世界空间配置走独立链（组件 → `UIRoot.WorldSpaceCanvasConfig` → `UICanvasConfigSO.CreateWorldSpaceDefault()`），**不进 UIModule 注册表 / 蒙版调度**，生命周期随场景宿主。
 - **`IUIAssetLoader` / `ResourcesUILoader`** — 可插拔资源加载，**同步契约**（Addressables 需预加载后同步返回）；`RegisterAssetLoader` 替换。
 - **`BinderAssistant` / `BinderTag`**（Odin 程序集）— UI 元素绑定系统 + 代码生成；窗口感知，根节点带 Canvas 时默认 `Window` 后缀与 `AesirBaseWindow` 基类。生成脚本为 partial + 「同一脚本增量」模式，只替换「绑定字段」region。
 - 已知契约：`OnClose` 只在受控销毁路径（Hide + DestroyOnHide）调用，**外部销毁只有 `OnDestroy`** → 解绑逻辑放 `OnDestroy`。同基类类型重复 Show 报错；Hide/Get 未命中给 Warning；缺层 fail-fast。

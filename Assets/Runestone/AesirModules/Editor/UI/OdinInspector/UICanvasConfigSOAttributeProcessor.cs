@@ -107,6 +107,14 @@ namespace Runestone.AesirModules.Editor.OdinInspector
                 case nameof(UICanvasConfigSO.blockingMask):
                     attributes.Add(new BoxGroupAttribute("Graphic Raycaster Component"));
                     break;
+
+                case nameof(UICanvasConfigSO.worldSpaceDynamicPixelsPerUnit):
+                    attributes.Add(new BoxGroupAttribute("World Space Preset"));
+                    break;
+
+                case nameof(UICanvasConfigSO.worldSpaceReferencePixelsPerUnit):
+                    attributes.Add(new BoxGroupAttribute("World Space Preset"));
+                    break;
             }
         }
     }

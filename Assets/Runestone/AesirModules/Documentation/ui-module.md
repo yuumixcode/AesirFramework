@@ -1,6 +1,6 @@
 # UI 模块详细文档
 
-UI 框架（单门面 + 多注册表）：`UIModule` 单例管理面板与窗口的生命周期，`UIRoot` 负责四层 Canvas 层级构建。UI 有两种并列形态——**Panel（面板）** 以 `AesirBasePanel` 家族为根节点，挂载于共享层 Canvas；**Window（窗口，Canvas 根 UI）** 以 `AesirBaseWindow` 家族为根节点，预制体自带 Canvas、直接挂载于 UIRoot。本文覆盖快速开始之外的实现细节与设计边界；基础用法见包 [README](../README.md#ui-模块)。
+UI 框架（单门面 + 多注册表）：`UIModule` 单例管理面板与窗口的生命周期，`UIRoot` 负责四层屏幕空间 Canvas 层级构建与**世界空间 UI Canvas 预设**的统一配置。UI 有三种并列形态——**Panel（面板）** 以 `AesirBasePanel` 家族为根节点，挂载于共享层 Canvas；**Window（窗口，Canvas 根 UI）** 以 `AesirBaseWindow` 家族为根节点，预制体自带 Canvas、直接挂载于 UIRoot；**World Space Canvas（世界空间 UI）** 以 `WorldSpaceUICanvas` 为渲染根组件，挂在场景物体上随世界空间对象移动（血条、名字牌、交互提示等）。本文覆盖快速开始之外的实现细节与设计边界；基础用法见包 [README](../README.md#ui-模块)。
 
 ## 架构总览
 
@@ -13,13 +13,17 @@ UIRoot（预放置或运行时创建）
 ├── BackgroundLayer              # Canvas，sortingOrder 100
 ├── NormalLayer                  # Canvas，sortingOrder 200
 ├── PopupLayer                   # Canvas，sortingOrder 300
-└── TopLayer                     # Canvas，sortingOrder 400
-        ↑ 面板实例挂载于所属层的 Canvas 下
-SettingWindow / LoadingWindow …  # 窗口实例（根节点自带 Canvas，sortingOrder ≥ 500）
-        ↑ 窗口实例直接挂载于 UIRoot 下，恒在全部面板层之上
+├── TopLayer                     # Canvas，sortingOrder 400
+│       ↑ 面板实例挂载于所属层的 Canvas 下
+├── SettingWindow / LoadingWindow …  # 窗口实例（根节点自带 Canvas，sortingOrder ≥ 500）
+│       ↑ 窗口实例直接挂载于 UIRoot 下，恒在全部面板层之上
+└── worldSpaceCanvasConfig       # 世界空间 Canvas 配置引用（可空，回退内存默认预设）
+场景中的角色 / 交互物（世界空间跟随目标）
+└── WorldSpaceCanvas             # WorldSpaceUICanvas：RenderMode.WorldSpace，sortingOrder 默认 450
+        ↑ 挂载于目标节点下或由 FollowTarget 每帧同步位置 + 面向相机
 ```
 
-依赖方向为单向拉取：`UIModule.EnsureReady` 在每次面板/窗口操作时经 `UIRoot.Instance` 惰性发现 UI 根节点（未预放置时自动创建全层级）；`UIRoot` 不反向注册 UIModule——这保证编辑器菜单 `Create UIRoot` 只创建层级本身，不会连带触发运行时单例的创建链。
+依赖方向为单向拉取：`UIModule.EnsureReady` 在每次面板/窗口操作时经 `UIRoot.Instance` 惰性发现 UI 根节点（未预放置时自动创建全层级）；`UIRoot` 不反向注册 UIModule——这保证编辑器菜单 `Create UIRoot` 只创建层级本身，不会连带触发运行时单例的创建链。世界空间 Canvas 的跟随组件经 `UIRoot.TryGetExisting()`（非创建式）读取相机与配置，不会凭空造出 `[UIRoot]`。
 
 ## 面板生命周期
 
@@ -111,6 +115,50 @@ UIModule.RegisterWindowPrefab<SettingWindow>(prefab);
 
 蒙版模式的初始值配置于 **`UIModuleConfigSO`**（单例配置资产，编辑器首次导入时自动创建在 `Assets/Resources/UIModuleConfig/UIModuleConfig.asset`）：在 Project 窗口直接编辑资产即可生效，不要求预放置 `[UIModule]`。运行时解析顺序：①`UIModuleConfigSO.RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销）；②Resources 兜底（`Resources/UIModuleConfig/UIModuleConfig`）；③内存默认实例。运行时经 `UIModule.Instance.MaskMode` 切换只覆盖内存值，不改写配置资产。
 
+## 世界空间 UI Canvas 预设
+
+世界空间 UI（角色头顶血条 / 名字牌、场景交互提示、VR / AR 标记）需要 Canvas 随**世界空间对象**移动，属于 UGUI 的 `RenderMode.WorldSpace`。框架此前只有 Screen Space - Camera 的层 Canvas 与窗口根 Canvas，未提供世界空间预设；现在补齐为**第三种并列形态**。
+
+### 组件与接线
+
+`WorldSpaceUICanvas`（`Runtime/UI/WorldSpaceUICanvas.cs`，菜单 `Add Component → Aesir Modules → UI → World Space UI Canvas`）：挂在场景物体上即可获得世界空间渲染根。组件在 `Awake` 自动补齐并接线：
+
+- `Canvas`（`RenderMode.WorldSpace`）+ `RectTransform` + `CanvasScaler`（`ConstantPixelSize`）+ `GraphicRaycaster`；
+- RectTransform 为正方形像素网格（默认 100×100 单位、`localScale = 1 / DynamicPixelsPerUnit`），避免非等比宽高拉伸 UI；
+- `sortingOrder` 默认 **450**（介于面板四层 ≤400 与窗口 ≥500 之间），可序列化修改；
+- 子树递归归入 UI 层（layer 5），使 UIRoot 的 UICamera 能渲染（主游戏相机需自行排除 UI 层）。
+
+配置来源优先级：`WorldSpaceUICanvas` 组件上显式指定的配置 → `UIRoot.WorldSpaceCanvasConfig` → 内存默认预设 `UICanvasConfigSO.CreateWorldSpaceDefault()`。与屏幕空间的 `UICanvasConfigSO`（层 Canvas / 窗口根）是**两条独立配置链，互不覆盖**。
+
+### 跟随目标与朝向
+
+两种跟随方式，按预制体摆放位置自动选择：
+
+- **作为目标子节点**：Canvas 挂在角色 / 交互物下（`FollowTarget` 留空），直接随父级世界变换移动——最常见形态；
+- **显式指定目标**：设置 `FollowTarget` 为场景中的 `Transform`，组件在 `LateUpdate` 每帧把自身挂到该目标下并同步位置。
+
+`PositionOffset`（局部偏移，默认零）在两种形态下都生效；`FaceCamera`（默认 true）+ `Billboard` 枚举控制朝向：`None` / `CameraFacingYLocked`（默认，Y 轴竖直，适合头顶信息牌）/ `CameraFacingFull`（完整广告牌）。朝向默认使 UI 正面朝向相机（`FlipFacing = true`）；关闭时采用 Unity 广告牌惯例（Canvas +Z 指向远离相机一侧）。
+
+### 运行时创建
+
+```csharp
+// 在角色头顶创建一个世界空间 Canvas（挂到目标节点下，随目标移动）
+var canvas = UIRoot.Instance.CreateWorldSpaceCanvas(character.transform, "Nameplate");
+
+// 显式配置 + 局部偏移 + 广告牌朝向
+var config = UICanvasConfigSO.CreateWorldSpaceDefault();
+var popup = UIRoot.Instance.CreateWorldSpaceCanvas(interactable.transform, "InteractHint", config);
+popup.PositionOffset = new Vector3(0f, 2f, 0f);
+popup.FaceCamera = true;
+popup.Billboard = WorldSpaceUICanvas.WorldSpaceBillboardMode.CameraFacingFull;
+```
+
+`CreateWorldSpaceCanvas(Transform worldTarget, string canvasName = "WorldSpaceCanvas", UICanvasConfigSO config = null)`：目标为空时记录错误并返回 null；创建后自动 `Build(config)` 接线，后续改字段需手动调用 `Build()` 重建。
+
+### 生命周期边界
+
+`WorldSpaceUICanvas` 只提供渲染根，**不进入 `UIModule` 的面板 / 窗口注册表**，也不参与蒙版调度。世界空间 UI 的生命周期随宿主场景物体（挂载目标的销毁 / 场景卸载），内容由业务代码直接驱动子节点；需要面板 / 窗口那种 Show/Hide 生命周期与注册表管理时，请按 Panel 或 Window 形态接入。
+
 ## Panel 与 Window 的选型对比
 
 一个项目通常只选一种主形态；两种形态的 API 与生命周期完全对称，按需混用也成立（窗口恒在面板之上）：
@@ -147,18 +195,24 @@ public interface IUIAssetLoader
 
 ## Canvas 配置
 
-`UICanvasConfigSO` 统一配置所有**层 Canvas** 与**窗口根 Canvas**（渲染模式固定 ScreenSpaceCamera）：
+`UICanvasConfigSO` 有两条独立配置链：
+
+**屏幕空间链**（`ApplyToCanvas`，渲染模式为 ScreenSpaceCamera）：统一配置所有**层 Canvas** 与**窗口根 Canvas**：
 
 - 创建：`Assets → Create → Aesir Modules → UI → Default UICanvasConfig`（与 UIRoot Inspector 的"创建默认资产"按钮共用同一幂等实现）；
 - 未创建资产时使用内存默认值（字段默认值与资产一致）；
 - 每次初始化（Awake / `Build`）重新应用全量配置，**层 sortingOrder 被强制覆盖为基准值**（100/200/300/400）——手动微调层序会被打回；
 - 窗口挂载时同样应用全量配置（渲染模式 / CanvasScaler / GraphicRaycaster），但**窗口 sortingOrder 不被覆盖**——取窗口声明的序列化值（默认 500，恒在面板层之上）；
+- 若资产渲染模式被设为 WorldSpace，`ApplyToCanvas` 会写入渲染模式后跳过 CanvasScaler 的缩放配置（世界空间下屏幕缩放模式无意义），世界空间缩放字段由 `ApplyToWorldSpaceCanvas` 管；
 - 配置不管理预制体内自行添加的子 Canvas。
+
+**世界空间链**（`ApplyToWorldSpaceCanvas`）：`UIRoot.WorldSpaceCanvasConfig` 引用一份世界空间配置（未在 Inspector 赋值时回退内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`），由 `WorldSpaceUICanvas` 在 `Build()` 时应用。世界空间专用字段：`Dynamic Pixels Per Unit`（默认 100，决定 UI 在世界中的物理大小）、`Reference Pixels Per Unit`（默认 100，影响字体 / 精灵基准尺寸）；屏幕缩放字段（`ScaleMode` / `ReferenceResolution` 等）不参与世界空间配置。
 
 ## 设计边界
 
 - **层级体系封闭**：`UILayer` 固定四层，层序基准硬编码；加层需改框架源码。四层对教学/中小项目已足够。
 - **无 per-panel Canvas**：同层多面板共享层 Canvas（同图集合批友好）；代价是同层穿插打断 batch、无独立 sortingOrder。需要动画隔离/独立渲染请在面板预制体内加子 Canvas。同层内顺序仅由 Show 顺序决定。需要独立 Canvas、独立排序或蒙版挡输入的界面请升格为**窗口形态**——窗口是与面板并列的概念，不是 per-panel 选项。
+- **世界空间 UI 不进注册表**：`WorldSpaceUICanvas` 只提供随世界对象移动的渲染根，生命周期随宿主场景物体，不经 `UIModule` 的 Show / Hide / 蒙版调度。需要面板 / 窗口生命周期时请按对应形态接入。
 - **窗口蒙版只服务窗口**：单遮/叠遮调度只作用于窗口的 `Mask` 子物体；面板不提供蒙版（需要遮挡输入的面板应改为窗口形态）。
 - **主相机需自行排除 UI 层**：UICamera 只渲染 UI(5)+TransparentFX(1)，主游戏相机若含 UI 层会重复渲染。
 - **Binder 仅服务编辑期构建**：绑定在「生成脚本 → 编译后自动挂载」时经 `BindComponents()` 完成并写入 prefab 序列化数据；运行时 `AddComponent` 动态创建的面板/窗口不做自动绑定（无运行时重绑兜底）。
@@ -171,4 +225,5 @@ public interface IUIAssetLoader
 - 窗口生命周期与蒙版机制由 `Tests/Editor/UI/UIModuleWindowTests.cs` 锁定（17 用例：挂载接线、sortingOrder 应用、UI 层递归、生命周期契约、Close 双分叉、键语义、Panel↔Window 跨契约互斥、根缺 Canvas 中止、反清理，蒙版单遮重算 / 同序 tie / 叠遮独立 / 点击蒙版 / 无 Mask 子物体无操作）；Binder 窗口感知由 `Tests/Editor/OdinInspector/BinderAssistantWindowTests.cs` 锁定（5 用例：默认脚本名后缀、默认基类、后缀去重、基类下拉窗口家族、Context 下拉触发）；
 - 单例配置资产由 `Tests/Editor/UI/UIModuleConfigSOTests.cs` 锁定（10 用例：Resources 解析与缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复兜底、加载器返回 null 落内存默认、CreateDefault 默认值、UIModule 蒙版初值取自配置、运行时切换不改写资产）；
 - Binder 代码生成器另有 20 用例（`BinderCodeGeneratorTests` 14 + `BinderContextSelectorTests` 1 + `BinderHierarchyUtilityTests` 5）；
-- 修改 UIModule 状态机或 UIRoot 层级构建逻辑时，先跑对应 EditMode 测试。
+- 世界空间 Canvas 预设由 `Tests/Editor/UI/WorldSpaceUICanvasTests.cs` 锁定（7 用例：世界空间默认配置、Canvas 接线、世界空间配置跳过屏幕 Scaler、sortingOrder / UI 层、显式跟随目标与偏移、运行时创建入口与配置传递、空目标防呆）；
+- 修改 UIModule 状态机、UIRoot 层级构建逻辑或世界空间 Canvas 接线时，先跑对应 EditMode 测试。
