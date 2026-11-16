@@ -7,6 +7,8 @@
 # - main 同步永不 force；GitHub main 领先时同步会失败，此时应把 GitHub 提交 merge 回 CNB
 # - 永不改写已发布的 main 历史（rebase/filter），否则单向同步断裂
 # - GitHub 侧零提交：不点 Merge 按钮，PR 由维护者 fetch 回本地经 CNB 合并
+# - 提交信息（主题与正文）严禁出现跳过标记字面量，否则 main 流水线整体跳过；
+#   确需跳过请用 git push -o ci.skip
 
 main:
   push:
