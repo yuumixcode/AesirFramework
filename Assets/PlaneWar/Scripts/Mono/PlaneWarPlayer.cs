@@ -1,20 +1,19 @@
-#if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using UnityEngine;
 
-namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
+namespace PlaneWar
 {
     /// <summary>
-    /// 飞机大战原生版示例 —— 玩家飞机。
+    /// 飞机大战原生版 —— 玩家飞机。
     /// </summary>
     /// <remarks>
     /// 原生写法：一个组件同时负责读输入、移动、开火三件事；移动边界以序列化字段配置在组件上。
     /// <para>
     /// 操作：方向键 / WASD 移动，按住 Space 连发（受 <see cref="fireCooldown" /> 节流）。
-    /// 本示例中玩家位于画面下方朝上射击，敌机自上方往下飞。
+    /// 本案例中玩家位于画面下方朝上射击，敌机自上方往下飞。
     /// </para>
-    /// <para>移动与开火只在游戏进行中生效；失败后由 <see cref="SamplePlaneWarMonoGameManager.SetGameOver" /> 接管。</para>
+    /// <para>移动与开火只在游戏进行中生效；失败后由 <see cref="PlaneWarGameManager.SetGameOver" /> 接管。</para>
     /// </remarks>
-    public class SamplePlaneWarMonoPlayer : MonoBehaviour
+    public class PlaneWarPlayer : MonoBehaviour
     {
         /// <summary>
         /// 移动速度（世界单位 / 秒）。
@@ -38,7 +37,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         /// 子弹预制体；在机头上方生成。
         /// </summary>
         [SerializeField]
-        SamplePlaneWarMonoBullet bulletPrefab;
+        PlaneWarBullet bulletPrefab;
 
         /// <summary>
         /// 枪口相对机身的垂直偏移（机头朝上，为正值）。
@@ -50,7 +49,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
 
         void Update()
         {
-            if (SamplePlaneWarMonoGameManager.Instance.IsGameOver)
+            if (PlaneWarGameManager.Instance.IsGameOver)
             {
                 return;
             }
@@ -83,4 +82,3 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         }
     }
 }
-#endif

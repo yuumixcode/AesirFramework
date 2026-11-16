@@ -1,11 +1,10 @@
-#if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
+namespace PlaneWar
 {
     /// <summary>
-    /// 飞机大战原生版示例 —— 游戏管理器（经典 MonoBehaviour 单例）。
+    /// 飞机大战原生版 —— 游戏管理器（经典 MonoBehaviour 单例）。
     /// </summary>
     /// <remarks>
     /// 原生写法：静态 <c>Instance</c> 单例 + 场景预放置；得分与失败状态集中在此，
@@ -23,12 +22,12 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
     /// 防止编辑器中反复 Play 时残留上次的运行状态。
     /// </para>
     /// </remarks>
-    public class SamplePlaneWarMonoGameManager : MonoBehaviour
+    public class PlaneWarGameManager : MonoBehaviour
     {
         /// <summary>
         /// 全局单例访问器；由 Awake 赋值，场景中必须预放置一个实例。
         /// </summary>
-        public static SamplePlaneWarMonoGameManager Instance { get; private set; }
+        public static PlaneWarGameManager Instance { get; private set; }
 
         // 非序列化字段：防止 Unity 将运行状态保存到场景
         int _score;
@@ -60,7 +59,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         }
 
         /// <summary>
-        /// 增加得分；子弹命中敌机时由 <see cref="SamplePlaneWarMonoEnemy.Kill" /> 调用。
+        /// 增加得分；子弹命中敌机时由 <see cref="PlaneWarEnemy.Kill" /> 调用。
         /// </summary>
         public void AddScore(int value)
         {
@@ -83,4 +82,3 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         }
     }
 }
-#endif

@@ -1,23 +1,22 @@
-#if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using UnityEngine;
 
-namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
+namespace PlaneWar
 {
     /// <summary>
-    /// 飞机大战原生版示例 —— 敌机生成器。
+    /// 飞机大战原生版 —— 敌机生成器。
     /// </summary>
     /// <remarks>
     /// 原生写法：在 <c>Update</c> 里递减计时器，归零后从预制体数组随机取一种敌机、
     /// 在顶部生成区随机取横坐标实例化；生成节奏由两个间隔字段控制。
     /// <para>游戏进行时才生成；失败后停止生成。</para>
     /// </remarks>
-    public class SamplePlaneWarMonoEnemySpawner : MonoBehaviour
+    public class PlaneWarEnemySpawner : MonoBehaviour
     {
         /// <summary>
         /// 可生成的敌机预制体（等概率随机选取）。
         /// </summary>
         [SerializeField]
-        SamplePlaneWarMonoEnemy[] enemyPrefabs;
+        PlaneWarEnemy[] enemyPrefabs;
 
         /// <summary>
         /// 生成间隔下限（秒）。
@@ -52,7 +51,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
 
         void Update()
         {
-            if (SamplePlaneWarMonoGameManager.Instance.IsGameOver)
+            if (PlaneWarGameManager.Instance.IsGameOver)
             {
                 return;
             }
@@ -73,4 +72,3 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         }
     }
 }
-#endif

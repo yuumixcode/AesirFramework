@@ -1,10 +1,9 @@
-#if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using UnityEngine;
 
-namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
+namespace PlaneWar
 {
     /// <summary>
-    /// 飞机大战原生版示例 —— 敌机。
+    /// 飞机大战原生版 —— 敌机。
     /// </summary>
     /// <remarks>
     /// 原生写法：三种敌机（A / B / C）共用本脚本，速度与分值差异全部由预制体上的
@@ -14,7 +13,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
     /// 碰到玩家飞机（Kinematic Rigidbody2D）时玩家坠毁，游戏结束。
     /// </para>
     /// </remarks>
-    public class SamplePlaneWarMonoEnemy : MonoBehaviour
+    public class PlaneWarEnemy : MonoBehaviour
     {
         /// <summary>
         /// 移动速度（世界单位 / 秒）。
@@ -46,15 +45,15 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
 
         void OnTriggerEnter2D(Collider2D other)
         {
-            if (SamplePlaneWarMonoGameManager.Instance.IsGameOver)
+            if (PlaneWarGameManager.Instance.IsGameOver)
             {
                 return;
             }
 
-            if (other.TryGetComponent(out SamplePlaneWarMonoPlayer player))
+            if (other.TryGetComponent(out PlaneWarPlayer player))
             {
                 Destroy(player.gameObject);
-                SamplePlaneWarMonoGameManager.Instance.SetGameOver();
+                PlaneWarGameManager.Instance.SetGameOver();
             }
         }
 
@@ -63,9 +62,8 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         /// </summary>
         public void Kill()
         {
-            SamplePlaneWarMonoGameManager.Instance.AddScore(scoreValue);
+            PlaneWarGameManager.Instance.AddScore(scoreValue);
             Destroy(gameObject);
         }
     }
 }
-#endif

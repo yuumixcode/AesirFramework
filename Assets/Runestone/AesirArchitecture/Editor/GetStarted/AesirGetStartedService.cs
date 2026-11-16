@@ -405,7 +405,7 @@ namespace Runestone.AesirArchitecture.Editor
 
         #region 分组与档位
 
-        /// <summary>示例分组标题（渐进式教学顺序：MVC → MVP → 功能演示 → 实战 → 各模块）。</summary>
+        /// <summary>示例分组标题（渐进式教学顺序：MVC → MVP → 功能演示 → 各模块）。</summary>
         /// <remarks>
         /// 展示启发式的登记点之一：按显示名前缀归类，未命中任何前缀的示例落入「功能演示」默认组。
         /// 新增教学分组时在此追加前缀规则，并同步 <c>GetGroupOrder</c> 的排序键。
@@ -433,11 +433,6 @@ namespace Runestone.AesirArchitecture.Editor
                 return "音频模块";
             }
 
-            if (name.StartsWith("PlaneWar", StringComparison.OrdinalIgnoreCase))
-            {
-                return "实战示例";
-            }
-
             return "功能演示";
         }
 
@@ -452,12 +447,10 @@ namespace Runestone.AesirArchitecture.Editor
                     return 1;
                 case "功能演示":
                     return 2;
-                case "实战示例":
-                    return 3;
                 case "事件模块":
-                    return 4;
+                    return 3;
                 case "音频模块":
-                    return 5;
+                    return 4;
                 default:
                     return 100;
             }

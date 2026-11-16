@@ -1,12 +1,11 @@
-#if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
+namespace PlaneWar
 {
     /// <summary>
-    /// 飞机大战原生版示例 —— 游戏 HUD（得分 + 当前时间 + 游戏结束提示）。
+    /// 飞机大战原生版 —— 游戏 HUD（得分 + 当前时间 + 游戏结束提示）。
     /// </summary>
     /// <remarks>
     /// 原生写法：HUD 在 <c>Update</c> 里每帧轮询 GameManager 的得分并重建字符串；
@@ -15,7 +14,7 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
     /// 字体使用系统动态生成（Windows / macOS / Linux 均兼容），避免引入全局字体资产。
     /// </para>
     /// </remarks>
-    public class SamplePlaneWarMonoGameHUD : MonoBehaviour
+    public class PlaneWarGameHUD : MonoBehaviour
     {
         /// <summary>
         /// 跨平台中文系统字体候选（按优先级从左到右探测）。
@@ -59,15 +58,15 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
 
         void Update()
         {
-            if (SamplePlaneWarMonoGameManager.Instance.IsGameOver)
+            if (PlaneWarGameManager.Instance.IsGameOver)
             {
                 scoreText.text = "游戏结束";
-                timeText.text = $"得分: {SamplePlaneWarMonoGameManager.Instance.Score}";
+                timeText.text = $"得分: {PlaneWarGameManager.Instance.Score}";
                 gameOverText.text = "[按 Space 继续]";
             }
             else
             {
-                scoreText.text = $"得分: {SamplePlaneWarMonoGameManager.Instance.Score}";
+                scoreText.text = $"得分: {PlaneWarGameManager.Instance.Score}";
                 timeText.text = DateTime.Now.ToString("HH:mm:ss");
                 gameOverText.text = "";
             }
@@ -93,4 +92,3 @@ namespace Runestone.AesirArchitecture.Samples.PlaneWarMono
         }
     }
 }
-#endif
