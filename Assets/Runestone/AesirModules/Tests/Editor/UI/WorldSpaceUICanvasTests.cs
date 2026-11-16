@@ -1,6 +1,8 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -149,6 +151,8 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         public void UIRoot_CreateWorldSpaceCanvas_NullTarget_ReturnsNull()
         {
             var root = Track(new GameObject("[UIRoot]")).AddComponent<UIRoot>();
+
+            LogAssert.Expect(LogType.Error, new Regex("UIRoot\\.CreateWorldSpaceCanvas 失败"));
 
             Assert.IsNull(root.CreateWorldSpaceCanvas(null));
         }
