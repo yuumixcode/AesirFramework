@@ -84,6 +84,7 @@ main:
             fi
 
         - name: rolling-tag
+          image: python:3.12
           script: |
             set -e
             VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
