@@ -62,6 +62,20 @@ UIModule.RegisterWindowPrefab<T>(GameObject prefab);           UIModule.ContainW
 - 蒙版模式（窗口）：`UIModule.MaskMode`（Single 单遮 / Stacked 叠遮，运行时切换即重算）；配置在 `UIModuleConfigSO`（Resources 兜底 + `RegisterConfigLoader` 可替换）。
 - 面板层级 `layer` 与窗口 `sortingOrder` 在各自脚本序列化字段上设置。
 
+### 世界空间 UI（跟随场景对象）
+
+面板 / 窗口均为屏幕空间 UI。`WorldSpaceUICanvas` 是第三种并列形态：**不进 UIModule 注册表**，生命周期随宿主场景物体。挂在目标节点下（FollowTarget 留空即随父级移动），或运行时创建：
+
+```csharp
+var canvas = UIRoot.Instance.CreateWorldSpaceCanvas(character.transform, "Nameplate");
+canvas.PositionOffset = new Vector3(0f, 2f, 0f);
+canvas.FaceCamera = true; // 默认：面向 UI 相机，Billboard 默认 CameraFacingYLocked（Y 轴竖直）
+```
+
+- 自动接线：Canvas(`WorldSpace`) + RectTransform(square) + CanvasScaler(ConstantPixelSize) + GraphicRaycaster；sortingOrder 默认 450（面板 ≤400 / 窗口 ≥500 之间），子树归入 UI 层(5)；
+- 配置链：组件字段 → `UIRoot.WorldSpaceCanvasConfig` → `UICanvasConfigSO.CreateWorldSpaceDefault()`；与屏幕空间配置互不影响；
+- 朝向：默认 `FlipFacing = true` 使 UI 正面朝相机；关闭则采用 Unity 广告牌惯例（+Z 指向远离相机）；`Billboard` 可选 None / YLocked / Full。
+
 ## Scene 模块（Runestone.AesirModules）
 
 ### 一行切换场景（最简方式，实测路径）
