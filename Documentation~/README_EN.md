@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (Manager of Managers pattern), an event module, audio management, scene management tooling, and a script documentation generator.
+Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (single facade + multiple registries), an event module, audio management, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.32.0-blue.svg)](../CHANGELOG.md)
@@ -15,7 +15,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 | Module | Status | Description |
 |------|------|------|
-| UI | Implemented | `UIModule` singleton (Manager of Managers) + `UIRoot` 4-layer Canvas + panel lifecycle + Canvas-root windows (single/stacked mask) + pluggable asset loading |
+| UI | Implemented | `UIModule` singleton (single facade + multiple registries) + `UIRoot` 4-layer Canvas + panel lifecycle + Canvas-root windows (single/stacked mask) + pluggable asset loading |
 | Event | Implemented | `EventModule` dual-track subscription (Attribute + Script) + 4 priority levels with stable sorting + snapshot/re-entrant-safe dispatch + expression-tree optimization + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization |
 | Audio | Implemented | `AudioModule` singleton (minimal 2D audio facade) + SFX round-robin exclusive sources + BGM crossfade + 3-channel volume/mute persistence |
 | Scene | Implemented | `SceneModule` static facade (scene load/additive/unload/activate + scene lifecycle events, call `SceneModule.xxx` directly) + UniTask adapter assembly (optional, define auto-maintained: with UniTask the coroutine implementation is replaced by UniTask-driven flow and awaitable APIs are provided) + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Module Settings) |

@@ -735,6 +735,11 @@ namespace Runestone.AesirModules
         /// MoveTowards 到达时精确返回目标值，循环条件用精确比较即可安全退出；
         /// 连续切歌时新协程从当前系数续接，无跳变。
         /// </para>
+        /// <para>
+        /// 失活边界：淡变进行中若模块 GameObject 被失活，协程被引擎中断、系数停在半途，重新激活不会自动续接
+        /// （本模块默认 DDOL 常驻，淡变中失活属非预期用法）——系数直到下一次 PlayBgm / StopBgm 才重新到位。
+        /// 启动即失活的情形由 <see cref="StartBgmFade" /> 的瞬时降级覆盖。
+        /// </para>
         /// </summary>
         IEnumerator FadeBgmRoutine(float target, float fadeSeconds)
         {

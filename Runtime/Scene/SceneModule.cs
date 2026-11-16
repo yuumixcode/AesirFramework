@@ -455,10 +455,12 @@ namespace Runestone.AesirModules
         {
             SceneManager.sceneUnloaded -= ReconcileUnloadedScene;
 
-            // 物体失活/销毁会中断所有协程且协程 finally 不保证执行——在此配平批量卸载的重入状态，
-            // 防止宿主被杀后 _unloadDepth 残留（UniTask 分支有语言级 finally 保证，此处兜底协程分支）
+            // 物体失活/销毁会中断所有协程且协程 finally 不保证执行——在此配平瞬态操作状态，
+            // 防止宿主被杀后残留（UniTask 分支有语言级 finally 保证，此处兜底协程分支）。
+            // 挂起的 Single 加载路径与 _unloadDepth 同属瞬态操作态：不清空会让后续 Single 加载被永久拒绝。
             _unloadDepth = 0;
             _unloadSnapshotBuffer.Clear();
+            _pendingSingleLoadPath = null;
         }
 
         /// <summary>
@@ -776,14 +778,27 @@ namespace Runestone.AesirModules
                 yield break;
             }
 
+            // BeginLoad 成功后才进入 try：Single 挂起态已置位，须保证异常退出时配平。
             // 逐帧轮询而非 yield return op：onProgress 需要每帧报告归一化进度
-            while (!operation.isDone)
+            try
             {
-                onProgress?.Invoke(Mathf.Min(operation.progress / ProgressCap, 1f));
-                yield return null;
-            }
+                while (!operation.isDone)
+                {
+                    onProgress?.Invoke(Mathf.Min(operation.progress / ProgressCap, 1f));
+                    yield return null;
+                }
 
-            CompleteLoad(scenePath, mode, onProgress, onCompleted);
+                CompleteLoad(scenePath, mode, onProgress, onCompleted);
+            }
+            finally
+            {
+                // onProgress 抛异常等中断路径清空挂起态（成功路径 CompleteLoad 已清空，此处幂等）；
+                // 宿主失活/销毁路径协程 finally 不保证执行，由 OnDisable 兜底。
+                if (mode == LoadSceneMode.Single)
+                {
+                    _pendingSingleLoadPath = null;
+                }
+            }
         }
 
         IEnumerator UnloadSceneInternal(string scenePath, Action onUnloaded, Action onFailed)
@@ -852,13 +867,14 @@ namespace Runestone.AesirModules
             Action<float> onProgress,
             LoadSceneMode mode)
         {
+            if (!BeginLoad(scenePath, mode, onFailed, out var operation))
+            {
+                return;
+            }
+
+            // BeginLoad 成功后才进入 try：Single 挂起态已置位，须保证取消/异常退出时配平
             try
             {
-                if (!BeginLoad(scenePath, mode, onFailed, out var operation))
-                {
-                    return;
-                }
-
                 // 逐帧轮询：onProgress 需要每帧报告归一化进度（与协程实现逐帧等价）
                 while (!operation.isDone)
                 {
@@ -871,6 +887,15 @@ namespace Runestone.AesirModules
             catch (OperationCanceledException)
             {
                 // 宿主销毁：静默中止（回调链随宿主消亡，对齐协程被停止的语义）
+            }
+            finally
+            {
+                // 取消/异常路径清空挂起态（成功路径 CompleteLoad 已清空，此处幂等），
+                // 对齐 UnloadAllAddedScenesAsyncInternal 的 finally 保证，不依赖 OnDisable 兜底。
+                if (mode == LoadSceneMode.Single)
+                {
+                    _pendingSingleLoadPath = null;
+                }
             }
         }
 

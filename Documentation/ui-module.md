@@ -1,6 +1,6 @@
 # UI 模块详细文档
 
-UI 框架（Manager of Managers 模式）：`UIModule` 单例管理面板与窗口的生命周期，`UIRoot` 负责四层 Canvas 层级构建。UI 有两种并列形态——**Panel（面板）** 以 `AesirBasePanel` 家族为根节点，挂载于共享层 Canvas；**Window（窗口，Canvas 根 UI）** 以 `AesirBaseWindow` 家族为根节点，预制体自带 Canvas、直接挂载于 UIRoot。本文覆盖快速开始之外的实现细节与设计边界；基础用法见包 [README](../README.md#ui-模块)。
+UI 框架（单门面 + 多注册表）：`UIModule` 单例管理面板与窗口的生命周期，`UIRoot` 负责四层 Canvas 层级构建。UI 有两种并列形态——**Panel（面板）** 以 `AesirBasePanel` 家族为根节点，挂载于共享层 Canvas；**Window（窗口，Canvas 根 UI）** 以 `AesirBaseWindow` 家族为根节点，预制体自带 Canvas、直接挂载于 UIRoot。本文覆盖快速开始之外的实现细节与设计边界；基础用法见包 [README](../README.md#ui-模块)。
 
 ## 架构总览
 
