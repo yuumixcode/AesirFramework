@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.32.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.32.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.33.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.33.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -36,9 +36,19 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.33.0] - 2026-11-16
+
+---
+
 **仓库级变更 / Repository-wide**
 
+- **AI 技能统一到整包扩展 `AesirFrameworkGame`，包内 `Skills/` 删除** — 两个包各自的 `TuanjieCowork~/Skills/`（RAA 六篇 + RAM 四篇）全部并入仓库根 `.codely-cli/extensions/AesirFrameworkGame/skills/`，与扩展独有的 `aesir-router` 和两篇实战模板合成一处：11 个技能 + 2 篇模板。包内只保留一份 `TuanjieCowork~/README.md`，改写为"怎么下载这个扩展、怎么装"的导流文档——团结 Cowork 用户稀疏克隆 `.codely-cli/extensions/AesirFrameworkGame`（`git clone --depth 1 --filter=blob:none --sparse`，CNB 优先、GitHub 兜底）后 `codely extensions install ... --scope workspace`，或直接拷进 `<工程>/.codely-cli/extensions/`（目录即插即用）；不用 Cowork 的开发者从同一处取 `skills/` 拆进自己的 AI 工具。`scripts/sync_from_packages.py` 随第二份主位一起删除，`scripts/validate.py` 新增"包内不得再出现 `TuanjieCowork~/Skills`"守护。根 `README` / 两包 `README`（中英）的技能链接、结构树与模式决策链接同步改指扩展内文件。**Why:** 两个包各自维护技能时，跨包交叉引用只能写"另一个包里的那篇"——架构技能要教 RAM 模块用法、模块技能要指回架构，开发者只装一个包时链接就断；合成一个扩展后 `aesir-router` 先做依赖门禁再分派，跨包互链退回同级相对路径，装一次就全在。**边界：** 仅 AI 技能与文档分发形态变更，无运行时代码改动；unitypackage 与 UPM 形态本就不含技能，不受影响。
+- **扩展新增「依赖门禁」三条硬规则** — 写进扩展 `CODELY.md`、`aesir-router`（完整判定表）、`aesir-framework`、`aesir-boot-scene` 与四个模块技能顶部：①**触发条件**——先探测工程实际装了哪个包（`manifest.json` / `packages-lock.json` / `Library/PackageCache` / 内联 `Assets/Runestone/*` / 能否 `using` 编译），缺 RAA 则全部技能失效、缺 RAM 则四个模块技能失效，缺包时禁止改用原生 `SceneManager`、自建 Canvas 栈、`PlayOneShot`、`static event` 总线顶替；②**记忆读取**——必须先 `read_memory` 并看工程约定文件，记忆明确"不要安装 RAM 包 / 只允许 RAA"就不装，只在已装能力范围内做事；③**询问与安装**——记忆未明确禁止时**必须**用选择题询问开发者，问句说清装哪个包、从哪装、会写 `Packages/manifest.json` 并从网络下载，线路固定 **CNB 优先、GitHub 兜底**，两个都缺时先 RAA 后 RAM，只缺 RAA 时走菜单 `Tools/Aesir/Modules/Install Dependencies`。**Why:** 技能容易在缺包时"顺着用户话往下编"——拿原生 API 假装框架能力，或静默往 `manifest.json` 里塞依赖；前者产出跑不通的代码，后者越过开发者的环境与依赖决策（部分团队明确只要架构层）。把"探测 → 读记忆 → 询问"定成顺序不可颠倒的三步，AI 才有稳定行为。**边界：** 纯技能正文与扩展上下文变更，无运行时代码改动。
+
+- **PlaneWar 迁出包外，成为宿主工程的完整游戏案例** — 纵版射击 PlaneWar 从包内 `Samples/PlaneWar`（连同 `Samples~/` 镜像）迁至仓库根 `Assets/PlaneWar/`，按实际游戏项目分层（`Art/` / `Prefabs/` / `Scenes/` / `Scripts/` / `Materials/`），场景改名 `PlaneWar.unity`；**同时从 `package.json` 的 samples 清单移除**，Getting Started 窗口的「实战示例」分组、分组排序与图标分支一并删除（可导入示例回到 11 个）。**身份随之改变：** 脚本不再是"示例"——类名去 `Sample` 前缀（`PlaneWarGameManager` / `PlaneWarPlayer` / `PlaneWarEnemy` / `PlaneWarEnemySpawner` / `PlaneWarBullet` / `PlaneWarGameHUD`）、命名空间改 `PlaneWar`、程序集改 `PlaneWar.Mono`、整文件 `#if UNITY_EDITOR` 包裹**移除**（案例正常编译进玩家构建，也不再被示例场景构建剔除规则拦截）。所有 `.meta` 随文件一起移动，GUID 不变，场景与预制体对脚本/资产的引用无需重连。**Why:** 包内示例的定位是"单个 API 的最小用法"，整文件 `#if` 包裹与场景构建剔除都服务于"示例不进玩家包"；而一款能从头玩到尾的游戏恰恰要能打包、要能当 `Assets/` 形态的真实参考工程——两种身份混在 `Samples/` 里，既让包体背着完整游戏，又让案例永远进不了构建。**边界：** 无框架运行时代码改动；`Third Party Notices.md` 移除 Goldmetal 素材条目（精灵已不随包分发，授权声明留在 `Assets/PlaneWar/README.md` 与根 README）
+- **AI 技能包独立成 `TuanjieCowork~/`（两个包，仅此一处）** — 原挂在 `Documentation/` 下的 AI Skill 迁出为包根 `TuanjieCowork~/Skills/<skill-name>/`，目标是「开发者拿到这个目录就能导入团结 Cowork」：每包一份 `TuanjieCowork~/README.md` 给导入命令（`codely skills install "<路径>/Skills/<name>" --scope user|workspace`）与获取路径（仓库内 `Assets/Runestone/<包>/TuanjieCowork~/Skills/`、UPM `Packages/<包ID>/TuanjieCowork~/Skills/`）。**刻意不设无波浪线的 `TuanjieCowork/` 主位：** 尾随 `~` 的目录不被 AssetDatabase 导入、不生成 `.meta`、也不进 unitypackage（`build_unitypackage.py` 的 `_is_ignored_name`），因此 AI 内容不会进入任何 Unity 工程、也不会分发给 unitypackage 用户。技能互链只用同级相对路径、不链接 `Documentation/` 内文件——单个技能目录可独立拷走。**Why:** `Documentation/` 的定位是"给人读的使用文档"，技能是"给 AI 加载的指令集"，混在一处既让文档目录里出现可执行技能，又让 AI 内容被迫随包进入工程。**边界：** 仅文档与分发形态变更，无运行时代码改动；unitypackage 用户拿不到技能包（需要就走 Git URL 或克隆仓库）
 - **分发：unitypackage 整目录剔除单元测试（`Tests/`）** — 打包脚本 `.github/scripts/build_unitypackage.py` 新增包根排除表 `EXCLUDED_ROOT_DIRS = {"Tests"}`，三个 Release 产物（`AesirArchitecture` / `AesirModules` / `AesirFramework`）的 unitypackage 与配套 `.github/update-info.json` 文件清单均不再包含包根 `Tests/`（连同目录自带的 `.meta`；RAA 31 条、RAM 71 条）。**Why:** 包内用例断言的是框架内部契约，对使用者没有价值；一旦以 Assets 形态导入，测试程序集就会在消费者项目的 Test Runner 里与该工程自己的测试并列——几百条框架用例混进来后，筛选与红绿判读全变噪音。**按整目录剔除而非只删 asmdef：** 残留的测试脚本会并入 `Assembly-CSharp` 并因 NUnit 引用失效报 `CS0246`，比不删更糟。**边界：** 仅 unitypackage 导出线剔除；UPM（Git URL / `*-latest` 分支）形态维持现状——Package Manager 默认不编译包内测试程序集（需 Project Settings → Testables 主动 opt-in），不会污染消费者工程。存量安装的残留由更新器「上次清单 − 新版清单」差集在下次更新时自动清理（连带 `.meta` 删除与空目录回收）
+- **包内 `Documentation/` 目录取消（两个包）** — 英文说明 `Documentation/README_EN.md` 升到各包根 `README_EN.md`（`.meta` 随之移动、GUID 不变），使用文档（RAA `observable-collections.md`、RAM 五篇模块文档）只保留在尾随 `~` 的 `Documentation~/`；`Documentation/` 整目录与 `Documentation~/README_EN.md` 一并删除，根/包 README 的徽章、链接与结构树同步改写。**Why:** `Documentation/` 在 `Assets/` 可见区，Unity 会把里面的 `.md` 当资产导入、unitypackage 也照发，而使用文档在文档站已有权威副本；`~` 目录已覆盖"随包分发但不进工程"，再留一个无 `~` 主位只是双份维护。**代价：** unitypackage 用户不再随包拿到使用文档（读文档站或克隆仓库）。**边界：** 仅文档与分发形态变更，无运行时代码改动
 
 ### [architecture] Aesir Architecture
 
@@ -54,6 +64,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 **Changed**
 
+- **AI 技能拆分：`aesir-framework` 一分为五** — 原单篇技能（169 行正文 + 11 篇 references）按"一个技能只回答一类问题"拆开：`aesir-framework`（入口：定位与五条核心裁决、Quick 三件套、十条关键约定、工程初始化、命名、技能地图）/ `aesir-tiers`（六档分级 + MVC 三档与 MVP 三档六份模板）/ `aesir-core-api`（ObservableValue、可观察集合、MiniEvent、Context 细节、AesirTimer、PlayerLoop、能力矩阵）/ `aesir-decisions`（模式选择 + 通知机制两张决策表）/ `aesir-pitfalls`（十条高频陷阱）。各技能的 description 收紧到自己的触发词，AI 按意图只加载需要的那一篇，不再"提到 Aesir 就整包进上下文"。同时**删除 `references/modules-api.md`**（RAM 四模块白名单 152 行）——RAM 的 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 四个技能已逐条覆盖且以源码为准，两份说法并存只会产生冲突口径。配套：`pitfalls.md` 内容提升为 `aesir-pitfalls/SKILL.md` 正文，`mode-decisions.md` / `event-decisions.md` / 六份模板 / `core-api.md` 随各自技能迁移并修正交叉链接；包内 `README`、根 `README`、`CODELY.md` 的技能清单与 `mode-decisions` 链接同步改指新路径。**无运行时代码变更**
 - **`AesirTimer` 面板重构：数据源与显示样式解耦** — `AesirTimerDebugModel`（行内含预格式化文案的 `AesirTimerInfo`）拆成四层：`AesirTimerSnapshot` / `AesirTimerStatistics` 只搬数据（状态枚举、秒数、次数、进度、回调归属，零文案零颜色）；`AesirTimerDebugSource` 负责抓取节奏与汇总；`AesirTimerText` 是把快照翻成中文文案与颜色的样式层；`AesirTimerSummaryView` 是"进度条 + 单行摘要"的外观。IMGUI 窗口、Odin 窗口、原生绘制器、Odin 绘制器全部改为消费快照——换一套面板样式只写新视图，抓取与数据不动
 - **`AesirTimer` 面板在编辑模式下归零** — 数据源在非 Play 模式不再枚举注册表、不读累计计数，统计行与表格恒定为零（此前退出 Play 后可能残留上一个会话的"累计创建 / 累计到期 / 结算帧"）；Play 状态切换那一刻立即重抓并重绘，面板不会滞后一个拉取间隔
 - **`AesirTimer` 示例补自定义 Inspector** — `AesirTimerSample` 把展示数据抽成内部 `TimerRow`（标签 / 状态 / 明细 / 进度 / 颜色），运行时 `OnGUI` 面板与 `AesirTimerSampleInspector` 共用同一份行数据、各用一套样式（与调试面板的解耦同构）；Inspector 提供四组动作按钮（编辑模式下整组禁用），播放中约 10 Hz 重绘。示例脚本仍整文件 `#if UNITY_EDITOR` 包裹（并入示例程序集 `Scripts/`，由 `AesirSamplesScriptGuardTests` 守护）
@@ -66,6 +77,20 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 - **架构决策落文档：暂不提供 MVVM（2026-11-16 裁决）** — 新增 `AesirFramework-Skill/references/mode-decisions.md`（模式选择速查 + Unity 官方立场调研 + 不提供 MVVM 的五点论述 + 重评触发条件）；README / README_EN 模式定位段、CODELY.md 设计基调、SKILL.md 核心裁决与 references 索引、包内 README_EN 同批对齐口径。**Why:** Unity 官方最佳实践只教 MVC/MVP（[官方教程](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns) / 视频系列），MVVM 的核心增量是数据绑定引擎，与轻量、Unity 原生优先定位相悖，`ObservableValue<T>` 已覆盖状态通知。快速开发首推 MVC 不变，MVP 保留官方范式可选地位；无任何运行时代码变更。决策记录见 Aesir-Notebook `decisions/architecture-core.md` 第十一章
 - 站点 `Scripting API` 新增 `AesirTimer` 页（SDG 重生成）；`architecture/features.md`「延时与下一帧」重写为计时器 + 四路径选择表；`product/features.md` 能力矩阵与设计边界同步（原"时间调度原语：不做"改为"只保留 `AesirTimer`"）；包内 `AesirFramework-Skill` 的 `core-api.md` 增补计时器一节；同批删除 jam 实战手册 `jam-playbook.md`（其核心缺口已被 `AesirTimer` 覆盖，工程初始化要点并入 `SKILL.md`）
+
+### [modules] Aesir Modules
+
+**Added**
+
+- **世界空间 UI Canvas 预设（`WorldSpaceUICanvas`）** — 补齐 UI 模块缺失的 `RenderMode.WorldSpace` 预设：组件挂在场景物体上（或经 `UIRoot.CreateWorldSpaceCanvas(target, name, config)` 运行时创建）即自动接线 Canvas / RectTransform(square) / CanvasScaler(ConstantPixelSize) / GraphicRaycaster，子树归入 UI 层(5)，默认 sortingOrder 450（面板层 100–400 与窗口 ≥500 之间）。支持跟随父级变换或显式 `FollowTarget` + `PositionOffset` 偏移，以及 `FaceCamera` / `Billboard`（None / YLocked / Full）+ `FlipFacing` 朝向控制。世界空间 UI 是与 Panel / Window 并列的第三种形态，**不进 UIModule 注册表与蒙版调度**，生命周期随宿主场景物体；配置走独立链（组件字段 → `UIRoot.WorldSpaceCanvasConfig` → `UICanvasConfigSO.CreateWorldSpaceDefault()`），`ApplyToCanvas` 在世界空间配置下跳过屏幕缩放字段写入，避免 Screen Scale 模式污染世界空间 Canvas
+- **世界空间 Canvas 预设 EditMode 守护用例** — `Tests/Editor/UI/WorldSpaceUICanvasTests.cs`（7 用例）：默认配置、Canvas 接线、世界空间配置跳过屏幕 Scaler、sortingOrder / UI 层、显式跟随目标与偏移、运行时创建入口与配置传递、空目标防呆
+
+**Changed**
+
+- **AI 技能迁出包外：`TuanjieCowork~/Skills/` 删除，只留一份导流文档** — 四个模块技能（`aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene`）全部并进仓库根整包扩展 `.codely-cli/extensions/AesirFrameworkGame/skills/`；包内 `TuanjieCowork~/` 只剩 `README.md`，内容改为"怎么下载这个扩展、怎么装"。模块技能顶部新增**依赖门禁**指引：工程缺 RAM 或 RAA 时，AI 先探测、再读记忆、记忆未明确禁止才询问是否经 Git URL 安装，不得改用原生 `SceneManager` / 自建 Canvas 栈 / `PlayOneShot` / `static event` 总线顶替。**Why:** 技能分居两个包时，"用 UI 模块要先读架构那包里的那篇"这类跨包引用只能靠文字描述，只装一个包就断链。**无运行时代码变更**
+- **`Documentation/` 目录取消：英文说明升到包根，各模块使用文档只留 `Documentation~/`** — `Documentation/README_EN.md` 移到包根 `README_EN.md`（`.meta` 随文件移动、GUID 不变），`ui-module.md` / `event-module.md` / `audio-module.md` / `scene-module.md` / `script-doc-generator.md` 只保留在尾随 `~` 的 `Documentation~/`；`Documentation/` 整目录（含 `.meta`）与 `Documentation~/README_EN.md` 一并删除。**Why:** `Documentation/` 位于 `Assets/` 可见区，Unity 会把这些 `.md` 当资产导入、unitypackage 里也照发，而使用文档在文档站已有权威副本，`~` 目录已覆盖"随包分发但不进工程"的全部需求。**代价：** unitypackage 用户不再随包拿到使用文档。**无运行时代码变更**
+
+---
 
 ## [0.32.0] - 2026-10-17
 

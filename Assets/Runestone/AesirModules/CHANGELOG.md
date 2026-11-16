@@ -7,10 +7,18 @@
 
 ## [Unreleased]
 
+## [0.33.0] - 2026-11-16
+
 ### Added
 
 - **世界空间 UI Canvas 预设（`WorldSpaceUICanvas`）** — 补齐 UI 模块缺失的 `RenderMode.WorldSpace` 预设：组件挂在场景物体上（或经 `UIRoot.CreateWorldSpaceCanvas(target, name, config)` 运行时创建）即自动接线 Canvas / RectTransform(square) / CanvasScaler(ConstantPixelSize) / GraphicRaycaster，子树归入 UI 层(5)，默认 sortingOrder 450（面板层 100–400 与窗口 ≥500 之间）。支持跟随父级变换或显式 `FollowTarget` + `PositionOffset` 偏移，以及 `FaceCamera` / `Billboard`（None / YLocked / Full）+ `FlipFacing` 朝向控制。世界空间 UI 是与 Panel / Window 并列的第三种形态，**不进 UIModule 注册表与蒙版调度**，生命周期随宿主场景物体。配置走独立链：组件字段 → `UIRoot.WorldSpaceCanvasConfig` → 内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`；`UICanvasConfigSO` 新增 `ApplyToWorldSpaceCanvas` 与 `CreateWorldSpaceDefault`，`ApplyToCanvas` 在世界空间配置下跳过屏幕缩放字段写入，避免 Screen Scale 模式污染世界空间 Canvas
 - **世界空间 Canvas 预设 EditMode 守护用例** — `Tests/Editor/UI/WorldSpaceUICanvasTests.cs`（7 用例）：默认配置、Canvas 接线、世界空间配置跳过屏幕 Scaler、sortingOrder / UI 层、显式跟随目标与偏移、运行时创建入口与配置传递、空目标防呆
+- **AI 技能包 `TuanjieCowork~/Skills/`** — 四个模块技能可从包内直接导入团结 Cowork / Codely CLI：`aesir-ui`（Panel 与 Window 选型、`OnInit/OnShow/OnHide/OnClose` 生命周期、蒙版单遮/叠遮、世界空间 UI Canvas）、`aesir-events`（双轨订阅、四档优先级、订阅者过滤器、快照迭代与重入、SO 资产化）、`aesir-audio`（SFX 轮询、BGM 淡变、三通道音量持久化）、`aesir-scene`（Single/Additive、进度归一化、`SceneAssetWrapper`、UniTask awaitable API）。每个 `SKILL.md` 由 `Documentation/*-module.md` 提炼为「默认写法 → 关键 API → 坑位 → 设计边界」，正文不引用 `Documentation/` 内文件（技能可单独拷走）；`TuanjieCowork~/README.md` 给 `codely skills install` 命令与获取路径。**只建尾随 `~` 的那一份**：该目录不被 AssetDatabase 导入、不生成 `.meta`、不进 unitypackage——AI 内容不进入使用者的 Unity 工程。**Why:** 模块用法只有给 AI 加载时才真正生效，而 `documentationUrl` 指向的文档站是给人读的——技能是另一个消费面，但不该成为工程里的噪音。**无运行时代码变更**
+
+### Changed
+
+- **AI 技能迁出包外：`TuanjieCowork~/Skills/` 删除，只留一份导流文档** — 四个模块技能（`aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene`）全部并进仓库根整包扩展 `.codely-cli/extensions/AesirFrameworkGame/skills/`（与 RAA 六篇架构技能、扩展独有的 `aesir-router` 与两篇实战模板同处一个扩展）；包内 `TuanjieCowork~/` 只剩 `README.md`，内容改为"怎么下载这个扩展、怎么装"——团结 Cowork 用户稀疏克隆扩展目录后 `codely extensions install` 或直接拷进 `<工程>/.codely-cli/extensions/`，不用 Cowork 的开发者取 `skills/` 拆进自己的 AI 工具（CNB 优先、GitHub 兜底）。模块技能顶部新增**依赖门禁**指引：工程缺 RAM 或 RAA 时，AI 先探测、再读记忆、记忆未明确禁止才询问是否经 Git URL 安装，不得改用原生 `SceneManager` / 自建 Canvas 栈 / `PlayOneShot` / `static event` 总线顶替。包 `README` / `README_EN` 的「AI 技能包」小节同步改写。**Why:** 技能分居两个包时，"用 UI 模块要先读架构那包里的那篇"这类跨包引用只能靠文字描述，只装一个包就断链；同一扩展内的相对路径互链才装一次全在，而模块技能本身离不开架构底座。**无运行时代码变更**
+- **`Documentation/` 目录移除：英文说明升到包根，各模块使用文档只留 `Documentation~/`** — 包内 `Documentation/README_EN.md` 移到包根 `README_EN.md`（`.meta` 随文件移动、GUID 不变），`ui-module.md` / `event-module.md` / `audio-module.md` / `scene-module.md` / `script-doc-generator.md` 只保留在尾随 `~` 的 `Documentation~/`；`Documentation/` 整目录（含 `.meta`）删除，`Documentation~/README_EN.md` 同步删除，避免同一份英文说明两处漂移。包 `README.md` 的英文徽章、各模块文档链接与结构树改指新位置。**Why:** `Documentation/` 位于 `Assets/` 可见区，Unity 会把这些 `.md` 当资产导入、unitypackage 里也照发——而使用文档在文档站已有权威副本，尾随 `~` 的 `Documentation~/` 已覆盖"随包分发但不进工程"的全部需求，再留一个无 `~` 的主位只是双份维护。**代价：** unitypackage 用户不再随包拿到使用文档（读文档站或克隆仓库）。**无运行时代码变更**
 
 ## [0.32.0] - 2026-10-17
 

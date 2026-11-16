@@ -11,20 +11,20 @@
 | 项 | 值 |
 |---|---|
 | Unity 版本 | 2022.3.62f3c1（Unity 中国版） |
-| 渲染管线 | URP 14.0.12 |
+| 渲染管线 | URP 14.0.12（含 `com.unity.feature.2d`） |
 | C# 版本 | C# 9 |
 | 许可证 | MIT |
 | 作者 | [yuumixcode](https://github.com/yuumixcode) |
 | 命名空间 | `Runestone.AesirArchitecture` / `Runestone.AesirModules`（品牌名"符文石"） |
 | 代码注释 | 中文 XML 文档注释，标识符英文 |
-| 规模 | 两个包内共 426 个 `.cs`（含 `Samples~/` 镜像；排除镜像为 352 个） |
+| 规模 | 两包内共 400+ 个 `.cs`（含 `Samples~/` 镜像）；另有宿主工程完整游戏案例 `Assets/PlaneWar/`（6 个脚本，不属两包） |
 
 ### 两个包
 
 | 包 | 包 ID | 版本 | 说明 |
 |---|---|---|---|
-| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.32.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
-| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.32.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
+| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.33.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
+| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.33.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
 
 依赖关系：**RAA 不依赖任何 Aesir 包**；**RAM 依赖 RAA**（`package.json` 中**不声明**该依赖，见下方"依赖补全"）。
 
@@ -37,7 +37,24 @@ Aesir Inspector 已迁出为独立公开仓库，本仓不再包含。根目录�
 3. **核心架构默认最低档 Quick**：不建 Model/Service 接口、不做只读 property 包装、直接持具体类、`Register*` 注册实现类型；只有确需多实现/替换时才引入接口。
 4. **Model = 运行时数据的底层数据源**，不是 UI 附属。
 5. **低概率问题用文档约定杜绝，不加防御性代码兜底**；异常不吞噬（fail-fast）；不做初始化回滚、不做自愈轮询。
-6. **暂不提供 MVVM（2026-11-16 裁决）**：快速开发首推 MVC；MVP 是 Unity 官方最佳实践所教授的严格分层范式（可选）。MVVM 的核心增量是数据绑定引擎，与"Unity 原生优先、不构建平行自建体系"基调相悖，状态通知已由 `ObservableValue<T>` 覆盖；业务侧可自行按 MVVM 风格组织代码，框架包不提供一等公民支持（无 IViewModel / 绑定引擎 / 官方模板）。重评触发：UI Toolkit 运行时绑定成为主力 UI 方案 / 大型数据驱动 UI 消除订阅胶水成为普遍诉求 / 社区明确广泛需求。完整论述见 `Aesir-Notebook/docs/decisions/architecture-core.md` 第十一章与 `AesirArchitecture/Documentation/AesirFramework-Skill/references/mode-decisions.md`。
+6. **暂不提供 MVVM（2026-11-16 裁决）**：快速开发首推 MVC；MVP 是 Unity 官方最佳实践所教授的严格分层范式（可选）。MVVM 的核心增量是数据绑定引擎，与"Unity 原生优先、不构建平行自建体系"基调相悖，状态通知已由 `ObservableValue<T>` 覆盖；业务侧可自行按 MVVM 风格组织代码，框架包不提供一等公民支持（无 IViewModel / 绑定引擎 / 官方模板）。重评触发：UI Toolkit 运行时绑定成为主力 UI 方案 / 大型数据驱动 UI 消除订阅胶水成为普遍诉求 / 社区明确广泛需求。完整论述见 `Aesir-Notebook/docs/decisions/architecture-core.md` 第十一章与 `.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md`。
+
+### 双主位：CNB 主仓 + GitHub 镜像
+
+**主仓在 CNB，GitHub 是镜像与国际发布出口**——`origin` 指向 `cnb.cool/runestone-game/AesirFramework`，本地无 `github` remote。
+
+| 侧 | 职责 |
+|---|---|
+| CNB（主仓） | `main` 推送触发 `.cnb.yml`：包分支 split + 裁剪 → `update-info.json` 回写 → 滚动 tag → git-sync 推 GitHub main / 包分支 / tag；`v*` tag 推送触发 CNB Release（国内下载加速） |
+| GitHub（镜像） | `main` 与 `AesirArchitecture-latest` / `AesirModules-latest` 由 CNB 单向同步；收到 `v*` tag 时由 `.github/workflows/auto-release.yml` 发 GitHub Release |
+
+硬纪律（写进 `.cnb.yml` 注释，违反即断同步）：
+
+- **GitHub 侧零提交、零 tag**：不点 PR 的 Merge 按钮；PR 由维护者 fetch 回本地经 CNB 合并。
+- main 同步永不 force；GitHub main 领先时同步会失败 → 把 GitHub 提交 `fetch` 后 merge 进 CNB main 再推。
+- **永不改写已发布 main 历史**（rebase / filter），否则单向同步断裂。
+- 提交信息（主题与正文）**严禁出现跳过标记字面量**，否则 CNB main 流水线整体跳过；确需跳过用 `git push -o ci.skip`。
+- CNB 侧删掉的分支 / tag **不会**在 GitHub 消失（git-sync 插件只 push、不删）。
 
 ---
 
@@ -47,42 +64,54 @@ Aesir Inspector 已迁出为独立公开仓库，本仓不再包含。根目录�
 AesirFramework/
 ├── README.md / README_EN.md / CHANGELOG.md / CONTRIBUTING.md / CODE_OF_CONDUCT*.md
 ├── CODELY.md                      # 本文件
+├── .cnb.yml                       # CNB 主仓流水线（split / update-info / rolling tag / git-sync）
 ├── CodeStyle/AesirCodeStyle.cs    # 统一代码风格指南（不参与编译）
 ├── .github/
-│   ├── workflows/auto-release.yml           # 发版：Build 三份 unitypackage + Release + 回写 update-info.json
-│   ├── workflows/auto-publish-branches.yml  # main 推送时 subtree split 滚动 *-latest 常驻分支
-│   └── scripts/build_unitypackage.py        # 打包脚本（纯 Python，禁换第三方 CLI）
+│   ├── workflows/auto-release.yml     # 收到 v* tag → 建三份 unitypackage → 滚动 GitHub Release
+│   ├── scripts/build_unitypackage.py  # 打包脚本（纯 Python，禁换第三方 CLI）
+│   └── scripts/extract_release_notes.py
+├── .codely-cli/                   # AI 工具链（部分入库，见「AI 技能与 Codely 环境」）
+│   ├── RESTORE.md                 # 换机 / 新克隆的环境还原手册
+│   ├── settings.json / memory.md / memory/ / skills/
+│   └── extensions/AesirFrameworkGame/   # 自研扩展，全量入库：11 技能 + 2 实战模板
 ├── Assets/
 │   ├── Runestone/
 │   │   ├── AesirArchitecture/     # RAA 包根
 │   │   └── AesirModules/          # RAM 包根
-│   ├── Scripts/                   # 宿主工程自用脚本（不属于两个包）
+│   ├── PlaneWar/                  # 完整游戏案例（纵版射击 Mono 版，不随包分发）
+│   ├── Scripts/                   # 宿主工程自用脚本（不属两个包）
 │   │   ├── HUDContext.cs / HUDPanel.cs      # Binder 生成的示范面板与 Context
 │   │   └── Editor/AesirPackageExporter/     # Tools/Aesir/Export Packages 导出工具
-│   ├── Scenes/SampleScene.unity
+│   ├── Scenes/SampleScene.unity   # Build Settings 唯一登记场景（index 0）
 │   ├── Settings/                  # URP 资源（UniversalRP / Renderer2D / Lit2DSceneTemplate）
+│   ├── Resources/                 # 模块配置资产（SceneModuleConfig / UIModuleConfig）
+│   ├── Editor Default Resources/  # SDG 的资产标记与面板资源
+│   ├── TextMesh Pro/              # TMP Essential Resources
+│   ├── Vertical 2D Shooting BE4/  # Goldmetal 免费素材原件（gitignored，PlaneWar 内有自包含拷贝）
 │   └── Plugins/Sirenix/           # Odin Inspector（gitignored，独立授权）
 └── Packages/manifest.json
 ```
 
-**gitignored 的本地产物（不要提交、也不要当作事实来源）**：`Library/`、`Temp/`、`obj/`、`Logs/`、`UserSettings/`、`Exports/`（历史 unitypackage）、`ScriptDocGenerator/`（默认文档输出根）、`ScriptableSingleton/`、`TestResults*.xml`、`*.log`、`screenshots/`、`Assets/Resources/`（模块配置资产，运行时生成）、`Assets/Editor Default Resources/`、`*.csproj`、`*.sln`。
+**gitignored 的本地产物（不要提交、也不要当作事实来源）**：`Library/`、`Temp/`、`obj/`、`Logs/`、`UserSettings/`、`Build/`、`Exports/`（历史 unitypackage）、`ScriptDocGenerator/`（默认文档输出根）、`TestResults*.xml`、`*.log`、`screenshots/`、`*.csproj`、`*.sln`、`Assets/Plugins/Sirenix/`、`Assets/Vertical 2D Shooting BE4/`、`.DS_Store`。
 
-`.codely-cli/` 大多忽略，但 **`.codely-cli/extensions/TJGenerators` 与其 Bridge 包缓存已入库**（见 `.gitignore` 注释），`.codely-cli/skills/` 仍是本地工具链、不入库。
+> 入库口径（2026-11-16 裁决）：`Assets/Resources/`（模块配置单例）与 `Assets/Editor Default Resources/Script Doc Generator/`（SDG 资产标记）**入库**——本仓库示例运行会读取它们；`ScriptableSingleton/`（`LoadTypeSettings` / `BinderEditorSettings` / `SceneEditorSettings`）属本机编辑器产物，**继续 gitignored**。
 
 ### 两个包的标准结构
 
 ```
 <包根>/
-├── package.json / README.md / CHANGELOG.md / LICENSE.md / Third Party Notices.md
+├── package.json / README.md / README_EN.md / CHANGELOG.md / LICENSE.md / Third Party Notices.md
 ├── AesirPathLookup.asset        # 安装位置锚点（GUID 固定，勿删/勿改）
 ├── Runtime/                     # 运行时锚点 asmdef 在层根，模块以子目录汇入
 ├── Editor/                      # 编辑器锚点 asmdef 在层根
 ├── Tests/                       # Editor（EditMode）/ Runtime（PlayMode）
 ├── Samples/                     # 编写主位（Assets 内可见、可运行、构建剔除）
 ├── Samples~/                    # 发布镜像（Package Manager 按需导入）
-├── Documentation/               # 文档主位（Assets 内可见、随 unitypackage 导出、不进构建）
-└── Documentation~/              # 文档镜像（无 .meta）
+├── Documentation~/              # 使用文档（AssetDatabase 不可见、无 .meta、不进 unitypackage）
+└── TuanjieCowork~/              # AI 技能获取入口（仅 README，技能正文不在此）
 ```
+
+**`Documentation/`（无波浪线）已取消**：英文说明升到包根 `README_EN.md`，使用文档只在 `Documentation~/`。**`TuanjieCowork~/Skills/` 也已取消**：两个包各留一份 `README.md` 讲"扩展在哪、怎么装"，技能正文的唯一主位是仓库根的 `.codely-cli/extensions/AesirFrameworkGame/skills/`。
 
 ---
 
@@ -161,11 +190,13 @@ public class HUDContext : AbstractContext<HUDContext>
 
 写作纪律：快捷/标准档表现层可直写 Model；标准档起写入应经 Command；严格档只读 + 写方法；Service 可直写。
 
-其余示例：`ObservableValue`（Odin Drawer）、`ObservableCollections`、`MiniEvent`、`AesirTimer`（延时 / 冷却 / 重复 / 暂停 + 只读查询面板 + 自定义 Inspector 状态表与动作按钮，配 `Timer Debugger` 窗口）、`PlaneWar`（Mono 版纵版射击实战）、`RuntimeInitializeLoadType`（五个阶段顺序，Editor-only asmdef，开关在 `Tools → Aesir → Architecture → Samples/RuntimeInitializeLoadType`）。
+其余示例：`ObservableValue`（Odin Drawer）、`ObservableCollections`、`MiniEvent`、`AesirTimer`（延时 / 冷却 / 重复 / 暂停 + 只读查询面板 + 自定义 Inspector 状态表与动作按钮，配 `Timer Debugger` 窗口）、`RuntimeInitializeLoadType`（五个阶段顺序，Editor-only asmdef，开关在 `Tools → Aesir → Architecture → Samples/RuntimeInitializeLoadType`）。
+
+完整游戏案例不在包内：`Assets/PlaneWar/`（纵版射击 Mono 版，宿主工程实际游戏，见 `Assets/PlaneWar/README.md`）。
 
 ### RAA 编辑器工具（`Editor/`）
 
-- **Getting Started 窗口**（0.24.0）— `Tools/Aesir/Getting Started`，priority **-980**（居 Tools/Aesir 顶部）。以各包 `package.json` 的 `samples` 清单为唯一真源；覆盖 Assets 安装 / 嵌入式 / UPM 三种发现；未导入示例可窗口内一键导入（`PackageManager.UI.Sample` API）。Odin 版与 IMGUI 兜底版经 `OdinWindowOpener` 静态委托路由。
+- **Getting Started 窗口** — `Tools/Aesir/Getting Started`，priority **-980**（居 Tools/Aesir 顶部）。以各包 `package.json` 的 `samples` 清单为唯一真源；覆盖 Assets 安装 / 嵌入式 / UPM 三种发现；未导入示例可窗口内一键导入（`PackageManager.UI.Sample` API）。分组 / 顺序 / 档位徽章是**代码侧展示启发式**，登记点是 `AesirGetStartedService` 的 `GetSampleGroup` / `GetGroupOrder` / `GetSampleBadge`，未命中落入默认分组——改分组改这三个方法，不改 `package.json`。Odin 版与 IMGUI 兜底版经 `OdinWindowOpener` 静态委托路由。「实战示例」分组随 PlaneWar 迁出已删除。
 - **包内更新器** — `Tools/Aesir/Check for Updates`，priority **1100**（置底）。面向"代码导入 `Assets/Runestone`"的用户：锚点定位安装根 → 扫描 `*/package.json` → 三层版本检测（GitHub 直连 → 镜像站 `ghproxy.net`/`gh-proxy.com` → jsDelivr）→ 下载 `<包目录名>-v<版本>.unitypackage` → 差集删除残留条目 → 静默导入 → 登记 `.aesir/installed-manifest.json`。整段更新用 `EditorApplication.LockReloadAssemblies()` 防域重载打断；超时双判据（总时长 + 无进展）。纯 UPM 安装时菜单隐藏（无管辖对象）。
 - **安装位置锚点** — 每个包根 `AesirPathLookup.asset`（`ScriptableObject` 空壳，`.meta` GUID 固定写在 `AesirAssetPaths` 常量里）。解析顺序：默认根 `Directory.Exists` → 锚点 GUID 查询 → `FindAssets("t:AesirPathLookup")` 兜底；域重载后重解析。**勿删、勿改 GUID。**
 - **构建剔除** — `AesirSamplesBuildFilter` 经 `BuildPlayerWindow.RegisterBuildPlayerHandler` 把 Aesir 示例场景从本次构建选项剔除并打印 `[Aesir Build]` 日志（不改 Build Settings 持久数据）。仅拦截窗口构建入口，CI 直接调 `BuildPipeline.BuildPlayer` 不经过钩子。
@@ -191,11 +222,11 @@ public class HUDContext : AbstractContext<HUDContext>
   - 静态门面：`Show<T>` / `Hide<T>` / `Get<T>` / `Prewarm<T>` / `RegisterPrefab<T>` / `ContainPrefab<T>`；窗口：`Open<T>` / `Close<T>` / `GetWindow<T>` / `PrewarmWindow<T>` / `RegisterWindowPrefab<T>` / `ContainWindowPrefab<T>`。实例侧为长名（`ShowPanel` / `OpenWindow` …）。
 - **`IUIPanel`** — `Initialize → Show(payload) → Hide → DestroyPanel`；`Layer`（`UILayer`）、`DestroyOnHide`、`IsOpen`。
   - `AesirBasePanel` / `AesirBasePanelView<T>` / `AesirBasePanelViewController<T>`；面板实例化到 `UIRoot` 四层 Canvas 下。
-- **Canvas 根窗口形态** — `IUIWindow`：`OnInit → OnShow → OnHide → OnClose`；`AesirBaseWindow` / `AesirBaseWindowView<T>` / `AesirBaseWindowViewController<T>`；预制体根节点自带 Canvas，直接挂 `UIRoot` 下，不经四层层级；`sortingOrder` 为单一真源（默认 500）；预制体约定 `Mask` + `Content` 子物体。
+- **Canvas 根窗口形态** — `IUIWindow`：`OnInit → OnShow → OnHide → OnClose`；`AesirBaseWindow` / `AesirBaseWindowView<T>` / `AesirBaseWindowViewController<T>`；预制体根节点自带 Canvas，直接挂 `UIRoot` 下，不经四层层级；`sortingOrder` 为单一真源（默认 500）；预制体约定 `Mask` + `Content` 子物体；`CloseSelf()` 为窗口既有的自关闭入口。
   - 蒙版：初值在 `UIModuleConfigSO` 单例资产，运行时经 `MaskMode` 切换；蒙版点击走 `AesirBaseWindow.OnMaskClicked()` 虚方法，`closeOnMaskClick`（默认 false）。层级枚举 `UIMaskMode`。
   - 命名规范：窗口类/脚本/预制体以 `Window` 结尾（不用 `XxxCanvas`，会被误读为 Canvas 派生类）。
 - **`UIRoot`** — 构建四层 Canvas 层级；层 Canvas / UICamera / EventSystem 为序列化引用持久化（`UICanvasConfigSO`）。
-  - **世界空间 UI Canvas 预设** — `WorldSpaceUICanvas`（Add Component → Aesir Modules → UI）：`RenderMode.WorldSpace` + RectTransform/CanvasScaler/GraphicRaycaster 自动接线，默认 sortingOrder 450（面板层 100–400 与窗口 ≥500 之间）；`FollowTarget`（空=跟随父级）+ `PositionOffset` + `FaceCamera`/`Billboard` 控制跟随与朝向，子树归入 UI 层(5)；`UIRoot.CreateWorldSpaceCanvas(target, name, config)` 运行时创建。世界空间配置走独立链（组件 → `UIRoot.WorldSpaceCanvasConfig` → `UICanvasConfigSO.CreateWorldSpaceDefault()`），**不进 UIModule 注册表 / 蒙版调度**，生命周期随场景宿主。
+  - **世界空间 UI Canvas 预设** — `WorldSpaceUICanvas`（Add Component → Aesir Modules → UI）：`RenderMode.WorldSpace` + RectTransform/CanvasScaler/GraphicRaycaster 自动接线，默认 sortingOrder 450（面板层 100–400 与窗口 ≥500 之间）；`FollowTarget`（空=跟随父级）+ `PositionOffset` + `FaceCamera`/`Billboard` 控制跟随与朝向，子树归入 UI 层(5)；`UIRoot.CreateWorldSpaceCanvas(target, name, config)` 运行时创建。世界空间配置走独立链（组件 → `UIRoot.WorldSpaceCanvasConfig` → `UICanvasConfigSO.CreateWorldSpaceDefault()`），**不进 UIModule 注册表 / 蒙版调度**，生命周期随场景宿主。Odin 侧配置经 `WorldSpaceUICanvasAttributeProcessor`。
 - **`IUIAssetLoader` / `ResourcesUILoader`** — 可插拔资源加载，**同步契约**（Addressables 需预加载后同步返回）；`RegisterAssetLoader` 替换。
 - **`BinderAssistant` / `BinderTag`**（Odin 程序集）— UI 元素绑定系统 + 代码生成；窗口感知，根节点带 Canvas 时默认 `Window` 后缀与 `AesirBaseWindow` 基类。生成脚本为 partial + 「同一脚本增量」模式，只替换「绑定字段」region。
 - 已知契约：`OnClose` 只在受控销毁路径（Hide + DestroyOnHide）调用，**外部销毁只有 `OnDestroy`** → 解绑逻辑放 `OnDestroy`。同基类类型重复 Show 报错；Hide/Get 未命中给 Warning；缺层 fail-fast。
@@ -227,7 +258,7 @@ public class HUDContext : AbstractContext<HUDContext>
 
 ### 脚本文档生成（需 Odin）
 
-`Runtime/ScriptDocGenerator/OdinInspector` + `Editor/ScriptDocGenerator/OdinInspector`（经 asmref 汇入 Odin 程序集）。反射生成结构化 API 文档（增量保留 `## Additional Notes`）+ Summary 双向同步工具。静态入口 `ScriptDocGeneratorAPI`（`GenerateDocsForType/ForTypes/ForAssembly/ForFolder`，`settings == null` 用 Default，`outputFolder == null` 用项目根 `ScriptDocGenerator/`；全程无弹窗）。菜单：`Tools → Aesir → Modules → Script Doc Generator`。Summary 工具的权威源是 `[Summary]` 特性。
+`Runtime/ScriptDocGenerator/OdinInspector` + `Editor/ScriptDocGenerator/OdinInspector`（经 asmref 汇入 Odin 程序集）。反射生成结构化 API 文档（增量保留 `## Additional Notes`）+ Summary 双向同步工具。静态入口 `ScriptDocGeneratorAPI`（`GenerateDocsForType/ForTypes/ForAssembly/ForFolder`，`settings == null` 用 Default，`outputFolder == null` 用项目根 `ScriptDocGenerator/`；全程无弹窗）。菜单：`Tools → Aesir → Modules → Script Doc Generator`。Summary 工具的权威源是 `[Summary]` 特性。资产标记与面板资源落在 `Assets/Editor Default Resources/Script Doc Generator/`。
 
 ### 依赖补全（`Editor/Bootstrap`）
 
@@ -243,7 +274,7 @@ public class HUDContext : AbstractContext<HUDContext>
 
 ## 程序集定义
 
-### RAA（17 个 asmdef，`Samples~/` 按同名镜像一份）
+### RAA（16 个 asmdef，`Samples~/` 按同名镜像一份）
 
 | 程序集 | 锚点路径 |
 |---|---|
@@ -256,10 +287,11 @@ public class HUDContext : AbstractContext<HUDContext>
 | `Runestone.AesirArchitecture.Samples.MvpQuick` / `MvpStandard` / `MvpStrict` | `Samples/Counter-Mvp-*` |
 | `Runestone.AesirArchitecture.Samples.MiniEvent` / `ObservableValue` / `ObservableCollections` | 同名示例 |
 | `Runestone.AesirArchitecture.Samples.AesirTimer` | `Samples/AesirTimer/` |
-| `Runestone.AesirArchitecture.Samples.PlaneWarMono` | `Samples/PlaneWar/Scripts/Mono/` |
 | `Runestone.AesirArchitecture.Samples.RuntimeInitializeLoadType` | `Samples/RuntimeInitializeLoadType/Editor/`（Editor-only） |
 
 示例程序集为**运行时程序集 + 整文件 `#if UNITY_EDITOR` 包裹**：编辑器内正常编译/挂载/Play，玩家构建整体剔除。**不要改回 Editor-only asmdef**——其 MonoBehaviour 会被判定为编辑器脚本而禁止挂场景（Missing Script）。
+
+宿主工程的游戏案例程序集不在此表：`PlaneWar.Mono`（`Assets/PlaneWar/Scripts/Mono/`，命名空间 `PlaneWar`，`autoReferenced: false`），正常编译进玩家构建、不经示例的构建剔除。
 
 ### RAM（17 个 asmdef + 7 个 asmref）
 
@@ -305,9 +337,9 @@ asmref：`Editor/Audio/OdinInspector`、`Editor/Scene/Addressables`、`Editor/Sc
 - 本引擎 nunit 被裁剪：**无 `Assert.ThrowsAsync`**，`async Task` 用例可能被静默忽略 → 同步断言 + `GetAwaiter().GetResult()`。
 - 测试红了：契约有意变 → 改测试 + CHANGELOG 记破坏性；契约没变只是实现变 → 判为测试过拟合，删/简化测试，**绝不为保绿扭曲实现**。
 
-### 现状（2026-11-12 实测）
+### 现状（2026-11-16 实测）
 
-- **6 个测试程序集 / 72 个测试文件**；属性层面 `[Test]` 690、`[TestCase]` 67、`[UnityTest]` 37（参数化展开后约 800+ 条）。
+- **6 个测试程序集 / 74 个 `.cs`（其中 2 个为 `Tests/Editor/OdinInspector/ScriptDocGenerator/Common/` 下的辅助类型）**；属性层面 `[Test]` 703、`[TestCase]` 67（含 `[TestCaseSource]`）、`[UnityTest]` 39；参数化展开后实跑 EditMode 853 + PlayMode 36。
 - 最密、触碰时优先收敛：`BinderCodeGeneratorTests`、`AesirUpdateServiceTests`、`SourceParsingTests`、`AudioModuleTests`、`EventModuleTests`、`XmlSummaryToolTests`。
 - 改测试或 asmdef **必须重跑**；纯文档补丁可豁免 PlayMode。
 
@@ -317,9 +349,11 @@ asmref：`Editor/Audio/OdinInspector`、`Editor/Scene/Addressables`、`Editor/Sc
 
 ### 编辑器
 
-1. 用 Unity 2022.3.62f3c1 打开项目（首次导入会编译两包 + 示例）。
-2. 主推示例：`Assets/Runestone/AesirArchitecture/Samples/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity`。
-3. Odin Inspector 可选：装于 `Assets/Plugins/Sirenix/`（gitignored）。未安装时 `ODIN_INSPECTOR` 相关内容整体编译剔除，功能可用但 Binder / SDG / Odin 窗口退化。
+1. **先装 TJGenerators 扩展再打开 Unity**（`Packages/manifest.json` 有本地路径依赖 `file:../.codely-cli/extensions/TJGenerators/Packages/cn.tuanjie.ai.generators`，该目录不入库；未装则包缺失、相关脚本不编译）。重装命令见 `.codely-cli/RESTORE.md`。
+2. 用 Unity 2022.3.62f3c1 打开项目（首次导入会编译两包 + 示例）。
+3. 主推示例：`Assets/Runestone/AesirArchitecture/Samples/Counter-Mvc-Quick/Scene/SampleForCounterMvcQuick.unity`。
+4. 完整游戏案例：`Assets/PlaneWar/Scenes/PlaneWar.unity`（方向键/WASD 移动、Space 按住连发、失败后 Space 重开；**未登记在 Build Settings**，出包时自行加入）。
+5. Odin Inspector 可选：装于 `Assets/Plugins/Sirenix/`（gitignored）。未安装时 `ODIN_INSPECTOR` 相关内容整体编译剔除，功能可用但 Binder / SDG / Odin 窗口退化。
 
 ### 命令行
 
@@ -338,7 +372,12 @@ Unity -batchmode -projectPath . -testPlatform playmode -runTests \
 
 `-runTests` 与 `-quit` 互斥（不要同时给）。全绿 exit 0，失败 exit 2，需解析结果 XML。同项目不可双开。
 
-Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，玩家构建自动排除。unitypackage 由 CI 的 `.github/scripts/build_unitypackage.py` 产出（纯 Python，**禁止换第三方 CLI**——实测会产出重复 GUID / 全零 meta / 丢文件夹条目；跳过 `~` 后缀与 `.` 开头目录；包根 `Tests/` 整目录剔除，含目录 `.meta`）。
+Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，玩家构建自动排除。unitypackage 由 `.github/scripts/build_unitypackage.py` 产出（纯 Python，**禁止换第三方 CLI**——实测会产出重复 GUID / 全零 meta / 丢文件夹条目；跳过 `~` 后缀与 `.` 开头目录；包根 `Tests/` 整目录剔除，含目录 `.meta`）。
+
+### 实时核查工具
+
+- **Unity Insight VFS（优先）**：`vfs_index_status` 确认索引就绪后用 `vfs_ls` / `vfs_glob` / `vfs_grep` / `vfs_read` / `vfs_refs` 查类、方法、调用关系、预制体/场景层级与引用；`read_file` 前先 `vfs_resolve_path`。索引未就绪时退回 `glob` / `search_file_content`。
+- **Codely Bridge（脚本上下文）**：可直接跑 C# 片段，但有硬限制——裸 `Object` 报 CS0104（写 `UnityEngine.Object.*`）、无 `UNITY_EDITOR` 宏、`TestRunnerApi` 不推进测试、禁 top-level `await`、`Camera` 不是 MonoBehaviour。详见「本仓实测坑位」。
 
 ---
 
@@ -374,12 +413,35 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 - `AESIR_MODULES_UNITASK` — 由 asmdef `versionDefines`（`com.cysharp.unitask`）产生 + `AesirUniTaskDefineKeeper` 编辑器维护。
 - `ODIN_INSPECTOR` / `ODIN_INSPECTOR_3*` — Sirenix 管理。
 
-### Samples / Documentation 双目录
+### Samples 双目录 / Documentation~ 与 TuanjieCowork~ 单目录
 
-- `Samples/`、`Documentation/` 是**编写主位**；`Samples~/`、`Documentation~/` 是 UPM 镜像（`~` 目录对 AssetDatabase 不可见、不进 unitypackage）。
-- 同步方向：先改主位，再同步镜像（含 `.meta`，GUID 与 UPM 导入链路一致；`Documentation~/` 不含 `.meta`）。
+- `Samples/` 是**编写主位**；`Samples~/` 是 UPM 镜像（`~` 目录对 AssetDatabase 不可见、不进 unitypackage）。
+- 同步方向：先改主位，再同步镜像（含 `.meta`，GUID 与 UPM 导入链路一致）。
+- **`Documentation~/` 无主位**：使用文档只放 `Documentation~/`（尾随 `~`，AssetDatabase 不可见、不进 unitypackage、无 `.meta`），在该目录直接编辑、无镜像同步；英文说明放包根 `README_EN.md`（`.md` 会被 Unity 当资产导入，保持一份）。当前存量：RAA `observable-collections.md`；RAM `ui-module.md` / `event-module.md` / `audio-module.md` / `scene-module.md` / `script-doc-generator.md`。unitypackage 用户不随包拿到使用文档——权威副本在文档站。
 - 本机同步脚本：`.codely-cli/skills/sync-samples/scripts/sync_samples.py --check`。**逐文件 diff 判断方向，不要凭"主位为准"硬覆盖**（历史上主位反而是错的一侧）；脚本会校验 `package.json` 的 `samples` 清单。`rsync --exclude='*.meta'` 会误配 `.md.meta`，应写 `--exclude='*.md.meta'`。
-- 文档三类：`Documentation/` 只放 ①英文 `README_EN` ②使用文档 ③AI Skill。迭代过程与内部设计文档写私有笔记仓 `Aesir-Notebook/`，不随包分发；包内不保留设计变更记录。
+- 文档分层：包根 ①`README.md`（中文）②`README_EN.md`（英文）；`Documentation~/` 放使用文档。迭代过程与内部设计文档写私有笔记仓 `Aesir-Notebook/`，不随包分发；包内不保留设计变更记录（CHANGELOG 除外）。
+- **`TuanjieCowork~/` 只放一份 `README.md`**（技能获取入口）。AI 内容不进 Unity 工程——`~` 目录不被 AssetDatabase 导入、不生成 `.meta`、不进 unitypackage（`build_unitypackage.py` 的 `_is_ignored_name` 跳过尾随 `~`）。**禁止创建无波浪线的 `TuanjieCowork/`**：会被当普通资产导入并写进 unitypackage 分发给所有使用者。
+
+### AI 技能与 Codely 环境（`.codely-cli/`）
+
+**技能正文的唯一主位**：`.codely-cli/extensions/AesirFrameworkGame/skills/`（整包扩展，`gemini-extension.json` v1.2.0），11 个技能 + 2 篇实战模板：
+
+| 技能 | 覆盖 |
+|---|---|
+| `aesir-router` | 入口与分派：意图 → 技能、组合路径、依赖门禁、常见误路由纠正 |
+| `aesir-framework` | 架构底座：Context／Model／View／Controller、Quick 三件套、核心裁决、命名、十条约定 |
+| `aesir-tiers` | 六档分级与模板（MVC／MVP 各三档）、升档触发条件 |
+| `aesir-core-api` | `ObservableValue`、可观察集合、`MiniEvent`、`AesirTimer`、`AesirPlayerLoop`、能力矩阵 |
+| `aesir-decisions` | MVC 还是 MVP、为什么没有 MVVM、四种通知机制怎么选 |
+| `aesir-pitfalls` | 十条高频陷阱（现象 + 原因 + 修法） |
+| `aesir-boot-scene` | 启动场景 `Boot.unity` + `GameBootstrap` + Build Settings index 0 |
+| `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` | RAM 四模块用法 |
+
+扩展独有增量：`skills/aesir-framework/references/templates-game-skeleton.md`（完整可玩小游戏骨架）与 `templates-migration-from-mono.md`（原生 MonoBehaviour → Aesir 迁移表）；脚本 `scripts/install.py`（批量装到项目级/全局技能目录）、`scripts/validate.py`（manifest / frontmatter / 相对链接校验）。
+
+**入库策略**（`.gitignore` 白名单）：入库 `settings.json`、`memory.md` + `memory/`、`skills/`、`RESTORE.md`、`extensions/AesirFrameworkGame/`；其余扩展（TJGenerators 115M、codely-unity-lsp-server、TMPChineseFont、vtsls）、`UnityInsight/`、`auto-saves/`、`tool-outputs/`、`tmp/` 一律不入库，按 `RESTORE.md` 一条命令重装。凭证按文件名模式兜底排除（`*token*.json` / `*secret*` / `*oauth*` / `*credential*` / `.env*` / `*.pem` / `*.p12` / `*.key`）。
+
+**维护约定**：技能只在扩展目录内改（包里不再有副本）；改完跑 `python3 .codely-cli/extensions/AesirFrameworkGame/scripts/validate.py`（期望"0 个错误，0 个警告"）。拆分公司原则是**一个技能只回答一类问题**——入口不写模板、模板不进核心 API、决策与陷阱各自独立，AI 按意图只加载需要的那一篇。
 
 ### 外部关联目录（均被 `.gitignore` 排除）
 
@@ -390,19 +452,33 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ## 发布与分支
 
-- **`main`** — 开发主线。
-- **常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`** — CI 在 main 推送时按包目录 subtree split 滚动更新（包内容为分支根）。分支名永久固定：Git URL 一次输入持续更新，升级 = Package Manager 移除后用同一 URL 重新 Add。钉旧版本用 Release tag（`?path=<包路径>#v<版本>`；**历史已发布版本 tag 永久保留**，当前在研版本 tag 随 push main 滚动刷新、版本号 bump 后冻结——钉版本钉历史稳定版）。CI 自动清理废弃的 `Aesir*-v*` 版本分支。
-- **`auto-release.yml`** — 每次 push main 滚动构建三份 unitypackage（`AesirArchitecture` / `AesirModules` / `AesirFramework`，纯 Python `build_unitypackage.py`，CI 无需 Unity 编辑器）+ 创建 Release + 把 `update-info.json`（版本/tag + 各包文件清单）以 `[skip ci]` 提交回 main。**远端 CI 不跑 Unity 编译/测试**（不配 `UNITY_LICENSE`）；编译与 EditMode/PlayMode 验证在本地 batchmode 全绿后再推送（见测试规范）。`auto-publish-branches.yml` 仅镜像裁剪双向结构校验，同样无 Unity 测试。
+- **`main`** — 开发主线（CNB 主仓）。
+- **常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`** — CNB `main` 推送时按包目录 `git subtree split` 滚动更新（包内容为分支根），**并进一步裁掉开发侧 `Samples/` 与 `Documentation/`，只保留 `~` 版本**（流水线内含残留断言：残留即 `exit 1`）。分支名永久固定：Git URL 一次输入持续更新，升级 = Package Manager 移除后用同一 URL 重新 Add。钉旧版本用 Release tag（`?path=<包路径>#v<版本>`；历史已发布版本 tag 永久保留，当前在研版本 tag 随 push main 滚动刷新、版本号 bump 后冻结）。流水线自动清理废弃的 `Aesir*-v*` 版本分支。
+- **`.cnb.yml`（主仓流水线，唯一权威）** — main push：split 包分支 → `update-info.json` 回写（`[skip ci]`）→ 滚动 tag `v<版本>` → git-sync 推 GitHub main / 两包分支 / tag。`v*` tag push：CNB 侧构建三份 unitypackage 并发 CNB Release（国内加速）。
+- **`.github/workflows/auto-release.yml`（GitHub 镜像侧）** — 仅在收到 `v*` tag 时运行：校验 tag 与两包 `package.json` 版本一致 → 纯 Python 构建 `AesirArchitecture` / `AesirModules` / `AesirFramework`（两包合并）→ 从根 CHANGELOG 抽该版本段落 → 滚动重建 GitHub Release（删旧 Release 保 tag，tag 归 CNB 管）。`auto-publish-branches.yml` 已删除，分支滚动职责全部移到 `.cnb.yml`。
+- **远端 CI 不跑 Unity 编译/测试**（不配 `UNITY_LICENSE`）；编译与 EditMode/PlayMode 验证在本地 batchmode 全绿后再推送。
 - 发版前须全仓摸底旧版本号：两包 `package.json`、根 `CHANGELOG.md`（当前版本行 + 固定分支名 + 新段落）、两包中英 `README`、根 `README`/`README_EN`、`CODELY.md`、文档站。改版本号时注意：根 CHANGELOG 插入若用 `%` 格式化会被正文 `%` 撞格式符（改用占位符 `.replace()`）；`git add -A` 会带上测试产物；改名文件要连 `.meta` 一起 add。
 - 提交信息中文；`git` 命令在本机需先 `export PATH=/opt/homebrew/bin:$PATH`（git-lfs 在该目录，否则 LFS filter 报 `git-lfs: command not found`）。
 
 ---
 
-## 当前状态与待办（2026-11-12）
+## 当前状态与待办（2026-11-16）
 
-- 已发布 **0.32.0**；工作区在 `[Unreleased]` 上继续开发，当前未提交的增量主要是 **`AesirTimer`**：`Runtime/Modules/Timer/`（原 `Runtime/Common/`，已迁为内置功能模块）+ `Tests/Editor/AesirTimerTests.cs`（15 例）+ `Tests/Runtime/AesirTimerTests.cs`（3 例）+ `Editor/Timer/`（调试面板、设置、字段绘制器）+ `Editor/OdinInspector/Timer/`（Odin 版窗口与 Drawer）与配套 CHANGELOG / 文档 / README 改动。
+- 已发布 **0.33.0**（2026-11-16）。主仓（CNB）、`Aesir-Notebook`、`AesirFramework-Site` 三仓同批提交推送；`v0.33.0` tag 由 CNB 流水线滚动生成并经 git-sync 送达 GitHub。
+- **0.33.0 落地内容**：
+  1. **PlaneWar 迁出为宿主工程完整游戏案例** —— `Samples/PlaneWar` → `Assets/PlaneWar`（`Samples~/` 镜像与 `package.json` 示例条目同批删除，Getting Started 的「实战示例」分组随之移除，可导入示例回到 11 个）；类名去 `Sample` 前缀、命名空间 `PlaneWar`、程序集 `PlaneWar.Mono`、整文件 `#if UNITY_EDITOR` 包裹移除。
+  2. **文档形态收敛** —— 两个包的 `Documentation/`（无波浪线）整目录取消：`README_EN.md` 升到包根，使用文档只留 `Documentation~/`；`Documentation~/README_EN.md` 删除。
+  3. **AI 技能迁出包外、统一为 Codely 扩展** —— 技能正文主位为 `.codely-cli/extensions/AesirFrameworkGame/skills/`（11 技能 + 2 模板），包内 `TuanjieCowork~/` 只留获取说明 `README.md`；模块技能补「依赖门禁」三条硬规则。
+  4. **`.codely-cli` 入库策略重订 + `RESTORE.md`** —— 自研扩展全量入库，其余扩展靠一条命令重装；TJGenerators 必须"先装扩展再开 Unity"。
+  5. **CI 主位迁 CNB** —— `.cnb.yml` 接管 split / update-info / rolling tag / git-sync；GitHub 侧只保 tag → Release。
+  6. **（RAM）世界空间 UI Canvas 预设** —— `WorldSpaceUICanvas` + `UIRoot.CreateWorldSpaceCanvas` + `UICanvasConfigSO.CreateWorldSpaceDefault()`，7 例 EditMode 守护。
+  7. **（RAA）`AesirTimer` 计时器原语** —— `Countdown` / `NextFrame` / `Every` / `Pause` / `Resume` / `Restart` / `Cancel`，调试面板（Odin + IMGUI）、字段检视、示例与 18 例测试。
+- **门禁基线（0.33.0 实测）**：EditMode batchmode **853 total / 850 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error；`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；两个文档站 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
+- **待办 / 未决**：
+  - PlaneWar 的 RAA 版案例（`Assets/PlaneWar/Scripts/Raa/`，程序集 `PlaneWar.Raa`）待编写（当前只有 Mono 版；README 已列出规划）。
+  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.33.0 复核。
+  - `.codely-cli/memory.md` 的整理收尾（ARCHIVE 已存在）。
 - **UniTask 已通过 `manifest.json` 的 Git URL 安装** → `AESIR_MODULES_UNITASK` 生效，`SceneModuleUniTask` 与对应测试参与编译。新增依赖 UniTask 的代码须确认该宏；新增需要该宏的程序集须**自己再声明一份** `versionDefines` + `defineConstraints`。
-- PlaneWar 的 RAA 版示例（`Samples/PlaneWar/Scripts/Raa/`）待编写（当前只有 Mono 版）。
 - 无 Addressables 配置（UI 走 `ResourcesUILoader`，`IUIAssetLoader` 已预留接口）。
 
 ---
@@ -411,9 +487,12 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 - **编译冻结 / 域重载卡死**：任一程序集编译失败（含 `Assembly-CSharp` 里的生成文件）→ 域不重载，全部程序集停在旧版本（`isCompiling` 长期不落、磁盘 DLL 已新但反射找不到新成员、测试永远跑旧代码）。解法：`grep "error CS" Editor.log` 找到阻塞源修掉 → 重新触发编译 → 等域重载。
 - **条件编译**：`versionDefines` 宏只对声明它的程序集可见；`defineConstraints` 不满足时先排除程序集再解析 references；name 引用缺失程序集被静默忽略。RAM 核心 asmdef（`Runestone.AesirModules.asmdef`）无条件 name 引用 `UniTask` 即依赖此行为：未装 UniTask 时该引用被静默忽略、`AESIR_MODULES_UNITASK` 宏不定义，`SceneModule` 自动回退协程驱动——可选集成成立，但属引擎隐式行为（asmdef 为严格 JSON 无法内嵌注释，故记于此），改名 / 移除该引用前须知此耦合。
+- **manifest 本地路径依赖**：`cn.tuanjie.ai.generators` 指向 `.codely-cli/extensions/TJGenerators/`（gitignored）。新克隆未装扩展就打开 Unity → 包解析失败、相关脚本不编译。
 - **Samples 示例场景污染**：出现 `BinderTag` / `BinderCodeGenerator` / `MenuProbe` 等 RAM 专有类型即污染（RAA 无 RAM 依赖）；本仓示例场景 `GraphicRaycaster` 的 `m_Bits` 惯例值 55。
 - **PlayMode 门禁必须走 batchmode**：编辑器内跑 Test Framework 1.1.33 会误入 PlayerLauncher。
 - **unitypackage 导出必须整目录剔除 `Tests/`**（含目录 `.meta`）：只删 asmdef 会让残留 `.cs` 并入 `Assembly-CSharp` 报 `CS0246`，比不删更糟。边界仅 unitypackage；UPM 形态维持现状（Package Manager 默认不编译包内测试程序集，需 Testables 主动 opt-in）。
 - **Odin 面板**：`InspectorProperty.Draw` 对只读属性会 `PushGUIEnabled(false)` → 只读展示成员加 `[EnableGUI]`；多个 `ShowIf` 是 OR 语义；类级 `DetailedInfoBox` 只能一个；窗口 `PropertyTree` 必须在 `OnDisable` 里 `Dispose()`；**绘制回调禁止解析资产库单例**（会触发全项目重扫并报 `GUIStateObj is deleted`），单例收敛到 `OnEnable` 按域缓存。
 - **UI 卸载时机**：`OnClose` 只在受控销毁路径调用，外部销毁只有 `OnDestroy` → 解绑放 `OnDestroy`。
 - **引擎细节**：两个 Trigger Collider2D 之间至少一个 Kinematic Rigidbody2D 才会触发 `OnTriggerEnter2D`；`PlayerSettings.SetScriptingDefineSymbols` 值未变时不落盘（写完 grep 验证）；`SetScriptingDefineSymbols` 对废弃 `BuildTargetGroup` 抛异常，枚举清理需 try/catch。
+- **Codely Bridge 脚本上下文硬限制**：裸 `Object` 报 CS0104（写 `UnityEngine.Object.*`）；无 `UNITY_EDITOR` 宏（`[Conditional("UNITY_EDITOR")]` 方法体被整体剔除）；禁 top-level `await`（会永久冻结）；`TestRunnerApi` 在该上下文不推进测试（走 batchmode）；`Camera` 不是 MonoBehaviour（`StartCoroutine` 反射调用报类型不匹配）；Play 中改脚本不即时编译，须 stop Play + `ImportAsset` + `Refresh` 另一次调用核对；编辑器无聚焦窗口时 `unscaledDeltaTime` 可达秒级。
+- **Editor 生命周期**：EditMode 下 `Destroy` 是 no-op（销毁类用例必须进 PlayMode）；`exec_editor_script` 内 `new GameObject()` / `DestroyImmediate` 不标脏场景（要显式 `MarkSceneDirty`）；`[InitializeOnLoad*]` 里禁止直接 `AssetDatabase.CreateAsset` / 写脚本宏（推迟到 `EditorApplication.delayCall`，而后台失焦时 `delayCall` 不派发）。
