@@ -12,6 +12,7 @@ NOT included (same as Unity's FindAssets-based export). Unity's own ExportPackag
 with IncludeDependencies additionally drags in engine built-in package sources
 (ugui/URP scripts referenced by sample scenes) — deliberately NOT emulated here:
 release packages stay self-contained and never copy engine sources.
+Package-root Tests/ folders are omitted on purpose (see EXCLUDED_ROOT_DIRS).
 Passing --package multiple times produces one combined package (used for the RAF
 bundle of RAA + RAM).
 """
@@ -41,6 +42,17 @@ def _is_ignored_name(name):
     return name.startswith(".") or name.endswith("~")
 
 
+# Package-root folders shipped only to this repo's own development flow. Tests/ is
+# excluded because a release imported under Assets/ puts its test assemblies into the
+# consuming project's Test Runner next to that project's own tests — the suites only
+# assert this repo's internals and nobody runs them there. Dropping the folder also
+# drops it from update-info.json, so the in-editor updater removes leftovers from
+# earlier installs (its residual cleanup deletes last-manifest minus new-manifest).
+# UPM branches keep Tests/ — Package Manager does not compile package test
+# assemblies unless the consumer opts in via Project Settings → Testables.
+EXCLUDED_ROOT_DIRS = {"Tests"}
+
+
 def collect_entries(package_dirs):
     """Yield (guid, asset_path_or_None, meta_path, pathname) for every meta-backed entry."""
     seen_guids = set()
@@ -49,7 +61,10 @@ def collect_entries(package_dirs):
         if not os.path.isdir(package_dir):
             raise SystemExit(f"package dir not found: {package_dir}")
         for root, dirs, files in os.walk(package_dir):
-            dirs[:] = [d for d in dirs if not _is_ignored_name(d)]
+            at_package_root = root == package_dir
+            dirs[:] = [d for d in dirs
+                       if not _is_ignored_name(d)
+                       and not (at_package_root and d in EXCLUDED_ROOT_DIRS)]
             for name in dirs:
                 dir_path = os.path.join(root, name)
                 meta_path = dir_path + ".meta"

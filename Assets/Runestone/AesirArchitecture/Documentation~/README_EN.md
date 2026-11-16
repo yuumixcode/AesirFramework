@@ -17,7 +17,7 @@
 
 ## Overview
 
-AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVC / MVP layering for small to medium-large projects. The framework is **MVC-first**: `IController` is the recommended entry point for rapid development; `IPresenter` (MVP) is an optional pattern for stricter Model-View separation.
+AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVC / MVP layering for small to medium-large projects. The framework is **MVC-first**: `IController` is the recommended entry point for rapid development; `IPresenter` (MVP) is an optional pattern for stricter Model-View separation — MVP is exactly the pattern taught by Unity's official best practices ([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)). **MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts with the lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state notification. See [Mode Selection Decisions](AesirFramework-Skill/references/mode-decisions.md) for the full rationale and re-evaluation triggers.
 
 ### Core Features
 
@@ -33,7 +33,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, preserving registration order
 - **Domain Reload safety** — Static variables explicitly reset via `[RuntimeInitializeOnLoadMethod]`; no residue across Play Mode entry/exit
 - **Pure C# core + MonoBehaviour adapter** — Framework core is pure C#; the Engine layer does NOT depend on any Component layer type. `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` serve as MonoBehaviour adapters
-- **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional) for stricter Model-View separation
+- **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional — Unity's official best-practice pattern) for stricter Model-View separation. MVVM is intentionally not provided for now (see [Mode Selection Decisions](AesirFramework-Skill/references/mode-decisions.md))
 
 ## Installation
 
@@ -253,6 +253,7 @@ The package provides 11 importable samples (Package Manager → Aesir Architectu
 | `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
 | `ObservableCollections` | Observable collections: single-track change notifications, mutations and set operations triggered via ContextMenu | None |
 | `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
+| `AesirTimer` | Timer usage: `Countdown` delay and cooldown, `NextFrame`, `Every` with finite or infinite repeats, `Pause` / `Resume` / `Restart` / `Cancel`; the on-screen panel only reads `Remaining` / `Progress` / `RemainingExecutions` to draw progress bars (no driving code), plus a pure C# cooldown model that is not a MonoBehaviour; actions are triggered by buttons in a custom Inspector (`ContextMenu` calls the same methods), and the runtime panel and the Inspector share one row data source | None |
 | `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); toggles controlled via the settings window (`Tools → Aesir → Architecture → Samples`) | None |
 
 ### Hands-on sample
@@ -351,7 +352,7 @@ cn.runestone.aesir.architecture/
 ├── Documentation/
 │   ├── README_EN.md               # This file
 │   ├── observable-collections.md  # Observable collections: semantics and upstream differences
-│   ├── AesirFramework-Skill/      # AI coding guide (SKILL.md + six-tier templates + module quick reference + pitfalls + jam playbook)
+│   ├── AesirFramework-Skill/      # AI coding guide (SKILL.md + six-tier templates + module quick reference + pitfalls)
 │   └── AesirBootScene-Skill/       # AI boot-scene skill (create boot scene + bootstrap script)
 ├── CHANGELOG.md
 ├── LICENSE.md
@@ -472,6 +473,7 @@ cn.runestone.aesir.architecture/
 ## Roadmap
 
 - [x] Core MVC / MVP layering (MVC-first)
+- [x] MVVM evaluated — intentionally not adopted for now (2026-11-16; see [Mode Selection Decisions](AesirFramework-Skill/references/mode-decisions.md) for rationale and re-evaluation triggers)
 - [x] Native PlayerLoop lifecycle injection
 - [x] Command pattern (sync)
 - [x] Query pattern (CQRS read)

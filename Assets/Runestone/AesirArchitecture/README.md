@@ -251,6 +251,7 @@ this.ExecuteCommand<AddScoreCommand>();
 | `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
 | `ObservableCollections` | 可观察集合用法：单轨变更通知，经 ContextMenu 触发增删改查与集合运算 | 无 |
 | `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
+| `AesirTimer` | 计时器用法：`Countdown` 延时与冷却、`NextFrame`、`Every` 有限 / 无限重复、`Pause` / `Resume` / `Restart` / `Cancel`；面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条（无驱动代码），另含一个不继承 MonoBehaviour 的纯 C# 冷却模型；动作在自定义 Inspector 里点按钮触发（`ContextMenu` 走同一批方法），运行时面板与 Inspector 共用同一份行数据 | 无 |
 | `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示，开关经设置窗口控制（`Tools → Aesir → Architecture → Samples`） | 无 |
 
 ### 实战示例
@@ -349,7 +350,7 @@ cn.runestone.aesir.architecture/
 ├── Documentation/                  # 文档主位（Assets 可见、随 unitypackage 导出、不进构建）
 │   ├── README_EN.md               # English version
 │   ├── observable-collections.md  # 可观察集合：语义定稿与上游差异清单
-│   ├── AesirFramework-Skill/      # AI 编码指南（SKILL.md + 六档模板 + 模块速查 + 陷阱 + jam 实战）
+│   ├── AesirFramework-Skill/      # AI 编码指南（SKILL.md + 六档模板 + 模块速查 + 陷阱）
 │   └── AesirBootScene-Skill/       # AI 启动场景 Skill（创建启动场景 + 启动脚本）
 ├── Documentation~/                 # 文档镜像（Git URL 安装隐藏副本，无 .meta）
 ├── CHANGELOG.md
@@ -371,6 +372,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
 │   │   ├── Observable/            # ObservableValue + 可观察集合（三种集合 / 单轨变更通知）
+│   │   ├── Timer/                 # AesirTimer 计时器原语（倒计时 / 下一帧 / 按间隔重复 + 暂停）
 │   │   └── Utilities/             # PlayerLoopUtility
 │   ├── Common/                    # 框架基础设施
 │   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
@@ -424,6 +426,7 @@ cn.runestone.aesir.architecture/
 │   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
 │   ├── ObservableCollections/     # 可观察集合（List / Dictionary / HashSet）使用示例
 │   ├── MiniEvent/                 # MiniEvent 使用案例
+│   ├── AesirTimer/                # AesirTimer 使用案例（延时 / 冷却 / 重复 / 暂停 + 只读查询面板 + 自定义 Inspector）
 │   ├── PlaneWar/                  # 纵版射击飞机大战（Mono 版实战示例）
 │   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType 各阶段重置演示（Editor-only 工具，菜单 Tools → Aesir → Architecture → Samples）
 ├── Samples~/                      # 示例源镜像（Git URL 安装后经 Package Manager 按需导入；构建时自动剔除）

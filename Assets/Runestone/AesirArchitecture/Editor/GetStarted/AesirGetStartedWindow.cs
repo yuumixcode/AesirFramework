@@ -180,7 +180,7 @@ namespace Runestone.AesirArchitecture.Editor
                 if (GUILayout.Button("打开场景", GUILayout.Width(80)))
                 {
                     // 反馈文案复用 Odin 版 Toast 的同一真源（Service 层构造），只把输出通道换成门面日志；
-                    // 返回 false = 用户在 Unity 的保存面板上取消（Unity 自身已给交互），静默即可
+                    // 返回 false = 用户在 Unity 的保存提示上取消（Unity 自身已给交互），静默即可
                     if (AesirGetStartedService.OpenSampleScene(sample))
                     {
                         AesirArchitectureDebug.Log("AesirGetStarted",

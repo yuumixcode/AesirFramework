@@ -9,6 +9,10 @@
 # - GitHub 侧零提交：不点 Merge 按钮，PR 由维护者 fetch 回本地经 CNB 合并
 # - 提交信息（主题与正文）严禁出现跳过标记字面量，否则 main 流水线整体跳过；
 #   确需跳过请用 git push -o ci.skip
+# - git-sync 固定 v1.3.0（fetch_options 需 ≥ v1.3.0）。升级前先复验两条源码级行为未变：
+#   ① force 同时作用于分支推送与 tag 推送，无法拆分为"只强推 tag、不强推分支"；
+#   ② branch 指定的分支在本地工作区不存在时仅告警并以 0 退出，不会失败（漏同步是静默的）。
+#   另注：插件只做 push，不传删除——CNB 侧删掉的分支/tag 不会在 GitHub 消失。
 
 main:
   push:
@@ -95,9 +99,10 @@ main:
             git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" "refs/tags/$TAG"
 
         # main 永不 force：GitHub main 若领先（意外提交），此处失败即告警，
-        # 处理规程：git fetch github main → merge 进 CNB main → 重新推送
+        # 处理规程：git fetch https://github.com/yuumixcode/AesirFramework.git main → merge 进 CNB main → 重新推送
+        # （本地无 github remote；GitHub PR 同理用一次性 URL fetch pull/N/head 或 gh -R yuumixcode/AesirFramework）
         - name: sync-main-to-github
-          image: tencentcom/git-sync
+          image: tencentcom/git-sync:v1.3.0
           settings:
             target_url: https://github.com/yuumixcode/AesirFramework.git
             auth_type: https
@@ -106,9 +111,11 @@ main:
             branch: main
 
         # 包分支裁剪提交时间戳每次不同 → hash 变 → 必须 force；
-        # force 同时作用于 tags（插件行为），滚动 tag 的强推搭本阶段便车
+        # force 同时作用于 tags（插件行为），滚动 tag 的强推搭本阶段便车。
+        # 本阶段是唯一携带 push_tags 的地方：GitHub Release 全靠 tag 送达，
+        # 若拆分/裁剪失败导致本阶段没跑，GitHub 侧不会出新 Release（CNB Release 照常）。
         - name: sync-architecture-branch
-          image: tencentcom/git-sync
+          image: tencentcom/git-sync:v1.3.0
           settings:
             target_url: https://github.com/yuumixcode/AesirFramework.git
             auth_type: https
@@ -117,9 +124,13 @@ main:
             branch: AesirArchitecture-latest
             force: true
             push_tags: true
+            # push_tags 分支会先执行 git fetch origin --tags --force ${fetch_options}。
+            # --prune-tags 让本地与 CNB（tag 的唯一源）对齐：在 CNB 撤回过的版本 tag
+            # 不会被随后的 git push target --tags --force 复活到 GitHub。
+            fetch_options: "--prune-tags"
 
         - name: sync-modules-branch
-          image: tencentcom/git-sync
+          image: tencentcom/git-sync:v1.3.0
           settings:
             target_url: https://github.com/yuumixcode/AesirFramework.git
             auth_type: https

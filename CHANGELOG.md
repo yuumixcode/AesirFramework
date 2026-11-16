@@ -32,6 +32,41 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+---
+
+**仓库级变更 / Repository-wide**
+
+- **分发：unitypackage 整目录剔除单元测试（`Tests/`）** — 打包脚本 `.github/scripts/build_unitypackage.py` 新增包根排除表 `EXCLUDED_ROOT_DIRS = {"Tests"}`，三个 Release 产物（`AesirArchitecture` / `AesirModules` / `AesirFramework`）的 unitypackage 与配套 `.github/update-info.json` 文件清单均不再包含包根 `Tests/`（连同目录自带的 `.meta`；RAA 31 条、RAM 71 条）。**Why:** 包内用例断言的是框架内部契约，对使用者没有价值；一旦以 Assets 形态导入，测试程序集就会在消费者项目的 Test Runner 里与该工程自己的测试并列——几百条框架用例混进来后，筛选与红绿判读全变噪音。**按整目录剔除而非只删 asmdef：** 残留的测试脚本会并入 `Assembly-CSharp` 并因 NUnit 引用失效报 `CS0246`，比不删更糟。**边界：** 仅 unitypackage 导出线剔除；UPM（Git URL / `*-latest` 分支）形态维持现状——Package Manager 默认不编译包内测试程序集（需 Project Settings → Testables 主动 opt-in），不会污染消费者工程。存量安装的残留由更新器「上次清单 − 新版清单」差集在下次更新时自动清理（连带 `.meta` 删除与空目录回收）
+
+### [architecture] Aesir Architecture
+
+**Added**
+
+- **`AesirTimer` 计时器原语** — `Runtime/Modules/Timer/AesirTimer.cs`（与 Observable / Event / Locator 同级的**内置功能模块**，不再放在 `Common`）：框架驱动的倒计时器，调用即开始、到期自动出队，让纯 C# 的 Model / Service / Command 不借 MonoBehaviour、不借协程即可延时与做冷却进度。**每个计时器是一个独立实例**（时长 / 剩余 / 时间源 / 回调都挂在实例字段上），注册表只保存"哪些实例还活着"用于每帧推进——因此既可持有引用读 `Progress` 直接喂 UI 进度条，也可创建后丢弃引用（到期自动出队，不泄漏）。同时提供 `AesirTimer.NextFrame(...)`（此后第一次结算执行一次，与"当帧执行"的边界有明确语义）与 `unscaled` 选项（暂停菜单 / UI 动画不受 `Time.timeScale` 影响）。注入**复用既有 `AesirPlayerLoop`**（`BeforeUpdate` + `order: int.MinValue`）而不是自行 `PlayerLoop.SetPlayerLoop`，直接继承注入自愈（第三方 SDK 覆盖 PlayerLoop 后不会静默失效）；结算期与执行期两阶段分离，回调内新建 / 取消无需挂起队列；单趟扫描 + 就地压实保持 O(n)、零分配，且同帧多个到期严格按创建顺序回调。**有意不做**：`Start`（工厂即开始）、自带 `Tick` 的不自驱形态（有 `Update` 的地方用本地 float 字段，不与既有路径重复）、正计时秒表（永不结束的计时器是泄漏源，用 `Time.time` 差值）、对象池。重复执行与实例级暂停由随后补齐的 `Every` / `Pause` / `Resume` 承担（见下一条）。**归因修订**：0.30.0 移除 `AesirScheduler` 的依据是"全仓零使用"，但根本原因是它的 `Delay(s, cb)` 形态表达不出"可重复 + 可查询"这两类真实用例（PlaneWar 全部计时都属于这两类，因此"最该用的场景恰恰用不上"）；新原语以单一实例类型同时覆盖两者
+- **`AesirTimer` 单元测试** — `Tests/Editor/AesirTimerTests`（15 用例：累加到期、同帧保序、回调内新建延后一帧、取消互斥、零时长与 `Progress` 边界、`Restart` 幂等、`NextFrame` 两种时机、`unscaled` 时间源，及 `Every` 无限/有限重复与跨多间隔卡顿只回调一次、`Pause` 冻结与 `NextFrame` 恢复对齐、`Restart` 复位暂停的重复计时器）+ `Tests/Runtime/AesirTimerTests`（3 用例：真实 PlayerLoop 跨帧到期、`NextFrame` 落在下一帧、`timeScale = 0` 时只有 unscaled 推进）
+- **`AesirTimer.Every` / `Pause` / `Resume` / `RemainingExecutions`** — 补齐"重复执行"与"实例级暂停"两类真实需求。`Every(interval, onTick, repeatCount = -1, unscaled = false)`：首次回调在 `interval` 之后，`repeatCount < 0` 无限、有限次数用尽自动出队转 `IsFinished`、`0` 表示一次也不执行；**一帧卡顿跨越多个间隔只回调一次**（重新装填用 `= duration` 而非 `+=`），避免"越慢越忙"的回调雪崩。`Pause()` / `Resume()` 只挂起单个实例（`unscaled` 同样有效），暂停期间保留在注册表、`Remaining` 与 `Progress` 冻结；`Resume` 对 `NextFrame` 形态会重新对齐结算周期号，不会"恢复即到期"。`Restart()` 语义扩展为"完整重来"：剩余时间、执行计数、暂停态一并复位。`RemainingExecutions` 返回"从此刻起还会回调几次"（无限为 -1，结束/取消为 0）
+- **`AesirTimer` 调试面板（Odin 版 + IMGUI 兜底版）** — `Tools/Aesir/Architecture/Timer Debugger`（priority 996，装了 Odin 时经 `OdinWindowOpener` 路由到 Odin 版）。**拉取与重绘分离**：工具栏可调拉取节奏（按时间 0.05–10 秒 / 按帧 1–600，`EditorPrefs` 持久化，默认 0.5 秒），只有到点才枚举注册表并重建行快照，其余重绘只读缓存——面板开销与计时器数量、重绘频率解耦。逐行显示状态（运行中 / 已暂停）、形态（单次 / 下一帧 / 重复 ×N / 重复 ∞）、时间源（scaled / unscaled，`timeScale = 0` 标注冻结）、剩余秒数、进度条、已执行 / 总次数、**还剩几次**、存活时长、回调归属（Lambda 折叠成"类型.外层方法 λ"）；另附累计创建 / 到期 / 取消 / 结算帧统计。按紧迫度排序（已暂停靠后、其余按剩余时间升序），超过 200 行截断并标出总数
+- **`AesirTimer` 字段检视** — 原生 `[CustomPropertyDrawer]`（状态词着色 + 进度条 + 单行摘要）与 Odin `OdinValueDrawer`，共用 `AesirTimerText` 的文案与颜色、`AesirTimerSummaryView` 的进度条与摘要外观。**前提**：原生 Inspector 只为可序列化类型创建属性，`AesirTimer` 字段需标 `[SerializeReference]`；Odin 侧需宿主是 `SerializedMonoBehaviour` / `SerializedScriptableObject` 或字段标 `[ShowInInspector]`。两者都不满足时用调试面板（零侵入），或给自己的组件写自定义 Inspector（见 `Samples/AesirTimer`）。绘制器取值走 `fieldInfo` 反射而非 `SerializedProperty.managedReferenceValue`——后者对 null 引用会顺手实例化对象
+
+- **`AesirTimer` 示例** — `Samples/AesirTimer/`（+ `Samples~/` 镜像，已登记 `package.json` 的 `samples`）：延时 / 冷却 / 有限重复在进入 Play 后自动开始，其余动作经**自定义 Inspector 的按钮**触发（`NextFrame` / 无限重复 / `Pause` / `Resume` / `Restart` / `Cancel`；`ContextMenu` 走同一批方法，脱离示例脚本也能用）；左上角面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条，**没有任何驱动代码**（即「查询式计时」的用法示范），配 `Tools/Aesir/Architecture/Timer Debugger` 可对照同一批实例的运行时快照。另含 `SkillCooldown`——一个不继承 MonoBehaviour 的纯 C# 冷却模型（`TryCast` / `IsReady` / `Progress` / `Pause`），示范 Model 层如何持有计时器
+
+**Changed**
+
+- **`AesirTimer` 面板重构：数据源与显示样式解耦** — `AesirTimerDebugModel`（行内含预格式化文案的 `AesirTimerInfo`）拆成四层：`AesirTimerSnapshot` / `AesirTimerStatistics` 只搬数据（状态枚举、秒数、次数、进度、回调归属，零文案零颜色）；`AesirTimerDebugSource` 负责抓取节奏与汇总；`AesirTimerText` 是把快照翻成中文文案与颜色的样式层；`AesirTimerSummaryView` 是"进度条 + 单行摘要"的外观。IMGUI 窗口、Odin 窗口、原生绘制器、Odin 绘制器全部改为消费快照——换一套面板样式只写新视图，抓取与数据不动
+- **`AesirTimer` 面板在编辑模式下归零** — 数据源在非 Play 模式不再枚举注册表、不读累计计数，统计行与表格恒定为零（此前退出 Play 后可能残留上一个会话的"累计创建 / 累计到期 / 结算帧"）；Play 状态切换那一刻立即重抓并重绘，面板不会滞后一个拉取间隔
+- **`AesirTimer` 示例补自定义 Inspector** — `AesirTimerSample` 把展示数据抽成内部 `TimerRow`（标签 / 状态 / 明细 / 进度 / 颜色），运行时 `OnGUI` 面板与 `AesirTimerSampleInspector` 共用同一份行数据、各用一套样式（与调试面板的解耦同构）；Inspector 提供四组动作按钮（编辑模式下整组禁用），播放中约 10 Hz 重绘。示例脚本仍整文件 `#if UNITY_EDITOR` 包裹（并入示例程序集 `Scripts/`，由 `AesirSamplesScriptGuardTests` 守护）
+
+**Fixed**
+
+- **Getting Started「打开场景」强制另存临时场景** — `AesirGetStartedService.OpenSampleScene` 原用 `EditorSceneManager.SaveOpenScenes()` 一次性保存全部打开场景，对无资产路径的临时场景（新建未保存 / 崩溃恢复出的 `Temp/__Backupscenes` 场景）Unity 无处可写，只能弹出另存为面板强制命名——点示例卡的「打开场景」时先被这个面板挡住，只能取消（而取消即中止切换）。改为「有路径的场景静默落盘（示例导航不打断）+ 无路径的临时场景跳过静默保存、走 Unity 标准的保存询问（不保存 / 取消 / 保存）」，取消才中止切换；Toast 去掉"切换前的场景已保存"
+
+**文档同步**
+
+- **架构决策落文档：暂不提供 MVVM（2026-11-16 裁决）** — 新增 `AesirFramework-Skill/references/mode-decisions.md`（模式选择速查 + Unity 官方立场调研 + 不提供 MVVM 的五点论述 + 重评触发条件）；README / README_EN 模式定位段、CODELY.md 设计基调、SKILL.md 核心裁决与 references 索引、包内 README_EN 同批对齐口径。**Why:** Unity 官方最佳实践只教 MVC/MVP（[官方教程](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns) / 视频系列），MVVM 的核心增量是数据绑定引擎，与轻量、Unity 原生优先定位相悖，`ObservableValue<T>` 已覆盖状态通知。快速开发首推 MVC 不变，MVP 保留官方范式可选地位；无任何运行时代码变更。决策记录见 Aesir-Notebook `decisions/architecture-core.md` 第十一章
+- 站点 `Scripting API` 新增 `AesirTimer` 页（SDG 重生成）；`architecture/features.md`「延时与下一帧」重写为计时器 + 四路径选择表；`product/features.md` 能力矩阵与设计边界同步（原"时间调度原语：不做"改为"只保留 `AesirTimer`"）；包内 `AesirFramework-Skill` 的 `core-api.md` 增补计时器一节；同批删除 jam 实战手册 `jam-playbook.md`（其核心缺口已被 `AesirTimer` 覆盖，工程初始化要点并入 `SKILL.md`）
+
 ## [0.32.0] - 2026-10-17
 
 ---

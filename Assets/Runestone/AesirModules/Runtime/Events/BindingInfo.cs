@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using UnityEngine;
 
 namespace Runestone.AesirModules
 {
@@ -38,6 +40,14 @@ namespace Runestone.AesirModules
         /// </summary>
         readonly Action<object, object[]> _compiledInvoke;
 
+        /// <summary>
+        /// MethodInfo 级编译缓存：同一监听方法只编译一次表达式树委托。
+        /// 频繁启停的订阅者（UI 开关 OnEnable/OnDisable 反复 Bind）复用缓存，
+        /// 不再每次付 ~1-3ms 编译开销。键为 MethodInfo（按方法句柄相等，跨反射实例去重）。
+        /// </summary>
+        static readonly Dictionary<MethodInfo, Action<object, object[]>> _compileCache =
+            new Dictionary<MethodInfo, Action<object, object[]>>();
+
         public StaticBindingInfo(string bindingKey,
             MethodInfo method,
             object subscriber,
@@ -47,8 +57,16 @@ namespace Runestone.AesirModules
             Subscriber = subscriber;
             Priority = priority;
             Method = method;
-            _compiledInvoke = CompileMethod(method);
+            _compiledInvoke = GetOrCompile(method);
         }
+
+        /// <summary>
+        /// 域加载清空编译缓存（非泛型类按框架铁律类内自重置，RIOLM 在泛型类会被 Unity 静默跳过）。
+        /// 缓存仅持纯委托与 MethodInfo、无 Unity 对象引用，跨局复用本无副作用；
+        /// 清空只为遵循静态显式重置铁律并约束内存。
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetCompileCache() => _compileCache.Clear();
 
         /// <summary>
         /// 原始方法信息。仅用于去重判断 <see cref="IsAlreadyBound" />。
@@ -102,8 +120,60 @@ namespace Runestone.AesirModules
         ///         </item>
         ///     </list>
         /// </remarks>
+        /// <summary>
+        /// 取缓存的编译委托，未命中才编译并写入缓存（见 <see cref="_compileCache" />）。
+        /// </summary>
+        static Action<object, object[]> GetOrCompile(MethodInfo method)
+        {
+            if (_compileCache.TryGetValue(method, out var cached))
+            {
+                return cached;
+            }
+
+            var compiled = CompileMethod(method);
+            _compileCache[method] = compiled;
+            return compiled;
+        }
+
+        /// <summary>
+        /// 绑定期签名校验（fail-fast）。事件分发恒投递 1 个事件参数（见 <c>EventModule.RaiseEvent</c>），
+        /// 故监听方法最多 1 个参数；ref/out 与指针签名表达式树不支持。不合规即抛含修复提示的异常，
+        /// 由 <c>Bind</c> 的逐方法 try/catch 记为绑定期错误并跳过该方法，
+        /// 而非留到分发期炸成 <see cref="IndexOutOfRangeException" /> 或编译期晦涩异常。
+        /// </summary>
+        static void ValidateSignature(MethodInfo method)
+        {
+            var parameters = method.GetParameters();
+            if (parameters.Length > 1)
+            {
+                throw new ArgumentException(
+                    $"[AesirListener] 方法 {method.DeclaringType?.Name}.{method.Name} 声明了 {parameters.Length} 个参数，" +
+                    "但事件分发只投递 1 个事件参数。监听方法最多 1 个参数（0 个表示忽略事件数据）；" +
+                    "多余参数会在分发期触发 IndexOutOfRange——请修正方法签名。");
+            }
+
+            foreach (var p in parameters)
+            {
+                if (p.ParameterType.IsByRef)
+                {
+                    throw new ArgumentException(
+                        $"[AesirListener] 方法 {method.DeclaringType?.Name}.{method.Name} 的参数 {p.Name} 为 ref/out，" +
+                        "表达式树编译不支持 by-ref 签名——请改为普通值/引用参数。");
+                }
+
+                if (p.ParameterType.IsPointer)
+                {
+                    throw new ArgumentException(
+                        $"[AesirListener] 方法 {method.DeclaringType?.Name}.{method.Name} 的参数 {p.Name} 为指针类型，" +
+                        "表达式树编译不支持指针签名——请改为普通值/引用参数。");
+                }
+            }
+        }
+
         static Action<object, object[]> CompileMethod(MethodInfo method)
         {
+            ValidateSignature(method);
+
             // 参数 1：目标对象（订阅者），类型为 object，需要转换为方法所属类型
             var targetParam = Expression.Parameter(typeof(object), "target");
 

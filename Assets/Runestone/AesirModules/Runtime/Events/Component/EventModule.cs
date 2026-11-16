@@ -550,11 +550,15 @@ namespace Runestone.AesirModules
                             continue;
                         }
 
-                        var info = new StaticBindingInfo(bindingKey, method, subscriber, attr.Priority);
-                        if (!IsAlreadyBound(info))
+                        // 去重前置于构造：重复绑定（同订阅者同方法）直接跳过，不再为已存在的绑定
+                        // 构造 StaticBindingInfo（即便有编译缓存，也省一次对象分配）
+                        if (IsAlreadyBound(bindingKey, method, subscriber))
                         {
-                            AddToRegistry(AttributeBindings, info);
+                            continue;
                         }
+
+                        var info = new StaticBindingInfo(bindingKey, method, subscriber, attr.Priority);
+                        AddToRegistry(AttributeBindings, info);
                     }
                 }
                 catch (Exception e)
@@ -593,19 +597,18 @@ namespace Runestone.AesirModules
             return null;
         }
 
-        bool IsAlreadyBound(BindingInfo info)
+        bool IsAlreadyBound(string bindingKey, MethodInfo method, object subscriber)
         {
-            if (!AttributeBindings.TryGetValue(info.BindingKey, out var list))
+            if (!AttributeBindings.TryGetValue(bindingKey, out var list))
             {
                 return false;
             }
 
             // 用 foreach 替代 LINQ Any，避免闭包和迭代器分配
-            var staticInfo = (StaticBindingInfo)info;
             foreach (var b in list)
             {
-                if (b is StaticBindingInfo sb && ReferenceEquals(b.Subscriber, info.Subscriber) &&
-                    sb.Method == staticInfo.Method)
+                if (b is StaticBindingInfo sb && ReferenceEquals(sb.Subscriber, subscriber) &&
+                    sb.Method == method)
                 {
                     return true;
                 }

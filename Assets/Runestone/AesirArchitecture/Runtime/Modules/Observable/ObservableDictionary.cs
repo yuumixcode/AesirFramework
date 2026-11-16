@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
@@ -38,6 +39,7 @@ namespace Runestone.AesirArchitecture
         readonly MiniEvent<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>> _changedEvent =
             new MiniEvent<CollectionChangedEventArgs<KeyValuePair<TKey, TValue>>>();
 
+        [SerializeField]
         Dictionary<TKey, TValue> dictionary = new Dictionary<TKey, TValue>();
 
         /// <summary>

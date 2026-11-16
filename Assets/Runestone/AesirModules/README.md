@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager of Managers 模式）、事件模块、音频管理、场景管理工具与脚本文档生成工具。
+Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面 + 多注册表）、事件模块、音频管理、场景管理工具与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.32.0-blue.svg)](./CHANGELOG.md)
@@ -15,7 +15,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（Manager o
 
 | 模块 | 状态 | 说明 |
 |------|------|------|
-| UI | 已实现 | `UIModule` 单例（Manager of Managers）+ `UIRoot` 四层 Canvas + 面板生命周期 + Canvas 根窗口（蒙版单遮/叠遮）+ 可插拔资源加载 |
+| UI | 已实现 | `UIModule` 单例（单门面 + 多注册表）+ `UIRoot` 四层 Canvas + 面板生命周期 + Canvas 根窗口（蒙版单遮/叠遮）+ 可插拔资源加载 |
 | Event | 已实现 | `EventModule` 双轨订阅（Attribute + Script）+ 4 档优先级稳定排序 + 快照与重入安全分发 + 表达式树优化 + 订阅者过滤器（精确投递）+ 死引用清理 + SO 资产化 |
 | Audio | 已实现 | `AudioModule` 单例（2D 音频极简门面）+ SFX 独占音源轮询 + BGM 淡入淡出 + 三通道音量/静音持久化 |
 | Scene | 已实现 | `SceneModule` 静态门面（加载/叠加/卸载/激活场景切换 + 场景事件广播，直接 `SceneModule.xxx` 调用）+ UniTask 适配程序集（可选，宏自动维护，含 UniTask 时协程实现自动替换为 UniTask 驱动并提供可 await API）+ `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Module Settings） |

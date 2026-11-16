@@ -20,7 +20,7 @@
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
 | **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.32.0` |
-| **Aesir Modules** | UI framework (Manager of Managers, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.32.0` |
+| **Aesir Modules** | UI framework (single facade + multiple registries, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.32.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -28,7 +28,7 @@
 
 ## 🏛️ Aesir Architecture (RAA) — Architecture Framework
 
-**RAA is a progressive MVC architecture built on a "Unity-native-first" philosophy.** It does not build a parallel system to the engine; instead it deeply integrates with Unity's PlayerLoop, ScriptableObject, and Editor API — staying lightweight while providing clear layering for small to medium-large projects. The framework is **MVC-first** (`IController` is the recommended entry point for rapid development); `IPresenter` (MVP) is an optional pattern for stricter layering.
+**RAA is a progressive MVC architecture built on a "Unity-native-first" philosophy.** It does not build a parallel system to the engine; instead it deeply integrates with Unity's PlayerLoop, ScriptableObject, and Editor API — staying lightweight while providing clear layering for small to medium-large projects. The framework is **MVC-first** (`IController` is the recommended entry point for rapid development); `IPresenter` (MVP) is an optional pattern for stricter layering — MVP is exactly the pattern taught by Unity's official best practices ([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)). **MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts with the framework's lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state notification — this is an evaluated architecture decision; see [Mode Selection Decisions](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/references/mode-decisions.md) for the full rationale and re-evaluation triggers.
 
 ### Architecture Roles & Capability Interfaces
 
@@ -40,7 +40,7 @@ The framework uses **capability interface composition** — each role exposes on
 | **Service** | `IService` → `AbstractService` | GetModel, GetService | Cross-module coordination; may write Models directly, cannot execute Command/Query |
 | **View** | `IView` | GetModel, GetService (read-only) | Presentation; subscribes to Model notifications for refresh |
 | **Controller** | `IController` | GetModel, GetService, **ExecuteCommand**, **ExecuteQuery** | MVC entry point (recommended) |
-| **Presenter** | `IPresenter` | All Controller + IDisposable | MVP pattern (optional); mediates Model ↔ View, View is passive |
+| **Presenter** | `IPresenter` | All Controller + IDisposable | MVP pattern (optional, Unity's official best-practice pattern); mediates Model ↔ View, View is passive |
 | **Command** | `ICommand` → `AbstractCommand` | Execute() | Write operations (synchronous, no return value) |
 | **Query** | `IQuery<TResult>` | Execute() → TResult | Read operations (no side effects), CQRS-style |
 
@@ -56,7 +56,7 @@ RAA's most distinctive feature is **tiered progression** — from the minimal co
 | **Lesson 2 · Standard** | Read-only exposure + write methods | Controller calls write methods | Presenter calls write methods |
 | **Lesson 3 · Strict** | Interface registration + read-only + write methods | Command writes + Query processed reads | Command writes + Query reads |
 
-Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + five hands-on/advanced samples (ObservableValue / ObservableCollections / MiniEvent / PlaneWar / RuntimeInitializeLoadType), importable lesson by lesson (start from Counter-Mvc-Quick if this is your first contact).
+Direct writes are legal at the Quick tier (great for prototypes); the Standard tier encapsulates modification entry points (recommended starting point); the Strict tier fully decouples reads/writes with the best extensibility. At the Strict tier, Views hold Controllers/Presenters via **narrow business interfaces** (framework capabilities like `ExecuteCommand` are unreachable at the type level) — read/write separation is enforced by the type system. The package ships 6 counter samples + six hands-on/advanced samples (ObservableValue / ObservableCollections / MiniEvent / AesirTimer / PlaneWar / RuntimeInitializeLoadType), importable lesson by lesson (start from Counter-Mvc-Quick if this is your first contact).
 
 ### Core Mechanics at a Glance
 
@@ -72,7 +72,7 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 
 1. **Unity-native first** — Use engine capabilities (PlayerLoop / SO / Editor API); no parallel homegrown systems
 2. **Minimal boundaries** — No event bus, no multi-Context instances, no Command pooling / async / Undo; low-probability issues are prevented up front via documented conventions and edit-time hints (InfoBox), not runtime defensive code
-3. **Presentation/logic separation** — All Inspector presentation is injected dynamically via Odin AttributeProcessors; runtime assemblies carry zero styling attributes
+3. **Presentation/logic separation** — Inspector presentation is injected mainly via Odin AttributeProcessors; runtime assemblies carry only a few styling attributes gated by `#if ODIN_INSPECTOR` (e.g. `SceneModule`'s `[DetailedInfoBox]` / `[LabelText]`), leaving zero residue when Odin is absent
 
 ---
 
@@ -82,7 +82,7 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 
 ### UI Framework
 
-- **`UIModule` (Manager-of-Managers singleton)** — Static shortcut API: `UIModule.Show<T>()` / `Hide<T>()` / `Get<T>()` / `Prewarm<T>()` / `RegisterPrefab<T>()`; panel state machine: active → deactivated cache → destroyed
+- **`UIModule` (single-facade singleton with multiple registries, no sub-manager hierarchy)** — Static shortcut API: `UIModule.Show<T>()` / `Hide<T>()` / `Get<T>()` / `Prewarm<T>()` / `RegisterPrefab<T>()`; panel state machine: active → deactivated cache → destroyed
 - **`UIRoot` 4-layer Canvas hierarchy** — One-click construction of Background / Normal / Popup / Top layered Canvases + UICamera + EventSystem (`GameObject → Aesir Modules → Create UIRoot`); layer Canvas references are serialized and persisted
 - **Panel lifecycle** — `IUIPanel` contract `Initialize → Show(payload) → Hide → DestroyPanel`; `AesirBasePanel` offers virtual `OnInit` / `OnShow` / `OnHide` / `OnClose`; `DestroyOnHide` decides whether hiding destroys the panel or caches it for reuse
 - **Pluggable asset loading** — `ResourcesUILoader` by default (Resources folder); implement `IUIAssetLoader` to swap in Addressables or anything else
@@ -96,7 +96,7 @@ A dual-track subscription event system: `[AesirListener]` attribute-based static
 
 ### Scene Module & Editor Tools
 
-- **`SceneModule`** — Automatic discovery and prioritized loading of the bootstrap scene, additive scene load tracking
+- **`SceneModule`** — The bootstrap scene is collected by name into a serialized reference / global config SO via the editor `BootstrapSceneHelper`; at runtime it is read by user code to orchestrate startup (no automatic search or loading), plus additive scene load tracking
 - **Editor tools** — `SceneManagerWindow` scene management window, `BootstrapSceneHelper` one-click bootstrap scene registration, `SceneAssetWrapper` serializable scene reference
 
 ---
@@ -234,7 +234,7 @@ UIModule.Show<MainMenuPanel>();
 UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "Confirm?" });
 ```
 
-The UI framework provides Manager-of-Managers singletons, a 4-layer Canvas hierarchy (`UILayer`), panel lifecycle (active → deactivated cache → destroyed), a pluggable asset loader (Resources by default, Addressables-ready), and Canvas-root windows with masks — a second UI form beside panels (`AesirBaseWindow`, `UIModule.Open<T>()` / `Close<T>()`, prefab root carries its own Canvas mounted directly under UIRoot with `sortingOrder` 500 always above the panel layers; the `Mask` child blocks all input below with single/stacked scheduling and close-on-click).
+The UI framework provides a single-facade singleton (multiple registries), a 4-layer Canvas hierarchy (`UILayer`), panel lifecycle (active → deactivated cache → destroyed), a pluggable asset loader (Resources by default, Addressables-ready), and Canvas-root windows with masks — a second UI form beside panels (`AesirBaseWindow`, `UIModule.Open<T>()` / `Close<T>()`, prefab root carries its own Canvas mounted directly under UIRoot with `sortingOrder` 500 always above the panel layers; the `Mask` child blocks all input below with single/stacked scheduling and close-on-click).
 
 Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Assets/Runestone/AesirModules/Documentation/README_EN.md) (English) / [`README.md`](./Assets/Runestone/AesirModules/README.md) (中文).
 
@@ -245,7 +245,7 @@ Full guide: [`Assets/Runestone/AesirModules/Documentation/README_EN.md`](./Asset
 | Document | Location |
 |---|---|
 | Architecture tutorial (中文 / English) | Each package's `README.md` / `Documentation/README_EN.md` |
-| AI coding guide (full framework: RAA architecture + RAM module quick reference + six-tier templates + pitfalls & event decision tables + jam playbook) | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
+| AI coding guide (full framework: RAA architecture + RAM module quick reference + six-tier templates + pitfalls & event decision tables) | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
 | AI boot-scene skill (project bootstrap: create boot scene + bootstrap script in one step) | [`AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md) |
 | Event module detailed manual | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
 | Changelogs (repo-level aggregate / per-package) | Root [`CHANGELOG.md`](./CHANGELOG.md) and each package's `CHANGELOG.md` |

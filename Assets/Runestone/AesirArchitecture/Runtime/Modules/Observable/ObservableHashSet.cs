@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using Runestone.AesirArchitecture.Internal;
+using UnityEngine;
 
 namespace Runestone.AesirArchitecture
 {
@@ -41,6 +42,7 @@ namespace Runestone.AesirArchitecture
         readonly MiniEvent<CollectionChangedEventArgs<T>> _changedEvent =
             new MiniEvent<CollectionChangedEventArgs<T>>();
 
+        [SerializeField]
         HashSet<T> set = new HashSet<T>();
 
         /// <summary>

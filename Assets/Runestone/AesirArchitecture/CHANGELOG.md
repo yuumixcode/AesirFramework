@@ -5,6 +5,34 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- **`AesirTimer` 计时器原语** — `Runtime/Modules/Timer/AesirTimer.cs`（与 Observable / Event / Locator 同级的**内置功能模块**，不再放在 `Common`）：框架驱动的倒计时器，调用即开始、到期自动出队，让纯 C# 的 Model / Service / Command 不借 MonoBehaviour、不借协程即可延时与做冷却进度。**每个计时器是一个独立实例**（时长 / 剩余 / 时间源 / 回调都挂在实例字段上），注册表只保存"哪些实例还活着"用于每帧推进——既可持有引用读 `Progress` 直接喂 UI 进度条，也可创建后丢弃引用（到期自动出队，不泄漏）。另有 `AesirTimer.NextFrame(...)`（此后第一次结算执行一次）与 `unscaled` 选项（不受 `Time.timeScale` 影响）。注入**复用既有 `AesirPlayerLoop`**（`BeforeUpdate` + `order: int.MinValue`）而非自行 `PlayerLoop.SetPlayerLoop`，直接继承注入自愈；结算期与执行期两阶段分离，回调内新建 / 取消无需挂起队列；单趟扫描 + 就地压实保持 O(n)、零分配，同帧多个到期严格按创建顺序回调。**有意不做**：`Start`（工厂即开始）、自带 `Tick` 的不自驱形态（有 `Update` 的地方用本地 float 字段）、正计时秒表（永不结束 = 泄漏源，用 `Time.time` 差值）、对象池。**归因修订**：0.30.0 移除 `AesirScheduler` 的依据是"全仓零使用"，根本原因是其 `Delay(s, cb)` 形态表达不出"可重复 + 可查询"两类真实用例；新原语以单一实例类型同时覆盖两者
+- **`AesirTimer` 单元测试** — `Tests/Editor/AesirTimerTests`（9 用例）+ `Tests/Runtime/AesirTimerTests`（3 用例）
+- **`AesirTimer.Every` / `Pause` / `Resume` / `RemainingExecutions`** — 补齐"重复执行"与"实例级暂停"。`Every(interval, onTick, repeatCount = -1, unscaled = false)`：首次回调在 `interval` 之后，`repeatCount < 0` 无限、有限次数用尽自动出队转 `IsFinished`、`0` 表示一次也不执行；**一帧卡顿跨越多个间隔只回调一次**（重新装填用 `= duration` 而非 `+=`），避免"越慢越忙"的回调雪崩。`Pause()` / `Resume()` 只挂起单个实例（`unscaled` 同样有效），暂停期间保留在注册表、`Remaining` 与 `Progress` 冻结；`Resume` 对 `NextFrame` 形态重新对齐结算周期号，不会"恢复即到期"。`Restart()` 扩展为完整重来：剩余时间、执行计数、暂停态一并复位。`RemainingExecutions` 返回"从此刻起还会回调几次"（无限为 -1，结束 / 取消为 0）
+- **`AesirTimer` 调试面板（Odin 版 + IMGUI 兜底版）** — `Tools/Aesir/Architecture/Timer Debugger`（priority 996；装了 Odin 时经 `OdinWindowOpener` 路由到 Odin 版）。**拉取与重绘分离**：工具栏可调拉取节奏（按时间 0.05–10 秒 / 按帧 1–600，`EditorPrefs` 持久化，默认 0.5 秒），只有到点才枚举注册表并重建行快照，其余重绘只读缓存——面板开销与计时器数量、重绘频率解耦。逐行显示状态（运行中 / 已暂停）、形态（单次 / 下一帧 / 重复 ×N / 重复 ∞）、时间源（scaled / unscaled，`timeScale = 0` 标注冻结）、剩余秒数、进度条、已执行 / 总次数、**还剩几次**、存活时长、回调归属（Lambda 折叠成"类型.外层方法 λ"），另附累计创建 / 到期 / 取消 / 结算帧统计；按紧迫度排序（已暂停靠后、其余按剩余时间升序），超过 200 行截断并标出总数
+- **`AesirTimer` 字段检视** — 原生 `[CustomPropertyDrawer]`（状态词着色 + 进度条 + 单行摘要）与 Odin `OdinValueDrawer`，共用 `AesirTimerText` 的文案与颜色、`AesirTimerSummaryView` 的进度条与摘要外观。**前提**：原生 Inspector 只为可序列化类型创建属性，`AesirTimer` 字段需标 `[SerializeReference]`；Odin 侧需宿主是 `SerializedMonoBehaviour` / `SerializedScriptableObject` 或字段标 `[ShowInInspector]`。两者都不满足时用调试面板（零侵入），或给自己的组件写自定义 Inspector（见 `Samples/AesirTimer`）。绘制器取值走 `fieldInfo` 反射而非 `SerializedProperty.managedReferenceValue`——后者对 null 引用会顺手实例化对象
+- **`AesirTimer` 测试补充** — `Tests/Editor/AesirTimerTests` 增至 15 例：新增无限重复、有限重复用尽出队、卡顿不补发、暂停冻结与恢复、`NextFrame` 暂停后恢复、`Restart` 重置计数与暂停态
+- **`AesirTimer` 示例** — `Samples/AesirTimer/`（+ `Samples~/` 镜像，已登记 `package.json` 的 `samples`）：延时 / 冷却 / 有限重复在进入 Play 后自动开始，其余动作经**自定义 Inspector 的按钮**触发（`NextFrame` / 无限重复 / `Pause` / `Resume` / `Restart` / `Cancel`；`ContextMenu` 走同一批方法，脱离示例脚本也能用）；左上角面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条，**没有任何驱动代码**（「查询式计时」的用法示范），配 `Tools/Aesir/Architecture/Timer Debugger` 可对照同一批实例的运行时快照。另含 `SkillCooldown`——不继承 MonoBehaviour 的纯 C# 冷却模型（`TryCast` / `IsReady` / `Progress` / `Pause`），示范 Model 层如何持有计时器
+
+### Changed
+
+- **`AesirTimer` 面板重构：数据源与显示样式解耦** — `AesirTimerDebugModel`（行内含预格式化文案的 `AesirTimerInfo`）拆成四层：`AesirTimerSnapshot` / `AesirTimerStatistics` 只搬数据（状态枚举、秒数、次数、进度、回调归属，零文案零颜色）；`AesirTimerDebugSource` 负责抓取节奏与汇总（原 `AesirTimerDebugModel` 的调度部分）；`AesirTimerText` 是把快照翻成中文文案与颜色的样式层；`AesirTimerSummaryView` 是"进度条 + 单行摘要"的外观。IMGUI 窗口、Odin 窗口、原生绘制器、Odin 绘制器全部改为消费快照——换一套面板样式只写新视图，抓取与措辞不动；新增展示字段只需在快照补一次抓取，全部视图立刻可用
+- **`AesirTimer` 面板在编辑模式下归零** — 数据源在非 Play 模式不再枚举注册表、不读累计计数，统计行与表格恒定为零（此前退出 Play 后可能残留上一个会话的"累计创建 / 累计到期 / 结算帧"）；Play 状态切换的那一刻立即重抓并重绘，面板不会滞后一个拉取间隔。两个窗口的编辑模式提示统一为"这里没有数据源，数据保持为零"
+- **`AesirTimer` 示例补自定义 Inspector** — `AesirTimerSample` 把展示数据抽成内部 `TimerRow`（标签 / 状态 / 明细 / 进度 / 颜色），运行时 `OnGUI` 面板与新增的 `AesirTimerSampleInspector` 共用同一份行数据、各用一套样式（与上面调试面板的解耦同构，示例本身就示范"换样式不换数据"）；Inspector 提供四组动作按钮（编辑模式下整组禁用——那里创建的计时器永远不会推进），播放中约 10 Hz 重绘。示例脚本文件整文件 `#if UNITY_EDITOR` 包裹的既有约定不变（并入示例程序集 `Scripts/`，仍受 `AesirSamplesScriptGuardTests` 守护）
+- **AI Skill 文档同步** — `Documentation/AesirFramework-Skill/references/core-api.md` 增补计时器一节（含四路径选择表与设计边界）；`SKILL.md` 与 `references/modules-api.md` 同步：references 索引、工程初始化流程、命名规范里的指针全部改指 `AesirTimer` / `core-api.md`
+- **架构决策落文档：暂不提供 MVVM（2026-11-16 裁决）** — 新增 `Documentation/AesirFramework-Skill/references/mode-decisions.md`（+ `Documentation~/` 镜像）：MVC/MVP 模式选择速查、Unity 官方立场调研（官方最佳实践只教 MVC/MVP，未正式推荐 MVVM）、不提供 MVVM 的五点论述与重评触发条件。`SKILL.md` 核心裁决加"暂不提供 MVVM"条（用户要求 MVVM 时说明决策并引导 MVC/MVP）、模式选择行补官方口径、references 索引加行；包内 `README_EN.md` 模式定位段与 Roadmap 同步。**无运行时代码变更**——快速开发首推 MVC 不变，MVP 保留 Unity 官方最佳实践范式可选地位
+
+### Removed
+
+- **`AesirFramework-Skill/references/jam-playbook.md`（jam 实战手册）** — 按裁决删除。该手册的定位是"框架缺什么就手抄一份补件"，而其中最核心的缺口（计时器）已由 `AesirTimer` 在框架内解决，继续保留一份"抄进业务工程的计时器类"与「同一需求只留一条路径」的定位冲突；手册内的工程目录约定、初始化步骤与自检要点已并入 `SKILL.md` 的工程初始化流程，删除后无悬空引用（`SKILL.md` ×6 处、`modules-api.md` ×2 处指针全部清理）
+
+### Fixed
+
+- **Getting Started「打开场景」强制另存临时场景** — `AesirGetStartedService.OpenSampleScene` 原用 `EditorSceneManager.SaveOpenScenes()` 一次性保存全部打开场景，对**无资产路径的临时场景**（新建未保存 / 崩溃恢复出的 `Temp/__Backupscenes` 场景）Unity 无处可写，只能弹出另存为面板强制命名——点示例卡的「打开场景」时先被这个面板挡住，只有取消才能退出（而取消即中止切换）。改为 `SaveModifiedScenes()`：有路径的场景仍静默落盘（示例导航不打断），无路径的临时场景跳过静默保存、改走 `SaveCurrentModifiedScenesIfUserWantsTo()` 的标准询问（不保存 / 取消 / 保存），取消才中止切换。Toast 相应去掉"切换前的场景已保存"（用户可能选择不保存）
+
 ## [0.32.0] - 2026-10-17
 
 ### Added

@@ -62,6 +62,12 @@ namespace Runestone.AesirModules
         /// <summary>窗口实例注册表，键 = 窗口实例的实际类型（与面板注册表相互独立，键语义约定一致）。</summary>
         readonly Dictionary<Type, IUIWindow> _windowDict = new Dictionary<Type, IUIWindow>();
 
+        /// <summary>
+        /// RefreshWindowMasks 待清理键复用缓冲（Clear 保留容量）。窗口开关冷路径免每次分配；
+        /// 同步消费（RemoveDestroyedWindowRecords 即遍历即移除），SetMaskVisible 为纯显隐切换无嵌套回调，故无重入。
+        /// </summary>
+        readonly List<Type> _destroyedWindowKeys = new List<Type>();
+
         IUIAssetLoader _loader;
 
         /// <summary>
@@ -1190,8 +1196,9 @@ namespace Runestone.AesirModules
         /// </summary>
         void RefreshWindowMasks()
         {
-            // 遍历期间不改表：已销毁条目先登记键，遍历结束后统一移除
-            var destroyedKeys = new List<Type>();
+            // 遍历期间不改表：已销毁条目先登记键，遍历结束后统一移除（复用缓冲免每次分配）
+            _destroyedWindowKeys.Clear();
+            var destroyedKeys = _destroyedWindowKeys;
 
             if (MaskMode == UIMaskMode.Stacked)
             {

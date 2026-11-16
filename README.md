@@ -20,7 +20,7 @@
 | 子包 | 用途 | 包名 | 版本 |
 |---|---|---|---|
 | **Aesir Architecture** | 渐进式 MVC 架构（能力接口组合、Command/Query、PlayerLoop 生命周期、响应式属性） | `cn.runestone.aesir.architecture` | `0.32.0` |
-| **Aesir Modules** | UI 框架（Manager of Managers、四层 Canvas、面板生命周期、Canvas 根窗口与蒙版）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.32.0` |
+| **Aesir Modules** | UI 框架（单门面多注册表、四层 Canvas、面板生命周期、Canvas 根窗口与蒙版）+ 事件模块 + 音频管理 + 场景管理工具 + 脚本文档生成工具（需 Odin） | `cn.runestone.aesir.modules` | `0.32.0` |
 
 > 📝 **命名空间**：所有子包统一使用 `Runestone.*` 命名空间（品牌名"符文石"）。
 
@@ -28,7 +28,7 @@
 
 ## 🏛️ Aesir Architecture（RAA）——架构框架
 
-**RAA 是一个以"Unity 原生优先"为核心理念的渐进式 MVC 架构**。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的分层规范。框架以 **MVC 为主要模式**（`IController` 是推荐的快速开发入口），`IPresenter`（MVP）作为可选的严格分层模式。
+**RAA 是一个以"Unity 原生优先"为核心理念的渐进式 MVC 架构**。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的分层规范。框架以 **MVC 为主要模式**（`IController` 是推荐的快速开发入口），`IPresenter`（MVP）作为可选的严格分层模式——MVP 正是 Unity 官方最佳实践所教授的范式（[官方教程](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)）。**暂不提供 MVVM**：其核心增量是数据绑定引擎，与框架轻量、Unity 原生优先的定位不符，`ObservableValue<T>` 已覆盖状态通知需求——这是经调研评估后的架构决策，完整论述与重评触发条件见[模式选择决策](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/references/mode-decisions.md)。
 
 ### 架构角色与能力接口
 
@@ -40,7 +40,7 @@
 | **Service** | `IService` → `AbstractService` | GetModel, GetService | 跨模块协调；可直写 Model，不能执行 Command/Query |
 | **View** | `IView` | GetModel, GetService（只读） | 表现层；自订阅 Model 通知刷新 |
 | **Controller** | `IController` | GetModel, GetService, **ExecuteCommand**, **ExecuteQuery** | MVC 模式入口（推荐） |
-| **Presenter** | `IPresenter` | 全部 Controller + IDisposable | MVP 模式（可选）；中介 Model ↔ View，View 被动 |
+| **Presenter** | `IPresenter` | 全部 Controller + IDisposable | MVP 模式（可选，Unity 官方最佳实践范式）；中介 Model ↔ View，View 被动 |
 | **Command** | `ICommand` → `AbstractCommand` | Execute() | 写操作（同步、无返回值） |
 | **Query** | `IQuery<TResult>` | Execute() → TResult | 读操作（无副作用），CQRS 风格 |
 
@@ -56,7 +56,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 | **第二课 · 标准档** | 只读暴露 + 写方法 | Controller 直调写方法 | Presenter 直调写方法 |
 | **第三课 · 严格档** | 接口注册 + 只读暴露 + 写方法 | Command 写 + Query 加工读 | Command 写 + Query 读 |
 
-快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / ObservableCollections / MiniEvent / PlaneWar / RuntimeInitializeLoadType 五个实战与进阶示例，逐课可导入（第一次接触建议从 Counter-Mvc-Quick 开始）。
+快捷档直改合法、适合原型；标准档封装修改入口（推荐起步）；严格档读写全解耦、扩展性最好。View / Controller / Presenter 在严格档按**业务窄接口**存储（类型层面拿不到 `ExecuteCommand` 等框架能力），读写分离由类型系统闭环。包内提供 6 个计数器示例 + ObservableValue / ObservableCollections / MiniEvent / AesirTimer / PlaneWar / RuntimeInitializeLoadType 六个实战与进阶示例，逐课可导入（第一次接触建议从 Counter-Mvc-Quick 开始）。
 
 ### 核心机制速览
 
@@ -72,7 +72,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 1. **Unity 原生优先** — 用引擎能力（PlayerLoop / SO / Editor API），不自建平行体系
 2. **极简边界** — 不做事件总线、Context 多实例、Command 池化 / async / Undo；低概率问题用文档约定与编辑期提示（InfoBox）杜绝，不加运行时防御兜底
-3. **样式与逻辑分离** — Inspector 呈现全部经 Odin AttributeProcessor 动态注入，运行时程序集零样式特性
+3. **样式与逻辑分离** — Inspector 呈现主要经 Odin AttributeProcessor 动态注入；运行时程序集仅含 `#if ODIN_INSPECTOR` 门禁的少量样式特性（如 `SceneModule` 的 `[DetailedInfoBox]` / `[LabelText]`），无 Odin 时零残留
 
 ---
 
@@ -82,7 +82,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 ### UI 框架
 
-- **`UIModule`（Manager of Managers 单例）** — 静态快捷 API：`UIModule.Show<T>()` / `Hide<T>()` / `Get<T>()` / `Prewarm<T>()` / `RegisterPrefab<T>()`；面板状态机为 激活 → 停用缓存 → 销毁
+- **`UIModule`（单门面 + 多注册表单例，无子 Manager 分层）** — 静态快捷 API：`UIModule.Show<T>()` / `Hide<T>()` / `Get<T>()` / `Prewarm<T>()` / `RegisterPrefab<T>()`；面板状态机为 激活 → 停用缓存 → 销毁
 - **`UIRoot` 四层 Canvas 层级** — 一键构建 Background / Normal / Popup / Top 分层 Canvas + UICamera + EventSystem（`GameObject → Aesir Modules → Create UIRoot`），层级 Canvas 序列化引用持久化
 - **面板生命周期** — `IUIPanel` 契约 `Initialize → Show(payload) → Hide → DestroyPanel`；`AesirBasePanel` 提供虚方法 `OnInit` / `OnShow` / `OnHide` / `OnClose`；`DestroyOnHide` 决定隐藏时销毁还是缓存复用
 - **窗口（Canvas 根 UI）与蒙版** — 与面板并列的第二种形态：`AesirBaseWindow` 家族预制体根节点自带 Canvas、直接挂载于 UIRoot、默认 `sortingOrder` 500 恒在面板四层之上；静态 API `UIModule.Open<T>()` / `Close<T>()` / `GetWindow<T>()`；预制体 `Mask` 子物体为蒙版（`UIMaskMode` 单遮/叠遮统一调度、点击蒙版可关闭）；模态弹窗、全屏流转页推荐窗口形态，常驻 HUD 与非模态面板推荐面板形态（选型对比见包内文档）
@@ -97,7 +97,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 ### 场景模块与编辑器工具
 
-- **`SceneModule`** — 启动场景（Bootstrap）自动发现与优先加载、叠加场景动态加载追踪
+- **`SceneModule`** — 启动场景（Bootstrap）经编辑器 `BootstrapSceneHelper` 按名搜集为序列化引用 / 全局配置 SO，运行时供用户代码读取编排（不自动搜索、不自动加载）；叠加场景动态加载追踪
 - **编辑器工具** — `SceneManagerWindow` 场景管理窗口、`BootstrapSceneHelper` 启动场景一键注册、`SceneAssetWrapper` 可序列化场景引用
 
 ---
@@ -141,7 +141,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 
 > **国内加速**：CNB 是主仓库，GitHub 是其镜像——两条线路内容一致，大陆网络推荐 CNB 线路（无需代理直连）。本文所有 GitHub Git URL 均可把 `github.com/yuumixcode` 换成 `cnb.cool/runestone-game` 得到 CNB 等价线路，分支 / tag / `?path=` 参数不变（方式 3、方式 4 同理）。
 >
-> `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0`（`path` 换成对应包目录，tag 永久保留）。
+> `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0`（`path` 换成对应包目录；**历史已发布版本的 tag 永久保留**，当前在研版本的 tag 会随每次 push `main` 滚动刷新、待版本号 bump 后才冻结为永久历史 tag——钉版本请钉已发布的历史稳定版）。
 >
 > **两个包需要分别添加**：UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），仅添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败——可随后经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装。
 
@@ -237,7 +237,7 @@ UIModule.Show<MainMenuPanel>();
 UIModule.Show<ConfirmDialogPanel, ConfirmData>(new ConfirmData { message = "确定？" });
 ```
 
-UI 框架提供 Manager-of-Managers 单例、四层 Canvas 层级（`UILayer`）、面板生命周期（激活 → 停用缓存 → 销毁）与可插拔资源加载器（默认 Resources，可换 Addressables）。
+UI 框架提供单门面 + 多注册表单例、四层 Canvas 层级（`UILayer`）、面板生命周期（激活 → 停用缓存 → 销毁）与可插拔资源加载器（默认 Resources，可换 Addressables）。
 
 完整指南见 [`Assets/Runestone/AesirModules/README.md`](./Assets/Runestone/AesirModules/README.md)（中文）/ [`Documentation/README_EN.md`](./Assets/Runestone/AesirModules/Documentation/README_EN.md)（English）。
 
@@ -248,7 +248,7 @@ UI 框架提供 Manager-of-Managers 单例、四层 Canvas 层级（`UILayer`）
 | 文档 | 位置 |
 |---|---|
 | 架构教学（中文/英文） | 各包 `README.md` / `Documentation/README_EN.md` |
-| AI 编码指南（全框架：RAA 架构 + RAM 模块速查 + 六档模板 + 陷阱清单与事件决策表 + jam 实战手册） | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
+| AI 编码指南（全框架：RAA 架构 + RAM 模块速查 + 六档模板 + 陷阱清单与事件决策表） | [`AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirFramework-Skill/SKILL.md) |
 | AI 启动场景 Skill（项目初始化：一键创建启动场景 + 启动脚本） | [`AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md`](./Assets/Runestone/AesirArchitecture/Documentation/AesirBootScene-Skill/SKILL.md) |
 | 事件模块详细手册 | [`AesirModules/Documentation/event-module.md`](./Assets/Runestone/AesirModules/Documentation/event-module.md) |
 | 变更日志（仓库级聚合 / 各包子包） | 根 [`CHANGELOG.md`](./CHANGELOG.md) 及各包 `CHANGELOG.md` |
