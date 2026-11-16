@@ -2,11 +2,11 @@
 
 > A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.32.0-blue.svg)](../CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
+[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
-[![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
+[![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package does **NOT depend on** any other Aesir sub-package (standalone installable).
 >
@@ -17,7 +17,7 @@
 
 ## Overview
 
-AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVC / MVP layering for small to medium-large projects. The framework is **MVC-first**: `IController` is the recommended entry point for rapid development; `IPresenter` (MVP) is an optional pattern for stricter Model-View separation — MVP is exactly the pattern taught by Unity's official best practices ([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)). **MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts with the lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state notification. See [Mode Selection Decisions](AesirFramework-Skill/references/mode-decisions.md) for the full rationale and re-evaluation triggers.
+AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVC / MVP layering for small to medium-large projects. The framework is **MVC-first**: `IController` is the recommended entry point for rapid development; `IPresenter` (MVP) is an optional pattern for stricter Model-View separation — MVP is exactly the pattern taught by Unity's official best practices ([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)). **MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts with the lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state notification. See [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md) for the full rationale and re-evaluation triggers.
 
 ### Core Features
 
@@ -33,7 +33,7 @@ AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-f
 - **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, preserving registration order
 - **Domain Reload safety** — Static variables explicitly reset via `[RuntimeInitializeOnLoadMethod]`; no residue across Play Mode entry/exit
 - **Pure C# core + MonoBehaviour adapter** — Framework core is pure C#; the Engine layer does NOT depend on any Component layer type. `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` serve as MonoBehaviour adapters
-- **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional — Unity's official best-practice pattern) for stricter Model-View separation. MVVM is intentionally not provided for now (see [Mode Selection Decisions](AesirFramework-Skill/references/mode-decisions.md))
+- **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional — Unity's official best-practice pattern) for stricter Model-View separation. MVVM is intentionally not provided for now (see [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md))
 
 ## Installation
 
@@ -66,7 +66,7 @@ Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFram
 - **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
 - Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.32.0`).
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.33.0`).
 >
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
 
@@ -256,15 +256,11 @@ The package provides 11 importable samples (Package Manager → Aesir Architectu
 | `AesirTimer` | Timer usage: `Countdown` delay and cooldown, `NextFrame`, `Every` with finite or infinite repeats, `Pause` / `Resume` / `Restart` / `Cancel`; the on-screen panel only reads `Remaining` / `Progress` / `RemainingExecutions` to draw progress bars (no driving code), plus a pure C# cooldown model that is not a MonoBehaviour; actions are triggered by buttons in a custom Inspector (`ContextMenu` calls the same methods), and the runtime panel and the Inspector share one row data source | None |
 | `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); toggles controlled via the settings window (`Tools → Aesir → Architecture → Samples`) | None |
 
-### Hands-on sample
-
-| Sample | Description | Dependency |
-|------|------|------|
-| `PlaneWar` | Vertical shooter "Plane War" (Mono version): a complete self-contained mini-game demonstrating how MiniEvent, ObservableValue, and MonoLifecycleProxy combine in real gameplay | None |
+> **PlaneWar is not part of the package**: the complete vertical-shooter game case has moved out to the host project's `Assets/PlaneWar/` (visible in the source repository only — not shipped with the package, not in the sample list or the Getting Started window). See `Assets/PlaneWar/README.md` in the repository root.
 
 ## Observable Collections (a lean built-in subset of ObservableCollections)
 
-> The collection type names reference [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) so upstream documentation stays easy to compare against. This module is a **high-frequency subset** of upstream (a lean, indie-game-oriented scope), not a full port; the change notification is this project's own convention (a single-track event, **not aligned with upstream semantics**). Full details live in [`Documentation/observable-collections.md`](observable-collections.md).
+> The collection type names reference [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) so upstream documentation stays easy to compare against. This module is a **high-frequency subset** of upstream (a lean, indie-game-oriented scope), not a full port; the change notification is this project's own convention (a single-track event, **not aligned with upstream semantics**). Full details live in [`Documentation~/observable-collections.md`](Documentation~/observable-collections.md).
 
 **Collection family**: `ObservableList<T>`, `ObservableDictionary<TKey, TValue>`, `ObservableHashSet<T>` — all implementing `IObservableCollection<T>` (`AddListener` / `RemoveListener`). For queues and other collection shapes, use the upstream [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) directly.
 
@@ -292,7 +288,7 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 
 **Heavy needs go upstream**: synchronized views and filters, R3 reactive integration, ring buffers / stacks / alternate index list, `INotifyCollectionChanged` (WPF-style) binding, writable views — use [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) directly (the two are not meant to be mixed).
 
-**Coexists with upstream**: assembly, UPM package name and namespace are fully isolated on three layers, so both libraries can be installed in the same project (assembly `ObservableCollections` vs `Runestone.AesirArchitecture`); when a single source file `using`s both namespaces and references a same-named type bare (the three collections and related interfaces), CS0104 occurs — resolve with a using alias or full qualification. See "Coexisting with upstream" in `Documentation/observable-collections.md`.
+**Coexists with upstream**: assembly, UPM package name and namespace are fully isolated on three layers, so both libraries can be installed in the same project (assembly `ObservableCollections` vs `Runestone.AesirArchitecture`); when a single source file `using`s both namespaces and references a same-named type bare (the three collections and related interfaces), CS0104 occurs — resolve with a using alias or full qualification. See "Coexisting with upstream" in `Documentation~/observable-collections.md`.
 
 ## Architecture Overview
 
@@ -349,11 +345,11 @@ cn.runestone.aesir.architecture/
 ├── package.json
 ├── AesirPathLookup.asset             # Install-location anchor asset (Runestone can be moved anywhere; do not delete)
 ├── README.md                       # Chinese
-├── Documentation/
-│   ├── README_EN.md               # This file
-│   ├── observable-collections.md  # Observable collections: semantics and upstream differences
-│   ├── AesirFramework-Skill/      # AI coding guide (SKILL.md + six-tier templates + module quick reference + pitfalls)
-│   └── AesirBootScene-Skill/       # AI boot-scene skill (create boot scene + bootstrap script)
+├── README_EN.md                    # This file
+├── Documentation~/                 # Usage docs (trailing '~': invisible to the AssetDatabase, not shipped in the unitypackage)
+│   └── observable-collections.md   # Observable collections: semantics and upstream differences
+├── TuanjieCowork~/                # AI skills entry point (invisible to the AssetDatabase, not in the unitypackage)
+│   └── README.md                  # Skills now live in the repo-root extension .codely-cli/extensions/AesirFrameworkGame/ — how to download & install
 ├── CHANGELOG.md
 ├── LICENSE.md
 ├── Runtime/
@@ -426,7 +422,6 @@ cn.runestone.aesir.architecture/
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
 │   ├── ObservableCollections/     # Observable collections (List / Dictionary / HashSet) usage examples
 │   ├── MiniEvent/                 # MiniEvent usage examples
-│   ├── PlaneWar/                  # Vertical shooter "Plane War" (Mono hands-on sample)
 │   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType phase-reset demo (Editor-only tool, menu Tools → Aesir → Architecture → Samples)
 ├── Samples~/                      # Sample source mirror (import on demand via Package Manager after Git URL install; excluded from builds)
 └── Third Party Notices.md          # Third-party license notices
@@ -445,7 +440,7 @@ cn.runestone.aesir.architecture/
 - **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
 - **Delayed execution for pure C# layers** — the framework deliberately ships **no** frame-level scheduler. When a pure C# class needs per-frame callbacks use `MonoLifecycleProxy` (`ICustomUpdate` / `ICustomFixedUpdate` / `ICustomLateUpdate` — no scene object, the DDOL host is created for you); when it needs a coroutine, put the driver on a GameObject. Both are Unity-native mental models, so a third scheduling API is unnecessary
 - **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
-- **Full observable-collection suite** — a **high-frequency subset** of [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see `Third Party Notices.md`) ships in-package: three collections (List / Dictionary / HashSet) with a single-track change notification. Queues and other collection shapes, synchronized views with filters, R3 reactive extensions, ring buffers / stacks / alternate index list, the `INotifyCollectionChanged` binding layer and writable views are **not** provided — use the upstream library for those (the two are not meant to be mixed; see `Documentation/observable-collections.md`)
+- **Full observable-collection suite** — a **high-frequency subset** of [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see `Third Party Notices.md`) ships in-package: three collections (List / Dictionary / HashSet) with a single-track change notification. Queues and other collection shapes, synchronized views with filters, R3 reactive extensions, ring buffers / stacks / alternate index list, the `INotifyCollectionChanged` binding layer and writable views are **not** provided — use the upstream library for those (the two are not meant to be mixed; see `Documentation~/observable-collections.md`)
 - **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
 
 ### Coding Conventions (violations fail fast; the framework does not compensate)
@@ -473,7 +468,7 @@ cn.runestone.aesir.architecture/
 ## Roadmap
 
 - [x] Core MVC / MVP layering (MVC-first)
-- [x] MVVM evaluated — intentionally not adopted for now (2026-11-16; see [Mode Selection Decisions](AesirFramework-Skill/references/mode-decisions.md) for rationale and re-evaluation triggers)
+- [x] MVVM evaluated — intentionally not adopted for now (2026-11-16; see [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md) for rationale and re-evaluation triggers)
 - [x] Native PlayerLoop lifecycle injection
 - [x] Command pattern (sync)
 - [x] Query pattern (CQRS read)

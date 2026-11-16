@@ -23,15 +23,3 @@ synchronized views); the remaining upstream capabilities (synchronized views, R3
 `INotifyCollectionChanged` binding layer, writable views) are not included — use the upstream package for those.
 Deviations from upstream are itemized in `Documentation/observable-collections.md` (Unsafe/CollectionsMarshal fast paths replaced
 with allocation-free fallbacks, `record struct` / primary constructors downgraded to C# 9 syntax).
-
-
-
-Component Name: Vertical 2D Shooting (Goldmetal)
-
-License Type: "Free for commercial use with attribution"
-
-Copyright ⓒ 2021 Goldmetal. Free to use (including commercially) provided that Goldmetal is credited as the source.
-
-Sprite assets used by the PlaneWar sample (self-contained copies under Samples/PlaneWar) come from this pack.
-
-[Goldmetal Studio](https://www.goldmetal.co.kr)
