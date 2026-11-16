@@ -53,6 +53,8 @@ main:
               for KEEP_DIR in "Samples~" "Documentation~"; do
                 [ -d "$KEEP_DIR" ] || { echo "$BR 缺少 $KEEP_DIR"; exit 1; }
               done
+              # 裁剪提交时间戳每次不同 → 非快进，必须 force；CNB 侧包分支同样要更新（国内 UPM 加速入口）
+              git push -f origin "$BR"
               git checkout main
             done
             # 清理废弃的版本分支（钉版入口统一为 Release tag）
@@ -62,6 +64,8 @@ main:
             done
 
         - name: update-info
+          # 默认构建镜像无 python3，独立容器执行
+          image: python:3.12
           script: |
             set -e
             python3 .github/scripts/build_unitypackage.py \
@@ -134,6 +138,7 @@ main:
       retry: 2
       stages:
         - name: build-unitypackages
+          image: python:3.12
           script: |
             set -e
             VERSION="${CNB_BRANCH#v}"
