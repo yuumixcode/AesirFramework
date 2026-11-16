@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面 + 多注册表）、事件模块、音频管理、场景管理工具与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.32.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
-[![English](https://img.shields.io/badge/README-English-blue.svg)](./Documentation/README_EN.md)
+[![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.32.0`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.33.0`）
 
 ## 模块总览
 
@@ -25,7 +25,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.32.0（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.33.0（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。Odin 只负责面板样式增强：**Scene 模块的 `SceneAssetWrapper` 拖拽赋值、着色与一键修复按钮**，装 Odin 时由 Processor 面板提供，未装时由原生 PropertyDrawer 兜底（等价信息量）；`SceneModuleConfigSO` 的配置项在两种环境下都可编辑（未装 Odin 走原生 CustomEditor）。纯代码路径（`FromScenePath` 构造 / `SceneAsset` 代码赋值 / TryGet 家族）始终可用。
 
 ## 目录组织
@@ -171,7 +171,7 @@ SettingWindow（根：Canvas + CanvasScaler + GraphicRaycaster + 窗口脚本）
 
 蒙版由 `UIModule` 统一调度（初始值配置于 `UIModuleConfigSO` 单例资产，编辑器自动创建在 `Assets/Resources/UIModuleConfig/`，不要求预放置 `[UIModule]`；彻底放弃 Resources 时可经 `UIModuleConfigSO.RegisterConfigLoader` 注册自定义加载器；运行时经 `UIModule.Instance.MaskMode` 切换）：**单遮**（默认）= 全局仅最高层可见窗口的蒙版生效，多窗口叠加透明度不叠加；**叠遮** = 各窗口蒙版独立跟随自身打开状态。蒙版点击经 Button 自动接线回调 `OnMaskClicked()`，默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口。无 `Mask` 子物体的窗口（如全屏不透明加载页）不参与遮挡。
 
-**Panel 与 Window 的选型**：常驻 HUD、非模态并存的信息/列表面板用 **Panel**（共享层 Canvas，同图集合批友好，项目默认主形态）；模态弹窗、全屏流转页（设置/暂停/结算/加载）、需要独立排序或渲染隔离的浮层用 **Window**。两种形态 API 与生命周期对称，按需混用成立（窗口恒在面板之上）；一个项目通常只选一种主形态。完整对比见 [Documentation/ui-module.md](./Documentation/ui-module.md)。
+**Panel 与 Window 的选型**：常驻 HUD、非模态并存的信息/列表面板用 **Panel**（共享层 Canvas，同图集合批友好，项目默认主形态）；模态弹窗、全屏流转页（设置/暂停/结算/加载）、需要独立排序或渲染隔离的浮层用 **Window**。两种形态 API 与生命周期对称，按需混用成立（窗口恒在面板之上）；一个项目通常只选一种主形态。完整对比见 [Documentation~/ui-module.md](./Documentation~/ui-module.md)。
 
 6. 世界空间 UI（血条 / 名字牌 / 交互提示）——需要 Canvas 跟随场景中的世界对象时，使用 `WorldSpaceUICanvas` 预设（**第三种并列形态，不进 UIModule 注册表**）：
 
@@ -186,7 +186,7 @@ nameplate.Billboard = WorldSpaceUICanvas.WorldSpaceBillboardMode.CameraFacingYLo
 // FollowTarget 留空即表示跟随父级；组件在 Awake 自动补齐 Canvas / RectTransform / Scaler / Raycaster。
 ```
 
-世界空间配置走独立链：组件上的配置 → `UIRoot.WorldSpaceCanvasConfig` → 内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`；世界空间 UI 的生命周期随宿主场景物体，Show / Hide 与蒙版调度请走 Panel / Window 形态。详见 [Documentation/ui-module.md](./Documentation/ui-module.md#世界空间-ui-canvas-预设)。
+世界空间配置走独立链：组件上的配置 → `UIRoot.WorldSpaceCanvasConfig` → 内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`；世界空间 UI 的生命周期随宿主场景物体，Show / Hide 与蒙版调度请走 Panel / Window 形态。详见 [Documentation~/ui-module.md](./Documentation~/ui-module.md#世界空间-ui-canvas-预设)。
 
 ### 目录结构
 
@@ -225,7 +225,7 @@ Editor/UI/                         # 汇入核心编辑器程序集（层根锚�
 > - **`OnClose` 仅受控销毁路径调用** — 见上方生命周期细节；非受控销毁（场景卸载 / 外部 Destroy）只触发 `OnDestroy`。
 > - **主相机需自行排除 UI 层** — UICamera 的 cullingMask 只含 UI(5) 与 TransparentFX(1) 层，但主游戏相机若也包含 UI 层会重复渲染，请在项目相机配置中自行排除。
 
-详细文档见 [Documentation/ui-module.md](./Documentation/ui-module.md)。
+详细文档见 [Documentation~/ui-module.md](./Documentation~/ui-module.md)。
 
 ## 事件模块
 
@@ -354,7 +354,7 @@ myEventArgsSO.Raise();
 private void OnKeyPressed() { ... }
 ```
 
-> **设计边界**：分发基于注册表快照迭代且支持重入（订阅者回调内可安全同步发布事件，参数互不覆写）；遗漏退订的已销毁订阅者由分发期死引用清理自动兜底；系统事件（元事件）与频道标签依赖编辑器工具链，待工具链立项后一并设计。详见 [Documentation/event-module.md](./Documentation/event-module.md)。
+> **设计边界**：分发基于注册表快照迭代且支持重入（订阅者回调内可安全同步发布事件，参数互不覆写）；遗漏退订的已销毁订阅者由分发期死引用清理自动兜底；系统事件（元事件）与频道标签依赖编辑器工具链，待工具链立项后一并设计。详见 [Documentation~/event-module.md](./Documentation~/event-module.md)。
 
 ### 目录结构
 
@@ -374,7 +374,7 @@ Runtime/Events/                    # 汇入核心运行时程序集（层根锚�
 └── SubscriberPriority.cs          # 优先级枚举（4 档）
 ```
 
-详细文档见 [Documentation/event-module.md](./Documentation/event-module.md)。
+详细文档见 [Documentation~/event-module.md](./Documentation~/event-module.md)。
 
 ## 音频模块
 
@@ -403,7 +403,7 @@ AudioModule.SfxVolume = 0.5f;
 AudioModule.MasterMute = true;
 ```
 
-> **设计边界**：仅负责 2D 音频——3D 空间音效用原生 `AudioSource.PlayClipAtPoint`；不集成 AudioMixer；`PlaySfx` 为 fire-and-forget，无每音效停止与播完回调（回调需求用 MiniEvent）。详见 [Documentation/audio-module.md](./Documentation/audio-module.md)。
+> **设计边界**：仅负责 2D 音频——3D 空间音效用原生 `AudioSource.PlayClipAtPoint`；不集成 AudioMixer；`PlaySfx` 为 fire-and-forget，无每音效停止与播完回调（回调需求用 MiniEvent）。详见 [Documentation~/audio-module.md](./Documentation~/audio-module.md)。
 
 ### 目录结构
 
@@ -554,7 +554,15 @@ Editor/UniTask/
 - **Summary 工具** — Project 窗口右键（`Assets → Script Doc Generator → Process Summary`）在 XML `<summary>` 注释与 `[Summary]` 特性之间同步（特性为权威内容源，特性优先、XML 回退）：Sync（双向对齐保留双份）/ Replace（收敛为单份特性）/ Remove（移除特性，带确认）三种模式、批量单次刷新、引号转义、行尾保持、宏定义感知、自动补 `using`。
 - **自定义特性** — `[Summary]`（运行时可经 `GetSummary()` 读取）、`[ReferenceLinkURL]`（为类型附加文档链接）。
 
-详细文档见 [Documentation/script-doc-generator.md](./Documentation/script-doc-generator.md)。
+详细文档见 [Documentation~/script-doc-generator.md](./Documentation~/script-doc-generator.md)。
+
+## AI 技能包（团结 Cowork / Codely CLI）
+
+Aesir 的 AI 技能统一放在仓库根的整包扩展 [`.codely-cli/extensions/AesirFrameworkGame/`](../../../.codely-cli/extensions/AesirFrameworkGame/)（`AesirArchitecture` 与 `AesirModules` 共用一个扩展），不再随单个包分发。与本包相关的四个模块技能：`aesir-ui`（面板/窗口/蒙版/世界空间 UI）、`aesir-events`（双轨订阅/优先级/过滤）、`aesir-audio`（SFX/BGM/音量持久化）、`aesir-scene`（场景切换/进度/叠加追踪）；同一扩展里还有支撑写法的架构技能与入口路由 `aesir-router`。**依赖门禁**：工程缺 RAM 或 RAA 时，AI 会先读记忆、再询问是否经 Git URL 安装（CNB 优先、GitHub 兜底），不会用原生 API 顶替。
+
+下载与安装方式见 [`TuanjieCowork~/README.md`](./TuanjieCowork~/README.md)。
+
+> 技能存放在 `.codely-cli/` 与 `~` 结尾目录内，对 AssetDatabase 不可见、不进 unitypackage——AI 内容不进入任何 Unity 工程。
 
 ## 示例
 

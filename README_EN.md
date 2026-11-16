@@ -2,14 +2,14 @@
 
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (single facade + multiple registries), an event module, audio management, scene management tooling, and a script documentation generator.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.32.0-blue.svg)](../CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
+[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
-[![中文](https://img.shields.io/badge/README-中文-red.svg)](../README.md)
+[![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.32.0`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.33.0`)
 
 ## Modules
 
@@ -25,7 +25,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.32.0 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.33.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed. Odin is a panel styling enhancement only: the Scene module's `SceneAssetWrapper` drag-assign, coloring and one-click fix buttons are provided by the Odin processor panel when Odin is installed, and by a native PropertyDrawer fallback (equivalent information) when not; `SceneModuleConfigSO` settings are editable in both environments (native CustomEditor fallback without Odin). The pure-code path (`FromScenePath` construction / `SceneAsset` code assignment / TryGet family) always works.
 
 ## Directory Layout
@@ -169,7 +169,7 @@ SettingWindow (root: Canvas + CanvasScaler + GraphicRaycaster + window script)
 
 Masks are scheduled centrally by `UIModule` (initial value configured on the `UIModuleConfigSO` singleton asset, auto-created by the editor under `Assets/Resources/UIModuleConfig/` — no pre-placed `[UIModule]` required; projects abandoning Resources entirely can register a custom loader via `UIModuleConfigSO.RegisterConfigLoader`; switchable at runtime via `UIModule.Instance.MaskMode`): **single** (default) = only the topmost visible window's mask is active, so stacked windows do not stack opacity; **stacked** = each window's mask independently follows its own visibility. Mask clicks are wired automatically through the Button and call the `OnMaskClicked()` virtual — by default `closeOnMaskClick` (default false) decides whether the window closes. Windows without a `Mask` child (e.g. opaque fullscreen loading pages) simply do not participate in masking.
 
-**Panel vs. Window**: for persistent HUDs and co-existing non-modal info/list panels, use **Panel** (shared layer Canvas, batching-friendly; the default form for most projects); for modal popups, fullscreen flow pages (settings / pause / results / loading), and overlays needing independent sorting or render isolation, use **Window**. The two forms have symmetric APIs and lifecycles and can be mixed as needed (windows always render above panels); a project usually picks one primary form. Full comparison in [Documentation/ui-module.md](./ui-module.md).
+**Panel vs. Window**: for persistent HUDs and co-existing non-modal info/list panels, use **Panel** (shared layer Canvas, batching-friendly; the default form for most projects); for modal popups, fullscreen flow pages (settings / pause / results / loading), and overlays needing independent sorting or render isolation, use **Window**. The two forms have symmetric APIs and lifecycles and can be mixed as needed (windows always render above panels); a project usually picks one primary form. Full comparison in [Documentation~/ui-module.md](./Documentation~/ui-module.md).
 
 6. World-space UI (health bars / nameplates / interaction hints) — use the `WorldSpaceUICanvas` preset when a Canvas must follow a world-space object (**a third sibling form, outside the UIModule registry**):
 
@@ -184,7 +184,7 @@ nameplate.Billboard = WorldSpaceUICanvas.WorldSpaceBillboardMode.CameraFacingYLo
 // leaving FollowTarget empty means "follow the parent". Awake auto-wires Canvas / RectTransform / Scaler / Raycaster.
 ```
 
-World-space config uses a separate chain: component config → `UIRoot.WorldSpaceCanvasConfig` → in-memory default `UICanvasConfigSO.CreateWorldSpaceDefault()`. World-space UI lives with its host scene object; use the Panel / Window forms for Show / Hide and mask scheduling. See [Documentation/ui-module.md](./ui-module.md#世界空间-ui-canvas-预设).
+World-space config uses a separate chain: component config → `UIRoot.WorldSpaceCanvasConfig` → in-memory default `UICanvasConfigSO.CreateWorldSpaceDefault()`. World-space UI lives with its host scene object; use the Panel / Window forms for Show / Hide and mask scheduling. See [Documentation~/ui-module.md](./Documentation~/ui-module.md#世界空间-ui-canvas-预设).
 
 ### Directory Structure
 
@@ -223,7 +223,7 @@ Editor/UI/                         # joins the core editor assembly (layer-root 
 > - **`OnClose` only runs on the controlled destroy path** — see the lifecycle details above; uncontrolled destroys (scene unload / external Destroy) only trigger `OnDestroy`.
 > - **Exclude the UI layer from your main camera** — the UICamera cullingMask only contains UI(5) and TransparentFX(1), but a main game camera that also includes the UI layer will render the UI twice; exclude it in your own camera setup.
 
-See [Documentation/ui-module.md](./ui-module.md) for the detailed module documentation.
+See [Documentation~/ui-module.md](./Documentation~/ui-module.md) for the detailed module documentation.
 
 ## Event Module
 
@@ -352,7 +352,7 @@ myEventArgsSO.Raise();
 private void OnKeyPressed() { ... }
 ```
 
-> **Design boundaries**: dispatch iterates over a registry snapshot and is re-entrant safe (publishing events synchronously inside subscriber callbacks is safe; arguments never overwrite each other); destroyed subscribers left unsubscribed are auto-cleaned during dispatch (dead-reference cleanup); system events (meta events) and channel labels depend on the editor toolchain and will be designed together with it. See [event-module.md](./event-module.md) for details.
+> **Design boundaries**: dispatch iterates over a registry snapshot and is re-entrant safe (publishing events synchronously inside subscriber callbacks is safe; arguments never overwrite each other); destroyed subscribers left unsubscribed are auto-cleaned during dispatch (dead-reference cleanup); system events (meta events) and channel labels depend on the editor toolchain and will be designed together with it. See [Documentation~/event-module.md](./Documentation~/event-module.md) for details.
 
 ### Directory Structure
 
@@ -376,7 +376,7 @@ Editor/Events/                     # joins the core editor assembly
 └── AesirEventArgsSOEditor.cs      # SO custom inspector (runtime-only Raise button)
 ```
 
-Detailed docs: [event-module.md](./event-module.md).
+Detailed docs: [Documentation~/event-module.md](./Documentation~/event-module.md).
 
 ## Audio Module
 
@@ -405,7 +405,7 @@ AudioModule.SfxVolume = 0.5f;
 AudioModule.MasterMute = true;
 ```
 
-> **Design boundaries**: 2D audio only — use the native `AudioSource.PlayClipAtPoint` for 3D spatial sounds; no AudioMixer integration; `PlaySfx` is fire-and-forget with no per-sound stop or completion callbacks (use MiniEvent for callbacks). See [audio-module.md](./audio-module.md) for details.
+> **Design boundaries**: 2D audio only — use the native `AudioSource.PlayClipAtPoint` for 3D spatial sounds; no AudioMixer integration; `PlaySfx` is fire-and-forget with no per-sound stop or completion callbacks (use MiniEvent for callbacks). See [Documentation~/audio-module.md](./Documentation~/audio-module.md) for details.
 
 ### Directory Structure
 
@@ -561,7 +561,15 @@ Located at `Runtime/ScriptDocGenerator/OdinInspector/` and `Editor/ScriptDocGene
 - **Summary Tool** — Project window context menu (`Assets → Script Doc Generator → Process Summary`) syncs XML `<summary>` comments and the `[Summary]` attribute with the attribute as the authoritative source (attribute-first, XML fallback): Sync (aligns both, keeps both) / Replace (collapses to a single attribute) / Remove (removes attributes, with confirmation) modes, batch processing with a single asset refresh, quote escaping, line-ending preservation, preprocessor-directive aware, auto-adds the `using` directive.
 - **Custom attributes** — `[Summary]` (readable at runtime via `GetSummary()`), `[ReferenceLinkURL]` (attaches documentation links to types).
 
-See [script-doc-generator.md](./script-doc-generator.md) (Chinese) for full documentation.
+See [Documentation~/script-doc-generator.md](./Documentation~/script-doc-generator.md) (Chinese) for full documentation.
+
+## AI Skill Pack (Tuanjie Cowork / Codely CLI)
+
+All Aesir AI skills now live in one all-in-one extension at the repository root: [`.codely-cli/extensions/AesirFrameworkGame/`](../../../.codely-cli/extensions/AesirFrameworkGame/) (shared by `AesirArchitecture` and `AesirModules`), and no longer ship inside a single package. The four module skills relevant here are `aesir-ui` (panels / windows / masks / world-space UI), `aesir-events` (dual-track subscription / priorities / filters), `aesir-audio` (SFX / BGM / volume persistence) and `aesir-scene` (scene switching / progress / additive tracking); the same extension also carries the architecture skills they build on plus the `aesir-router` entry point. **Dependency gate**: when RAM or RAA is missing, the AI reads memory first, then asks whether to install via Git URL (CNB first, GitHub as fallback) instead of substituting native APIs.
+
+See [`TuanjieCowork~/README.md`](./TuanjieCowork~/README.md) for download and install instructions.
+
+> Skills live under `.codely-cli/` and `~`-suffixed folders — invisible to the AssetDatabase, never in the unitypackage, so AI content does not land in any Unity project.
 
 ## Samples
 

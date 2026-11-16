@@ -9,7 +9,7 @@ namespace Runestone.AesirModules
     /// </para>
     /// </summary>
     /// <remarks>
-    /// 窗口与面板是两种并列的 UI 形态（选型对比见包内 Documentation/ui-module.md）；
+    /// 窗口与面板是两种并列的 UI 形态（选型对比见包内 Documentation~/ui-module.md）；
     /// 一个类型不应同时实现 <see cref="IUIPanel" /> 与本接口。
     /// </remarks>
     public interface IUIWindow

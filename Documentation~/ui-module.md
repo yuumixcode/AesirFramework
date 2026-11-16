@@ -153,7 +153,7 @@ popup.FaceCamera = true;
 popup.Billboard = WorldSpaceUICanvas.WorldSpaceBillboardMode.CameraFacingFull;
 ```
 
-`CreateWorldSpaceCanvas(Transform worldTarget, string canvasName = "WorldSpaceCanvas", UICanvasConfigSO config = null)`：目标为空时记录错误并返回 null；创建后自动 `Build(config)` 接线，后续改字段需手动调用 `Build()` 重建。
+`CreateWorldSpaceCanvas(Transform worldTarget, string canvasName = "WorldSpaceCanvas", UICanvasConfigSO config = null)`：目标为空时记录错误并返回 null；创建时带 `config` 执行一次 `Build(config)` 接线。跟随目标 / `PositionOffset` / `FaceCamera` / `Billboard` / `FlipFacing` 由 `LateUpdate` 每帧读取，运行时改动即时生效；**配置与 `sortingOrder` 属于接线期参数**——换配置后需再调用 `Build(overrideConfig)` 才会重新应用到 Canvas，而 `sortingOrder` 是序列化字段（运行时仅可读，`SortingOrder` 属性无 setter），在 Inspector 中改动同样要调用 `Build()` 才会刷新 Canvas。
 
 ### 生命周期边界
 
