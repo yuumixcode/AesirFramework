@@ -37,8 +37,15 @@ namespace Runestone.AesirModules.Editor.OdinInspector
                     break;
 
                 case UIRoot.UICanvasConfigFieldName:
-                    attributes.Add(new TitleAttribute("预设 Canvas 配置 [非 WorldSpace Canvas]",
-                        "此配置文件将应用到所有预设 Canvas 层，如果未设置则使用默认配置"));
+                    attributes.Add(new TitleAttribute("预设 Canvas 配置 [Screen Space Canvas]",
+                        "此配置文件将应用到所有预设 Canvas 层与窗口根 Canvas，如果未设置则使用默认配置"));
+                    attributes.Add(new HideLabelAttribute());
+                    attributes.Add(new InlineEditorAttribute(InlineEditorObjectFieldModes.Hidden));
+                    break;
+
+                case UIRoot.WorldSpaceCanvasConfigFieldName:
+                    attributes.Add(new TitleAttribute("世界空间 Canvas 配置 [WorldSpace Canvas]",
+                        "此配置文件将应用到 WorldSpaceUICanvas；如果未设置则使用内存默认预设"));
                     attributes.Add(new HideLabelAttribute());
                     attributes.Add(new InlineEditorAttribute(InlineEditorObjectFieldModes.Hidden));
                     break;

@@ -81,7 +81,8 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 | Type | Layer | Description |
 |------|----|------|
 | `UIModule` | Component | UI manager singleton: panel registration, showing, hiding, prewarming and registry maintenance; static shortcut API for global access |
-| `UIRoot` | Component | UI root node: builds the 4-layer Canvas (Background / Normal / Popup / Top) + UICamera + EventSystem, applies the unified Canvas config |
+| `UIRoot` | Component | UI root node: builds the 4-layer Canvas (Background / Normal / Popup / Top) + UICamera + EventSystem, applies screen-space Canvas config; provides the world-space Canvas creation entry and config reference |
+| `WorldSpaceUICanvas` | Component | World-space UI Canvas preset: attach to a scene object for a `RenderMode.WorldSpace` root that follows the object / can face the camera; outside the UIModule registry |
 | `IUIPanel` | Engine | Panel contract: lifecycle `Initialize → Show(payload) → Hide → DestroyPanel`; properties `Layer` / `DestroyOnHide` / `IsOpen` |
 | `AesirBasePanel` | Component | Abstract panel base: virtual `OnInit` / `OnShow` / `OnHide` / `OnClose`, serialized fields `layer` / `destroyOnHide`, convenience `HideSelf()` |
 | `AesirBasePanelView<T>` | Component | MVP-mode panel view base: inherits `AesirBasePanel` and binds to a Context type (`IView`), accessing Models / Services via the Context |
@@ -92,7 +93,7 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 | `AesirBaseWindowViewController<T>` | Component | MVC-mode window controller base: inherits `AesirBaseWindow` and binds to a Context type (`IController`), executing Commands / Queries |
 | `UIMaskMode` | Engine | Window mask scheduling mode: single (only the topmost visible window's mask is active) / stacked (each window's mask follows its own visibility); initial value configured on `UIModuleConfigSO`, switchable at runtime |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | Pluggable asset loading contract and default implementation (Resources folder). The contract is **synchronous**: suitable for Resources, synchronous caches and similar pipelines; async pipelines such as Addressables must be preloaded and returned synchronously |
-| `UICanvasConfigSO` | Asset | Unified Canvas config asset (a default asset can be created from the Create menu) |
+| `UICanvasConfigSO` | Asset | Canvas config asset: `ApplyToCanvas` for screen-space layer/window roots, `ApplyToWorldSpaceCanvas` for world-space Canvases; `CreateWorldSpaceDefault()` builds the in-memory world-space preset (a default asset can be created from the Create menu) |
 | `UIModuleConfigSO` | Asset | UI module global config asset (singleton): module-level settings such as the mask scheduling mode; auto-created under Resources (`UIModuleConfig/UIModuleConfig`) by the editor; a custom loader can replace the Resources fallback |
 | `UILayer` | Engine | Layer enum: Background / Normal / Popup / Top |
 
@@ -170,12 +171,27 @@ Masks are scheduled centrally by `UIModule` (initial value configured on the `UI
 
 **Panel vs. Window**: for persistent HUDs and co-existing non-modal info/list panels, use **Panel** (shared layer Canvas, batching-friendly; the default form for most projects); for modal popups, fullscreen flow pages (settings / pause / results / loading), and overlays needing independent sorting or render isolation, use **Window**. The two forms have symmetric APIs and lifecycles and can be mixed as needed (windows always render above panels); a project usually picks one primary form. Full comparison in [Documentation/ui-module.md](./ui-module.md).
 
+6. World-space UI (health bars / nameplates / interaction hints) — use the `WorldSpaceUICanvas` preset when a Canvas must follow a world-space object (**a third sibling form, outside the UIModule registry**):
+
+```csharp
+// Create a world-space Canvas above a character (attached under the target, follows its world transform)
+var nameplate = UIRoot.Instance.CreateWorldSpaceCanvas(character.transform, "Nameplate");
+nameplate.PositionOffset = new Vector3(0f, 2f, 0f);  // local offset
+nameplate.FaceCamera = true;                         // face the UI camera (on by default)
+nameplate.Billboard = WorldSpaceUICanvas.WorldSpaceBillboardMode.CameraFacingYLocked;
+
+// Or add Component → Aesir Modules → UI → World Space UI Canvas to a scene object;
+// leaving FollowTarget empty means "follow the parent". Awake auto-wires Canvas / RectTransform / Scaler / Raycaster.
+```
+
+World-space config uses a separate chain: component config → `UIRoot.WorldSpaceCanvasConfig` → in-memory default `UICanvasConfigSO.CreateWorldSpaceDefault()`. World-space UI lives with its host scene object; use the Panel / Window forms for Show / Hide and mask scheduling. See [Documentation/ui-module.md](./ui-module.md#世界空间-ui-canvas-预设).
+
 ### Directory Structure
 
 ```
 Runtime/UI/                        # joins the core runtime assembly (layer-root anchor)
 ├── UIModule.cs                    # UI manager singleton (panel/window registries + mask scheduling)
-├── UIRoot.cs                      # UI root node (4-layer Canvas construction)
+├── UIRoot.cs                      # UI root node (4-layer Canvas + world-space Canvas creation entry/config)
 ├── IUIPanel.cs                    # Panel contract
 ├── AesirBasePanel.cs              # Panel base class
 ├── AesirBasePanelView.cs          # MVP panel view base (Context-bound)
@@ -186,7 +202,8 @@ Runtime/UI/                        # joins the core runtime assembly (layer-root
 ├── AesirBaseWindowViewController.cs # MVC window controller base (Context + Command/Query capabilities)
 ├── UIMaskMode.cs                  # Mask scheduling mode enum (single/stacked)
 ├── UILayer.cs                     # Layer enum
-├── UICanvasConfigSO.cs            # Canvas config asset
+├── UICanvasConfigSO.cs            # Canvas config asset (screen-space / world-space apply paths)
+├── WorldSpaceUICanvas.cs          # World-space UI Canvas preset (follow / billboard / wiring)
 ├── UIModuleConfigSO.cs            # UI module global config asset (singleton: mask mode etc., Resources fallback + custom loader)
 ├── UIAssetLoader/                 # IUIAssetLoader + ResourcesUILoader
 ├── InputSystem/                   # Input System input module adaptation (separate optional assembly)
@@ -200,6 +217,7 @@ Editor/UI/                         # joins the core editor assembly (layer-root 
 > **Design boundaries**:
 > - **The layer system is a closed set** — `UILayer` is fixed at four layers (Background / Normal / Popup / Top), with the base sorting orders hardcoded to 100 / 200 / 300 / 400 and force-overwritten on every Awake. Adding a layer or changing orders requires modifying the framework source; no configuration surface is provided. Four layers are sufficient for teaching and small-to-mid projects.
 > - **Panel roots attach directly under the layer Canvas (no per-panel Canvas)** — panels of the same layer share the layer Canvas: batching-friendly for same-atlas UI, at the cost of batch interruption on interleaved panels and no per-panel Canvas / independent sortingOrder surface. For an independent Canvas (animation isolation, render effects), add a child Canvas inside the panel prefab yourself (not managed by `UICanvasConfigSO`); a **whole screen** needing an independent Canvas, independent sorting or a click-blocking mask should be promoted to the window form (Canvas-root UI, always above the panel layers). In-layer rendering order is decided solely by the Show order (`SetAsLastSibling`).
+> - **World-space UI is outside the registry** — `WorldSpaceUICanvas` only provides a render root that follows world objects; its lifetime is tied to the host scene object and it is not part of UIModule Show / Hide / mask scheduling. Use the Panel / Window forms for the full lifecycle.
 > - **Masks serve the window form only** — single/stacked scheduling only touches the window's `Mask` child; panels have no mask — convert an input-blocking panel to the window form instead. Window navigation stacks/back navigation and SmartShowHide pseudo-hiding (next-cycle candidate) are not implemented.
 > - **The loading contract is synchronous** — see the "Loading contract" note above; no async interface.
 > - **`OnClose` only runs on the controlled destroy path** — see the lifecycle details above; uncontrolled destroys (scene unload / external Destroy) only trigger `OnDestroy`.
