@@ -9,6 +9,8 @@
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
 
+> 🏠 **Primary repository**: [CNB](https://cnb.cool/runestone-game/AesirFramework) (direct access from mainland China; source of commits, tags, and pipelines) · [GitHub](https://github.com/yuumixcode/AesirFramework) is the international mirror and Release outlet, synced automatically. Please file Issues / PRs on GitHub (the community entry).
+
 ---
 
 ## ✨ Two Sub-Packages, Independently Installable
@@ -133,14 +135,18 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 |---|---|
 | Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest` |
 | Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest` |
+| Aesir Architecture (mainland China) | `https://cnb.cool/runestone-game/AesirFramework.git#AesirArchitecture-latest` |
+| Aesir Modules (mainland China) | `https://cnb.cool/runestone-game/AesirFramework.git#AesirModules-latest` |
 
-> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0` (swap `path` for the desired package directory; tags are kept forever).
+> **Mainland China acceleration**: CNB is the primary repository and GitHub is its mirror — both routes serve identical content; users in mainland China are recommended to use the CNB route (direct access, no proxy needed). Every GitHub Git URL in this document has a CNB equivalent: replace `github.com/yuumixcode` with `cnb.cool/runestone-game`, keeping the branch / tag / `?path=` parameters unchanged (same for Options 3 and 4).
+>
+> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0` (swap `path` for the desired package directory; **tags of published historical versions are kept forever**, while the in-development version's tag rolls forward on every push to `main` and freezes only after the version number is bumped — pin published stable versions).
 >
 > **Both packages must be added separately**: UPM does not support Git URL dependencies inside a package (official Unity limitation). Adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture — you can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 
 ### Option 2: unitypackage Import + In-Package Updater (mainland / offline friendly)
 
-Download the matching unitypackage from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and drop it into your project:
+Download the matching unitypackage from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) (international) or [CNB Releases](https://cnb.cool/runestone-game/AesirFramework/-/releases) (direct access from mainland China, recommended there) and drop it into your project — assets on both sides are identical:
 
 | Asset | Content |
 |---|---|

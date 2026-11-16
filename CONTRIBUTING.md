@@ -3,6 +3,9 @@
 > 感谢你考虑为本项目做出贡献！无论是 Bug 报告、功能建议、文档改进还是代码提交，我们都非常欢迎。
 >
 > Thanks for considering contributing! Bug reports, feature requests, documentation improvements, and code contributions are all welcome.
+>
+> 🏠 主仓库：[CNB](https://cnb.cool/runestone-game/AesirFramework)（提交 / tag / 流水线源头）· GitHub 为国际镜像与社区入口——**Issue / PR 都在 GitHub 提**。
+> Primary repo: [CNB](https://cnb.cool/runestone-game/AesirFramework) (source of commits / tags / pipelines) · GitHub is the international mirror and community entry — **file Issues / PRs on GitHub**.
 
 [English](#english) | [中文](#中文)
 
@@ -76,6 +79,7 @@
 
 ```bash
 git clone https://github.com/yuumixcode/AesirFramework.git
+# 国内加速 / mainland China: git clone https://cnb.cool/runestone-game/AesirFramework.git
 ```
 
 #### 预热包缓存（不开 GUI）
@@ -187,6 +191,14 @@ Unity -batchmode -quit -projectPath . \
 - [ ] 提交信息遵循 Conventional Commits
 - [ ] 涉及子包功能变更时，已更新对应子包 `CHANGELOG.md` 的 `[Unreleased]`
 
+#### 主仓库与镜像（PR 如何被合并）
+
+主仓库在 [CNB](https://cnb.cool/runestone-game/AesirFramework)，GitHub 是单向自动同步的国际镜像 + Release 出口（CNB 注册需微信实名，国际用户无法使用，故社区入口保留在 GitHub）。**贡献流程不变：照常 Fork GitHub 仓库、向 GitHub `main` 提 PR。**
+
+- 维护者会把你的 PR 分支取到 CNB 侧合并（保留原始提交的 merge 方式），同步回 GitHub 后 PR **自动标记为 Merged**，贡献记录不丢失。
+- 若以 squash / cherry-pick 方式采纳（提交 hash 改变），维护者会手动关闭 PR 并在评论中注明采纳的提交。
+- **维护者纪律**：合并一律在 CNB 侧完成——不要在 GitHub 点 Merge 按钮、不要向 GitHub `main` 直接推送（GitHub 领先会导致单向同步失败）；已发布的 `main` 历史永不改写（禁止 rebase / force-push），否则镜像同步与所有消费者的克隆一并失效。
+
 ### 问题与帮助
 
 - **Bug 报告 & 功能建议**: [GitHub Issues](https://github.com/yuumixcode/AesirFramework/issues)
@@ -263,6 +275,7 @@ Clone:
 
 ```bash
 git clone https://github.com/yuumixcode/AesirFramework.git
+# 国内加速 / mainland China: git clone https://cnb.cool/runestone-game/AesirFramework.git
 ```
 
 Pre-warm package cache without GUI:
@@ -369,6 +382,14 @@ Unity -batchmode -quit -projectPath . \
 - [ ] `Assets/Plugins/Sirenix/` not committed (gitignored)
 - [ ] Commit messages follow Conventional Commits
 - [ ] Sub-package feature changes have updated the corresponding `CHANGELOG.md` `[Unreleased]` section
+
+#### Primary Repo & Mirror (how PRs get merged)
+
+The primary repository lives on [CNB](https://cnb.cool/runestone-game/AesirFramework); GitHub is a one-way auto-synced international mirror and Release outlet (CNB registration requires WeChat real-name verification, unavailable to international users, so the community entry stays on GitHub). **The contribution workflow is unchanged: fork the GitHub repo and open PRs against GitHub `main` as usual.**
+
+- The maintainer fetches your PR branch and merges it on the CNB side (a merge that preserves your original commits); once synced back, GitHub **automatically marks the PR as Merged** and your contribution credit is kept.
+- If adopted via squash / cherry-pick (commit hashes change), the maintainer closes the PR manually with a comment noting the adopted commit.
+- **Maintainer discipline**: always merge on the CNB side — never click the Merge button on GitHub and never push directly to GitHub `main` (GitHub getting ahead breaks the one-way sync); never rewrite published `main` history (no rebase / force-push), or the mirror sync and every consumer clone breaks.
 
 ### Getting Help
 

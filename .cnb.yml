@@ -1,0 +1,164 @@
+# CNB 主仓流水线（GitHub 仅为镜像 + 国际发布出口）
+#
+# main push：包分支 split → update-info 回写（[skip ci]）→ 滚动 tag → git-sync 推 GitHub
+# v* tag_push：打 unitypackage → 发 CNB Release（国内下载加速）
+#
+# 纪律：
+# - main 同步永不 force；GitHub main 领先时同步会失败，此时应把 GitHub 提交 merge 回 CNB
+# - 永不改写已发布的 main 历史（rebase/filter），否则单向同步断裂
+# - GitHub 侧零提交：不点 Merge 按钮，PR 由维护者 fetch 回本地经 CNB 合并
+
+main:
+  push:
+    - name: publish-and-sync
+      # 连续推送串行排队，避免回写提交 / 滚动 tag 互相踩
+      lock:
+        wait: true
+        timeout: 1800
+      retry: 2
+      imports:
+        - https://cnb.cool/runestone-game/secrets/-/blob/main/github.yml
+      stages:
+        - name: split-package-branches
+          script: |
+            set -e
+            git config user.name "cnb-pipeline"
+            git config user.email "pipeline@cnb.cool"
+            for PAIR in "AesirArchitecture:AesirArchitecture-latest" "AesirModules:AesirModules-latest"; do
+              PKG="${PAIR%%:*}"
+              BR="${PAIR##*:}"
+              DIR="Assets/Runestone/$PKG"
+              [ -d "$DIR" ] || { echo "missing $DIR"; exit 1; }
+              git branch -D "$BR" 2>/dev/null || true
+              git subtree split --prefix="$DIR" --branch "$BR"
+              git checkout "$BR"
+              # UPM 分发裁剪：只保留 Package Manager 认的 ~ 版（与 unitypackage 过滤方向互补）
+              REMOVED=0
+              for DEV_DIR in Samples Documentation; do
+                if [ -e "$DEV_DIR" ]; then
+                  git rm -r -q --ignore-unmatch "$DEV_DIR"
+                  [ -f "$DEV_DIR.meta" ] && git rm -q --ignore-unmatch "$DEV_DIR.meta"
+                  REMOVED=1
+                fi
+              done
+              if [ "$REMOVED" = "1" ]; then
+                git commit -q -m "chore: 剔除开发侧 Samples/ 与 Documentation/ 镜像（UPM 分发只保留 ~ 版）"
+              fi
+              for DEV_DIR in Samples Documentation; do
+                [ -e "$DEV_DIR" ] && { echo "$BR 残留开发侧副本 $DEV_DIR"; exit 1; }
+                [ -e "$DEV_DIR.meta" ] && { echo "$BR 残留 $DEV_DIR.meta"; exit 1; }
+              done
+              for KEEP_DIR in "Samples~" "Documentation~"; do
+                [ -d "$KEEP_DIR" ] || { echo "$BR 缺少 $KEEP_DIR"; exit 1; }
+              done
+              git checkout main
+            done
+            # 清理废弃的版本分支（钉版入口统一为 Release tag）
+            OBSOLETE=$(git ls-remote --heads origin 'refs/heads/AesirArchitecture-v*' 'refs/heads/AesirModules-v*' | awk '{print $2}')
+            for REF in $OBSOLETE; do
+              git push origin --delete "${REF#refs/heads/}"
+            done
+
+        - name: update-info
+          script: |
+            set -e
+            python3 .github/scripts/build_unitypackage.py \
+              --package Assets/Runestone/AesirArchitecture \
+              --package Assets/Runestone/AesirModules \
+              --output dist/AesirFramework-preview.unitypackage \
+              --update-info .github/update-info.json
+            rm -rf dist
+            if [ -n "$(git status --porcelain .github/update-info.json)" ]; then
+              VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
+              git add .github/update-info.json
+              git commit -m "chore: 同步 update-info.json 到 v${VERSION} [skip ci]"
+              git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" HEAD:main
+            else
+              echo "update-info.json 无变化，跳过回写"
+            fi
+
+        - name: rolling-tag
+          script: |
+            set -e
+            VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
+            TAG="v${VERSION}"
+            git tag -d "$TAG" 2>/dev/null || true
+            git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" ":refs/tags/$TAG" 2>/dev/null || true
+            git tag "$TAG"
+            git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" "refs/tags/$TAG"
+
+        # main 永不 force：GitHub main 若领先（意外提交），此处失败即告警，
+        # 处理规程：git fetch github main → merge 进 CNB main → 重新推送
+        - name: sync-main-to-github
+          image: tencentcom/git-sync
+          settings:
+            target_url: https://github.com/yuumixcode/AesirFramework.git
+            auth_type: https
+            username: ${GIT_USERNAME}
+            password: ${GIT_ACCESS_TOKEN}
+            branch: main
+
+        # 包分支裁剪提交时间戳每次不同 → hash 变 → 必须 force；
+        # force 同时作用于 tags（插件行为），滚动 tag 的强推搭本阶段便车
+        - name: sync-architecture-branch
+          image: tencentcom/git-sync
+          settings:
+            target_url: https://github.com/yuumixcode/AesirFramework.git
+            auth_type: https
+            username: ${GIT_USERNAME}
+            password: ${GIT_ACCESS_TOKEN}
+            branch: AesirArchitecture-latest
+            force: true
+            push_tags: true
+
+        - name: sync-modules-branch
+          image: tencentcom/git-sync
+          settings:
+            target_url: https://github.com/yuumixcode/AesirFramework.git
+            auth_type: https
+            username: ${GIT_USERNAME}
+            password: ${GIT_ACCESS_TOKEN}
+            branch: AesirModules-latest
+            force: true
+
+# CNB Release（国内下载加速）：tag 推送触发，checkout 到 tag 对应提交。
+# GitHub Release 由 GitHub auto-release 在同一 tag 上独立发布，两边资产同源。
+"v*":
+  tag_push:
+    - name: cnb-release
+      lock:
+        wait: true
+        timeout: 1800
+      retry: 2
+      stages:
+        - name: build-unitypackages
+          script: |
+            set -e
+            VERSION="${CNB_BRANCH#v}"
+            python3 .github/scripts/build_unitypackage.py \
+              --package Assets/Runestone/AesirArchitecture \
+              --output "dist/AesirArchitecture-v${VERSION}.unitypackage"
+            python3 .github/scripts/build_unitypackage.py \
+              --package Assets/Runestone/AesirModules \
+              --output "dist/AesirModules-v${VERSION}.unitypackage"
+            python3 .github/scripts/build_unitypackage.py \
+              --package Assets/Runestone/AesirArchitecture \
+              --package Assets/Runestone/AesirModules \
+              --output "dist/AesirFramework-v${VERSION}.unitypackage"
+            python3 .github/scripts/extract_release_notes.py \
+              --changelog CHANGELOG.md --version "$VERSION" > release_notes.md
+            ls -lh dist/
+
+        # overlying 默认 false = 先删后建，正好匹配滚动发布语义
+        - name: create-release
+          type: git:release
+          options:
+            title: $CNB_BRANCH
+            descriptionFromFile: release_notes.md
+            latest: true
+
+        - name: upload-assets
+          image: cnbcool/attachments:latest
+          settings:
+            attachments:
+              - "./dist/*.unitypackage"

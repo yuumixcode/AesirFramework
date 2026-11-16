@@ -9,6 +9,8 @@
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
+> 🏠 **主仓库**：[CNB](https://cnb.cool/runestone-game/AesirFramework)（国内直连，提交 / tag / 流水线源头）· [GitHub](https://github.com/yuumixcode/AesirFramework) 为国际镜像与 Release 出口，内容自动同步。Issue / PR 请走 GitHub（社区入口）。
+
 ---
 
 ## ✨ 两个子包，独立可装
@@ -134,14 +136,18 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 |---|---|
 | Aesir Architecture | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest` |
 | Aesir Modules | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest` |
+| Aesir Architecture（国内加速） | `https://cnb.cool/runestone-game/AesirFramework.git#AesirArchitecture-latest` |
+| Aesir Modules（国内加速） | `https://cnb.cool/runestone-game/AesirFramework.git#AesirModules-latest` |
 
+> **国内加速**：CNB 是主仓库，GitHub 是其镜像——两条线路内容一致，大陆网络推荐 CNB 线路（无需代理直连）。本文所有 GitHub Git URL 均可把 `github.com/yuumixcode` 换成 `cnb.cool/runestone-game` 得到 CNB 等价线路，分支 / tag / `?path=` 参数不变（方式 3、方式 4 同理）。
+>
 > `latest` 分支由 CI 在每次推送 `main` 时自动按包目录 subtree split 滚动更新（包内容即分支根目录），**分支名永久固定**——Git URL 只需输入一次，后续升级无需修改。Package Manager 不会对 Git URL 安装的包显示更新提示：**升级 = 移除旧包后用同一 URL 重新添加**（或删除 `packages-lock.json` 中对应条目后让 UPM 重新解析）。需要钉死某个旧版本时，改用 Release tag：`https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.32.0`（`path` 换成对应包目录，tag 永久保留）。
 >
 > **两个包需要分别添加**：UPM 不支持在包内声明 Git URL 依赖（Unity 官方限制），仅添加 Aesir Modules 时其核心程序集会因缺少 Aesir Architecture 编译失败——可随后经菜单 `Tools → Aesir → Modules → Install Dependencies` 一键补装。
 
 ### 方式 2：unitypackage 导入 + 包内更新器（大陆 / 离线友好）
 
-从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载对应 unitypackage 拖入项目：
+从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases)（国际）或 [CNB Releases](https://cnb.cool/runestone-game/AesirFramework/-/releases)（国内直连，推荐大陆用户）下载对应 unitypackage 拖入项目，两侧资产内容一致：
 
 | 资产 | 内容 |
 |---|---|
