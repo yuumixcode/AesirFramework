@@ -86,6 +86,7 @@ RAA 最鲜明的特征是**按档位渐进**——从最少概念跑通闭环，
 - **`UIRoot` 四层 Canvas 层级** — 一键构建 Background / Normal / Popup / Top 分层 Canvas + UICamera + EventSystem（`GameObject → Aesir Modules → Create UIRoot`），层级 Canvas 序列化引用持久化
 - **面板生命周期** — `IUIPanel` 契约 `Initialize → Show(payload) → Hide → DestroyPanel`；`AesirBasePanel` 提供虚方法 `OnInit` / `OnShow` / `OnHide` / `OnClose`；`DestroyOnHide` 决定隐藏时销毁还是缓存复用
 - **窗口（Canvas 根 UI）与蒙版** — 与面板并列的第二种形态：`AesirBaseWindow` 家族预制体根节点自带 Canvas、直接挂载于 UIRoot、默认 `sortingOrder` 500 恒在面板四层之上；静态 API `UIModule.Open<T>()` / `Close<T>()` / `GetWindow<T>()`；预制体 `Mask` 子物体为蒙版（`UIMaskMode` 单遮/叠遮统一调度、点击蒙版可关闭）；模态弹窗、全屏流转页推荐窗口形态，常驻 HUD 与非模态面板推荐面板形态（选型对比见包内文档）
+- **世界空间 UI Canvas 预设** — `WorldSpaceUICanvas` 组件挂在场景物体上即获得 `RenderMode.WorldSpace` 渲染根，随世界对象移动 / 可面向相机（血条、名字牌、交互提示）；`UIRoot.CreateWorldSpaceCanvas(target)` 运行时创建，配置走独立链（`UIRoot.WorldSpaceCanvasConfig`），不进 UIModule 注册表
 - **可插拔资源加载** — 默认 `ResourcesUILoader`（Resources 目录），实现 `IUIAssetLoader` 即可替换为 Addressables 等
 - **预热** — `Prewarm<T>()` 逐帧预实例化，`PrewarmAll()` 分摊首次打开的实例化卡顿
 - **Binder 组件绑定（Odin 可选）** — `BinderAssistant` / `BinderTag` 将 UI 元素自动绑定到面板脚本

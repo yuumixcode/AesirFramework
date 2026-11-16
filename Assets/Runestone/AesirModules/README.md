@@ -81,7 +81,8 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest
 | 类型 | 层 | 说明 |
 |------|----|------|
 | `UIModule` | Component | UI 管理器单例：面板注册、显示、隐藏、预热与注册表维护；提供静态快捷 API 供全局调用 |
-| `UIRoot` | Component | UI 根节点：构建四层 Canvas（Background / Normal / Popup / Top）+ UICamera + EventSystem，应用 Canvas 统一配置 |
+| `UIRoot` | Component | UI 根节点：构建四层 Canvas（Background / Normal / Popup / Top）+ UICamera + EventSystem，应用屏幕空间 Canvas 统一配置；提供世界空间 Canvas 创建入口与配置引用 |
+| `WorldSpaceUICanvas` | Component | 世界空间 UI Canvas 预设组件：挂在场景物体上即获得 `RenderMode.WorldSpace` 渲染根，随世界对象移动 / 可面向相机；不进 UIModule 注册表 |
 | `IUIPanel` | Engine | 面板契约：生命周期 `Initialize → Show(payload) → Hide → DestroyPanel`；属性 `Layer` / `DestroyOnHide` / `IsOpen` |
 | `AesirBasePanel` | Component | 面板抽象基类：虚方法 `OnInit` / `OnShow` / `OnHide` / `OnClose`，序列化字段 `layer` / `destroyOnHide`，便捷方法 `HideSelf()` |
 | `AesirBasePanelView<T>` | Component | MVP 模式面板视图基类：继承 `AesirBasePanel` 并按 Context 类型绑定（`IView`），经 Context 访问 Model / Service |
@@ -92,7 +93,7 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest
 | `AesirBaseWindowViewController<T>` | Component | MVC 模式窗口控制器基类：继承 `AesirBaseWindow` 并按 Context 类型绑定（`IController`），可执行 Command / Query |
 | `UIMaskMode` | Engine | 窗口蒙版调度模式：单遮（仅最高层可见窗口的蒙版生效）/ 叠遮（各窗口蒙版独立生效），初始值配置于 `UIModuleConfigSO`、运行时可切换 |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | 可插拔资源加载契约与默认实现（Resources 目录）。加载契约为**同步语义**：适用于 Resources、同步缓存等管线；Addressables 等异步管线需自行预加载后同步返回 |
-| `UICanvasConfigSO` | Asset | Canvas 统一配置资产（可经 Create 菜单创建默认资产） |
+| `UICanvasConfigSO` | Asset | Canvas 配置资产：`ApplyToCanvas` 配置屏幕空间层 / 窗口根 Canvas，`ApplyToWorldSpaceCanvas` 配置世界空间 Canvas；`CreateWorldSpaceDefault()` 生成世界空间内存预设（可经 Create 菜单创建默认资产） |
 | `UIModuleConfigSO` | Asset | UI 模块全局配置资产（单例）：蒙版调度模式等模块级配置，编辑器自动创建于 Resources（`UIModuleConfig/UIModuleConfig`），可注册自定义加载器替代 Resources 兜底 |
 | `UILayer` | Engine | 层级枚举：Background / Normal / Popup / Top |
 
@@ -172,12 +173,27 @@ SettingWindow（根：Canvas + CanvasScaler + GraphicRaycaster + 窗口脚本）
 
 **Panel 与 Window 的选型**：常驻 HUD、非模态并存的信息/列表面板用 **Panel**（共享层 Canvas，同图集合批友好，项目默认主形态）；模态弹窗、全屏流转页（设置/暂停/结算/加载）、需要独立排序或渲染隔离的浮层用 **Window**。两种形态 API 与生命周期对称，按需混用成立（窗口恒在面板之上）；一个项目通常只选一种主形态。完整对比见 [Documentation/ui-module.md](./Documentation/ui-module.md)。
 
+6. 世界空间 UI（血条 / 名字牌 / 交互提示）——需要 Canvas 跟随场景中的世界对象时，使用 `WorldSpaceUICanvas` 预设（**第三种并列形态，不进 UIModule 注册表**）：
+
+```csharp
+// 在角色头顶创建一个世界空间 Canvas（挂在目标下，随其世界变换移动）
+var nameplate = UIRoot.Instance.CreateWorldSpaceCanvas(character.transform, "Nameplate");
+nameplate.PositionOffset = new Vector3(0f, 2f, 0f);  // 局部偏移
+nameplate.FaceCamera = true;                         // 面向 UI 相机（默认开启）
+nameplate.Billboard = WorldSpaceUICanvas.WorldSpaceBillboardMode.CameraFacingYLocked;
+
+// 也可在场景中给物体直接 Add Component → Aesir Modules → UI → World Space UI Canvas，
+// FollowTarget 留空即表示跟随父级；组件在 Awake 自动补齐 Canvas / RectTransform / Scaler / Raycaster。
+```
+
+世界空间配置走独立链：组件上的配置 → `UIRoot.WorldSpaceCanvasConfig` → 内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`；世界空间 UI 的生命周期随宿主场景物体，Show / Hide 与蒙版调度请走 Panel / Window 形态。详见 [Documentation/ui-module.md](./Documentation/ui-module.md#世界空间-ui-canvas-预设)。
+
 ### 目录结构
 
 ```
 Runtime/UI/                        # 汇入核心运行时程序集（层根锚点）
 ├── UIModule.cs                    # UI 管理器单例（面板/窗口注册表 + 蒙版调度）
-├── UIRoot.cs                      # UI 根节点（四层 Canvas 构建）
+├── UIRoot.cs                      # UI 根节点（四层 Canvas 构建 + 世界空间 Canvas 创建入口/配置）
 ├── IUIPanel.cs                    # 面板契约
 ├── AesirBasePanel.cs              # 面板基类
 ├── AesirBasePanelView.cs          # MVP 面板视图基类（绑定 Context）
@@ -188,7 +204,8 @@ Runtime/UI/                        # 汇入核心运行时程序集（层根锚�
 ├── AesirBaseWindowViewController.cs # MVC 窗口控制器基类（绑定 Context + Command/Query 能力）
 ├── UIMaskMode.cs                  # 蒙版调度模式枚举（单遮/叠遮）
 ├── UILayer.cs                     # 层级枚举
-├── UICanvasConfigSO.cs            # Canvas 配置资产
+├── UICanvasConfigSO.cs            # Canvas 配置资产（屏幕空间 / 世界空间两条应用路径）
+├── WorldSpaceUICanvas.cs          # 世界空间 UI Canvas 预设组件（跟随 / 朝向 / 接线）
 ├── UIModuleConfigSO.cs            # UI 模块全局配置资产（单例：蒙版模式等，Resources 兜底 + 可注册加载器）
 ├── UIAssetLoader/                 # IUIAssetLoader + ResourcesUILoader
 ├── InputSystem/                   # Input System 输入模块适配（独立可选程序集）
@@ -202,6 +219,7 @@ Editor/UI/                         # 汇入核心编辑器程序集（层根锚�
 > **设计边界**：
 > - **层级体系是封闭集** — `UILayer` 固定四层（Background / Normal / Popup / Top），层序基准硬编码为 100 / 200 / 300 / 400 且每次 Awake 强制覆盖。新增层级或调整层序需修改框架源码，不提供配置位。四层对教学与中小项目已足够。
 > - **面板根节点直接挂层 Canvas 下（无独立 Canvas）** — 同层多面板共享层 Canvas：同图集合批友好，代价是同层穿插打断 batch、无 per-panel Canvas / 独立 sortingOrder 配置位。需要独立 Canvas（动画隔离、渲染特效）请在面板预制体内自行添加子 Canvas（不归 UICanvasConfigSO 统一配置管理）；需要独立 Canvas、独立排序或蒙版挡输入的**完整界面**请升格为窗口形态（Canvas 根 UI，恒在面板层之上）。同层内渲染顺序仅由 Show 顺序（`SetAsLastSibling`）决定。
+> - **世界空间 UI 不进注册表** — `WorldSpaceUICanvas` 只提供随世界对象移动的渲染根，生命周期随宿主场景物体，不经 UIModule 的 Show / Hide / 蒙版调度；需要完整生命周期请按 Panel / Window 形态接入。
 > - **蒙版只服务窗口形态** — 单遮/叠遮调度只作用于窗口的 `Mask` 子物体；面板不提供蒙版，需要遮挡输入的面板应改为窗口。窗口导航栈/返回与 SmartShowHide 伪隐藏（下期候选）不做。
 > - **加载契约为同步语义** — 见上方"加载契约"说明；不做 async 接口。
 > - **`OnClose` 仅受控销毁路径调用** — 见上方生命周期细节；非受控销毁（场景卸载 / 外部 Destroy）只触发 `OnDestroy`。

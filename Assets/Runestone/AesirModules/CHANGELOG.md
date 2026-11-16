@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- **世界空间 UI Canvas 预设（`WorldSpaceUICanvas`）** — 补齐 UI 模块缺失的 `RenderMode.WorldSpace` 预设：组件挂在场景物体上（或经 `UIRoot.CreateWorldSpaceCanvas(target, name, config)` 运行时创建）即自动接线 Canvas / RectTransform(square) / CanvasScaler(ConstantPixelSize) / GraphicRaycaster，子树归入 UI 层(5)，默认 sortingOrder 450（面板层 100–400 与窗口 ≥500 之间）。支持跟随父级变换或显式 `FollowTarget` + `PositionOffset` 偏移，以及 `FaceCamera` / `Billboard`（None / YLocked / Full）+ `FlipFacing` 朝向控制。世界空间 UI 是与 Panel / Window 并列的第三种形态，**不进 UIModule 注册表与蒙版调度**，生命周期随宿主场景物体。配置走独立链：组件字段 → `UIRoot.WorldSpaceCanvasConfig` → 内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`；`UICanvasConfigSO` 新增 `ApplyToWorldSpaceCanvas` 与 `CreateWorldSpaceDefault`，`ApplyToCanvas` 在世界空间配置下跳过屏幕缩放字段写入，避免 Screen Scale 模式污染世界空间 Canvas
+- **世界空间 Canvas 预设 EditMode 守护用例** — `Tests/Editor/UI/WorldSpaceUICanvasTests.cs`（7 用例）：默认配置、Canvas 接线、世界空间配置跳过屏幕 Scaler、sortingOrder / UI 层、显式跟随目标与偏移、运行时创建入口与配置传递、空目标防呆
+
 ## [0.32.0] - 2026-10-17
 
 ### Added

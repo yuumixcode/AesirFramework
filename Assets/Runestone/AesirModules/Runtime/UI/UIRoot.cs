@@ -29,10 +29,12 @@ namespace Runestone.AesirModules
         const int UILayerMask = (1 << UILayerIndex) | (1 << TransparentFXLayerIndex);
         internal const string LayerCanvasesFieldName = nameof(layerCanvases);
         internal const string UICanvasConfigFieldName = nameof(uiCanvasConfigSO);
+        internal const string WorldSpaceCanvasConfigFieldName = nameof(worldSpaceCanvasConfig);
         internal const string DontDestroyOnLoadFieldName = nameof(dontDestroyOnLoad);
 
         static UIRoot _instance;
         static UICanvasConfigSO _defaultCanvasConfig;
+        static UICanvasConfigSO _defaultWorldSpaceCanvasConfig;
 
         static readonly Dictionary<UILayer, int> LayerSortOrders = new Dictionary<UILayer, int>
         {
@@ -64,6 +66,9 @@ namespace Runestone.AesirModules
 
         [SerializeField]
         UICanvasConfigSO uiCanvasConfigSO;
+
+        [SerializeField]
+        UICanvasConfigSO worldSpaceCanvasConfig;
 
         /// <summary>
         /// UI 专用相机引用。首次构建时赋值并随场景序列化持久，后续初始化引用非空即跳过，不按物体名查找。
@@ -126,6 +131,26 @@ namespace Runestone.AesirModules
             }
         }
 
+        /// <summary>
+        /// 非创建式获取已存在的 UIRoot 实例：场景中无预放置实例时返回 <c>null</c>，
+        /// 不经 <see cref="Instance" /> 懒创建宿主树。
+        /// <para>
+        /// 供世界空间 UI 等在场景卸载 / 编辑器探测阶段取相机与配置的对象使用——
+        /// 这类调用若走 <see cref="Instance" /> 会在"本来没有 UIRoot"时凭空造出 [UIRoot] 物体。
+        /// </para>
+        /// </summary>
+        public static UIRoot TryGetExisting()
+        {
+            if (_instance != null)
+            {
+                return _instance;
+            }
+
+            _instance = FindAnyObjectByType<UIRoot>(FindObjectsInactive.Include);
+            return _instance;
+        }
+
+        /// <summary>UI 专用正交相机（由 <see cref="EnsureUICamera" /> 构建）。</summary>
         public Camera UICamera => uiCamera;
 
         /// <summary>
@@ -143,6 +168,29 @@ namespace Runestone.AesirModules
                 return _defaultCanvasConfig;
             }
         }
+
+        /// <summary>
+        /// 世界空间预设的运行时默认配置（仅内存实例）。静态缓存避免反复构建时重复 CreateInstance。
+        /// </summary>
+        static UICanvasConfigSO DefaultWorldSpaceCanvasConfig
+        {
+            get
+            {
+                if (_defaultWorldSpaceCanvasConfig == null)
+                {
+                    _defaultWorldSpaceCanvasConfig = UICanvasConfigSO.CreateWorldSpaceDefault();
+                }
+
+                return _defaultWorldSpaceCanvasConfig;
+            }
+        }
+
+        /// <summary>
+        /// 世界空间 Canvas 的统一配置（<see cref="WorldSpaceUICanvas" /> 接线共用）。
+        /// 未设置时回退 <see cref="UICanvasConfigSO.CreateWorldSpaceDefault" /> 的内存预设。
+        /// 与 <see cref="CanvasConfig" />（仅管屏幕空间层 Canvas 与窗口根 Canvas）分属两条独立配置链。
+        /// </summary>
+        public UICanvasConfigSO WorldSpaceCanvasConfig => worldSpaceCanvasConfig;
 
         /// <summary>
         /// 统一 Canvas 配置（层 Canvas 与窗口接线共用）。未设置时回退默认配置。
@@ -213,6 +261,7 @@ namespace Runestone.AesirModules
         {
             _instance = null;
             _defaultCanvasConfig = null;
+            _defaultWorldSpaceCanvasConfig = null;
             CreateInputModule = null;
         }
 
@@ -220,7 +269,51 @@ namespace Runestone.AesirModules
         {
             EnsureUIComponents();
             EnsureCanvasConfig();
+            EnsureWorldSpaceCanvasConfig();
             ApplyCanvasConfig();
+        }
+
+        /// <summary>
+        /// 运行时创建一个挂在 <paramref name="worldTarget" /> 下的世界空间 UI Canvas 预设。
+        /// <para>
+        /// 在目标物体下新建子节点并挂 <see cref="WorldSpaceUICanvas" />——Canvas 随目标的世界变换移动。
+        /// 需要相对目标的偏移或面向相机时，取返回组件设置 <see cref="WorldSpaceUICanvas.PositionOffset" /> /
+        /// <see cref="WorldSpaceUICanvas.FaceCamera" />（或手动调用 <see cref="WorldSpaceUICanvas.Build" /> 重建）。
+        /// </para>
+        /// <para>
+        /// 本方法与 <see cref="Build" /> 走同一套配置路径：优先使用显式传入的 <paramref name="config" />，
+        /// 其次 UIRoot 的 <see cref="WorldSpaceCanvasConfig" />，最后内存默认世界空间预设。
+        /// </para>
+        /// </summary>
+        /// <param name="worldTarget">世界空间跟随目标（场景中的任意 Transform）。</param>
+        /// <param name="canvasName">新建 Canvas 节点的名称，默认 "WorldSpaceCanvas"。</param>
+        /// <param name="config">可选的世界空间 Canvas 配置；为 null 时按上述回退链解析。</param>
+        /// <returns>新建的 <see cref="WorldSpaceUICanvas" /> 组件；目标为空时返回 null。</returns>
+        public WorldSpaceUICanvas CreateWorldSpaceCanvas(Transform worldTarget, string canvasName = "WorldSpaceCanvas",
+            UICanvasConfigSO config = null)
+        {
+            if (worldTarget == null)
+            {
+                AesirModulesDebug.LogError(AesirModulesDebug.UIModuleTag,
+                    "UIRoot.CreateWorldSpaceCanvas 失败：worldTarget 为空");
+                return null;
+            }
+
+            EnsureWorldSpaceCanvasConfig();
+
+            var go = new GameObject(canvasName);
+            go.transform.SetParent(worldTarget, false);
+            var worldCanvas = go.AddComponent<WorldSpaceUICanvas>();
+            worldCanvas.Build(config);
+            return worldCanvas;
+        }
+
+        void EnsureWorldSpaceCanvasConfig()
+        {
+            if (worldSpaceCanvasConfig == null)
+            {
+                worldSpaceCanvasConfig = DefaultWorldSpaceCanvasConfig;
+            }
         }
 
         /// <summary>
@@ -233,6 +326,7 @@ namespace Runestone.AesirModules
         {
             EnsureUIComponents();
             EnsureCanvasConfig();
+            EnsureWorldSpaceCanvasConfig();
             ApplyCanvasConfig();
         }
 
