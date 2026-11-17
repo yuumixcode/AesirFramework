@@ -89,7 +89,7 @@ namespace Runestone.AesirArchitecture.Editor
             toolbar.AddToClassList("aesir-toolbar");
 
             var title = new Label("Aesir Framework — 示例导航");
-            title.AddToClassList("aesir-toolbar-title");
+            title.AddToClassList("aesir-toolbar__title");
             toolbar.Add(title);
 
             toolbar.Add(new Button(() => Application.OpenURL(AesirUpdateService.ReleasesPageUrl))
@@ -152,7 +152,7 @@ namespace Runestone.AesirArchitecture.Editor
             header.style.alignItems = Align.Center;
 
             var name = new Label(pkg.DisplayName);
-            name.AddToClassList("aesir-package-header");
+            name.AddToClassList("aesir-package__header");
             name.style.flexGrow = 1f;
             header.Add(name);
 
@@ -160,7 +160,7 @@ namespace Runestone.AesirArchitecture.Editor
                 ? $"v{pkg.Version} · {pkg.Samples.Count} 示例 · Assets 安装"
                 : $"v{pkg.Version} · {pkg.Samples.Count} 示例 · UPM 安装";
             var meta = new Label(installNote);
-            meta.AddToClassList("aesir-package-meta");
+            meta.AddToClassList("aesir-package__meta");
             header.Add(meta);
             container.Add(header);
 
@@ -185,20 +185,20 @@ namespace Runestone.AesirArchitecture.Editor
             card.AddToClassList("aesir-sample");
 
             var icon = new Label(GetSampleIcon(sample));
-            icon.AddToClassList("aesir-sample-icon");
+            icon.AddToClassList("aesir-sample__icon");
             card.Add(icon);
 
             var info = new VisualElement();
-            info.AddToClassList("aesir-sample-info");
+            info.AddToClassList("aesir-sample__info");
 
             var title = new Label(sample.DisplayName);
-            title.AddToClassList("aesir-sample-title");
+            title.AddToClassList("aesir-sample__title");
             info.Add(title);
 
             if (!string.IsNullOrEmpty(sample.Description))
             {
                 var desc = new Label(sample.Description);
-                desc.AddToClassList("aesir-sample-desc");
+                desc.AddToClassList("aesir-sample__desc");
                 info.Add(desc);
             }
 
@@ -206,14 +206,14 @@ namespace Runestone.AesirArchitecture.Editor
             if (!string.IsNullOrEmpty(badge))
             {
                 var badgeLabel = new Label(badge);
-                badgeLabel.AddToClassList("aesir-badge");
+                badgeLabel.AddToClassList("aesir-sample__badge");
                 info.Add(badgeLabel);
             }
 
             card.Add(info);
 
             var actions = new VisualElement();
-            actions.AddToClassList("aesir-sample-actions");
+            actions.AddToClassList("aesir-sample__actions");
             if (sample.IsImported && sample.HasScene)
             {
                 actions.Add(new Button(() => OpenScene(sample)) { text = "打开场景" }
