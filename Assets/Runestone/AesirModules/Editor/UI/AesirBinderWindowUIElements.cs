@@ -151,6 +151,7 @@ namespace Runestone.AesirModules.Editor
 
         void AddActions(VisualElement parent, Component component)
         {
+            var type = component.GetType();
             var actions = new VisualElement();
             actions.style.flexDirection = FlexDirection.Row;
             actions.style.marginTop = 8f;
@@ -158,12 +159,29 @@ namespace Runestone.AesirModules.Editor
             actions.style.borderTopWidth = 1f;
             actions.style.borderTopColor = new Color(0.11f, 0.11f, 0.11f);
 
+            var available = 0;
             for (var i = 0; i < ActionMethods.Length; i++)
             {
                 var methodName = ActionMethods[i];
+                if (type.GetMethod(methodName,
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) == null)
+                {
+                    continue; // 无 Odin 时这些编辑器方法不存在，不显示失效按钮
+                }
+
+                available++;
                 var button = new Button(() => Invoke(component, methodName)) { text = ActionLabels[i] };
                 button.style.marginRight = 4f;
                 actions.Add(button);
+            }
+
+            if (available == 0)
+            {
+                parent.Add(new HelpBox(
+                    "当前未安装 Odin Inspector：BinderAssistant 的编辑器动作（构建/生成/检查）不可用。" +
+                    "字段数据仍可查看，场景引用不会丢失；安装 Odin 后即可使用完整工具。",
+                    HelpBoxMessageType.Info));
+                return;
             }
 
             parent.Add(actions);
