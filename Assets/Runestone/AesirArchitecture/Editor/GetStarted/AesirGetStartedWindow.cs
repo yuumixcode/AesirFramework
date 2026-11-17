@@ -11,8 +11,8 @@ namespace Runestone.AesirArchitecture.Editor
     /// 按教学分组展示，一键打开示例场景或定位示例目录。
     /// <para>
     /// 安装 Odin Inspector 且样式开关 <see cref="AesirInspectorStyleSettings.UseOdin" /> 为 true 时，
-    /// 菜单经 <see cref="OdinWindowOpener" /> 路由到 Odin 版窗口（AesirGetStartedWindowOdin：页面栈导航、
-    /// 示例卡片与滑动动效）；否则打开本 UI Toolkit 窗口。数据层两版共用 <see cref="AesirGetStartedService" />。
+    /// 菜单经 <see cref="OdinWindowOpener" /> 路由到 Odin 版窗口（AesirGetStartedWindowOdin）；
+    /// 否则打开本窗口。外观由 <c>AesirGetStarted.uss</c> 统一控制，复刻 Odin 深色卡片风格。
     /// </para>
     /// </summary>
     public class AesirGetStartedWindow : EditorWindow
@@ -21,6 +21,8 @@ namespace Runestone.AesirArchitecture.Editor
 
         const string MenuPath = "Tools/Aesir/Getting Started";
         const string WindowTitle = "Aesir Getting Started";
+        const string StyleSheetPath =
+            "Assets/Runestone/AesirArchitecture/Editor/GetStarted/AesirGetStarted.uss";
 
         /// <summary>
         /// Odin 版窗口的打开委托（由 Odin 程序集经 [InitializeOnLoadMethod] 注册；
@@ -52,7 +54,6 @@ namespace Runestone.AesirArchitecture.Editor
 
         #region 状态
 
-        /// <summary>扫描产物（包 → 分组 → 示例 的视图模型；扫描时重建）。</summary>
         List<AesirGetStartedService.AesirPackageInfo> _packages = new();
         ScrollView _scroll;
 
@@ -66,6 +67,13 @@ namespace Runestone.AesirArchitecture.Editor
         {
             var root = rootVisualElement;
             root.Clear();
+            root.AddToClassList("aesir-root");
+
+            var styleSheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(StyleSheetPath);
+            if (styleSheet != null)
+            {
+                root.styleSheets.Add(styleSheet);
+            }
 
             root.Add(BuildToolbar());
             _scroll = new ScrollView(ScrollViewMode.Vertical);
@@ -73,6 +81,26 @@ namespace Runestone.AesirArchitecture.Editor
             root.Add(_scroll);
 
             Scan();
+        }
+
+        VisualElement BuildToolbar()
+        {
+            var toolbar = new VisualElement();
+            toolbar.AddToClassList("aesir-toolbar");
+
+            var title = new Label("Aesir Framework — 示例导航");
+            title.AddToClassList("aesir-toolbar-title");
+            toolbar.Add(title);
+
+            toolbar.Add(new Button(() => Application.OpenURL(AesirUpdateService.ReleasesPageUrl))
+            {
+                text = "Releases"
+            }.Also(b => b.AddToClassList("aesir-button")));
+
+            toolbar.Add(new Button(Scan) { text = "刷新" }
+                .Also(b => b.AddToClassList("aesir-button")));
+
+            return toolbar;
         }
 
         /// <summary>扫描包与示例并重建 UI（刷新 / 导入 Sample 后调用）。</summary>
@@ -84,7 +112,9 @@ namespace Runestone.AesirArchitecture.Editor
                 return;
             }
 
+            var scrollOffset = _scroll.scrollOffset;
             _scroll.Clear();
+
             if (_packages.Count == 0)
             {
                 var box = new HelpBox(
@@ -92,12 +122,11 @@ namespace Runestone.AesirArchitecture.Editor
                     "（默认安装到 Assets/Runestone，可自由移动到项目任意文件夹），" +
                     "或经 Package Manager 用 Git URL 安装后从 Samples 标签页导入示例。",
                     HelpBoxMessageType.Warning);
-                var open = new Button(() => Application.OpenURL(AesirUpdateService.ReleasesPageUrl))
+                _scroll.Add(box);
+                _scroll.Add(new Button(() => Application.OpenURL(AesirUpdateService.ReleasesPageUrl))
                 {
                     text = "打开 GitHub Releases 页面"
-                };
-                _scroll.Add(box);
-                _scroll.Add(open);
+                }.Also(b => b.AddToClassList("aesir-button")));
                 return;
             }
 
@@ -105,50 +134,42 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 _scroll.Add(BuildPackage(pkg));
             }
+
+            _scroll.scrollOffset = scrollOffset;
         }
 
         #endregion
 
         #region UI
 
-        VisualElement BuildToolbar()
-        {
-            var toolbar = new VisualElement();
-            toolbar.AddToClassList("aesir-getstarted-toolbar");
-            toolbar.style.flexDirection = FlexDirection.Row;
-            toolbar.style.alignItems = Align.Center;
-            toolbar.style.paddingBottom = 6f;
-            toolbar.style.borderBottomWidth = 1f;
-
-            var hint = new Label(
-                "Aesir Framework 示例导航 — 打开场景 / 定位 / 导入 Sample。" +
-                "点击事件卡片上的按钮完成对应操作。");
-            hint.style.flexGrow = 1f;
-            hint.style.whiteSpace = WhiteSpace.Normal;
-            toolbar.Add(hint);
-
-            toolbar.Add(new Button(Scan) { text = "刷新" });
-            return toolbar;
-        }
-
         VisualElement BuildPackage(AesirGetStartedService.AesirPackageInfo pkg)
         {
             var container = new VisualElement();
-            container.AddToClassList("aesir-getstarted-package");
+            container.AddToClassList("aesir-package");
+
+            var header = new VisualElement();
+            header.style.flexDirection = FlexDirection.Row;
+            header.style.alignItems = Align.Center;
+
+            var name = new Label(pkg.DisplayName);
+            name.AddToClassList("aesir-package-header");
+            name.style.flexGrow = 1f;
+            header.Add(name);
 
             var installNote = pkg.InstallType == AesirGetStartedService.AesirInstallType.AssetsCopy
-                ? "Assets 安装"
-                : "UPM 安装 · 未导入示例可一键导入";
-            var header = new Label(
-                $"{pkg.DisplayName}   v{pkg.Version} · {pkg.Samples.Count} 个示例 · {installNote}");
-            header.AddToClassList("aesir-getstarted-package-header");
+                ? $"v{pkg.Version} · {pkg.Samples.Count} 示例 · Assets 安装"
+                : $"v{pkg.Version} · {pkg.Samples.Count} 示例 · UPM 安装";
+            var meta = new Label(installNote);
+            meta.AddToClassList("aesir-package-meta");
+            header.Add(meta);
             container.Add(header);
 
             foreach (var group in AesirGetStartedService.GroupSamples(pkg))
             {
-                var groupTitle = new Label(group.Title);
-                groupTitle.AddToClassList("aesir-getstarted-group-title");
+                var groupTitle = new Label($"{group.Title}    {group.Samples.Count} 个示例");
+                groupTitle.AddToClassList("aesir-group-title");
                 container.Add(groupTitle);
+
                 foreach (var sample in group.Samples)
                 {
                     container.Add(BuildSample(sample));
@@ -161,42 +182,80 @@ namespace Runestone.AesirArchitecture.Editor
         VisualElement BuildSample(AesirGetStartedService.AesirSampleInfo sample)
         {
             var card = new VisualElement();
-            card.AddToClassList("aesir-getstarted-sample");
+            card.AddToClassList("aesir-sample");
+
+            var icon = new Label(GetSampleIcon(sample));
+            icon.AddToClassList("aesir-sample-icon");
+            card.Add(icon);
 
             var info = new VisualElement();
-            info.style.flexGrow = 1f;
+            info.AddToClassList("aesir-sample-info");
+
             var title = new Label(sample.DisplayName);
-            title.AddToClassList("aesir-getstarted-sample-title");
+            title.AddToClassList("aesir-sample-title");
             info.Add(title);
+
             if (!string.IsNullOrEmpty(sample.Description))
             {
                 var desc = new Label(sample.Description);
-                desc.AddToClassList("aesir-getstarted-sample-desc");
-                desc.style.whiteSpace = WhiteSpace.Normal;
+                desc.AddToClassList("aesir-sample-desc");
                 info.Add(desc);
+            }
+
+            var badge = AesirGetStartedService.GetSampleBadge(sample);
+            if (!string.IsNullOrEmpty(badge))
+            {
+                var badgeLabel = new Label(badge);
+                badgeLabel.AddToClassList("aesir-badge");
+                info.Add(badgeLabel);
             }
 
             card.Add(info);
 
-            // 动作按钮：已导入且有场景 → 打开场景；其余形态降级为定位 / 引导导入
+            var actions = new VisualElement();
+            actions.AddToClassList("aesir-sample-actions");
             if (sample.IsImported && sample.HasScene)
             {
-                card.Add(new Button(() => OpenScene(sample)) { text = "打开场景" });
-                card.Add(new Button(() => Ping(sample)) { text = "定位" });
+                actions.Add(new Button(() => OpenScene(sample)) { text = "打开场景" }
+                    .Also(b => b.AddToClassList("aesir-button")));
+                actions.Add(new Button(() => Ping(sample)) { text = "定位" }
+                    .Also(b => b.AddToClassList("aesir-button")));
             }
             else if (sample.IsImported)
             {
-                var noScene = new Label("代码示例 · 无独立场景");
-                noScene.style.fontSize = 10f;
-                card.Add(noScene);
-                card.Add(new Button(() => Ping(sample)) { text = "定位" });
+                var hint = new Label("无独立场景");
+                hint.AddToClassList("aesir-empty");
+                actions.Add(hint);
+                actions.Add(new Button(() => Ping(sample)) { text = "定位" }
+                    .Also(b => b.AddToClassList("aesir-button")));
             }
             else
             {
-                card.Add(new Button(() => Import(sample)) { text = "导入 Sample" });
+                actions.Add(new Button(() => Import(sample)) { text = "导入 Sample" }
+                    .Also(b => b.AddToClassList("aesir-button")));
             }
 
+            card.Add(actions);
             return card;
+        }
+
+        /// <summary>示例图标：按分组 / 目录映射为 Unicode 符号（近似 Odin 的 SDF 图标，避免引入图标资产）。</summary>
+        static string GetSampleIcon(AesirGetStartedService.AesirSampleInfo sample)
+        {
+            switch (AesirGetStartedService.GetSampleGroup(sample))
+            {
+                case "MVC 计数器 · 渐进式": return "▦";
+                case "MVP 计数器 · 渐进式": return "☰";
+                case "事件模块": return "◈";
+                case "音频模块": return "♪";
+            }
+
+            var dir = sample.RelativeDir ?? string.Empty;
+            if (dir.StartsWith("MiniEvent", StringComparison.Ordinal)) return "⚡";
+            if (dir.StartsWith("ObservableCollections", StringComparison.Ordinal)) return "▤";
+            if (dir.StartsWith("ObservableValue", StringComparison.Ordinal)) return "◉";
+            if (dir.StartsWith("RuntimeInitializeLoadType", StringComparison.Ordinal)) return "◷";
+            return "★";
         }
 
         static void OpenScene(AesirGetStartedService.AesirSampleInfo sample)
@@ -223,13 +282,11 @@ namespace Runestone.AesirArchitecture.Editor
             switch (result)
             {
                 case AesirGetStartedService.AesirSampleImportResult.Imported:
-                    Scan(); // 卡片即时切换为已导入态
+                    Scan();
                     AesirArchitectureDebug.Log("AesirGetStarted", message);
                     break;
-
                 case AesirGetStartedService.AesirSampleImportResult.Cancelled:
-                    break; // 用户在确认框取消，无需提示
-
+                    break;
                 default:
                     EditorUtility.DisplayDialog(AesirGetStartedService.ImportConfirmTitle, message, "确定");
                     break;
@@ -237,5 +294,14 @@ namespace Runestone.AesirArchitecture.Editor
         }
 
         #endregion
+    }
+
+    static class AesirVisualElementExtensions
+    {
+        internal static T Also<T>(this T element, Action<T> action)
+        {
+            action(element);
+            return element;
+        }
     }
 }
