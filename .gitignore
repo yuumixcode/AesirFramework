@@ -173,3 +173,9 @@ InitTestScene*.unity*
 TestResults*.xml
 /playmode-test.log
 
+# AI 工具本地技能发现目录（技能正文主位在 .codely-cli/skills/，这些是各工具的安装副本）
+/.agents/
+/.claude/
+/.junie/
+/skills-lock.json
+
