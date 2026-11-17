@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Runestone.AesirArchitecture;
 using UnityEngine;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
 
@@ -25,7 +25,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 当前物体上需要绑定的组件数量。<see cref="BinderAssistant" /> 据此为每个组件生成一条 <see cref="BinderInfo" />。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [ShowInInspector]
         [LabelText("绑定组件数量: ")]
         [PropertyRange(1, "$MaxComponentNumber")]
@@ -36,7 +36,7 @@ namespace Runestone.AesirModules
             set => componentNumber = value;
         }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         // 下拉范围上限：当前物体上可绑定的组件类型数量（含 GameObject 自身）
         double MaxComponentNumber => Types.Count();
 #endif

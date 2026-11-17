@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
 
@@ -21,7 +21,7 @@ namespace Runestone.AesirModules
         /// <summary>
         /// 被绑定组件所在的 GameObject 引用。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [TableColumnWidth(160)]
         [LabelText("物体")]
 #endif
@@ -31,7 +31,7 @@ namespace Runestone.AesirModules
         /// 组件类型的完整名称（含命名空间），作为代码生成时 <c>GetComponent&lt;T&gt;()</c> 的泛型参数；
         /// 选择 <c>GameObject</c> 表示绑定物体本身。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [TableColumnWidth(160)]
         [LabelText("组件类型")]
         [ValueDropdown(nameof(GetTypesString))]
@@ -42,7 +42,7 @@ namespace Runestone.AesirModules
         /// 生成脚本中的字段名（camelCase）。默认值为「物体名_类型简称」，可手动修改；
         /// 重复字段名会在校验时报错。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [TableColumnWidth(170)]
         [LabelText("字段名")]
         [InlineButton(nameof(DefaultFieldName), "默认")]
@@ -53,7 +53,7 @@ namespace Runestone.AesirModules
         /// 相对于 <see cref="BinderAssistant" /> 的 <c>transform.Find()</c> 路径，
         /// 由 <see cref="UpdatePath" /> 自动计算；空字符串表示绑定 Assistant 自身所在物体。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [LabelText("路径")]
         [DisplayAsString]
 #endif
@@ -70,7 +70,7 @@ namespace Runestone.AesirModules
         public BinderInfo(BinderAssistant assistant, BinderTag tagObj)
         {
             LabelObj = tagObj.SelfObj;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
             // 默认字段名由编辑器程序集中的代码生成器合成，Player 构建不参与
             DefaultFieldName();
 #endif
@@ -85,7 +85,7 @@ namespace Runestone.AesirModules
         /// 由 <c>#if UNITY_EDITOR</c> 收拢的代码生成器。
         /// </para>
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         public void DefaultFieldName()
         {
             var objectName = LabelObj ? LabelObj.name : "Element";
@@ -113,7 +113,7 @@ namespace Runestone.AesirModules
         /// 获取 <see cref="LabelObj" /> 上可绑定的组件类型下拉列表（含 GameObject 自身）。
         /// 仅编辑器可用（返回 Odin 的 <c>ValueDropdownList</c>）。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         ValueDropdownList<string> GetTypesString()
         {
             var list = new ValueDropdownList<string>();
