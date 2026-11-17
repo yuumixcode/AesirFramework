@@ -2,19 +2,17 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Runestone.AesirArchitecture.Editor
 {
     /// <summary>
-    /// Aesir Getting Started 窗口（IMGUI 兜底版）— 框架示例导航：列出本机安装的 Aesir 包及其示例，
+    /// Aesir Getting Started 窗口（UI Toolkit 版）— 框架示例导航：列出本机安装的 Aesir 包及其示例，
     /// 按教学分组展示，一键打开示例场景或定位示例目录。
     /// <para>
-    /// 安装了 Odin Inspector 时，菜单入口经 <see cref="OdinWindowOpener" /> 路由到 Odin 版窗口
-    /// （AesirGetStartedWindowOdin：页面栈导航、示例卡片与滑动动效）；未安装时本窗口为菜单落点。
-    /// 数据层两版共用 <see cref="AesirGetStartedService" />，本类只做展示与动作接线。
-    /// </para>
-    /// <para>
-    /// 扫描结果（包 + 分组视图模型）在 OnEnable / 手动刷新时重建，OnGUI 期间零磁盘 IO、零 LINQ。
+    /// 安装 Odin Inspector 且样式开关 <see cref="AesirInspectorStyleSettings.UseOdin" /> 为 true 时，
+    /// 菜单经 <see cref="OdinWindowOpener" /> 路由到 Odin 版窗口（AesirGetStartedWindowOdin：页面栈导航、
+    /// 示例卡片与滑动动效）；否则打开本 UI Toolkit 窗口。数据层两版共用 <see cref="AesirGetStartedService" />。
     /// </para>
     /// </summary>
     public class AesirGetStartedWindow : EditorWindow
@@ -22,10 +20,11 @@ namespace Runestone.AesirArchitecture.Editor
         #region 菜单与 Odin 窗口路由
 
         const string MenuPath = "Tools/Aesir/Getting Started";
+        const string WindowTitle = "Aesir Getting Started";
 
         /// <summary>
         /// Odin 版窗口的打开委托（由 Odin 程序集经 [InitializeOnLoadMethod] 注册；
-        /// 未安装 Odin Inspector 时为 null，菜单打开本 IMGUI 兜底窗口）。
+        /// 未安装 Odin Inspector 或样式开关关闭时为 null，菜单打开本 UI Toolkit 窗口）。
         /// </summary>
         public static Action OdinWindowOpener { get; private set; }
 
@@ -38,13 +37,13 @@ namespace Runestone.AesirArchitecture.Editor
         [MenuItem(MenuPath, false, -980)]
         static void Open()
         {
-            if (OdinWindowOpener != null)
+            if (AesirInspectorStyleSettings.UseOdin && OdinWindowOpener != null)
             {
                 OdinWindowOpener();
                 return;
             }
 
-            var window = GetWindow<AesirGetStartedWindow>("Aesir Getting Started Window");
+            var window = GetWindow<AesirGetStartedWindow>(WindowTitle);
             window.minSize = new Vector2(520, 480);
             window.Show();
         }
@@ -54,187 +53,187 @@ namespace Runestone.AesirArchitecture.Editor
         #region 状态
 
         /// <summary>扫描产物（包 → 分组 → 示例 的视图模型；扫描时重建）。</summary>
-        List<AesirGetStartedService.AesirPackageInfo> _packages =
-            new List<AesirGetStartedService.AesirPackageInfo>();
-
-        /// <summary>各包的分组视图（与 _packages 平行；避免 OnGUI 每帧重算分组）。</summary>
-        readonly List<List<AesirGetStartedService.SampleGroup>> _groups =
-            new List<List<AesirGetStartedService.SampleGroup>>();
-
-        Vector2 _scrollPosition;
+        List<AesirGetStartedService.AesirPackageInfo> _packages = new();
+        ScrollView _scroll;
 
         #endregion
 
         #region 生命周期
 
-        void OnEnable()
+        void OnEnable() => BuildUI();
+
+        void BuildUI()
         {
+            var root = rootVisualElement;
+            root.Clear();
+
+            root.Add(BuildToolbar());
+            _scroll = new ScrollView(ScrollViewMode.Vertical);
+            _scroll.style.flexGrow = 1f;
+            root.Add(_scroll);
+
             Scan();
         }
 
-        /// <summary>扫描包与示例并预计算分组视图模型（OnGUI 期间只读消费）。</summary>
+        /// <summary>扫描包与示例并重建 UI（刷新 / 导入 Sample 后调用）。</summary>
         void Scan()
         {
             _packages = AesirGetStartedService.ScanPackages();
-            _groups.Clear();
-            foreach (var pkg in _packages)
+            if (_scroll == null)
             {
-                _groups.Add(AesirGetStartedService.GroupSamples(pkg));
+                return;
             }
 
-            Repaint();
+            _scroll.Clear();
+            if (_packages.Count == 0)
+            {
+                var box = new HelpBox(
+                    "未扫描到 Aesir 包。请经 GitHub Releases 导入 unitypackage" +
+                    "（默认安装到 Assets/Runestone，可自由移动到项目任意文件夹），" +
+                    "或经 Package Manager 用 Git URL 安装后从 Samples 标签页导入示例。",
+                    HelpBoxMessageType.Warning);
+                var open = new Button(() => Application.OpenURL(AesirUpdateService.ReleasesPageUrl))
+                {
+                    text = "打开 GitHub Releases 页面"
+                };
+                _scroll.Add(box);
+                _scroll.Add(open);
+                return;
+            }
+
+            foreach (var pkg in _packages)
+            {
+                _scroll.Add(BuildPackage(pkg));
+            }
         }
 
         #endregion
 
         #region UI
 
-        void OnGUI()
+        VisualElement BuildToolbar()
         {
-            DrawToolbar();
+            var toolbar = new VisualElement();
+            toolbar.AddToClassList("aesir-getstarted-toolbar");
+            toolbar.style.flexDirection = FlexDirection.Row;
+            toolbar.style.alignItems = Align.Center;
+            toolbar.style.paddingBottom = 6f;
+            toolbar.style.borderBottomWidth = 1f;
 
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
+            var hint = new Label(
+                "Aesir Framework 示例导航 — 打开场景 / 定位 / 导入 Sample。" +
+                "点击事件卡片上的按钮完成对应操作。");
+            hint.style.flexGrow = 1f;
+            hint.style.whiteSpace = WhiteSpace.Normal;
+            toolbar.Add(hint);
 
-            if (_packages.Count == 0)
-            {
-                EditorGUILayout.HelpBox(
-                    "未扫描到 Aesir 包。请经 GitHub Releases 导入 unitypackage" +
-                    "（默认安装到 Assets/Runestone，可自由移动到项目任意文件夹），" +
-                    "或经 Package Manager 用 Git URL 安装后从 Samples 标签页导入示例。", MessageType.Warning);
-                if (GUILayout.Button("打开 GitHub Releases 页面"))
-                {
-                    Application.OpenURL(AesirUpdateService.ReleasesPageUrl);
-                }
-            }
-            else
-            {
-                for (var i = 0; i < _packages.Count; i++)
-                    DrawPackage(_packages[i], _groups[i]);
-            }
-
-            EditorGUILayout.EndScrollView();
+            toolbar.Add(new Button(Scan) { text = "刷新" });
+            return toolbar;
         }
 
-        void DrawToolbar()
+        VisualElement BuildPackage(AesirGetStartedService.AesirPackageInfo pkg)
         {
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(
-                "Aesir Framework 示例导航 — 点击「打开场景」保存当前场景并进入示例；「定位」在 Project 窗口选中示例文件夹；" +
-                "UPM / 嵌入式安装的未导入示例经「导入 Sample」确认后导入。", EditorStyles.miniLabel);
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("刷新", EditorStyles.toolbarButton, GUILayout.Width(60)))
-            {
-                Scan();
-            }
+            var container = new VisualElement();
+            container.AddToClassList("aesir-getstarted-package");
 
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.Space(4);
-        }
-
-        void DrawPackage(AesirGetStartedService.AesirPackageInfo pkg,
-            List<AesirGetStartedService.SampleGroup> groups)
-        {
             var installNote = pkg.InstallType == AesirGetStartedService.AesirInstallType.AssetsCopy
                 ? "Assets 安装"
                 : "UPM 安装 · 未导入示例可一键导入";
+            var header = new Label(
+                $"{pkg.DisplayName}   v{pkg.Version} · {pkg.Samples.Count} 个示例 · {installNote}");
+            header.AddToClassList("aesir-getstarted-package-header");
+            container.Add(header);
 
-            EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField(pkg.DisplayName, EditorStyles.boldLabel);
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.LabelField($"v{pkg.Version} · {pkg.Samples.Count} 个示例 · {installNote}",
-                EditorStyles.miniLabel);
-            EditorGUILayout.EndHorizontal();
-
-            foreach (var group in groups)
+            foreach (var group in AesirGetStartedService.GroupSamples(pkg))
             {
-                EditorGUILayout.Space(4);
-                EditorGUILayout.LabelField(group.Title, EditorStyles.boldLabel);
+                var groupTitle = new Label(group.Title);
+                groupTitle.AddToClassList("aesir-getstarted-group-title");
+                container.Add(groupTitle);
                 foreach (var sample in group.Samples)
                 {
-                    DrawSample(sample);
+                    container.Add(BuildSample(sample));
                 }
             }
 
-            EditorGUILayout.Space(10);
+            return container;
         }
 
-        void DrawSample(AesirGetStartedService.AesirSampleInfo sample)
+        VisualElement BuildSample(AesirGetStartedService.AesirSampleInfo sample)
         {
-            EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.BeginHorizontal();
+            var card = new VisualElement();
+            card.AddToClassList("aesir-getstarted-sample");
 
-            EditorGUILayout.BeginVertical();
-            EditorGUILayout.LabelField(sample.DisplayName, EditorStyles.boldLabel);
+            var info = new VisualElement();
+            info.style.flexGrow = 1f;
+            var title = new Label(sample.DisplayName);
+            title.AddToClassList("aesir-getstarted-sample-title");
+            info.Add(title);
             if (!string.IsNullOrEmpty(sample.Description))
             {
-                EditorGUILayout.LabelField(sample.Description, EditorStyles.wordWrappedMiniLabel);
+                var desc = new Label(sample.Description);
+                desc.AddToClassList("aesir-getstarted-sample-desc");
+                desc.style.whiteSpace = WhiteSpace.Normal;
+                info.Add(desc);
             }
 
-            EditorGUILayout.EndVertical();
-
-            GUILayout.FlexibleSpace();
+            card.Add(info);
 
             // 动作按钮：已导入且有场景 → 打开场景；其余形态降级为定位 / 引导导入
             if (sample.IsImported && sample.HasScene)
             {
-                if (GUILayout.Button("打开场景", GUILayout.Width(80)))
-                {
-                    // 反馈文案复用 Odin 版 Toast 的同一真源（Service 层构造），只把输出通道换成门面日志；
-                    // 返回 false = 用户在 Unity 的保存提示上取消（Unity 自身已给交互），静默即可
-                    if (AesirGetStartedService.OpenSampleScene(sample))
-                    {
-                        AesirArchitectureDebug.Log("AesirGetStarted",
-                            AesirGetStartedService.BuildOpenSceneToastMessage(sample));
-                    }
-                }
-
-                if (GUILayout.Button("定位", GUILayout.Width(52)))
-                {
-                    if (AesirGetStartedService.PingSample(sample))
-                    {
-                        AesirArchitectureDebug.Log("AesirGetStarted",
-                            AesirGetStartedService.BuildPingToastMessage(sample));
-                    }
-                }
+                card.Add(new Button(() => OpenScene(sample)) { text = "打开场景" });
+                card.Add(new Button(() => Ping(sample)) { text = "定位" });
             }
             else if (sample.IsImported)
             {
-                EditorGUILayout.LabelField("代码示例 · 无独立场景", EditorStyles.miniLabel, GUILayout.Width(110));
-                if (GUILayout.Button("定位", GUILayout.Width(52)))
-                {
-                    if (AesirGetStartedService.PingSample(sample))
-                    {
-                        AesirArchitectureDebug.Log("AesirGetStarted",
-                            AesirGetStartedService.BuildPingToastMessage(sample));
-                    }
-                }
+                var noScene = new Label("代码示例 · 无独立场景");
+                noScene.style.fontSize = 10f;
+                card.Add(noScene);
+                card.Add(new Button(() => Ping(sample)) { text = "定位" });
             }
             else
             {
-                // 未导入（UPM / 嵌入式安装）：确认框 + Package Manager Sample API 导入
-                if (GUILayout.Button("导入 Sample", GUILayout.Width(96)))
-                {
-                    var result = AesirGetStartedService.ConfirmAndImportUpmSample(sample, out var message);
-                    switch (result)
-                    {
-                        case AesirGetStartedService.AesirSampleImportResult.Imported:
-                            Scan(); // 卡片即时切换为已导入态
-                            AesirArchitectureDebug.Log("AesirGetStarted", message);
-                            break;
-
-                        case AesirGetStartedService.AesirSampleImportResult.Cancelled:
-                            break; // 用户在确认框取消，无需提示
-
-                        default:
-                            EditorUtility.DisplayDialog(AesirGetStartedService.ImportConfirmTitle, message,
-                                "确定");
-                            break;
-                    }
-                }
+                card.Add(new Button(() => Import(sample)) { text = "导入 Sample" });
             }
 
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.EndVertical();
+            return card;
+        }
+
+        static void OpenScene(AesirGetStartedService.AesirSampleInfo sample)
+        {
+            if (AesirGetStartedService.OpenSampleScene(sample))
+            {
+                AesirArchitectureDebug.Log("AesirGetStarted",
+                    AesirGetStartedService.BuildOpenSceneToastMessage(sample));
+            }
+        }
+
+        static void Ping(AesirGetStartedService.AesirSampleInfo sample)
+        {
+            if (AesirGetStartedService.PingSample(sample))
+            {
+                AesirArchitectureDebug.Log("AesirGetStarted",
+                    AesirGetStartedService.BuildPingToastMessage(sample));
+            }
+        }
+
+        void Import(AesirGetStartedService.AesirSampleInfo sample)
+        {
+            var result = AesirGetStartedService.ConfirmAndImportUpmSample(sample, out var message);
+            switch (result)
+            {
+                case AesirGetStartedService.AesirSampleImportResult.Imported:
+                    Scan(); // 卡片即时切换为已导入态
+                    AesirArchitectureDebug.Log("AesirGetStarted", message);
+                    break;
+
+                case AesirGetStartedService.AesirSampleImportResult.Cancelled:
+                    break; // 用户在确认框取消，无需提示
+
+                default:
+                    EditorUtility.DisplayDialog(AesirGetStartedService.ImportConfirmTitle, message, "确定");
+                    break;
+            }
         }
 
         #endregion

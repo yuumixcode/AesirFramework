@@ -1,5 +1,7 @@
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Runestone.AesirArchitecture.Editor
 {
@@ -30,6 +32,49 @@ namespace Runestone.AesirArchitecture.Editor
     internal sealed class AesirTimerDrawer : PropertyDrawer
     {
         const float Spacing = 2f;
+
+        /// <summary>
+        /// UI Toolkit 绘制入口（复刻 AesirTimerOdinDrawer 的两行摘要）：状态词着色 + 进度条 + 单行摘要。
+        /// </summary>
+        /// <remarks>
+        /// 与 <see cref="OnGUI" /> 并存：UI Toolkit Inspector 走本方法，纯 IMGUI 上下文走 OnGUI。
+        /// 数据取 <see cref="AesirTimerSnapshot" />，文案 / 颜色取 <see cref="AesirTimerText" />，
+        /// 外观用 VisualElement 重排（IMGUI 的 AesirTimerSummaryView 不复用）。
+        /// </remarks>
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
+        {
+            var root = new VisualElement();
+            root.AddToClassList("aesir-timer-field");
+
+            var timer = AesirTimerSnapshot.Capture(ResolveTimer(property));
+
+            var stateLabel = new Label($"{property.displayName}：{AesirTimerText.DescribeState(timer)}");
+            stateLabel.style.color = AesirTimerText.StateColor(timer);
+            stateLabel.AddToClassList("aesir-timer-field__state");
+            root.Add(stateLabel);
+
+            if (!timer.HasTimer)
+            {
+                root.Add(new HelpBox(
+                    "字段未持有实例：AesirTimer 由工厂方法创建（Countdown / Every / NextFrame）",
+                    HelpBoxMessageType.Info));
+                return root;
+            }
+
+            var bar = new ProgressBar
+            {
+                value = AesirTimerText.Progress01(timer) * 100f,
+                title = AesirTimerText.DescribeProgress(timer)
+            };
+            bar.AddToClassList("aesir-timer-field__progress");
+            root.Add(bar);
+
+            var summaryLabel = new Label(AesirTimerText.DescribeOneLine(timer));
+            summaryLabel.AddToClassList("aesir-timer-field__summary");
+            root.Add(summaryLabel);
+
+            return root;
+        }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label) =>
             EditorGUIUtility.singleLineHeight * 2f + Spacing;
