@@ -1,17 +1,17 @@
 using System;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Runestone.AesirArchitecture.Editor
 {
     /// <summary>
-    /// 计时器调试窗口（IMGUI 兜底版）— 按可调的拉取节奏列出当前注册表中的计时器，
+    /// 计时器调试窗口（UI Toolkit 版）— 按可调的拉取节奏列出当前注册表中的计时器，
     /// 逐行显示状态、形态、时间源、剩余秒数、进度、执行次数与回调归属。
     /// <para>
-    /// 安装了 Odin Inspector 时，菜单入口经 <see cref="OdinWindowOpener" /> 路由到 Odin 版窗口
-    /// （AesirTimerDebugWindowOdin，Odin 风格的概览与表格）；未安装时本窗口为菜单落点。
-    /// 两者共用 <see cref="AesirTimerDebugSource" /> 抓取的数据与 <see cref="AesirTimerText" /> 的措辞，
-    /// 本类只做 IMGUI 排布——换窗口外观不需要碰数据源，也不需要碰文案。
+    /// 安装 Odin Inspector 且样式开关 <see cref="AesirInspectorStyleSettings.UseOdin" /> 为 true 时，
+    /// 菜单经 <see cref="OdinWindowOpener" /> 路由到 Odin 版窗口；否则打开本 UI Toolkit 窗口。
+    /// 两版共用 <see cref="AesirTimerDebugSource" /> 抓取的数据与 <see cref="AesirTimerText" /> 的措辞。
     /// </para>
     /// <para>
     /// 性能取向：拉取（枚举注册表 + 逐行快照）与重绘是两条节奏。重绘由编辑器驱动，
@@ -26,21 +26,7 @@ namespace Runestone.AesirArchitecture.Editor
         const string MenuPath = "Tools/Aesir/Architecture/Timer Debugger";
         const string WindowTitle = "Aesir Timer Debugger";
 
-        /// <summary>列宽（表头与数据行共用，保证对齐）。</summary>
-        const float StateWidth = 54f;
-
-        const float FormWidth = 86f;
-        const float ClockWidth = 92f;
-        const float RemainingWidth = 62f;
-        const float ProgressWidth = 104f;
-        const float ExecutionsWidth = 62f;
-        const float LeftWidth = 52f;
-        const float AgeWidth = 52f;
-
-        /// <summary>
-        /// Odin 版窗口的打开委托（由 Odin 程序集经 [InitializeOnLoadMethod] 注册；
-        /// 未安装 Odin Inspector 时为 null，菜单打开本 IMGUI 兜底窗口）。
-        /// </summary>
+        /// <summary>Odin 版窗口的打开委托（Odin 程序集注册；关闭 Odin 样式时为 null）。</summary>
         public static Action OdinWindowOpener { get; private set; }
 
         /// <summary>注册 Odin 版窗口的打开方式（域重载清空静态委托后由 Odin 程序集重新注册）。</summary>
@@ -69,7 +55,11 @@ namespace Runestone.AesirArchitecture.Editor
 
         readonly AesirTimerDebugSource _source = new AesirTimerDebugSource();
 
-        Vector2 _scroll;
+        Label _statisticsLabel;
+        Label _cadenceLabel;
+        VisualElement _rowsContainer;
+        VisualElement _emptyHint;
+        Label _hintLabel;
 
         #endregion
 
@@ -81,6 +71,7 @@ namespace Runestone.AesirArchitecture.Editor
             EditorApplication.update += OnEditorUpdate;
             _source.ResetCadence();
             _source.Refresh();
+            BuildUI();
         }
 
         void OnDisable()
@@ -89,181 +80,193 @@ namespace Runestone.AesirArchitecture.Editor
             AesirTimerDebuggerSettings.Changed -= OnSettingsChanged;
         }
 
-        /// <summary>拉取节奏变化（切换模式/频率、开关自动刷新）：重置节奏并立即重绘。</summary>
+        /// <summary>拉取节奏变化（切换模式/频率、开关自动刷新）：重置节奏并刷新视图。</summary>
         void OnSettingsChanged()
         {
             _source.ResetCadence();
-            Repaint();
+            UpdateCadenceLabel();
+            RefreshRows();
         }
 
         /// <summary>
-        /// 编辑器 update 驱动器：Play 状态切换或到达设定节奏时抓取一次，抓取成功才重绘
-        /// （未到点的 update 不产生任何重绘，这是限流生效的关键）。
+        /// 编辑器 update 驱动器：Play 状态切换或到达设定节奏时抓取一次，抓取成功才刷新行视图
+        /// （未到点的 update 不产生任何视图变更，这是限流生效的关键）。
         /// </summary>
         void OnEditorUpdate()
         {
             if (_source.Tick())
             {
-                Repaint();
+                RefreshRows();
             }
         }
 
         #endregion
 
-        #region 绘制
+        #region UI
 
-        void OnGUI()
+        void BuildUI()
         {
-            DrawToolbar();
+            var root = rootVisualElement;
+            root.Clear();
 
-            if (!EditorApplication.isPlaying)
+            root.Add(BuildToolbar());
+
+            _hintLabel = new Label(AesirTimerText.EditModeHint);
+            _hintLabel.style.whiteSpace = WhiteSpace.Normal;
+            _hintLabel.AddToClassList("aesir-timer-hint");
+            root.Add(_hintLabel);
+
+            _statisticsLabel = new Label();
+            _statisticsLabel.style.whiteSpace = WhiteSpace.Normal;
+            root.Add(_statisticsLabel);
+
+            root.Add(BuildHeader());
+
+            _rowsContainer = new ScrollView(ScrollViewMode.Vertical);
+            _rowsContainer.style.flexGrow = 1f;
+            root.Add(_rowsContainer);
+
+            _emptyHint = new Label("当前没有注册中的计时器。");
+            _emptyHint.style.unityTextAlign = TextAnchor.MiddleCenter;
+            root.Add(_emptyHint);
+
+            UpdateCadenceLabel();
+            RefreshRows();
+        }
+
+        VisualElement BuildToolbar()
+        {
+            var toolbar = new VisualElement();
+            toolbar.style.flexDirection = FlexDirection.Row;
+            toolbar.style.alignItems = Align.Center;
+            toolbar.style.paddingBottom = 4f;
+
+            var mode = new EnumField("拉取", AesirTimerDebuggerSettings.Mode);
+            mode.RegisterValueChangedCallback(evt =>
             {
-                EditorGUILayout.HelpBox(AesirTimerText.EditModeHint, MessageType.Info);
+                if (evt.newValue is AesirTimerRefreshMode refreshMode)
+                {
+                    AesirTimerDebuggerSettings.Mode = refreshMode;
+                    BuildUI(); // 模式切换会改变工具栏字段（间隔 / 帧），重建
+                }
+            });
+            toolbar.Add(mode);
+
+            if (AesirTimerDebuggerSettings.Mode == AesirTimerRefreshMode.Interval)
+            {
+                var interval = new FloatField("间隔(秒)") { value = AesirTimerDebuggerSettings.IntervalSeconds };
+                interval.RegisterValueChangedCallback(evt =>
+                    AesirTimerDebuggerSettings.IntervalSeconds = evt.newValue);
+                toolbar.Add(interval);
+            }
+            else
+            {
+                var frames = new IntegerField("每(帧)") { value = AesirTimerDebuggerSettings.FrameInterval };
+                frames.RegisterValueChangedCallback(evt =>
+                    AesirTimerDebuggerSettings.FrameInterval = evt.newValue);
+                toolbar.Add(frames);
             }
 
-            DrawStatistics();
-            DrawHeader();
+            var autoRefresh = new Toggle("自动刷新") { value = AesirTimerDebuggerSettings.AutoRefresh };
+            autoRefresh.RegisterValueChangedCallback(evt =>
+                AesirTimerDebuggerSettings.AutoRefresh = evt.newValue);
+            toolbar.Add(autoRefresh);
 
-            if (_source.Rows.Count == 0)
+            toolbar.Add(new Button(ForceRefresh) { text = "立即刷新" });
+
+            _cadenceLabel = new Label();
+            _cadenceLabel.style.flexGrow = 1f;
+            _cadenceLabel.style.unityTextAlign = TextAnchor.MiddleRight;
+            toolbar.Add(_cadenceLabel);
+
+            return toolbar;
+        }
+
+        VisualElement BuildHeader()
+        {
+            var header = new VisualElement();
+            header.style.flexDirection = FlexDirection.Row;
+            header.Add(new Label("状态") { style = { width = 54 } });
+            header.Add(new Label("形态") { style = { width = 86 } });
+            header.Add(new Label("时间源") { style = { width = 92 } });
+            header.Add(new Label("剩余") { style = { width = 62 } });
+            header.Add(new Label("进度") { style = { width = 104 } });
+            header.Add(new Label("已执行") { style = { width = 62 } });
+            header.Add(new Label("还剩") { style = { width = 52 } });
+            header.Add(new Label("存活") { style = { width = 52 } });
+            header.Add(new Label("回调"));
+            return header;
+        }
+
+        void ForceRefresh()
+        {
+            _source.ResetCadence();
+            _source.Refresh();
+            UpdateCadenceLabel();
+            RefreshRows();
+        }
+
+        void UpdateCadenceLabel()
+        {
+            if (_cadenceLabel != null)
             {
-                EditorGUILayout.HelpBox("当前没有注册中的计时器。", MessageType.None);
+                _cadenceLabel.text = AesirTimerDebuggerSettings.DescribeCadence();
+            }
+        }
+
+        /// <summary>重建行视图：统计、空提示、逐行快照。编辑模式与 Play 模式切换时同步提示可见性。</summary>
+        void RefreshRows()
+        {
+            if (_rowsContainer == null)
+            {
                 return;
             }
 
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            _hintLabel.style.display = EditorApplication.isPlaying ? DisplayStyle.None : DisplayStyle.Flex;
+            _statisticsLabel.text = AesirTimerText.DescribeStatistics(_source.Statistics);
 
-            for (var i = 0; i < _source.Rows.Count; i++)
+            _rowsContainer.Clear();
+            var rows = _source.Rows;
+            _emptyHint.style.display = rows.Count == 0 ? DisplayStyle.Flex : DisplayStyle.None;
+
+            for (var i = 0; i < rows.Count; i++)
             {
-                DrawRow(_source.Rows[i]);
+                _rowsContainer.Add(BuildRow(rows[i]));
             }
 
             if (_source.IsTruncated)
             {
-                EditorGUILayout.HelpBox(
-                    $"仅显示最紧迫的 {AesirTimerDebugSource.MaxRows} 个，共 {_source.Statistics.Registered} 个计时器。",
-                    MessageType.None);
+                _rowsContainer.Add(new Label(
+                    $"仅显示最紧迫的 {AesirTimerDebugSource.MaxRows} 个，共 {_source.Statistics.Registered} 个计时器。"));
             }
-
-            EditorGUILayout.EndScrollView();
         }
 
-        /// <summary>工具栏：拉取模式、拉取频率、自动刷新开关、立即刷新。</summary>
-        void DrawToolbar()
+        static VisualElement BuildRow(in AesirTimerSnapshot info)
         {
-            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
 
-            var mode = (AesirTimerRefreshMode)EditorGUILayout.Popup(
-                (int)AesirTimerDebuggerSettings.Mode, ModeLabels, EditorStyles.toolbarPopup,
-                GUILayout.Width(70));
+            var state = new Label(AesirTimerText.DescribeState(info)) { style = { width = 54 } };
+            state.style.color = AesirTimerText.StateColor(info);
+            row.Add(state);
+            row.Add(new Label(AesirTimerText.DescribeForm(info)) { style = { width = 86 } });
+            row.Add(new Label(AesirTimerText.DescribeClock(info)) { style = { width = 92 } });
+            row.Add(new Label(AesirTimerText.DescribeRemaining(info)) { style = { width = 62 } });
 
-            if (mode != AesirTimerDebuggerSettings.Mode)
+            var bar = new ProgressBar
             {
-                AesirTimerDebuggerSettings.Mode = mode;
-            }
+                value = AesirTimerText.Progress01(info) * 100f,
+                title = AesirTimerText.DescribeProgress(info),
+                style = { width = 104 }
+            };
+            row.Add(bar);
 
-            if (AesirTimerDebuggerSettings.Mode == AesirTimerRefreshMode.Interval)
-            {
-                GUILayout.Label("间隔", EditorStyles.miniLabel, GUILayout.Width(26));
+            row.Add(new Label(AesirTimerText.DescribeExecutions(info)) { style = { width = 62 } });
+            row.Add(new Label(AesirTimerText.DescribeLeftExecutions(info)) { style = { width = 52 } });
+            row.Add(new Label(AesirTimerText.DescribeAge(info)) { style = { width = 52 } });
+            row.Add(new Label(AesirTimerText.DescribeCallback(info)));
 
-                var interval = EditorGUILayout.FloatField(AesirTimerDebuggerSettings.IntervalSeconds,
-                    EditorStyles.toolbarTextField, GUILayout.Width(42));
-
-                if (!Mathf.Approximately(interval, AesirTimerDebuggerSettings.IntervalSeconds))
-                {
-                    AesirTimerDebuggerSettings.IntervalSeconds = interval;
-                }
-
-                GUILayout.Label("秒", EditorStyles.miniLabel, GUILayout.Width(16));
-            }
-            else
-            {
-                GUILayout.Label("每", EditorStyles.miniLabel, GUILayout.Width(16));
-
-                var frames = EditorGUILayout.IntField(AesirTimerDebuggerSettings.FrameInterval,
-                    EditorStyles.toolbarTextField, GUILayout.Width(36));
-
-                if (frames != AesirTimerDebuggerSettings.FrameInterval)
-                {
-                    AesirTimerDebuggerSettings.FrameInterval = frames;
-                }
-
-                GUILayout.Label("帧", EditorStyles.miniLabel, GUILayout.Width(16));
-            }
-
-            AesirTimerDebuggerSettings.AutoRefresh = GUILayout.Toggle(
-                AesirTimerDebuggerSettings.AutoRefresh, "自动刷新", EditorStyles.toolbarButton,
-                GUILayout.Width(66));
-
-            if (GUILayout.Button("立即刷新", EditorStyles.toolbarButton, GUILayout.Width(66)))
-            {
-                _source.ResetCadence();
-                _source.Refresh();
-                Repaint();
-            }
-
-            GUILayout.FlexibleSpace();
-
-            GUILayout.Label(AesirTimerDebuggerSettings.DescribeCadence(), EditorStyles.miniLabel);
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        /// <summary>累计统计（编辑模式下恒为零：那里没有数据源）。</summary>
-        void DrawStatistics()
-        {
-            EditorGUILayout.LabelField(AesirTimerText.DescribeStatistics(_source.Statistics),
-                EditorStyles.miniLabel);
-        }
-
-        /// <summary>表头。</summary>
-        void DrawHeader()
-        {
-            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-
-            Part("状态", StateWidth, EditorStyles.miniBoldLabel);
-            Part("形态", FormWidth, EditorStyles.miniBoldLabel);
-            Part("时间源", ClockWidth, EditorStyles.miniBoldLabel);
-            Part("剩余", RemainingWidth, EditorStyles.miniBoldLabel);
-            Part("进度", ProgressWidth, EditorStyles.miniBoldLabel);
-            Part("已执行", ExecutionsWidth, EditorStyles.miniBoldLabel);
-            Part("还剩", LeftWidth, EditorStyles.miniBoldLabel);
-            Part("存活", AgeWidth, EditorStyles.miniBoldLabel);
-            GUILayout.Label("回调", EditorStyles.miniBoldLabel);
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        /// <summary>数据行：各列限宽 + 进度条 + 回调名占剩余宽度。</summary>
-        void DrawRow(in AesirTimerSnapshot info)
-        {
-            EditorGUILayout.BeginHorizontal();
-
-            var previousColor = GUI.contentColor;
-            GUI.contentColor = AesirTimerText.StateColor(info);
-            Part(AesirTimerText.DescribeState(info), StateWidth, EditorStyles.miniBoldLabel);
-            GUI.contentColor = previousColor;
-
-            Part(AesirTimerText.DescribeForm(info), FormWidth, EditorStyles.miniLabel);
-            Part(AesirTimerText.DescribeClock(info), ClockWidth, EditorStyles.miniLabel);
-            Part(AesirTimerText.DescribeRemaining(info), RemainingWidth, EditorStyles.miniLabel);
-
-            var barRect = GUILayoutUtility.GetRect(ProgressWidth, EditorGUIUtility.singleLineHeight,
-                GUILayout.Width(ProgressWidth));
-            EditorGUI.ProgressBar(barRect, AesirTimerText.Progress01(info), AesirTimerText.DescribeProgress(info));
-
-            Part(AesirTimerText.DescribeExecutions(info), ExecutionsWidth, EditorStyles.miniLabel);
-            Part(AesirTimerText.DescribeLeftExecutions(info), LeftWidth, EditorStyles.miniLabel);
-            Part(AesirTimerText.DescribeAge(info), AgeWidth, EditorStyles.miniLabel);
-            GUILayout.Label(AesirTimerText.DescribeCallback(info), EditorStyles.miniLabel,
-                GUILayout.MinWidth(120));
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        /// <summary>定宽标签。</summary>
-        static void Part(string text, float width, GUIStyle style)
-        {
-            GUILayout.Label(text, style, GUILayout.Width(width));
+            return row;
         }
 
         #endregion
