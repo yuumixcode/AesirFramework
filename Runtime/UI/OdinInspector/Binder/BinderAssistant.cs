@@ -8,7 +8,7 @@ using Runestone.AesirArchitecture;
 using UnityEngine;
 using Object = UnityEngine.Object;
 // Odin / UnityEditor 只在编辑器侧使用：本程序集是全平台程序集，Player 构建不应依赖 Odin 运行时程序集
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -26,7 +26,7 @@ namespace Runestone.AesirModules
         /// partial 分部类: 生成自动维护文件（后缀可选，默认 <c>.designer.cs</c>，整体覆盖）+
         /// 手写 partial <c>*.cs</c>（仅首次生成）。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [InspectorName("Partial 分部类")]
 #endif
         PartialClass,
@@ -35,7 +35,7 @@ namespace Runestone.AesirModules
         /// 同一脚本增量: 只替换目标脚本内「绑定字段（自动生成）」region 的内容（含 BindComponents 方法），
         /// region 外的内容归开发者所有。
         /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [InspectorName("同一脚本增量")]
 #endif
         SameScriptIncrement
@@ -69,7 +69,7 @@ namespace Runestone.AesirModules
     /// 占位不会写进生成代码）。
     /// </para>
     /// </summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
     [DetailedInfoBox("Binder 使用说明（工作流 / 自动检查时机）",
         "【工作流】\n" +
         "① 在需要绑定引用的子物体上挂 BinderTag 标记（可通过层级右键菜单「GameObject/Aesir/添加 BinderTag 标记」快速添加），默认绑定 1 个组件，用「绑定组件数量」声明要绑定的组件个数；\n" +
@@ -82,7 +82,7 @@ namespace Runestone.AesirModules
     [DisallowMultipleComponent]
     public class BinderAssistant : AesirMonoBehaviour
     {
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [PropertyOrder(-10)]
         [HorizontalGroup("状态")]
         [ToggleLeft]
@@ -90,34 +90,34 @@ namespace Runestone.AesirModules
 #endif
         public bool OpenAutoValidate = true;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [LabelText("生成模式")]
 #endif
         public BinderScriptMode ScriptMode = BinderScriptMode.SameScriptIncrement;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [LabelText("命名空间: ")]
         [InlineButton(nameof(DefaultNamespace), "默认")]
 #endif
         public string TargetNamespace;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [LabelText("脚本名: ")]
         [InlineButton(nameof(DefaultScriptName), "默认")]
 #endif
         public string ScriptName;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [ValueDropdown(nameof(GetBaseTypes))]
         [LabelText("基类: ")]
 #endif
         public string BaseType;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsAesirGenericUiBase))]
         [ValueDropdown(nameof(GetContextTypeChoices))]
@@ -126,14 +126,14 @@ namespace Runestone.AesirModules
 #endif
         public string ContextTypeName;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsUserGenericBase))]
         [LabelText("泛型参数: ")]
 #endif
         public string BaseTypeArguments;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsPartialMode))]
         [ValueDropdown(nameof(GetPartialSuffixOptions))]
@@ -143,7 +143,7 @@ namespace Runestone.AesirModules
 #endif
         public string PartialSuffix = ".designer.cs";
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [LabelText("目标文件夹: ")]
         [InlineButton(nameof(DefaultFolderPath), "默认")]
@@ -151,25 +151,25 @@ namespace Runestone.AesirModules
 #endif
         public string FolderPath;
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [LabelText("附加 using 命名空间")]
 #endif
         public List<string> CustomNamespaces = new List<string>();
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [InfoBox("$ErrorHint", InfoMessageType.Error, nameof(HasError))]
         [Title("绑定单元列表")]
         [TableList(AlwaysExpanded = true, IsReadOnly = true)]
 #endif
         public List<BinderInfo> Units = new List<BinderInfo>();
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         /// <summary>最近一次校验的错误明细，供 Inspector 错误提示框展示。</summary>
         List<string> _lastValidationErrors;
 #endif
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [PropertyOrder(-9)]
         [HorizontalGroup("状态")]
         [ShowInInspector]
@@ -178,7 +178,7 @@ namespace Runestone.AesirModules
 #endif
         public bool HasError { get; private set; }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         [FoldoutGroup("生成配置")]
         [ShowIf(nameof(IsPartialMode))]
         [LabelText("可选后缀列表（编辑器持久化）")]
@@ -193,7 +193,7 @@ namespace Runestone.AesirModules
         public string HierarchyPath => BinderHierarchyUtility.GetAbsolutePath(transform);
 
         /// <summary>EditorPrefs 键: 待自动挂载的物体 InstanceID。</summary>
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         const string PendingBindInstanceIdKey = "AesirModules.BinderAssistant.PendingBind.InstanceId";
 
         /// <summary>EditorPrefs 键: 待自动挂载的脚本类型完整名称。</summary>
@@ -212,7 +212,7 @@ namespace Runestone.AesirModules
         static List<ValueDropdownItem<string>> _contextTypeChoicesCache;
 #endif
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
         // 下下下 编辑器侧工具链（Inspector 绘制、AppDomain 扫描、脚本生成与文件写入）。
         // 依赖 Odin；所有具体类型（BinderCodeGenerator / BinderEditorSettings 等）都在本程序集内、
         // 由 #if UNITY_EDITOR 收拢，故整段以 UNITY_EDITOR 包裹，Player 构建不再携带。

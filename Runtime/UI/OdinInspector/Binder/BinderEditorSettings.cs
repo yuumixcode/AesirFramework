@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR && ODIN_INSPECTOR
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
