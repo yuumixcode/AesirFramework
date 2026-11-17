@@ -185,7 +185,10 @@ namespace Runestone.AesirModules
             builder.AppendLine();
             foreach (var unit in config.Units)
             {
+                // TitleGroup 仅是 Odin 的分组装饰：用条件编译包裹，无 Odin 时生成的代码照常编译。
+                builder.AppendLine("#if ODIN_INSPECTOR");
                 builder.AppendLine("[Sirenix.OdinInspector.TitleGroup(\"" + BindFieldRegionName + "\")]");
+                builder.AppendLine("#endif");
                 builder.AppendLine("[UnityEngine.SerializeField]");
                 builder.AppendLine("private " + ToSourceTypeReference(unit.ComponentFullName) + " " +
                                    unit.FieldName + ";");
