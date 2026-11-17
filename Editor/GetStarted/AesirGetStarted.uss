@@ -8,7 +8,8 @@
  * 间距: xs=4  sm=8  md=12  lg=16  xl=24
  * 圆角: sm=4  md=6  lg=8
  * 字体: xs=11  sm=12  base=14  md=17  lg=22
- * 时长: fast=0.15s  normal=0.2s
+ * 交互: Unity 2022.3 USS 不支持 transition/transform(scale/translate)，
+ *       改用 hover/active 伪类的即时颜色切换表达反馈（见 ui-uitk skill 的 USS Restrictions）
  * 颜色（Unity 编辑器深色主题）:
  *   面板=#383838  卡片=#3C3C3C  抬升=#414141  边框=#1C1C1C
  *   文本主=#D6D6D6  文本次=#9A9A9A  accent=#3F81C2(Unity 蓝)
@@ -61,8 +62,6 @@
   color: #D6D6D6;
   font-size: 12px;
   margin-left: 4px;
-  transition-property: background-color, border-color, scale;
-  transition-duration: 0.15s;
 }
 
 .aesir-button:hover {
@@ -71,7 +70,8 @@
 }
 
 .aesir-button:active {
-  scale: 0.97;
+  background-color: #2F6FA8;
+  border-color: #1C1C1C;
 }
 
 .aesir-button--primary {
@@ -94,8 +94,6 @@
   border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 12px;
-  transition-property: border-color;
-  transition-duration: 0.2s;
 }
 
 .aesir-package:hover {
@@ -142,14 +140,11 @@
   margin-top: 6px;
   margin-bottom: 2px;
   min-height: 56px;
-  transition-property: background-color, border-color, translate;
-  transition-duration: 0.15s;
 }
 
 .aesir-sample:hover {
   background-color: #414141;
   border-color: #565656;
-  translate: 0 -1px;
 }
 
 .aesir-sample__icon {
