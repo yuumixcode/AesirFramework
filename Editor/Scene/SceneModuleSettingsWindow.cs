@@ -1,4 +1,5 @@
 using System;
+using Runestone.AesirArchitecture.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -78,7 +79,7 @@ namespace Runestone.AesirModules.Editor
         [MenuItem(MenuPath)]
         static void Open()
         {
-            if (OdinWindowOpener != null)
+            if (AesirInspectorStyleSettings.UseOdin && OdinWindowOpener != null)
             {
                 OdinWindowOpener();
                 return;
