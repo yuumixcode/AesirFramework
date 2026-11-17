@@ -24,15 +24,21 @@ namespace Game
     {
     #region 绑定字段（自动生成）
 
+    #if ODIN_INSPECTOR
     [Sirenix.OdinInspector.TitleGroup("绑定字段（自动生成）")]
+    #endif
     [UnityEngine.SerializeField]
     private UnityEngine.UI.Text scoreText;
 
+    #if ODIN_INSPECTOR
     [Sirenix.OdinInspector.TitleGroup("绑定字段（自动生成）")]
+    #endif
     [UnityEngine.SerializeField]
     private UnityEngine.UI.Text timeText;
 
+    #if ODIN_INSPECTOR
     [Sirenix.OdinInspector.TitleGroup("绑定字段（自动生成）")]
+    #endif
     [UnityEngine.SerializeField]
     private UnityEngine.UI.Text gameOverText;
 
