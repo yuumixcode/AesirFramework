@@ -42,6 +42,14 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
         /// <param name="attributes">该属性节点当前已附加的特性列表，处理器可向其中添加新特性</param>
         public override void ProcessSelfAttributes(InspectorProperty property, List<Attribute> attributes)
         {
+            if (!AesirInspectorStyleSettings.UseOdin)
+            {
+                // 关闭 Odin 样式时，强制 Odin 让路给 Unity 原生/UIToolkit 绘制器
+                // （否则 Odin 仍接管该字段，ObservableValueDrawer 不会被调用）。
+                attributes.Add(new DrawWithUnityAttribute());
+                return;
+            }
+
             attributes.Add(new HideLabelAttribute());
             attributes.Add(new InlinePropertyAttribute());
         }
@@ -60,6 +68,11 @@ namespace Runestone.AesirArchitecture.Editor.OdinInspector
             MemberInfo member,
             List<Attribute> attributes)
         {
+            if (!AesirInspectorStyleSettings.UseOdin)
+            {
+                return;
+            }
+
             if (member.MemberType == MemberTypes.Field &&
                 member.Name == ObservableValue<T>.PrivateValueFieldName)
             {

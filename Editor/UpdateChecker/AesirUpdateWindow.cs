@@ -57,7 +57,7 @@ namespace Runestone.AesirArchitecture.Editor
         [MenuItem(MenuPath, false, 1100)]
         static void Open()
         {
-            if (OdinWindowOpener != null)
+            if (AesirInspectorStyleSettings.UseOdin && OdinWindowOpener != null)
             {
                 OdinWindowOpener();
                 return;
