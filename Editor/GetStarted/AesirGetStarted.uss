@@ -1,0 +1,171 @@
+/* Aesir Getting Started / 编辑器窗口共享样式 —— 复刻 Odin Inspector 深色主题配色 */
+
+:root {
+  --aesir-bg: #383838;
+  --aesir-panel: #2a2a2a;
+  --aesir-header: #3c3c3c;
+  --aesir-border: #1c1c1c;
+  --aesir-hover: rgba(255, 255, 255, 0.06);
+  --aesir-text: #d6d6d6;
+  --aesir-text-dim: #9a9a9a;
+  --aesir-accent: #5ecb6e;
+  --aesir-accent-dim: #4a9e57;
+  --aesir-warn: #e0a83c;
+}
+
+.aesir-root {
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+/* 顶部工具栏 */
+.aesir-toolbar {
+  flex-direction: row;
+  align-items: center;
+  padding-bottom: 6px;
+  padding-top: 2px;
+  border-bottom-width: 1px;
+  border-bottom-color: #1c1c1c;
+  margin-bottom: 6px;
+}
+
+.aesir-toolbar-title {
+  font-size: 14px;
+  -unity-font-style: bold;
+  color: #d6d6d6;
+  flex-grow: 1;
+}
+
+.aesir-toolbar-hint {
+  font-size: 11px;
+  color: #9a9a9a;
+  white-space: normal;
+  flex-grow: 1;
+}
+
+.aesir-button {
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  background-color: #4a4a4a;
+  border-radius: 3px;
+  color: #d6d6d6;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.aesir-button:hover {
+  background-color: #595959;
+}
+
+.aesir-button:active {
+  background-color: #4a9e57;
+}
+
+/* 包卡片 */
+.aesir-package {
+  background-color: #2a2a2a;
+  border-width: 1px;
+  border-color: #1c1c1c;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.aesir-package-header {
+  font-size: 18px;
+  -unity-font-style: bold;
+  color: #d6d6d6;
+  padding-bottom: 4px;
+  border-bottom-width: 1px;
+  border-bottom-color: #1c1c1c;
+  margin-bottom: 6px;
+}
+
+.aesir-package-meta {
+  font-size: 11px;
+  color: #5ecb6e;
+  -unity-font-style: bold;
+}
+
+/* 分组标题 */
+.aesir-group-title {
+  font-size: 13px;
+  -unity-font-style: bold;
+  color: #d6d6d6;
+  padding-top: 6px;
+  padding-bottom: 4px;
+  margin-top: 4px;
+  border-bottom-width: 1px;
+  border-bottom-color: #1c1c1c;
+}
+
+/* 示例卡片 */
+.aesir-sample {
+  flex-direction: row;
+  align-items: flex-start;
+  background-color: #3c3c3c;
+  border-width: 1px;
+  border-color: #1c1c1c;
+  border-radius: 3px;
+  padding: 8px 10px;
+  margin-top: 5px;
+  margin-bottom: 2px;
+  min-height: 56px;
+}
+
+.aesir-sample:hover {
+  background-color: #464646;
+}
+
+.aesir-sample-icon {
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #5ecb6e;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+}
+
+.aesir-sample-info {
+  flex-grow: 1;
+}
+
+.aesir-sample-title {
+  font-size: 13px;
+  -unity-font-style: bold;
+  color: #d6d6d6;
+}
+
+.aesir-sample-desc {
+  font-size: 11px;
+  color: #9a9a9a;
+  white-space: normal;
+  margin-top: 2px;
+}
+
+.aesir-sample-actions {
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+
+.aesir-badge {
+  font-size: 10px;
+  color: #e0a83c;
+  -unity-font-style: bold;
+}
+
+/* 空状态 / 提示 */
+.aesir-empty {
+  font-size: 12px;
+  color: #9a9a9a;
+  padding: 12px;
+  align-self: center;
+}
