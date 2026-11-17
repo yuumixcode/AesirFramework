@@ -109,6 +109,51 @@ namespace Runestone.AesirModules.ScriptDocGenerator.Editor
                 field.Bind(_serialized);
                 scroll.Add(field);
             }
+
+            AddActionButtons(scroll, _panel);
+        }
+
+        /// <summary>反射调用面板的 [Button] 动作，让 UI Toolkit 版功能与 Odin 版等价。</summary>
+        void AddActionButtons(VisualElement parent, Object panel)
+        {
+            var actions = new VisualElement();
+            actions.style.flexDirection = FlexDirection.Row;
+            actions.style.marginTop = 8f;
+            actions.style.paddingTop = 6f;
+            actions.style.borderTopWidth = 1f;
+            actions.style.borderTopColor = new Color(0.11f, 0.11f, 0.11f);
+
+            var buttons = new[]
+            {
+                ("AnalyzeType", "类型分析"),
+                ("GenerateDoc", "生成文档"),
+                ("ResetToDefault", "重置配置")
+            };
+
+            foreach (var (methodName, label) in buttons)
+            {
+                var method = panel.GetType().GetMethod(methodName,
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (method == null)
+                {
+                    continue;
+                }
+
+                var button = new Button(() =>
+                {
+                    _serialized.ApplyModifiedProperties();
+                    method.Invoke(panel, null);
+                    _serialized.Update();
+                    Rebuild();
+                }) { text = label };
+                button.style.marginRight = 4f;
+                actions.Add(button);
+            }
+
+            if (actions.childCount > 0)
+            {
+                parent.Add(actions);
+            }
         }
 
         static Type FindType(string fullName)
