@@ -47,6 +47,20 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+### [modules] Aesir Modules
+
+**Added**
+
+- **简化 UI 实例化：移除停用模板机制，改为 `Instantiate → SetActive(false)`** — 经多轮质疑与实测确认，"克隆停用模板 + 从模板实例化"是防御性编程过头的产物：框架约定面板 / 窗口不写 `Awake`/`OnEnable`（`OnInit`/`OnShow` 接管生命周期），克隆体初始化时跑一轮空原生回调无害，模板机制换取的"回调不提前跑"收益为零、却每预制体常驻一份完整克隆。`UIModule.InstantiateInactive` 现直接 `Instantiate(prefab) → SetActive(false)`，删除 `_inactiveTemplates` 缓存、`_templateContainer`、`GetInactiveTemplate`；**实例名复位为来源预制体名**（去掉 `(Clone)(Clone)` 叠层，面板 / 窗口各一条命名回归测试）。补 `Resources.Load` 资产语义实证（`Tests/Editor/UI/ResourcesLoadAssetSemanticsTests.cs`，3 用例）与决策复盘文档 `Documentation~/ui-instantiation-mechanism.md`。详细变更见 `Assets/Runestone/AesirModules/CHANGELOG.md`
+
+**Changed**
+
+- **模块配置资产不再随包导入自动创建，改为显式菜单 + 运行时兜底（行为变更）** — 移除配置资产的 `[InitializeOnLoadMethod]` 自动调度，新增菜单 `Tools/Aesir/Modules/Create Module Config Assets`（幂等）显式创建；未创建资产时以代码默认值在内存中兜底、不写用户工程。原先依赖自动创建的工程若要在 Project 窗口编辑配置需主动点一次菜单；仅用默认值则无需操作
+- **`SceneAssetWrapper` 的 Inspector 绘制改为 UI Toolkit 优先 + IMGUI 兜底，零 Odin 依赖** — `SceneAssetWrapperDrawer` 去掉 Odin 编译门控、新增 `CreatePropertyGUI`，IMGUI 兜底；Processor 读取样式开关，关 Odin 样式时强制让路。运行时 `SceneAssetWrapper` 本身仍是零 Odin 的纯 C# 类型
+- **移除 Binder / Script Doc Generator 的 UI Toolkit 窗口** — 两个工具只保留原 Odin 窗口为唯一入口，数据层零 Odin 依赖不变
+
+---
+
 ## [0.33.0] - 2026-11-16
 
 ---
