@@ -16,8 +16,8 @@ namespace Runestone.AesirModules
     ///     用于彻底放弃 Resources 的项目（如 Addressables 或代码内构造配置）；
     ///     </item>
     ///     <item>
-    ///     Resources 兜底（<see cref="ResourcePath" />，编辑器在编辑模式域加载时自动创建该资产，
-    ///     见编辑器程序集 <c>UIModuleConfigAssetInitializer</c>）；
+    ///     Resources 兜底（<see cref="ResourcePath" />）；可在 Project 窗口自建资产，或经菜单
+    ///     <c>Tools/Aesir/Modules/Create Module Config Assets</c> 显式创建（包导入时不写用户工程）；
     ///     </item>
     ///     <item>内存默认实例——前两级均未命中时以代码默认值创建，仅存在于内存、不持久化。</item>
     /// </list>

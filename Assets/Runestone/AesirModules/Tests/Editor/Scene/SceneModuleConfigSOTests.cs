@@ -13,8 +13,8 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
     /// 单例缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复 Resources 兜底、
     /// 加载器返回 null 落内存默认实例、启动场景兜底回退（实例序列化字段优先于配置）。
     /// <para>
-    /// 依赖仓库内 Resources 兜底资产（编辑器初始化器 <c>SceneModuleConfigAssetInitializer</c> 自动创建，
-    /// 缺失时先刷新编辑器）；静态状态经反射在 SetUp/TearDown 重置，保证用例互不污染。
+    /// 依赖仓库内 Resources 兜底资产（本仓入库的示例基线；新工程需显式创建或走内存默认）；
+    /// 静态状态经反射在 SetUp/TearDown 重置，保证用例互不污染。
     /// 命名空间段取 <c>SceneModuleConfig</c> 而非 <c>Scene</c>——后者会遮蔽兄弟测试类裸引用的
     /// <see cref="UnityEngine.SceneManagement.Scene" /> 类型（命名空间成员优先于 using 导入的 CS0118）。
     /// </para>
@@ -186,7 +186,7 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
         static SceneModuleConfigSO LoadResourceConfig()
         {
             var config = Resources.Load<SceneModuleConfigSO>(SceneModuleConfigSO.ResourcePath);
-            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{SceneModuleConfigSO.ResourcePath}），请先刷新编辑器让初始化器创建");
+            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{SceneModuleConfigSO.ResourcePath}），请检查本仓 Assets/Resources 基线或显式创建资产");
             return config;
         }
 

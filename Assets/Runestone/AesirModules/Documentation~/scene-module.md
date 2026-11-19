@@ -8,7 +8,7 @@
 |------|------|
 | `SceneModule` | 场景管理单例（MonoBehaviour，预放置优先/运行时自动创建于 `[Aesir Modules]` 宿主下）；公开 API 全部为静态成员（静态门面，经 `Instance` 单例转发） |
 | `SceneModuleUniTask` | UniTask 适配 API（独立程序集 `Runestone.AesirModules.UniTask`，工程包含 UniTask 时自动参与编译）：可 await 的加载/卸载/重载/批量卸载 |
-| `SceneModuleConfigSO` | 模块全局配置资产（单例）：全局启动场景兜底 + 加载进度归一化上限；编辑器自动创建 Resources 兜底资产，可注册自定义加载器 |
+| `SceneModuleConfigSO` | 模块全局配置资产（单例）：全局启动场景兜底 + 加载进度归一化上限；可显式创建 Resources 资产（菜单 `Tools/Aesir/Modules/Create Module Config Assets`），可注册自定义加载器，缺失时内存默认兜底 |
 | `SceneAssetWrapper` | 可序列化场景引用：GUID 锚点自愈、状态机校验、TryGet 安全读取家族、Addressables 地址缓存 |
 | `SceneAssetWrapperState` | 引用状态枚举：`Regular`（BuildSettings 途径）/ `Addressable` / `Unsafe` |
 | `SceneAssetWrapperUnsafeReason` | 不安全原因：`Empty` / `NotInBuild` |
@@ -67,7 +67,7 @@ await SceneModuleUniTask.UnloadAllAddedScenesAsync();
 
 ## 模块配置（SceneModuleConfigSO）
 
-模块级配置承载于 **`SceneModuleConfigSO`**（单例配置资产，编辑器首次导入时自动创建在 `Assets/Resources/SceneModuleConfig/SceneModuleConfig.asset`）：在 Project 窗口直接编辑资产即可生效，不要求预放置 `[SceneModule]`。运行时解析顺序：①`SceneModuleConfigSO.RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销）；②Resources 兜底（`Resources/SceneModuleConfig/SceneModuleConfig`）；③内存默认实例。
+模块级配置承载于 **`SceneModuleConfigSO`**（单例配置资产）：在 Project 窗口显式创建于 `Assets/Resources/SceneModuleConfig/SceneModuleConfig.asset`，或点菜单 `Tools/Aesir/Modules/Create Module Config Assets` 一键生成（**包导入时不会写用户工程**），之后直接编辑资产即可生效，不要求预放置 `[SceneModule]`。运行时解析顺序：①`SceneModuleConfigSO.RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销）；②Resources 兜底（`Resources/SceneModuleConfig/SceneModuleConfig`）；③内存默认实例（前两级都没命中时，缺资产也能跑）。
 
 当前承载两项配置：
 
@@ -77,7 +77,7 @@ await SceneModuleUniTask.UnloadAllAddedScenesAsync();
 ## SceneAssetWrapper
 
 ```csharp
-// Inspector 拖拽赋值（装 Odin 走 Processor 面板；未装 Odin 走原生 PropertyDrawer 兜底，等价可用），或代码构造：
+// Inspector 拖拽赋值（UI Toolkit 绘制，样式可在 Preferences → Aesir 切换为 Odin 版），或代码构造：
 var wrapper = SceneAssetWrapper.FromScenePath("Assets/Scenes/Gameplay.unity");
 
 // 状态校验（加载前判断）
@@ -91,7 +91,7 @@ var name = wrapper.SceneName;
 var address = wrapper.Address; // Addressable 场景
 ```
 
-Inspector 状态提示与一键修复：Addressable 场景青色；引用悬空（路径与 GUID 都定位不到资产，资产被删除或移出工程）红色；未加入 BuildSettings 红色 + "添加到 BuildSettings"按钮；已加入但被禁用黄色 + "启用"按钮。装 Odin 时由 Processor 面板呈现（含悬空 Error 信息框）；未装 Odin 时由原生 PropertyDrawer 兜底（拖拽框 + 状态行 + 修复按钮，等价信息量）。
+Inspector 状态提示与一键修复：Addressable 场景青色；引用悬空（路径与 GUID 都定位不到资产，资产被删除或移出工程）红色；未加入 BuildSettings 红色 + "添加到 BuildSettings"按钮；已加入但被禁用黄色 + "启用"按钮；安装了 Addressables 且场景尚不可寻址时另有"加入 Addressables 默认组"按钮。绘制器 `SceneAssetWrapperDrawer` 零 Odin 依赖：UI Toolkit `CreatePropertyGUI` 为默认呈现，IMGUI `OnGUI` 供 Odin 编辑器窗口 `DrawWithUnity` 让路后使用；装了 Odin 且 `Preferences → Aesir` 的「使用 Odin Inspector 样式」为开时，由 Processor 面板接管（含悬空 Error 信息框），关掉则强制让路给上面的绘制器。
 
 > **引用悬空的判定口径**：对象引用断链但 GUID 能自愈回路径、且资产仍可定位（场景被移动/重命名后的常态）**不算悬空**——加载完全可用，建议重新拖拽一次恢复对象引用；只有资产真正消失（删除/移出工程）才红色提示。
 
@@ -111,7 +111,7 @@ Inspector 状态提示与一键修复：Addressable 场景青色；引用悬空�
 
 ## 设计边界
 
-- **Odin Inspector 边界** — Odin 只是面板样式增强：`SceneAssetWrapper` 的 Inspector 拖拽赋值、状态着色与一键修复按钮，装 Odin 时由 Processor 面板提供，**未装 Odin 时由原生 PropertyDrawer 兜底（等价信息量）**；`SceneModuleConfigSO` 的启动场景与进度上限在两种环境下都可在 Project 窗口直接编辑（未装 Odin 由原生 CustomEditor 兜底）。纯代码路径（`FromScenePath` 构造、TryGet 家族）始终可用。
+- **Odin Inspector 边界** — Odin 只是面板样式增强：`SceneAssetWrapper` 的 Inspector 拖拽赋值、状态着色与一键修复按钮由零 Odin 的 `SceneAssetWrapperDrawer` 提供（UI Toolkit 优先 / IMGUI 兜底），装了 Odin 可在 `Preferences → Aesir` 一键切回 Processor 面板；**运行时类型本身不含任何 Odin 引用**。`SceneModuleConfigSO`（`Resources` 下、随构建分发的运行时配置 SO）的启动场景与进度上限在两种环境下都可编辑；偏好开关则存在 Editor 专属的 `AesirInspectorStyleSettingsSO` 中（只在编辑器读取、不进构建）——一个管游戏怎么加载场景，一个管编辑器怎么显示，职责不交叉。纯代码路径（`FromScenePath` 构造、TryGet 家族）始终可用。
 - **Addressable 场景不经 SceneModule 加载** — wrapper 提供地址缓存（`Address` / `TryGetAddress`），加载/卸载请直接调用 Addressables API（如 `Addressables.LoadSceneAsync(wrapper.Address)`）。
 - **重复叠加同一路径后果自负** — Unity 会加载两个实例而追踪只记一条，卸载只移除其一；请勿对同一路径重复 `LoadSceneAdditive`。
 - **启动场景分工** — 运行时 `SceneModule` 只持有 `bootstrapScene` 引用供用户代码读取（`BootstrapSceneAssetWrapper`：实例序列化字段优先、未赋值时回退配置资产 `SceneModuleConfigSO` 的全局启动场景），不做自动流转；BuildSettings 序号 0 与进 Play 强制打开 Bootstrap 由编辑器 `BootstrapSceneHelper` 负责（默认关闭）。
