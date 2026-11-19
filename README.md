@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面 + 多注册表）、事件模块、音频管理、场景管理工具与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.34.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.33.0`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.34.0`）
 
 ## 模块总览
 
@@ -25,7 +25,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.33.0（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.34.0（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。Odin 只负责面板样式增强：**Scene 模块的 `SceneAssetWrapper` 拖拽赋值、着色与一键修复按钮**，装 Odin 时由 Processor 面板提供，未装时由原生 PropertyDrawer 兜底（等价信息量）；`SceneModuleConfigSO` 的配置项在两种环境下都可编辑（未装 Odin 走原生 CustomEditor）。纯代码路径（`FromScenePath` 构造 / `SceneAsset` 代码赋值 / TryGet 家族）始终可用。
 
 ## 目录组织
@@ -94,7 +94,7 @@ https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest
 | `UIMaskMode` | Engine | 窗口蒙版调度模式：单遮（仅最高层可见窗口的蒙版生效）/ 叠遮（各窗口蒙版独立生效），初始值配置于 `UIModuleConfigSO`、运行时可切换 |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | 可插拔资源加载契约与默认实现（Resources 目录）。加载契约为**同步语义**：适用于 Resources、同步缓存等管线；Addressables 等异步管线需自行预加载后同步返回 |
 | `UICanvasConfigSO` | Asset | Canvas 配置资产：`ApplyToCanvas` 配置屏幕空间层 / 窗口根 Canvas，`ApplyToWorldSpaceCanvas` 配置世界空间 Canvas；`CreateWorldSpaceDefault()` 生成世界空间内存预设（可经 Create 菜单创建默认资产） |
-| `UIModuleConfigSO` | Asset | UI 模块全局配置资产（单例）：蒙版调度模式等模块级配置，编辑器自动创建于 Resources（`UIModuleConfig/UIModuleConfig`），可注册自定义加载器替代 Resources 兜底 |
+| `UIModuleConfigSO` | Asset | UI 模块全局配置资产（单例）：蒙版调度模式等模块级配置，可显式创建于 Resources（`UIModuleConfig/UIModuleConfig`，菜单 `Tools/Aesir/Modules/Create Module Config Assets`），可注册自定义加载器；缺资产时用内存默认配置 |
 | `UILayer` | Engine | 层级枚举：Background / Normal / Popup / Top |
 
 ### 快速开始
@@ -169,7 +169,7 @@ SettingWindow（根：Canvas + CanvasScaler + GraphicRaycaster + 窗口脚本）
 └── Content     实际 UI 元素容器（框架不触碰）
 ```
 
-蒙版由 `UIModule` 统一调度（初始值配置于 `UIModuleConfigSO` 单例资产，编辑器自动创建在 `Assets/Resources/UIModuleConfig/`，不要求预放置 `[UIModule]`；彻底放弃 Resources 时可经 `UIModuleConfigSO.RegisterConfigLoader` 注册自定义加载器；运行时经 `UIModule.Instance.MaskMode` 切换）：**单遮**（默认）= 全局仅最高层可见窗口的蒙版生效，多窗口叠加透明度不叠加；**叠遮** = 各窗口蒙版独立跟随自身打开状态。蒙版点击经 Button 自动接线回调 `OnMaskClicked()`，默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口。无 `Mask` 子物体的窗口（如全屏不透明加载页）不参与遮挡。
+蒙版由 `UIModule` 统一调度（初始值配置于 `UIModuleConfigSO` 单例资产，可在 Project 窗口显式创建于 `Assets/Resources/UIModuleConfig/` 或点菜单 `Tools/Aesir/Modules/Create Module Config Assets` 一键生成——**包导入时不会写用户工程**，不要求预放置 `[UIModule]`；彻底放弃 Resources 时可经 `UIModuleConfigSO.RegisterConfigLoader` 注册自定义加载器；两者都没有时用内存默认配置；运行时经 `UIModule.Instance.MaskMode` 切换）：**单遮**（默认）= 全局仅最高层可见窗口的蒙版生效，多窗口叠加透明度不叠加；**叠遮** = 各窗口蒙版独立跟随自身打开状态。蒙版点击经 Button 自动接线回调 `OnMaskClicked()`，默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口。无 `Mask` 子物体的窗口（如全屏不透明加载页）不参与遮挡。
 
 **Panel 与 Window 的选型**：常驻 HUD、非模态并存的信息/列表面板用 **Panel**（共享层 Canvas，同图集合批友好，项目默认主形态）；模态弹窗、全屏流转页（设置/暂停/结算/加载）、需要独立排序或渲染隔离的浮层用 **Window**。两种形态 API 与生命周期对称，按需混用成立（窗口恒在面板之上）；一个项目通常只选一种主形态。完整对比见 [Documentation~/ui-module.md](./Documentation~/ui-module.md)。
 
@@ -212,7 +212,7 @@ Runtime/UI/                        # 汇入核心运行时程序集（层根锚�
 └── OdinInspector/Binder/          # Binder 全家桶（经 asmref 汇入 Odin 程序集）
 Editor/UI/                         # 汇入核心编辑器程序集（层根锚点）
 ├── UIModuleMenuItems.cs           # Create UIRoot / Default UICanvasConfig 菜单项
-├── UIModuleConfigAssetInitializer.cs # UIModuleConfig 兜底资产自动创建（编辑模式域加载后）
+├── UIModuleConfigAssetInitializer.cs # UIModuleConfig 资产显式创建入口（幂等；导入时不自动执行，菜单见 Editor/Common/ModuleConfigAssetsMenuItem.cs）
 └── OdinInspector/                 # Odin AttributeProcessors（经 asmref 汇入 Odin 编辑器程序集）
 ```
 
@@ -425,7 +425,7 @@ Editor/Audio/                     # 汇入核心编辑器程序集（层根锚�
 | 类型 | 说明 |
 |------|------|
 | `SceneModule` | 场景管理单例：Single/Additive 加载（完成/失败/进度回调）、卸载、重载、激活场景切换、`SceneLoadedEvent` / `SceneUnloadedEvent` 场景事件广播、DDOL 序列化配置 |
-| `SceneModuleConfigSO` | 模块全局配置资产（单例）：全局启动场景兜底 + 加载进度归一化上限；编辑器自动创建于 Resources（`SceneModuleConfig/SceneModuleConfig`），可注册自定义加载器替代 Resources 兜底 |
+| `SceneModuleConfigSO` | 模块全局配置资产（单例）：全局启动场景兜底 + 加载进度归一化上限；可显式创建于 Resources（`SceneModuleConfig/SceneModuleConfig`，菜单 `Tools/Aesir/Modules/Create Module Config Assets`），可注册自定义加载器替代 Resources 兜底；缺资产时用内存默认配置 |
 | `SceneAssetWrapper` | 可序列化场景引用：GUID 锚点自愈（移动/重命名免疫、断链自恢复）、状态机校验（`State` / `UnsafeReason`）、`TryGet` 安全读取家族；安装 Addressables 时自动扩展地址查询能力。Inspector 面板效果（拖拽/着色/一键修复）需 Odin Inspector，未安装时仅保证 API 可用。功能设计参考 [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference) |
 | `SceneAssetWrapperState` / `SceneAssetWrapperUnsafeReason` | 引用状态（Regular/Addressable/Unsafe）与不安全原因枚举 |
 | `SceneAssetWrapperAddressablesBridge` | Addressables 编辑器能力静态桥（核心程序集零 Addressables 依赖，未装包自动隐藏） |
@@ -527,7 +527,7 @@ Editor/Scene/                      # 汇入核心编辑器程序集（层根锚�
 ├── BootstrapSceneHelper.cs        # Bootstrapper 场景搜集注册工具（默认关闭）
 ├── OdinInspector/                  # 汇入 Odin 编辑器程序集
 │   └── SceneModuleSettingsWindowOdin.cs  # 设置窗口 Odin 版（InlineEditor 展示设置单例，经 asmref 汇入，无 Odin 整体排除）
-├── SceneModuleConfigAssetInitializer.cs  # SceneModuleConfig 兜底资产自动创建（编辑模式域加载后）
+├── SceneModuleConfigAssetInitializer.cs  # SceneModuleConfig 资产显式创建入口（幂等；导入时不自动执行，菜单见 Editor/Common/ModuleConfigAssetsMenuItem.cs）
 ├── SceneEditorSettings.cs         # 编辑器持久化设置
 ├── Tests/                         # EditMode 测试（SceneAssetWrapper 27 用例 + SceneModule 24 用例，含静态门面契约）；真实加载成功路径另见包根 Tests/Runtime 的 PlayMode 用例
 ├── OdinInspector/                 # SceneAssetWrapper Processor（经 asmref 汇入）

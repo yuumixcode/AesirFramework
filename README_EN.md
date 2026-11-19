@@ -3,13 +3,13 @@
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (single facade + multiple registries), an event module, audio management, scene management tooling, and a script documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.34.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.33.0`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.34.0`)
 
 ## Modules
 
@@ -25,7 +25,7 @@ Functional module package for Aesir Architecture (RAA). Currently provides a UI 
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.33.0 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.34.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation; auto-excluded when not installed. Odin is a panel styling enhancement only: the Scene module's `SceneAssetWrapper` drag-assign, coloring and one-click fix buttons are provided by the Odin processor panel when Odin is installed, and by a native PropertyDrawer fallback (equivalent information) when not; `SceneModuleConfigSO` settings are editable in both environments (native CustomEditor fallback without Odin). The pure-code path (`FromScenePath` construction / `SceneAsset` code assignment / TryGet family) always works.
 
 ## Directory Layout
@@ -94,7 +94,7 @@ Download `AesirModules-v<version>.unitypackage` (or the combined `AesirFramework
 | `UIMaskMode` | Engine | Window mask scheduling mode: single (only the topmost visible window's mask is active) / stacked (each window's mask follows its own visibility); initial value configured on `UIModuleConfigSO`, switchable at runtime |
 | `IUIAssetLoader` / `ResourcesUILoader` | Engine | Pluggable asset loading contract and default implementation (Resources folder). The contract is **synchronous**: suitable for Resources, synchronous caches and similar pipelines; async pipelines such as Addressables must be preloaded and returned synchronously |
 | `UICanvasConfigSO` | Asset | Canvas config asset: `ApplyToCanvas` for screen-space layer/window roots, `ApplyToWorldSpaceCanvas` for world-space Canvases; `CreateWorldSpaceDefault()` builds the in-memory world-space preset (a default asset can be created from the Create menu) |
-| `UIModuleConfigSO` | Asset | UI module global config asset (singleton): module-level settings such as the mask scheduling mode; auto-created under Resources (`UIModuleConfig/UIModuleConfig`) by the editor; a custom loader can replace the Resources fallback |
+| `UIModuleConfigSO` | Asset | UI module global config asset (singleton): module-level settings such as the mask scheduling mode; create it explicitly under Resources (`UIModuleConfig/UIModuleConfig`, menu `Tools/Aesir/Modules/Create Module Config Assets`) or register a custom loader; falls back to an in-memory default when absent (importing the package never writes to your project) |
 | `UILayer` | Engine | Layer enum: Background / Normal / Popup / Top |
 
 ### Quick Start
@@ -167,7 +167,7 @@ SettingWindow (root: Canvas + CanvasScaler + GraphicRaycaster + window script)
 └── Content     Actual UI element container (untouched by the framework)
 ```
 
-Masks are scheduled centrally by `UIModule` (initial value configured on the `UIModuleConfigSO` singleton asset, auto-created by the editor under `Assets/Resources/UIModuleConfig/` — no pre-placed `[UIModule]` required; projects abandoning Resources entirely can register a custom loader via `UIModuleConfigSO.RegisterConfigLoader`; switchable at runtime via `UIModule.Instance.MaskMode`): **single** (default) = only the topmost visible window's mask is active, so stacked windows do not stack opacity; **stacked** = each window's mask independently follows its own visibility. Mask clicks are wired automatically through the Button and call the `OnMaskClicked()` virtual — by default `closeOnMaskClick` (default false) decides whether the window closes. Windows without a `Mask` child (e.g. opaque fullscreen loading pages) simply do not participate in masking.
+Masks are scheduled centrally by `UIModule` (initial value configured on the `UIModuleConfigSO` singleton asset — create it explicitly under `Assets/Resources/UIModuleConfig/` or via the menu `Tools/Aesir/Modules/Create Module Config Assets`; **importing the package never writes to your project**; no pre-placed `[UIModule]` required; projects abandoning Resources entirely can register a custom loader via `UIModuleConfigSO.RegisterConfigLoader`; with neither present an in-memory default is used; switchable at runtime via `UIModule.Instance.MaskMode`): **single** (default) = only the topmost visible window's mask is active, so stacked windows do not stack opacity; **stacked** = each window's mask independently follows its own visibility. Mask clicks are wired automatically through the Button and call the `OnMaskClicked()` virtual — by default `closeOnMaskClick` (default false) decides whether the window closes. Windows without a `Mask` child (e.g. opaque fullscreen loading pages) simply do not participate in masking.
 
 **Panel vs. Window**: for persistent HUDs and co-existing non-modal info/list panels, use **Panel** (shared layer Canvas, batching-friendly; the default form for most projects); for modal popups, fullscreen flow pages (settings / pause / results / loading), and overlays needing independent sorting or render isolation, use **Window**. The two forms have symmetric APIs and lifecycles and can be mixed as needed (windows always render above panels); a project usually picks one primary form. Full comparison in [Documentation~/ui-module.md](./Documentation~/ui-module.md).
 
@@ -210,7 +210,7 @@ Runtime/UI/                        # joins the core runtime assembly (layer-root
 └── OdinInspector/Binder/          # Binder family (joined into the Odin assembly via asmref)
 Editor/UI/                         # joins the core editor assembly (layer-root anchor)
 ├── UIModuleMenuItems.cs           # Create UIRoot / Default UICanvasConfig menu items
-├── UIModuleConfigAssetInitializer.cs # auto-creates the UIModuleConfig fallback asset (after editor-mode domain load)
+├── UIModuleConfigAssetInitializer.cs # explicit, idempotent UIModuleConfig creation entry point (not run on import; menu lives in Editor/Common/ModuleConfigAssetsMenuItem.cs)
 └── OdinInspector/                 # Odin AttributeProcessors (joined into the Odin editor assembly via asmref)
 ```
 
@@ -427,7 +427,7 @@ Editor/Audio/                     # joins the core editor assembly (layer-root a
 | Type | Description |
 |------|------|
 | `SceneModule` | Scene management singleton: Single/Additive loading (completion/failure/progress callbacks), unloading, reload, active-scene switching, `SceneLoadedEvent` / `SceneUnloadedEvent` lifecycle broadcast, DDOL serialized setting |
-| `SceneModuleConfigSO` | Module-global config asset (singleton): global bootstrap-scene fallback + load-progress normalization cap; the editor auto-creates it under Resources (`SceneModuleConfig/SceneModuleConfig`) and a custom loader can replace the Resources fallback |
+| `SceneModuleConfigSO` | Module-global config asset (singleton): global bootstrap-scene fallback + load-progress normalization cap; create it explicitly under Resources (`SceneModuleConfig/SceneModuleConfig`, menu `Tools/Aesir/Modules/Create Module Config Assets`) or register a custom loader; falls back to an in-memory default when absent |
 | `SceneAssetWrapper` | Serializable scene reference: GUID-anchor self-healing (rename/move immune, broken-ref recovery), state-machine validation (`State` / `UnsafeReason`), `TryGet` safe-read family; address-query capability extends automatically when Addressables is installed. Inspector experience (drag-assign, coloring, one-click fixes): Odin processor panel when Odin is installed, native PropertyDrawer fallback otherwise. Functional design references [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference) |
 | `SceneAssetWrapperState` / `SceneAssetWrapperUnsafeReason` | Reference state (Regular/Addressable/Unsafe) and unsafe-reason enums |
 | `SceneAssetWrapperAddressablesBridge` | Addressables editor capability static bridge (zero Addressables dependency in the core assembly; hidden automatically when the package is absent) |
@@ -534,7 +534,7 @@ Editor/Scene/                      # joins the core editor assembly (layer-root 
 ├── OdinInspector/                  # Folded into the Odin editor assembly
 │   └── SceneModuleSettingsWindowOdin.cs  # Odin-flavoured settings window (InlineEditor of the settings singleton; joined via asmref, excluded entirely without Odin)
 ├── BootstrapSceneHelper.cs        # Bootstrap scene registration tool (off by default)
-├── SceneModuleConfigAssetInitializer.cs  # auto-creates the SceneModuleConfig fallback asset (after editor-mode domain load)
+├── SceneModuleConfigAssetInitializer.cs  # explicit, idempotent SceneModuleConfig creation entry point (not run on import; menu lives in Editor/Common/ModuleConfigAssetsMenuItem.cs)
 ├── SceneEditorSettings.cs         # Editor persisted settings
 ├── Tests/                         # EditMode tests (SceneAssetWrapper 27 cases + SceneModule 24 cases, incl. the static-facade contract); real load success paths covered by the PlayMode suite in the package-root Tests/Runtime
 ├── OdinInspector/                 # SceneAssetWrapper Processor (joined via asmref)
