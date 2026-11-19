@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Runestone.AesirArchitecture.Samples
 {
     /// <summary>
-    /// AesirTimer 用法演示：一次性延时、下一帧、按间隔重复、实例级暂停 / 恢复 / 重开 / 取消，
-    /// 以及"每帧只读查询画进度条"的用法。
+    /// AesirTimer 用法演示：一次性延时、下一帧、按间隔重复、秒表、区间、频率，
+    /// 实例级暂停 / 恢复 / 重开 / 取消，以及"每帧只读查询画进度条"的用法。
     /// </summary>
     /// <remarks>
     ///     <para>
@@ -69,7 +69,12 @@ namespace Runestone.AesirArchitecture.Samples
         AesirTimer _cooldown;
         AesirTimer _repeats;
         AesirTimer _heartbeat;
+        AesirTimer _stopwatch;
+        AesirTimer _interval;
+        AesirTimer _frequency;
         int _repeatTick;
+        int _intervalTick;
+        int _frequencyTick;
 
         void Awake()
         {
@@ -127,6 +132,46 @@ namespace Runestone.AesirArchitecture.Samples
             ? "[AesirTimer] 冲刺成功"
             : $"[AesirTimer] 冲刺冷却中，还需 {_dash.Remaining:0.00} 秒");
 
+        [ContextMenu("⑦ 秒表开始/读取（Stopwatch）")]
+        internal void ToggleStopwatch()
+        {
+            if (IsAlive(_stopwatch))
+            {
+                Debug.Log($"[AesirTimer] 秒表已走 {((StopwatchTimer)_stopwatch).Elapsed:0.00} 秒");
+                return;
+            }
+
+            _stopwatch = AesirTimer.Stopwatch();
+        }
+
+        [ContextMenu("⑧ 区间触发：3 秒每 0.5 秒（Interval）")]
+        internal void StartInterval()
+        {
+            _interval?.Cancel();
+            _intervalTick = 0;
+            _interval = AesirTimer.Interval(3f, 0.5f,
+                () => Debug.Log($"[AesirTimer] 区间 {++_intervalTick}/6 次"));
+        }
+
+        [ContextMenu("⑨ 频率触发：每秒 4 次（Frequency）")]
+        internal void ToggleFrequency()
+        {
+            if (IsAlive(_frequency))
+            {
+                _frequency.Cancel();
+                return;
+            }
+
+            _frequencyTick = 0;
+            _frequency = AesirTimer.Frequency(4, () =>
+            {
+                if (++_frequencyTick % 4 == 0)
+                {
+                    Debug.Log($"[AesirTimer] 频率累计 {_frequencyTick} 次");
+                }
+            });
+        }
+
         [ContextMenu("暂停全部（Pause）")]
         internal void PauseAll()
         {
@@ -134,6 +179,9 @@ namespace Runestone.AesirArchitecture.Samples
             _cooldown?.Pause();
             _repeats?.Pause();
             _heartbeat?.Pause();
+            _stopwatch?.Pause();
+            _interval?.Pause();
+            _frequency?.Pause();
             _dash.Pause();
         }
 
@@ -144,6 +192,9 @@ namespace Runestone.AesirArchitecture.Samples
             _cooldown?.Resume();
             _repeats?.Resume();
             _heartbeat?.Resume();
+            _stopwatch?.Resume();
+            _interval?.Resume();
+            _frequency?.Resume();
             _dash.Resume();
         }
 
@@ -166,11 +217,17 @@ namespace Runestone.AesirArchitecture.Samples
             _cooldown?.Cancel();
             _repeats?.Cancel();
             _heartbeat?.Cancel();
+            _stopwatch?.Cancel();
+            _interval?.Cancel();
+            _frequency?.Cancel();
 
             _delay = null;
             _cooldown = null;
             _repeats = null;
             _heartbeat = null;
+            _stopwatch = null;
+            _interval = null;
+            _frequency = null;
 
             _dash.Reset();
         }
@@ -223,6 +280,9 @@ namespace Runestone.AesirArchitecture.Samples
             buffer.Add(DescribeTimer("② 冷却 Countdown", _cooldown));
             buffer.Add(DescribeTimer("③ 有限重复 Every", _repeats));
             buffer.Add(DescribeTimer("④ 心跳 Every ∞", _heartbeat));
+            buffer.Add(DescribeStopwatch("⑦ 秒表 Stopwatch", _stopwatch as StopwatchTimer));
+            buffer.Add(DescribeTimer("⑧ 区间 Interval", _interval));
+            buffer.Add(DescribeTimer("⑨ 频率 Frequency", _frequency));
             buffer.Add(DescribeCooldown("⑥ 冲刺（纯 C# 模型）", _dash));
         }
 
@@ -262,6 +322,18 @@ namespace Runestone.AesirArchitecture.Samples
             return new TimerRow(label, state, detail, timer.Progress, color);
         }
 
+        static TimerRow DescribeStopwatch(string label, StopwatchTimer stopwatch)
+        {
+            if (stopwatch == null)
+            {
+                return new TimerRow(label, "未创建", "由 AesirTimer.Stopwatch 创建", 0f, IdleColor);
+            }
+
+            var state = stopwatch.IsCancelled ? "已取消" : stopwatch.IsPaused ? "已暂停" : "计时中";
+            var color = stopwatch.IsCancelled ? IdleColor : stopwatch.IsPaused ? WaitingColor : ReadyColor;
+            return new TimerRow(label, state, $"已走 {stopwatch.Elapsed:0.00}s", 0f, color);
+        }
+
         static TimerRow DescribeCooldown(string label, SkillCooldown cooldown)
         {
             if (cooldown.IsReady)
@@ -282,7 +354,7 @@ namespace Runestone.AesirArchitecture.Samples
         {
             CaptureRows(_rows);
 
-            GUILayout.BeginArea(new Rect(10f, 10f, PanelWidth, 150f), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10f, 10f, PanelWidth, 210f), GUI.skin.box);
             GUILayout.Label("AesirTimer Sample — 动作在 Play 模式下于 Inspector 点按钮触发");
 
             for (var i = 0; i < _rows.Count; i++)

@@ -125,6 +125,13 @@ namespace Runestone.AesirArchitecture.Samples
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
+                    if (GUILayout.Button("秒表开始/读取")) sample.ToggleStopwatch();
+                    if (GUILayout.Button("区间 3s×0.5s")) sample.StartInterval();
+                    if (GUILayout.Button("频率 4/s")) sample.ToggleFrequency();
+                }
+
+                using (new EditorGUILayout.HorizontalScope())
+                {
                     if (GUILayout.Button("暂停全部")) sample.PauseAll();
                     if (GUILayout.Button("恢复全部")) sample.ResumeAll();
                 }

@@ -37,7 +37,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>单次拉取最多保留的行数。</summary>
         internal const int MaxRows = 200;
 
-        readonly List<AesirTimer> _timers = new List<AesirTimer>();
+        readonly List<AbstractTimer> _timers = new List<AbstractTimer>();
         readonly List<AesirTimerSnapshot> _rows = new List<AesirTimerSnapshot>();
 
         int _frameCounter;
@@ -164,7 +164,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>
         /// 排序：运行中在前、已暂停在后，组内按剩余时间升序（最紧迫的先看）。
         /// </summary>
-        static int CompareByUrgency(AesirTimer a, AesirTimer b)
+        static int CompareByUrgency(AbstractTimer a, AbstractTimer b)
         {
             if (a.IsPaused != b.IsPaused)
             {
