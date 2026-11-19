@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Runestone.AesirArchitecture.Editor;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 
@@ -23,6 +24,13 @@ namespace Runestone.AesirModules.Editor.OdinInspector
         public override void ProcessSelfAttributes(InspectorProperty parentProperty,
             List<Attribute> attributes)
         {
+            if (!AesirInspectorStyleSettings.UseOdin)
+            {
+                // 关闭 Odin 样式时强制让路：否则 Odin 仍接管该字段，SceneAssetWrapperDrawer 不会被调用
+                attributes.Add(new DrawWithUnityAttribute());
+                return;
+            }
+
             attributes.Add(new InlinePropertyAttribute());
 
             // 引用悬空（SceneAsset 丢失但路径残留）→ Error + 修复指引（此前只有颜色信号）
@@ -51,6 +59,11 @@ namespace Runestone.AesirModules.Editor.OdinInspector
             MemberInfo member,
             List<Attribute> attributes)
         {
+            if (!AesirInspectorStyleSettings.UseOdin)
+            {
+                return;
+            }
+
             switch (member.Name)
             {
                 case SceneAssetWrapper.SceneAssetPropertyName:

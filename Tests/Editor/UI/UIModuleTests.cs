@@ -45,7 +45,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             protected override void OnInit() => LifeLog.Add("Init");
 
             // 覆写生命周期时保留 base 调用：base.OnShow/OnHide 负责激活/停用物体，
-            // 是"Awake/OnEnable 推迟到 Show 激活时触发"契约的载体
+            // 是"OnInit/OnShow 驱动、激活态由框架控制"契约的载体
             protected override void OnShow(object payload)
             {
                 base.OnShow(payload);
@@ -233,6 +233,20 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             Assert.IsTrue(panel.IsOpen);
             Assert.AreEqual(new[] { "Init", "Show" }, LifeLog.ToArray());
             Assert.AreSame(panel, module.GetPanel<TestPanel>(), "首次 Show 后应可按实际类型获取");
+        }
+
+        [Test]
+        public void ShowPanel_ActivePrefab_InstanceNameHasNoCloneSuffix()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+            CreateRegisteredPrefab(module);
+
+            var panel = module.ShowPanel<TestPanel>();
+
+            // Instantiate 追加的 "(Clone)" 被复位为来源预制体名
+            Assert.AreEqual("TestPanelPrefab", panel.gameObject.name,
+                "面板实例名应为来源预制体名，不带 (Clone) 后缀");
         }
 
         [Test]
@@ -587,7 +601,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             var panel = module.ShowPanel<LifecycleStatePanel>();
 
             Assert.IsFalse(LifecycleStatePanel.ActiveSelfDuringInit,
-                "OnInit 执行时面板物体应为停用状态（Awake/OnEnable 推迟到 Show 激活才触发）");
+                "OnInit 执行时面板物体应为停用状态（框架在 Instantiate 后立即 SetActive(false)）");
             Assert.IsTrue(panel.gameObject.activeSelf, "Show 完成后面板物体应已激活");
         }
 
@@ -604,7 +618,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
 
             var panel = module.GetPanel<LifecyclePrewarmPanel>();
             Assert.IsFalse(LifecyclePrewarmPanel.ActiveSelfDuringInit, "预热期 OnInit 时物体应为停用状态");
-            Assert.IsFalse(panel.gameObject.activeSelf, "预热后面板物体应保持停用（Awake/OnEnable 未触发）");
+            Assert.IsFalse(panel.gameObject.activeSelf, "预热后面板物体应保持停用（首次 Show 才激活）");
 
             module.ShowPanel<LifecyclePrewarmPanel>();
             Assert.IsTrue(panel.gameObject.activeSelf, "首次 Show 才激活面板物体");

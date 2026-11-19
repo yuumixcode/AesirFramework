@@ -39,13 +39,6 @@ namespace Runestone.AesirModules
         bool dontDestroyOnLoad = true;
 
         /// <summary>
-        /// 停用克隆模板缓存，键 = 来源预制体，值 = 该预制体的停用模板克隆体（见 <see cref="InstantiateInactive" />）。
-        /// 非序列化，随本组件实例存活；模板物体挂在本组件下，随本组件所属 GameObject（或场景卸载）一并回收。
-        /// </summary>
-        readonly Dictionary<GameObject, GameObject> _inactiveTemplates =
-            new Dictionary<GameObject, GameObject>();
-
-        /// <summary>
         /// 面板实例注册表，键 = 面板实例的实际类型。
         /// 激活/停用状态由面板自身的 <see cref="IUIPanel.IsOpen" /> 承担，注册表不重复记录，
         /// 由此排除多表不一致的可能。Show/Hide/Get 须以同一实际类型调用；
@@ -79,9 +72,6 @@ namespace Runestone.AesirModules
 
         /// <summary><see cref="_maskMode" /> 是否已从配置解析。</summary>
         bool _maskModeResolved;
-
-        /// <summary>停用模板容器（模板克隆体的父物体），恒为停用；惰性创建，随本组件所属 GameObject 回收。</summary>
-        GameObject _templateContainer;
 
         UIRoot _uiRoot;
 
@@ -1048,58 +1038,25 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// 以停用状态实例化预制体：克隆体创建时不触发 Awake/OnEnable。
+        /// 以停用状态实例化预制体：先 <see cref="Object.Instantiate(GameObject)" /> 克隆体，再立即 <c>SetActive(false)</c>。
         /// <para>
-        /// 不对来源预制体做 SetActive(false) → 恢复 的临时切换：来源可能是 <c>Resources.Load</c> 得到的资产
-        /// 或用户注册的资产引用，属共享对象，在编辑器中改动其 activeSelf 会把资产标记为脏
-        /// （Project 窗口星号、改动可能留存到退出 Play 模式之后）。改为按来源预制体缓存一份停用模板克隆体，
-        /// 每个预制体至多克隆一次，此后 <c>Instantiate(template)</c> 因模板自身停用而天然不触发 Awake/OnEnable，
-        /// 来源资产全程只读。
+        /// 框架约定面板 / 窗口不写 <c>Awake</c> / <c>OnEnable</c>——生命周期由 UIModule 显式驱动的
+        /// <c>OnInit</c> / <c>OnShow</c> 承担，这两个原生回调在框架基类里为空。因此克隆体创建瞬间即便因来源 active
+        /// 而跑一次空的 Awake/OnEnable，也完全幂等、无副作用；随后 SetActive(false) 进入停用态，
+        /// <c>Initialize</c>（OnInit）在停用态执行，直到 <c>OnShow</c> 内 <c>SetActive(true)</c> 才激活。
         /// </para>
         /// <para>
-        /// <b>代价（有意承担的常驻开销）</b>：每个被实例化过的预制体各留一份完整层级克隆体
-        /// （挂在 <c>[UIModule]InactiveTemplates</c> 容器下）存活至本模块所属 GameObject 被销毁为止；
-        /// 模板持有来源预制体引用，故不会被 <c>Resources.UnloadUnusedAssets</c> 回收。
-        /// 面板/窗口预制体数量有限，该开销约等于"每个预制体多一份未激活实例"。
+        /// 来源资产全程只读：SetActive 作用在克隆体上，不碰 <c>Resources.Load</c> 返回的共享资产对象。
+        /// 实例名复位为来源预制体名（去掉 <see cref="Object.Instantiate(GameObject)" /> 追加的 "(Clone)"），
+        /// 便于层级展示与诊断文本对照；名称不参与任何查找，注册表始终以面板/窗口实际类型为键。
         /// </para>
         /// </summary>
         GameObject InstantiateInactive(GameObject prefab)
         {
-            // 来源自身即停用：克隆体天然为停用，无需模板
-            if (!prefab.activeSelf)
-            {
-                return Instantiate(prefab);
-            }
-
-            return Instantiate(GetInactiveTemplate(prefab));
-        }
-
-        /// <summary>
-        /// 取指定来源预制体的停用模板克隆体，缺失时创建并缓存（每个预制体至多克隆一次）。
-        /// 模板挂在恒停用的容器下，随<b>本组件所属 GameObject</b>（或场景卸载）一并回收。
-        /// </summary>
-        GameObject GetInactiveTemplate(GameObject prefab)
-        {
-            // 模板本体被外部销毁时重建；键为已销毁来源预制体的陈旧条目不影响正确性（不再命中即重建）。
-            // 已知残留：来源预制体销毁后该键不清理，属"每个预制体一条"的有界条目
-            if (_inactiveTemplates.TryGetValue(prefab, out var template) && template != null)
-            {
-                return template;
-            }
-
-            if (_templateContainer == null)
-            {
-                _templateContainer = new GameObject("[UIModule]InactiveTemplates");
-                _templateContainer.SetActive(false);
-                _templateContainer.transform.SetParent(transform, false);
-            }
-
-            // 挂入停用容器（instantiateInWorldSpace: false——取预制体自身局部变换，不因容器位置产生偏移）
-            // 再显式停用：容器停用时克隆体不触发 Awake/OnEnable，显式 SetActive 兜底不依赖该行为
-            template = Instantiate(prefab, _templateContainer.transform, false);
-            template.SetActive(false);
-            _inactiveTemplates[prefab] = template;
-            return template;
+            var instance = UnityEngine.Object.Instantiate(prefab);
+            instance.SetActive(false);
+            instance.name = prefab.name;
+            return instance;
         }
 
         /// <summary>

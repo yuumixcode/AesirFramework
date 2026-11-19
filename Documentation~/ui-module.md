@@ -42,6 +42,8 @@ ResolvePrefab → InstantiateInactive（停用克隆，不触发 Awake/OnEnable�
 
 再次 Show（激活或停用面板）不会重走 Initialize，只做置顶（`SetAsLastSibling`）+ 重新 `OnShow(payload)`。
 
+> 为什么现在直接 `Instantiate → SetActive(false)`、以及曾经"克隆停用模板"机制为何被移除（一次防御性编程过头的复盘），见 [ui-instantiation-mechanism.md](ui-instantiation-mechanism.md)。
+
 ### OnClose 与 OnDestroy 的职责分界
 
 | 路径 | 触发的回调 |
@@ -100,7 +102,7 @@ UIModule.RegisterWindowPrefab<SettingWindow>(prefab);
 - **资源路径传参**：`Show<T>()` / `Open<T>()` 均有 `path:` 双参版与 **`Show<T>(string path)` 单参重载**——位置参数直接传路径（`Show<T>("UI/Xxx")`）即可命中 path 形参；此前的陷阱是字符串会被第一形参 `object payload` 吞掉、随后报"未注册且未提供 path"且不揭示真因，新重载已消除。`path` 经加载器加载后自动注册，后续同类型直接 `Show<T>()` 不必再传。
 - **经引用注册后带 path 调用**：输出"path 被忽略"警告（引用注册条目不走 path 加载）。
 - **查询类静态 API 为纯查询**：`Get<T>()` / `ContainPrefab<T>()` / `GetWindow<T>()` / `ContainWindowPrefab<T>()` 无模块实例时返回 `null` / `false`，**不创建** `[Aesir Modules]` 宿主树——编辑器期探测"面板是否在场"可放心调用。
-- **生命周期错配告警**：UIRoot 常驻（DDOL）而模块实例可能随场景卸载被重建——新建同类型面板/窗口时若 UIRoot 子树存在不在本实例注册表中的同类实例（上一场景遗留），输出警告提示共存风险。
+- **生命周期错配告警**：UIRoot 常驻（默认 DDOL）而模块实例可能随场景卸载被重建——新建同类型面板/窗口时若 UIRoot 子树存在不在本实例注册表中的同类实例（上一场景遗留），输出警告提示共存风险。告警文本中的实例名已复位为来源预制体名（无 `(Clone)` / `(Clone)(Clone)` 后缀），可直接与预制体对照。采用下方"UI 独立场景 + 叠加加载"方案时 UIModule/UIRoot 一同随 UI 场景卸载重建，不会出现此类孤儿。
 
 ### 蒙版机制（单遮 / 叠遮）
 
@@ -113,7 +115,7 @@ UIModule.RegisterWindowPrefab<SettingWindow>(prefab);
 
 蒙版点击：`Mask` 子物体挂 `Button` 时由基类在 `OnInit` 自动接线，回调虚方法 `OnMaskClicked()`——默认按 `closeOnMaskClick`（默认 false）决定是否关闭本窗口，子类可覆写自定义行为（如提示「先完成当前操作」）。无 `Mask` 子物体的窗口（如全屏不透明加载页）对蒙版调度为无操作，天然不参与遮挡。
 
-蒙版模式的初始值配置于 **`UIModuleConfigSO`**（单例配置资产，编辑器首次导入时自动创建在 `Assets/Resources/UIModuleConfig/UIModuleConfig.asset`）：在 Project 窗口直接编辑资产即可生效，不要求预放置 `[UIModule]`。运行时解析顺序：①`UIModuleConfigSO.RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销）；②Resources 兜底（`Resources/UIModuleConfig/UIModuleConfig`）；③内存默认实例。运行时经 `UIModule.Instance.MaskMode` 切换只覆盖内存值，不改写配置资产。
+蒙版模式的初始值配置于 **`UIModuleConfigSO`**（单例配置资产）：在 Project 窗口显式创建于 `Assets/Resources/UIModuleConfig/UIModuleConfig.asset`，或点菜单 `Tools/Aesir/Modules/Create Module Config Assets` 一键生成（**包导入时不会写用户工程**），之后直接编辑资产即可生效，不要求预放置 `[UIModule]`。运行时解析顺序：①`UIModuleConfigSO.RegisterConfigLoader` 注册的加载器（注册后 Resources 兜底不再执行，供彻底放弃 Resources 的项目；重复注册 fail-fast，`UnregisterConfigLoader` 幂等注销）；②Resources 兜底（`Resources/UIModuleConfig/UIModuleConfig`）；③内存默认实例（前两级都没命中时，缺资产也能跑）。运行时经 `UIModule.Instance.MaskMode` 切换只覆盖内存值，不改写配置资产。
 
 ## 世界空间 UI Canvas 预设
 
@@ -207,6 +209,19 @@ public interface IUIAssetLoader
 - 配置不管理预制体内自行添加的子 Canvas。
 
 **世界空间链**（`ApplyToWorldSpaceCanvas`）：`UIRoot.WorldSpaceCanvasConfig` 引用一份世界空间配置（未在 Inspector 赋值时回退内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`），由 `WorldSpaceUICanvas` 在 `Build()` 时应用。世界空间专用字段：`Dynamic Pixels Per Unit`（默认 100，决定 UI 在世界中的物理大小）、`Reference Pixels Per Unit`（默认 100，影响字体 / 精灵基准尺寸）；屏幕缩放字段（`ScaleMode` / `ReferenceResolution` 等）不参与世界空间配置。
+
+## UI 场景生命周期（推荐方案，非默认）
+
+框架所有模块的 `dontDestroyOnLoad` **默认均为 true**——零配置即可跨场景常驻，开箱即用。中大型项目若希望 UI 随场景回收，采用如下**主动配置**的推荐结构：
+
+| 类别 | 典型类型 | DDOL | 理由 |
+|---|---|---|---|
+| 全局物体 | `AesirArchitecture` / `AesirModules` / `AudioModule` / `SceneModule` / `EventModule` | 保持默认 true | 进程级单例（配置、事件、音频、场景调度），本就跨场景常驻 |
+| UI 宿主 | `UIModule` + `UIRoot` | 预放置为独立 UI 场景根物体，关掉各自 `dontDestroyOnLoad` | UI 场景可 `UnloadScene` 卸载，UI 子树一次性回收 |
+
+- 建独立 `UIScene.unity`，只放 UIModule / UIRoot（均为根物体）及其层级 Canvas，两个组件的 `dontDestroyOnLoad` 取消勾选；用 `LoadSceneAdditive` 叠加载入，`UnloadScene` 卸载即整套 UI 回收。
+- `dontDestroyOnLoad` 字段**仅在预放置为根物体时生效**；运行时自动创建的 UIModule 挂在 `[Aesir Modules]` 宿主下跟随宿主 DDOL，UIRoot 运行时创建同理。因此"UI 场景可卸载"要求主动预放置并关字段，不是改框架默认。
+- 面板/窗口实例挂在 UIRoot 层 Canvas 下，随 UI 场景卸载一并销毁；注册表随 UIModule 重建清零，天然规避旧场景孤儿面板。需跨 UI 场景保留的数据放 DDOL 的 Model（`AbstractContext` 纯 C# 单例），不要放面板字段。
 
 ## 设计边界
 

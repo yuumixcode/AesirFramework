@@ -4,7 +4,7 @@ namespace Runestone.AesirModules
 {
     /// <summary>
     /// 窗口蒙版调度模式，初始值配置于 <see cref="UIModuleConfigSO" />（Resources 兜底资产，
-    /// 编辑器自动创建），运行时可经 <see cref="UIModule.MaskMode" /> 切换。
+    /// 可显式创建；缺资产时用内存默认配置），运行时可经 <see cref="UIModule.MaskMode" /> 切换。
     /// </summary>
     public enum UIMaskMode
     {
