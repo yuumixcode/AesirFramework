@@ -20,15 +20,22 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
         [SerializeField]
         Text logText;
 
-        void OnEnable()
+        protected override void OnInit()
         {
+            base.OnInit();
             _instance = this;
             SampleUIFonts.Apply(transform);
+        }
+
+        protected override void OnShow(object payload)
+        {
+            base.OnShow(payload); // 激活物体（base 默认实现为 SetActive(true)）
             RefreshLog();
         }
 
-        void OnDisable()
+        protected override void OnDestroy()
         {
+            base.OnDestroy(); // 反注册面板记录，勿漏
             if (_instance == this)
             {
                 _instance = null;

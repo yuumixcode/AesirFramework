@@ -345,6 +345,20 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         }
 
         [Test]
+        public void OpenWindow_ActivePrefab_InstanceNameHasNoCloneSuffix()
+        {
+            var module = CreateModule();
+            TrackUIRoot();
+            CreateRegisteredWindowPrefab(module);
+
+            var window = module.OpenWindow<TestWindow>();
+
+            // Instantiate 追加的 "(Clone)" 被复位为来源预制体名
+            Assert.AreEqual("TestWindowPrefab", ((MonoBehaviour)window).gameObject.name,
+                "窗口实例名应为来源预制体名，不带 (Clone) 后缀");
+        }
+
+        [Test]
         public void OpenWindow_AttachesDirectlyUnderUIRoot_AndWiresCanvas()
         {
             var module = CreateModule();
@@ -423,7 +437,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             var window = module.OpenWindow<LifecycleStateWindow>();
 
             Assert.IsFalse(LifecycleStateWindow.ActiveSelfDuringInit,
-                "OnInit 执行时窗口物体应为停用状态（Awake/OnEnable 推迟到 Show 激活才触发，与面板同一契约）");
+                "OnInit 执行时窗口物体应为停用状态（框架在 Instantiate 后立即 SetActive(false)，与面板同一契约）");
             Assert.IsTrue(window.gameObject.activeSelf, "Show 完成后窗口物体应已激活");
         }
 

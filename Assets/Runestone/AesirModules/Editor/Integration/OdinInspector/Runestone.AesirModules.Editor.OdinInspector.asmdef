@@ -5,7 +5,8 @@
     "Runestone.AesirModules",
     "Runestone.AesirModules.Editor",
     "Runestone.AesirModules.OdinInspector",
-    "Runestone.AesirArchitecture"
+    "Runestone.AesirArchitecture",
+    "Runestone.AesirArchitecture.Editor"
   ],
   "includePlatforms": [
     "Editor"
