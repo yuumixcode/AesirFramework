@@ -16,11 +16,7 @@
   "allowUnsafeCode": false,
   "overrideReferences": true,
   "precompiledReferences": [
-    "nunit.framework.dll",
-    "Sirenix.OdinInspector.Attributes.dll",
-    "Sirenix.Serialization.dll",
-    "Sirenix.Serialization.Config.dll",
-    "Sirenix.Utilities.dll"
+    "nunit.framework.dll"
   ],
   "autoReferenced": false,
   "defineConstraints": [
