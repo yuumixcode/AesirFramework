@@ -148,6 +148,8 @@ main:
         wait: true
         timeout: 1800
       retry: 2
+      imports:
+        - https://cnb.cool/runestone-game/secrets/-/blob/main/github.yml
       stages:
         - name: build-unitypackages
           image: python:3.12
@@ -181,3 +183,18 @@ main:
           settings:
             attachments:
               - "./dist/*.unitypackage"
+
+        # GitHub Release 直接由本流水线经 REST API 发布，不依赖 tag-push webhook 触发
+        # auto-release.yml（已实测该触发不可靠：tag 送达但无 PushEvent / 无 run）。
+        # 脚本幂等：先删同 tag 的旧 Release 再重建上传，tag 本身始终归 CNB 管、不触碰。
+        # 用与 git-sync 相同的 PAT（contents: write 即可）；GitHub workflow 保留作幂等兜底。
+        - name: publish-github-release
+          image: python:3.12
+          script: |
+            set -e
+            [ -n "$GIT_ACCESS_TOKEN" ] || { echo "GIT_ACCESS_TOKEN missing"; exit 1; }
+            GITHUB_TOKEN="$GIT_ACCESS_TOKEN" python3 .github/scripts/publish_github_release.py \
+              --owner yuumixcode --repo AesirFramework \
+              --tag "$CNB_BRANCH" \
+              --notes release_notes.md \
+              --assets dist/*.unitypackage
