@@ -68,8 +68,9 @@
 - commit message：`chore: 版本号同步至 x.y.z` + 中文要点 body
 - 推送被拒（fetch first）通常是上一次发版的 CI 回写提交（`chore: 同步 update-info.json 到 vX.Y.Z [skip ci]`）——`git fetch && git rebase origin/main` 后重推
 - 推 `main` 自动触发 `.cnb.yml`：split 两包分支 → 回写 `update-info.json`（带回写提交）→ 滚动 tag `v<版本>` → git-sync 推 GitHub main / 两分支 / tag。**tag 由流水线生成，不要本地手动打 tag**
-- tag 到位后两边各自发 Release（CNB 侧 `v*` tag_push、GitHub 侧 `auto-release.yml`），资产都是 RAA / RAM / RAF 三个 unitypackage
-- 验收：`git ls-remote --tags origin 'v<版本>'` 存在、两包分支已滚动到新提交、CNB 与 GitHub 各有该版本 Release 且资产齐全
+- tag 到位后两边各自发 Release：CNB 侧 `v*` tag_push（build + `git:release` + attachments），**GitHub 侧由同一 CNB 流水线的 `publish-github-release` stage 经 REST API 直发**（`.github/scripts/publish_github_release.py`，幂等 delete→create→upload，token 走 `github.yml` 的 `GIT_ACCESS_TOKEN`）。资产都是 RAA / RAM / RAF 三个 unitypackage
+- **不要指望 GitHub `auto-release.yml` 被 tag 触发**——实测 git-sync 推的 tag 送达 GitHub 但无 PushEvent / 无 run（v0.34.0 起复现）。该 workflow 仅作幂等兜底 + `workflow_dispatch` 手动补发入口；CNB 直发才是主路径
+- 验收：`git ls-remote --tags origin 'v<版本>'` 存在、两包分支已滚动到新提交、`gh release view <tag> --repo yuumixcode/AesirFramework --json assets` 有 RAA/RAM/RAF 三份、CNB 侧 Release 同样齐全
 
 ### 11. 文档仓同批
 
