@@ -64,7 +64,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>到期回调的归属（如 <c>SkillModel.Tick</c>，Lambda 折叠为 <c>SkillModel.Cast λ</c>），null 表示没有回调。</summary>
         internal readonly string Callback;
 
-        AesirTimerSnapshot(AesirTimer timer)
+        AesirTimerSnapshot(AbstractTimer timer)
         {
             HasTimer = true;
             State = timer.State;
@@ -83,7 +83,7 @@ namespace Runestone.AesirArchitecture.Editor
         }
 
         /// <summary>抓取一个实例；null 返回 <see cref="default" />（<see cref="HasTimer" /> 为 false）。</summary>
-        internal static AesirTimerSnapshot Capture(AesirTimer timer) =>
+        internal static AesirTimerSnapshot Capture(AbstractTimer timer) =>
             timer == null ? default : new AesirTimerSnapshot(timer);
 
         /// <summary>
