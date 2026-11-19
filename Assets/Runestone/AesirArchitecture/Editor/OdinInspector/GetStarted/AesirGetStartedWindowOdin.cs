@@ -1129,15 +1129,22 @@ namespace Runestone.AesirArchitecture.Editor
                 const float bottomLineHeight = 20f; // 底部信息行：无场景提示（左）+ 档位徽章（右）
 
                 // 按钮宽度按形态取值：「导入 Sample」（中文 + 空格 + Sample 拉丁词）比「打开场景」宽
+                var hasExtraAction = AesirGetStartedService.TryGetExtraSampleAction(sample, out var extraAction);
                 var buttonWidth = sample.IsImported ? 80 : 96;
+                if (hasExtraAction)
+                {
+                    // 自定义动作文案更长（如「初始化时机设置」），按最长者定列宽
+                    buttonWidth = Mathf.Max(buttonWidth, 112);
+                }
 
                 var badge = AesirGetStartedService.GetSampleBadge(sample);
                 var hasSceneHint = sample.IsImported && !sample.HasScene;
                 var hasBottomLine = badge != null || hasSceneHint;
                 var bottomLine = hasBottomLine ? bottomLineHeight : 0f;
 
-                // 右侧按钮列：已导入有场景 →「打开场景」、未导入 →「导入 Sample」；已导入无场景不占按钮列（描述全宽）
-                var buttonColumnWidth = sample.IsImported && !sample.HasScene ? 0f : buttonWidth + 14f;
+                var hasPrimaryAction = !sample.IsImported || sample.HasScene;
+                var buttonCount = (hasPrimaryAction ? 1 : 0) + (hasExtraAction ? 1 : 0);
+                var buttonColumnWidth = buttonCount > 0 ? buttonWidth + 14f : 0f;
 
                 // 描述换行高度预算：内容区实际宽度须扣掉图标、内边距与按钮列，否则预算行数偏少导致溢出
                 var predicted = _prevWidth - textPadding * 2 - iconWidth - buttonColumnWidth;
@@ -1206,24 +1213,42 @@ namespace Runestone.AesirArchitecture.Editor
                 // 行内按钮（先于整卡按钮绘制：重叠区域命中优先；垂直居中、比例与卡片协调）
                 if (buttonColumnWidth > 0f)
                 {
-                    var buttonRect = rect.Padding(textPadding, 0f).AlignRight(buttonWidth)
-                        .AlignCenterY(buttonHeight);
-                    // 按钮样式用 Button 而非 MiniButton——MiniButton 的背景不随 rect 高度拉伸（恒 ~18px 高
-                    // 且锚在 rect 顶部），加大 rect 只扩点击区不涨可见高度；Button 随 rect 完整渲染
-                    if (GUI.Button(buttonRect, sample.IsImported ? "打开场景" : "导入 Sample",
-                            SirenixGUIStyles.Button))
+                    var columnRect = rect.Padding(textPadding, 0f).AlignRight(buttonWidth);
+                    var slotHeight = columnRect.height / buttonCount;
+                    var slot = 0;
+
+                    // 示例配置入口置于上方；按钮样式用 Button 而非 MiniButton——MiniButton 的背景不随
+                    // rect 高度拉伸（恒 ~18px 高且锚在 rect 顶部），Button 随 rect 完整渲染
+                    if (hasExtraAction)
                     {
-                        if (sample.IsImported)
+                        var extraRect = new Rect(columnRect.x, columnRect.y + slot * slotHeight,
+                            columnRect.width, slotHeight).AlignCenterY(buttonHeight);
+                        if (GUI.Button(extraRect, extraAction.Label, SirenixGUIStyles.Button))
                         {
-                            if (AesirGetStartedService.OpenSampleScene(sample))
-                            {
-                                Window.ShowBottomRightToast(SdfIconType.CheckCircleFill,
-                                    AesirGetStartedService.BuildOpenSceneToastMessage(sample));
-                            }
+                            extraAction.Invoke();
                         }
-                        else
+                        slot++;
+                    }
+
+                    if (hasPrimaryAction)
+                    {
+                        var primaryRect = new Rect(columnRect.x, columnRect.y + slot * slotHeight,
+                            columnRect.width, slotHeight).AlignCenterY(buttonHeight);
+                        if (GUI.Button(primaryRect, sample.IsImported ? "打开场景" : "导入 Sample",
+                                SirenixGUIStyles.Button))
                         {
-                            ImportSampleWithConfirm(sample);
+                            if (sample.IsImported)
+                            {
+                                if (AesirGetStartedService.OpenSampleScene(sample))
+                                {
+                                    Window.ShowBottomRightToast(SdfIconType.CheckCircleFill,
+                                        AesirGetStartedService.BuildOpenSceneToastMessage(sample));
+                                }
+                            }
+                            else
+                            {
+                                ImportSampleWithConfirm(sample);
+                            }
                         }
                     }
                 }

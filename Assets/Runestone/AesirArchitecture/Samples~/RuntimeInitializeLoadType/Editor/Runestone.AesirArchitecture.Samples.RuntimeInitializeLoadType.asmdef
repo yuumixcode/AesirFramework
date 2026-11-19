@@ -1,7 +1,9 @@
 {
   "name": "Runestone.AesirArchitecture.Samples.RuntimeInitializeLoadType",
   "rootNamespace": "Runestone.AesirArchitecture.Samples",
-  "references": [],
+  "references": [
+    "Runestone.AesirArchitecture.Editor"
+  ],
   "includePlatforms": [
     "Editor"
   ],

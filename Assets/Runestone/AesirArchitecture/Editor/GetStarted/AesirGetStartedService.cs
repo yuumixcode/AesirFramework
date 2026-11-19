@@ -212,6 +212,36 @@ namespace Runestone.AesirArchitecture.Editor
 
         #endregion
 
+        #region 示例自定义动作
+
+        /// <summary>示例卡片右侧的自定义动作，用于不进主菜单的示例配置入口。</summary>
+        public sealed class AesirSampleAction
+        {
+            /// <summary>按钮文案。</summary>
+            public string Label;
+
+            /// <summary>点击回调。</summary>
+            public Action Invoke;
+        }
+
+        static readonly Dictionary<string, AesirSampleAction> ExtraSampleActions =
+            new Dictionary<string, AesirSampleAction>(StringComparer.Ordinal);
+
+        /// <summary>
+        /// 注册示例的自定义动作。key 取 package.json samples 清单里的相对目录（如 RuntimeInitializeLoadType）。
+        /// 由示例自己的编辑器程序集在 <c>[InitializeOnLoadMethod]</c> 中注册——核心编辑器程序集不引用示例程序集。
+        /// </summary>
+        public static void RegisterExtraSampleAction(string relativeDir, string label, Action invoke)
+        {
+            ExtraSampleActions[relativeDir] = new AesirSampleAction { Label = label, Invoke = invoke };
+        }
+
+        /// <summary>取示例注册的自定义动作（两版 Getting Started 的右侧按钮共用）。</summary>
+        public static bool TryGetExtraSampleAction(AesirSampleInfo sample, out AesirSampleAction action) =>
+            ExtraSampleActions.TryGetValue(sample.RelativeDir, out action);
+
+        #endregion
+
         #region 包扫描
 
         /// <summary>

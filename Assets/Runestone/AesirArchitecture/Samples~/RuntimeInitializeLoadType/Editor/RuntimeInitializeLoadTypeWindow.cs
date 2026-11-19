@@ -2,6 +2,7 @@ using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Utilities;
 using Sirenix.Utilities.Editor;
+using Runestone.AesirArchitecture.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -25,9 +26,13 @@ namespace Runestone.AesirArchitecture.Samples
             runtimeInitializeLoadTypeSettings = RuntimeInitializeLoadTypeSettings.instance;
         }
 
-        // priority 995：承担 Architecture 组的组级排序锚点（父菜单 priority 由子项最小值决定），
-        // 使 Architecture 组位于 Modules 组（998）之前；差值 ≤10 不产生分割线
-        [MenuItem("Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType", false, 995)]
+        // 本窗口不进主菜单：由 Getting Started 中该示例卡片右侧的按钮打开。
+        [InitializeOnLoadMethod]
+        static void RegisterGettingStartedAction()
+        {
+            AesirGetStartedService.RegisterExtraSampleAction("RuntimeInitializeLoadType", "初始化时机设置", ShowWindow);
+        }
+
         public static void ShowWindow()
         {
             var window = GetWindow<RuntimeInitializeLoadTypeWindow>();
