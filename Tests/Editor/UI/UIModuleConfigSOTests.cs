@@ -13,8 +13,8 @@ namespace Runestone.AesirModules.Tests.Editor.UI
     /// 单例缓存、加载器优先于 Resources、重复注册 fail-fast、注销恢复 Resources 兜底、
     /// 加载器返回 null 落内存默认实例、UIModule 蒙版模式初值取自配置。
     /// <para>
-    /// 依赖仓库内 Resources 兜底资产（编辑器初始化器 <c>UIModuleConfigAssetInitializer</c> 自动创建，
-    /// 缺失时先刷新编辑器）；静态状态经反射在 SetUp/TearDown 重置，保证用例互不污染。
+    /// 依赖仓库内 Resources 兜底资产（本仓入库的示例基线；新工程需显式创建或走内存默认）；
+    /// 静态状态经反射在 SetUp/TearDown 重置，保证用例互不污染。
     /// </para>
     /// </summary>
     public class UIModuleConfigSOTests
@@ -164,7 +164,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         static UIModuleConfigSO LoadResourceConfig()
         {
             var config = Resources.Load<UIModuleConfigSO>(UIModuleConfigSO.ResourcePath);
-            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{UIModuleConfigSO.ResourcePath}），请先刷新编辑器让初始化器创建");
+            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{UIModuleConfigSO.ResourcePath}），请检查本仓 Assets/Resources 基线或显式创建资产");
             return config;
         }
 

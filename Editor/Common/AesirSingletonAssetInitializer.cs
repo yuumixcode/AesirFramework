@@ -4,12 +4,11 @@ using UnityEngine;
 namespace Runestone.AesirModules.Editor
 {
     /// <summary>
-    /// 模块配置资产（单例 <see cref="ScriptableObject" />）的自动创建共用实现。
+    /// 模块配置资产（单例 <see cref="ScriptableObject" />）的显式创建共用实现。
     /// </summary>
     /// <remarks>
-    /// 各模块的 <c>XxxModuleConfigAssetInitializer</c> 负责在 <c>[InitializeOnLoadMethod]</c> 里注册
-    /// <c>EditorApplication.delayCall</c>（域加载期 AssetDatabase 未就绪，此刻 CreateAsset 会报
-    /// "Unable to import newly created asset"），实际创建推迟到编辑器空闲首帧并由本类执行——
+    /// 由菜单 <c>Tools/Aesir/Modules/Create Module Config Assets</c> 显式调用，经各模块的
+    /// <c>XxxModuleConfigAssetInitializer</c> 转入本类——包导入时不写用户工程。
     /// UI / Scene 两个配置资产此前各持一份等价实现，此处收敛为单一真源。
     /// </remarks>
     internal static class AesirSingletonAssetInitializer
@@ -61,7 +60,7 @@ namespace Runestone.AesirModules.Editor
             var config = ScriptableObject.CreateInstance<T>();
             AssetDatabase.CreateAsset(config, assetPath);
             AssetDatabase.SaveAssets();
-            AesirModulesDebug.Log(logTag, $"已自动创建 {typeof(T).Name} 配置资产（Resources 兜底路径）：{assetPath}");
+            AesirModulesDebug.Log(logTag, $"已创建 {typeof(T).Name} 配置资产（Resources 兜底路径）：{assetPath}");
         }
     }
 }
