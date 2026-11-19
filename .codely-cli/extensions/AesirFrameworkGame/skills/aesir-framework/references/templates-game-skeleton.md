@@ -8,19 +8,21 @@
 
 | 文件 | 位置 | 职责 |
 |---|---|---|
-| `GameContext.cs` | `Assets/Game/Context/` | 注册 Model |
-| `GameModel.cs` | `Assets/Game/Model/` | 得分 + 失败状态（运行时数据） |
-| `GameHudPanel.cs` | `Assets/Game/View/` | HUD 面板，订阅刷新（`AesirBasePanelViewController<T>`） |
-| `EnemySpawner.cs` | `Assets/Game/Core/` | 节奏化生成敌人（`AesirTimer.Every`） |
-| `PlayerController.cs` | `Assets/Game/Core/` | 移动 + 开火冷却（`AesirTimer.Countdown`） |
-| `GameBootstrap.cs` | `Assets/Game/Core/` | 启动引导（由 `aesir-boot-scene` 技能产出，勿手写） |
+| `GameContext.cs` | `Assets/_Game/Scripts/Contexts/` | 注册 Model（框架角色，注册进 Context） |
+| `GameModel.cs` | `Assets/_Game/Scripts/Model/` | 得分 + 失败状态（运行时数据源，注册进 Context） |
+| `GameHudPanel.cs` | `Assets/_Game/Scripts/UI/` | HUD 面板，订阅刷新（`AesirBasePanelViewController<T>`，View 角色，未注册进 Context → 按界面方面分层） |
+| `EnemySpawner.cs` | `Assets/_Game/Scripts/Gameplay/` | 节奏化生成敌人（`AesirTimer.Every`，玩法方面） |
+| `PlayerController.cs` | `Assets/_Game/Scripts/Gameplay/` | 移动 + 开火冷却（`AesirTimer.Countdown`，玩法方面） |
+| `Bootstrap.cs` | `Assets/_Game/Scripts/` | 启动引导（由 `aesir-boot-scene` 技能产出，勿手写；放根目录、全局命名空间） |
+
+> 脚本目录见 `aesir-project-structure` §2.2，判据是**角色是否注册进 Context**：注册进去的 Context / Model / Service 直接在 `Scripts/` 下按角色建 `Contexts/` `Model/` `Service/`；没注册的 View / Controller 偏业务逻辑层，按 `Gameplay/`（玩家 / 敌人 / 生成器）与 `UI/`（面板 / 窗口 / HUD）分层，对齐 Input System 的两套 Action Map。**所有脚本统一全局命名空间**——目录不产生 `namespace`，角色只是分类。
 
 关键基类选择（易错点）：RAM 面板要么用 `AesirBasePanel`（拿不到 Model），要么用 **`AesirBasePanelViewController<TContext>`**（`AesirBasePanel` + `IController`，可 `this.GetModel<T>()`）。业务面板一律用后者。
 
 ## 1. Context
 
 ```csharp
-// Assets/Game/Context/GameContext.cs
+// Assets/_Game/Scripts/Contexts/GameContext.cs
 using Runestone.AesirArchitecture;
 
 public sealed class GameContext : AbstractContext<GameContext>
@@ -35,7 +37,7 @@ public sealed class GameContext : AbstractContext<GameContext>
 ## 2. Model：得分与失败状态
 
 ```csharp
-// Assets/Game/Model/GameModel.cs
+// Assets/_Game/Scripts/Model/GameModel.cs
 using System;
 using UnityEngine;
 using Runestone.AesirArchitecture;
@@ -56,7 +58,7 @@ public sealed class GameModel : AbstractModel
 ## 3. HUD 面板：订阅而不是每帧轮询
 
 ```csharp
-// Assets/Game/View/GameHudPanel.cs
+// Assets/_Game/Scripts/UI/GameHudPanel.cs
 using UnityEngine;
 using UnityEngine.UI;
 using Runestone.AesirModules;
@@ -88,13 +90,13 @@ public class GameHudPanel : AesirBasePanelViewController<GameContext>
 显示方式（`path:` 必须用命名参数，否则字符串会被当成 payload 吞掉）：
 
 ```csharp
-UIModule.Show<GameHudPanel>(path: "UI/GameHudPanel");   // 预制体存 Assets/Resources/UI/，根节点不带 Canvas
+UIModule.Show<GameHudPanel>(path: "UI/GameHudPanel");   // 预制体存 Assets/_Game/Resources/UI/，根节点不带 Canvas；文件名不加类型前缀
 ```
 
 ## 4. 生成器：节奏交给 `AesirTimer`，不写 `Update` 计时
 
 ```csharp
-// Assets/Game/Core/EnemySpawner.cs
+// Assets/_Game/Scripts/Gameplay/EnemySpawner.cs
 using UnityEngine;
 using Runestone.AesirArchitecture;
 
@@ -144,7 +146,7 @@ public class EnemySpawner : MonoBehaviour
 ## 5. 玩家：开火冷却用可暂停的计时器
 
 ```csharp
-// Assets/Game/Core/PlayerController.cs
+// Assets/_Game/Scripts/Gameplay/PlayerController.cs
 using UnityEngine;
 using Runestone.AesirArchitecture;
 
@@ -213,7 +215,7 @@ SceneModule.ReloadScene();               // 不要用原生 SceneManager；混�
 
 ## 自检清单（跑一遍）
 
-- [ ] 场景里只有 `GameBootstrap` 物体 + `AudioListener`（无 Main Camera），Build Settings index 0 指向 Boot 场景。
+- [ ] 场景里只有 `Bootstrap` 物体 + `AudioListener`（无 Main Camera），Build Settings index 0 指向 Boot 场景。
 - [ ] 启动后 HUD 出现且得分显示 `0`（说明 `AddListenerAndInvoke` 生效，而非等第一次变化才刷新）。
 - [ ] 连续击杀时得分文本变化，**HUD 里没有任何 `Update`**。
 - [ ] 失败后敌人停止生成、玩家无法移动开火，HUD 出现结束提示。

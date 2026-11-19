@@ -17,18 +17,18 @@ description: Aesir Modules 的场景模块（SceneModule）编码指南。为 Un
 using Runestone.AesirModules;
 
 // 切场景（Single：卸掉旧的、重设激活场景）
-SceneModule.LoadSceneSingle("Assets/Scenes/Gameplay.unity",
+SceneModule.LoadSceneSingle("Assets/_Game/Scenes/Gameplay.unity",
     onCompleted: () => Debug.Log("loaded"),
     onFailed:    () => Debug.LogError("failed"),
     onProgress:  p => progressBar.value = p);   // 逐帧 0–1，已按 progressCap 归一化
 
 // 叠加（Additive：不改激活场景，进追踪列表）
-SceneModule.LoadSceneAdditive("Assets/Scenes/HUD.unity");
-SceneModule.UnloadScene("Assets/Scenes/HUD.unity");
+SceneModule.LoadSceneAdditive("Assets/_Game/Scenes/HUD.unity");
+SceneModule.UnloadScene("Assets/_Game/Scenes/HUD.unity");
 SceneModule.UnloadAllAddedScenes();
 
 // 激活场景（决定光照设置来源与 Instantiate 默认落点）
-SceneModule.SetActiveScene("Assets/Scenes/Gameplay.unity");
+SceneModule.SetActiveScene("Assets/_Game/Scenes/Gameplay.unity");
 
 // 重载当前激活场景（异步 Single 语义）
 SceneModule.ReloadScene();
@@ -66,7 +66,7 @@ SceneModule.BootstrapSceneAssetWrapper; // 启动场景：实例字段优先，�
 ```csharp
 [SerializeField] SceneAssetWrapper nextScene;      // Inspector 拖拽赋值（Odin / 原生 Drawer 双环境等价）
 
-var w = SceneAssetWrapper.FromScenePath("Assets/Scenes/Gameplay.unity");
+var w = SceneAssetWrapper.FromScenePath("Assets/_Game/Scenes/Gameplay.unity");
 SceneModule.LoadSceneSingle(w);
 
 if (w.TryGetScenePath(out var path)) { }            // 安全读取
@@ -94,7 +94,7 @@ await SceneModuleUniTask.UnloadAllAddedScenesAsync();
 
 ## 配置与 DDOL
 
-- `SceneModuleConfigSO` 自动创建在 `Assets/Resources/SceneModuleConfig/SceneModuleConfig.asset`，可直接编辑：`bootstrapScene`（全局启动场景兜底）、`progressCap`（默认 0.9）。解析顺序：注册的加载器 → Resources 兜底 → 内存默认。
+- `SceneModuleConfigSO` 需显式创建：在 Project 窗口建 `Assets/Resources/SceneModuleConfig/SceneModuleConfig.asset`，或点菜单 `Tools/Aesir/Modules/Create Module Config Assets` 一键生成（包导入时不会自动写工程）。可编辑 `bootstrapScene`（全局启动场景兜底）、`progressCap`（默认 0.9）。解析顺序：注册的加载器 → Resources 兜底 → 内存默认（缺资产也能跑）。
 - 预放置实例为根物体时受 `dontDestroyOnLoad`（默认开）控制；**关闭 DDOL 会在 Single 加载时连实例一起销毁并中断回调**。
 - **预放置实例必须处于激活状态**：失活物体起不了加载协程，模块会跳过它并新建实例 + 告警。
 - 模块实例被重建时叠加追踪归零（`AddedScenePaths` / `LastLoadedScene` 随旧实例消亡），静态事件对象不受影响。

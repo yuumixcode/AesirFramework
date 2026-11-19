@@ -181,6 +181,19 @@ AesirPlayerLoop.EnsureInjected();
 框架驱动的计时器（`Runtime/Modules/Timer`）：创建即开始、到期自动出队或按间隔重复，**每个计时器是一个独立实例**，可随时查询 `Remaining` / `Progress` / `RemainingExecutions`。
 不需要 MonoBehaviour、也不需要协程，供纯 C# 的 Model / Service / Command 使用。
 
+**架构**：`AbstractTimer`（public 抽象基类，模板方法固定调度引擎 + 共有状态 / 查询 / 生命周期）→ `AesirTimer`（抽象门面，静态工厂 + 引擎委托）→ 六个具体类。既有 `AesirTimer.Countdown/Every/NextFrame` 调用与 `AesirTimer` 字段声明均保持兼容。六种形态：
+
+| 工厂 | 具体类 | 用途 |
+|------|--------|------|
+| `Countdown(seconds, cb, unscaled)` | `CountdownTimer` | 一次性倒计时（延时 / 冷却） |
+| `NextFrame(cb)` | `NextFrameTimer` | 下一帧执行一次 |
+| `Every(interval, cb, repeatCount, unscaled)` | `RepeatingTimer` | 按间隔重复，限次 / 无限 |
+| `Interval(total, interval, cb, unscaled)` | `IntervalTimer` | 总时长内每隔固定间隔触发 |
+| `Frequency(ticksPerSecond, cb, unscaled)` | `FrequencyTimer` | 每秒触发 N 次 |
+| `Stopwatch(unscaled)` | `StopwatchTimer` | 正计时测时长，读 `Elapsed` |
+
+分层思路参考开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)（学习致谢）；具体实现为框架自有。
+
 ```csharp
 // ① 一次性延时
 AesirTimer.Countdown(3f, () => _model.Refresh());
@@ -207,6 +220,17 @@ AesirTimer.Countdown(0.2f, FadeOut, unscaled: true);
 // ⑦ 中途取消
 var timer = AesirTimer.Countdown(10f, OnTimeout);
 timer.Cancel();                        // 与 timer.Dispose() 等价
+
+// ⑧ 总时长内每隔固定间隔触发（如 10 秒内每 1 秒）
+AesirTimer.Interval(10f, 1f, () => _model.Spawn());
+
+// ⑨ 每秒 5 次
+AesirTimer.Frequency(5, () => _model.Sample());
+
+// ⑩ 秒表测耗时（无终点，须持有引用手动 Cancel；只读取时间戳的场合直接用 Time.time）
+var stopwatch = AesirTimer.Stopwatch();
+float elapsed = stopwatch.Elapsed;
+stopwatch.Cancel();
 ```
 
 **选路径只看一个问题：你有每帧回调吗？**
@@ -224,7 +248,7 @@ timer.Cancel();                        // 与 timer.Dispose() 等价
 > - `NextFrame` 落在"此后第一次结算"：在 `Update` / 协程 / 到期回调里创建 → 下一帧执行；在 `AfterAssembliesLoaded` 里创建 → 当帧结算。
 > - 到期自动出队，**不需要 Dispose**，也不会泄漏；但取消必须持有引用（丢弃引用即放弃 `Cancel` 的能力）。
 > - 同一次结算内多个到期按创建顺序回调；在到期回调里新建的计时器下一帧才推进。
-> - 需要**正计时（秒表）**用 `Time.time` 差值，不要用计时器——永远不结束的计时器是泄漏源；无限重复的 `Every` 必须能在合适时机 `Cancel`。
+> - **正计时**用 `AesirTimer.Stopwatch()` 读 `Elapsed`（只想要时间戳时直接用 `Time.time` 差值更省）；它无终点，须持有引用并在合适时机 `Cancel`。无限重复的 `Every` / `Frequency` 同样必须能在合适时机 `Cancel`。`Interval` 以总时长为终点，末尾不足一个间隔的余量不再触发事件。
 > - 需要另一种时长就新建实例（框架不做对象池）；同一冷却位复用请用 `Restart()`（同时重置执行计数与暂停态）。
 > - 运行时排查看 `Tools → Aesir → Architecture → Timer Debugger`（Odin / IMGUI 双版本）：状态、形态、时间源、剩余、进度、已执行 / 还剩几次、存活时长、回调归属，并可按时间或按帧调低拉取频率以降低调试开销；编辑模式下没有数据源，面板数据恒为零。
 > - 想在自己组件的 Inspector 里看计时器：字段是普通（非 `[SerializeReference]`）引用时，给组件写自定义 Inspector，读 `Progress` / `Remaining` / `RemainingExecutions` 画即可（`Samples/AesirTimer` 的 `AesirTimerSampleInspector` 是完整范例：数据抽成一行结构，运行时面板与 Inspector 各用一套样式）。

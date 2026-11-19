@@ -1,12 +1,12 @@
 # AesirFrameworkGame
 
-AesirFramework（Runestone Yuumix 出品的 Unity／团结引擎框架）的 AI 编码技能包，也是 Aesir 全部 AI 技能的**唯一主位**：11 个技能（1 路由 + 5 架构 + 1 工程初始化 + 4 功能模块）+ 2 篇实战模板。用 Unity／团结引擎 + AesirFramework 做独立游戏时使用——从零搭工程骨架、组织 Context/Model/View/Controller（默认 Quick 档）、做面板与弹窗、发事件解耦、加音效与背景音乐、切场景与加载进度、把原生 MonoBehaviour 代码迁进框架。
+AesirFramework（Runestone Yuumix 出品的 Unity／团结引擎框架）的 AI 编码技能包，也是 Aesir 全部 AI 技能的**唯一主位**：12 个技能（1 路由 + 5 架构 + 2 工程初始化 + 4 功能模块）+ 2 篇实战模板。用 Unity／团结引擎 + AesirFramework 做独立游戏时使用——从零规划目录结构与搭工程骨架、组织 Context/Model/View/Controller（默认 Quick 档）、做面板与弹窗、发事件解耦、加音效与背景音乐、切场景与加载进度、把原生 MonoBehaviour 代码迁进框架。
 
 **面向独立游戏，主打精简 + 渐进式**：默认走最低档 Quick（不建接口、不做只读包装、直接持具体类），只在确需扩展时升档。
 
 ## 用哪个技能
 
-先加载 `skills/aesir-router/SKILL.md`——它先过依赖门禁，再按意图分派到下面 11 个技能，并给出"从零做小游戏 / 只补某一面 / 从原生代码迁移"三条组合路径。单点需求可直接加载对应技能：
+先加载 `skills/aesir-router/SKILL.md`——它先过依赖门禁，再按意图分派到下面 12 个技能，并给出"从零做小游戏 / 只补某一面 / 从原生代码迁移"三条组合路径。单点需求可直接加载对应技能：
 
 | 技能 | 覆盖 |
 |---|---|
@@ -16,7 +16,8 @@ AesirFramework（Runestone Yuumix 出品的 Unity／团结引擎框架）的 AI 
 | `aesir-core-api` | `ObservableValue`、可观察集合、`MiniEvent`、`AesirTimer`、`AesirPlayerLoop` |
 | `aesir-decisions` | MVC 还是 MVP、为什么没有 MVVM、四种通知机制怎么选 |
 | `aesir-pitfalls` | 十条高频陷阱（现象 + 原因 + 修法） |
-| `aesir-boot-scene` | 工程初始化：启动场景 `Boot.unity` + `GameBootstrap.cs` + Build Settings index 0 |
+| `aesir-project-structure` | 工程初始化：PC 独立游戏目录模板、按用途分层 + Global/Shared/Unique、版本控制边界、docs 文档站与 Zensical 部署 |
+| `aesir-boot-scene` | 工程初始化：启动场景 `Bootstrap.unity` + `Bootstrap.cs` + Build Settings index 0 |
 | `aesir-ui` | `UIModule`／`UIRoot`：Panel 与 Window 选型、生命周期、蒙版单遮／叠遮、世界空间血条 |
 | `aesir-events` | `EventModule`：双轨订阅、四档优先级、订阅者过滤器、SO 事件资产化 |
 | `aesir-audio` | `AudioModule`：PlaySfx 轮询、PlayBgm 淡变、三通道音量与持久化 |

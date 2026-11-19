@@ -44,12 +44,14 @@ public sealed class PlayerModel : AbstractModel
     public bool isInvincible;                  // 普通字段：不需要通知就别用 ObservableValue
 }
 
-// 3. 面板：MonoViewController<T>（View 兼 Controller，可读可写）
-public class PlayerPanel : MonoViewController<GameContext>
+// 3. 面板：AesirBasePanelViewController<T>（RAM 面板基类，View 兼 Controller，可读可写）
+//    注意不是 RAA 的 MonoViewController<T>——那个是场景里直接挂的 MonoBehaviour，
+//    不经 UIModule 的预制体加载/生命周期，无法配合 UIModule.Show<T>() 显示。
+public sealed class PlayerPanel : AesirBasePanelViewController<GameContext>
 {
     PlayerModel _model;
 
-    void Start()
+    protected override void OnInit()                                 // 取代 Awake：UIModule 装配期调用
     {
         _model = this.GetModel<PlayerModel>();                       // 缓存为字段，勿每帧 GetModel
         _model.Hp.AddListenerAndInvoke(OnHpChanged)                  // 订阅并立即拿当前值
@@ -59,6 +61,9 @@ public class PlayerPanel : MonoViewController<GameContext>
     void OnHpChanged(int newHp) { /* 刷新 UI */ }
     public void OnHealButtonClicked() => _model.Hp.Value += 1;        // 直改（快捷档特有）
 }
+
+// 显示（预制体存 Resources 下，path 用命名参数——细节见 aesir-ui 技能）：
+// UIModule.Show<PlayerPanel>(path: "UI/PlayerPanel");
 ```
 
 **Context 访问方式**：View 基类内用 `this.GetModel<T>()`；世界物体/其它脚本用 `GameContext.Instance.GetModel<T>()`（纯 C# 单例懒加载，不随场景卸载销毁——重开必须先 `GameContext.Instance.Dispose()`）。
@@ -79,8 +84,8 @@ public class PlayerPanel : MonoViewController<GameContext>
 ## 工程初始化流程（jam 开工 / 新项目起步）
 
 1. 装两个包（Git URL 两条都要加）。
-2. **创建启动场景**：用 `aesir-boot-scene` 技能（`../aesir-boot-scene/SKILL.md`）——一键产出 `Boot.unity`（只含启动脚本 + AudioListener，无相机）+ `GameBootstrap.cs`，登记 Build Settings index 0。
-3. 建目录结构（`Context/` `Model/` `Controller/` `View/` `Core/`）。延时与冷却直接用框架的 `AesirTimer`（见 `aesir-core-api`），不要自己抄一个计时器类。
+2. **创建启动场景**：用 `aesir-boot-scene` 技能（`../aesir-boot-scene/SKILL.md`）——一键产出 `Bootstrap.unity`（只含启动脚本 + AudioListener，无相机）+ `Bootstrap.cs`，登记 Build Settings index 0。
+3. 建目录结构：脚本按 `aesir-project-structure` §2.2 分——注册进 Context 的 Context / Model / Service 放 `Scripts/Contexts/` `Model/` `Service/`，没注册的 View / Controller 按业务放 `Scripts/Gameplay/` 或 `Scripts/UI/`，全部全局命名空间。延时与冷却直接用框架的 `AesirTimer`（见 `aesir-core-api`），不要自己抄一个计时器类。
 4. 写 Context + 第一个 Model + 第一个面板，跑通闭环。
 5. 自检一遍：Console 无编译错误、启动场景能进、第一个面板能正常打开。
 
@@ -91,7 +96,7 @@ public class PlayerPanel : MonoViewController<GameContext>
 - Command：`XxxCommand : AbstractCommand`；Query：`GetXxxQuery : AbstractQuery<TResult>`（升档才用）
 - ObservableValue：私有 `[SerializeField]` 字段 `camelCase`，对外属性 `PascalCase`
 - 事件参数载体（EventModule）：`XxxEventArgs : AesirEventArgs`；MVP View 事件无 On 前缀
-- 目录：`Context/` `Model/` `Controller/` `View/` `Core/`（业务工程约定）
+- 目录：`Assets/_Game/Scripts/` 下——注册进 Context 的按角色 `Contexts/` `Model/` `Service/`，没注册的 View / Controller 按业务 `Gameplay/` `UI/`（详见 `aesir-project-structure` §2.2）
 
 ## 技能地图（按需加载，不要一次全读）
 
@@ -101,5 +106,6 @@ public class PlayerPanel : MonoViewController<GameContext>
 | `aesir-core-api`（`../aesir-core-api/SKILL.md`） | 需要 `ObservableValue` / `MiniEvent` / 可观察集合 / `AesirTimer` / PlayerLoop 的具体写法时 |
 | `aesir-decisions`（`../aesir-decisions/SKILL.md`） | 选 MVC 还是 MVP、用户提 MVVM、犹豫用哪种通知机制时 |
 | `aesir-pitfalls`（`../aesir-pitfalls/SKILL.md`） | 报错、行为诡异、要自查写法时 |
+| `aesir-project-structure`（`../aesir-project-structure/SKILL.md`） | 新项目先立目录骨架、Assets 按用途分层、docs 文档站、CODELY.md 怎么写（不依赖包） |
 | `aesir-boot-scene`（`../aesir-boot-scene/SKILL.md`） | 项目初始化、建启动场景 |
 | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene`（`../aesir-ui/SKILL.md` 等同级目录） | 做界面 / 发事件 / 播音效 / 切场景的细节。**RAM 模块细节以这四个技能为准**，本技能不重复 |

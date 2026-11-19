@@ -103,9 +103,9 @@ void OnGameOverChanged(bool over) => gameOverRoot.SetActive(over);
 
 ## 收尾自检
 
-- [ ] `grep -rn "static.*Instance" Assets/Game` 只剩框架类型，业务里没有自建单例。
-- [ ] `grep -rn "SceneManager\." Assets/Game` 无结果（全部走 `SceneModule`）。
-- [ ] `grep -rn "Update()" Assets/Game` 命中的只剩"每帧必然要变"的驱动（输入、时钟、朝向相机），没有状态轮询。
+- [ ] `grep -rn "static.*Instance" Assets/_Game/Scripts` 只剩框架类型，业务里没有自建单例。
+- [ ] `grep -rn "SceneManager\." Assets/_Game/Scripts` 无结果（全部走 `SceneModule`）。
+- [ ] `grep -rn "Update()" Assets/_Game/Scripts` 命中的只剩"每帧必然要变"的驱动（输入、时钟、朝向相机），没有状态轮询。
 - [ ] 每个 `AddListener` 都有对应移除路径（`RemoveListenerWhenGameObjectOnDestroyed` 或 `OnDisable` 对称移除）。
 - [ ] 重开一局时数据归零（即 `Dispose()` 在 `ReloadScene()` 之前）。
 

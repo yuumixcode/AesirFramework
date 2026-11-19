@@ -65,7 +65,9 @@ GameContext.Instance.GetModel<PlayerModel>();   // 懒加载单例
 - `Instance` 是**纯 C# 单例，不随场景卸载销毁**：重开流程先 `GameContext.Instance.Dispose()` 再 `SceneModule.ReloadScene()`。
 - 模块间互相访问放 `OnInitialize()`（此时全部注册完毕），不要在 `Configure()` 里。
 
-## AesirTimer — 唯一计时原语
+## AesirTimer — 计时原语（AbstractTimer + 六种具体形态）
+
+静态工厂 `AesirTimer` 返回 `AbstractTimer` 子类；`AbstractTimer` 是抽象基类（模板方法固定调度引擎 + 共有状态 / 查询 / 生命周期），`AesirTimer` 是抽象门面（工厂 + 委托）。六种形态：`Countdown`→`CountdownTimer`、`NextFrame`→`NextFrameTimer`、`Every`→`RepeatingTimer`、`Interval`→`IntervalTimer`（总时长内每隔固定间隔）、`Frequency`→`FrequencyTimer`（每秒 N 次）、`Stopwatch`→`StopwatchTimer`（正计时读 `Elapsed`）。既有调用零改动。分层参考 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)（学习致谢），实现为框架自有。
 
 **选路径只看一个问题：你有每帧回调吗？**
 
@@ -81,14 +83,17 @@ AesirTimer.Countdown(3f, () => _model.Refresh());        // 一次性延时
 _cooldown = AesirTimer.Countdown(5f);                    // 冷却：读 Progress / IsFinished，Restart() 复用
 AesirTimer.NextFrame(() => RebuildLayout());             // 下一帧一次
 AesirTimer.Every(0.5f, Tick, repeatCount: 6);            // 每 0.5s 一次，共 6 次（省略即无限）
+AesirTimer.Interval(10f, 1f, () => _model.Spawn());      // 10 秒内每 1 秒触发
+AesirTimer.Frequency(5, () => _model.Sample());          // 每秒 5 次
+var sw = AesirTimer.Stopwatch(); float elapsed = sw.Elapsed; sw.Cancel(); // 秒表
 _cooldown.Pause(); _cooldown.Resume();                   // 实例级暂停（全局暂停用 Time.timeScale）
 AesirTimer.Countdown(0.2f, FadeOut, unscaled: true);     // 不受 timeScale 影响
 timer.Cancel();                                          // 取消（等于 Dispose）
 ```
 
 - 没有 `Start()` / `Tick()`：工厂即开始；到期自动出队、**不需要 Dispose 也不会泄漏**（但取消需持有引用）。
-- `Every` 一帧卡顿跨多个间隔**只回调一次**（不补发）；`repeatCount < 0` 无限、`0` 一次也不执行。
-- 正计时（秒表）用 `Time.time` 差值——永不结束的计时器是泄漏源；无限 `Every` 必须能 `Cancel`。
+- `Every` 一帧卡顿跨多个间隔**只回调一次**（不补发）；`repeatCount < 0` 无限、`0` 一次也不执行；`Interval` 以总时长为终点、末尾不足一个间隔的余量不再触发。
+- 正计时用 `AesirTimer.Stopwatch()` 读 `Elapsed`（只想要时间戳时用 `Time.time` 差值更省）；它无终点须手动 `Cancel`。无限 `Every` / `Frequency` 必须能 `Cancel`。
 - 排查看 `Tools → Aesir → Architecture → Timer Debugger`（编辑模式无数据源，恒为零）。
 
 ## AesirPlayerLoop — 帧回调（不用 MonoBehaviour）

@@ -5,7 +5,7 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 
 # AesirFrameworkGame 技能路由
 
-本扩展打包 AesirFramework 的编码技能：5 个架构技能（入口 / 六档 / 核心 API / 决策 / 陷阱）+ 1 个工程初始化技能 + 4 个功能模块技能。**先过下面的依赖门禁，再按本文定位意图、加载对应技能**，不要一次把全部技能读进来。
+本扩展打包 AesirFramework 的编码技能：5 个架构技能（入口 / 六档 / 核心 API / 决策 / 陷阱）+ 2 个工程初始化技能（项目结构 / 启动场景）+ 4 个功能模块技能。**先过下面的依赖门禁，再按本文定位意图、加载对应技能**，不要一次把全部技能读进来。
 
 ## 依赖门禁（先于分派，硬规则）
 
@@ -22,10 +22,12 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 
 | 工程实际有 | 可用 | 失效（不许写，也不许用原生 API 顶替） |
 |---|---|---|
-| RAA + RAM | 全部 11 个技能 | — |
-| 只有 RAA | router / framework / tiers / core-api / decisions / pitfalls / boot-scene | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 全部失效——四个模块一个都编不过 |
-| 只有 RAM | 无（RAM 依赖 RAA，编译就过不了） | 全部——先补 RAA |
-| 都没有 | 只能解释概念与写法 | 全部——先装包 |
+| RAA + RAM | 全部 12 个技能 | — |
+| 只有 RAA | router / framework / tiers / core-api / decisions / pitfalls / boot-scene / project-structure | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 全部失效——四个模块一个都编不过 |
+| 只有 RAM | 仅 project-structure（纯目录/文档知识，不依赖包） | 其余全部——先补 RAA |
+| 都没有 | 仅 project-structure（立目录骨架时第一个用它）+ 解释概念与写法 | 其余全部——先装包 |
+
+> `aesir-project-structure` 是唯一不依赖任何包的技能（纯目录结构与文档规范），四种状态都可用——全新工程往往最先用它立骨架，再装包。
 
 缺包时的禁止项：改用原生 `SceneManager`、自建 Canvas 栈、`AudioSource.PlayOneShot`、`static event` 总线顶替，或凭印象编造框架 API。正确做法是走 ② ③。
 
@@ -59,7 +61,8 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 | 状态通知、可观察集合、MiniEvent、计时器、帧回调 | `../aesir-core-api/SKILL.md` | "状态变了通知 UI"、"技能冷却"、"不用协程怎么延时"、"用事件还是 ObservableValue" |
 | 选 MVC 还是 MVP、为什么没有 MVVM、通知机制怎么选 | `../aesir-decisions/SKILL.md` | "MVC 还是 MVP"、"能不能用 MVVM"、"为什么不用 MVVM" |
 | 报错、行为诡异、订阅收不到、提交前自查 | `../aesir-pitfalls/SKILL.md` | "Aesir 报错"、"取不到 Model"、"订阅没反应"、"内存泄漏" |
-| 初始化工程、建启动场景、生成 GameBootstrap、登记 Build Settings | `../aesir-boot-scene/SKILL.md` | "创建启动场景"、"jam 开工"、"搭工程骨架"、"建主菜单场景" |
+| 规划项目目录、Assets 分层、按用途还是按类型、哪些目录进 Git、搭 docs 文档站、写 CODELY.md | `../aesir-project-structure/SKILL.md` | "项目目录怎么组织"、"Assets 怎么分层"、"哪些目录进 Git"、"docs 怎么搭"、"工程骨架" |
+| 初始化工程、建启动场景、生成 Bootstrap、登记 Build Settings | `../aesir-boot-scene/SKILL.md` | "创建启动场景"、"jam 开工"、"搭工程骨架"、"建主菜单场景" |
 | 做界面：面板/弹窗/蒙版/敌方血条 | `../aesir-ui/SKILL.md` | "加开始界面"、"暂停面板"、"设置窗口"、"血条" |
 | 模块间解耦、发布-订阅、事件过滤 | `../aesir-events/SKILL.md` | "发个消息"、"UI 响应事件"、"只让范围内敌人受伤" |
 | 音效、背景音乐、音量设置 | `../aesir-audio/SKILL.md` | "加点击音效"、"背景音乐"、"音量滑条"、"切场景换歌" |
@@ -76,11 +79,12 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 
 ### A. 从零做一个小游戏（最常见）
 
-1. 装两个包：`cn.runestone.aesir.architecture` + `cn.runestone.aesir.modules`（RAM 缺 RAA 时走 `Tools/Aesir/Modules/Install Dependencies`）。
-2. `aesir-boot-scene` → 产出 `Boot.unity` + `GameBootstrap.cs`，Build Settings index 0。
-3. `aesir-framework` → 写 `GameContext` + 第一个 Model + 第一个面板，跑通闭环。**默认 Quick 档，不要一上来建接口和 Command。**
-4. `templates-game-skeleton.md` → 按玩法补齐得分/失败/生成器/重开。
-5. 按需叠加模块技能：界面细节 → `aesir-ui`；关卡切换 → `aesir-scene`；音效 → `aesir-audio`；跨模块广播 → `aesir-events`。
+1. `aesir-project-structure` → 先立目录骨架与 `docs/` 雏形（纯知识，不依赖包）：`Assets/_Game/` 按用途分层、`CODELY.md` + `README.md` + `docs/index.md` 三件套。
+2. 装两个包：`cn.runestone.aesir.architecture` + `cn.runestone.aesir.modules`（RAM 缺 RAA 时走 `Tools/Aesir/Modules/Install Dependencies`）。
+3. `aesir-boot-scene` → 产出 `Bootstrap.unity` + `Bootstrap.cs`，Build Settings index 0。
+4. `aesir-framework` → 写 `GameContext` + 第一个 Model + 第一个面板，跑通闭环。**默认 Quick 档，不要一上来建接口和 Command。**
+5. `templates-game-skeleton.md` → 按玩法补齐得分/失败/生成器/重开。
+6. 按需叠加模块技能：界面细节 → `aesir-ui`；关卡切换 → `aesir-scene`；音效 → `aesir-audio`；跨模块广播 → `aesir-events`。
 
 ### B. 已有工程，只补某一面
 

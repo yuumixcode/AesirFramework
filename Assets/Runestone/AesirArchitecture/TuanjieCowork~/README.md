@@ -4,7 +4,7 @@ Aesir 的 AI 编码技能统一放在**整包扩展 AesirFrameworkGame** 里（�
 
 ## 扩展里有什么
 
-一个扩展 = 11 个技能 + 2 篇实战模板：
+一个扩展 = 12 个技能 + 2 篇实战模板：
 
 | 技能 | 覆盖 |
 |---|---|
@@ -14,7 +14,8 @@ Aesir 的 AI 编码技能统一放在**整包扩展 AesirFrameworkGame** 里（�
 | `aesir-core-api` | `ObservableValue`、可观察集合、`MiniEvent`、`AesirTimer`、`AesirPlayerLoop` |
 | `aesir-decisions` | MVC 还是 MVP、为什么没有 MVVM、四种通知机制怎么选 |
 | `aesir-pitfalls` | 十条高频陷阱（现象 + 原因 + 修法） |
-| `aesir-boot-scene` | 启动场景 `Boot.unity` + `GameBootstrap` + Build Settings index 0 |
+| `aesir-project-structure` | PC 独立游戏目录模板、按用途 + Global/Shared/Unique 分层、版本控制边界、docs 文档站（不依赖包） |
+| `aesir-boot-scene` | 启动场景 `Bootstrap.unity` + `Bootstrap.cs` + Build Settings index 0 |
 | `aesir-ui` | `UIModule`／`UIRoot`：Panel 与 Window、蒙版、世界空间血条 |
 | `aesir-events` | `EventModule`：双轨订阅、优先级、订阅者过滤器、SO 事件资产 |
 | `aesir-audio` | `AudioModule`：`PlaySfx` 轮询、`PlayBgm` 淡变、三通道音量 |
@@ -43,7 +44,7 @@ Aesir 的 AI 编码技能统一放在**整包扩展 AesirFrameworkGame** 里（�
 git clone --depth 1 --filter=blob:none --sparse https://cnb.cool/runestone-game/AesirFramework.git aesir-ai-skills
 cd aesir-ai-skills
 git sparse-checkout set .codely-cli/extensions/AesirFrameworkGame
-ls .codely-cli/extensions/AesirFrameworkGame/skills    # 应看到 11 个技能目录
+ls .codely-cli/extensions/AesirFrameworkGame/skills    # 应看到 12 个技能目录
 ```
 
 CNB 拉不动时换 GitHub 镜像（路径与命令完全相同，只换 URL）：
