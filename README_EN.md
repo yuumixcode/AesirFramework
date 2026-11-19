@@ -3,7 +3,7 @@
 > A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.34.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
@@ -66,7 +66,7 @@ Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFram
 - **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
 - Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.33.0`).
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.34.0`).
 >
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
 
@@ -226,6 +226,8 @@ this.ExecuteCommand<AddScoreCommand>();
 
 > **Aesir Getting Started window** (menu `Tools → Aesir → Getting Started`, since 0.24.0): a navigation hub that browses and jumps straight into every sample of both Aesir packages — the overview page shows cards of installed packages (with download guidance for missing ones) and package pages list samples grouped by teaching order; clicking a sample card selects its folder in the Project window, and samples with a scene provide an "Open Scene" button that switches over directly (saving the current scene once beforehand), with results reported via a Toast in the bottom-right corner of the window. For not-yet-imported samples of UPM (Git URL) / embedded installs, clicking a card shows a guidance Toast, and the "Import Sample" button opens a confirmation dialog (with the sample description and destination path, cancellable) that imports the sample straight into Assets/Samples/ via the Package Manager Sample API and refreshes the list automatically. Without Odin an IMGUI fallback window is used; with Odin installed the animated Odin window takes over automatically.
 
+> The window's UI Toolkit stylesheet organization (design-token layering / BEM naming / micro-interactions) was inspired by the open-source project [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame) (MIT, credited as a learning source). Only the organization is borrowed — the palette stays with Unity's native editor theme (its dark-blue branding is not used), and the UI and implementation are this framework's own, not a port or copy.
+
 The package provides 11 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
 
 ### MVC family (View subscribes itself)
@@ -253,10 +255,29 @@ The package provides 11 importable samples (Package Manager → Aesir Architectu
 | `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
 | `ObservableCollections` | Observable collections: single-track change notifications, mutations and set operations triggered via ContextMenu | None |
 | `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
-| `AesirTimer` | Timer usage: `Countdown` delay and cooldown, `NextFrame`, `Every` with finite or infinite repeats, `Pause` / `Resume` / `Restart` / `Cancel`; the on-screen panel only reads `Remaining` / `Progress` / `RemainingExecutions` to draw progress bars (no driving code), plus a pure C# cooldown model that is not a MonoBehaviour; actions are triggered by buttons in a custom Inspector (`ContextMenu` calls the same methods), and the runtime panel and the Inspector share one row data source | None |
-| `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); toggles controlled via the settings window (`Tools → Aesir → Architecture → Samples`) | None |
+| `AesirTimer` | Timer usage: six shapes — `Countdown` delay and cooldown, `NextFrame`, `Every` finite/infinite repeats, `Stopwatch`, `Interval`, `Frequency`, plus `Pause` / `Resume` / `Restart` / `Cancel`; the on-screen panel only reads `Remaining` / `Progress` / `RemainingExecutions` to draw progress bars (no driving code), plus a pure C# cooldown model that is not a MonoBehaviour; actions are triggered by buttons in a custom Inspector (`ContextMenu` calls the same methods), and the runtime panel and the Inspector share one row data source | None |
+| `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); its settings window is not in the menu — open it from the "初始化时机设置" button on this sample's card in `Tools → Aesir → Getting Started` | None |
 
 > **PlaneWar is not part of the package**: the complete vertical-shooter game case has moved out to the host project's `Assets/PlaneWar/` (visible in the source repository only — not shipped with the package, not in the sample list or the Getting Started window). See `Assets/PlaneWar/README.md` in the repository root.
+
+## Timers (AesirTimer / AbstractTimer)
+
+Timers are a built-in **functional module** (alongside Observable / Event / Locator), letting pure-C# Model / Service / Command code delay, cooldown and fire on a cadence without MonoBehaviour or coroutines. The single entry point is the static factory `AesirTimer`; returned instances derive from the abstract base `AbstractTimer`. Hold a reference to query progress, cancel or restart — or drop it (instances auto-dequeue on expiry, no leak).
+
+**Six shapes** (`AesirTimer` factory → concrete class):
+
+| Factory | Concrete class | Purpose |
+|---|---|---|
+| `Countdown(seconds, cb, unscaled)` | `CountdownTimer` | One-shot countdown (delay / cooldown) |
+| `NextFrame(cb)` | `NextFrameTimer` | Fire once on the next settle pass |
+| `Every(interval, cb, repeatCount, unscaled)` | `RepeatingTimer` | Repeat at a fixed interval, finite or infinite |
+| `Interval(total, interval, cb, unscaled)` | `IntervalTimer` | Fire every fixed interval within a total span (e.g. every 1s for 10s) |
+| `Frequency(ticksPerSecond, cb, unscaled)` | `FrequencyTimer` | Fire N times per second |
+| `Stopwatch(unscaled)` | `StopwatchTimer` | Count up from zero to measure elapsed time, read `Elapsed` |
+
+**Architecture**: `AbstractTimer` fixes the scheduling engine with the template-method pattern (registry / PlayerLoop injection / two-phase settling / statistics) and delegates "how to advance, when due" to six single-purpose concrete classes (OCP / SRP). Shared behaviour lives on `AbstractTimer`: `Duration` / `Remaining` / `Progress` / `RemainingExecutions` queries and `Pause` / `Resume` / `Restart` / `Cancel` / `Dispose` control; the `unscaled` time source ignores `Time.timeScale`. Settling reuses `AesirPlayerLoop` (`BeforeUpdate` + `order: int.MinValue`), same-pass expiries fire strictly in creation order, and hitches never trigger catch-up. The `Tools → Aesir → Architecture → Timer Debugger` window shows live snapshots.
+
+> The **abstract-base + concrete-timer layering** was inspired by the open-source project [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers) (credited as a learning source). The concrete shapes, settling semantics and debug tooling are this framework's own implementation, not a port or copy of that project.
 
 ## Observable Collections (a lean built-in subset of ObservableCollections)
 
@@ -422,7 +443,7 @@ cn.runestone.aesir.architecture/
 │   ├── ObservableValue/           # ObservableValue Inspector demo (Odin Inspector)
 │   ├── ObservableCollections/     # Observable collections (List / Dictionary / HashSet) usage examples
 │   ├── MiniEvent/                 # MiniEvent usage examples
-│   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType phase-reset demo (Editor-only tool, menu Tools → Aesir → Architecture → Samples)
+│   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType phase-reset demo (Editor-only tool, opened from the Getting Started sample card button)
 ├── Samples~/                      # Sample source mirror (import on demand via Package Manager after Git URL install; excluded from builds)
 └── Third Party Notices.md          # Third-party license notices
 ```
