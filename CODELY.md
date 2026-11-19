@@ -23,8 +23,8 @@
 
 | 包 | 包 ID | 版本 | 说明 |
 |---|---|---|---|
-| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.33.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
-| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.33.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
+| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.34.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
+| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.34.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
 
 依赖关系：**RAA 不依赖任何 Aesir 包**；**RAM 依赖 RAA**（`package.json` 中**不声明**该依赖，见下方"依赖补全"）。
 
@@ -73,7 +73,7 @@ AesirFramework/
 ├── .codely-cli/                   # AI 工具链（部分入库，见「AI 技能与 Codely 环境」）
 │   ├── RESTORE.md                 # 换机 / 新克隆的环境还原手册
 │   ├── settings.json / memory.md / memory/ / skills/
-│   └── extensions/AesirFrameworkGame/   # 自研扩展，全量入库：11 技能 + 2 实战模板
+│   └── extensions/AesirFrameworkGame/   # 自研扩展，全量入库：12 技能 + 2 实战模板
 ├── Assets/
 │   ├── Runestone/
 │   │   ├── AesirArchitecture/     # RAA 包根
@@ -94,7 +94,7 @@ AesirFramework/
 
 **gitignored 的本地产物（不要提交、也不要当作事实来源）**：`Library/`、`Temp/`、`obj/`、`Logs/`、`UserSettings/`、`Build/`、`Exports/`（历史 unitypackage）、`ScriptDocGenerator/`（默认文档输出根）、`TestResults*.xml`、`*.log`、`screenshots/`、`*.csproj`、`*.sln`、`Assets/Plugins/Sirenix/`、`Assets/Vertical 2D Shooting BE4/`、`.DS_Store`。
 
-> 入库口径（2026-11-16 裁决）：`Assets/Resources/`（模块配置单例）与 `Assets/Editor Default Resources/Script Doc Generator/`（SDG 资产标记）**入库**——本仓库示例运行会读取它们；`ScriptableSingleton/`（`LoadTypeSettings` / `BinderEditorSettings` / `SceneEditorSettings`）属本机编辑器产物，**继续 gitignored**。
+> 入库口径（2026-11-16 裁决）：`Assets/Resources/`（模块配置单例）与 `Assets/Editor Default Resources/Script Doc Generator/`（SDG 资产标记）**入库**——本仓库示例运行会读取它们；`ScriptableSingleton/`（`LoadTypeSettings` / `BinderEditorSettings` / `SceneEditorSettings`）属本机编辑器产物，**继续 gitignored**。注意：这两份 Resources 资产只是**本仓入库的示例基线**；包本身已取消"导入即自动创建"，用户工程需经菜单 `Tools/Aesir/Modules/Create Module Config Assets` 显式创建（或自行创建 / 注册加载器），缺资产时运行时用内存默认配置兜底。
 
 ### 两个包的标准结构
 
@@ -167,7 +167,7 @@ public class HUDContext : AbstractContext<HUDContext>
 | `AesirArchitecture` | MonoBehaviour 单例（`[DefaultExecutionOrder(-999)]`） |
 | `AesirMonoBehaviour` / `AesirScriptableObject` | 架构感知基类 |
 | `AesirPlayerLoop` | PlayerLoop 注入；`EnsureInjected()` 公开；`Register` 时自动检测补插（第三方 SDK 改 PlayerLoop 后需手动调用） |
-| `AesirTimer` | 唯一计时器原语（`Runtime/Modules/Timer`）：`Countdown(seconds, onFinished, unscaled)` / `NextFrame(onFinished)` / `Every(interval, onTick, repeatCount = -1, unscaled)`；读 `Duration`/`Remaining`/`Progress`/`RemainingExecutions`/`IsFinished`/`IsCancelled`/`IsPaused`；`Pause()`/`Resume()`/`Restart()`/`Cancel()`（`Dispose()` 等价取消）。复用 `AesirPlayerLoop`（BeforeUpdate + `order: int.MinValue`），结算期与执行期分离，回调内新建/取消延后一帧；重复形态一次结算最多回调一次（卡顿不补发）。调试面板 `Tools/Aesir/Architecture/Timer Debugger`（Odin + IMGUI 双版本，数据源/样式分层，拉取节奏可调，编辑模式恒为零）与字段检视（原生需 `[SerializeReference]`，Odin 需 Odin 序列化宿主或 `[ShowInInspector]`；普通字段看示例的 `AesirTimerSampleInspector` 写法） |
+| `AbstractTimer` / `AesirTimer` | 计时器功能模块（`Runtime/Modules/Timer`）：`AbstractTimer`（public 抽象基类，模板方法固定调度引擎 + 共有状态/查询/生命周期）→ `AesirTimer`（抽象门面，静态工厂 + 引擎委托）→ 六个具体类。工厂：`Countdown(seconds, cb, unscaled)`→`CountdownTimer`（一次性）、`NextFrame(cb)`→`NextFrameTimer`、`Every(interval, cb, repeatCount=-1, unscaled)`→`RepeatingTimer`（限次/无限）、`Interval(total, interval, cb, unscaled)`→`IntervalTimer`（总时长内每隔固定间隔）、`Frequency(ticksPerSecond, cb, unscaled)`→`FrequencyTimer`（每秒 N 次）、`Stopwatch(unscaled)`→`StopwatchTimer`（正计时读 `Elapsed`）。共有 API（在 `AbstractTimer`）：读 `Duration`/`Remaining`/`Progress`/`RemainingExecutions`/`IsFinished`/`IsCancelled`/`IsPaused`，控制 `Pause()`/`Resume()`/`Restart()`/`Cancel()`（`Dispose()` 等价取消）。复用 `AesirPlayerLoop`（BeforeUpdate + `order: int.MinValue`），结算期与执行期分离，回调内新建/取消延后一帧；每次结算最多回调一次（卡顿不补发）。分层思路参考 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)，实现为自有。调试面板 `Tools/Aesir/Architecture/Timer Debugger`（Odin + IMGUI 双版本，数据源/样式分层，拉取节奏可调，编辑模式恒为零）与字段检视（原生需 `[SerializeReference]`，Odin 需 Odin 序列化宿主或 `[ShowInInspector]`；普通字段看示例的 `AesirTimerSampleInspector` 写法） |
 | `ObservableValue<T>` | 响应式属性；Model 持可写实例，View 持 `IReadOnlyObservableValue<T>`；`SetValueSilently`、`AddListenerAndInvoke` |
 | `ObservableList<T>` / `ObservableDictionary<TKey,TValue>` / `ObservableHashSet<T>` | 单轨变更通知（`AddListener`/`RemoveListener`），载荷为 `CollectionChangedEventArgs<T>`，返回 `AutoRemoveListenerHandle`；语义：无变更不通知、批量逐项、字典值更新为 Replace、Move 单事件、Sort/Reverse/Clear 统一 Reset |
 | `MiniEvent` / `MiniEvent<T>` | 零分配多播事件（Invoke 路径零分配，AddListener 有分配）；异常语义 = 原生事件（fail-fast） |
@@ -190,7 +190,7 @@ public class HUDContext : AbstractContext<HUDContext>
 
 写作纪律：快捷/标准档表现层可直写 Model；标准档起写入应经 Command；严格档只读 + 写方法；Service 可直写。
 
-其余示例：`ObservableValue`（Odin Drawer）、`ObservableCollections`、`MiniEvent`、`AesirTimer`（延时 / 冷却 / 重复 / 暂停 + 只读查询面板 + 自定义 Inspector 状态表与动作按钮，配 `Timer Debugger` 窗口）、`RuntimeInitializeLoadType`（五个阶段顺序，Editor-only asmdef，开关在 `Tools → Aesir → Architecture → Samples/RuntimeInitializeLoadType`）。
+其余示例：`ObservableValue`（Odin Drawer）、`ObservableCollections`、`MiniEvent`、`AesirTimer`（延时 / 冷却 / 重复 / 暂停 + 只读查询面板 + 自定义 Inspector 状态表与动作按钮，配 `Timer Debugger` 窗口）、`RuntimeInitializeLoadType`（五个阶段顺序，Editor-only asmdef；配置窗口不进菜单，从 `Tools → Aesir → Getting Started` 中该示例卡片右侧的「初始化时机设置」按钮打开）。
 
 完整游戏案例不在包内：`Assets/PlaneWar/`（纵版射击 Mono 版，宿主工程实际游戏，见 `Assets/PlaneWar/README.md`）。
 
@@ -206,9 +206,9 @@ public class HUDContext : AbstractContext<HUDContext>
 
 ### 设计边界（RAA）
 
-不做：事件总线 / EventChannel、Context 多实例、Command/Query 池化与 async 与 Undo/Redo、`AesirTimer` 之外的调度原语（`Start`、秒表、对象池）、View 生命周期脚手架（交给 RAM 的 UIModule）、线程安全（仅主线程）、集合高级能力（队列/过滤视图/环形缓冲等用上游 Cysharp.ObservableCollections）。
+不做：事件总线 / EventChannel、Context 多实例、Command/Query 池化与 async 与 Undo/Redo、计时器家族之外的调度原语（`Start` 显式启动、对象池；秒表已作为 `StopwatchTimer` 纳入——它只累计时间、无终点，仍需持有引用手动取消，仅读时间戳的场合直接用 `Time.time`）、View 生命周期脚手架（交给 RAM 的 UIModule）、线程安全（仅主线程）、集合高级能力（队列/过滤视图/环形缓冲等用上游 Cysharp.ObservableCollections）。
 
-时间调度的四条路径边界：MonoBehaviour 内本地 float 字段 / `MonoLifecycleProxy` 帧代理 / `AesirTimer` / 协程。`AesirTimer` 内部的两层暂停：全局靠 `Time.timeScale`（`unscaled` 不受影响），单实例靠 `Pause()`/`Resume()`。
+时间调度的四条路径边界：MonoBehaviour 内本地 float 字段 / `MonoLifecycleProxy` 帧代理 / `AesirTimer` 工厂创建的计时器 / 协程。`AbstractTimer` 内部的两层暂停：全局靠 `Time.timeScale`（`unscaled` 不受影响），单实例靠 `Pause()`/`Resume()`。
 
 ---
 
@@ -424,7 +424,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ### AI 技能与 Codely 环境（`.codely-cli/`）
 
-**技能正文的唯一主位**：`.codely-cli/extensions/AesirFrameworkGame/skills/`（整包扩展，`gemini-extension.json` v1.2.0），11 个技能 + 2 篇实战模板：
+**技能正文的唯一主位**：`.codely-cli/extensions/AesirFrameworkGame/skills/`（整包扩展，`gemini-extension.json` v1.3.0），12 个技能 + 2 篇实战模板：
 
 | 技能 | 覆盖 |
 |---|---|
@@ -434,7 +434,8 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 | `aesir-core-api` | `ObservableValue`、可观察集合、`MiniEvent`、`AesirTimer`、`AesirPlayerLoop`、能力矩阵 |
 | `aesir-decisions` | MVC 还是 MVP、为什么没有 MVVM、四种通知机制怎么选 |
 | `aesir-pitfalls` | 十条高频陷阱（现象 + 原因 + 修法） |
-| `aesir-boot-scene` | 启动场景 `Boot.unity` + `GameBootstrap` + Build Settings index 0 |
+| `aesir-project-structure` | PC 独立游戏目录模板、按用途 + Global/Shared/Unique 分层、版本控制边界、docs 文档站与 Zensical 部署（不依赖包） |
+| `aesir-boot-scene` | 启动场景 `Bootstrap.unity` + `Bootstrap.cs` + Build Settings index 0 |
 | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` | RAM 四模块用法 |
 
 扩展独有增量：`skills/aesir-framework/references/templates-game-skeleton.md`（完整可玩小游戏骨架）与 `templates-migration-from-mono.md`（原生 MonoBehaviour → Aesir 迁移表）；脚本 `scripts/install.py`（批量装到项目级/全局技能目录）、`scripts/validate.py`（manifest / frontmatter / 相对链接校验）。
@@ -462,21 +463,21 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ---
 
-## 当前状态与待办（2026-11-16）
+## 当前状态与待办（2026-11-19）
 
-- 已发布 **0.33.0**（2026-11-16）。主仓（CNB）、`Aesir-Notebook`、`AesirFramework-Site` 三仓同批提交推送；`v0.33.0` tag 由 CNB 流水线滚动生成并经 git-sync 送达 GitHub。
-- **0.33.0 落地内容**：
-  1. **PlaneWar 迁出为宿主工程完整游戏案例** —— `Samples/PlaneWar` → `Assets/PlaneWar`（`Samples~/` 镜像与 `package.json` 示例条目同批删除，Getting Started 的「实战示例」分组随之移除，可导入示例回到 11 个）；类名去 `Sample` 前缀、命名空间 `PlaneWar`、程序集 `PlaneWar.Mono`、整文件 `#if UNITY_EDITOR` 包裹移除。
-  2. **文档形态收敛** —— 两个包的 `Documentation/`（无波浪线）整目录取消：`README_EN.md` 升到包根，使用文档只留 `Documentation~/`；`Documentation~/README_EN.md` 删除。
-  3. **AI 技能迁出包外、统一为 Codely 扩展** —— 技能正文主位为 `.codely-cli/extensions/AesirFrameworkGame/skills/`（11 技能 + 2 模板），包内 `TuanjieCowork~/` 只留获取说明 `README.md`；模块技能补「依赖门禁」三条硬规则。
-  4. **`.codely-cli` 入库策略重订 + `RESTORE.md`** —— 自研扩展全量入库，其余扩展靠一条命令重装；TJGenerators 必须"先装扩展再开 Unity"。
-  5. **CI 主位迁 CNB** —— `.cnb.yml` 接管 split / update-info / rolling tag / git-sync；GitHub 侧只保 tag → Release。
-  6. **（RAM）世界空间 UI Canvas 预设** —— `WorldSpaceUICanvas` + `UIRoot.CreateWorldSpaceCanvas` + `UICanvasConfigSO.CreateWorldSpaceDefault()`，7 例 EditMode 守护。
-  7. **（RAA）`AesirTimer` 计时器原语** —— `Countdown` / `NextFrame` / `Every` / `Pause` / `Resume` / `Restart` / `Cancel`，调试面板（Odin + IMGUI）、字段检视、示例与 18 例测试。
-- **门禁基线（0.33.0 实测）**：EditMode batchmode **853 total / 850 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error；`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；两个文档站 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
+- 已发布 **0.34.0**（2026-11-19）。主仓（CNB）、`Aesir-Notebook`、`AesirFramework-Site` 三仓同批提交推送；`v0.34.0` tag 由 CNB 流水线滚动生成并经 git-sync 送达 GitHub。
+- **0.34.0 落地内容**：
+  1. **（RAA）编辑器工具去 Odin 化 + UI Toolkit 复刻** —— Getting Started / Timer Debugger / Update / Scene Settings 四个窗口与 ObservableValue / 可观察集合 / AesirTimer 三个 Drawer 改用 UI Toolkit；新增 `Preferences → Aesir` 偏好页与 Editor 专属样式 SO（只 Editor 读取、不进构建），Odin 降级为纯样式开关；SceneAssetWrapper 绘制改 UI Toolkit 优先 + IMGUI 兜底、零 Odin 依赖。运行时代码一律不依赖 Odin（有 / 无 Odin 编译均 0 error）。
+  2. **（RAA）`AesirTimer` 分层重构（无破坏性）** —— 单一类拆为 `AbstractTimer` 抽象基类 + 六种具体计时器（`Countdown` / `NextFrame` / `Repeating` / `Interval` / `Frequency` / `Stopwatch`），既有公开 API 零改动，示例补三种新形态，新增 9 例 EditMode 用例。
+  3. **（RAM）模块配置资产改为显式创建** —— 移除导入即自动创建，改菜单 `Tools/Aesir/Modules/Create Module Config Assets` + 运行时内存兜底，不再写用户工程；配套更新两包文档与启动脚本模板。
+  4. **（RAM）UI 实例化简化** —— 移除停用模板机制改 `Instantiate → SetActive(false)`，实例名去重复 `(Clone)`；`Resources.Load` 资产语义实证与文档决策复盘。
+  5. **移除 Binder / SDG 的 UI Toolkit 窗口** —— 两个工具只保留原 Odin 窗口，数据层零 Odin 依赖不改。
+  6. **（AI 扩展）`AesirFrameworkGame` 1.2.0 → 1.3.0** —— 新增 `aesir-project-structure` 技能（12 技能），统一资产命名去类型前缀与工程目录约定；按 PlaneWar 三篇复盘优化 boot-scene / framework / ui / router 技能。
+- **门禁基线（0.34.0 实测）**：EditMode batchmode **872 total / 869 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑。**
+- 门禁前置校验：`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；两个文档站 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
 - **待办 / 未决**：
   - PlaneWar 的 RAA 版案例（`Assets/PlaneWar/Scripts/Raa/`，程序集 `PlaneWar.Raa`）待编写（当前只有 Mono 版；README 已列出规划）。
-  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.33.0 复核。
+  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.34.0 复核。
   - `.codely-cli/memory.md` 的整理收尾（ARCHIVE 已存在）。
 - **UniTask 已通过 `manifest.json` 的 Git URL 安装** → `AESIR_MODULES_UNITASK` 生效，`SceneModuleUniTask` 与对应测试参与编译。新增依赖 UniTask 的代码须确认该宏；新增需要该宏的程序集须**自己再声明一份** `versionDefines` + `defineConstraints`。
 - 无 Addressables 配置（UI 走 `ResourcesUILoader`，`IUIAssetLoader` 已预留接口）。

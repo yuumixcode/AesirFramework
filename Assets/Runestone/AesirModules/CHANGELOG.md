@@ -5,7 +5,18 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.34.0] - 2026-11-19
+
+### Added
+
+- **简化 UI 实例化：移除停用模板机制，改为 `Instantiate → SetActive(false)`** — 经多轮质疑与实测确认，"克隆停用模板 + 从模板实例化"是防御性编程过头的产物：框架约定面板 / 窗口不写 `Awake`/`OnEnable`（`OnInit`/`OnShow` 接管生命周期），克隆体初始化时跑一轮空原生回调无害，模板机制换取的"回调不提前跑"收益为零、却每预制体常驻一份完整克隆。`UIModule.InstantiateInactive` 现直接 `Instantiate(prefab) → SetActive(false)`，删除 `_inactiveTemplates` 缓存、`_templateContainer`、`GetInactiveTemplate`；实例名复位为预制体名（只剩一层 `(Clone)`，面板 / 窗口各一条命名回归测试）。`Documentation~/ui-instantiation-mechanism.md` 重写为决策复盘；`Tests/Editor/UI/ResourcesLoadAssetSemanticsTests.cs`（3 用例，自包含）实证 `Resources.Load` 与 `AssetDatabase.LoadAssetAtPath` 同一引用、改内存不保存不落盘且不自动标脏；据 Unity 官方《Safely edit a loaded asset》补 Addressables 对照（编辑器默认 Use Asset Database 与 Resources 同类坑，真 AssetBundle 才隔离）。示例 `SampleUIHud`（Samples 与 Samples~ 同步）从 `OnEnable`/`OnDisable` 改为 `OnInit`/`OnShow`/`OnDestroy` 规范写法
+
+### Changed
+
+- **模块配置资产不再随包导入自动创建，改为显式菜单 + 运行时兜底（行为变更）** — 移除 `UIModuleConfigAssetInitializer` / `SceneModuleConfigAssetInitializer` 的 `[InitializeOnLoadMethod]` 自动调度：新增菜单 `Tools/Aesir/Modules/Create Module Config Assets`（priority 997，幂等），点击后在 `Assets/Resources/UIModuleConfig/` 与 `Assets/Resources/SceneModuleConfig/` 下各创建一份配置 SO；也可自行在 Project 窗口创建，或经 `UIModuleConfigSO.RegisterConfigLoader` / `SceneModuleConfigSO.RegisterConfigLoader` 走自定义路径。两个配置 SO 的 `Instance` 解析链不变（注册加载器 → Resources 兜底 → 内存默认实例），未创建资产时以代码默认值在内存中兜底、不写用户工程——第三方包导入即写工程属隐式副作用。原先依赖自动创建的工程若要在 Project 窗口编辑蒙版模式 / 启动场景 / 进度上限，需主动点一次菜单或自行创建资产；仅使用默认值则无需任何操作。配套更新两包 README、使用文档与 `aesir-boot-scene` 启动脚本模板的推荐注释
+
+- **`SceneAssetWrapper` 的 Inspector 绘制改为 UI Toolkit 优先 + IMGUI 兜底，零 Odin 依赖** — `SceneAssetWrapperDrawer` 去掉 `#if !ODIN_INSPECTOR` 编译门控（装了 Odin 时也参与编译），新增 `CreatePropertyGUI`：场景资产 ObjectField + 同源着色状态行 + 三个修复按钮（加入 BuildSettings / 启用 / 加入 Addressables），IMGUI `OnGUI` 保留作为 Odin 编辑器窗口 `DrawWithUnity` 让路后的兜底。`SceneAssetWrapperAttributeProcessor` 现在读取 `AesirInspectorStyleSettings.UseOdin`：关闭 Odin 样式时注入 `DrawWithUnityAttribute` 强制让路（仅 `return` 不够——Odin 仍会接管字段），并跳过子成员特性注入。运行时 `SceneAssetWrapper` 本身仍是零 Odin 的纯 C# 类型，运行时配置继续由 `SceneModuleConfigSO`（Resources，随构建分发）承载
+- **移除 Binder / Script Doc Generator 的 UI Toolkit 窗口** — 这两个工具不直接影响代码运行也不影响配置，删去 `AesirBinderWindowUIElements` 与 `ScriptDocGeneratorWindowUIElements`（含 `.meta`、菜单项），各自保留原 Odin 窗口为唯一入口。Odin 数据层脱离与无 Odin 编译能力保留不变
 
 ## [0.33.0] - 2026-11-16
 

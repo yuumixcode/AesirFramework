@@ -3,7 +3,7 @@
 > 面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.33.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.34.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
@@ -66,7 +66,7 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 - **下载直连失败自动切换镜像站代理**，全部线路失败时弹窗给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效；
 - 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装 Odin Inspector 时更新器为 Odin 界面。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后用同一 URL 重新添加（`latest` 分支名永久固定，无需随发版修改；需钉死旧版本时改用 Release tag，如 `?path=Assets/Runestone/AesirArchitecture#v0.33.0`）。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后用同一 URL 重新添加（`latest` 分支名永久固定，无需随发版修改；需钉死旧版本时改用 Release tag，如 `?path=Assets/Runestone/AesirArchitecture#v0.34.0`）。
 >
 > **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
 
@@ -224,6 +224,8 @@ this.ExecuteCommand<AddScoreCommand>();
 
 > **Aesir Getting Started 窗口**（菜单 `Tools → Aesir → Getting Started`，0.24.0 起）：集中浏览与直达 Aesir 两包全部示例的导航入口——概览页展示已安装包卡片（含未安装包的下载引导），包页按教学分组列出示例；点击示例卡片即在 Project 窗口选中其文件夹，带场景的示例可经「打开场景」按钮一键直达（切换前自动保存当前场景一次），操作结果以窗口右下角 Toast 提示。UPM（Git URL）/ 嵌入式安装的未导入示例：点击卡片以 Toast 引导导入，「导入 Sample」按钮弹出确认框（含示例介绍与导入后位置，可取消），确认后经 Package Manager 的 Sample API 直接导入到 Assets/Samples/ 并自动刷新示例清单。未安装 Odin 时提供 IMGUI 兜底窗口，安装 Odin 后自动切换为带页面动效的 Odin 版窗口。
 
+> 该窗口的 UI Toolkit 样式组织方式（设计令牌分层 / BEM 命名 / 微交互）参考开源项目 [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame)（MIT，学习致谢）。仅借鉴组织方式，配色保持 Unity 编辑器原生主题（未采用其深蓝品牌色），UI 与实现均为本框架自有，非移植或复刻。
+
 包内提供 11 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
 
 ### MVC 系列（View 自订阅刷新）
@@ -251,10 +253,29 @@ this.ExecuteCommand<AddScoreCommand>();
 | `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
 | `ObservableCollections` | 可观察集合用法：单轨变更通知，经 ContextMenu 触发增删改查与集合运算 | 无 |
 | `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
-| `AesirTimer` | 计时器用法：`Countdown` 延时与冷却、`NextFrame`、`Every` 有限 / 无限重复、`Pause` / `Resume` / `Restart` / `Cancel`；面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条（无驱动代码），另含一个不继承 MonoBehaviour 的纯 C# 冷却模型；动作在自定义 Inspector 里点按钮触发（`ContextMenu` 走同一批方法），运行时面板与 Inspector 共用同一份行数据 | 无 |
-| `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示，开关经设置窗口控制（`Tools → Aesir → Architecture → Samples`） | 无 |
+| `AesirTimer` | 计时器用法：六种形态 `Countdown` 延时与冷却、`NextFrame`、`Every` 有限 / 无限重复、`Stopwatch` 秒表、`Interval` 区间、`Frequency` 频率，以及 `Pause` / `Resume` / `Restart` / `Cancel`；面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条（无驱动代码），另含一个不继承 MonoBehaviour 的纯 C# 冷却模型；动作在自定义 Inspector 里点按钮触发（`ContextMenu` 走同一批方法），运行时面板与 Inspector 共用同一份行数据 | 无 |
+| `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示；配置窗口不进菜单，从 `Tools → Aesir → Getting Started` 中该示例卡片右侧的「初始化时机设置」按钮打开 | 无 |
 
 > **PlaneWar 不在包内**：纵版射击完整游戏案例已迁出为宿主工程的 `Assets/PlaneWar/`（源码仓库内可见，不随包分发、不进示例清单与 Getting Started 面板），详见仓库根 `Assets/PlaneWar/README.md`。
+
+## 计时器（AesirTimer / AbstractTimer）
+
+计时器是框架内置的**功能模块**（与 Observable / Event / Locator 同级），让纯 C# 的 Model / Service / Command 不借 MonoBehaviour、不借协程即可延时、冷却、按节奏触发。统一入口是静态工厂 `AesirTimer`，返回的实例由抽象基类 `AbstractTimer` 派生，持有引用可查询进度、取消、重开；也可丢弃引用（到期自动出队，不泄漏）。
+
+**六种形态**（`AesirTimer` 工厂 → 具体类）：
+
+| 工厂方法 | 具体类 | 用途 |
+|---|---|---|
+| `Countdown(seconds, cb, unscaled)` | `CountdownTimer` | 一次性倒计时（延时 / 冷却） |
+| `NextFrame(cb)` | `NextFrameTimer` | 此后第一次结算执行一次 |
+| `Every(interval, cb, repeatCount, unscaled)` | `RepeatingTimer` | 按间隔重复，限次或无限 |
+| `Interval(total, interval, cb, unscaled)` | `IntervalTimer` | 总时长内每隔固定间隔触发（如 10 秒内每 1 秒） |
+| `Frequency(ticksPerSecond, cb, unscaled)` | `FrequencyTimer` | 每秒触发 N 次 |
+| `Stopwatch(unscaled)` | `StopwatchTimer` | 从零正计时测时长，读 `Elapsed` |
+
+**架构**：`AbstractTimer` 用模板方法固定调度引擎（注册表 / PlayerLoop 注入 / 两阶段结算 / 统计），把"如何推进、何时到期"下沉给六个职责单一的具体类（OCP / SRP）。共有行为见 `AbstractTimer`：`Duration` / `Remaining` / `Progress` / `RemainingExecutions` 查询，`Pause` / `Resume` / `Restart` / `Cancel` / `Dispose` 控制；`unscaled` 时间源不受 `Time.timeScale` 影响。结算复用 `AesirPlayerLoop`（`BeforeUpdate` + `order: int.MinValue`），同帧多个到期严格按创建顺序回调，卡顿帧不补发。配套 `Tools → Aesir → Architecture → Timer Debugger` 面板可查看运行时快照。
+
+> 抽象基类 + 具体 Timer 的**分层思路**参考了开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)（致谢学习来源）。本模块的具体形态、结算语义与调试工具均为本框架自有实现，并非该项目的移植或复刻。
 
 ## 可观察集合（ObservableCollections 轻量内置子集）
 
@@ -367,7 +388,7 @@ cn.runestone.aesir.architecture/
 │   │   ├── CustomLifecycle/       # MonoLifecycleProxy 生命周期代理
 │   │   ├── Locator/               # GenericLocator 泛型定位器
 │   │   ├── Observable/            # ObservableValue + 可观察集合（三种集合 / 单轨变更通知）
-│   │   ├── Timer/                 # AesirTimer 计时器原语（倒计时 / 下一帧 / 按间隔重复 + 暂停）
+│   │   ├── Timer/                 # AbstractTimer 抽象基类 + AesirTimer 工厂 + 六种具体计时器（倒计时 / 下一帧 / 重复 / 秒表 / 区间 / 频率 + 暂停）
 │   │   └── Utilities/             # PlayerLoopUtility
 │   ├── Common/                    # 框架基础设施
 │   │   ├── AesirArchitecture.cs   # 框架 MonoBehaviour 单例入口
@@ -421,8 +442,8 @@ cn.runestone.aesir.architecture/
 │   ├── ObservableValue/           # ObservableValue Inspector 演示（Odin Inspector）
 │   ├── ObservableCollections/     # 可观察集合（List / Dictionary / HashSet）使用示例
 │   ├── MiniEvent/                 # MiniEvent 使用案例
-│   ├── AesirTimer/                # AesirTimer 使用案例（延时 / 冷却 / 重复 / 暂停 + 只读查询面板 + 自定义 Inspector）
-│   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType 各阶段重置演示（Editor-only 工具，菜单 Tools → Aesir → Architecture → Samples）
+│   ├── AesirTimer/                # AesirTimer 六种形态使用案例（延时 / 冷却 / 重复 / 秒表 / 区间 / 频率 + 只读查询面板 + 自定义 Inspector）
+│   └── RuntimeInitializeLoadType/ # RuntimeInitializeLoadType 各阶段重置演示（Editor-only 工具，从 Getting Started 示例卡片右侧按钮打开）
 ├── Samples~/                      # 示例源镜像（Git URL 安装后经 Package Manager 按需导入；构建时自动剔除）
 └── Third Party Notices.md          # 第三方许可声明
 ```

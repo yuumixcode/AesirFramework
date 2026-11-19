@@ -1,7 +1,7 @@
 {
   "name": "cn.runestone.aesir.architecture",
   "displayName": "Aesir Architecture",
-  "version": "0.33.0",
+  "version": "0.34.0",
   "unity": "2022.3",
   "description": "面向团结引擎 / Unity 的渐进式 MVC 架构框架，以 Unity 原生特性为一等公民。能力接口组合、命令/查询模式（CQRS）、轻量事件（MiniEvent）与响应式属性（ObservableValue）、PlayerLoop 原生生命周期、纯 C# 架构根与 MonoBehaviour 适配层分离，可选集成 Odin Inspector。",
   "documentationUrl": "https://yuumixcode.github.io/AesirFramework-Site/architecture/",
@@ -67,7 +67,7 @@
     },
     {
       "displayName": "RuntimeInitializeLoadType（初始化时机）",
-      "description": "RuntimeInitializeLoadType 初始化时机示例：在 SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad 五个阶段输出日志演示执行顺序，触发开关由设置窗口控制（Tools → Aesir → Architecture → Samples → RuntimeInitializeLoadType）。",
+      "description": "RuntimeInitializeLoadType 初始化时机示例：在 SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad 五个阶段输出日志演示执行顺序，触发开关由设置窗口控制（Tools → Aesir → Getting Started，点击本示例右侧的「初始化时机设置」按钮打开）。",
       "path": "Samples~/RuntimeInitializeLoadType"
     },
     {

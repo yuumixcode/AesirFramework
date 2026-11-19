@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.33.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.33.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.34.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.34.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -32,7 +32,18 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [0.34.0] - 2026-11-19
+
+### 仓库级变更 / Repository-wide
+
+- **AI 扩展新增「项目结构」技能，统一资产命名与工程目录约定（`AesirFrameworkGame` 1.2.0 → 1.3.0）** — 扩展从 11 技能扩到 12：`aesir-project-structure` 作为独立技能纳入，覆盖 PC 独立游戏目录模板、按用途分层 + `Global/Shared/Unique` 复用范围、版本控制边界、`docs/` 单一真源 + Zensical 站点与同仓部署 GitHub Pages、AI 友好的 `CODELY.md`，并作为唯一不依赖 RAA/RAM 的工程初始化技能，接在 router 依赖门禁与「从零做小游戏」组合路径的最前面。**资产命名去掉类型前缀**：场景 / 预制体 / 图片文件名不再加 `scn_` / `pref_` 之类前缀——名字本身即语义、代码引用时本就带 `.unity` / `.prefab` / `.png` 扩展名。**工程目录同步到最新约定**：自有资源根目录为**单下划线** `_Game`（非 `__Game`），场景直接放 `Assets/_Game/Scenes/`（启动场景 `Bootstrap.unity`，无 Boot 子目录），业务脚本按角色平铺在 `Assets/_Game/Scripts/{Contexts,Core,Model,View}/`（去掉 `Game/` 中间层），命名空间同步去掉 `Game.` 前缀（`Core` / `EditorTools`）；编辑器工具仍放 `Assets/Editor/`。上述路径 / 命名同步到全部 12 个技能、两篇实战模板、扩展 `CODELY.md` 与根 `CODELY.md` / `README.md` / 两包 `TuanjieCowork~/README.md`。**Why:** 技能里的脚本目录与场景名停留在旧 PlaneWar 结构（`Assets/Game/`、`Assets/Scenes/Boot/Boot.unity`、`namespace Game.Core`），与实际工程目录对不上，照抄即建错路径；类型前缀则与"名字自带语义 + 引用带扩展名"重复表达。**边界：** 纯 AI 技能正文与扩展元数据变更，无框架运行时代码改动；`validate.py` 校验 0 错误 0 警告
+- **Odin 样式开关迁入 Preferences，移除 Binder / SDG 的 UI Toolkit 窗口** — 用户裁决：RAA / RAM 的运行时代码一律不依赖 Odin Inspector（已由 `#if ODIN_INSPECTOR` 守卫与零 Sirenix 引用的核心运行时程序集保证，observable value / 可观察集合 / MiniEvent / `SceneAssetWrapper` 在无 Odin 时代码层照常运行）；Odin 只负责样式优化。据此新增 `Preferences → Aesir` 偏好页 + Editor 专属样式 SO（`ScriptableSingleton`，不进构建，与随构建分发的 `SceneModuleConfigSO` 成对），`SceneAssetWrapper` 的显示改为 UI Toolkit 优先并可一键切回 Odin 样式；同时移除与运行时/配置无关的 Binder 与 Script Doc Generator 的 UI Toolkit 版本窗口，只保留原 Odin 工具。`RuntimeInitializeLoadType` 示例的配置窗口不再有独立菜单项，改由 Getting Started 中该示例右侧按钮打开。样式相关文件归入 `Editor/Common/InspectorStyle/`，包 CHANGELOG / README（中英）/ CODELY.md 同步。编辑器 UI Toolkit 样式（Getting Started 窗口 `AesirGetStarted.uss`）的组织方式（设计令牌分层 / BEM 命名 / 微交互）参考开源项目 [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame)（MIT，学习致谢）；仅借鉴组织方式，配色保持 Unity 原生主题，非移植
+
+### [architecture] Aesir Architecture
+
+**Changed**
+
+- **`AesirTimer` 拆为 `AbstractTimer` 抽象基类 + 六种具体计时器（无破坏性）** — 把原单类的调度引擎（注册表 / PlayerLoop 注入 / 两阶段结算 / 统计）与共有状态、查询、生命周期控制抽到 public `AbstractTimer`，用模板方法把"如何推进、何时到期"下沉给六个职责单一的具体类：`CountdownTimer`（一次性倒计时）、`NextFrameTimer`（下一帧）、`RepeatingTimer`（按间隔重复，限次 / 无限）、`IntervalTimer`（总时长内每隔固定间隔触发）、`FrequencyTimer`（每秒 N 次）、`StopwatchTimer`（正计时测时长）。`AesirTimer` 收敛为抽象门面（静态工厂 + 引擎委托），既有 `AesirTimer.Countdown/Every/NextFrame` 调用与 `AesirTimer` 字段声明零改动（具体类全部派生自 `AesirTimer`），编辑器调试面板与既有 15 + 3 例计时器测试全部回归通过。全部沿用既有语义：创建即开始、到期自动出队、`unscaled` 时间源、实例级暂停 / 重开 / 取消、同帧按创建顺序回调、卡顿帧不补发；区间形态以容差判定总时长耗尽，避免浮点残差导致到点后驻留。新增 9 例 EditMode 用例覆盖秒表 / 区间 / 频率核心契约，EditMode 全量 862 pass / 0 fail、PlayMode 36/36。分层思路参考开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)（学习致谢），具体实现与调试工具为本框架自有。详细变更见 `Assets/Runestone/AesirArchitecture/CHANGELOG.md`
 
 ---
 

@@ -5,7 +5,18 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [0.34.0] - 2026-11-19
+
+### Added
+
+- **`Preferences → Aesir` 偏好设置页 + Editor 专属样式配置 SO** — Odin 样式开关从 `Tools/Aesir/Use Odin Inspector Style` 菜单迁入统一的 Preferences 页（`AesirInspectorStyleSettingsProvider`），偏好值由 `Editor/Common/InspectorStyle/AesirInspectorStyleSettingsSO`（`ScriptableSingleton`，只 Editor 读取、不进构建）持有，与场景模块 `SceneModuleConfigSO`（`Resources` 下、随构建分发的运行时配置）成对：前者管"编辑器怎么显示"，后者管"游戏怎么加载场景"，职责不交叉。`AesirInspectorStyleSettings.UseOdin` 保持为唯一门面，既有 5 处消费点（Getting Started / Timer Debugger / Update / Scene Settings / ObservableValue Processor）零改动。**UI Toolkit 实现，无 UXML/USS 资产**。Getting Started 窗口共享样式 `AesirGetStarted.uss` 的组织方式（设计令牌分层 / BEM 命名 / 微交互）参考开源项目 [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame)（MIT，学习致谢）；仅借鉴组织方式，配色保持 Unity 原生主题，非移植
+- **Getting Started 示例卡片右侧自定义动作入口** — `AesirGetStartedService` 新增 `RegisterExtraSampleAction(relativeDir, label, Action)`：示例自己的编辑器程序集在 `[InitializeOnLoadMethod]` 注册，核心编辑器程序集不反向引用示例程序集。UI Toolkit 版与 Odin 版卡片都据此渲染按钮。`RuntimeInitializeLoadType` 示例的菜单项 `Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType` 随之移除，改由该示例卡片右侧的「初始化时机设置」按钮打开（`Samples/` 与 `Samples~/` 镜像同步）；`package.json` 描述、包 README（中英）与 CODELY.md 同步改写
+
+### Changed
+
+- **样式开关相关文件归入 `Editor/Common/InspectorStyle/`** — `AesirInspectorStyleSettings` / `AesirInspectorStyleSettingsSO` / `AesirInspectorStyleSettingsProvider` 三个文件（含 `.meta`，GUID 不变）集中到独立子目录，避免核心 `Editor/Common/` 继续膨胀
+- **`AesirTimer` 拆分为 `AbstractTimer` 抽象基类 + 六种具体计时器（无破坏性）** — 原单类同时塞满倒计时 / 重复 / 下一帧三种形态与调度引擎、状态查询，新增形态只能继续加分支。现用模板方法重构：`AbstractTimer`（public）固定调度引擎（注册表 / PlayerLoop 注入 / 两阶段结算 / 统计）与共有状态、查询、生命周期控制，把"如何推进、何时到期"下沉给六个职责单一的具体类；`AesirTimer` 收敛为抽象门面（静态工厂 + 引擎委托），既有 `AesirTimer.Countdown/Every/NextFrame` 调用与 `AesirTimer` 字段声明**零改动**（具体类全部派生自 `AesirTimer`），编辑器面板与 15 例既有测试全部回归通过。六种形态：`CountdownTimer`（一次性倒计时）、`NextFrameTimer`（下一帧）、`RepeatingTimer`（按间隔重复，限次 / 无限）、`IntervalTimer`（总时长内每隔固定间隔触发）、`FrequencyTimer`（每秒 N 次）、`StopwatchTimer`（正计时测时长，读 `Elapsed`）。全部沿用既有语义：创建即开始、到期自动出队、`unscaled` 时间源、实例级暂停 / 重开 / 取消、同帧按创建顺序回调、卡顿帧不补发；区间计时器以容差判定总时长耗尽，避免浮点残差导致到点后驻留。新增 9 例 EditMode 用例覆盖秒表 / 区间 / 频率核心契约。分层思路参考开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)（学习致谢），具体实现与调试工具为本框架自有。**未改**：`AesirTimerState` 枚举、调试面板、示例场景门槛
+- **`AesirTimer` 示例补三种新形态** — `Samples/AesirTimer`（+ `Samples~/` 镜像）新增秒表开始 / 读取、区间触发、频率触发三个动作（`ContextMenu` 与自定义 Inspector 按钮同源），只读面板与行数据同步展示新形态；面板高度随行数扩展
 
 ## [0.33.0] - 2026-11-16
 
