@@ -214,6 +214,12 @@ namespace Runestone.AesirArchitecture.Editor
 
             var actions = new VisualElement();
             actions.AddToClassList("aesir-sample__actions");
+            if (AesirGetStartedService.TryGetExtraSampleAction(sample, out var extraAction))
+            {
+                actions.Add(new Button(extraAction.Invoke) { text = extraAction.Label }
+                    .Also(b => b.AddToClassList("aesir-button")));
+            }
+
             if (sample.IsImported && sample.HasScene)
             {
                 actions.Add(new Button(() => OpenScene(sample)) { text = "打开场景" }

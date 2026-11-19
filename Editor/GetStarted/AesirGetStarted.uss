@@ -1,6 +1,7 @@
 /* Aesir 编辑器 UI Toolkit 共享样式
- * 组织方式参考 YokiFrame 的 InspectorKit USS（设计令牌分层 + BEM 命名 + 微交互），
- * 但配色保持 Unity 编辑器原生主题（不采用 YokiFrame 的深蓝品牌色）。
+ * 样式组织方式（设计令牌分层 + BEM 命名 + 微交互）参考开源项目 YokiFrame
+ * （https://github.com/HinataYoki/YokiFrame，MIT）的 InspectorKit USS——仅借鉴组织方式，
+ * 配色保持 Unity 编辑器原生主题（不采用其深蓝品牌色），非代码移植或复刻。
  * Unity 2022.3 的 USS 对 var() 支持不稳定，故令牌以注释标注、值直接内联。
  */
 
