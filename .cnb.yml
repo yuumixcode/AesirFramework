@@ -93,8 +93,12 @@ main:
             set -e
             VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
             TAG="v${VERSION}"
-            git tag -d "$TAG" 2>/dev/null || true
-            git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" ":refs/tags/$TAG" 2>/dev/null || true
+            # 语义化版本 tag 一旦发布即不可变：远端已存在时直接复用，避免反复删推
+            # （删除请求在 CNB 侧容易被后台自动 tag 规则立即重建，导致后续 push 被拒）。
+            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+              echo "tag $TAG 已存在，跳过滚动更新"
+              exit 0
+            fi
             git tag "$TAG"
             git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" "refs/tags/$TAG"
 
