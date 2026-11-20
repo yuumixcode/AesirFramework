@@ -280,31 +280,21 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
         }
 
         /// <summary>
-        /// 在包内测试目录下创建临时夹具文件夹，返回其 Assets 相对路径（调用方负责 DeleteAsset 回收）。
+        /// 在项目 Assets 下创建临时夹具文件夹，返回其 Assets 相对路径（调用方负责 DeleteAsset 回收）。
+        /// UPM 包目录是 immutable folder——在其中新建的文件夹拿不到 .meta，Unity 会报
+        /// "has no meta file, but it's in an immutable folder" 并忽略该资产，故夹具一律建在可写的 Assets/ 下。
         /// </summary>
         static string CreateFixtureFolder(string folderName)
         {
-            var miscFolder = LocateFolderOfThisTestFile();
-            Assume.That(miscFolder, Is.Not.Null, "应能定位到本测试所在目录");
-            var fixtureGuid = AssetDatabase.CreateFolder(miscFolder, folderName);
-            return AssetDatabase.GUIDToAssetPath(fixtureGuid);
-        }
-
-        /// <summary>
-        /// 按本测试文件名定位其所在目录（Assets 安装 / UPM 形态自适应）。
-        /// </summary>
-        static string LocateFolderOfThisTestFile()
-        {
-            foreach (var guid in AssetDatabase.FindAssets(nameof(ScriptDocGeneratorApiTests)))
+            const string parent = "Assets";
+            var fixturePath = parent + "/" + folderName;
+            if (AssetDatabase.IsValidFolder(fixturePath))
             {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                if (path.EndsWith("ScriptDocGeneratorApiTests.cs", StringComparison.OrdinalIgnoreCase))
-                {
-                    return Path.GetDirectoryName(path)?.Replace('\\', '/');
-                }
+                AssetDatabase.DeleteAsset(fixturePath);
             }
 
-            return null;
+            var fixtureGuid = AssetDatabase.CreateFolder(parent, folderName);
+            return AssetDatabase.GUIDToAssetPath(fixtureGuid);
         }
 
         #endregion
