@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.34.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.34.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.34.1** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.34.1** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -29,6 +29,23 @@ versions follow [Semantic Versioning](https://semver.org/).
 > **依赖关系 / Dependency**:
 > - **Aesir Architecture** — 不依赖任何 Aesir 子包 / depends on no Aesir sub-package
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
+
+---
+
+## [0.34.1] - 2026-11-20
+
+### [architecture] Aesir Architecture
+
+**Fixed**
+
+- **恢复测试程序集的 Odin 预编译引用** — `fdc5724b`（「清理测试程序集 Odin 引用」）误删了 RAA PlayMode 测试 asmdef 的 `Sirenix.*.dll` `precompiledReferences`，而 `AesirMonoBehaviour` 的基类链在 Odin 环境下指向 `SerializedMonoBehaviour`，测试一碰即 `CS0012`（引用了未定义程序集的类型）。现补回 `Sirenix.OdinInspector.Attributes.dll` / `Sirenix.Serialization.dll` / `Sirenix.Utilities.dll`。对不存在程序集的预编译引用会被 Unity 静默忽略，故保留引用在「有 / 无 Odin」两种环境下都成立；测试只在本仓开发用、不随包分发（unitypackage 整目录剔除 `Tests/`），不受「运行时零 Odin 依赖」约束。
+
+### [modules] Aesir Modules
+
+**Fixed**
+
+- **恢复三个测试程序集的 Odin 预编译引用** — 同 RAA：`fdc5724b` 误删了 `Tests.Editor` / `Tests` / `Tests.UniTask` 三个 asmdef 的 `Sirenix.*.dll` 引用导致 `CS0012`，现补回（`Tests.Editor` / `Tests` / `Tests.UniTask` 各含 `Sirenix.OdinInspector.Attributes.dll` / `Sirenix.Serialization.dll` / `Sirenix.Serialization.Config.dll` / `Sirenix.Utilities.dll`）。
+- **`ScriptDocGeneratorApiTests` 临时夹具移出包内只读目录** — `CreateFixtureFolder` 原先把夹具建在测试文件所在目录（UPM 安装时 `Packages/` 是 immutable folder，新建文件夹拿不到 `.meta`，Unity 报 "has no meta file, but it's in an immutable folder" 并忽略资产）。现改为在可写的 `Assets/` 下创建（已存在则先删），`LocateFolderOfThisTestFile` 辅助方法随之移除。
 
 ---
 

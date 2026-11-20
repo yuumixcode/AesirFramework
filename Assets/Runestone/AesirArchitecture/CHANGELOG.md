@@ -5,6 +5,12 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.34.1] - 2026-11-20
+
+### Fixed
+
+- **恢复 PlayMode 测试程序集的 Odin 预编译引用** — `fdc5724b` 误删了 `Runestone.AesirArchitecture.Tests.asmdef` 的 `Sirenix.*.dll` `precompiledReferences`，而 `AesirMonoBehaviour` 的基类链在 Odin 环境下指向 `SerializedMonoBehaviour`，测试一碰即 `CS0012`（引用了未定义程序集的类型）。现补回 `Sirenix.OdinInspector.Attributes.dll` / `Sirenix.Serialization.dll` / `Sirenix.Utilities.dll`。对不存在程序集的预编译引用会被 Unity 静默忽略，故保留引用在「有 / 无 Odin」两种环境下都成立；测试只在本仓开发用、不随包分发，不受「运行时零 Odin 依赖」约束。**无运行时代码变更。**
+
 ## [0.34.0] - 2026-11-19
 
 ### Added

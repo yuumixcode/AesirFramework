@@ -23,8 +23,8 @@
 
 | 包 | 包 ID | 版本 | 说明 |
 |---|---|---|---|
-| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.34.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
-| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.34.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
+| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.34.1 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
+| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.34.1 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
 
 依赖关系：**RAA 不依赖任何 Aesir 包**；**RAM 依赖 RAA**（`package.json` 中**不声明**该依赖，见下方"依赖补全"）。
 
@@ -463,9 +463,12 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ---
 
-## 当前状态与待办（2026-11-19）
+## 当前状态与待办（2026-11-20）
 
-- 已发布 **0.34.0**（2026-11-19）。主仓（CNB）、`Aesir-Notebook`、`AesirFramework-Site` 三仓同批提交推送；`v0.34.0` tag 由 CNB 流水线滚动生成并经 git-sync 送达 GitHub。
+- 已发布 **0.34.1**（2026-11-20，补丁版）。主仓（CNB）、`Aesir-Notebook`、`AesirFramework-Site` 三仓同批提交推送；`v0.34.1` tag 由 CNB 流水线滚动生成并经 git-sync 送达 GitHub。上一稳定版 0.34.0（2026-11-19）。
+- **0.34.1 落地内容**（纯测试基础设施修复，无运行时代码变更）：
+  1. **恢复测试程序集的 Odin 预编译引用** —— `fdc5724b` 误删后导致 `CS0012`（`AesirMonoBehaviour` 基类链在 Odin 环境指向 `SerializedMonoBehaviour`）；RAA PlayMode + RAM `Tests.Editor` / `Tests` / `Tests.UniTask` 四个 asmdef 补回 `Sirenix.*.dll`。测试只在本仓开发用、不随包分发，不受"运行时零 Odin 依赖"约束。
+  2. **`ScriptDocGeneratorApiTests` 临时夹具移出包内只读目录** —— 改在可写 `Assets/` 下创建，规避 UPM 安装时 `Packages/` immutable folder 拿不到 `.meta` 的问题。
 - **0.34.0 落地内容**：
   1. **（RAA）编辑器工具去 Odin 化 + UI Toolkit 复刻** —— Getting Started / Timer Debugger / Update / Scene Settings 四个窗口与 ObservableValue / 可观察集合 / AesirTimer 三个 Drawer 改用 UI Toolkit；新增 `Preferences → Aesir` 偏好页与 Editor 专属样式 SO（只 Editor 读取、不进构建），Odin 降级为纯样式开关；SceneAssetWrapper 绘制改 UI Toolkit 优先 + IMGUI 兜底、零 Odin 依赖。运行时代码一律不依赖 Odin（有 / 无 Odin 编译均 0 error）。
   2. **（RAA）`AesirTimer` 分层重构（无破坏性）** —— 单一类拆为 `AbstractTimer` 抽象基类 + 六种具体计时器（`Countdown` / `NextFrame` / `Repeating` / `Interval` / `Frequency` / `Stopwatch`），既有公开 API 零改动，示例补三种新形态，新增 9 例 EditMode 用例。
@@ -473,11 +476,11 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
   4. **（RAM）UI 实例化简化** —— 移除停用模板机制改 `Instantiate → SetActive(false)`，实例名去重复 `(Clone)`；`Resources.Load` 资产语义实证与文档决策复盘。
   5. **移除 Binder / SDG 的 UI Toolkit 窗口** —— 两个工具只保留原 Odin 窗口，数据层零 Odin 依赖不改。
   6. **（AI 扩展）`AesirFrameworkGame` 1.2.0 → 1.3.0** —— 新增 `aesir-project-structure` 技能（12 技能），统一资产命名去类型前缀与工程目录约定；按 PlaneWar 三篇复盘优化 boot-scene / framework / ui / router 技能。
-- **门禁基线（0.34.0 实测）**：EditMode batchmode **872 total / 869 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑。**
+- **门禁基线（0.34.1 实测，与 0.34.0 一致）**：EditMode batchmode **872 total / 869 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑。**
 - 门禁前置校验：`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；两个文档站 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
 - **待办 / 未决**：
   - PlaneWar 的 RAA 版案例（`Assets/PlaneWar/Scripts/Raa/`，程序集 `PlaneWar.Raa`）待编写（当前只有 Mono 版；README 已列出规划）。
-  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.34.0 复核。
+  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.34.1 复核。
   - `.codely-cli/memory.md` 的整理收尾（ARCHIVE 已存在）。
 - **UniTask 已通过 `manifest.json` 的 Git URL 安装** → `AESIR_MODULES_UNITASK` 生效，`SceneModuleUniTask` 与对应测试参与编译。新增依赖 UniTask 的代码须确认该宏；新增需要该宏的程序集须**自己再声明一份** `versionDefines` + `defineConstraints`。
 - 无 Addressables 配置（UI 走 `ResourcesUILoader`，`IUIAssetLoader` 已预留接口）。
@@ -491,7 +494,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 - **manifest 本地路径依赖**：`cn.tuanjie.ai.generators` 指向 `.codely-cli/extensions/TJGenerators/`（gitignored）。新克隆未装扩展就打开 Unity → 包解析失败、相关脚本不编译。
 - **Samples 示例场景污染**：出现 `BinderTag` / `BinderCodeGenerator` / `MenuProbe` 等 RAM 专有类型即污染（RAA 无 RAM 依赖）；本仓示例场景 `GraphicRaycaster` 的 `m_Bits` 惯例值 55。
 - **PlayMode 门禁必须走 batchmode**：编辑器内跑 Test Framework 1.1.33 会误入 PlayerLauncher。
-- **unitypackage 导出必须整目录剔除 `Tests/`**（含目录 `.meta`）：只删 asmdef 会让残留 `.cs` 并入 `Assembly-CSharp` 报 `CS0246`，比不删更糟。边界仅 unitypackage；UPM 形态维持现状（Package Manager 默认不编译包内测试程序集，需 Testables 主动 opt-in）。
+- **unitypackage 导出必须整目录剔除 `Tests/`**（含目录 `.meta`）：只删 asmdef 会让残留 `.cs` 并入 `Assembly-CSharp` 报 `CS0246`，比不删更糟。**边界仅 unitypackage 导出线；UPM 形态有意保留 `Tests/`，不要顺手删**——已实测：使用者在自己工程 `Packages/manifest.json` 的 `testables` 数组里加入包 ID（`cn.runestone.aesir.architecture` / `cn.runestone.aesir.modules`），Package Manager 就会编译包内测试程序集，可在 Test Runner 直接跑框架用例；不加则默认不编译，不污染消费者工程。包内测试一律假定自己可能跑在 `Packages/` 只读目录里：临时夹具建在可写的 `Assets/` 或系统 `Temp/`，别用 `AssetDatabase.CreateFolder` 往测试文件所在的包目录里塞东西（immutable folder 新建文件夹拿不到 `.meta`，Unity 报 "has no meta file, but it's in an immutable folder. The asset will be ignored."）。
 - **CNB 迁移后镜像首次同步必失败（2026-11-16 实测）**：CNB 导入仓库时重写了提交哈希，GitHub main 与 CNB main **没有共同祖先**（两条历史各有独立的 `Initial commit`）——文档里「fetch → merge 回 CNB」的规程在这种情况下不可用（`refusing to merge unrelated histories`，且文件级全是 added-by-both 冲突），`git-sync` 的 main 阶段随之失败，后续包分支与 tag 同步阶段一并被跳过（GitHub 侧停在旧版本、无新 Release）。处置：确认真实差异只有 `.cnb.yml` 且内容已被 CNB 侧更新版本取代后，**一次性 `--force-with-lease` 把 GitHub 的 main / 两包分支对齐 CNB**，再用 CNB 的 `v<版本>` tag 手动推一次触发 GitHub Release；此后单向同步恢复正常。
 - **GitHub 侧 tag 推送不触发 Actions（2026-11-19 修复）**：`git-sync` 把 `v*` tag 推到 GitHub 后 `auto-release.yml` **不可靠触发**（tag 已送达、`ls-remote` 可见，但 repo events 无 PushEvent、`actions/runs` 无 run；v0.32.0/v0.33.0 曾有 run、v0.34.0 起复现）。**根治**：GitHub Release 改由 CNB `v*` tag_push 流水线直接发——`publish-github-release` stage 用 `.github/scripts/publish_github_release.py`（纯标准库，delete→create→upload 幂等）经 REST API 发布，`imports` 的 `github.yml` 提供 `GIT_ACCESS_TOKEN`（contents: write 即可）。`auto-release.yml` 保留为幂等兜底并加 `workflow_dispatch`（可指定 tag 手动补发）；两边都只删 Release、不动 tag（tag 归 CNB 管）。**手动补发**（本仓无 GitHub remote，`gh` 必须显式 `--repo`）：本地构建三包后 `gh release create <tag> --repo <owner>/<repo> --notes-file ...`，或带 token 跑 `publish_github_release.py`。**验收**：`gh release view <tag> --repo <owner>/<repo> --json assets` 应有 RAA/RAM/RAF 三份。
 - **发版后补 CHANGELOG 必须滚动 CNB tag，否则 CNB Release 正文停在旧版（2026-11-19 实测）**：CNB Release 是 `v*` tag_push 时 **checkout 到 tag 指向的 commit**、再用那份 CHANGELOG 经 `extract_release_notes.py` 生成正文（`create-release` 的 `descriptionFromFile`）。发版后若再补根 CHANGELOG（如漏写 `[modules]` 段），仅 push main **不会更新已发布的 Release**——正文由 tag commit 决定，与 main HEAD 无关。表象：GitHub Release 正文已新（上轮用脚本重建过）、CNB Release（国内）正文仍是旧的，用户看到「Release 内容没变」。**修复**：把 tag 滚到含完整 CHANGELOG 的 main HEAD——`git push -f <cnb-url> refs/heads/main:refs/tags/v<版本>`（tag 是本仓在研滚动 tag，非历史钉版 tag，force 安全），tag push 自动触发 `v*` 流水线重建 Release。**注意**：本地 git token 只有 code 权限，`PATCH /{repo}/-/releases/{id}` 改正文需 `repo-release:rw` 会 403，别走 API 改正文；流水线里的 `CNB_TOKEN` 才有发布权限。**验收**：CNB API `GET /{repo}/-/releases`（需 `Accept: application/json`）比对 v<版本> 的 `body` 含 `[modules]`，并与 `gh release view` 的 GitHub 正文对齐。

@@ -19,8 +19,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.34.0` |
-| **Aesir Modules** | UI framework (single facade + multiple registries, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.34.0` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.34.1` |
+| **Aesir Modules** | UI framework (single facade + multiple registries, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.34.1` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -141,7 +141,7 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 
 > **Mainland China acceleration**: CNB is the primary repository and GitHub is its mirror — both routes serve identical content; users in mainland China are recommended to use the CNB route (direct access, no proxy needed). Every GitHub Git URL in this document has a CNB equivalent: replace `github.com/yuumixcode` with `cnb.cool/runestone-game`, keeping the branch / tag / `?path=` parameters unchanged (same for Options 3 and 4).
 >
-> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.34.0` (swap `path` for the desired package directory; **tags of published historical versions are kept forever**, while the in-development version's tag rolls forward on every push to `main` and freezes only after the version number is bumped — pin published stable versions).
+> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.34.1` (swap `path` for the desired package directory; **tags of published historical versions are kept forever**, while the in-development version's tag rolls forward on every push to `main` and freezes only after the version number is bumped — pin published stable versions).
 >
 > **Both packages must be added separately**: UPM does not support Git URL dependencies inside a package (official Unity limitation). Adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture — you can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 
