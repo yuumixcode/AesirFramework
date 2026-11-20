@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [0.34.1] - 2026-11-20
+
+### Fixed
+
+- **恢复三个测试程序集的 Odin 预编译引用** — `fdc5724b` 误删了 `Tests.Editor` / `Tests` / `Tests.UniTask` 三个 asmdef 的 `Sirenix.*.dll` `precompiledReferences`，而 `AesirMonoBehaviour` 的基类链在 Odin 环境下指向 `SerializedMonoBehaviour`，测试一碰即 `CS0012`。现补回（每个 asmdef 含 `Sirenix.OdinInspector.Attributes.dll` / `Sirenix.Serialization.dll` / `Sirenix.Serialization.Config.dll` / `Sirenix.Utilities.dll`）。对不存在程序集的预编译引用会被 Unity 静默忽略，故保留引用在「有 / 无 Odin」两种环境下都成立；测试只在本仓开发用、不随包分发，不受「运行时零 Odin 依赖」约束。
+- **`ScriptDocGeneratorApiTests` 临时夹具移出包内只读目录** — `CreateFixtureFolder` 原先把夹具建在测试文件所在目录（UPM 安装时 `Packages/` 是 immutable folder，新建文件夹拿不到 `.meta`，Unity 报 "has no meta file, but it's in an immutable folder" 并忽略资产）。现改为在可写的 `Assets/` 下创建（已存在则先删），`LocateFolderOfThisTestFile` 辅助方法随之移除。**无运行时代码变更。**
+
 ## [0.34.0] - 2026-11-19
 
 ### Added
