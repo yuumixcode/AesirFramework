@@ -143,7 +143,7 @@ namespace Runestone.AesirArchitecture.Editor
         const string WindowTitle = "Aesir Getting Started Window";
 
         /// <summary>在线文档站地址（工具条链接）。</summary>
-        const string DocsUrl = "https://yuumixcode.github.io/AesirFramework-Docs/";
+        const string DocsUrl = "https://yuumixcode.github.io/AesirFramework/";
 
         /// <summary>GitHub 仓库地址。</summary>
         const string GitHubUrl = "https://github.com/yuumixcode/AesirFramework";

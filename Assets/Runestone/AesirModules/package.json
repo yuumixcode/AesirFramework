@@ -4,8 +4,8 @@
   "version": "0.35.0",
   "unity": "2022.3",
   "description": "Aesir 功能模块包。UI 框架（单门面 + 多注册表单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（Script 订阅 + 句柄退订、订阅者过滤器精确投递、取消传播、公开诊断 API 与调试窗口、死引用清理、SO 资产化）+ 音频模块（SFX 轮询播放、BGM 淡入淡出、三通道音量持久化）。",
-  "documentationUrl": "https://yuumixcode.github.io/AesirFramework-Site/modules/",
-  "changelogUrl": "https://yuumixcode.github.io/AesirFramework-Site/changelog/",
+  "documentationUrl": "https://yuumixcode.github.io/AesirFramework/modules/",
+  "changelogUrl": "https://yuumixcode.github.io/AesirFramework/changelog/",
   "keywords": [
     "ui",
     "modules",

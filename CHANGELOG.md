@@ -32,6 +32,19 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### 仓库级变更 / Repository-wide
+
+- **文档站并入主仓** — 产品站内容迁至仓库根 `docs/` + `zensical.toml`，由 `.github/workflows/docs.yml`
+  构建发布（GitHub Pages）；站点 URL 由 `…/AesirFramework-Site/` 变为 `…/AesirFramework/`，旧仓
+  `AesirFramework-Site` 切全路径跳转壳，存量深链保持可达。两包 `documentationUrl` / `changelogUrl`
+  同步更新（随下次发版到达用户，期间旧地址跳转兜底）。
+
+### [architecture] Aesir Architecture
+
+- **修复 Getting Started 窗口文档站死链** — `DocsUrl` 指向已弃用的 `AesirFramework-Docs`（404），统一为同仓新址。
+
 ## [0.35.0] - 2026-11-23
 
 ### [architecture] Aesir Architecture

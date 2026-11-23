@@ -21,12 +21,12 @@
 
 ## 阶段 2：主仓引用替换与门禁（一个 commit）
 
-- [ ] 2.1 两包 `package.json`：`documentationUrl`/`changelogUrl` 共 4 处换新前缀 `…/AesirFramework/…`
-- [ ] 2.2 `AesirGetStartedWindowOdin.cs` L146 `DocsUrl`：`AesirFramework-Docs`（404 死链）→ `https://yuumixcode.github.io/AesirFramework/`
-- [ ] 2.3 两包 CHANGELOG `[Unreleased]`：RAA 记 Fixed（Getting Started 文档链接 404）+ Changed（文档站同仓、URL 更新）；RAM 记 Changed（package.json 文档链接更新）；根 CHANGELOG 同步
-- [ ] 2.4 CODELY.md：目录结构图加 `docs/`、`tools/docs-site/`、`zensical.toml`、`site/`、`.cache/`；外部关联目录节删 Site 条目改同仓口径；迭代文档矩阵与门禁清单加 `zensical build --strict`
-- [ ] 2.5 门禁：编译预热 0 error → EditMode 全绿（解析 XML）→ `sync_samples.py --check` 零漂移；PlayMode 豁免（无运行时行为变更）
-- [ ] 2.6 提交 `fix: 文档站链接统一指向同仓新址（含 Getting Started 404 死链）`
+- [x] 2.1 两包 `package.json`：`documentationUrl`/`changelogUrl` 共 4 处换新前缀 `…/AesirFramework/…`
+- [x] 2.2 `AesirGetStartedWindowOdin.cs` L146 `DocsUrl`：`AesirFramework-Docs`（404 死链）→ `https://yuumixcode.github.io/AesirFramework/`
+- [x] 2.3 两包 CHANGELOG `[Unreleased]`：RAA 记 Fixed（Getting Started 文档链接 404）+ Changed（文档站同仓、URL 更新）；RAM 记 Changed（package.json 文档链接更新）；根 CHANGELOG 同步
+- [x] 2.4 CODELY.md：目录结构图加 `docs/`、`tools/docs-site/`、`zensical.toml`、`site/`、`.cache/`；外部关联目录节删 Site 条目改同仓口径；迭代文档矩阵与门禁清单加 `zensical build --strict`
+- [x] 2.5 门禁：编译预热 0 error → EditMode 全绿（解析 XML）→ `sync_samples.py --check` 零漂移；PlayMode 豁免（无运行时行为变更）
+- [x] 2.6 提交 `fix: 文档站链接统一指向同仓新址（含 Getting Started 404 死链）`
 
 ## 阶段 3：启用主仓 Pages 并验证新站
 

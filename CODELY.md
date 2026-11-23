@@ -69,9 +69,14 @@ AesirFramework/
 ├── .cnb.yml                       # CNB 下载仓流水线（v* tag → CNB Release；修复分支反推按钮）
 ├── .cnb/web_trigger.yml           # CNB 分支详情页自定义按钮（反推此分支到 GitHub）
 ├── CodeStyle/AesirCodeStyle.cs    # 统一代码风格指南（不参与编译）
+├── docs/                          # 公开产品站内容（Zensical 同仓发布；内部 architecture/modules 等路径不可动）
+├── zensical.toml                  # 站点配置（site_url / nav / theme；edit_uri 必须置空）
+├── tools/docs-site/               # 站点本地工具（预览/截图）、品牌源图、工程约定 README
+├── openspec/                      # openspec 式变更提案（config.yaml + changes/，TJSpec 仪表盘数据根）
 ├── .github/
 │   ├── workflows/sync-to-cnb.yml      # 主仓流水线：split / update-info / 版本 tag / force 同步 CNB
 │   ├── workflows/auto-release.yml     # 建三份 unitypackage → 滚动 GitHub Release（由 sync 派发）
+│   ├── workflows/docs.yml             # 文档站流水线：docs/** 变更 → zensical build --strict → GitHub Pages
 │   ├── scripts/build_unitypackage.py  # 打包脚本（纯 Python，禁换第三方 CLI）
 │   └── scripts/extract_release_notes.py
 ├── .codely-cli/                   # AI 工具链（部分入库，见「AI 技能与 Codely 环境」）
@@ -96,7 +101,7 @@ AesirFramework/
 └── Packages/manifest.json
 ```
 
-**gitignored 的本地产物（不要提交、也不要当作事实来源）**：`Library/`、`Temp/`、`obj/`、`Logs/`、`UserSettings/`、`Build/`、`Exports/`（历史 unitypackage）、`ScriptDocGenerator/`（默认文档输出根）、`TestResults*.xml`、`*.log`、`screenshots/`、`*.csproj`、`*.sln`、`Assets/Plugins/Sirenix/`、`Assets/Vertical 2D Shooting BE4/`、`.DS_Store`。
+**gitignored 的本地产物（不要提交、也不要当作事实来源）**：`Library/`、`Temp/`、`obj/`、`Logs/`、`UserSettings/`、`Build/`、`Exports/`（历史 unitypackage）、`ScriptDocGenerator/`（默认文档输出根）、`site/`（文档站构建产物）、`.cache/`（zensical 增量缓存）、`TestResults*.xml`、`*.log`、`screenshots/`、`*.csproj`、`*.sln`、`Assets/Plugins/Sirenix/`、`Assets/Vertical 2D Shooting BE4/`、`.DS_Store`。
 
 > 入库口径（2026-11-16 裁决）：`Assets/Resources/`（模块配置单例）与 `Assets/Editor Default Resources/Script Doc Generator/`（SDG 资产标记）**入库**——本仓库示例运行会读取它们；`ScriptableSingleton/`（`LoadTypeSettings` / `BinderEditorSettings` / `SceneEditorSettings`）属本机编辑器产物，**继续 gitignored**。注意：这两份 Resources 资产只是**本仓入库的示例基线**；包本身已取消"导入即自动创建"，用户工程需经菜单 `Tools/Aesir/Modules/Create Module Config Assets` 显式创建（或自行创建 / 注册加载器），缺资产时运行时用内存默认配置兜底。
 
@@ -448,10 +453,17 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 **维护约定**：技能只在扩展目录内改（包里不再有副本）；改完跑 `python3 .codely-cli/extensions/AesirFrameworkGame/scripts/validate.py`（期望"0 个错误，0 个警告"）。拆分公司原则是**一个技能只回答一类问题**——入口不写模板、模板不进核心 API、决策与陷阱各自独立，AI 按意图只加载需要的那一篇。
 
-### 外部关联目录（均被 `.gitignore` 排除）
+### 公开产品站（同仓，2026-11-23 并入）
+
+- 内容在主仓根 `docs/` + `zensical.toml`，由 `.github/workflows/docs.yml` 构建发布到 GitHub Pages（`https://yuumixcode.github.io/AesirFramework/`）；仅 `docs/**` / `zensical.toml` / workflow 自身变更触发。本地门禁 `zensical build --strict`（0 issue）。
+- 站点工程约定（设计系统 / 半角标点 / 中文标题英文锚点 / `edit_uri` 置空 / API 页增量重生成流程）权威源在 `tools/docs-site/README.md`；本地工具 `serve-preview.py` / `shoot.mjs` 与品牌源图同目录。
+- `docs/architecture/`、`docs/modules/` 物理路径被 SDG 重生成与 `package.json` 的 `documentationUrl` 依赖，**不可移动**。
+- 旧仓 `AesirFramework-Site` 保留为全路径跳转壳 + 历史留档（旧深链跳新站对应页）；本地克隆清理后不再存在。
+- `site/`（构建产物）与 `.cache/`（zensical 增量缓存）gitignored。
+
+### 外部关联目录（被 `.gitignore` 排除）
 
 - `Aesir-Notebook/` — 私有开发笔记（Zensical 站点，含 `docs/standards/iteration-workflow.md`、`unit-testing-standards.md`、`design-changelog.md` 权威源）。
-- `AesirFramework-Site/` — 公开产品站（Zensical + GitHub Pages），`docs/architecture/`、`docs/modules/` 物理路径被 SDG 与 `package.json` 的 `documentationUrl` 依赖，**不可移动**。
 
 ### 迭代流程（新增功能 / 行为变更 / Bug 修复）
 
@@ -472,8 +484,8 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
    | Bug 修复 | CHANGELOG `[Unreleased]` Fixed + 回归测试 |
    | 设计裁决 / 删机制 | `Aesir-Notebook` 的 `design-changelog.md` + `decisions/` + 本文件设计边界 |
    | 改 asmdef / 静态状态 | 无文档变更，但改 asmdef **必须重跑门禁**；改静态状态手动关 Domain Reload 连按两次 Play |
-   用户写法变了还要同步 AI 扩展技能（唯一主位 `.codely-cli/extensions/AesirFrameworkGame/skills/`）。产品文档只写当前行为，历史演进写笔记仓。
-6. **门禁** — 依次：`sync_samples.py --check`（零漂移）→ 编译预热 0 error → EditMode → PlayMode（改运行时行为才需要）。改测试/asmdef 全跑，纯文档补丁可豁免 PlayMode；全绿 exit 0、失败 exit 2 需解析 XML。
+   用户写法变了还要同步 AI 扩展技能（唯一主位 `.codely-cli/extensions/AesirFrameworkGame/skills/`）。产品文档只写当前行为，历史演进写笔记仓。表中「产品站」指同仓主仓根 `docs/`（2026-11-23 起）；站点版本落点随主仓发版提交。
+6. **门禁** — 依次：`sync_samples.py --check`（零漂移）→ 编译预热 0 error → EditMode → PlayMode（改运行时行为才需要）；`docs/` / `zensical.toml` 变更另跑主仓根 `zensical build --strict`（0 issue）。改测试/asmdef 全跑，纯文档补丁可豁免 PlayMode；全绿 exit 0、失败 exit 2 需解析 XML。
 7. **提交与合并** — 一个功能一个 commit，Conventional Commits + message 写"为什么"；普通提交的主题/正文禁含 `[skip ci]` 等跳过标记字面量（会跳过 GitHub 同步流水线），确需跳过才用；精确路径 `git add`（勿 `-A`）。PR 提 GitHub 并正常 Merge；CNB AI 修复分支经反推按钮进 GitHub 后同样走 PR。功能迭代期只维护各包 CHANGELOG 的 `[Unreleased]`。
 
 **真源与镜像**：`Samples/` 主位 → `Samples~/` 镜像（逐文件 diff 判方向，勿凭主位硬覆盖）；技能正文只在扩展目录；发版清单只认 `sync-to-cnb.yml` / `auto-release.yml` + version-sync skill。
@@ -486,6 +498,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 - **常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`** — GitHub `main` 推送时由 `sync-to-cnb.yml` 按包目录 `git subtree split` 滚动更新（包内容为分支根），**并进一步裁掉开发侧 `Samples/` 与 `Documentation/`，只保留 `~` 版本**（流水线内含残留断言：残留即 `exit 1`），随后 force 同步到 CNB。分支名永久固定：Git URL 一次输入持续更新，升级 = Package Manager 移除后用同一 URL 重新 Add。钉旧版本用 Release tag（`?path=<包路径>#v<版本>`；**版本 tag 一旦发布即不可变、永久保留**，版本号 bump 后的首次推送才创建新 tag）。流水线自动清理两边废弃的 `Aesir*-v*` 版本分支。
 - **`.github/workflows/sync-to-cnb.yml`（主仓流水线，唯一跨仓同步入口）** — main push：split 包分支 → `update-info.json` 回写（`[skip ci]` 提交推回 GitHub main）→ 版本 tag（远端已存在即跳过）→ 新 tag 时 `gh workflow run` 派发 auto-release → **main / 两包分支 / tags 全部 force 推 CNB**（需 Secrets `CNB_USERNAME` / `CNB_TOKEN`），并对齐 CNB 侧多余 `v*` tag。
 - **`.github/workflows/auto-release.yml`（GitHub Release）** — 主触发路径是 sync 流水线的 `workflow_dispatch` 派发（`GITHUB_TOKEN` 推的 tag 不触发 push workflow）；保留 push tags 触发给维护者手动推 tag 的场景。校验 tag 与两包 `package.json` 版本一致 → 纯 Python 构建 `AesirArchitecture` / `AesirModules` / `AesirFramework`（两包合并）→ 从根 CHANGELOG 抽该版本段落 → 滚动重建 GitHub Release（删旧 Release 保 tag）。
+- **`.github/workflows/docs.yml`（文档站）** — main push 且 `docs/**` / `zensical.toml` / workflow 自身变更触发（另含 `workflow_dispatch`）：锁 zensical 0.1.1 → `build --strict` → GitHub Pages（deploy-pages）。与 sync-to-cnb 并存：docs-only 提交照常走 sync（CNB 全量镜像含 `docs/`），包分支 split 不受影响。
 - **`.cnb.yml`（CNB 下载仓流水线）** — 只剩两条：`v*` tag push 构建三份 unitypackage 并发 CNB Release（国内加速，两边资产同源）；`web_trigger_push_github` 手动按钮把 CNB AI 修复分支反推 GitHub（按钮定义在 `.cnb/web_trigger.yml`，禁止反推 main / 常驻包分支）。
 - **远端 CI 不跑 Unity 编译/测试**（不配 `UNITY_LICENSE`）；编译与 EditMode/PlayMode 验证在本地 batchmode 全绿后再推送。
 - 发版前须全仓摸底旧版本号：两包 `package.json`、根 `CHANGELOG.md`（当前版本行 + 固定分支名 + 新段落）、两包中英 `README`、根 `README`/`README_EN`、`CODELY.md`、文档站。改版本号时注意：根 CHANGELOG 插入若用 `%` 格式化会被正文 `%` 撞格式符（改用占位符 `.replace()`）；`git add -A` 会带上测试产物；改名文件要连 `.meta` 一起 add。
@@ -503,6 +516,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
   4. **（RAM）SDG 开放泛型成员默认值读取崩溃修复**。
   5. **（RAA）代码格式化与 XML 注释排版统一**（无运行时行为变更）。
 - **2026-11-23 双仓架构反转**：GitHub 升为开发主仓、CNB 降为国内下载仓（原因：CNB AI Issue/PR 效果不佳）。新增 `.github/workflows/sync-to-cnb.yml`（split / update-info / 版本 tag / force 同步 CNB），`.cnb.yml` 瘦身为 CNB Release + 反推按钮，`auto-release.yml` 改由 sync 派发；tag 语义沿承 PR #7「一旦发布即不可变」。Secrets `CNB_USERNAME` / `CNB_TOKEN` 已配置，首跑已验证（run 45140383615）。
+- **2026-11-23 文档站并入主仓**（提案 `openspec/changes/merge-docs-site/`）：`docs/` + `zensical.toml` + `docs.yml` 就位，站点 URL 改 `…/AesirFramework/`，旧仓 `AesirFramework-Site` 切全路径跳转壳；两包 `documentationUrl` / `changelogUrl` 与 Getting Started 窗口 404 死链（旧 `AesirFramework-Docs` 地址）已修，随下次发版到达用户。门禁实测：编译 0 error、EditMode 881/878/0/3、sync_samples 零漂移、zensical --strict 0 issue。
 - **0.34.1 落地内容**（纯测试基础设施修复，无运行时代码变更）：
   1. **恢复测试程序集的 Odin 预编译引用** —— `fdc5724b` 误删后导致 `CS0012`（`AesirMonoBehaviour` 基类链在 Odin 环境指向 `SerializedMonoBehaviour`）；RAA PlayMode + RAM `Tests.Editor` / `Tests` / `Tests.UniTask` 四个 asmdef 补回 `Sirenix.*.dll`。测试只在本仓开发用、不随包分发，不受"运行时零 Odin 依赖"约束。
   2. **`ScriptDocGeneratorApiTests` 临时夹具移出包内只读目录** —— 改在可写 `Assets/` 下创建，规避 UPM 安装时 `Packages/` immutable folder 拿不到 `.meta` 的问题。
@@ -514,7 +528,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
   5. **移除 Binder / SDG 的 UI Toolkit 窗口** —— 两个工具只保留原 Odin 窗口，数据层零 Odin 依赖不改。
   6. **（AI 扩展）`AesirFrameworkGame` 1.2.0 → 1.3.0** —— 新增 `aesir-project-structure` 技能（12 技能），统一资产命名去类型前缀与工程目录约定；按 PlaneWar 三篇复盘优化 boot-scene / framework / ui / router 技能。
 - **门禁基线（0.35.0 实测）**：EditMode batchmode **881 total / 878 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑。**
-- 门禁前置校验：`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；两个文档站 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
+- 门禁前置校验：`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；主仓根文档站与 `Aesir-Notebook` 各自 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
 - **待办 / 未决**：
   - PlaneWar 的 RAA 版案例（`Assets/PlaneWar/Scripts/Raa/`，程序集 `PlaneWar.Raa`）待编写（当前只有 Mono 版；README 已列出规划）。
   - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.35.0 复核。
