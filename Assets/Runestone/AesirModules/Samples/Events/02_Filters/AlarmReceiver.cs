@@ -1,10 +1,11 @@
 #if UNITY_EDITOR // 示例仅编辑器内参与编译（运行时程序集保证场景可挂载，#if 保证构建剔除）
+using Runestone.AesirArchitecture;
 using UnityEngine;
 
 namespace Runestone.AesirModules.Samples.Events.Filters
 {
     /// <summary>
-    /// 事件订阅者。注册 <c>[AesirListener]</c> 监听两种示例事件，收到后弹跳一次并变色，
+    /// 事件订阅者。用 Script 订阅监听两种示例事件，收到后弹跳一次并变色，
     /// 同时向 <see cref="SampleHud" /> 输出日志。被过滤器拦截的订阅者保持静止，形成直观对照。
     /// </summary>
     [AddComponentMenu("")]
@@ -17,9 +18,11 @@ namespace Runestone.AesirModules.Samples.Events.Filters
         Color flashColor = Color.yellow;
 
         int _alarmCount;
+        AutoRemoveListenerHandle _alarmHandle;
         Vector3 _baseScale;
         float _bounceTimer;
         int _orderCount;
+        AutoRemoveListenerHandle _orderHandle;
         MaterialPropertyBlock _propertyBlock;
 
         Renderer _renderer;
@@ -44,17 +47,24 @@ namespace Runestone.AesirModules.Samples.Events.Filters
             transform.localScale = _baseScale * (1f + 0.4f * Mathf.Sin(t * Mathf.PI));
         }
 
-        void OnEnable() => EventModule.AddListener(this);
-        void OnDisable() => EventModule.RemoveListener(this);
+        void OnEnable()
+        {
+            _alarmHandle = EventModule.AddListener<AlarmEvent>(this, OnAlarm);
+            _orderHandle = EventModule.AddListener<SquadOrderEvent>(this, OnSquadOrder);
+        }
 
-        [AesirListener]
+        void OnDisable()
+        {
+            _alarmHandle.Dispose();
+            _orderHandle.Dispose();
+        }
+
         void OnAlarm(AlarmEvent e)
         {
             _alarmCount++;
             Flash($"警报 ×{_alarmCount}：{e.Message}");
         }
 
-        [AesirListener]
         void OnSquadOrder(SquadOrderEvent e)
         {
             _orderCount++;

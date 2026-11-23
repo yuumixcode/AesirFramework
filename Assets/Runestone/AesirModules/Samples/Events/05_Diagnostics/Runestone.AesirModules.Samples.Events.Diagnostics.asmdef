@@ -1,0 +1,17 @@
+{
+  "name": "Runestone.AesirModules.Samples.Events.Diagnostics",
+  "rootNamespace": "Runestone.AesirModules.Samples.Events.Diagnostics",
+  "references": [
+    "Runestone.AesirModules",
+    "Runestone.AesirArchitecture"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": false,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

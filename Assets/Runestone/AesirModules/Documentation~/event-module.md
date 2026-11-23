@@ -2,16 +2,22 @@
 
 ## 概述
 
-事件模块提供基于双轨订阅的事件系统，实现业务模块间的发布-订阅解耦。
+事件模块提供基于 Script 订阅的事件系统，实现业务模块间的发布-订阅解耦。
 
-- **Attribute 订阅**：`[AesirListener]` 特性标记方法，`AddListener(obj)` 反射扫描注册
-- **Script 订阅**：`AddListener<T>(obj, callback)` 动态注册 Lambda 委托，返回 `AutoRemoveListenerHandle`
-- 两种订阅共存于独立注册表，分发时合并进迭代快照，按 4 档优先级稳定排序执行（同档按注册顺序）
+- **Script 订阅**：`AddListener<T>(subscriber, callback)` 注册委托，返回 `AutoRemoveListenerHandle` 精确退订；这是
+  **唯一**的订阅形态
+- 订阅按 4 档优先级稳定排序执行（同档按注册顺序）
 - **订阅者过滤器**：`WithFilter` 链式声明"只让特定范围的订阅者收到"（精确投递）
-- **分发期可靠性**：快照迭代（回调内退订/注册不影响本趟分发）、支持重入发布（回调内可安全再发布事件）、自动清理已销毁订阅者（死引用）；可选分发耗时告警
-- **SO 资产化**：`AesirEventArgsSO` 让事件可保存为 .asset 资源，`UnityEventOnAesirEvent` 桥接 Inspector UnityEvent
+- **取消传播**：`Cancel(this)` 中止本次分发（First/Last 档不受影响）
+- **分发期可靠性**：快照迭代（回调内退订/注册不影响本趟分发）、支持跨实例重入发布（同一实例重入被拒绝）、自动清理已销毁订阅者（死引用）；可选分发耗时告警
+- **SO 资产化**：`AesirEventArgsSO` 让事件可保存为 .asset 资源，`UnityEventOnAesirEvent` 桥接 Inspector
+  UnityEvent
+- **可观测性**：`AesirEventDiagnostics` 公开门面 + Monitor / Log / Tester 三个调试窗口
 
-> **注意**：`AesirEventArgs` 是事件参数载体（类似 `EventArgs`），本身不持有监听者。订阅管理由 `EventModule` 的双注册表负责。这与 `MiniEvent`（自身持有 `Action` 列表的自包含事件）在设计定位上不同。
+> **注意**：`AesirEventArgs` 是事件参数载体（类似 `EventArgs`），本身不持有监听者。订阅管理由 `EventModule`
+> 的注册表负责。这与 `MiniEvent`（自身持有 `Action` 列表的自包含事件）在设计定位上不同。
+
+> **设计裁决**：本模块曾提供 `[AesirListener]` 特性反射订阅，现已移除——理由见文末「为什么只保留 Script 订阅」。
 
 ## 核心类型
 
@@ -21,51 +27,43 @@
 
 ```csharp
 [Serializable]
-public abstract class AesirEventArgs : ICloneable
+public abstract class AesirEventArgs
 {
     public object Sender { get; private set; }                 // 发布者，分发时写入
     public IReadOnlyList<ISubscriberFilter> Filters { get; }  // 过滤器列表（未添加时为 null）
 
-    public AesirEventArgs SetSender(object sender);   // 链式
+    public bool IsCancelled { get; }                           // 本次分发是否被取消
+    public object CancelledBy { get; }                         // 取消者
+
+    public AesirEventArgs SetSender(object sender);            // 链式（发布者侧 API）
     public AesirEventArgs WithFilter(ISubscriberFilter filter);            // 链式添加过滤器
     public AesirEventArgs WithFilters(params ISubscriberFilter[] filters); // 链式添加一组过滤器
-    public void Invoke();                               // 用 Sender 触发
-    public void Invoke(object sender);                 // 用指定 sender 触发
-    public virtual object Clone();                     // 浅拷贝
+    public AesirEventArgs Cancel(object canceller);            // 取消本次传播
+    public AesirEventArgs NonCancellable();                    // 使事件免疫取消
+    public void Invoke();                                      // 用 Sender 触发
+    public void Invoke(object sender);                         // 用指定 sender 触发
 }
 ```
 
-### AesirListenerAttribute
-
-方法特性，标记该方法监听指定事件参数类型。`AllowMultiple = true`：同一方法可标注多个特性监听多种事件。
-
-```csharp
-[AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
-public class AesirListenerAttribute : Attribute
-{
-    public Type EventType { get; set; }                       // 显式事件类型（可选）
-    public SubscriberPriority Priority { get; set; } = High;  // 优先级
-
-    public AesirListenerAttribute();
-    public AesirListenerAttribute(Type eventType);
-    public AesirListenerAttribute(SubscriberPriority priority);
-    public AesirListenerAttribute(Type eventType, SubscriberPriority priority);
-}
-```
+> **分发约定**（低概率场景用约定杜绝，不做防御兜底）：
+> - **同一参数实例在分发期间不得被再次发布**——`EventModule` 会输出错误日志并拒绝（fail-fast）。事件链请使用新的参数实例，或经
+>   `AesirTimer.NextFrame` 延后发布；发布**其他实例**（同型或异型）不受限制。
+> - `SetSender` 是发布者侧 API，订阅者不应在分发期间调用。
+> - 分发中途增删/替换发布者的 `Collider2D` 不被支持（空间过滤器的解析结果按趟缓存）。
 
 ### EventModule
 
 MonoBehaviour 单例，直接继承 `AesirMonoBehaviour`，作为 `AesirModules` 子物体懒加载创建。
 
 ```csharp
-// Attribute 订阅
-public static void AddListener(object subscriber);
-public static void RemoveListener(object subscriber);
-
-// Script 订阅（返回 AutoRemoveListenerHandle）
+// Script 订阅（返回 AutoRemoveListenerHandle，首选退订路径）
 public static AutoRemoveListenerHandle AddListener<TEventArgs>(object subscriber, Action<TEventArgs> callback);
 public static AutoRemoveListenerHandle AddListener<TEventArgs>(object subscriber, Action<TEventArgs> callback, SubscriberPriority priority);
 public static AutoRemoveListenerHandle AddListener(object subscriber, AesirEventArgs eventArgs, Action<AesirEventArgs> callback);  // 非泛型版
+
+// 按对象退订（退订方无句柄时的补充路径）
+public static void RemoveListener<TEventArgs>(object subscriber);  // 精确退订该对象的某事件类型（O(1) 查表）
+public static void RemoveListener(object subscriber);              // 批量退订该对象全部订阅（O(n) 冷路径）
 
 // 事件触发
 public static void InvokeEvent<TEventArgs>(object sender, TEventArgs eventArgs);
@@ -77,33 +75,21 @@ public static EventModule Instance { get; }
 // [SerializeField] float executionMsLimit = 0f;  — 分发耗时告警阈值（ms），0 = 关闭
 ```
 
-### BindingInfo
+### 绑定信息（internal 实现细节）
 
-绑定信息基类，Attribute 与 Script 订阅的共同部分：
-
-```csharp
-public abstract class BindingInfo
-{
-    public string BindingKey { get; protected set; }
-    public object Subscriber { get; protected set; }
-    public SubscriberPriority Priority { get; protected set; }
-    public long InsertionIndex { get; internal set; }  // 注册顺序号（同优先级稳定排序的次键）
-    public abstract void Invoke(object[] args = null);
-}
-```
-
-- **StaticBindingInfo** — 持有 `MethodInfo` + 表达式树编译委托。注册时通过 `Expression.Lambda.Compile()` 将反射方法编译为 `Action<object, object[]>` 委托，分发时零反射调用
-- **DynamicBindingInfo\<TEventArgs\>** — 持有 `Action<TEventArgs>` 直接委托，无需表达式树
+订阅绑定由 internal 的 `BindingInfo` 基类 + `ScriptBindingInfo<T>` 承载：持有 `Action<T>`
+直接委托，注册后直接调用，无反射、无表达式树、无参数数组。**包外不可见**——订阅/退订必须经 `EventModule` 公开
+API，诊断展示所需的信息（事件类型、监听成员名、优先级、存活状态）经 `AesirEventDiagnostics` 的快照公开。
 
 ### SubscriberPriority
 
 ```csharp
 public enum SubscriberPriority
 {
-    First,   // 最前 — 比所有默认档位更早
-    High,    // 高优先级 — Attribute 订阅默认值
+    First,   // 最前 — 前置校验；不受取消传播影响
+    High,    // 高优先级（需显式指定）
     Medium,  // 中优先级 — Script 订阅默认值
-    Last     // 最后 — 收尾/清理
+    Last     // 最后 — 收尾/清理；不受取消传播影响
 }
 ```
 
@@ -123,26 +109,7 @@ public class OnPlayerScored : AesirEventArgs
 }
 ```
 
-### 2. Attribute 订阅
-
-```csharp
-using UnityEngine;
-using Runestone.AesirModules;
-
-public class ScoreUI : MonoBehaviour
-{
-    void OnEnable()  => EventModule.AddListener(this);
-    void OnDisable() => EventModule.RemoveListener(this);
-
-    [AesirListener]
-    private void OnPlayerScored(OnPlayerScored e)
-    {
-        Debug.Log($"[ScoreUI] {e.playerName} scored {e.points}");
-    }
-}
-```
-
-### 3. Script 订阅
+### 2. Script 订阅
 
 ```csharp
 using UnityEngine;
@@ -161,6 +128,32 @@ public class ScoreController : MonoBehaviour
 }
 ```
 
+一个方法监听多种事件 = 多条 `AddListener<T>`，各自持有句柄：
+
+```csharp
+AutoRemoveListenerHandle _scoreHandle;
+AutoRemoveListenerHandle _levelHandle;
+
+void OnEnable()
+{
+    _scoreHandle = EventModule.AddListener<OnPlayerScored>(this, OnScored);
+    _levelHandle = EventModule.AddListener<OnLevelLoaded>(this, OnLevel);
+}
+void OnDisable() { _scoreHandle.Dispose(); _levelHandle.Dispose(); }
+```
+
+### 3. 无句柄退订（外部解绑）
+
+退订方拿不到句柄时（诊断工具强制解绑、临时屏蔽某对象）：
+
+```csharp
+// 只退该对象对 OnPlayerScored 的订阅
+EventModule.RemoveListener<OnPlayerScored>(someSubscriber);
+
+// 退该对象的全部订阅
+EventModule.RemoveListener(someSubscriber);
+```
+
 ### 4. 发布事件
 
 ```csharp
@@ -174,11 +167,7 @@ EventModule.InvokeEvent(this, new OnPlayerScored { points = 10 });
 ### 5. 指定优先级
 
 ```csharp
-// Attribute — 构造函数指定
-[AesirListener(SubscriberPriority.First)]
-private void OnPlayerScored(OnPlayerScored e) { ... }
-
-// Script — 参数指定
+EventModule.AddListener<OnPlayerScored>(this, e => { ... }, SubscriberPriority.First);
 EventModule.AddListener<OnPlayerScored>(this, e => { ... }, SubscriberPriority.Last);
 ```
 
@@ -208,19 +197,20 @@ new OnTick().WithFilter(new WithPriority(SubscriberPriority.Medium)).Invoke(this
 
 内建过滤器：
 
-| 过滤器 | 语义 |
-|--------|------|
-| `WithTag(tag)` | 仅 Tag 匹配的订阅者收到（tag 须非 null 非空串，构造期 fail-fast 抛出） |
-| `WithPriority(priority)` | 仅绑定在指定优先级档位的订阅者收到 |
-| `SameSceneAsEmitter` | 仅与发布者同场景的订阅者收到（适配多场景叠加加载） |
-| `OnlySelf` | 仅发布者自身/子树/父级链上的订阅者收到 |
-| `InsideCollider2D` | 仅位于发布者 Collider2D 范围内的订阅者收到（空间局域广播） |
+| 过滤器                   | 语义                                                                   |
+|--------------------------|------------------------------------------------------------------------|
+| `WithTag(tag)`           | 仅 Tag 匹配的订阅者收到（tag 须非 null 非空串，构造期 fail-fast 抛出） |
+| `WithPriority(priority)` | 仅绑定在指定优先级档位的订阅者收到                                     |
+| `SameSceneAsEmitter`     | 仅与发布者同场景的订阅者收到（适配多场景叠加加载）                     |
+| `OnlySelf`               | 仅发布者自身/子树/父级链上的订阅者收到                                 |
+| `InsideCollider2D`       | 仅位于发布者 Collider2D 范围内的订阅者收到（空间局域广播）             |
 
 自定义过滤器：实现 `ISubscriberFilter.ShouldReceive(AesirEventArgs, object subscriber, SubscriberPriority)` 即可。
 
-> **fail-closed 约定**：过滤器无法解析对象（发布者/订阅者不是 GameObject 或 Component、已销毁）时按"不通过"处理，避免过滤条件失效导致事件意外扩散。过滤器抛出的异常与订阅者回调一样被分发隔离（不影响其他订阅者）。
+> **fail-closed 约定**：过滤器无法解析对象（发布者/订阅者不是 GameObject 或
+> Component、已销毁）时按"不通过"处理，避免过滤条件失效导致事件意外扩散。过滤器抛出的异常与订阅者回调一样被分发隔离（不影响其他订阅者）。
 >
-> **生命周期**：过滤器随事件参数实例存在，`Clone()` 共享同一列表；缓存复用的参数实例（如 `AesirEventArgsSO`）会保留已添加的过滤器。
+> **生命周期**：过滤器随事件参数实例存在；缓存复用的参数实例（如 `AesirEventArgsSO`）会保留已添加的过滤器。
 
 ### 7. SO 资产化（Inspector 配置事件）
 
@@ -241,106 +231,221 @@ scoredEventAsset.Raise();
 2. 经下拉选择监听的事件类型
 3. 在 On Raised 中绑定任意 UnityEvent 回调（播放音效、激活物体等）
 
-> `SubclassSelector`（UI Toolkit PropertyDrawer）对任意 `[SerializeReference]` 字段生效；`ExcludeSubclassSelector` 特性可把不想出现在下拉中的类型排除。运行时修改事件类型需重新启用组件使订阅生效。
+> `SubclassSelector`（UI Toolkit PropertyDrawer）对任意 `[SerializeReference]` 字段生效；
+> `ExcludeSubclassSelector` 特性可把不想出现在下拉中的类型排除。运行时修改事件类型需重新启用组件使订阅生效。
 
 ## 架构设计
 
-### 双注册表
+### 单注册表（Type 键 + 注册期有序）
 
-两种订阅分别存储于独立注册表，分发时合并：
+只有一张 Script 订阅注册表，以事件参数类型为键，列表在**注册时**维护有序（Priority 升序、同档按注册顺序），分发直接取用：
 
 ```
-AttributeBindings (Dictionary<string, List<BindingInfo>>)
-  └─ StaticBindingInfo (MethodInfo + 表达式树委托)
-
-DynamicBindings (Dictionary<string, List<BindingInfo>>)
-  └─ DynamicBindingInfo<T> (Action<T> 委托)
+Bindings (Dictionary<Type, List<BindingInfo>>)
+  └─ ScriptBindingInfo<T> (Action<T> 委托，internal)
 
 RaiseEvent:
-  1. 从两个注册表取订阅者列表
-  2. 合并进迭代快照（顶层复用迭代缓冲区；重入层使用独立局部列表）
-  3. 按优先级稳定排序（Priority 主键 + InsertionIndex 注册序次键；count > 1 才排序）
-  4. 逐订阅者：死引用检查 → 过滤器检查 → 调用（顶层复用 object[] 参数数组）
+  1. 同实例重入守卫（分发中的实例再次发布 → 报错拒绝）
+  2. 按事件类型 O(1) 取订阅者列表（已有序，无需排序）
+  3. 拷贝进迭代快照（顶层复用迭代缓冲区；重入层用按深度复用的独立缓冲区）
+  4. 逐订阅者：死引用检查 → 取消检查 → 过滤器检查 → 委托直调
   5. 循环外：移除本轮收集的死绑定；超阈值输出耗时告警（仅顶层分发计时）
 ```
 
-### 快照迭代与重入安全
+### 快照迭代与重入约定
 
 分发循环基于注册表快照执行，两个语义由此保证：
 
-- **回调内退订/注册不影响本趟分发**——订阅者回调内 `RemoveListener` / 句柄 `Dispose` / 新增订阅，只修改注册表本身，本趟迭代仍按快照执行完毕（退订的订阅者本趟仍会收到，新增的订阅者从下趟开始收到），不会出现"退订后续订阅者导致跳过一个"的索引位移。
-- **回调内可安全同步发布事件（重入）**——订阅者回调内再发布任何事件（同型或异型），重入层使用独立的局部迭代列表、局部参数数组与局部死绑定收集，外层循环继续时剩余订阅者仍收到正确的外层事件参数。重入层不再复用顶层的共享缓冲区，代价是重入层每次分发一次小的局部分配。
+- **回调内退订/注册不影响本趟分发**——订阅者回调内 `RemoveListener` / 句柄 `Dispose` /
+  新增订阅，只修改注册表本身，本趟迭代仍按快照执行完毕（退订的订阅者本趟仍会收到，新增的订阅者从下趟开始收到），不会出现"退订后续订阅者导致跳过一个"的索引位移。
+- **回调内可安全同步发布其他参数实例（跨实例重入）**
+  ——同型或异型均可，重入层使用按深度复用的独立迭代缓冲区与死绑定收集，外层循环继续时剩余订阅者仍收到正确的外层参数。缓冲区池随最大嵌套深度增长一次，之后稳态零分配。
+
+**同一参数实例的重入发布被拒绝（fail-fast）**：分发期间再次发布同一实例（如在订阅者回调里对正在分发的 `e` 调
+`Invoke`，或重入触发同一个 `AesirEventArgsSO`
+资产）会输出错误日志并跳过。这是"低概率问题用约定杜绝、不加防御兜底"的设计裁决——原实现为这个极低频场景维护逐订阅者
+Sender 校正，已删除。事件链的正确写法：
+
+```csharp
+// ✅ 新实例
+EventModule.AddListener<EnemyDiedEventArgs>(this, e =>
+    new ScoreChangedEventArgs { delta = e.score }.Invoke(this));
+
+// ✅ 延后一帧（RAA 计时器）
+EventModule.AddListener<EnemyDiedEventArgs>(this, e =>
+    AesirTimer.NextFrame(() => new ScoreChangedEventArgs { delta = e.score }.Invoke(this)));
+
+// ❌ 同一实例再发一次——被拒绝并报错
+EventModule.AddListener<EnemyDiedEventArgs>(this, e => e.Invoke(this));
+```
 
 ### 死引用清理
 
-订阅者 GameObject 被 Destroy 后绑定仍残留在注册表（旧版本只跳过不清理，会永久累积）。现在分发循环内把 Unity 假 null 的订阅者收集到复用列表，**循环结束后**从双注册表移除并输出 Warning 提示检查退订遗漏（编辑器内；玩家构建中静默清理）。同一订阅者的事件类型不再被发布时，其死绑定不会清理——按需发布即可，无泄漏累积。
+订阅者 GameObject 被 Destroy 后绑定仍残留在注册表。分发循环内把 Unity 假 null 的订阅者收集到复用列表，
+**循环结束后**从注册表移除并输出 Warning 提示检查退订遗漏（编辑器内；玩家构建中静默清理）。同一订阅者的事件类型不再被发布时，其死绑定不会清理——按需发布即可，无泄漏累积。
 
-### 表达式树优化
+### 性能模型
 
-`StaticBindingInfo` 在注册时（`Bind` / `OnEnable`，冷路径）通过 `Expression.Lambda.Compile()` 将 `MethodInfo` 编译为 `Action<object, object[]>` 委托。之后每次分发（热路径）直接委托调用，比 `MethodInfo.Invoke` 快 20-40 倍。
+**热路径（分发期）零反射、零排序、零字符串分配、零装箱**：
 
-### 性能模型（冷/热路径）
+- 注册表以 `Type` 为键（`RuntimeTypeHandle` 哈希），无字符串键拼接与缓存；
+- 顺序在注册期维护（有序插入，冷路径），分发侧零排序零比较；
+- 委托直调收 `AesirEventArgs`，无 `object[]` 参数数组与类型模式检查；
+- 顶层分发复用迭代缓冲区与死绑定收集列表，重入层用按深度复用的缓冲区池（Clear 保留容量，稳态零分配）；
+- 空间过滤器的发布者 GameObject / Collider2D 按趟解析一次、N 个订阅者共享；
+- 无实例时 `TryGetExisting` 走负缓存快速路径（每个"实例缺失期"至多一次全场景查找）；
+- 过滤器列表懒分配（未声明过滤器时为 null，零开销）；诊断关闭时只多一次静态 bool 读取。
 
-反射只发生在**冷路径**（注册期，一次性成本），**热路径**（分发期）零反射、零字符串分配、零装箱、零闭包捕获；顶层分发零列表分配（迭代缓冲区 Clear 复用），重入层除外（见"快照迭代与重入安全"）：
+| 操作             | 成本量级                                    |
+|------------------|---------------------------------------------|
+| 委托直调         | ~4ns/次                                     |
+| Type 键字典查询  | O(1)，零分配                                |
+| 注册（有序插入） | 同档追加 O(1)；跨档插入 O(n) 移位（冷路径） |
 
-**冷路径（`AddListener` / `Bind`，每次订阅/退订）**：
+对比：曾有过的 `[AesirListener]` 特性订阅在绑定期需 `GetMethods` + `GetCustomAttributes`（~
+50µs/对象）、表达式树首次编译（1-3ms/方法）、维护一整套缓存基础设施——这些开销已随特性订阅移除而消失。
 
-| 反射操作 | 成本 |
-|----------|------|
-| `Bind`：`GetMethods` 方法数组 + `GetCustomAttributes` 特性实例化 + 表达式树编译 | ~50µs/订阅者（实测） |
-| `StaticBindingInfo`：`Expression.Lambda.Compile()` | ~1-3ms/唯一方法，仅首次 |
-| 非泛型 `AddListener` 重载：`Delegate.CreateDelegate` + `MakeGenericMethod` | 每次订阅一次 |
-| `RemoveListener`：`Keys.ToList()` 键快照 | 每次退订一次分配 |
+**性能回归测试**（`Tests/Editor/EventModuleTests.cs`）：
 
-**热路径（`RaiseEvent` 分发）**：
-
-| 操作 | 实测成本 |
-|------|----------|
-| 编译委托调用（vs `MethodInfo.Invoke` ~300ns） | ~4ns/次，加速 ~78 倍 |
-| 绑定键查询（Type→string 缓存后；原生 `AssemblyQualifiedName` 拼接每次 ~1µs + 新分配字符串） | ~20ns 字典查询，零分配 |
-| 1000 订阅者单次发布（含死引用检查、过滤器检查、排序、调用） | ~571µs |
-
-顶层热路径复用迭代缓冲区、`object[]` 参数数组、死绑定收集列表与静态 `Stopwatch`（Clear 保留容量，稳态零分配）；过滤器列表懒分配（未声明过滤器时为 null，零开销）。`List.Sort` 的比较器包装为每次排序一次小分配（订阅者 ≥ 2 才触发）；重入层使用局部列表与局部数组，每次重入分发分配一个小的局部列表。
-
-**性能回归测试**（`Tests/Editor/EventModuleTests.cs`，防止优化退化）：
-
-- `GetEventBindingKey_Cached_SameStringInstancePerType` — 同类型键复用同一字符串实例（引用同一性断言，锁定热路径零字符串分配）
-- `CompiledDelegate_InvokeIsFasterThanReflectionInvoke` — 20 万次迭代对比计时，断言编译委托快于 `MethodInfo.Invoke`
-- `Dispatch_ThousandSubscribers_CompletesWithinGenerousBudget` — 1000 订阅者单次分发的信息性软门槛（实测约 0.6ms，门槛放大千倍仅作量级回归防线，CI 波动不脆）
+- `Dispatch_PriorityTiers_RegisteredOutOfOrder_StillSorted` — 乱序注册仍全序执行（锁定注册期有序插入）
+- `Dispatch_ThousandSubscribers_CompletesWithinGenerousBudget` — 1000 订阅者单次分发的信息性软门槛
 
 ### 性能监控
 
-`executionMsLimit`（毫秒，默认 0 = 关闭）为分发耗时告警阈值。开启后单次分发超过阈值输出 Warning（含事件名、耗时与订阅者数量）。计时复用静态 `Stopwatch`，零稳态分配；**仅顶层分发计时**——重入层不计时，避免嵌套分发的 Restart/Stop 互相破坏计时。分发支持重入，语义见"快照迭代与重入安全"。
+`executionMsLimit`（毫秒，默认 0 = 关闭）为分发耗时告警阈值。开启后单次分发超过阈值输出
+Warning（含事件名、耗时与订阅者数量）。计时复用静态 `Stopwatch`，零稳态分配；**仅顶层分发计时**——重入层不计时，避免嵌套分发的
+Restart/Stop 互相破坏计时。
 
 ### 退订
 
-- `RemoveListener(obj)` — 移除该对象的全部绑定（含 Attribute + Script）
-- `AutoRemoveListenerHandle.Dispose()` — 仅移除单条 Script 绑定（重复调用安全）
+- `AutoRemoveListenerHandle.Dispose()` — 首选，精确移除单条订阅（重复调用安全）
+- `RemoveListener<T>(subscriber)` — 无句柄时精确退订某对象的某事件类型
+- `RemoveListener(subscriber)` — 无句柄时批量退订该对象全部订阅（冷路径 O(n)）
 - 遗漏退订且订阅者被销毁 → 下次分发自动清理（死引用清理兜底）
+
+## 取消传播
+
+订阅者可在回调内调用 `e.Cancel(this)` 中止本次分发：
+
+- `First` / `Last` 两档**始终收到**（分别承担前置校验与收尾清理，不受取消影响）；
+- `High` / `Medium` 档中，取消之后的剩余订阅者被跳过；
+- `NonCancellable()` 让事件免疫取消（结算、存档等必须送达所有订阅者的场景）；
+- 每趟分发自动复位取消状态，缓存复用的参数实例（`AesirEventArgsSO`）不会带入上一趟痕迹。
+
+```csharp
+void OnBeforeClose(OnPanelClose e)
+{
+    if (!CanClose)
+    {
+        e.Cancel(this); // 阻止后续 High/Medium 档订阅者关闭面板
+    }
+}
+
+// 订阅时把该方法放到 High 档（前置校验语义）
+_handle = EventModule.AddListener<OnPanelClose>(this, OnBeforeClose, SubscriberPriority.High);
+```
+
+典型用途：输入吞噬、伤害减免链、互斥 UI 抢先响应。
+
+## 可观测性与调试
+
+`AesirEventDiagnostics` 是全部监控数据的**公开门面**，只依赖运行时类型、零 Odin 依赖——未安装 Odin
+的开发者可直接用它自建监视面板。
+
+### 订阅树查询（拉取）
+
+```csharp
+AesirEventSubscriptionSnapshot[] subs = AesirEventDiagnostics.GetSubscriptions();
+AesirSubscriberSnapshot[] listeners = AesirEventDiagnostics.GetSubscribers(typeof(OnPlayerScored));
+int count = AesirEventDiagnostics.GetSubscriberCount(typeof(OnPlayerScored));
+bool any = AesirEventDiagnostics.HasSubscribers(typeof(OnPlayerScored));
+```
+
+快照为只读 struct，含事件类型、订阅者实例、监听成员名、优先级、是否存活。
+
+### 链路快照（推送 + 环形缓冲）
+
+```csharp
+// 实时推送：订阅此事件即可制作监视面板
+AesirEventDiagnostics.TraceProduced += snap => { /* 处理 snap */ };
+
+// 回看历史：最新在前，环形缓冲有硬容量上限
+AesirEventTraceSnapshot[] recent = AesirEventDiagnostics.GetRecentTraces(max: 50);
+
+AesirEventDiagnostics.TraceCapacity = 256;      // 容量（防日志无限增长）
+AesirEventDiagnostics.Enabled = true;           // 采集总开关
+AesirEventDiagnostics.ClearTraces();            // 清空
+```
+
+`AesirEventTraceSnapshot` 记录种类（Raised / SubscriberBound / SubscriberUnbound）、时间戳（**UTC**，展示时
+`ToLocalTime()`）、事件类型、参与者、命中订阅者数、耗时、是否取消、过滤器数。参与者名称在首次采集时弱表缓存（运行期改名不反映）。采集默认在编辑器与
+Development Build 开启、正式包关闭；关闭时分发热路径零分配。
+
+### 内置调试窗口
+
+菜单 `Tools → Aesir → Modules`：
+
+| 窗口              | 用途                                                               |
+|-------------------|--------------------------------------------------------------------|
+| **Event Monitor** | 实时展示"哪些事件有哪些订阅者"（类型 / 优先级 / 存活）             |
+| **Event Log**     | 实时展示触发 / 绑定 / 解绑链路，含命中数、耗时、取消状态，容量上限 |
+| **Event Tester**  | 选事件类型、填载荷、手动触发（仅 Play 模式）                       |
+
+每个窗口都有 UI Toolkit 版（核心 Editor 程序集、零 Odin）与 Odin 版（经静态委托路由）。装有 Odin 且开启 Aesir Odin
+样式时自动用 Odin 版（表格 + 即时刷新）；未装 Odin 或关闭样式时落回 UI Toolkit 版，功能等价。
+
+## 为什么只保留 Script 订阅（移除特性的理由）
+
+本模块早期提供 `[AesirListener]` 特性反射订阅：在方法上标注特性，`AddListener(obj)` 反射扫描对象全部方法完成注册。现已
+**彻底移除**，只保留 Script 订阅。理由：
+
+1. **收益仅为省几行代码**。特性订阅的全部优势——声明就近、一个方法监听多事件、一次注册全部——本质都是"把 N 条
+   AddListener 压成 N 个标注 + 1 条注册"。它能做到的事，Script 订阅全都能做到；没有独占能力。
+2. **性能更差且随对象数线性增长**。绑定期 `GetMethods` + 逐方法 `GetCustomAttributes` + LINQ ≈ 50µs/对象，
+   **无类型缓存**——1000 个持续生成的对象 ≈ 50ms 纯反射，表现为"每帧都在跑启动反射"；还有表达式树首次编译
+   1-3ms/方法、`RemoveListener(obj)` 的 O(n) + `Keys.ToList()` 分配。
+3. **类型安全更弱**。Script 订阅的 callback 参数由泛型编译期约束；特性订阅靠反射从首参推断事件类型 +
+   字符串键匹配，签名错误（多参数 / ref-out / 类型不符）要到 `OnEnable` 反射扫描时才暴露。
+4. **维护面与框架定位冲突**。签名校验、类型推断、表达式树编译与缓存、去重、多套 Warning
+   文本——整套基础设施只为"省几行"服务，与 RAA/RAM 的极简基调相悖。
+5. **AI 时代学习成本被放大**。AI 写 `AddListener<T>(this, e => ...)`
+   完全自然，不需要记特性名、不受签名约束；特性的"声明式美感"对 AI 零增益。学习成本高的机制会被开发者用 AI 直接绕过。
+
+**迁移**：把 `[AesirListener] void OnXxx(MyArgs e)` 改成 `EventModule.AddListener<MyArgs>(this, e => { ... })`
+并持有句柄，`OnDisable` 中 `Dispose()`；退订方无句柄时用 `RemoveListener<T>(subscriber)` 或
+`RemoveListener(subscriber)`。完整裁决见私有笔记仓 `decisions/remove-attribute-subscription.md`。
 
 ## 目录结构
 
 ```
 Runtime/Events/
-├── AesirEventArgs.cs              # 事件参数基类（Sender + WithFilter 链式 API）
+├── AesirEventArgs.cs              # 事件参数基类（Sender + WithFilter + Cancel 链式 API）
 ├── AesirEventArgsSO.cs            # SO 资产包装（CreateAssetMenu + Raise）
-├── AesirEventUtility.cs           # 静态工具（绑定键、Unity null 检测、GameObject 解析）
-├── AesirListenerAttribute.cs      # 订阅者特性（AllowMultiple）
-├── BindingInfo.cs                 # 绑定信息基类 + StaticBindingInfo + DynamicBindingInfo<T>
+├── AesirEventUtility.cs           # 静态工具（Unity null 检测、GameObject 解析）
+├── AesirEventDiagnostics.cs       # 诊断公开门面（订阅查询 + 链路快照 + 环形缓冲）
+├── BindingInfo.cs                 # 绑定信息（internal）：基类 + ScriptBindingInfo<T>
 ├── ISubscriberFilter.cs           # 过滤器策略接口
 ├── SubscriberFilters.cs          # 内建过滤器（WithTag/WithPriority/SameSceneAsEmitter/InsideCollider2D/OnlySelf）
 ├── SubclassSelectorAttribute.cs   # [SerializeReference] 子类下拉特性 + 排除特性
 ├── Component/
-│   ├── EventModule.cs             # 事件模块单例（死引用清理 + 过滤器检查 + 性能监控）
+│   ├── EventModule.cs             # 事件模块单例（死引用清理 + 过滤器检查 + 取消传播 + 性能监控）
 │   └── UnityEventOnAesirEvent.cs  # UnityEvent 桥接组件
 └── SubscriberPriority.cs          # 优先级枚举（4 档：First/High/Medium/Last）
 
 Editor/Events/
 ├── SubclassSelectorDrawer.cs      # 子类下拉 PropertyDrawer（UI Toolkit）
-└── AesirEventArgsSOEditor.cs      # SO 自定义 Inspector（运行时 Raise 按钮）
+├── AesirEventArgsSOEditor.cs      # SO 自定义 Inspector（运行时 Raise 按钮）
+├── EventDiagnosticsWindowHelper.cs # 诊断窗口 UI helper
+├── AesirEventMonitorWindow.cs     # 订阅监视窗口（UI Toolkit）
+├── AesirEventLogWindow.cs         # 事件日志窗口（UI Toolkit）
+└── AesirEventTesterWindow.cs      # 手动触发窗口（UI Toolkit）
+Editor/Integration/OdinInspector/Events/
+├── AesirEventMonitorWindowOdin.cs # 订阅监视窗口（Odin，静态委托路由）
+├── AesirEventLogWindowOdin.cs     # 事件日志窗口（Odin）
+└── AesirEventTesterWindowOdin.cs  # 手动触发窗口（Odin）
 
 Samples/Events/
-├── 01_KeyPress/           # 基本发布-订阅（[AesirListener] 静态订阅，纯脚本示例）
+├── 01_KeyPress/           # 基本发布-订阅（Script 订阅 + 句柄，纯脚本示例）
 ├── 02_Filters/            # 订阅者过滤器（含 SampleForEventFilters.unity 对照场景：
 │   │                      #   Space = WithTag+InsideCollider2D 双重过滤警报，R = OnlySelf 家族命令）
 │   └── Scene/
@@ -349,9 +454,3 @@ Samples/Events/
 │   └── Scene/
 └── ...（各示例目录含独立 asmdef，运行时程序集 + 整文件 #if UNITY_EDITOR，构建剔除）
 ```
-
-## 后续规划
-
-见 [Docs/AesirModules/EventModule/Feature-Roadmap.md](../../../../Docs/AesirModules/EventModule/Feature-Roadmap.md)。
-
-系统事件（OnObjectBound/OnEventRaised 等元事件）与 DefaultChannel 频道标签依赖编辑器工具链（Subscription Monitor / Event Log 等调试窗口），待工具链立项后一并设计。
