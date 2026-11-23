@@ -1,9 +1,9 @@
 {
   "name": "cn.runestone.aesir.modules",
   "displayName": "Aesir Modules",
-  "version": "0.34.1",
+  "version": "0.35.0",
   "unity": "2022.3",
-  "description": "Aesir 功能模块包。UI 框架（单门面 + 多注册表单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（双轨订阅、订阅者过滤器精确投递、死引用清理、SO 资产化）+ 音频模块（SFX 轮询播放、BGM 淡入淡出、三通道音量持久化）。",
+  "description": "Aesir 功能模块包。UI 框架（单门面 + 多注册表单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（Script 订阅 + 句柄退订、订阅者过滤器精确投递、取消传播、公开诊断 API 与调试窗口、死引用清理、SO 资产化）+ 音频模块（SFX 轮询播放、BGM 淡入淡出、三通道音量持久化）。",
   "documentationUrl": "https://yuumixcode.github.io/AesirFramework-Site/modules/",
   "changelogUrl": "https://yuumixcode.github.io/AesirFramework-Site/changelog/",
   "keywords": [
@@ -22,7 +22,7 @@
   "samples": [
     {
       "displayName": "Event Module - Key Press",
-      "description": "事件模块 V1 基本发布-订阅示例：按键发布事件、[AesirListener] 静态订阅。",
+      "description": "事件模块 V1 基本发布-订阅示例：按键发布事件、Script 订阅 + 句柄退订。",
       "path": "Samples~/Events/01_KeyPress"
     },
     {
@@ -34,6 +34,16 @@
       "displayName": "Event Module - SO Asset",
       "description": "SO 资产化示例：AesirEventArgsSO 资产配置事件（SubclassSelector 下拉）、UnityEventOnAesirEvent 桥接组件零代码串联 UnityEvent 回调。",
       "path": "Samples~/Events/03_SOAsset"
+    },
+    {
+      "displayName": "Event Module - Cancellation",
+      "description": "取消传播示例：Space 发布伤害事件，观察 First/High(取消)/Medium(被跳过)/Last 四档的实际执行链；Shift+Space 发布不可取消事件作对照。",
+      "path": "Samples~/Events/04_Cancellation"
+    },
+    {
+      "displayName": "Event Module - Diagnostics",
+      "description": "诊断 API 示例：只消费公开门面 AesirEventDiagnostics（零 Odin 依赖）展示订阅树与链路快照，演示无句柄时的精确/批量退订；可对照 Event Monitor / Event Log 窗口。",
+      "path": "Samples~/Events/05_Diagnostics"
     },
     {
       "displayName": "Audio Module - Basic Usage",
