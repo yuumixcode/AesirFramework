@@ -10,12 +10,12 @@ namespace Runestone.AesirModules.Editor
     /// <see cref="SceneAssetWrapper" /> 的属性绘制器 —— UI Toolkit 优先，IMGUI 兜底，零 Odin 依赖。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 装了 Odin 时由 <c>SceneAssetWrapperAttributeProcessor</c> 依据样式开关决定让路（注入
-    /// <c>DrawWithUnityAttribute</c>）还是接管；未装 Odin 时本绘制器是唯一实现。两条绘制路径共用
-    /// <see cref="BuildStateText" /> 与 <see cref="SceneAssetWrapper.GetSceneAssetColor" />，信息量一致。
-    /// </para>
-    /// <para>仅支持单值字段（wrapper 不作集合使用）；数组 / 列表元素显示为不支持。</para>
+    ///     <para>
+    ///     装了 Odin 时由 <c>SceneAssetWrapperAttributeProcessor</c> 依据样式开关决定让路（注入
+    ///     <c>DrawWithUnityAttribute</c>）还是接管；未装 Odin 时本绘制器是唯一实现。两条绘制路径共用
+    ///     <see cref="BuildStateText" /> 与 <see cref="SceneAssetWrapper.GetSceneAssetColor" />，信息量一致。
+    ///     </para>
+    ///     <para>仅支持单值字段（wrapper 不作集合使用）；数组 / 列表元素显示为不支持。</para>
     /// </remarks>
     [CustomPropertyDrawer(typeof(SceneAssetWrapper))]
     public class SceneAssetWrapperDrawer : PropertyDrawer
@@ -82,13 +82,15 @@ namespace Runestone.AesirModules.Editor
                 if (current.CanAddToBuild)
                 {
                     AddFixButton(actions, "添加到 BuildSettings",
-                        () => Apply(property, "Fix Scene In BuildSettings", w => w.AddCurrentSceneToBuildSettings()));
+                        () => Apply(property, "Fix Scene In BuildSettings",
+                            w => w.AddCurrentSceneToBuildSettings()));
                 }
 
                 if (current.CanEnableInBuild)
                 {
                     AddFixButton(actions, "在 BuildSettings 中启用",
-                        () => Apply(property, "Fix Scene In BuildSettings", w => w.EnableCurrentSceneInBuildSettings()));
+                        () => Apply(property, "Fix Scene In BuildSettings",
+                            w => w.EnableCurrentSceneInBuildSettings()));
                 }
 
                 if (current.CanMakeAddressable)
@@ -135,7 +137,8 @@ namespace Runestone.AesirModules.Editor
             EditorGUI.BeginProperty(position, label, property);
 
             var rect = new Rect(position.x, position.y, position.width, EditorGUIUtility.singleLineHeight);
-            var asset = (SceneAsset)EditorGUI.ObjectField(rect, label, wrapper.SceneAsset, typeof(SceneAsset), false);
+            var asset =
+                (SceneAsset)EditorGUI.ObjectField(rect, label, wrapper.SceneAsset, typeof(SceneAsset), false);
             if (!ReferenceEquals(asset, wrapper.SceneAsset))
             {
                 Apply(property, "Set SceneAssetWrapper", w => w.SceneAsset = asset);
@@ -150,9 +153,11 @@ namespace Runestone.AesirModules.Editor
 
             var cursor = new Rect(rect.x, rect.y + rect.height + Spacing, rect.width, ButtonHeight);
             DrawFixButton(cursor, wrapper.CanAddToBuild, "添加到 BuildSettings",
-                () => Apply(property, "Fix Scene In BuildSettings", w => w.AddCurrentSceneToBuildSettings()), ref cursor);
+                () => Apply(property, "Fix Scene In BuildSettings", w => w.AddCurrentSceneToBuildSettings()),
+                ref cursor);
             DrawFixButton(cursor, wrapper.CanEnableInBuild, "在 BuildSettings 中启用",
-                () => Apply(property, "Fix Scene In BuildSettings", w => w.EnableCurrentSceneInBuildSettings()), ref cursor);
+                () => Apply(property, "Fix Scene In BuildSettings",
+                    w => w.EnableCurrentSceneInBuildSettings()), ref cursor);
             DrawFixButton(cursor, wrapper.CanMakeAddressable, "加入 Addressables 默认组",
                 () => Apply(property, "Make Scene Addressable", w => w.AddSceneToAddressables()), ref cursor);
 
@@ -182,8 +187,7 @@ namespace Runestone.AesirModules.Editor
         }
 
         static int FixCount(SceneAssetWrapper wrapper) =>
-            (wrapper.CanAddToBuild ? 1 : 0) +
-            (wrapper.CanEnableInBuild ? 1 : 0) +
+            (wrapper.CanAddToBuild ? 1 : 0) + (wrapper.CanEnableInBuild ? 1 : 0) +
             (wrapper.CanMakeAddressable ? 1 : 0);
 
         /// <summary>取宿主对象上的 wrapper 实例（仅支持单值字段；集合字段返回 null）。</summary>
@@ -232,9 +236,7 @@ namespace Runestone.AesirModules.Editor
                     }
                 default:
                     var reason = wrapper.UnsafeReason;
-                    return reason != SceneAssetWrapperUnsafeReason.Empty
-                        ? $"不可加载：{reason}"
-                        : "未分配场景";
+                    return reason != SceneAssetWrapperUnsafeReason.Empty ? $"不可加载：{reason}" : "未分配场景";
             }
         }
     }

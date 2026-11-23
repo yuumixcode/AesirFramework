@@ -186,7 +186,8 @@ namespace Runestone.AesirModules.Tests.Editor.SceneModuleConfig
         static SceneModuleConfigSO LoadResourceConfig()
         {
             var config = Resources.Load<SceneModuleConfigSO>(SceneModuleConfigSO.ResourcePath);
-            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{SceneModuleConfigSO.ResourcePath}），请检查本仓 Assets/Resources 基线或显式创建资产");
+            Assert.IsNotNull(config,
+                $"Resources 兜底资产缺失（{SceneModuleConfigSO.ResourcePath}），请检查本仓 Assets/Resources 基线或显式创建资产");
             return config;
         }
 

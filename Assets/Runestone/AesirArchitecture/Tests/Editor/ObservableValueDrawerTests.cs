@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using NUnit.Framework;
 using Runestone.AesirArchitecture.Editor;
 using UnityEditor;
@@ -34,13 +35,11 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             Assert.IsNotNull(attribute, "ObservableValueDrawer 必须标注 CustomPropertyDrawer");
             // CustomPropertyDrawer 未公开目标类型，读其私有字段 m_Type（Unity 2022.3 实现）
             var typeField = typeof(CustomPropertyDrawer).GetField("m_Type",
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.IsNotNull(typeField, "Unity 实现应含 m_Type 字段");
             var targetType = (Type)typeField.GetValue(attribute);
-            Assert.IsTrue(targetType.IsGenericTypeDefinition,
-                "Drawer 应绑定开放泛型 ObservableValue<>，才能覆盖所有 T");
-            Assert.AreEqual(typeof(ObservableValue<>), targetType,
-                "Drawer 绑定类型必须是 ObservableValue<>");
+            Assert.IsTrue(targetType.IsGenericTypeDefinition, "Drawer 应绑定开放泛型 ObservableValue<>，才能覆盖所有 T");
+            Assert.AreEqual(typeof(ObservableValue<>), targetType, "Drawer 绑定类型必须是 ObservableValue<>");
         }
 
         /// <summary>
@@ -51,8 +50,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         {
             var method = typeof(ObservableValueDrawer).GetMethod("CreatePropertyGUI");
             Assert.IsNotNull(method, "必须提供 CreatePropertyGUI 以走 UI Toolkit 绘制");
-            Assert.AreEqual(typeof(VisualElement), method.ReturnType,
-                "CreatePropertyGUI 应返回 VisualElement");
+            Assert.AreEqual(typeof(VisualElement), method.ReturnType, "CreatePropertyGUI 应返回 VisualElement");
         }
 
         /// <summary>
@@ -61,9 +59,8 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void InvokeMethodName_ResolvesToRealPublicMethod()
         {
-            var method = typeof(ObservableValue<int>).GetMethod(
-                ObservableValue<int>.InvokeMethodName,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public);
+            var method = typeof(ObservableValue<int>).GetMethod(ObservableValue<int>.InvokeMethodName,
+                BindingFlags.Instance | BindingFlags.Public);
 
             Assert.IsNotNull(method, $"{ObservableValue<int>.InvokeMethodName} 常量必须指向真实方法");
         }

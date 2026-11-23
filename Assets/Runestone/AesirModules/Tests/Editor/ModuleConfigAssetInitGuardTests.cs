@@ -2,8 +2,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
-using UnityEditor;
 using Runestone.AesirModules.Editor;
+using UnityEditor;
 
 namespace Runestone.AesirModules.Tests.Editor
 {
@@ -29,7 +29,7 @@ namespace Runestone.AesirModules.Tests.Editor
         }
 
         static bool HasInitializeOnLoadMethod(Type type) =>
-            type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                .Any(method => method.IsDefined(typeof(InitializeOnLoadMethodAttribute), false));
+            type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Any(method =>
+                method.IsDefined(typeof(InitializeOnLoadMethodAttribute), false));
     }
 }

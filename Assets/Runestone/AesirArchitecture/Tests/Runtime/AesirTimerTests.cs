@@ -104,7 +104,7 @@ namespace Runestone.AesirArchitecture.Tests
             var unscaledFired = 0;
 
             AesirTimer.Countdown(0.1f, () => scaledFired++);
-            AesirTimer.Countdown(0.1f, () => unscaledFired++, unscaled: true);
+            AesirTimer.Countdown(0.1f, () => unscaledFired++, true);
 
             var deadline = Time.realtimeSinceStartup + WaitTimeoutSeconds;
             while (unscaledFired == 0 && Time.realtimeSinceStartup < deadline)

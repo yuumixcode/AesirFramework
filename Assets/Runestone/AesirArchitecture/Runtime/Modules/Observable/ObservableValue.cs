@@ -57,8 +57,12 @@ namespace Runestone.AesirArchitecture
         /// <summary>
         /// 读写属性值。设置新值时若与旧值不同，则触发变更通知。
         /// </summary>
-        /// <remarks>使用 <see cref="EqualityComparer{T}" />.Default 判断值是否变化，仅在变化时触发 <see cref="MiniEvent{T}" />.Invoke。
-        /// <para>性能注记：<c>EqualityComparer&lt;T&gt;.Default</c> 对未实现 <see cref="IEquatable{T}" /> 的值类型会回退到装箱比较（每次 set 装箱旧/新值）。热点路径上的自定义结构体建议实现 <c>IEquatable&lt;T&gt;</c> 消除装箱；基元类型（int / float / bool 等）已内置实现，无此开销。</para>
+        /// <remarks>
+        /// 使用 <see cref="EqualityComparer{T}" />.Default 判断值是否变化，仅在变化时触发 <see cref="MiniEvent{T}" />.Invoke。
+        /// <para>
+        /// 性能注记：<c>EqualityComparer&lt;T&gt;.Default</c> 对未实现 <see cref="IEquatable{T}" /> 的值类型会回退到装箱比较（每次 set
+        /// 装箱旧/新值）。热点路径上的自定义结构体建议实现 <c>IEquatable&lt;T&gt;</c> 消除装箱；基元类型（int / float / bool 等）已内置实现，无此开销。
+        /// </para>
         /// </remarks>
         public T Value
         {

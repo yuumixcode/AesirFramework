@@ -3,8 +3,6 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
-using Runestone.AesirModules;
-using Object = UnityEngine.Object;
 
 namespace Runestone.AesirModules.Tests.Editor.UI
 {
@@ -25,11 +23,13 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         const string TestDir = "Assets/Resources/AesirResourcesLoadProbe";
         const string AssetPath = TestDir + "/Probe.asset";
         const string ResourcePath = "AesirResourcesLoadProbe/Probe";
+
         static readonly FieldInfo MaskModeField = typeof(UIModuleConfigSO).GetField(
             "maskMode", BindingFlags.Instance | BindingFlags.NonPublic);
 
-        UIModuleConfigSO _cfg;
         UIMaskMode _baseline;
+
+        UIModuleConfigSO _cfg;
 
         [SetUp]
         public void SetUp()
@@ -41,6 +41,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
                 {
                     AssetDatabase.CreateFolder("Assets", "Resources");
                 }
+
                 AssetDatabase.CreateFolder("Assets/Resources", "AesirResourcesLoadProbe");
             }
 
@@ -74,6 +75,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             {
                 AssetDatabase.DeleteAsset(AssetPath);
             }
+
             if (AssetDatabase.IsValidFolder(TestDir))
             {
                 AssetDatabase.DeleteAsset(TestDir);
@@ -116,12 +118,10 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             // 绕过 Unity 对象缓存，直接读磁盘 YAML 文本
             var diskText = File.ReadAllText(AssetPath);
             var expectedOnDisk = "maskMode: " + (int)_baseline;
-            StringAssert.Contains(expectedOnDisk, diskText,
-                "未 SetDirty / SaveAssets 时，内存修改不应写回磁盘 .asset 文件");
+            StringAssert.Contains(expectedOnDisk, diskText, "未 SetDirty / SaveAssets 时，内存修改不应写回磁盘 .asset 文件");
 
             // 且此时对象未被标脏（脚本直接改字段不自动 dirty）
-            Assert.IsFalse(EditorUtility.IsDirty(_cfg),
-                "脚本直接修改字段不会自动把资产标记为 dirty");
+            Assert.IsFalse(EditorUtility.IsDirty(_cfg), "脚本直接修改字段不会自动把资产标记为 dirty");
         }
     }
 }

@@ -12,10 +12,13 @@ namespace Runestone.AesirArchitecture.Editor
     ///     <para>
     ///     复刻 <c>ObservableValueAttributeProcessor</c> 的四条 Odin 效果：
     ///     <list type="bullet">
-    ///     <item><c>HideLabel</c>：根容器不画自身标签，改由内层 value 字段承载语义标签。</item>
-    ///     <item><c>InlineProperty</c>：直接内联 value 字段的 <see cref="PropertyField" />，不产生嵌套 Foldout。</item>
-    ///     <item>标签取父属性名（Odin 表达式 <c>@$property.Parent.Name</c> 的等价实现），用 <see cref="SerializedProperty.displayName" />。</item>
-    ///     <item><c>OnValueChanged</c>：value 变更时调用 <see cref="ObservableValue{T}.InvokeEvent" /> 触发响应式通知。</item>
+    ///         <item><c>HideLabel</c>：根容器不画自身标签，改由内层 value 字段承载语义标签。</item>
+    ///         <item><c>InlineProperty</c>：直接内联 value 字段的 <see cref="PropertyField" />，不产生嵌套 Foldout。</item>
+    ///         <item>
+    ///         标签取父属性名（Odin 表达式 <c>@$property.Parent.Name</c> 的等价实现），用
+    ///         <see cref="SerializedProperty.displayName" />。
+    ///         </item>
+    ///         <item><c>OnValueChanged</c>：value 变更时调用 <see cref="ObservableValue{T}.InvokeEvent" /> 触发响应式通知。</item>
     ///     </list>
     ///     </para>
     ///     <para>
@@ -25,7 +28,8 @@ namespace Runestone.AesirArchitecture.Editor
     ///     <para>
     ///     <b>值与通知</b>：Unity 序列化直接写入 <c>value</c> 字段、绕过 <see cref="ObservableValue{T}.Value" />
     ///     setter，故不会自发通知。这里用 <c>TrackPropertyValue</c> 监听 value 字段变更，反射拿到实例后调用
-    ///     <see cref="ObservableValue{T}.InvokeEvent" />（方法名取自 <see cref="ObservableValue{T}.InvokeMethodName" />）补齐通知。
+    ///     <see cref="ObservableValue{T}.InvokeEvent" />（方法名取自 <see cref="ObservableValue{T}.InvokeMethodName" />
+    ///     ）补齐通知。
     ///     </para>
     /// </remarks>
     [CustomPropertyDrawer(typeof(ObservableValue<>))]

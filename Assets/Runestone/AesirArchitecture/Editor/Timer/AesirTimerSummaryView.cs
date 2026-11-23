@@ -22,15 +22,15 @@ namespace Runestone.AesirArchitecture.Editor
         {
             if (!timer.HasTimer)
             {
-                EditorGUI.LabelField(rect,
-                    "字段未持有实例：AesirTimer 由工厂方法创建（Countdown / Every / NextFrame）",
+                EditorGUI.LabelField(rect, "字段未持有实例：AesirTimer 由工厂方法创建（Countdown / Every / NextFrame）",
                     EditorStyles.miniLabel);
                 return;
             }
 
             var barWidth = Mathf.Min(110f, rect.width * 0.3f);
             var barRect = new Rect(rect.x, rect.y + 2f, barWidth, rect.height - 4f);
-            EditorGUI.ProgressBar(barRect, AesirTimerText.Progress01(timer), AesirTimerText.DescribeProgress(timer));
+            EditorGUI.ProgressBar(barRect, AesirTimerText.Progress01(timer),
+                AesirTimerText.DescribeProgress(timer));
 
             var textRect = new Rect(barRect.xMax + 6f, rect.y, rect.width - barWidth - 6f, rect.height);
             EditorGUI.LabelField(textRect, AesirTimerText.DescribeOneLine(timer), EditorStyles.miniLabel);

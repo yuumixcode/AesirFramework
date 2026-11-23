@@ -27,8 +27,7 @@ namespace Runestone.AesirArchitecture.Editor
         internal const string EmptyText = "（未创建）";
 
         /// <summary>非 Play 模式的统一提示（两个窗口共用，保证口径一致）。</summary>
-        internal const string EditModeHint =
-            "当前不在 Play 模式：计时器只在运行时被 PlayerLoop 推进，编辑模式下这里没有数据源，数据保持为零。";
+        internal const string EditModeHint = "当前不在 Play 模式：计时器只在运行时被 PlayerLoop 推进，编辑模式下这里没有数据源，数据保持为零。";
 
         internal static readonly Color RunningColor = new Color(0.42f, 0.83f, 0.45f);
         internal static readonly Color PausedColor = new Color(0.95f, 0.76f, 0.30f);

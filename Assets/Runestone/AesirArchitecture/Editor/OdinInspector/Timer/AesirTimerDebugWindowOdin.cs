@@ -25,6 +25,18 @@ namespace Runestone.AesirArchitecture.Editor
     /// </summary>
     public class AesirTimerDebugWindowOdin : OdinEditorWindow
     {
+        #region 面板内容
+
+        /// <summary>累计统计（编辑模式下恒为零：那里没有数据源）。</summary>
+        [PropertyOrder(-20)]
+        [ShowInInspector]
+        [EnableGUI]
+        [DisplayAsString(false, 12)]
+        [HideLabel]
+        string Statistics => _statistics;
+
+        #endregion
+
         #region 行视图模型
 
         /// <summary>
@@ -137,7 +149,7 @@ namespace Runestone.AesirArchitecture.Editor
         [ShowInInspector]
         [ReadOnly]
         [LabelText("计时器")]
-        [InfoBox("$" + nameof(EditModeHint), InfoMessageType.Info, VisibleIf = nameof(IsNotPlaying))]
+        [InfoBox("$" + nameof(EditModeHint), VisibleIf = nameof(IsNotPlaying))]
         [InfoBox("当前没有注册中的计时器。", InfoMessageType.None, VisibleIf = nameof(IsEmpty))]
         [ListDrawerSettings(ShowFoldout = false, DraggableItems = false, IsReadOnly = true,
             ShowItemCount = false, ShowPaging = false, ShowIndexLabels = false)]
@@ -170,8 +182,9 @@ namespace Runestone.AesirArchitecture.Editor
         [HideLabel]
         [ShowIf(nameof(IsIntervalMode))]
         [EnableGUI]
-        [SuffixLabel("秒", false)]
-        [PropertyRange(AesirTimerDebuggerSettings.MinIntervalSeconds, AesirTimerDebuggerSettings.MaxIntervalSeconds)]
+        [SuffixLabel("秒")]
+        [PropertyRange(AesirTimerDebuggerSettings.MinIntervalSeconds,
+            AesirTimerDebuggerSettings.MaxIntervalSeconds)]
         float IntervalSeconds
         {
             get => AesirTimerDebuggerSettings.IntervalSeconds;
@@ -185,8 +198,9 @@ namespace Runestone.AesirArchitecture.Editor
         [HideLabel]
         [ShowIf(nameof(IsFrameMode))]
         [EnableGUI]
-        [SuffixLabel("帧", false)]
-        [PropertyRange(AesirTimerDebuggerSettings.MinFrameInterval, AesirTimerDebuggerSettings.MaxFrameInterval)]
+        [SuffixLabel("帧")]
+        [PropertyRange(AesirTimerDebuggerSettings.MinFrameInterval,
+            AesirTimerDebuggerSettings.MaxFrameInterval)]
         int FrameInterval
         {
             get => AesirTimerDebuggerSettings.FrameInterval;
@@ -222,18 +236,6 @@ namespace Runestone.AesirArchitecture.Editor
         bool IsNotPlaying => !EditorApplication.isPlaying;
 
         bool IsEmpty => _rows.Count == 0;
-
-        #endregion
-
-        #region 面板内容
-
-        /// <summary>累计统计（编辑模式下恒为零：那里没有数据源）。</summary>
-        [PropertyOrder(-20)]
-        [ShowInInspector]
-        [EnableGUI]
-        [DisplayAsString(false, 12)]
-        [HideLabel]
-        string Statistics => _statistics;
 
         #endregion
 
@@ -299,8 +301,7 @@ namespace Runestone.AesirArchitecture.Editor
             }
 
             _statistics = AesirTimerText.DescribeStatistics(_source.Statistics) +
-                          $"　|　{AesirTimerDebuggerSettings.DescribeCadence()}" +
-                          (_source.IsTruncated
+                          $"　|　{AesirTimerDebuggerSettings.DescribeCadence()}" + (_source.IsTruncated
                               ? $"　|　仅显示最紧迫的 {AesirTimerDebugSource.MaxRows} 个"
                               : string.Empty);
         }

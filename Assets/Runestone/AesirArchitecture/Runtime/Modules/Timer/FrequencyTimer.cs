@@ -17,18 +17,16 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     public sealed class FrequencyTimer : AesirTimer
     {
-        /// <summary>每秒触发的次数（构造时给定）。</summary>
-        public int TicksPerSecond { get; }
-
         /// <summary>创建一个频率计时器并在同一次调用内开始计时。</summary>
         /// <param name="ticksPerSecond">每秒触发次数，必须大于 0。</param>
         /// <param name="onTick">每次触发执行的回调。</param>
         /// <param name="unscaled">是否使用不受 <c>Time.timeScale</c> 影响的时间源。</param>
-        internal FrequencyTimer(int ticksPerSecond, Action onTick, bool unscaled)
-            : base(1f / Mathf.Max(1, ticksPerSecond), -1, onTick, unscaled)
-        {
+        internal FrequencyTimer(int ticksPerSecond, Action onTick, bool unscaled) : base(
+            1f / Mathf.Max(1, ticksPerSecond), -1, onTick, unscaled) =>
             TicksPerSecond = Mathf.Max(1, ticksPerSecond);
-        }
+
+        /// <summary>每秒触发的次数（构造时给定）。</summary>
+        public int TicksPerSecond { get; }
 
         /// <inheritdoc />
         protected override bool Advance(float deltaTime, float unscaledDeltaTime)

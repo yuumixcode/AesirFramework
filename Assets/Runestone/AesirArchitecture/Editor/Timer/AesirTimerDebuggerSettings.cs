@@ -60,9 +60,6 @@ namespace Runestone.AesirArchitecture.Editor
         static int _frameInterval;
         static bool _autoRefresh;
 
-        /// <summary>设置发生变化（两个窗口据此重置节奏）。</summary>
-        internal static event Action Changed;
-
         /// <summary>拉取模式。</summary>
         internal static AesirTimerRefreshMode Mode
         {
@@ -156,6 +153,9 @@ namespace Runestone.AesirArchitecture.Editor
                 Changed?.Invoke();
             }
         }
+
+        /// <summary>设置发生变化（两个窗口据此重置节奏）。</summary>
+        internal static event Action Changed;
 
         /// <summary>
         /// 当前配置下"两次拉取之间"的说明文本（工具栏右侧提示用）。

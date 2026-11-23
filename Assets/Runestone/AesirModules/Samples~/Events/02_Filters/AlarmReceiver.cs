@@ -18,14 +18,14 @@ namespace Runestone.AesirModules.Samples.Events.Filters
         Color flashColor = Color.yellow;
 
         int _alarmCount;
+        AutoRemoveListenerHandle _alarmHandle;
         Vector3 _baseScale;
         float _bounceTimer;
         int _orderCount;
+        AutoRemoveListenerHandle _orderHandle;
         MaterialPropertyBlock _propertyBlock;
 
         Renderer _renderer;
-        AutoRemoveListenerHandle _alarmHandle;
-        AutoRemoveListenerHandle _orderHandle;
 
         void Awake()
         {

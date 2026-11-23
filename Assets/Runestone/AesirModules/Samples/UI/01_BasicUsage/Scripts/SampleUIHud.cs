@@ -20,6 +20,15 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
         [SerializeField]
         Text logText;
 
+        protected override void OnDestroy()
+        {
+            base.OnDestroy(); // 反注册面板记录，勿漏
+            if (_instance == this)
+            {
+                _instance = null;
+            }
+        }
+
         protected override void OnInit()
         {
             base.OnInit();
@@ -31,15 +40,6 @@ namespace Runestone.AesirModules.Samples.UI.BasicUsage
         {
             base.OnShow(payload); // 激活物体（base 默认实现为 SetActive(true)）
             RefreshLog();
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy(); // 反注册面板记录，勿漏
-            if (_instance == this)
-            {
-                _instance = null;
-            }
         }
 
         /// <summary>记录一条操作日志（窗口/蒙版行为均会调用），超过 7 条滚动丢弃。</summary>

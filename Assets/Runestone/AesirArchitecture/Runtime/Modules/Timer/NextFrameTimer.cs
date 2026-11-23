@@ -18,10 +18,10 @@ namespace Runestone.AesirArchitecture
     {
         /// <summary>创建一个"下一帧执行一次"的计时器。</summary>
         /// <param name="onFinished">下一帧结算时执行的回调。</param>
-        internal NextFrameTimer(Action onFinished)
-            : base(0f, 1, onFinished, false)
-        {
-        }
+        internal NextFrameTimer(Action onFinished) : base(0f, 1, onFinished, false) { }
+
+        /// <summary>调试窗口展示为"下一帧"形态。</summary>
+        internal override bool IsNextFrameMode => true;
 
         /// <inheritdoc />
         /// <remarks>落在"创建（或恢复）之后开始的第一次结算"上。</remarks>
@@ -30,8 +30,5 @@ namespace Runestone.AesirArchitecture
 
         /// <inheritdoc />
         protected override bool Rearm() => RescheduleOrFinish();
-
-        /// <summary>调试窗口展示为"下一帧"形态。</summary>
-        internal override bool IsNextFrameMode => true;
     }
 }

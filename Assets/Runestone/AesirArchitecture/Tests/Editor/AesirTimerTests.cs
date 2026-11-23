@@ -206,7 +206,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
             var unscaledFired = 0;
 
             AesirTimer.Countdown(0.5f, () => scaledFired++);
-            AesirTimer.Countdown(0.5f, () => unscaledFired++, unscaled: true);
+            AesirTimer.Countdown(0.5f, () => unscaledFired++, true);
 
             AesirTimer.TickOnce(0f, 0.5f);
 
@@ -241,7 +241,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void Every_FiniteRepeat_DrainsThenLeavesRegistry()
         {
             var fired = 0;
-            var timer = AesirTimer.Every(0.5f, () => fired++, repeatCount: 2);
+            var timer = AesirTimer.Every(0.5f, () => fired++, 2);
 
             AesirTimer.TickOnce(0.5f, 0.5f);
             Assert.AreEqual(1, fired);
@@ -331,7 +331,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         public void Restart_PausedRepeatingTimer_ResetsCountersAndResumes()
         {
             var fired = 0;
-            var timer = AesirTimer.Every(0.5f, () => fired++, repeatCount: 2);
+            var timer = AesirTimer.Every(0.5f, () => fired++, 2);
 
             AesirTimer.TickOnce(0.5f, 0.5f);
             Assert.AreEqual(1, fired);

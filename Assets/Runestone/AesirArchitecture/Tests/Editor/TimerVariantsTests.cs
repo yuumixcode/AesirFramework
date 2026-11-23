@@ -37,7 +37,7 @@ namespace Runestone.AesirArchitecture.Tests.Editor
         [Test]
         public void Stopwatch_Unscaled_ReadsOnlyUnscaledDelta()
         {
-            var stopwatch = AesirTimer.Stopwatch(unscaled: true);
+            var stopwatch = AesirTimer.Stopwatch(true);
 
             AesirTimer.TickOnce(0f, 0.4f);
 

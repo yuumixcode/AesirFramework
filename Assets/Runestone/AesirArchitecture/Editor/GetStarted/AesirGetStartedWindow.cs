@@ -21,6 +21,7 @@ namespace Runestone.AesirArchitecture.Editor
 
         const string MenuPath = "Tools/Aesir/Getting Started";
         const string WindowTitle = "Aesir Getting Started";
+
         const string StyleSheetPath =
             "Assets/Runestone/AesirArchitecture/Editor/GetStarted/AesirGetStarted.uss";
 
@@ -54,7 +55,9 @@ namespace Runestone.AesirArchitecture.Editor
 
         #region 状态
 
-        List<AesirGetStartedService.AesirPackageInfo> _packages = new();
+        List<AesirGetStartedService.AesirPackageInfo> _packages =
+            new List<AesirGetStartedService.AesirPackageInfo>();
+
         ScrollView _scroll;
 
         #endregion
@@ -97,8 +100,7 @@ namespace Runestone.AesirArchitecture.Editor
                 text = "Releases"
             }.Also(b => b.AddToClassList("aesir-button")));
 
-            toolbar.Add(new Button(Scan) { text = "刷新" }
-                .Also(b => b.AddToClassList("aesir-button")));
+            toolbar.Add(new Button(Scan) { text = "刷新" }.Also(b => b.AddToClassList("aesir-button")));
 
             return toolbar;
         }
@@ -120,8 +122,7 @@ namespace Runestone.AesirArchitecture.Editor
                 var box = new HelpBox(
                     "未扫描到 Aesir 包。请经 GitHub Releases 导入 unitypackage" +
                     "（默认安装到 Assets/Runestone，可自由移动到项目任意文件夹），" +
-                    "或经 Package Manager 用 Git URL 安装后从 Samples 标签页导入示例。",
-                    HelpBoxMessageType.Warning);
+                    "或经 Package Manager 用 Git URL 安装后从 Samples 标签页导入示例。", HelpBoxMessageType.Warning);
                 _scroll.Add(box);
                 _scroll.Add(new Button(() => Application.OpenURL(AesirUpdateService.ReleasesPageUrl))
                 {
@@ -216,29 +217,34 @@ namespace Runestone.AesirArchitecture.Editor
             actions.AddToClassList("aesir-sample__actions");
             if (AesirGetStartedService.TryGetExtraSampleAction(sample, out var extraAction))
             {
-                actions.Add(new Button(extraAction.Invoke) { text = extraAction.Label }
-                    .Also(b => b.AddToClassList("aesir-button")));
+                actions.Add(
+                    new Button(extraAction.Invoke) { text = extraAction.Label }.Also(b =>
+                        b.AddToClassList("aesir-button")));
             }
 
             if (sample.IsImported && sample.HasScene)
             {
-                actions.Add(new Button(() => OpenScene(sample)) { text = "打开场景" }
-                    .Also(b => b.AddToClassList("aesir-button")));
-                actions.Add(new Button(() => Ping(sample)) { text = "定位" }
-                    .Also(b => b.AddToClassList("aesir-button")));
+                actions.Add(
+                    new Button(() => OpenScene(sample)) { text = "打开场景" }.Also(b =>
+                        b.AddToClassList("aesir-button")));
+                actions.Add(
+                    new Button(() => Ping(sample)) { text = "定位" }.Also(b =>
+                        b.AddToClassList("aesir-button")));
             }
             else if (sample.IsImported)
             {
                 var hint = new Label("无独立场景");
                 hint.AddToClassList("aesir-empty");
                 actions.Add(hint);
-                actions.Add(new Button(() => Ping(sample)) { text = "定位" }
-                    .Also(b => b.AddToClassList("aesir-button")));
+                actions.Add(
+                    new Button(() => Ping(sample)) { text = "定位" }.Also(b =>
+                        b.AddToClassList("aesir-button")));
             }
             else
             {
-                actions.Add(new Button(() => Import(sample)) { text = "导入 Sample" }
-                    .Also(b => b.AddToClassList("aesir-button")));
+                actions.Add(
+                    new Button(() => Import(sample)) { text = "导入 Sample" }.Also(b =>
+                        b.AddToClassList("aesir-button")));
             }
 
             card.Add(actions);
@@ -250,17 +256,37 @@ namespace Runestone.AesirArchitecture.Editor
         {
             switch (AesirGetStartedService.GetSampleGroup(sample))
             {
-                case "MVC 计数器 · 渐进式": return "▦";
-                case "MVP 计数器 · 渐进式": return "☰";
-                case "事件模块": return "◈";
-                case "音频模块": return "♪";
+                case "MVC 计数器 · 渐进式":
+                    return "▦";
+                case "MVP 计数器 · 渐进式":
+                    return "☰";
+                case "事件模块":
+                    return "◈";
+                case "音频模块":
+                    return "♪";
             }
 
             var dir = sample.RelativeDir ?? string.Empty;
-            if (dir.StartsWith("MiniEvent", StringComparison.Ordinal)) return "⚡";
-            if (dir.StartsWith("ObservableCollections", StringComparison.Ordinal)) return "▤";
-            if (dir.StartsWith("ObservableValue", StringComparison.Ordinal)) return "◉";
-            if (dir.StartsWith("RuntimeInitializeLoadType", StringComparison.Ordinal)) return "◷";
+            if (dir.StartsWith("MiniEvent", StringComparison.Ordinal))
+            {
+                return "⚡";
+            }
+
+            if (dir.StartsWith("ObservableCollections", StringComparison.Ordinal))
+            {
+                return "▤";
+            }
+
+            if (dir.StartsWith("ObservableValue", StringComparison.Ordinal))
+            {
+                return "◉";
+            }
+
+            if (dir.StartsWith("RuntimeInitializeLoadType", StringComparison.Ordinal))
+            {
+                return "◷";
+            }
+
             return "★";
         }
 
@@ -302,7 +328,7 @@ namespace Runestone.AesirArchitecture.Editor
         #endregion
     }
 
-    static class AesirVisualElementExtensions
+    internal static class AesirVisualElementExtensions
     {
         internal static T Also<T>(this T element, Action<T> action)
         {

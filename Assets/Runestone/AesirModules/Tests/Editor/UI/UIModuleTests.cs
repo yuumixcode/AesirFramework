@@ -245,8 +245,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             var panel = module.ShowPanel<TestPanel>();
 
             // Instantiate 追加的 "(Clone)" 被复位为来源预制体名
-            Assert.AreEqual("TestPanelPrefab", panel.gameObject.name,
-                "面板实例名应为来源预制体名，不带 (Clone) 后缀");
+            Assert.AreEqual("TestPanelPrefab", panel.gameObject.name, "面板实例名应为来源预制体名，不带 (Clone) 后缀");
         }
 
         [Test]

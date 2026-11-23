@@ -63,7 +63,8 @@ namespace Runestone.AesirArchitecture.Editor
 
         AesirUpdateController _controller;
 
-        List<AesirUpdateService.InstalledPackage> _updateTargets = new();
+        List<AesirUpdateService.InstalledPackage> _updateTargets =
+            new List<AesirUpdateService.InstalledPackage>();
 
         #endregion
 
@@ -72,7 +73,8 @@ namespace Runestone.AesirArchitecture.Editor
         void OnEnable()
         {
             // 「仅重绘」回调：进度/状态文本变化只刷 UI，不重算列表
-            _controller = new AesirUpdateController(_state, ProgressTitle, OnViewChanged, _ => { }, RefreshUI);
+            _controller =
+                new AesirUpdateController(_state, ProgressTitle, OnViewChanged, _ => { }, RefreshUI);
             _controller.Initialize();
             BuildUI();
         }
@@ -119,8 +121,7 @@ namespace Runestone.AesirArchitecture.Editor
 
             if (_state.IsGitRepository)
             {
-                AddInfoBox(
-                    "检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，请勿执行更新——Release 内容会覆盖本地源码。",
+                AddInfoBox("检测到当前项目存在 .git 目录。若这是 AesirFramework 开发仓库，请勿执行更新——Release 内容会覆盖本地源码。",
                     HelpBoxMessageType.Warning);
             }
 
@@ -128,8 +129,7 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 AddInfoBox(
                     AesirUpdateService.BuildDetectionSummary(_state.RemoteSource, _state.RemoteRouteKind,
-                        _state.GitHubDirectAvailable),
-                    HelpBoxMessageType.None);
+                        _state.GitHubDirectAvailable), HelpBoxMessageType.None);
                 if (_state.RemoteRouteKind == AesirUpdateService.ReleaseRouteKind.CdnRelay)
                 {
                     AddInfoBox(AesirUpdateService.BuildCdnDelayHintText(), HelpBoxMessageType.Warning);
@@ -196,8 +196,7 @@ namespace Runestone.AesirArchitecture.Editor
             {
                 section.Add(new HelpBox(
                     $"未在 {AesirUpdateService.PrimaryInstallRoot} 下扫描到 Aesir 包。" +
-                    "请通过 GitHub Releases 导入 unitypackage 安装，或确认安装目录正确。",
-                    HelpBoxMessageType.Warning));
+                    "请通过 GitHub Releases 导入 unitypackage 安装，或确认安装目录正确。", HelpBoxMessageType.Warning));
                 return section;
             }
 
@@ -252,7 +251,7 @@ namespace Runestone.AesirArchitecture.Editor
             BuildFoldout("更新日志（本地 → 远程变更）", _state.ChangelogText, _changelogExpanded,
                 expanded => _changelogExpanded = expanded);
 
-        VisualElement BuildFoldout(string title, string text, bool expanded, System.Action<bool> onToggle)
+        VisualElement BuildFoldout(string title, string text, bool expanded, Action<bool> onToggle)
         {
             if (string.IsNullOrEmpty(text))
             {

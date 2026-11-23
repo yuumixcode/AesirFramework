@@ -23,9 +23,6 @@ namespace Runestone.AesirArchitecture.Editor
     /// </remarks>
     internal static class AesirInspectorStyleSettings
     {
-        /// <summary>样式切换（已打开的窗口 / Preferences 页据此同步）。</summary>
-        internal static event Action Changed;
-
         /// <summary>
         /// 是否使用 Odin 样式。为 false 时 Aesir 的 Odin 集成整体让路，
         /// 界面改用 UI Toolkit 复刻版。
@@ -44,5 +41,8 @@ namespace Runestone.AesirArchitecture.Editor
                 Changed?.Invoke();
             }
         }
+
+        /// <summary>样式切换（已打开的窗口 / Preferences 页据此同步）。</summary>
+        internal static event Action Changed;
     }
 }

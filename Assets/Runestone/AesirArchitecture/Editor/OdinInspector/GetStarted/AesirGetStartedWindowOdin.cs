@@ -1129,7 +1129,8 @@ namespace Runestone.AesirArchitecture.Editor
                 const float bottomLineHeight = 20f; // 底部信息行：无场景提示（左）+ 档位徽章（右）
 
                 // 按钮宽度按形态取值：「导入 Sample」（中文 + 空格 + Sample 拉丁词）比「打开场景」宽
-                var hasExtraAction = AesirGetStartedService.TryGetExtraSampleAction(sample, out var extraAction);
+                var hasExtraAction =
+                    AesirGetStartedService.TryGetExtraSampleAction(sample, out var extraAction);
                 var buttonWidth = sample.IsImported ? 80 : 96;
                 if (hasExtraAction)
                 {
@@ -1227,6 +1228,7 @@ namespace Runestone.AesirArchitecture.Editor
                         {
                             extraAction.Invoke();
                         }
+
                         slot++;
                     }
 

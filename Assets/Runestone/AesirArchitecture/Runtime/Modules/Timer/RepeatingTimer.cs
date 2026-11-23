@@ -22,10 +22,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="onTick">每次到期执行的回调。</param>
         /// <param name="repeatCount">最多执行次数，负数表示无限。</param>
         /// <param name="unscaled">是否使用不受 <c>Time.timeScale</c> 影响的时间源。</param>
-        internal RepeatingTimer(float interval, Action onTick, int repeatCount, bool unscaled)
-            : base(interval, repeatCount, onTick, unscaled)
-        {
-        }
+        internal RepeatingTimer(float interval, Action onTick, int repeatCount, bool unscaled) : base(
+            interval, repeatCount, onTick, unscaled) { }
 
         /// <inheritdoc />
         protected override bool Advance(float deltaTime, float unscaledDeltaTime)

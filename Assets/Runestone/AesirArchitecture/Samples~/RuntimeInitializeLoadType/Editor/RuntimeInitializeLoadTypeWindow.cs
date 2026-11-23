@@ -1,8 +1,8 @@
+using Runestone.AesirArchitecture.Editor;
 using Sirenix.OdinInspector;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Utilities;
 using Sirenix.Utilities.Editor;
-using Runestone.AesirArchitecture.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,7 +30,8 @@ namespace Runestone.AesirArchitecture.Samples
         [InitializeOnLoadMethod]
         static void RegisterGettingStartedAction()
         {
-            AesirGetStartedService.RegisterExtraSampleAction("RuntimeInitializeLoadType", "初始化时机设置", ShowWindow);
+            AesirGetStartedService.RegisterExtraSampleAction("RuntimeInitializeLoadType", "初始化时机设置",
+                ShowWindow);
         }
 
         public static void ShowWindow()

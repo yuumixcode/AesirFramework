@@ -222,7 +222,8 @@ namespace Runestone.AesirModules
             if (rect != null)
             {
                 rect.localScale = Vector3.one / worldSpaceDynamicPixelsPerUnit;
-                rect.sizeDelta = new Vector2(worldSpaceReferencePixelsPerUnit, worldSpaceReferencePixelsPerUnit);
+                rect.sizeDelta = new Vector2(worldSpaceReferencePixelsPerUnit,
+                    worldSpaceReferencePixelsPerUnit);
             }
 
             var scaler = canvas.GetComponent<CanvasScaler>();

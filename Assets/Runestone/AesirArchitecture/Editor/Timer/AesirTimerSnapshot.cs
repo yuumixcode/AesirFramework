@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
@@ -91,7 +92,7 @@ namespace Runestone.AesirArchitecture.Editor
         /// 无法定位责任人，换回外层方法名并标 <c>λ</c>；声明类型是显示类（<c>&lt;&gt;c</c> /
         /// <c>&lt;&gt;c__DisplayClassN_M</c>）时向上找到用户类型。
         /// </summary>
-        static string FoldCallbackName(System.Action callback)
+        static string FoldCallbackName(Action callback)
         {
             if (callback == null)
             {
@@ -152,8 +153,13 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>本次运行时起已执行的结算周期数。</summary>
         internal readonly int SettlePasses;
 
-        internal AesirTimerStatistics(int registered, int running, int paused, int createdTotal,
-            int finishedTotal, int cancelledTotal, int settlePasses)
+        internal AesirTimerStatistics(int registered,
+            int running,
+            int paused,
+            int createdTotal,
+            int finishedTotal,
+            int cancelledTotal,
+            int settlePasses)
         {
             Registered = registered;
             Running = running;

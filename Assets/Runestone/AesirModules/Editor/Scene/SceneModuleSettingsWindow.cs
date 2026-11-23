@@ -24,6 +24,8 @@ namespace Runestone.AesirModules.Editor
         /// <summary>Odin 版窗口的打开委托（Odin 程序集注册；关闭 Odin 样式时为 null）。</summary>
         public static Action OdinWindowOpener { get; private set; }
 
+        void OnEnable() => BuildUI();
+
         /// <summary>注册 Odin 版窗口的打开方式（域重载清空静态委托后由 Odin 程序集重新注册）。</summary>
         public static void RegisterOdinWindowOpener(Action opener) => OdinWindowOpener = opener;
 
@@ -41,8 +43,6 @@ namespace Runestone.AesirModules.Editor
             window.minSize = new Vector2(500f, 300f);
             window.Show();
         }
-
-        void OnEnable() => BuildUI();
 
         void BuildUI()
         {

@@ -131,25 +131,6 @@ namespace Runestone.AesirModules
             }
         }
 
-        /// <summary>
-        /// 非创建式获取已存在的 UIRoot 实例：场景中无预放置实例时返回 <c>null</c>，
-        /// 不经 <see cref="Instance" /> 懒创建宿主树。
-        /// <para>
-        /// 供世界空间 UI 等在场景卸载 / 编辑器探测阶段取相机与配置的对象使用——
-        /// 这类调用若走 <see cref="Instance" /> 会在"本来没有 UIRoot"时凭空造出 [UIRoot] 物体。
-        /// </para>
-        /// </summary>
-        public static UIRoot TryGetExisting()
-        {
-            if (_instance != null)
-            {
-                return _instance;
-            }
-
-            _instance = FindAnyObjectByType<UIRoot>(FindObjectsInactive.Include);
-            return _instance;
-        }
-
         /// <summary>UI 专用正交相机（由 <see cref="EnsureUICamera" /> 构建）。</summary>
         public Camera UICamera => uiCamera;
 
@@ -243,6 +224,25 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
+        /// 非创建式获取已存在的 UIRoot 实例：场景中无预放置实例时返回 <c>null</c>，
+        /// 不经 <see cref="Instance" /> 懒创建宿主树。
+        /// <para>
+        /// 供世界空间 UI 等在场景卸载 / 编辑器探测阶段取相机与配置的对象使用——
+        /// 这类调用若走 <see cref="Instance" /> 会在"本来没有 UIRoot"时凭空造出 [UIRoot] 物体。
+        /// </para>
+        /// </summary>
+        public static UIRoot TryGetExisting()
+        {
+            if (_instance != null)
+            {
+                return _instance;
+            }
+
+            _instance = FindAnyObjectByType<UIRoot>(FindObjectsInactive.Include);
+            return _instance;
+        }
+
+        /// <summary>
         /// 域加载时重置静态单例，兼容关闭 Domain Reload 的 Play 模式设置。
         /// </summary>
         /// <remarks>
@@ -289,7 +289,8 @@ namespace Runestone.AesirModules
         /// <param name="canvasName">新建 Canvas 节点的名称，默认 "WorldSpaceCanvas"。</param>
         /// <param name="config">可选的世界空间 Canvas 配置；为 null 时按上述回退链解析。</param>
         /// <returns>新建的 <see cref="WorldSpaceUICanvas" /> 组件；目标为空时返回 null。</returns>
-        public WorldSpaceUICanvas CreateWorldSpaceCanvas(Transform worldTarget, string canvasName = "WorldSpaceCanvas",
+        public WorldSpaceUICanvas CreateWorldSpaceCanvas(Transform worldTarget,
+            string canvasName = "WorldSpaceCanvas",
             UICanvasConfigSO config = null)
         {
             if (worldTarget == null)

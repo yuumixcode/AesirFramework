@@ -20,23 +20,23 @@ namespace Runestone.AesirArchitecture
     ///     </para>
     /// </remarks>
     /// <example>
-    /// <code>
+    ///     <code>
     /// // 一次性延时
     /// AesirTimer.Countdown(3f, () => model.Refresh());
-    ///
+    /// 
     /// // 技能冷却 + UI 进度
     /// AesirTimer _cooldown = AesirTimer.Countdown(5f);
     /// float progress = _cooldown.Progress;
-    ///
+    /// 
     /// // 每 0.5 秒结算一次伤害，共 6 次
     /// AesirTimer.Every(0.5f, () => model.TickDamage(), repeatCount: 6);
-    ///
+    /// 
     /// // 10 秒内每 1 秒触发一次
     /// AesirTimer.Interval(10f, 1f, () => model.Spawn());
-    ///
+    /// 
     /// // 每秒 5 次
     /// AesirTimer.Frequency(5, () => model.Sample());
-    ///
+    /// 
     /// // 测量耗时
     /// var stopwatch = AesirTimer.Stopwatch();
     /// float elapsed = stopwatch.Elapsed;
@@ -45,10 +45,8 @@ namespace Runestone.AesirArchitecture
     public abstract class AesirTimer : AbstractTimer
     {
         /// <summary>供具体子类构造器转发共有状态。</summary>
-        protected AesirTimer(float duration, int totalTicks, Action onFinished, bool unscaled)
-            : base(duration, totalTicks, onFinished, unscaled)
-        {
-        }
+        protected AesirTimer(float duration, int totalTicks, Action onFinished, bool unscaled) : base(
+            duration, totalTicks, onFinished, unscaled) { }
 
         #region 工厂方法
 
@@ -56,7 +54,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="seconds">倒计时时长（秒）。零或负值在下一次结算到期。</param>
         /// <param name="onFinished">到期回调，可为 null。</param>
         /// <param name="unscaled">true 时不受 <c>Time.timeScale</c> 影响。</param>
-        public static CountdownTimer Countdown(float seconds, Action onFinished = null, bool unscaled = false) =>
+        public static CountdownTimer
+            Countdown(float seconds, Action onFinished = null, bool unscaled = false) =>
             new CountdownTimer(seconds, onFinished, unscaled);
 
         /// <summary>创建一个按固定间隔重复的计时器并在同一次调用内开始计时。</summary>
@@ -64,7 +63,9 @@ namespace Runestone.AesirArchitecture
         /// <param name="onTick">每次到期执行的回调。</param>
         /// <param name="repeatCount">最多执行次数，省略或负数表示无限，0 表示一次也不执行。</param>
         /// <param name="unscaled">true 时不受 <c>Time.timeScale</c> 影响。</param>
-        public static RepeatingTimer Every(float interval, Action onTick, int repeatCount = -1,
+        public static RepeatingTimer Every(float interval,
+            Action onTick,
+            int repeatCount = -1,
             bool unscaled = false) =>
             new RepeatingTimer(interval, onTick, repeatCount, unscaled);
 
@@ -81,7 +82,9 @@ namespace Runestone.AesirArchitecture
         /// <param name="intervalSeconds">触发间隔（秒），必须大于 0。</param>
         /// <param name="onInterval">每次间隔到点时执行的回调。</param>
         /// <param name="unscaled">true 时不受 <c>Time.timeScale</c> 影响。</param>
-        public static IntervalTimer Interval(float totalSeconds, float intervalSeconds, Action onInterval,
+        public static IntervalTimer Interval(float totalSeconds,
+            float intervalSeconds,
+            Action onInterval,
             bool unscaled = false) =>
             new IntervalTimer(totalSeconds, intervalSeconds, onInterval, unscaled);
 

@@ -10,29 +10,21 @@ namespace Runestone.AesirModules
     /// 也可在运行时由 <see cref="UIRoot.CreateWorldSpaceCanvas" /> 挂到任意 <see cref="Transform" /> 上。
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// 与世界空间跟随目标的两种关系：物体是 Canvas 的<b>父级</b>时直接随父变换移动（如角色头顶血条——
-    /// Canvas 挂在角色子节点，不指定 <see cref="FollowTarget" />）；物体是 Canvas 的<b>兄弟节点</b>时
-    /// 指定 <see cref="FollowTarget" />，由本组件每帧把 Canvas 的父级变换同步到目标。
-    /// 两种情形都支持 <see cref="PositionOffset" />（局部偏移）与 <see cref="FaceCamera" />（面向相机）。
-    /// </para>
-    /// <para>
-    /// 本组件只提供渲染根，不参与 <see cref="UIModule" /> 的面板 / 窗口注册表与生命周期：
-    /// 世界空间 UI 的生命周期与宿主场景物体绑定，由业务代码直接驱动子节点内容。
-    /// </para>
+    ///     <para>
+    ///     与世界空间跟随目标的两种关系：物体是 Canvas 的<b>父级</b>时直接随父变换移动（如角色头顶血条——
+    ///     Canvas 挂在角色子节点，不指定 <see cref="FollowTarget" />）；物体是 Canvas 的<b>兄弟节点</b>时
+    ///     指定 <see cref="FollowTarget" />，由本组件每帧把 Canvas 的父级变换同步到目标。
+    ///     两种情形都支持 <see cref="PositionOffset" />（局部偏移）与 <see cref="FaceCamera" />（面向相机）。
+    ///     </para>
+    ///     <para>
+    ///     本组件只提供渲染根，不参与 <see cref="UIModule" /> 的面板 / 窗口注册表与生命周期：
+    ///     世界空间 UI 的生命周期与宿主场景物体绑定，由业务代码直接驱动子节点内容。
+    ///     </para>
     /// </remarks>
     [AddComponentMenu("Aesir Modules/UI/World Space UI Canvas")]
     [DisallowMultipleComponent]
     public sealed class WorldSpaceUICanvas : AesirMonoBehaviour
     {
-        internal const string FollowTargetFieldName = nameof(followTarget);
-        internal const string PositionOffsetFieldName = nameof(positionOffset);
-        internal const string FaceCameraFieldName = nameof(faceCamera);
-        internal const string BillboardModeFieldName = nameof(billboardMode);
-        internal const string FlipFacingFieldName = nameof(flipFacing);
-        internal const string CanvasConfigFieldName = nameof(canvasConfig);
-        internal const string SortingOrderFieldName = nameof(sortingOrder);
-
         /// <summary>世界空间 UI 的朝向模式。</summary>
         public enum WorldSpaceBillboardMode
         {
@@ -45,6 +37,14 @@ namespace Runestone.AesirModules
             /// <summary>完整面向 UI 相机（平面广告牌，适合始终正对屏幕的标记）。</summary>
             CameraFacingFull = 2
         }
+
+        internal const string FollowTargetFieldName = nameof(followTarget);
+        internal const string PositionOffsetFieldName = nameof(positionOffset);
+        internal const string FaceCameraFieldName = nameof(faceCamera);
+        internal const string BillboardModeFieldName = nameof(billboardMode);
+        internal const string FlipFacingFieldName = nameof(flipFacing);
+        internal const string CanvasConfigFieldName = nameof(canvasConfig);
+        internal const string SortingOrderFieldName = nameof(sortingOrder);
 
         [Tooltip("跟随的世界空间对象。为空时假定本组件已成为该目标的子节点（随父变换移动）")]
         [SerializeField]
@@ -120,6 +120,10 @@ namespace Runestone.AesirModules
         /// <summary>Canvas 的 sortingOrder。</summary>
         public int SortingOrder => sortingOrder;
 
+        void Awake() => Build();
+
+        void LateUpdate() => ApplyTransform(true);
+
         /// <summary>
         /// 用当前配置重新构建并接线 Canvas（渲染模式 / 缩放密度 / 射线检测 / sortingOrder / UI 层）。
         /// 通常在 Awake 中自动调用；运行时修改配置字段后可手动调用本方法即时生效。
@@ -138,12 +142,8 @@ namespace Runestone.AesirModules
             config.ApplyToWorldSpaceCanvas(Canvas);
             Canvas.sortingOrder = sortingOrder;
             UIRoot.SetLayerRecursively(transform, UIRoot.UILayerIndex);
-            ApplyTransform(computeBillboard: false);
+            ApplyTransform(false);
         }
-
-        void Awake() => Build();
-
-        void LateUpdate() => ApplyTransform(computeBillboard: true);
 
         UICanvasConfigSO ResolveConfig()
         {
