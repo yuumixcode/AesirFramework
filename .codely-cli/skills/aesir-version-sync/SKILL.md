@@ -74,6 +74,6 @@
 - **tag 不可变**：同名 tag 已存在时流水线跳过创建、两边不重建 Release——发版后补内容一律 bump patch 版本再走完整流程；GitHub 侧同 tag 补发走 `auto-release.yml` 的 `workflow_dispatch`（正文仍取自 tag commit）
 - 验收：`git ls-remote --tags origin 'v<版本>'` 存在、两包分支已滚动到新提交、`gh release view <tag> --json assets` 有 RAA/RAM/RAF 三份、CNB 侧 Release 同样齐全（`https://api.cnb.cool/runestone-game/AesirFramework/-/releases` 带 `Accept: application/json`）、CNB main HEAD == GitHub main HEAD
 
-### 11. 文档仓同批
+### 11. 文档落点同批
 
-`Aesir-Notebook`（开发笔记）与 `AesirFramework-Site`（产品站）各自独立 git 仓库，同批发版要一起提交推送：站点 `changelog.md` 补该版本段落（摘要视图）+ `product/releases.md` 版本表，笔记仓同步"当前基线"类陈述（版本号、测试计数、分发形态）。**注意：这两个仓库各自独立直接 push 即可，不走主仓的 sync-to-cnb 同步。**
+产品站已并入主仓（2026-11-23）：站点 `docs/changelog.md` 补该版本段落（摘要视图）+ `docs/product/releases.md` 版本表，**随主仓发版提交一起提交推送**（触发 `docs.yml` 发布），不再独立仓推送。`Aesir-Notebook`（开发笔记）仍独立 git 仓库，同批直接 push，同步"当前基线"类陈述（版本号、测试计数、分发形态），不走主仓的 sync-to-cnb 同步。

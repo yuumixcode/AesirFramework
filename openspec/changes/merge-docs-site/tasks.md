@@ -30,27 +30,27 @@
 
 ## 阶段 3：启用主仓 Pages 并验证新站
 
-- [ ] 3.1 启用 Pages：`gh api -X POST repos/yuumixcode/AesirFramework/pages -f build_type=workflow`（失败则网页 Settings → Pages → Source: GitHub Actions）
-- [ ] 3.2 推送分支 → PR 合并到 main（正常 Merge，走 GitHub 主仓流程）；观察 `docs.yml` 首跑与 `sync-to-cnb.yml` 照常运行
-- [ ] 3.3 新站验证：`https://yuumixcode.github.io/AesirFramework/` 200；抽查深链（architecture/、modules/events/、scripting-api 含 `{T}` 页、changelog/、product/releases/）；instant navigation / 搜索 / 自托管字体 / 移动端渲染正常
-- [ ] 3.4 确认 CNB 镜像 main 已含 `docs/`（force push 正常），CNB tag 流水线未被误触发
+- [x] 3.1 启用 Pages：`gh api -X POST repos/yuumixcode/AesirFramework/pages -f build_type=workflow`（失败则网页 Settings → Pages → Source: GitHub Actions）
+- [x] 3.2 推送分支 → PR 合并到 main（正常 Merge，走 GitHub 主仓流程）；观察 `docs.yml` 首跑与 `sync-to-cnb.yml` 照常运行
+- [x] 3.3 新站验证：`https://yuumixcode.github.io/AesirFramework/` 200；抽查深链（architecture/、modules/events/、scripting-api 含 `{T}` 页、changelog/、product/releases/）；instant navigation / 搜索 / 自托管字体 / 移动端渲染正常
+- [x] 3.4 确认 CNB 镜像 main 已含 `docs/`（force push 正常），CNB tag 流水线未被误触发
 
 ## 阶段 4：旧仓切跳转版（新站验证通过后才执行）
 
-- [ ] 4.1 旧仓写 `tools/make-redirects.py`：遍历 `site/**/*.html` 生成 `redirect/` 全路径跳转页（meta refresh 0 + canonical 新址 + 手动链接；`404.html` → 新站首页）
-- [ ] 4.2 旧仓 `deploy.yml` 改纯静态上传（删 pip/zensical 步骤，`path: redirect`）；提交推送，观察部署成功
-- [ ] 4.3 跳转验证：旧首页、旧 architecture 深链、旧 scripting-api `{T}` 页、旧 changelog、旧 404 → 全部落到新站对应页；`curl -sI` 抽查 + 浏览器实点
-- [ ] 4.4 旧仓 README 顶部弃用说明（新地址 + 2026-11-23 迁移日期 + 本仓仅保留跳转与历史）；repo description 同步
-- [ ] 4.5 （可选，D3 评审选 archive 才做）`gh api -X PATCH repos/yuumixcode/AesirFramework-Site -f archived=true` → curl 旧深链验证 Pages 仍可达；不可达立即 unarchive 并记录结论
+- [x] 4.1 旧仓写 `tools/make-redirects.py`：遍历 `site/**/*.html` 生成 `redirect/` 全路径跳转页（meta refresh 0 + canonical 新址 + 手动链接；`404.html` → 新站首页）
+- [x] 4.2 旧仓 `deploy.yml` 改纯静态上传（删 pip/zensical 步骤，`path: redirect`）；提交推送，观察部署成功
+- [x] 4.3 跳转验证：旧首页、旧 architecture 深链、旧 scripting-api `{T}` 页、旧 changelog、旧 404 → 全部落到新站对应页；`curl -sI` 抽查 + 浏览器实点
+- [x] 4.4 旧仓 README 顶部弃用说明（新地址 + 2026-11-23 迁移日期 + 本仓仅保留跳转与历史）；repo description 同步
+- [x] 4.5 （可选，D3 评审选 archive 才做）`gh api -X PATCH repos/yuumixcode/AesirFramework-Site -f archived=true` → curl 旧深链验证 Pages 仍可达；不可达立即 unarchive 并记录结论
 
 ## 阶段 5：周边同步与清理
 
-- [ ] 5.1 `memory/docs-site-rebuild-api-nav.py`：`SITE` 常量改主仓根；跑一次干跑验证路径解析
-- [ ] 5.2 `aesir-version-sync` 技能：站点版本落点改「随主仓发版提交」，通读全篇改路径/流程引用；Notebook 仍独立 push 的口径保留
-- [ ] 5.3 memory 更新：`memory.md` 站点引用条目（update_memory）+ `memory/external-workflow.md` 块改同仓口径（站点写作约定原样保留）
-- [ ] 5.4 提醒用户：`Aesir-Notebook` 内 `iteration-workflow.md` 等站点路径口径需在其私有仓同步（不属本变更提交）
-- [ ] 5.5 本地 `AesirFramework-Site/` 目录确认干净且全部已推送后移废纸篓（可恢复）；主仓 `.gitignore` 删 `/AesirFramework-Site/` 行，提交
-- [ ] 5.6 收尾提交推送；确认主仓 `git status` 干净、两仓线上状态符合预期
+- [x] 5.1 `memory/docs-site-rebuild-api-nav.py`：`SITE` 常量改主仓根；跑一次干跑验证路径解析
+- [x] 5.2 `aesir-version-sync` 技能：站点版本落点改「随主仓发版提交」，通读全篇改路径/流程引用；Notebook 仍独立 push 的口径保留
+- [x] 5.3 memory 更新：`memory.md` 站点引用条目（update_memory）+ `memory/external-workflow.md` 块改同仓口径（站点写作约定原样保留）
+- [x] 5.4 提醒用户：`Aesir-Notebook` 内 `iteration-workflow.md` 等站点路径口径需在其私有仓同步（不属本变更提交）
+- [x] 5.5 本地 `AesirFramework-Site/` 目录确认干净且全部已推送后移废纸篓（可恢复）；主仓 `.gitignore` 删 `/AesirFramework-Site/` 行，提交
+- [x] 5.6 收尾提交推送；确认主仓 `git status` 干净、两仓线上状态符合预期
 
 ## 验收标准
 

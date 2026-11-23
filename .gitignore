@@ -153,9 +153,6 @@ InitTestScene*.unity*
 # 开发笔记仓库（Aesir-Notebook，独立 git 仓库，内容不入主仓）
 /Aesir-Notebook/
 
-# 公开产品站点仓库（AesirFramework-Site，独立 git 仓库，内容不入主仓）
-/AesirFramework-Site/
-
 # Zensical 文档站构建产物与增量缓存（同仓站点，源在 docs/ + zensical.toml）
 /site/
 /.cache/

@@ -1,6 +1,6 @@
 import io, os, re, glob, sys
 
-SITE = "/Users/yuumix/Projects/Unity/AesirFramework/AesirFramework-Site"
+SITE = "/Users/yuumix/Projects/Unity/AesirFramework"
 KIND_ORDER = ["类", "结构体", "接口", "枚举", "委托"]
 KIND_MAP = {
     "class": "类", "static class": "类", "abstract class": "类", "sealed class": "类",
