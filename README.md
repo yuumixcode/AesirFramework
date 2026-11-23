@@ -8,31 +8,45 @@
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
-> 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**不依赖**其他 Aesir 子包（独立可装）。
+> 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**不依赖**
+> 其他 Aesir 子包（独立可装）。
 >
 > 关联包：
 > - **[Aesir Modules](https://github.com/yuumixcode/AesirFramework)**（依赖 Architecture）
 
-> **Odin Inspector 为可选增强**（Inspector 样式与调试体验），非运行前置——核心架构流程闭环（Context 注册 → 初始化 → Command/Query → ObservableValue 通知）无 Odin 可完整运行。
+> **Odin Inspector 为可选增强**（Inspector 样式与调试体验），非运行前置——核心架构流程闭环（Context 注册 → 初始化 →
+> Command/Query → ObservableValue 通知）无 Odin 可完整运行。
 
 ## 概述
 
-AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的架构。它不构建与引擎平行的自建体系，而是深度绑定 Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的 MVC / MVP 分层。框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
+AesirArchitecture（RAA）是一个以 **Unity 原生优先** 为核心理念的架构。它不构建与引擎平行的自建体系，而是深度绑定
+Unity 的 PlayerLoop、ScriptableObject、Editor API 等原生能力，在保持轻量的同时为中小型到中大型项目提供清晰的
+MVC / MVP 分层。框架以 **MVC 为主要模式**，`IController` 是推荐的快速开发入口；`IPresenter`（MVP）作为可选的严格分层模式。
 
 ### 核心特性
 
-- **MVC 优先架构** — `IController` + `ICommand` 命令模式 + `IQuery<TResult>` 查询模式（CQRS），Controller 作为 MVC 的核心入口直接修改 Model；`IPresenter`（MVP）作为可选的严格 Model-View 隔离模式
-- **PlayerLoop 原生生命周期** — 通过 `AesirPlayerLoop` 将自定义子系统注入 Unity PlayerLoop，提供 `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour
-- **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand` 等能力标记接口组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`，按需暴露能力
+- **MVC 优先架构** — `IController` + `ICommand` 命令模式 + `IQuery<TResult>` 查询模式（CQRS），Controller 作为
+  MVC 的核心入口直接修改 Model；`IPresenter`（MVP）作为可选的严格 Model-View 隔离模式
+- **PlayerLoop 原生生命周期** — 通过 `AesirPlayerLoop` 将自定义子系统注入 Unity PlayerLoop，提供
+  `BeforeUpdate` / `AfterUpdate` 帧回调，无需 MonoBehaviour
+- **能力接口组合** — 通过 `ICanGetModel`、`ICanExecuteCommand` 等能力标记接口组合出 `IModel` / `IService` /
+  `IView` / `IController` / `IPresenter`，按需暴露能力
 - **命令模式** — `ICommand` 负责写操作，同步执行
 - **查询模式** — `IQuery<TResult>` 负责读操作，返回结果，无副作用
-- **ObservableValue 响应式属性** — 快捷档 Model 直接暴露可写 `ObservableValue<T>`（表现层直改值）；标准档起收窄为 `IReadOnlyObservableValue<out T>` 只读接口 + 写方法；严格档再做接口注册 + Command 写入
-- **可观察集合（ObservableCollections 轻量内置子集）** — 三种高频集合（List / Dictionary / HashSet）+ 单轨变更通知 `AddListener`（无变更不通知、批量逐项、Sort / Reverse / Clear 走 Reset、Move 单事件）+ 监听句柄可绑定 Unity 生命周期自动移除 + Odin 内联调试面板。队列等其他集合形态与重度能力（同步视图 / R3 / 环形缓冲 / XAML 绑定等）用上游库。详见[可观察集合](#可观察集合observablecollections-轻量内置子集)
-- **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换 Model 的调试模式
-- **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule` 基类，消除代码重复
+- **ObservableValue 响应式属性** — 快捷档 Model 直接暴露可写 `ObservableValue<T>`（表现层直改值）；标准档起收窄为
+  `IReadOnlyObservableValue<out T>` 只读接口 + 写方法；严格档再做接口注册 + Command 写入
+- **可观察集合（ObservableCollections 轻量内置子集）** — 三种高频集合（List / Dictionary / HashSet）+ 单轨变更通知
+  `AddListener`（无变更不通知、批量逐项、Sort / Reverse / Clear 走 Reset、Move 单事件）+ 监听句柄可绑定 Unity
+  生命周期自动移除 + Odin 内联调试面板。队列等其他集合形态与重度能力（同步视图 / R3 / 环形缓冲 / XAML
+  绑定等）用上游库。详见[可观察集合](#可观察集合observablecollections-轻量内置子集)
+- **运行时错误日志** — `GetModel<T>()` / `GetService<T>()` 在目标未注册时抛出含调用者类型和目标类型信息的异常，替代前置依赖校验，兼容运行时替换
+  Model 的调试模式
+- **AbstractSubmodule 统一子模块生命周期** — Model 和 Service 的公共生命周期逻辑提取到 `AbstractSubmodule`
+  基类，消除代码重复
 - **GenericLocator 泛型定位器** — 按类型注册/查询的通用定位器，替代旧版 Container，按注册顺序保序
 - **Domain Reload 安全** — 静态变量通过 `[RuntimeInitializeOnLoadMethod]` 显式重置，反复进出 Play Mode 无残留
-- **纯 C# 核心 + MonoBehaviour 适配** — 框架核心为纯 C# 对象，Engine 层不依赖任何 Component 层类型，`AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` 作为 MonoBehaviour 适配层
+- **纯 C# 核心 + MonoBehaviour 适配** — 框架核心为纯 C# 对象，Engine 层不依赖任何 Component 层类型，
+  `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` 作为 MonoBehaviour 适配层
 - **MVC + MVP 双模式** — `IController`（MVC，推荐）适合快速开发，`IPresenter`（MVP，可选）提供更严格的 Model-View 隔离
 
 ## 安装
@@ -59,16 +73,26 @@ UPM 会自动通过 `package.json` 的 `name` 字段识别本包（`cn.runestone
 
 ### unitypackage 导入
 
-从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在 `Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**检查并更新：
+从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载
+`AesirArchitecture-v<版本>.unitypackage`（或两包合并的 `AesirFramework-v<版本>.unitypackage`）导入。以此方式安装在
+`Assets/Runestone/` 下的包，可通过 Unity 菜单 `Tools → Aesir → Check for Updates` 打开**包内更新器**检查并更新：
 
-- **版本检测**面向大陆网络做了三层兜底（直连 GitHub → 镜像站 → jsDelivr CDN 中转，能直连即 100% 实时），窗口内直接展示「本地 → 远程」更新日志与各层尝试详情；
-- **两种更新入口**：包列表每行的「更新」按钮仅更新单个包，供只使用其中一个包的项目按需更新（另一包在场且落后时，确认框会提示配套版本风险）；「全部更新」让整个框架到达远程版本——已安装的旧包更新、缺失的 Aesir 包补装，补装条目在确认框中明确标为「新安装」；
+- **版本检测**面向大陆网络做了三层兜底（直连 GitHub → 镜像站 → jsDelivr CDN 中转，能直连即 100%
+  实时），窗口内直接展示「本地 → 远程」更新日志与各层尝试详情；
+- **两种更新入口**：包列表每行的「更新」按钮仅更新单个包，供只使用其中一个包的项目按需更新（另一包在场且落后时，确认框会提示配套版本风险）；「全部更新」让整个框架到达远程版本——已安装的旧包更新、缺失的
+  Aesir 包补装，补装条目在确认框中明确标为「新安装」；
 - **下载直连失败自动切换镜像站代理**，全部线路失败时弹窗给出手动下载指引；下载进度条可随时点「取消」中止，已导入的包保持有效；
-- 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装 Odin Inspector 时更新器为 Odin 界面。
+- 按"上次安装清单 − 新版清单"精确差集清理残留、不误伤用户新增文件（清理在导入成功之后执行，导入失败时旧文件原封不动）；安装
+  Odin Inspector 时更新器为 Odin 界面。
 
-> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL 包显示更新提示，升级 = 移除旧包后用同一 URL 重新添加（`latest` 分支名永久固定，无需随发版修改；需钉死旧版本时改用 Release tag，如 `?path=Assets/Runestone/AesirArchitecture#v0.34.1`）。
+> 经 Git URL（UPM）安装的副本不在更新器管辖内——纯 UPM 安装形态下该菜单不显示；Package Manager 也不会对 Git URL
+> 包显示更新提示，升级 = 移除旧包后用同一 URL 重新添加（`latest` 分支名永久固定，无需随发版修改；需钉死旧版本时改用
+> Release tag，如 `?path=Assets/Runestone/AesirArchitecture#v0.34.1`）。
 >
-> **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置 `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
+> **Runestone 目录可整体移动到项目任意文件夹**：包根的 `AesirPathLookup.asset` 锚点资产负责带路（机制参照 Odin
+> Inspector 的同款资产——文件夹移动时 .meta GUID 保持不变，定位器按 GUID 找到新位置），更新器、Getting Started
+> 窗口与示例场景的构建剔除都能定位移动后的安装。锚点资产是内部文件、勿删除。注意：更新器经 unitypackage 导入始终装回默认位置
+> `Assets/Runestone`（Unity 机制固有），曾移动过的旧位置副本需自行清理。
 
 ## 快速开始
 
@@ -143,14 +167,19 @@ public class CounterPanel : MonoViewController<CounterContext>
 三个脚本挂上场景物体、按 Play 即可运行。完整示例见 `Counter-Mvc-Quick`。
 
 > **三档渐进路径**（Model 暴露面逐档收窄，写入路径逐档归口；文件数按脚本计）：
-> - **第一课（快捷档，~3 个脚本）**：Context + Model（可写 ObservableValue 只读属性暴露）+ `MonoViewController<T>` 面板（View 兼 Controller 直改值），见 `Counter-Mvc-Quick` 示例；
-> - **第二课（标准档，~4 个脚本）**：Model 收窄为只读接口暴露 + 写方法；View 拆出 `MonoView`，与 Controller 分离实例并共享同一 Model（写方法直调，不经 Command），见 `Counter-Mvc-Standard` 示例；
-> - **第三课（严格档，~10 个脚本）**：Model 接口注册；Controller 经 Context 发布 Command 写入、加工读取走 Query，View 按接口持有 Model 订阅刷新、按业务窄接口持有 Controller，见 `Counter-Mvc-Strict` 示例。
-> MVP 三档（`Counter-Mvp-Quick` / `Counter-Mvp-Standard` / `Counter-Mvp-Strict`）与 MVC 同构对照——每档 Model 暴露面一致，唯一差异是刷新路径：MVC 的 View 自订阅 Model，MVP 的 View 被动、由 Presenter 推送。
+> - **第一课（快捷档，~3 个脚本）**：Context + Model（可写 ObservableValue 只读属性暴露）+ `MonoViewController<T>`
+>   面板（View 兼 Controller 直改值），见 `Counter-Mvc-Quick` 示例；
+> - **第二课（标准档，~4 个脚本）**：Model 收窄为只读接口暴露 + 写方法；View 拆出 `MonoView`，与 Controller
+>   分离实例并共享同一 Model（写方法直调，不经 Command），见 `Counter-Mvc-Standard` 示例；
+> - **第三课（严格档，~10 个脚本）**：Model 接口注册；Controller 经 Context 发布 Command 写入、加工读取走 Query，View
+>   按接口持有 Model 订阅刷新、按业务窄接口持有 Controller，见 `Counter-Mvc-Strict` 示例。
+>   MVP 三档（`Counter-Mvp-Quick` / `Counter-Mvp-Standard` / `Counter-Mvp-Strict`）与 MVC 同构对照——每档 Model
+>   暴露面一致，唯一差异是刷新路径：MVC 的 View 自订阅 Model，MVP 的 View 被动、由 Presenter 推送。
 
 ### 进阶：标准档与严格档
 
-标准档起 Model 收窄为**只读暴露 + 写方法**（View 拆出 `MonoView<T>` 与 Controller 分离）；严格档进一步**按接口注册**、写入经 **Command** 分发、加工读取走 **Query**：
+标准档起 Model 收窄为**只读暴露 + 写方法**（View 拆出 `MonoView<T>` 与 Controller 分离）；严格档进一步
+**按接口注册**、写入经 **Command** 分发、加工读取走 **Query**：
 
 ```csharp
 public interface ICounterModel : IModel
@@ -222,66 +251,93 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## 示例（Samples）
 
-> **Aesir Getting Started 窗口**（菜单 `Tools → Aesir → Getting Started`，0.24.0 起）：集中浏览与直达 Aesir 两包全部示例的导航入口——概览页展示已安装包卡片（含未安装包的下载引导），包页按教学分组列出示例；点击示例卡片即在 Project 窗口选中其文件夹，带场景的示例可经「打开场景」按钮一键直达（切换前自动保存当前场景一次），操作结果以窗口右下角 Toast 提示。UPM（Git URL）/ 嵌入式安装的未导入示例：点击卡片以 Toast 引导导入，「导入 Sample」按钮弹出确认框（含示例介绍与导入后位置，可取消），确认后经 Package Manager 的 Sample API 直接导入到 Assets/Samples/ 并自动刷新示例清单。未安装 Odin 时提供 IMGUI 兜底窗口，安装 Odin 后自动切换为带页面动效的 Odin 版窗口。
+> **Aesir Getting Started 窗口**（菜单 `Tools → Aesir → Getting Started`，0.24.0 起）：集中浏览与直达 Aesir
+> 两包全部示例的导航入口——概览页展示已安装包卡片（含未安装包的下载引导），包页按教学分组列出示例；点击示例卡片即在
+> Project 窗口选中其文件夹，带场景的示例可经「打开场景」按钮一键直达（切换前自动保存当前场景一次），操作结果以窗口右下角
+> Toast 提示。UPM（Git URL）/ 嵌入式安装的未导入示例：点击卡片以 Toast 引导导入，「导入
+> Sample」按钮弹出确认框（含示例介绍与导入后位置，可取消），确认后经 Package Manager 的 Sample API 直接导入到
+> Assets/Samples/ 并自动刷新示例清单。未安装 Odin 时提供 IMGUI 兜底窗口，安装 Odin 后自动切换为带页面动效的 Odin
+> 版窗口。
 
-> 该窗口的 UI Toolkit 样式组织方式（设计令牌分层 / BEM 命名 / 微交互）参考开源项目 [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame)（MIT，学习致谢）。仅借鉴组织方式，配色保持 Unity 编辑器原生主题（未采用其深蓝品牌色），UI 与实现均为本框架自有，非移植或复刻。
+> 该窗口的 UI Toolkit 样式组织方式（设计令牌分层 / BEM 命名 /
+> 微交互）参考开源项目 [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame)（MIT，学习致谢）。仅借鉴组织方式，配色保持
+> Unity 编辑器原生主题（未采用其深蓝品牌色），UI 与实现均为本框架自有，非移植或复刻。
 
-包内提供 11 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与 MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter 推送）。
+包内提供 11 个可导入示例（Package Manager → Aesir Architecture → Samples）。计数器系列按**三档渐进**组织，MVC 与
+MVP 各三档逐课对照——每档 Model 暴露面一致，唯一差异是刷新路径（MVC：View 自订阅 Model；MVP：View 被动、Presenter
+推送）。
 
 ### MVC 系列（View 自订阅刷新）
 
-| 示例 | 档次 | Model 暴露面 | 写入 / 读取路径 |
-|------|------|-------------|----------------|
-| `Counter-Mvc-Quick` | 第一课 · 快捷档 | 具体类注册，可写 `ObservableValue` 直改 | View 兼 Controller 直改 / 直读 |
-| `Counter-Mvc-Standard` | 第二课 · 标准档 | 具体类注册，只读暴露 + 写方法 | Controller 直调写方法 / View 只读订阅 |
-| `Counter-Mvc-Strict` | 第三课 · 严格档 | 接口注册，只读暴露 + 写方法 | Controller 发布 Command / 加工读取经 Query |
+| 示例                   | 档次            | Model 暴露面                            | 写入 / 读取路径                            |
+|------------------------|-----------------|-----------------------------------------|--------------------------------------------|
+| `Counter-Mvc-Quick`    | 第一课 · 快捷档 | 具体类注册，可写 `ObservableValue` 直改 | View 兼 Controller 直改 / 直读             |
+| `Counter-Mvc-Standard` | 第二课 · 标准档 | 具体类注册，只读暴露 + 写方法           | Controller 直调写方法 / View 只读订阅      |
+| `Counter-Mvc-Strict`   | 第三课 · 严格档 | 接口注册，只读暴露 + 写方法             | Controller 发布 Command / 加工读取经 Query |
 
 ### MVP 系列（View 被动、Presenter 推送）
 
-| 示例 | 档次 | Model 暴露面 | 写入 / 读取路径 |
-|------|------|-------------|----------------|
-| `Counter-Mvp-Quick` | 第一课 · 快捷档 | 具体类注册，可写 `ObservableValue` 直改 | Presenter 直改 / 直读推送 |
-| `Counter-Mvp-Standard` | 第二课 · 标准档 | 具体类注册，只读暴露 + 写方法 | Presenter 直调写方法 / Model 直读推送 |
-| `Counter-Mvp-Strict` | 第三课 · 严格档 | 接口注册，只读暴露 + 写方法 | Command 写入 / Query 拉取推送 |
+| 示例                   | 档次            | Model 暴露面                            | 写入 / 读取路径                       |
+|------------------------|-----------------|-----------------------------------------|---------------------------------------|
+| `Counter-Mvp-Quick`    | 第一课 · 快捷档 | 具体类注册，可写 `ObservableValue` 直改 | Presenter 直改 / 直读推送             |
+| `Counter-Mvp-Standard` | 第二课 · 标准档 | 具体类注册，只读暴露 + 写方法           | Presenter 直调写方法 / Model 直读推送 |
+| `Counter-Mvp-Strict`   | 第三课 · 严格档 | 接口注册，只读暴露 + 写方法             | Command 写入 / Query 拉取推送         |
 
-> **MVP View 边界**：三档 View 均为纯 `MonoBehaviour`（被动视图不携带任何 Context 能力）；快捷档无任何接口抽象（Presenter 直接持有具体面板类），标准档起 View 契约以 `IXxxView` 接口形式存在；严格档 View 另按业务窄接口（`IXxxPresenter`，仅生命周期方法）持有 Presenter。
+> **MVP View 边界**：三档 View 均为纯 `MonoBehaviour`（被动视图不携带任何 Context 能力）；快捷档无任何接口抽象（Presenter
+> 直接持有具体面板类），标准档起 View 契约以 `IXxxView` 接口形式存在；严格档 View 另按业务窄接口（`IXxxPresenter`
+> ，仅生命周期方法）持有 Presenter。
 
 ### 工具类示例
 
-| 示例 | 说明 | 依赖 |
-|------|------|------|
-| `ObservableValue` | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果 | Odin Inspector |
-| `ObservableCollections` | 可观察集合用法：单轨变更通知，经 ContextMenu 触发增删改查与集合运算 | 无 |
-| `MiniEvent` | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件 | 无 |
-| `AesirTimer` | 计时器用法：六种形态 `Countdown` 延时与冷却、`NextFrame`、`Every` 有限 / 无限重复、`Stopwatch` 秒表、`Interval` 区间、`Frequency` 频率，以及 `Pause` / `Resume` / `Restart` / `Cancel`；面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条（无驱动代码），另含一个不继承 MonoBehaviour 的纯 C# 冷却模型；动作在自定义 Inspector 里点按钮触发（`ContextMenu` 走同一批方法），运行时面板与 Inspector 共用同一份行数据 | 无 |
-| `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示；配置窗口不进菜单，从 `Tools → Aesir → Getting Started` 中该示例卡片右侧的「初始化时机设置」按钮打开 | 无 |
+| 示例                        | 说明                                                                                                                                                                                                                                                                                                                                                                                                                                | 依赖           |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
+| `ObservableValue`           | 自定义 Drawer 演示：简单类型与复合可序列化类型在 Inspector 中的绘制效果                                                                                                                                                                                                                                                                                                                                                             | Odin Inspector |
+| `ObservableCollections`     | 可观察集合用法：单轨变更通知，经 ContextMenu 触发增删改查与集合运算                                                                                                                                                                                                                                                                                                                                                                 | 无             |
+| `MiniEvent`                 | 无参 / 单参事件用法；多参数推荐封装结构体形成单参事件                                                                                                                                                                                                                                                                                                                                                                               | 无             |
+| `AesirTimer`                | 计时器用法：六种形态 `Countdown` 延时与冷却、`NextFrame`、`Every` 有限 / 无限重复、`Stopwatch` 秒表、`Interval` 区间、`Frequency` 频率，以及 `Pause` / `Resume` / `Restart` / `Cancel`；面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条（无驱动代码），另含一个不继承 MonoBehaviour 的纯 C# 冷却模型；动作在自定义 Inspector 里点按钮触发（`ContextMenu` 走同一批方法），运行时面板与 Inspector 共用同一份行数据 | 无             |
+| `RuntimeInitializeLoadType` | 五个初始化时机（SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad）的触发顺序演示；配置窗口不进菜单，从 `Tools → Aesir → Getting Started` 中该示例卡片右侧的「初始化时机设置」按钮打开                                                                                                                                                                                          | 无             |
 
-> **PlaneWar 不在包内**：纵版射击完整游戏案例已迁出为宿主工程的 `Assets/PlaneWar/`（源码仓库内可见，不随包分发、不进示例清单与 Getting Started 面板），详见仓库根 `Assets/PlaneWar/README.md`。
+> **PlaneWar 不在包内**：纵版射击完整游戏案例已迁出为宿主工程的 `Assets/PlaneWar/`（源码仓库内可见，不随包分发、不进示例清单与
+> Getting Started 面板），详见仓库根 `Assets/PlaneWar/README.md`。
 
 ## 计时器（AesirTimer / AbstractTimer）
 
-计时器是框架内置的**功能模块**（与 Observable / Event / Locator 同级），让纯 C# 的 Model / Service / Command 不借 MonoBehaviour、不借协程即可延时、冷却、按节奏触发。统一入口是静态工厂 `AesirTimer`，返回的实例由抽象基类 `AbstractTimer` 派生，持有引用可查询进度、取消、重开；也可丢弃引用（到期自动出队，不泄漏）。
+计时器是框架内置的**功能模块**（与 Observable / Event / Locator 同级），让纯 C# 的 Model / Service / Command 不借
+MonoBehaviour、不借协程即可延时、冷却、按节奏触发。统一入口是静态工厂 `AesirTimer`，返回的实例由抽象基类
+`AbstractTimer` 派生，持有引用可查询进度、取消、重开；也可丢弃引用（到期自动出队，不泄漏）。
 
 **六种形态**（`AesirTimer` 工厂 → 具体类）：
 
-| 工厂方法 | 具体类 | 用途 |
-|---|---|---|
-| `Countdown(seconds, cb, unscaled)` | `CountdownTimer` | 一次性倒计时（延时 / 冷却） |
-| `NextFrame(cb)` | `NextFrameTimer` | 此后第一次结算执行一次 |
-| `Every(interval, cb, repeatCount, unscaled)` | `RepeatingTimer` | 按间隔重复，限次或无限 |
-| `Interval(total, interval, cb, unscaled)` | `IntervalTimer` | 总时长内每隔固定间隔触发（如 10 秒内每 1 秒） |
-| `Frequency(ticksPerSecond, cb, unscaled)` | `FrequencyTimer` | 每秒触发 N 次 |
-| `Stopwatch(unscaled)` | `StopwatchTimer` | 从零正计时测时长，读 `Elapsed` |
+| 工厂方法                                     | 具体类           | 用途                                          |
+|----------------------------------------------|------------------|-----------------------------------------------|
+| `Countdown(seconds, cb, unscaled)`           | `CountdownTimer` | 一次性倒计时（延时 / 冷却）                   |
+| `NextFrame(cb)`                              | `NextFrameTimer` | 此后第一次结算执行一次                        |
+| `Every(interval, cb, repeatCount, unscaled)` | `RepeatingTimer` | 按间隔重复，限次或无限                        |
+| `Interval(total, interval, cb, unscaled)`    | `IntervalTimer`  | 总时长内每隔固定间隔触发（如 10 秒内每 1 秒） |
+| `Frequency(ticksPerSecond, cb, unscaled)`    | `FrequencyTimer` | 每秒触发 N 次                                 |
+| `Stopwatch(unscaled)`                        | `StopwatchTimer` | 从零正计时测时长，读 `Elapsed`                |
 
-**架构**：`AbstractTimer` 用模板方法固定调度引擎（注册表 / PlayerLoop 注入 / 两阶段结算 / 统计），把"如何推进、何时到期"下沉给六个职责单一的具体类（OCP / SRP）。共有行为见 `AbstractTimer`：`Duration` / `Remaining` / `Progress` / `RemainingExecutions` 查询，`Pause` / `Resume` / `Restart` / `Cancel` / `Dispose` 控制；`unscaled` 时间源不受 `Time.timeScale` 影响。结算复用 `AesirPlayerLoop`（`BeforeUpdate` + `order: int.MinValue`），同帧多个到期严格按创建顺序回调，卡顿帧不补发。配套 `Tools → Aesir → Architecture → Timer Debugger` 面板可查看运行时快照。
+**架构**：`AbstractTimer` 用模板方法固定调度引擎（注册表 / PlayerLoop 注入 / 两阶段结算 /
+统计），把"如何推进、何时到期"下沉给六个职责单一的具体类（OCP / SRP）。共有行为见 `AbstractTimer`：`Duration` /
+`Remaining` / `Progress` / `RemainingExecutions` 查询，`Pause` / `Resume` / `Restart` / `Cancel` / `Dispose`
+控制；`unscaled` 时间源不受 `Time.timeScale` 影响。结算复用 `AesirPlayerLoop`（`BeforeUpdate` +
+`order: int.MinValue`），同帧多个到期严格按创建顺序回调，卡顿帧不补发。配套
+`Tools → Aesir → Architecture → Timer Debugger` 面板可查看运行时快照。
 
-> 抽象基类 + 具体 Timer 的**分层思路**参考了开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)（致谢学习来源）。本模块的具体形态、结算语义与调试工具均为本框架自有实现，并非该项目的移植或复刻。
+> 抽象基类 + 具体 Timer 的**分层思路**
+> 参考了开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)
+> （致谢学习来源）。本模块的具体形态、结算语义与调试工具均为本框架自有实现，并非该项目的移植或复刻。
 
 ## 可观察集合（ObservableCollections 轻量内置子集）
 
-> 本模块的集合类型命名参考 [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT），便于对照上游文档。本模块是上游的**高频子集**（面向独立游戏的精简定位），不是全量复刻；变更通知为本项目自有约定（单轨事件，**与上游语义不一致**）。完整说明见 [`Documentation~/observable-collections.md`](Documentation~/observable-collections.md)。
+> 本模块的集合类型命名参考 [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+> （MIT），便于对照上游文档。本模块是上游的**高频子集**（面向独立游戏的精简定位），不是全量复刻；变更通知为本项目自有约定（单轨事件，
+> **与上游语义不一致**）。完整说明见 [
+> `Documentation~/observable-collections.md`](Documentation~/observable-collections.md)。
 
-**集合家族**：`ObservableList<T>`、`ObservableDictionary<TKey, TValue>`、`ObservableHashSet<T>`，统一实现 `IObservableCollection<T>`（`AddListener` / `RemoveListener`）。队列等更多集合形态直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)。
+**集合家族**：`ObservableList<T>`、`ObservableDictionary<TKey, TValue>`、`ObservableHashSet<T>`，统一实现
+`IObservableCollection<T>`（`AddListener` / `RemoveListener`
+）。队列等更多集合形态直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)。
 
 **单轨变更通知**：
 
@@ -301,13 +357,20 @@ handle.Dispose(); // 或绑定 Unity 生命周期自动移除
 list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 ```
 
-**通知语义**：无变更的写操作不通知（赋相同值 / Remove 不存在元素 / Clear 空集合）；批量操作逐项通知；字典值更新以 Replace 表达（旧值在 OldItem）；`Move` 为单次 Move 事件。
+**通知语义**：无变更的写操作不通知（赋相同值 / Remove 不存在元素 / Clear 空集合）；批量操作逐项通知；字典值更新以
+Replace 表达（旧值在 OldItem）；`Move` 为单次 Move 事件。
 
-**可选增强**：安装 Odin Inspector 后，集合字段在 Inspector 中显示内联摘要（元素数 / 变更监听数 / 元素预览）。未安装时该面板不参与编译，纯代码 API 照常可用。
+**可选增强**：安装 Odin Inspector 后，集合字段在 Inspector 中显示内联摘要（元素数 / 变更监听数 /
+元素预览）。未安装时该面板不参与编译，纯代码 API 照常可用。
 
-**重度需求用上游**：同步视图与过滤器、R3 响应式集成、环形缓冲区 / 栈 / 交替索引列表、WPF 类平台的 `INotifyCollectionChanged` 绑定、可写视图回写——直接使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（两套体系不混用）。
+**重度需求用上游**：同步视图与过滤器、R3 响应式集成、环形缓冲区 / 栈 / 交替索引列表、WPF 类平台的
+`INotifyCollectionChanged`
+绑定、可写视图回写——直接使用 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+（两套体系不混用）。
 
-**可与上游共存**：程序集、UPM 包名与命名空间三层完全隔离，同一项目可同时安装两库（程序集 `ObservableCollections` vs `Runestone.AesirArchitecture`）；同一源文件同时 `using` 两个命名空间并裸引用同名类型（三种集合与相关接口）时会产生 CS0104，用命名空间别名或完全限定名解决。详见 `Documentation~/observable-collections.md` 的「与上游共存」。
+**可与上游共存**：程序集、UPM 包名与命名空间三层完全隔离，同一项目可同时安装两库（程序集 `ObservableCollections`
+vs `Runestone.AesirArchitecture`）；同一源文件同时 `using` 两个命名空间并裸引用同名类型（三种集合与相关接口）时会产生
+CS0104，用命名空间别名或完全限定名解决。详见 `Documentation~/observable-collections.md` 的「与上游共存」。
 
 ## 架构总览
 
@@ -349,13 +412,13 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 
 ### 能力矩阵
 
-| 模块 | GetModel | GetService | ExecuteCommand | ExecuteQuery | Initialize | Dispose |
-|------|:--------:|:---------:|:--------------:|:------------:|:----------:|:-------:|
-| **IModel** | ✓ | | | | ✓ | ✓ |
-| **IService** | ✓ | ✓ | | | ✓ | ✓ |
-| **IView** | ✓ | ✓ | | | | |
-| **IController** | ✓ | ✓ | ✓ | ✓ | | |
-| **IPresenter** | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| 模块            | GetModel | GetService | ExecuteCommand | ExecuteQuery | Initialize | Dispose |
+|-----------------|:--------:|:----------:|:--------------:|:------------:|:----------:|:-------:|
+| **IModel**      |    ✓    |            |                |              |     ✓     |   ✓    |
+| **IService**    |    ✓    |     ✓     |                |              |     ✓     |   ✓    |
+| **IView**       |    ✓    |     ✓     |                |              |            |         |
+| **IController** |    ✓    |     ✓     |       ✓       |      ✓      |            |         |
+| **IPresenter**  |    ✓    |     ✓     |       ✓       |      ✓      |            |   ✓    |
 
 ## 项目结构
 
@@ -448,7 +511,10 @@ cn.runestone.aesir.architecture/
 └── Third Party Notices.md          # 第三方许可声明
 ```
 
-> **图注**：树中两个 `Modules/` 目录语义不同——`Runtime/Core/Engine/Modules/` 是**架构角色模块**（IModel / IView / IController 等角色接口与抽象基类，回答"你在架构里是谁"）；`Runtime/Modules/` 是**内置功能模块**（MiniEvent / ObservableValue / MonoLifecycleProxy / GenericLocator 等独立工具，回答"你用什么"，与 MVC 无绑定、可脱离架构单独使用）。
+> **图注**：树中两个 `Modules/` 目录语义不同——`Runtime/Core/Engine/Modules/` 是**架构角色模块**（IModel /
+> IView / IController 等角色接口与抽象基类，回答"你在架构里是谁"）；`Runtime/Modules/` 是**内置功能模块**
+> （MiniEvent / ObservableValue / MonoLifecycleProxy / GenericLocator 等独立工具，回答"你用什么"，与 MVC
+> 无绑定、可脱离架构单独使用）。
 
 ## 设计边界
 
@@ -459,21 +525,27 @@ cn.runestone.aesir.architecture/
 - **事件总线 / EventChannel** — 跨模块通信使用互相 GetModel + ObservableValue 订阅，或直接引用 MiniEvent
 - **Context 多实例** — `AbstractContext<T>` 为 CRTP 泛型单例，每个具体上下文类型全局仅一份；多存档、多房间等场景请在业务层建模
 - **Command/Query 池化、async、队列、Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` 保持同步、无缓存；高频路径有分配敏感需求时在业务层包装
-- **纯 C# 层的延时手段** — 框架刻意**不**提供帧级调度器。纯 C# 类需要每帧回调时用 `MonoLifecycleProxy`（`ICustomUpdate` / `ICustomFixedUpdate` / `ICustomLateUpdate`，零场景物体、DDOL 自动建宿主），需要协程时把驱动方挂在 GameObject 上——两者都是 Unity 原生心智模型，无需第三套调度 API
+- **纯 C# 层的延时手段** — 框架刻意**不**提供帧级调度器。纯 C# 类需要每帧回调时用 `MonoLifecycleProxy`（
+  `ICustomUpdate` / `ICustomFixedUpdate` / `ICustomLateUpdate`，零场景物体、DDOL 自动建宿主），需要协程时把驱动方挂在
+  GameObject 上——两者都是 Unity 原生心智模型，无需第三套调度 API
 - **View 生命周期脚手架** — View 层保持极薄，面板生命周期由 Aesir Modules 的 UIModule 负责
-- **集合可观察全家桶** — 内置 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根 `Third Party Notices.md`）的**高频子集**：三种集合（List / Dictionary / HashSet）+ 单轨变更通知。队列等其他集合形态、同步视图与过滤器、R3 响应式、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged` 绑定层、可写视图**不做**——需要时直接使用上游库（两套体系不混用，详见 `Documentation~/observable-collections.md`）
+- **集合可观察全家桶** —
+  内置 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)（MIT，见包根
+  `Third Party Notices.md`）的**高频子集**：三种集合（List / Dictionary / HashSet）+ 单轨变更通知。队列等其他集合形态、同步视图与过滤器、R3
+  响应式、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged` 绑定层、可写视图**不做**
+  ——需要时直接使用上游库（两套体系不混用，详见 `Documentation~/observable-collections.md`）
 - **线程安全** — 所有框架类型仅保证主线程使用；Service 中 `Task.Run` 等异步回调请先调度回主线程再访问框架
 
 ### 编写约定（违反时 fail-fast 报错，框架不做兜底）
 
-| 约定 | 违反后果 |
-|------|---------|
-| 监听回调不应抛异常 | 异常直接向上传播并中断同事件后续回调（原生 C# 事件语义），由 Unity 记日志 |
-| `Configure()` 及各模块初始化中禁止访问 `Instance` | 会因单例尚未发布而递归创建第二个上下文实例 |
-| `Register` 与 `Get` 必须使用相同类型参数 | 按键精确匹配，用实现类查询接口键注册的实例返回 null / 抛未注册异常（含近失识别提示） |
-| 运行时替换 Model/Service 仅用于测试调试 | 旧实例被 Dispose，其上的订阅不会迁移，已订阅的 View 需自行重新订阅 |
-| 第三方 SDK 修改 PlayerLoop 后手动调用一次 `AesirPlayerLoop.EnsureInjected()` | BeforeUpdate / AfterUpdate 钩子静默失效（`Register` 注册回调时会自动检测补插） |
-| **写入纪律档位** | 快捷档直改可写 ObservableValue 合法；标准档 Model 收窄为只读接口 + 写方法（Controller 直调写方法）；严格档写入必经 Command + 接口注册；Service 可直写。推荐项目从标准档起步 |
+| 约定                                                                         | 违反后果                                                                                                                                                                    |
+|------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 监听回调不应抛异常                                                           | 异常直接向上传播并中断同事件后续回调（原生 C# 事件语义），由 Unity 记日志                                                                                                   |
+| `Configure()` 及各模块初始化中禁止访问 `Instance`                            | 会因单例尚未发布而递归创建第二个上下文实例                                                                                                                                  |
+| `Register` 与 `Get` 必须使用相同类型参数                                     | 按键精确匹配，用实现类查询接口键注册的实例返回 null / 抛未注册异常（含近失识别提示）                                                                                        |
+| 运行时替换 Model/Service 仅用于测试调试                                      | 旧实例被 Dispose，其上的订阅不会迁移，已订阅的 View 需自行重新订阅                                                                                                          |
+| 第三方 SDK 修改 PlayerLoop 后手动调用一次 `AesirPlayerLoop.EnsureInjected()` | BeforeUpdate / AfterUpdate 钩子静默失效（`Register` 注册回调时会自动检测补插）                                                                                              |
+| **写入纪律档位**                                                             | 快捷档直改可写 ObservableValue 合法；标准档 Model 收窄为只读接口 + 写方法（Controller 直调写方法）；严格档写入必经 Command + 接口注册；Service 可直写。推荐项目从标准档起步 |
 
 ## 设计原则
 
@@ -483,8 +555,11 @@ cn.runestone.aesir.architecture/
 4. **渐进式** — 小项目轻量使用，大项目逐步扩展，不强制全量引入
 5. **SO 与纯代码双通道**（规划中） — 每个 SO 能力都有纯 C# 替代方案
 6. **团结引擎优先** — 以团结引擎为一等公民
-7. **Inspector 精简原则（AI 优先）** — Odin 优化的目标是调试可见性；核心配置首选代码与资产文件（AI 可读写、可版本管理），Inspector 仅作调试加成；非必要、非重要内容不进面板
-8. **Odin 三条铁律** — 核心架构流程闭环不依赖 Odin（Context 注册 → Model/Service 初始化 → Command/Query 执行 → ObservableValue 通知全链路无 Odin 可运行）；架构调试器等体验优化品可用 Odin；样式优化与代码逻辑分离（ObservableValue 为范例：逻辑无 Odin 照常运行，样式由 Odin AttributeProcessor 增强）
+7. **Inspector 精简原则（AI 优先）** — Odin 优化的目标是调试可见性；核心配置首选代码与资产文件（AI
+   可读写、可版本管理），Inspector 仅作调试加成；非必要、非重要内容不进面板
+8. **Odin 三条铁律** — 核心架构流程闭环不依赖 Odin（Context 注册 → Model/Service 初始化 → Command/Query 执行 →
+   ObservableValue 通知全链路无 Odin 可运行）；架构调试器等体验优化品可用 Odin；样式优化与代码逻辑分离（ObservableValue
+   为范例：逻辑无 Odin 照常运行，样式由 Odin AttributeProcessor 增强）
 
 ## 路线图
 

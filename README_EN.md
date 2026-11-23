@@ -1,6 +1,7 @@
 # Aesir Architecture
 
-> A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features as first-class citizens.
+> A progressive MVC architecture framework for **Tuanjie Engine** / **Unity**, treating Unity native features
+> as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.34.1-blue.svg)](./CHANGELOG.md)
@@ -8,38 +9,76 @@
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
 
-> 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.** This package does **NOT depend on** any other Aesir sub-package (standalone installable).
+> 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.**
+> This package does **NOT depend on** any other Aesir sub-package (standalone installable).
 >
 > Related:
 > - **[Aesir Modules](https://github.com/yuumixcode/AesirFramework)** (depends on Architecture)
 
-> **Odin Inspector is an optional enhancement** (Inspector presentation and debugging experience), not a runtime prerequisite — the core architecture loop (Context registration → initialization → Command/Query → ObservableValue notification) runs fully without Odin.
+> **Odin Inspector is an optional enhancement** (Inspector presentation and debugging experience), not a
+> runtime prerequisite — the core architecture loop (Context registration → initialization → Command/Query →
+> ObservableValue notification) runs fully without Odin.
 
 ## Overview
 
-AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVC / MVP layering for small to medium-large projects. The framework is **MVC-first**: `IController` is the recommended entry point for rapid development; `IPresenter` (MVP) is an optional pattern for stricter Model-View separation — MVP is exactly the pattern taught by Unity's official best practices ([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)). **MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts with the lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state notification. See [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md) for the full rationale and re-evaluation triggers.
+AesirArchitecture (RAA) is an architecture framework built on a **Unity-native-first** philosophy. It does not
+build a parallel system to the engine; instead, it deeply integrates with Unity native capabilities such as
+PlayerLoop, ScriptableObject, and the Editor API — keeping things lightweight while providing a clear MVC /
+MVP layering for small to medium-large projects. The framework is **MVC-first**: `IController` is the
+recommended entry point for rapid development; `IPresenter` (MVP) is an optional pattern for stricter
+Model-View separation — MVP is exactly the pattern taught by Unity's official best practices
+([official tutorial](https://learn.unity.com/tutorial/build-a-modular-codebase-with-mvc-and-mvp-programming-patterns)).
+**MVVM is intentionally not provided for now**: its core increment is a data-binding engine, which conflicts
+with the lightweight, Unity-native-first positioning, and `ObservableValue<T>` already covers state
+notification.
+See [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md)
+for the full rationale and re-evaluation triggers.
 
 ### Core Features
 
-- **MVC-first architecture** — `IController` + `ICommand` command pattern + `IQuery<TResult>` query pattern (CQRS); Controller is the primary MVC entry point that directly modifies Model. `IPresenter` (MVP) is an optional pattern for stricter Model-View separation
-- **Native PlayerLoop lifecycle** — Inject custom subsystems into Unity's PlayerLoop via `AesirPlayerLoop`, providing `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour
-- **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` / `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, etc.) — expose only what you need
+- **MVC-first architecture** — `IController` + `ICommand` command pattern + `IQuery<TResult>` query pattern
+  (CQRS); Controller is the primary MVC entry point that directly modifies Model. `IPresenter` (MVP) is an
+  optional pattern for stricter Model-View separation
+- **Native PlayerLoop lifecycle** — Inject custom subsystems into Unity's PlayerLoop via `AesirPlayerLoop`,
+  providing `BeforeUpdate` / `AfterUpdate` frame callbacks without MonoBehaviour
+- **Capability interface composition** — Compose `IModel` / `IService` / `IView` / `IController` /
+  `IPresenter` from fine-grained capability marker interfaces (`ICanGetModel`, `ICanExecuteCommand`, etc.) —
+  expose only what you need
 - **Command pattern** — `ICommand` handles write operations, executed synchronously
 - **Query pattern** — `IQuery<TResult>` handles read operations, returns data without side effects
-- **`ObservableValue<T>` reactive property** — Quick tier: Model exposes writable `ObservableValue<T>` directly (presentation writes directly); Standard tier onward: narrowed to covariant `IReadOnlyObservableValue<out T>` + write methods; Strict tier: interface registration + Command writes on top
-- **Observable collections (a lean built-in subset of ObservableCollections)** — three high-frequency collections (List / Dictionary / HashSet), a single-track change notification `AddListener` (no-ops stay silent, range operations notify per item, Sort / Reverse / Clear go through Reset, Move is a single event), listener handles that can bind to Unity lifecycle for auto-removal, and an inline Odin debug panel. For queues, other collection shapes and heavy features (synchronized views / R3 / ring buffers / XAML binding) use the upstream library. See [Observable Collections](#observable-collections-a-lean-built-in-subset-of-observablecollections)
-- **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
-- **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is extracted into `AbstractSubmodule` base class, eliminating code duplication
-- **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy Container, preserving registration order
-- **Domain Reload safety** — Static variables explicitly reset via `[RuntimeInitializeOnLoadMethod]`; no residue across Play Mode entry/exit
-- **Pure C# core + MonoBehaviour adapter** — Framework core is pure C#; the Engine layer does NOT depend on any Component layer type. `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` serve as MonoBehaviour adapters
-- **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP, optional — Unity's official best-practice pattern) for stricter Model-View separation. MVVM is intentionally not provided for now (see [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md))
+- **`ObservableValue<T>` reactive property** — Quick tier: Model exposes writable `ObservableValue<T>`
+  directly (presentation writes directly); Standard tier onward: narrowed to covariant
+  `IReadOnlyObservableValue<out T>` + write methods; Strict tier: interface registration + Command writes on
+  top
+- **Observable collections (a lean built-in subset of ObservableCollections)** — three high-frequency
+  collections (List / Dictionary / HashSet), a single-track change notification `AddListener` (no-ops stay
+  silent, range operations notify per item, Sort / Reverse / Clear go through Reset, Move is a single event),
+  listener handles that can bind to Unity lifecycle for auto-removal, and an inline Odin debug panel. For
+  queues, other collection shapes and heavy features (synchronized views / R3 / ring buffers / XAML binding)
+  use the upstream library.
+  See [Observable Collections](#observable-collections-a-lean-built-in-subset-of-observablecollections)
+- **Runtime error logging** — `GetModel<T>()` / `GetService<T>()` throws exceptions with caller-type and
+  target-type info when unregistered, replacing pre-flight validation; supports runtime model replacement
+- **`AbstractSubmodule` unified submodule lifecycle** — Shared lifecycle logic for Model and Service is
+  extracted into `AbstractSubmodule` base class, eliminating code duplication
+- **`GenericLocator<T>` generic locator** — Type-keyed registration/query locator replacing the legacy
+  Container, preserving registration order
+- **Domain Reload safety** — Static variables explicitly reset via `[RuntimeInitializeOnLoadMethod]`; no
+  residue across Play Mode entry/exit
+- **Pure C# core + MonoBehaviour adapter** — Framework core is pure C#; the Engine layer does NOT depend on
+  any Component layer type. `AesirView<T>` / `MonoView<T>` / `AesirViewController<T>` serve as MonoBehaviour
+  adapters
+- **MVC + MVP dual modes** — `IController` (MVC, recommended) for fast development, `IPresenter` (MVP,
+  optional — Unity's official best-practice pattern) for stricter Model-View separation. MVVM is intentionally
+  not provided for now
+  (see [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md))
 
 ## Installation
 
 ### Via UPM (Git URL)
 
-Install via UPM with a Git URL anchored to the evergreen `latest` branch — the branch name is permanently fixed, so the URL entered once keeps delivering updates (the branch root is the package content):
+Install via UPM with a Git URL anchored to the evergreen `latest` branch — the branch name is permanently
+fixed, so the URL entered once keeps delivering updates (the branch root is the package content):
 
 ```
 https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest
@@ -59,16 +98,40 @@ Copy this package directory into your project's `Packages/` folder.
 
 ### unitypackage Import
 
-Download `AesirArchitecture-v<version>.unitypackage` (or the combined `AesirFramework-v<version>.unitypackage`) from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages installed this way live under `Assets/Runestone/` and can be checked and updated via the Unity menu `Tools → Aesir → Check for Updates` — the **in-package updater**:
+Download `AesirArchitecture-v<version>.unitypackage` (or the combined
+`AesirFramework-v<version>.unitypackage`)
+from [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) and import it. Packages
+installed this way live under `Assets/Runestone/` and can be checked and updated via the Unity menu
+`Tools → Aesir → Check for Updates` — the **in-package updater**:
 
-- **Version detection** falls back through three tiers for mainland connectivity (direct GitHub → mirror sites → jsDelivr CDN relay; results are 100% real-time whenever a direct connection works). The window shows the "local → remote" changelog plus per-tier detection details.
-- **Two update entries**: the per-row "Update" button updates a single package, for projects that only use one of them (when the other known package is present and outdated, the confirmation dialog warns about the paired-version risk); "Update All" brings the whole framework to the remote version — outdated packages are updated and missing Aesir packages are installed, with fresh installs clearly marked in the confirmation dialog.
-- **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog offers a manual-download guide. The download progress bar can be cancelled at any time — already imported packages stay valid.
-- Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin Inspector installed, the updater uses an Odin-based UI.
+- **Version detection** falls back through three tiers for mainland connectivity (direct GitHub → mirror
+  sites → jsDelivr CDN relay; results are 100% real-time whenever a direct connection works). The window shows
+  the "local → remote" changelog plus per-tier detection details.
+- **Two update entries**: the per-row "Update" button updates a single package, for projects that only use one
+  of them (when the other known package is present and outdated, the confirmation dialog warns about the
+  paired-version risk); "Update All" brings the whole framework to the remote version — outdated packages are
+  updated and missing Aesir packages are installed, with fresh installs clearly marked in the confirmation
+  dialog.
+- **Downloads fall back to mirror-site proxies when the direct link fails**; if every route fails, the dialog
+  offers a manual-download guide. The download progress bar can be cancelled at any time — already imported
+  packages stay valid.
+- Stale entries are removed by the exact diff of "previous install manifest − new manifest" after the import
+  succeeds (old files stay untouched when an import fails), without touching user-added files. With Odin
+  Inspector installed, the updater uses an Odin-based UI.
 
-> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as `?path=Assets/Runestone/AesirArchitecture#v0.34.1`).
+> Copies installed via Git URL (UPM) are outside the updater's scope — under a pure UPM installation the
+> `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to
+> upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently
+> fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as
+> `?path=Assets/Runestone/AesirArchitecture#v0.34.1`).
 >
-> **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset is an internal file — do not delete it. Note that the updater always imports back to the default location `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy yourself.
+> **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor
+> asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID
+> survives folder moves, and the path locator resolves the new location by GUID). The in-package updater, the
+> Getting Started window and the sample-scene build filter all follow the moved installation. The anchor asset
+> is an internal file — do not delete it. Note that the updater always imports back to the default location
+> `Assets/Runestone` (inherent to how unitypackages work); if you have moved Runestone, clean up the old copy
+> yourself.
 
 ## Quick Start
 
@@ -142,17 +205,29 @@ public class CounterPanel : MonoViewController<CounterContext>
 }
 ```
 
-Attach the three scripts to scene objects and press Play. See the `Counter-Mvc-Quick` sample for the full version.
+Attach the three scripts to scene objects and press Play. See the `Counter-Mvc-Quick` sample for the full
+version.
 
-> **Three-tier progressive path** (Model exposure narrows tier by tier, write paths converge tier by tier; file counts are script counts):
-> - **Lesson 1 (Quick tier, ~3 scripts)**: Context + Model (writable ObservableValue behind a read-only property) + `MonoViewController<T>` panel (View doubles as Controller, writes directly), see `Counter-Mvc-Quick` sample;
-> - **Lesson 2 (Standard tier, ~4 scripts)**: Model narrowed to read-only interface exposure + write methods; View becomes `MonoView`, separated from the Controller instance while sharing the same Model (write methods called directly, no Command), see `Counter-Mvc-Standard` sample;
-> - **Lesson 3 (Strict tier, ~10 scripts)**: Model registered by interface; Controller issues Commands via Context, processed reads go through Query, View holds the Model as the interface type with subscription refresh and holds the Controller via a narrow business interface, see `Counter-Mvc-Strict` sample.
-> The three MVP tiers (`Counter-Mvp-Quick` / `Counter-Mvp-Standard` / `Counter-Mvp-Strict`) mirror the MVC structure — the Model exposure is identical at each tier; the only difference is the refresh path: MVC Views subscribe to the Model themselves, MVP Views are passive and refreshed by the Presenter.
+> **Three-tier progressive path** (Model exposure narrows tier by tier, write paths converge tier by tier;
+> file counts are script counts):
+> - **Lesson 1 (Quick tier, ~3 scripts)**: Context + Model (writable ObservableValue behind a read-only
+>   property) + `MonoViewController<T>` panel (View doubles as Controller, writes directly), see
+>   `Counter-Mvc-Quick` sample;
+> - **Lesson 2 (Standard tier, ~4 scripts)**: Model narrowed to read-only interface exposure + write methods;
+>   View becomes `MonoView`, separated from the Controller instance while sharing the same Model (write
+>   methods called directly, no Command), see `Counter-Mvc-Standard` sample;
+> - **Lesson 3 (Strict tier, ~10 scripts)**: Model registered by interface; Controller issues Commands via
+>   Context, processed reads go through Query, View holds the Model as the interface type with subscription
+>   refresh and holds the Controller via a narrow business interface, see `Counter-Mvc-Strict` sample.
+>   The three MVP tiers (`Counter-Mvp-Quick` / `Counter-Mvp-Standard` / `Counter-Mvp-Strict`) mirror the MVC
+>   structure — the Model exposure is identical at each tier; the only difference is the refresh path: MVC
+>   Views subscribe to the Model themselves, MVP Views are passive and refreshed by the Presenter.
 
 ### Going further: Standard and Strict tiers
 
-From the Standard tier onward the Model narrows to **read-only exposure + write methods** (View splits into `MonoView<T>`, separated from the Controller); the Strict tier additionally **registers by interface**, routes writes through **Commands** and processed reads through **Queries**:
+From the Standard tier onward the Model narrows to **read-only exposure + write methods** (View splits into
+`MonoView<T>`, separated from the Controller); the Strict tier additionally **registers by interface**, routes
+writes through **Commands** and processed reads through **Queries**:
 
 ```csharp
 public interface ICounterModel : IModel
@@ -179,7 +254,8 @@ public sealed class CounterModel : AbstractModel, ICounterModel
 RegisterModel<ICounterModel>(new CounterModel());
 ```
 
-The Strict-tier View switches to `MonoView<T>` (read-only capability) and holds a plain C# Controller via a narrow business interface:
+The Strict-tier View switches to `MonoView<T>` (read-only capability) and holds a plain C# Controller via a
+narrow business interface:
 
 ```csharp
 public class UICounterMvcPanel : MonoView<CounterContext>
@@ -224,66 +300,109 @@ this.ExecuteCommand<AddScoreCommand>();
 
 ## Samples
 
-> **Aesir Getting Started window** (menu `Tools → Aesir → Getting Started`, since 0.24.0): a navigation hub that browses and jumps straight into every sample of both Aesir packages — the overview page shows cards of installed packages (with download guidance for missing ones) and package pages list samples grouped by teaching order; clicking a sample card selects its folder in the Project window, and samples with a scene provide an "Open Scene" button that switches over directly (saving the current scene once beforehand), with results reported via a Toast in the bottom-right corner of the window. For not-yet-imported samples of UPM (Git URL) / embedded installs, clicking a card shows a guidance Toast, and the "Import Sample" button opens a confirmation dialog (with the sample description and destination path, cancellable) that imports the sample straight into Assets/Samples/ via the Package Manager Sample API and refreshes the list automatically. Without Odin an IMGUI fallback window is used; with Odin installed the animated Odin window takes over automatically.
+> **Aesir Getting Started window** (menu `Tools → Aesir → Getting Started`, since 0.24.0): a navigation hub
+> that browses and jumps straight into every sample of both Aesir packages — the overview page shows cards of
+> installed packages (with download guidance for missing ones) and package pages list samples grouped by
+> teaching order; clicking a sample card selects its folder in the Project window, and samples with a scene
+> provide an "Open Scene" button that switches over directly (saving the current scene once beforehand), with
+> results reported via a Toast in the bottom-right corner of the window. For not-yet-imported samples of UPM
+> (Git URL) / embedded installs, clicking a card shows a guidance Toast, and the "Import Sample" button opens a
+> confirmation dialog (with the sample description and destination path, cancellable) that imports the sample
+> straight into Assets/Samples/ via the Package Manager Sample API and refreshes the list automatically. Without
+> Odin an IMGUI fallback window is used; with Odin installed the animated Odin window takes over automatically.
 
-> The window's UI Toolkit stylesheet organization (design-token layering / BEM naming / micro-interactions) was inspired by the open-source project [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame) (MIT, credited as a learning source). Only the organization is borrowed — the palette stays with Unity's native editor theme (its dark-blue branding is not used), and the UI and implementation are this framework's own, not a port or copy.
+> The window's UI Toolkit stylesheet organization (design-token layering / BEM naming / micro-interactions)
+> was inspired by the open-source project [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame) (MIT,
+> credited as a learning source). Only the organization is borrowed — the palette stays with Unity's native
+> editor theme (its dark-blue branding is not used), and the UI and implementation are this framework's own, not
+> a port or copy.
 
-The package provides 11 importable samples (Package Manager → Aesir Architecture → Samples). The counter family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the Model; MVP: Views are passive, the Presenter pushes).
+The package provides 11 importable samples (Package Manager → Aesir Architecture → Samples). The counter
+family follows a **three-tier progressive** layout, with MVC and MVP mirroring each other tier by tier — the
+Model exposure is identical at each tier; the only difference is the refresh path (MVC: Views subscribe to the
+Model; MVP: Views are passive, the Presenter pushes).
 
 ### MVC family (View subscribes itself)
 
-| Sample | Tier | Model exposure | Write / read path |
-|------|------|-------------|----------------|
-| `Counter-Mvc-Quick` | Lesson 1 · Quick | Concrete-class registration, writable `ObservableValue` modified directly | View-as-Controller writes / reads directly |
-| `Counter-Mvc-Standard` | Lesson 2 · Standard | Concrete-class registration, read-only exposure + write methods | Controller calls write methods / View read-only subscription |
-| `Counter-Mvc-Strict` | Lesson 3 · Strict | Interface registration, read-only exposure + write methods | Controller issues Commands / processed reads via Query |
+| Sample                 | Tier                | Model exposure                                                            | Write / read path                                            |
+|------------------------|---------------------|---------------------------------------------------------------------------|--------------------------------------------------------------|
+| `Counter-Mvc-Quick`    | Lesson 1 · Quick    | Concrete-class registration, writable `ObservableValue` modified directly | View-as-Controller writes / reads directly                   |
+| `Counter-Mvc-Standard` | Lesson 2 · Standard | Concrete-class registration, read-only exposure + write methods           | Controller calls write methods / View read-only subscription |
+| `Counter-Mvc-Strict`   | Lesson 3 · Strict   | Interface registration, read-only exposure + write methods                | Controller issues Commands / processed reads via Query       |
 
 ### MVP family (View passive, Presenter pushes)
 
-| Sample | Tier | Model exposure | Write / read path |
-|------|------|-------------|----------------|
-| `Counter-Mvp-Quick` | Lesson 1 · Quick | Concrete-class registration, writable `ObservableValue` modified directly | Presenter writes / reads directly and pushes |
-| `Counter-Mvp-Standard` | Lesson 2 · Standard | Concrete-class registration, read-only exposure + write methods | Presenter calls write methods / reads Model and pushes |
-| `Counter-Mvp-Strict` | Lesson 3 · Strict | Interface registration, read-only exposure + write methods | Command writes / Query pulls and pushes |
+| Sample                 | Tier                | Model exposure                                                            | Write / read path                                      |
+|------------------------|---------------------|---------------------------------------------------------------------------|--------------------------------------------------------|
+| `Counter-Mvp-Quick`    | Lesson 1 · Quick    | Concrete-class registration, writable `ObservableValue` modified directly | Presenter writes / reads directly and pushes           |
+| `Counter-Mvp-Standard` | Lesson 2 · Standard | Concrete-class registration, read-only exposure + write methods           | Presenter calls write methods / reads Model and pushes |
+| `Counter-Mvp-Strict`   | Lesson 3 · Strict   | Interface registration, read-only exposure + write methods                | Command writes / Query pulls and pushes                |
 
-> **MVP View boundary**: all three MVP Views are plain `MonoBehaviour` (passive views carry no Context capability); the Quick tier has no interface abstractions at all (the Presenter holds the concrete panel class), from the Standard tier onward the View contract exists as an `IXxxView` interface, and the Strict tier View additionally holds the Presenter via a narrow business interface (`IXxxPresenter`, lifecycle methods only).
+> **MVP View boundary**: all three MVP Views are plain `MonoBehaviour` (passive views carry no Context
+> capability); the Quick tier has no interface abstractions at all (the Presenter holds the concrete panel
+> class), from the Standard tier onward the View contract exists as an `IXxxView` interface, and the Strict tier
+> View additionally holds the Presenter via a narrow business interface (`IXxxPresenter`, lifecycle methods
+> only).
 
 ### Utility samples
 
-| Sample | Description | Dependency |
-|------|------|------|
-| `ObservableValue` | Custom Drawer demo: how simple and compound serializable types render in the Inspector | Odin Inspector |
-| `ObservableCollections` | Observable collections: single-track change notifications, mutations and set operations triggered via ContextMenu | None |
-| `MiniEvent` | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event | None |
-| `AesirTimer` | Timer usage: six shapes — `Countdown` delay and cooldown, `NextFrame`, `Every` finite/infinite repeats, `Stopwatch`, `Interval`, `Frequency`, plus `Pause` / `Resume` / `Restart` / `Cancel`; the on-screen panel only reads `Remaining` / `Progress` / `RemainingExecutions` to draw progress bars (no driving code), plus a pure C# cooldown model that is not a MonoBehaviour; actions are triggered by buttons in a custom Inspector (`ContextMenu` calls the same methods), and the runtime panel and the Inspector share one row data source | None |
-| `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); its settings window is not in the menu — open it from the "初始化时机设置" button on this sample's card in `Tools → Aesir → Getting Started` | None |
+| Sample                      | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Dependency     |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
+| `ObservableValue`           | Custom Drawer demo: how simple and compound serializable types render in the Inspector                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Odin Inspector |
+| `ObservableCollections`     | Observable collections: single-track change notifications, mutations and set operations triggered via ContextMenu                                                                                                                                                                                                                                                                                                                                                                                                                                  | None           |
+| `MiniEvent`                 | Parameterless / single-parameter event usage; multi-parameter payloads are best wrapped in a struct as a single-parameter event                                                                                                                                                                                                                                                                                                                                                                                                                    | None           |
+| `AesirTimer`                | Timer usage: six shapes — `Countdown` delay and cooldown, `NextFrame`, `Every` finite/infinite repeats, `Stopwatch`, `Interval`, `Frequency`, plus `Pause` / `Resume` / `Restart` / `Cancel`; the on-screen panel only reads `Remaining` / `Progress` / `RemainingExecutions` to draw progress bars (no driving code), plus a pure C# cooldown model that is not a MonoBehaviour; actions are triggered by buttons in a custom Inspector (`ContextMenu` calls the same methods), and the runtime panel and the Inspector share one row data source | None           |
+| `RuntimeInitializeLoadType` | Firing-order demo of the five initialization phases (SubsystemRegistration / AfterAssembliesLoaded / BeforeSplashScreen / BeforeSceneLoad / AfterSceneLoad); its settings window is not in the menu — open it from the "初始化时机设置" button on this sample's card in `Tools → Aesir → Getting Started`                                                                                                                                                                                                                                          | None           |
 
-> **PlaneWar is not part of the package**: the complete vertical-shooter game case has moved out to the host project's `Assets/PlaneWar/` (visible in the source repository only — not shipped with the package, not in the sample list or the Getting Started window). See `Assets/PlaneWar/README.md` in the repository root.
+> **PlaneWar is not part of the package**: the complete vertical-shooter game case has moved out to the host
+> project's `Assets/PlaneWar/` (visible in the source repository only — not shipped with the package, not in the
+> sample list or the Getting Started window). See `Assets/PlaneWar/README.md` in the repository root.
 
 ## Timers (AesirTimer / AbstractTimer)
 
-Timers are a built-in **functional module** (alongside Observable / Event / Locator), letting pure-C# Model / Service / Command code delay, cooldown and fire on a cadence without MonoBehaviour or coroutines. The single entry point is the static factory `AesirTimer`; returned instances derive from the abstract base `AbstractTimer`. Hold a reference to query progress, cancel or restart — or drop it (instances auto-dequeue on expiry, no leak).
+Timers are a built-in **functional module** (alongside Observable / Event / Locator), letting pure-C# Model /
+Service / Command code delay, cooldown and fire on a cadence without MonoBehaviour or coroutines. The single
+entry point is the static factory `AesirTimer`; returned instances derive from the abstract base
+`AbstractTimer`. Hold a reference to query progress, cancel or restart — or drop it (instances auto-dequeue on
+expiry, no leak).
 
 **Six shapes** (`AesirTimer` factory → concrete class):
 
-| Factory | Concrete class | Purpose |
-|---|---|---|
-| `Countdown(seconds, cb, unscaled)` | `CountdownTimer` | One-shot countdown (delay / cooldown) |
-| `NextFrame(cb)` | `NextFrameTimer` | Fire once on the next settle pass |
-| `Every(interval, cb, repeatCount, unscaled)` | `RepeatingTimer` | Repeat at a fixed interval, finite or infinite |
-| `Interval(total, interval, cb, unscaled)` | `IntervalTimer` | Fire every fixed interval within a total span (e.g. every 1s for 10s) |
-| `Frequency(ticksPerSecond, cb, unscaled)` | `FrequencyTimer` | Fire N times per second |
-| `Stopwatch(unscaled)` | `StopwatchTimer` | Count up from zero to measure elapsed time, read `Elapsed` |
+| Factory                                      | Concrete class   | Purpose                                                               |
+|----------------------------------------------|------------------|-----------------------------------------------------------------------|
+| `Countdown(seconds, cb, unscaled)`           | `CountdownTimer` | One-shot countdown (delay / cooldown)                                 |
+| `NextFrame(cb)`                              | `NextFrameTimer` | Fire once on the next settle pass                                     |
+| `Every(interval, cb, repeatCount, unscaled)` | `RepeatingTimer` | Repeat at a fixed interval, finite or infinite                        |
+| `Interval(total, interval, cb, unscaled)`    | `IntervalTimer`  | Fire every fixed interval within a total span (e.g. every 1s for 10s) |
+| `Frequency(ticksPerSecond, cb, unscaled)`    | `FrequencyTimer` | Fire N times per second                                               |
+| `Stopwatch(unscaled)`                        | `StopwatchTimer` | Count up from zero to measure elapsed time, read `Elapsed`            |
 
-**Architecture**: `AbstractTimer` fixes the scheduling engine with the template-method pattern (registry / PlayerLoop injection / two-phase settling / statistics) and delegates "how to advance, when due" to six single-purpose concrete classes (OCP / SRP). Shared behaviour lives on `AbstractTimer`: `Duration` / `Remaining` / `Progress` / `RemainingExecutions` queries and `Pause` / `Resume` / `Restart` / `Cancel` / `Dispose` control; the `unscaled` time source ignores `Time.timeScale`. Settling reuses `AesirPlayerLoop` (`BeforeUpdate` + `order: int.MinValue`), same-pass expiries fire strictly in creation order, and hitches never trigger catch-up. The `Tools → Aesir → Architecture → Timer Debugger` window shows live snapshots.
+**Architecture**: `AbstractTimer` fixes the scheduling engine with the template-method pattern (registry /
+PlayerLoop injection / two-phase settling / statistics) and delegates "how to advance, when due" to six
+single-purpose concrete classes (OCP / SRP). Shared behaviour lives on `AbstractTimer`: `Duration` /
+`Remaining` / `Progress` / `RemainingExecutions` queries and `Pause` / `Resume` / `Restart` / `Cancel` /
+`Dispose` control; the `unscaled` time source ignores `Time.timeScale`. Settling reuses `AesirPlayerLoop`
+(`BeforeUpdate` + `order: int.MinValue`), same-pass expiries fire strictly in creation order, and hitches
+never trigger catch-up. The `Tools → Aesir → Architecture → Timer Debugger` window shows live snapshots.
 
-> The **abstract-base + concrete-timer layering** was inspired by the open-source project [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers) (credited as a learning source). The concrete shapes, settling semantics and debug tooling are this framework's own implementation, not a port or copy of that project.
+> The **abstract-base + concrete-timer layering** was inspired by the open-source
+> project [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers) (credited as a
+> learning source). The concrete shapes, settling semantics and debug tooling are this framework's own
+> implementation, not a port or copy of that project.
 
 ## Observable Collections (a lean built-in subset of ObservableCollections)
 
-> The collection type names reference [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) so upstream documentation stays easy to compare against. This module is a **high-frequency subset** of upstream (a lean, indie-game-oriented scope), not a full port; the change notification is this project's own convention (a single-track event, **not aligned with upstream semantics**). Full details live in [`Documentation~/observable-collections.md`](Documentation~/observable-collections.md).
+> The collection type names
+> reference [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT) so upstream
+> documentation stays easy to compare against. This module is a **high-frequency subset** of upstream (a lean,
+> indie-game-oriented scope), not a full port; the change notification is this project's own convention (a
+> single-track event, **not aligned with upstream semantics**). Full details live in [
+> `Documentation~/observable-collections.md`](Documentation~/observable-collections.md).
 
-**Collection family**: `ObservableList<T>`, `ObservableDictionary<TKey, TValue>`, `ObservableHashSet<T>` — all implementing `IObservableCollection<T>` (`AddListener` / `RemoveListener`). For queues and other collection shapes, use the upstream [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) directly.
+**Collection family**: `ObservableList<T>`, `ObservableDictionary<TKey, TValue>`, `ObservableHashSet<T>` — all
+implementing `IObservableCollection<T>` (`AddListener` / `RemoveListener`). For queues and other collection
+shapes, use the upstream [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+directly.
 
 **Single-track change notification**:
 
@@ -303,13 +422,24 @@ handle.Dispose(); // or bind to the Unity lifecycle for auto-removal
 list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 ```
 
-**Notification semantics**: no-ops stay silent (same-value assignment / removing a missing item / clearing an empty collection); range operations notify per item; dictionary value updates surface as Replace (old value in OldItem); `Move` is a single Move event.
+**Notification semantics**: no-ops stay silent (same-value assignment / removing a missing item / clearing an
+empty collection); range operations notify per item; dictionary value updates surface as Replace (old value in
+OldItem); `Move` is a single Move event.
 
-**Optional enhancement**: with Odin Inspector installed, collection fields show an inline summary in the Inspector (element count / listener count / element preview). Without Odin the panel is excluded from compilation and the plain-code API keeps working.
+**Optional enhancement**: with Odin Inspector installed, collection fields show an inline summary in the
+Inspector (element count / listener count / element preview). Without Odin the panel is excluded from
+compilation and the plain-code API keeps working.
 
-**Heavy needs go upstream**: synchronized views and filters, R3 reactive integration, ring buffers / stacks / alternate index list, `INotifyCollectionChanged` (WPF-style) binding, writable views — use [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) directly (the two are not meant to be mixed).
+**Heavy needs go upstream**: synchronized views and filters, R3 reactive integration, ring buffers / stacks /
+alternate index list, `INotifyCollectionChanged` (WPF-style) binding, writable views —
+use [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) directly (the two are
+not meant to be mixed).
 
-**Coexists with upstream**: assembly, UPM package name and namespace are fully isolated on three layers, so both libraries can be installed in the same project (assembly `ObservableCollections` vs `Runestone.AesirArchitecture`); when a single source file `using`s both namespaces and references a same-named type bare (the three collections and related interfaces), CS0104 occurs — resolve with a using alias or full qualification. See "Coexisting with upstream" in `Documentation~/observable-collections.md`.
+**Coexists with upstream**: assembly, UPM package name and namespace are fully isolated on three layers, so
+both libraries can be installed in the same project (assembly `ObservableCollections` vs
+`Runestone.AesirArchitecture`); when a single source file `using`s both namespaces and references a same-named
+type bare (the three collections and related interfaces), CS0104 occurs — resolve with a using alias or full
+qualification. See "Coexisting with upstream" in `Documentation~/observable-collections.md`.
 
 ## Architecture Overview
 
@@ -351,13 +481,13 @@ list.AddListener(OnChanged).RemoveListenerWhenGameObjectOnDisable(this);
 
 ### Capability Matrix
 
-| Module | GetModel | GetService | ExecuteCommand | ExecuteQuery | Initialize | Dispose |
-|------|:--------:|:---------:|:--------------:|:------------:|:----------:|:-------:|
-| **IModel** | ✓ | | | | ✓ | ✓ |
-| **IService** | ✓ | ✓ | | | ✓ | ✓ |
-| **IView** | ✓ | ✓ | | | | |
-| **IController** | ✓ | ✓ | ✓ | ✓ | | |
-| **IPresenter** | ✓ | ✓ | ✓ | ✓ | | ✓ |
+| Module          | GetModel | GetService | ExecuteCommand | ExecuteQuery | Initialize | Dispose |
+|-----------------|:--------:|:----------:|:--------------:|:------------:|:----------:|:-------:|
+| **IModel**      |    ✓    |            |                |              |     ✓     |   ✓    |
+| **IService**    |    ✓    |     ✓     |                |              |     ✓     |   ✓    |
+| **IView**       |    ✓    |     ✓     |                |              |            |         |
+| **IController** |    ✓    |     ✓     |       ✓       |      ✓      |            |         |
+| **IPresenter**  |    ✓    |     ✓     |       ✓       |      ✓      |            |   ✓    |
 
 ## Project Structure
 
@@ -448,48 +578,79 @@ cn.runestone.aesir.architecture/
 └── Third Party Notices.md          # Third-party license notices
 ```
 
-> **Note**: the two `Modules/` folders in the tree mean different things — `Runtime/Core/Engine/Modules/` holds the **architecture role modules** (role interfaces such as IModel / IView / IController plus their abstract bases — "who you are" in the architecture), while `Runtime/Modules/` holds the **built-in feature modules** (standalone tools such as MiniEvent and ObservableValue — "what you use"; not bound to the MVC core, usable on their own).
+> **Note**: the two `Modules/` folders in the tree mean different things — `Runtime/Core/Engine/Modules/`
+> holds the **architecture role modules** (role interfaces such as IModel / IView / IController plus their
+> abstract bases — "who you are" in the architecture), while `Runtime/Modules/` holds the **built-in feature
+> modules** (standalone tools such as MiniEvent and ObservableValue — "what you use"; not bound to the MVC core,
+> usable on their own).
 
 ## Design Boundaries
 
-> The framework stays minimal: low-probability issues, or issues caused by discouraged coding patterns, are prevented up front by the conventions in this section — not by defensive runtime code.
+> The framework stays minimal: low-probability issues, or issues caused by discouraged coding patterns, are
+> prevented up front by the conventions in this section — not by defensive runtime code.
 
 ### Not Provided
 
-- **Event bus / EventChannel** — Cross-module communication uses GetModel + ObservableValue subscriptions, or direct MiniEvent references
-- **Multiple Context instances** — `AbstractContext<T>` is a CRTP generic singleton, one instance per concrete context type; model multi-save / multi-room scenarios at the business layer
-- **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and uncached; wrap at the business layer for allocation-sensitive hot paths
-- **Delayed execution for pure C# layers** — the framework deliberately ships **no** frame-level scheduler. When a pure C# class needs per-frame callbacks use `MonoLifecycleProxy` (`ICustomUpdate` / `ICustomFixedUpdate` / `ICustomLateUpdate` — no scene object, the DDOL host is created for you); when it needs a coroutine, put the driver on a GameObject. Both are Unity-native mental models, so a third scheduling API is unnecessary
-- **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir Modules
-- **Full observable-collection suite** — a **high-frequency subset** of [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see `Third Party Notices.md`) ships in-package: three collections (List / Dictionary / HashSet) with a single-track change notification. Queues and other collection shapes, synchronized views with filters, R3 reactive extensions, ring buffers / stacks / alternate index list, the `INotifyCollectionChanged` binding layer and writable views are **not** provided — use the upstream library for those (the two are not meant to be mixed; see `Documentation~/observable-collections.md`)
-- **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before touching the framework from async code (e.g. `Task.Run`)
+- **Event bus / EventChannel** — Cross-module communication uses GetModel + ObservableValue subscriptions, or
+  direct MiniEvent references
+- **Multiple Context instances** — `AbstractContext<T>` is a CRTP generic singleton, one instance per concrete
+  context type; model multi-save / multi-room scenarios at the business layer
+- **Command/Query pooling, async, queues, Undo/Redo** — `ExecuteCommand` / `ExecuteQuery` stay synchronous and
+  uncached; wrap at the business layer for allocation-sensitive hot paths
+- **Delayed execution for pure C# layers** — the framework deliberately ships **no** frame-level scheduler.
+  When a pure C# class needs per-frame callbacks use `MonoLifecycleProxy` (`ICustomUpdate` /
+  `ICustomFixedUpdate` / `ICustomLateUpdate` — no scene object, the DDOL host is created for you); when it
+  needs a coroutine, put the driver on a GameObject. Both are Unity-native mental models, so a third
+  scheduling API is unnecessary
+- **View lifecycle scaffolding** — The View layer stays thin; panel lifecycle is handled by UIModule in Aesir
+  Modules
+- **Full observable-collection suite** — a **high-frequency subset**
+  of [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections) (MIT, see
+  `Third Party Notices.md`) ships in-package: three collections (List / Dictionary / HashSet) with a
+  single-track change notification. Queues and other collection shapes, synchronized views with filters, R3
+  reactive extensions, ring buffers / stacks / alternate index list, the `INotifyCollectionChanged` binding
+  layer and writable views are **not** provided — use the upstream library for those (the two are not meant to
+  be mixed; see `Documentation~/observable-collections.md`)
+- **Thread safety** — All framework types are main-thread only; dispatch back to the main thread before
+  touching the framework from async code (e.g. `Task.Run`)
 
 ### Coding Conventions (violations fail fast; the framework does not compensate)
 
-| Convention | Consequence of violation |
-|------|---------|
-| Listener callbacks must not throw | Exceptions propagate and interrupt subsequent callbacks of the same event (native C# event semantics); Unity logs the error |
-| Never access `Instance` inside `Configure()` or module initialization | A second context instance is created recursively (the singleton is not published yet) |
-| `Register` and `Get` must use the same type argument | Exact-key matching: querying an interface-keyed registration by implementation type returns null / throws not-registered (with near-miss hint) |
-| Runtime Model/Service replacement is for testing/debugging only | The old instance is disposed, its subscriptions are not migrated; subscribed views must re-subscribe |
-| Call `AesirPlayerLoop.EnsureInjected()` once after a third-party SDK rewrites the PlayerLoop | BeforeUpdate / AfterUpdate hooks silently stop firing (`Register` self-heals on callback registration) |
-| **Write-discipline tiers** | Quick tier: direct writes to the writable ObservableValue are legal; Standard tier: Model narrowed to read-only interface + write methods (Controller calls write methods directly); Strict tier: writes must go through Command + interface registration; Services may write directly. Recommended: start from the Standard tier |
+| Convention                                                                                   | Consequence of violation                                                                                                                                                                                                                                                                                                          |
+|----------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Listener callbacks must not throw                                                            | Exceptions propagate and interrupt subsequent callbacks of the same event (native C# event semantics); Unity logs the error                                                                                                                                                                                                       |
+| Never access `Instance` inside `Configure()` or module initialization                        | A second context instance is created recursively (the singleton is not published yet)                                                                                                                                                                                                                                             |
+| `Register` and `Get` must use the same type argument                                         | Exact-key matching: querying an interface-keyed registration by implementation type returns null / throws not-registered (with near-miss hint)                                                                                                                                                                                    |
+| Runtime Model/Service replacement is for testing/debugging only                              | The old instance is disposed, its subscriptions are not migrated; subscribed views must re-subscribe                                                                                                                                                                                                                              |
+| Call `AesirPlayerLoop.EnsureInjected()` once after a third-party SDK rewrites the PlayerLoop | BeforeUpdate / AfterUpdate hooks silently stop firing (`Register` self-heals on callback registration)                                                                                                                                                                                                                            |
+| **Write-discipline tiers**                                                                   | Quick tier: direct writes to the writable ObservableValue are legal; Standard tier: Model narrowed to read-only interface + write methods (Controller calls write methods directly); Strict tier: writes must go through Command + interface registration; Services may write directly. Recommended: start from the Standard tier |
 
 ## Design Principles
 
-1. **Unity-native first** — Use Unity engine capabilities (PlayerLoop, ScriptableObject, Editor API) rather than building a parallel system
-2. **Domain Reload compatible (iron rule)** — Static variables must be explicitly reset; no residue across Play Mode entry/exit
+1. **Unity-native first** — Use Unity engine capabilities (PlayerLoop, ScriptableObject, Editor API) rather
+   than building a parallel system
+2. **Domain Reload compatible (iron rule)** — Static variables must be explicitly reset; no residue across
+   Play Mode entry/exit
 3. **Low MonoBehaviour dependency** — Core framework is pure C#; MonoBehaviour is only the adapter layer
-4. **Progressive** — Use lightly in small projects, scale up gradually for large projects; no forced full adoption
+4. **Progressive** — Use lightly in small projects, scale up gradually for large projects; no forced full
+   adoption
 5. **SO and pure code dual channels (planned)** — Each SO capability has a pure C# alternative
 6. **Tuanjie Engine first** — Tuanjie is a first-class citizen
-7. **Inspector austerity (AI-first)** — Odin enhances debuggability; core configuration lives in code and asset files (AI-readable, versionable); the Inspector is a debugging aid, not a configuration surface — non-essential content stays off the panel
-8. **Odin three iron rules** — The core architecture loop never depends on Odin (Context registration → initialization → Command/Query → ObservableValue notification runs fully without Odin); experience-optimizing tools (e.g. the Context Debugger) may use Odin; presentation and logic stay separate (ObservableValue is the canonical example: logic runs without Odin, Inspector presentation is enhanced by an Odin AttributeProcessor)
+7. **Inspector austerity (AI-first)** — Odin enhances debuggability; core configuration lives in code and
+   asset files (AI-readable, versionable); the Inspector is a debugging aid, not a configuration surface —
+   non-essential content stays off the panel
+8. **Odin three iron rules** — The core architecture loop never depends on Odin (Context registration →
+   initialization → Command/Query → ObservableValue notification runs fully without Odin);
+   experience-optimizing tools (e.g. the Context Debugger) may use Odin; presentation and logic stay separate
+   (ObservableValue is the canonical example: logic runs without Odin, Inspector presentation is enhanced by
+   an Odin AttributeProcessor)
 
 ## Roadmap
 
 - [x] Core MVC / MVP layering (MVC-first)
-- [x] MVVM evaluated — intentionally not adopted for now (2026-11-16; see [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md) for rationale and re-evaluation triggers)
+- [x] MVVM evaluated — intentionally not adopted for now (2026-11-16;
+  see [Mode Selection Decisions](https://cnb.cool/runestone-game/AesirFramework/-/blob/main/.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md)
+  for rationale and re-evaluation triggers)
 - [x] Native PlayerLoop lifecycle injection
 - [x] Command pattern (sync)
 - [x] Query pattern (CQRS read)
@@ -499,7 +660,8 @@ cn.runestone.aesir.architecture/
 - [x] Runtime error logging (replacing pre-flight validation)
 - [x] Engine layer decoupled from Component layer (pure C#)
 - [x] Domain Reload safety
-- [x] Observable collection family (lean built-in subset of ObservableCollections: three collections / inline Odin panel)
+- [x] Observable collection family (lean built-in subset of ObservableCollections: three collections / inline
+  Odin panel)
 - [x] In-package updater (Aesir Updater)
 - [ ] ScriptableObject visualization config layer
 - [ ] Editor toolchain (SO Inspector / MVP scaffold / module visualization)
