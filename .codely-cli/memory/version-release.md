@@ -13,7 +13,7 @@
 - **CNB AI Issue 闭环**：CNB 提 Issue → AI 在临时分支修复 → 点「反推此分支到 GitHub」→ GitHub 开 PR 正常 Merge → sync 流水线 force 写回 CNB。旧纪律「GitHub 零提交 / 不点 Merge / main 永不 force」全部作废；新纪律是 **CNB 侧零提交**。
 - **PR #7（2026-11-23 合并，CNB AI 产物）**：rolling tag 改「远端已存在即跳过」——CNB 侧删 tag 会被后台自动 tag 规则立即重建导致后续 push 被拒。该语义已迁入 sync-to-cnb.yml，与 2026-11-20「禁止连续推同名 tag」铁律一致。
 - 反推按钮的 `GIT_ACCESS_TOKEN` 是 OAuth 令牌，无 workflow scope 时改 workflow 文件的分支会被 GitHub 拒推——这类修复走本地 SSH 直推。
-- **首跑已验证（2026-11-23，run 45140383615，提交 50cb4456）**：全步骤绿；update-info 无变化跳过回写、v0.34.1 tag 已存在跳过创建、Dispatch 按预期 skipped；main / 两包分支 / tag 四项引用 GitHub 与 CNB 完全一致；CNB Release v0.34.1/v0.34.0/v0.33.0 各 3 资产、GitHub Release v0.34.1 三资产齐全。**尚未验证的路径**：新版本号 bump 时的新 tag 创建 + Release 派发 + CNB tag_push 触发（下次发版覆盖）；反推按钮（下次 CNB AI Issue 时覆盖）。
+- **首跑已验证（2026-11-23，run 45140383615，提交 50cb4456）**：全步骤绿；update-info 无变化跳过回写、v0.34.1 tag 已存在跳过创建、Dispatch 按预期 skipped；main / 两包分支 / tag 四项引用 GitHub 与 CNB 完全一致；CNB Release v0.34.1/v0.34.0/v0.33.0 各 3 资产、GitHub Release v0.34.1 三资产齐全。**全链路已验证**：0.35.0 发版覆盖新 tag 创建 + Release 派发 + CNB tag_push 触发（见下「0.35.0 发布」节）；仅剩反推按钮待下次 CNB AI Issue 时实测。
 
 ## 铁律：禁止连续推送相同（同名）版本 tag（2026-11-20 用户明确）
 
@@ -25,9 +25,19 @@
 - **How to apply:** 发版后若要补内容，走"补丁版本"完整流程，不要 `git push -f <cnb-url> refs/heads/main:refs/tags/v<同名版本>`；那条 force 滚 tag 的老办法仅适用于"tag 尚未推送 / 同一发版窗口内 CHANGELOG 未定稿"的场景，tag 一旦推出即作废该路径。
 - 历史背景：2026-11-19 曾用"把 tag 滚到含完整 CHANGELOG 的 main HEAD"修 CNB Release 正文（见下「发版后补 CHANGELOG」条），那是 tag 首次发布前的补救；本规则确立后，同类需求一律 bump patch 版本。
 
-## 门禁基线（当前 0.34.1，2026-11-20）
+## 0.35.0 发布（2026-11-23，GitHub 主仓时代首次发版，全链路验证通过）
 
-- [2026-11-16 19:35:50] **发布基线**：当前已发布 **0.34.1**（2026-11-20 补丁版）；上一稳定版 0.34.0（2026-11-19）、0.33.0（2026-11-16）。Unity **2022.3.62f3c1（Unity 中国版，不是团结引擎）**、URP 14.0.12、C# 9；RAA 16 asmdef / RAM 17 asmdef + 7 asmref（0.34.0 后）。门禁：EditMode batchmode **872 total / 869 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景预期 Ignore）、PlayMode **36/36**（RAA 20 / RAM 8 / UniTask 8）、`sync-samples --check` 零漂移、扩展 `validate.py` 0 错 0 警、两个文档站 `zensical build --strict` 无 issue。**改测试/asmdef 必须重跑；纯文档补丁可豁免 PlayMode**。最密测试文件（触碰时优先收敛）：`BinderCodeGeneratorTests`、`AesirUpdateServiceTests`、`SourceParsingTests`、`AudioModuleTests`、`EventModuleTests`、`XmlSummaryToolTests`。
+- 事件模块大版本（RAM）：取消传播 + `AesirEventDiagnostics` 公开诊断 API + Event Monitor/Log/Tester 三窗口（UI Toolkit + Odin 双版）+ 分发精简（Type 键注册期有序、去 object[]/反射、重入缓冲复用、负缓存）；**三项破坏性**：移除 `[AesirListener]` 特性订阅（只留 Script 订阅）、同实例重入 fail-fast、低频 API 收窄（Clone/字符串键删除、BindingInfo internal）。SDG 开放泛型崩溃修复。RAA 为格式化同步版。新示例 04_Cancellation / 05_Diagnostics。
+- **发版前审查拦下 8 处 WIP 语义损坏**：外部格式化批引入 6 处属性自引用无限递归（AbstractTimer 5 + SceneModule 1）+ 2 处可观察集合 backing 字段误删 `[SerializeField]`（Odin 持久化依赖）。手法：剥离注释的 token 级 HEAD 比对逐文件审查 + Python 反向引用正则扫描（grep -E 不支持反向引用，扫描无效）。
+- **门禁（0.35.0 基线）**：编译 0 error、EditMode **881/878 pass/0 fail/3 skip**、PlayMode **36/36**、镜像零漂移、扩展 validate 0/0、两站 zensical --strict 无 issue。含用例文件 76 / Tests .cs 78 / 属性 730 [Test]+67 [TestCase]+36 [UnityTest]。
+- **新流水线完整链路首验**：push main（6 批提交）→ sync-to-cnb run 45144649833 全绿（split → update-info 回写 6c87309f → **v0.35.0 新 tag 创建** → gh workflow run 派发 auto-release run 45144708880 成功 → force 推 CNB）→ **CNB 收到外部 tag push 正常触发 tag_push 流水线**，CNB Release v0.35.0 三资产 + body 含 [modules]；GitHub Release 三资产；两边 main/包分支/tag 全一致。tag 不可变语义同跑验证（0.34.1 首跑跳过创建）。
+- 三仓同批：主仓 GitHub main→6c87309f（含回写）、Notebook 279763a（补 design-changelog 18-21 + 决策索引 + 基线）、Site 1736f56（changelog/releases/事件页/API 页重生成）。
+- 本机产物排除口径：Exports/、ProjectSettings.asset 改动、TimelineSettings.asset、.codely-cli/settings.json 不提交；manifest bridge 1.0.93 随 chore(deps) 提交。第三方参考资产 Criminal Makers/Game Event Hub 已移废纸篓（用户裁决）。
+- **并发格式化防护实录**：发版中途用户另开的格式化进程两次改动工作区（17:02 批 + 示例字段重排），按「停下→diff 审查→ask_user 裁决→并入」处理，最终树重跑门禁后才推送。
+
+## 门禁基线（当前 0.35.0，2026-11-23）
+
+- [2026-11-23] **发布基线**：当前已发布 **0.35.0**（2026-11-23 事件模块大版本）；上一稳定版 0.34.1（2026-11-20）、0.34.0（2026-11-19）。Unity **2022.3.62f3c1（Unity 中国版，不是团结引擎）**、URP 14.0.12、C# 9；RAA 16 asmdef / RAM 17 asmdef + 7 asmref（0.34.0 后）。门禁：EditMode batchmode **872 total / 869 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景预期 Ignore）、PlayMode **36/36**（RAA 20 / RAM 8 / UniTask 8）、`sync-samples --check` 零漂移、扩展 `validate.py` 0 错 0 警、两个文档站 `zensical build --strict` 无 issue。**改测试/asmdef 必须重跑；纯文档补丁可豁免 PlayMode**。最密测试文件（触碰时优先收敛）：`BinderCodeGeneratorTests`、`AesirUpdateServiceTests`、`SourceParsingTests`、`AudioModuleTests`、`EventModuleTests`、`XmlSummaryToolTests`。
 
 ## 发版流程（skill `aesir-version-sync`）
 
