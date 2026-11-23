@@ -152,7 +152,12 @@ namespace Runestone.AesirModules.ScriptDocGenerator
             out object defaultValue)
         {
             var propertyType = propertyInfo.PropertyType;
-            if (propertyType.IsReferenceTypeExcludeString() || propertyType.IsAbstractOrInterface())
+            // 开放泛型成员：成员类型含泛型参数，或声明类型是开放泛型（如 AbstractContext<T> 的静态成员，
+            // 即使成员类型是具体类型，Mono 的 GetValue 也按 DeclaringType.ContainsGenericParameters 拒绝）——
+            // 反射无法物化其值，按无默认值处理
+            if (propertyType.ContainsGenericParameters ||
+                propertyInfo.DeclaringType.ContainsGenericParameters ||
+                propertyType.IsReferenceTypeExcludeString() || propertyType.IsAbstractOrInterface())
             {
                 defaultValue = null;
                 return false;
@@ -183,7 +188,11 @@ namespace Runestone.AesirModules.ScriptDocGenerator
         public static bool TryGetFieldCustomDefaultValue(this FieldInfo fieldInfo, out object defaultValue)
         {
             var fieldType = fieldInfo.FieldType;
-            if (fieldType.IsReferenceTypeExcludeString() || fieldType.IsAbstractOrInterface())
+            // 开放泛型成员：字段类型含泛型参数（如 AbstractContext<T>._instance : T），
+            // 或声明类型是开放泛型（即使字段类型是具体类型，Mono 的 GetValue 也按
+            // DeclaringType.ContainsGenericParameters 拒绝）——反射无法物化其值，按无默认值处理
+            if (fieldType.ContainsGenericParameters || fieldInfo.DeclaringType.ContainsGenericParameters ||
+                fieldType.IsReferenceTypeExcludeString() || fieldType.IsAbstractOrInterface())
             {
                 defaultValue = null;
                 return false;
