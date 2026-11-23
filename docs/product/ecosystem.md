@@ -10,7 +10,7 @@ description: "AesirFramework 周边的仓库、AI 技能文档集、工具链与
 | --- | --- | --- |
 | [AesirFramework](https://github.com/yuumixcode/AesirFramework) | 框架源码(两个包 + 示例 + 构建脚本) | — |
 | [AesirInspector](https://github.com/yuumixcode/AesirInspector) | 面向 Odin Inspector 开发者的学习工具包(已从主仓迁出) | 独立仓库 |
-| [AesirFramework-Site](https://github.com/yuumixcode/AesirFramework-Site) | 本站(产品介绍 + 使用文档 + Scripting API) | 公开 |
+| [AesirFramework docs/](https://github.com/yuumixcode/AesirFramework/tree/main/docs) | 本站(产品介绍 + 使用文档 + Scripting API,与主仓同仓) | 随主仓 |
 | `Aesir-Notebook` | 开发过程文档:设计变更、模块锐评、全仓审查、课程规划 | 内部,不公开 |
 
 ## AI 技能:整包扩展 `AesirFrameworkGame`

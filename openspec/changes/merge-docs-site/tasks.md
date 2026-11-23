@@ -41,7 +41,7 @@
 - [x] 4.2 旧仓 `deploy.yml` 改纯静态上传（删 pip/zensical 步骤，`path: redirect`）；提交推送，观察部署成功
 - [x] 4.3 跳转验证：旧首页、旧 architecture 深链、旧 scripting-api `{T}` 页、旧 changelog、旧 404 → 全部落到新站对应页；`curl -sI` 抽查 + 浏览器实点
 - [x] 4.4 旧仓 README 顶部弃用说明（新地址 + 2026-11-23 迁移日期 + 本仓仅保留跳转与历史）；repo description 同步
-- [x] 4.5 （可选，D3 评审选 archive 才做）`gh api -X PATCH repos/yuumixcode/AesirFramework-Site -f archived=true` → curl 旧深链验证 Pages 仍可达；不可达立即 unarchive 并记录结论
+- [x] 4.5 （可选）不 archive：D3 评审默认保留旧仓 active（零成本跳转壳），无 archive 动作
 
 ## 阶段 5：周边同步与清理
 

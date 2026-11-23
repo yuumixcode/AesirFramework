@@ -19,7 +19,7 @@
 - 阅读主仓库 [CONTRIBUTING.md](https://github.com/yuumixcode/AesirFramework/blob/main/CONTRIBUTING.md) 了解提交流程
 - 遵循 [CODE_OF_CONDUCT.md](https://github.com/yuumixcode/AesirFramework/blob/main/CODE_OF_CONDUCT.md)
 - 推荐从 `main` 拉分支;提交信息遵循 Conventional Commits
-- 文档问题(含本站点)可直接在 [AesirFramework-Site](https://github.com/yuumixcode/AesirFramework-Site) 提 PR —— 每页右侧有"编辑此页"入口
+- 文档问题(含本站点)可直接对主仓 [docs/ 目录](https://github.com/yuumixcode/AesirFramework/tree/main/docs) 提 PR(站点与主仓同仓;页面源文件路径与 URL 路径一致)
 
 ## 相关资源
 
