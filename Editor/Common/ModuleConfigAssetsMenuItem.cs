@@ -12,7 +12,10 @@ namespace Runestone.AesirModules.Editor
     /// </remarks>
     internal static class ModuleConfigAssetsMenuItem
     {
-        /// <summary>菜单路径（Modules 组内最前，现有 Install Dependencies 998 / Script Doc Generator 999 / Scene Module Settings 1000）。</summary>
+        /// <summary>
+        /// 菜单路径（Modules 组内最前，现有 Install Dependencies 998 / Script Doc Generator 999 / Scene Module Settings
+        /// 1000）。
+        /// </summary>
         const string MenuPath = "Tools/Aesir/Modules/Create Module Config Assets";
 
         [MenuItem(MenuPath, false, 997)]

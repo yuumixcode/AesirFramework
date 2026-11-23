@@ -16,7 +16,8 @@ namespace Runestone.AesirModules.Editor.OdinInspector
         /// 为跟随 / 朝向 / 配置 / 排序字段注入分组与条件显示。
         /// </summary>
         public override void ProcessChildMemberAttributes(InspectorProperty parentProperty,
-            MemberInfo member, List<Attribute> attributes)
+            MemberInfo member,
+            List<Attribute> attributes)
         {
             switch (member.Name)
             {

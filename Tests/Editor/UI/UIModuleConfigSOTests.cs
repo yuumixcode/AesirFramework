@@ -164,7 +164,8 @@ namespace Runestone.AesirModules.Tests.Editor.UI
         static UIModuleConfigSO LoadResourceConfig()
         {
             var config = Resources.Load<UIModuleConfigSO>(UIModuleConfigSO.ResourcePath);
-            Assert.IsNotNull(config, $"Resources 兜底资产缺失（{UIModuleConfigSO.ResourcePath}），请检查本仓 Assets/Resources 基线或显式创建资产");
+            Assert.IsNotNull(config,
+                $"Resources 兜底资产缺失（{UIModuleConfigSO.ResourcePath}），请检查本仓 Assets/Resources 基线或显式创建资产");
             return config;
         }
 

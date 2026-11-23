@@ -39,6 +39,12 @@ namespace Runestone.AesirModules
         bool dontDestroyOnLoad = true;
 
         /// <summary>
+        /// RefreshWindowMasks 待清理键复用缓冲（Clear 保留容量）。窗口开关冷路径免每次分配；
+        /// 同步消费（RemoveDestroyedWindowRecords 即遍历即移除），SetMaskVisible 为纯显隐切换无嵌套回调，故无重入。
+        /// </summary>
+        readonly List<Type> _destroyedWindowKeys = new List<Type>();
+
+        /// <summary>
         /// 面板实例注册表，键 = 面板实例的实际类型。
         /// 激活/停用状态由面板自身的 <see cref="IUIPanel.IsOpen" /> 承担，注册表不重复记录，
         /// 由此排除多表不一致的可能。Show/Hide/Get 须以同一实际类型调用；
@@ -54,12 +60,6 @@ namespace Runestone.AesirModules
 
         /// <summary>窗口实例注册表，键 = 窗口实例的实际类型（与面板注册表相互独立，键语义约定一致）。</summary>
         readonly Dictionary<Type, IUIWindow> _windowDict = new Dictionary<Type, IUIWindow>();
-
-        /// <summary>
-        /// RefreshWindowMasks 待清理键复用缓冲（Clear 保留容量）。窗口开关冷路径免每次分配；
-        /// 同步消费（RemoveDestroyedWindowRecords 即遍历即移除），SetMaskVisible 为纯显隐切换无嵌套回调，故无重入。
-        /// </summary>
-        readonly List<Type> _destroyedWindowKeys = new List<Type>();
 
         IUIAssetLoader _loader;
 
@@ -1038,7 +1038,7 @@ namespace Runestone.AesirModules
         }
 
         /// <summary>
-        /// 以停用状态实例化预制体：先 <see cref="Object.Instantiate(GameObject)" /> 克隆体，再立即 <c>SetActive(false)</c>。
+        /// 以停用状态实例化预制体：先 <see cref="object.Instantiate(GameObject)" /> 克隆体，再立即 <c>SetActive(false)</c>。
         /// <para>
         /// 框架约定面板 / 窗口不写 <c>Awake</c> / <c>OnEnable</c>——生命周期由 UIModule 显式驱动的
         /// <c>OnInit</c> / <c>OnShow</c> 承担，这两个原生回调在框架基类里为空。因此克隆体创建瞬间即便因来源 active
@@ -1047,13 +1047,13 @@ namespace Runestone.AesirModules
         /// </para>
         /// <para>
         /// 来源资产全程只读：SetActive 作用在克隆体上，不碰 <c>Resources.Load</c> 返回的共享资产对象。
-        /// 实例名复位为来源预制体名（去掉 <see cref="Object.Instantiate(GameObject)" /> 追加的 "(Clone)"），
+        /// 实例名复位为来源预制体名（去掉 <see cref="object.Instantiate(GameObject)" /> 追加的 "(Clone)"），
         /// 便于层级展示与诊断文本对照；名称不参与任何查找，注册表始终以面板/窗口实际类型为键。
         /// </para>
         /// </summary>
         GameObject InstantiateInactive(GameObject prefab)
         {
-            var instance = UnityEngine.Object.Instantiate(prefab);
+            var instance = Instantiate(prefab);
             instance.SetActive(false);
             instance.name = prefab.name;
             return instance;

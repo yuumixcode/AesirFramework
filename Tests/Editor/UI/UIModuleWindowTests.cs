@@ -354,8 +354,7 @@ namespace Runestone.AesirModules.Tests.Editor.UI
             var window = module.OpenWindow<TestWindow>();
 
             // Instantiate 追加的 "(Clone)" 被复位为来源预制体名
-            Assert.AreEqual("TestWindowPrefab", ((MonoBehaviour)window).gameObject.name,
-                "窗口实例名应为来源预制体名，不带 (Clone) 后缀");
+            Assert.AreEqual("TestWindowPrefab", window.gameObject.name, "窗口实例名应为来源预制体名，不带 (Clone) 后缀");
         }
 
         [Test]

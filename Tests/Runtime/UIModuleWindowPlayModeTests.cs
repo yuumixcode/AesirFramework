@@ -16,18 +16,16 @@ namespace Runestone.AesirModules.Tests
     /// <remarks>
     /// 必须在运行期验证：EditMode 下 <c>Destroy</c> 被引擎拒绝（no-op），<c>OnDestroy</c> 反清理链路不可触发——
     /// 既有 EditMode 用例（<c>UIModuleWindowTests.RemoveWindowRecord_ExternalDestroy_CleansRegistry</c>）只能手动调用
-    /// internal <c>RemoveWindowRecord</c> 入口替代真实回调。本套件走真实 <c>Destroy → AesirBaseWindow.OnDestroy →
-    /// UIModule.RemoveWindowRecord → RefreshWindowMasks</c> 端到端链路，并锁定 <c>RefreshWindowMasks</c>
+    /// internal <c>RemoveWindowRecord</c> 入口替代真实回调。本套件走真实
+    /// <c>
+    /// Destroy → AesirBaseWindow.OnDestroy →
+    /// UIModule.RemoveWindowRecord → RefreshWindowMasks
+    /// </c>
+    /// 端到端链路，并锁定 <c>RefreshWindowMasks</c>
     /// 复用缓冲（_destroyedWindowKeys）在销毁后重算蒙版的回落行为。
     /// </remarks>
     public class UIModuleWindowPlayModeTests
     {
-        /// <summary>测试窗口 A（基类 OnDestroy 已驱动反清理，无需覆写）。</summary>
-        class PlayModeWindowA : AesirBaseWindow { }
-
-        /// <summary>测试窗口 B（与 A 分桶注册，蒙版叠加/回落的第二窗口）。</summary>
-        class PlayModeWindowB : AesirBaseWindow { }
-
         /// <summary>
         /// 摘除本套件建立的 UIRoot / UIModule 单例宿主。二者默认 DDOL 跨用例存活，残留单例会让
         /// 依赖「无预存 UIRoot」前提的后续用例（如 <c>UIRootPlayModeTests</c>）新建实例被判重销毁而失败。
@@ -79,8 +77,7 @@ namespace Runestone.AesirModules.Tests
 
             Assert.IsTrue(UIModule.GetWindow<PlayModeWindowB>() == null,
                 "外部销毁应经真实 OnDestroy 反清理注册表（Unity null 语义）");
-            Assert.IsTrue(IsMaskActive(a.gameObject),
-                "B 销毁后蒙版应回落到 A（RefreshWindowMasks 复用缓冲重算）");
+            Assert.IsTrue(IsMaskActive(a.gameObject), "B 销毁后蒙版应回落到 A（RefreshWindowMasks 复用缓冲重算）");
 
             Object.Destroy(a.gameObject);
             Object.Destroy(prefabA);
@@ -171,6 +168,12 @@ namespace Runestone.AesirModules.Tests
             so.FindProperty("destroyOnHide").boolValue = value;
             so.ApplyModifiedProperties();
         }
+
+        /// <summary>测试窗口 A（基类 OnDestroy 已驱动反清理，无需覆写）。</summary>
+        class PlayModeWindowA : AesirBaseWindow { }
+
+        /// <summary>测试窗口 B（与 A 分桶注册，蒙版叠加/回落的第二窗口）。</summary>
+        class PlayModeWindowB : AesirBaseWindow { }
     }
 }
 #endif
