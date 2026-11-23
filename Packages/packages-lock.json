@@ -13,7 +13,7 @@
       }
     },
     "cn.tuanjie.codely.bridge": {
-      "version": "1.0.92",
+      "version": "1.0.93",
       "depth": 0,
       "source": "registry",
       "dependencies": {
