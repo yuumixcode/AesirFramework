@@ -463,6 +463,11 @@ namespace Runestone.AesirArchitecture.Editor
                 return "音频模块";
             }
 
+            if (name.StartsWith("Save Module", StringComparison.OrdinalIgnoreCase))
+            {
+                return "保存模块";
+            }
+
             return "功能演示";
         }
 
@@ -481,6 +486,8 @@ namespace Runestone.AesirArchitecture.Editor
                     return 3;
                 case "音频模块":
                     return 4;
+                case "保存模块":
+                    return 5;
                 default:
                     return 100;
             }
