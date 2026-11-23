@@ -13,12 +13,14 @@
 - AesirInspector 已迁出独立公开仓库，不在本仓库版本同步范围内
 - 依赖链：Architecture 无 Aesir 依赖；Modules 运行时依赖 Architecture——但 package.json **已不声明该依赖**（0.28.0 实测裁决：UPM 不支持包内 Git URL 依赖），缺依赖时经 `Install Dependencies` 菜单补装，**无 package.json 依赖版本需同步**
 
-## 分支策略（2026-11-16 迁 CNB 后）
+## 分支策略（2026-11-23 反转：GitHub 主仓后）
 
-- 主仓在 CNB（`cnb.cool/runestone-game/AesirFramework`），GitHub 是单向镜像；**唯一权威流水线是 `.cnb.yml`**
-- Git URL 安装锚定**常驻滚动分支** `AesirArchitecture-latest` / `AesirModules-latest`（main push 时 subtree split 滚动更新，分支名永久固定）——README 中的安装 URL **不含版本号，发版无需替换**
-- 钉旧版本用 Release tag（`?path=Assets/Runestone/<包目录>#v<版本>`，历史版本 tag 永久保留）
-- 旧策略的版本分支（`AesirXxx-v<版本>`）已废弃，由 `.cnb.yml` 的 split 阶段顺带清理；`auto-publish-branches.yml` 已删除
+- 主仓在 GitHub（`github.com/yuumixcode/AesirFramework`），CNB（`cnb.cool/runestone-game/AesirFramework`）是国内下载仓；**唯一跨仓同步入口是 `.github/workflows/sync-to-cnb.yml`**（main push 触发，main / 两包分支 / tags 全部 force 写入 CNB）
+- 本地 `origin` = GitHub（SSH），`cnb` remote 仅 fetch / 应急用；CNB 侧零提交，PR 在 GitHub 正常 Merge
+- Git URL 安装锚定**常驻滚动分支** `AesirArchitecture-latest` / `AesirModules-latest`（main push 时 subtree split 滚动更新，分支名永久固定）——README 中的安装 URL **不含版本号，发版无需替换**；国内线路仍 CNB 优先
+- 钉旧版本用 Release tag（`?path=Assets/Runestone/<包目录>#v<版本>`）；**版本 tag 一旦发布即不可变**——远端已存在即复用，版本号 bump 后的首次推送才创建新 tag，禁止重推同名 tag
+- 旧策略的版本分支（`AesirXxx-v<版本>`）已废弃，由 sync 流水线顺带清理两边
+- GitHub Actions 推 CNB 依赖仓库 Secrets `CNB_USERNAME` / `CNB_TOKEN`（CNB 个人访问令牌，repo 读写权限），缺失时同步流水线失败
 
 ## 工作流程
 
@@ -67,11 +69,11 @@
 
 - commit message：`chore: 版本号同步至 x.y.z` + 中文要点 body
 - 推送被拒（fetch first）通常是上一次发版的 CI 回写提交（`chore: 同步 update-info.json 到 vX.Y.Z [skip ci]`）——`git fetch && git rebase origin/main` 后重推
-- 推 `main` 自动触发 `.cnb.yml`：split 两包分支 → 回写 `update-info.json`（带回写提交）→ 滚动 tag `v<版本>` → git-sync 推 GitHub main / 两分支 / tag。**tag 由流水线生成，不要本地手动打 tag**
-- tag 到位后两边各自发 Release：CNB 侧 `v*` tag_push（build + `git:release` + attachments），**GitHub 侧由同一 CNB 流水线的 `publish-github-release` stage 经 REST API 直发**（`.github/scripts/publish_github_release.py`，幂等 delete→create→upload，token 走 `github.yml` 的 `GIT_ACCESS_TOKEN`）。资产都是 RAA / RAM / RAF 三个 unitypackage
-- **不要指望 GitHub `auto-release.yml` 被 tag 触发**——实测 git-sync 推的 tag 送达 GitHub 但无 PushEvent / 无 run（v0.34.0 起复现）。该 workflow 仅作幂等兜底 + `workflow_dispatch` 手动补发入口；CNB 直发才是主路径
-- 验收：`git ls-remote --tags origin 'v<版本>'` 存在、两包分支已滚动到新提交、`gh release view <tag> --repo yuumixcode/AesirFramework --json assets` 有 RAA/RAM/RAF 三份、CNB 侧 Release 同样齐全
+- 推 `origin`（GitHub）`main` 自动触发 `sync-to-cnb.yml`：split 两包分支 → 回写 `update-info.json`（`[skip ci]` 提交推回 GitHub main）→ 版本 tag `v<版本>`（不存在才创建）→ 新 tag 时派发 GitHub Release → main / 两分支 / tags 全部 force 推 CNB。**tag 由流水线生成，不要本地手动打 tag**
+- 两边各自发 Release：**GitHub 侧由 sync 流水线 `gh workflow run` 派发 `auto-release.yml`**（`GITHUB_TOKEN` 推的 tag 不触发 push workflow，必须显式派发）；**CNB 侧收到 v* tag push 触发 `.cnb.yml` 的 tag_push 流水线**（build + `git:release` + attachments）。资产都是 RAA / RAM / RAF 三个 unitypackage
+- **tag 不可变**：同名 tag 已存在时流水线跳过创建、两边不重建 Release——发版后补内容一律 bump patch 版本再走完整流程；GitHub 侧同 tag 补发走 `auto-release.yml` 的 `workflow_dispatch`（正文仍取自 tag commit）
+- 验收：`git ls-remote --tags origin 'v<版本>'` 存在、两包分支已滚动到新提交、`gh release view <tag> --json assets` 有 RAA/RAM/RAF 三份、CNB 侧 Release 同样齐全（`https://api.cnb.cool/runestone-game/AesirFramework/-/releases` 带 `Accept: application/json`）、CNB main HEAD == GitHub main HEAD
 
 ### 11. 文档仓同批
 
-`Aesir-Notebook`（开发笔记）与 `AesirFramework-Site`（产品站）各自独立 git 仓库，同批发版要一起提交推送：站点 `changelog.md` 补该版本段落（摘要视图）+ `product/releases.md` 版本表，笔记仓同步"当前基线"类陈述（版本号、测试计数、分发形态）。**注意：GitHub 侧对这两个仓库没有 CNB 流水线，直接 push 即可；主仓的 GitHub 镜像零提交纪律不适用于它们。**
+`Aesir-Notebook`（开发笔记）与 `AesirFramework-Site`（产品站）各自独立 git 仓库，同批发版要一起提交推送：站点 `changelog.md` 补该版本段落（摘要视图）+ `product/releases.md` 版本表，笔记仓同步"当前基线"类陈述（版本号、测试计数、分发形态）。**注意：这两个仓库各自独立直接 push 即可，不走主仓的 sync-to-cnb 同步。**

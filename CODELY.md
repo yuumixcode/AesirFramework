@@ -23,8 +23,8 @@
 
 | 包 | 包 ID | 版本 | 说明 |
 |---|---|---|---|
-| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.34.1 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
-| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.34.1 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
+| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.35.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
+| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.35.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
 
 依赖关系：**RAA 不依赖任何 Aesir 包**；**RAM 依赖 RAA**（`package.json` 中**不声明**该依赖，见下方"依赖补全"）。
 
@@ -39,22 +39,24 @@ Aesir Inspector 已迁出为独立公开仓库，本仓不再包含。根目录�
 5. **低概率问题用文档约定杜绝，不加防御性代码兜底**；异常不吞噬（fail-fast）；不做初始化回滚、不做自愈轮询。
 6. **暂不提供 MVVM（2026-11-16 裁决）**：快速开发首推 MVC；MVP 是 Unity 官方最佳实践所教授的严格分层范式（可选）。MVVM 的核心增量是数据绑定引擎，与"Unity 原生优先、不构建平行自建体系"基调相悖，状态通知已由 `ObservableValue<T>` 覆盖；业务侧可自行按 MVVM 风格组织代码，框架包不提供一等公民支持（无 IViewModel / 绑定引擎 / 官方模板）。重评触发：UI Toolkit 运行时绑定成为主力 UI 方案 / 大型数据驱动 UI 消除订阅胶水成为普遍诉求 / 社区明确广泛需求。完整论述见 `Aesir-Notebook/docs/decisions/architecture-core.md` 第十一章与 `.codely-cli/extensions/AesirFrameworkGame/skills/aesir-decisions/references/mode-decisions.md`。
 
-### 双主位：CNB 主仓 + GitHub 镜像
+### 双主位：GitHub 主仓 + CNB 国内下载仓（2026-11-23 反转）
 
-**主仓在 CNB，GitHub 是镜像与国际发布出口**——`origin` 指向 `cnb.cool/runestone-game/AesirFramework`，本地无 `github` remote。
+**主仓在 GitHub，CNB 是国内下载仓**——`origin` 指向 `git@github.com:yuumixcode/AesirFramework.git`（SSH，推 workflow 文件不受 OAuth scope 限制），CNB 保留为 `cnb` remote（`cnb.cool/runestone-game/AesirFramework`，仅 fetch / 应急用）。反转原因：CNB 的 AI Issue / PR 能力效果不佳，开发主流程回归 GitHub。
 
 | 侧 | 职责 |
 |---|---|
-| CNB（主仓） | `main` 推送触发 `.cnb.yml`：包分支 split + 裁剪 → `update-info.json` 回写 → 滚动 tag → git-sync 推 GitHub main / 包分支 / tag；`v*` tag 推送触发 CNB Release（国内下载加速） |
-| GitHub（镜像） | `main` 与 `AesirArchitecture-latest` / `AesirModules-latest` 由 CNB 单向同步；收到 `v*` tag 时由 `.github/workflows/auto-release.yml` 发 GitHub Release |
+| GitHub（主仓） | `main` 推送触发 `.github/workflows/sync-to-cnb.yml`：包分支 split + 裁剪 → `update-info.json` 回写（`[skip ci]`）→ 版本 tag（不存在才创建）→ 新 tag 时派发 `auto-release.yml` 发 GitHub Release → **main / 两包分支 / tags 全部 force 写入 CNB** |
+| CNB（下载仓） | 不做任何开发提交；收到 `v*` tag push 触发 `.cnb.yml` 的 tag_push 流水线发 CNB Release（国内下载加速）；另有 `web_trigger_push_github` 手动按钮把 AI 修复分支反推 GitHub |
 
-硬纪律（写进 `.cnb.yml` 注释，违反即断同步）：
+硬纪律（写进两边流水线注释）：
 
-- **GitHub 侧零提交、零 tag**：不点 PR 的 Merge 按钮；PR 由维护者 fetch 回本地经 CNB 合并。
-- main 同步永不 force；GitHub main 领先时同步会失败 → 把 GitHub 提交 `fetch` 后 merge 进 CNB main 再推。
-- **永不改写已发布 main 历史**（rebase / filter），否则单向同步断裂。
-- 提交信息（主题与正文）**严禁出现跳过标记字面量**，否则 CNB main 流水线整体跳过；确需跳过用 `git push -o ci.skip`。
-- CNB 侧删掉的分支 / tag **不会**在 GitHub 消失（git-sync 插件只 push、不删）。
+- **CNB 侧零提交**：main 与包分支每次被 GitHub force 覆盖，CNB 上的直接提交会被冲掉。
+- **PR 在 GitHub 正常 Merge**（旧"不点 Merge"纪律作废）；Issue / PR 社区入口统一 GitHub。
+- **CNB AI Issue 流程**：CNB 上提 Issue 让 AI 在**临时分支**修复 → 分支详情页点「反推此分支到 GitHub」按钮（`.cnb/web_trigger.yml` + `.cnb.yml` 的 `web_trigger_push_github`，禁止反推 main / 常驻包分支）→ GitHub 开 PR 合并 → 同步流水线自动把结果写回 CNB，闭环完成。
+- **版本 tag 一旦发布即不可变**（PR #7 裁决 + 2026-11-20 铁律）：远端已存在即复用，不删不重推；再小的更新也 bump patch 版本走完整发版流程。
+- GitHub Actions 用 `GITHUB_TOKEN` 推的 tag / 分支**不会触发** push 触发的 workflow（平台限制），GitHub Release 靠 `gh workflow run` 显式派发（`workflow_dispatch` 是豁免事件）。
+- GitHub Actions 推 CNB 需要仓库 Secrets **`CNB_USERNAME` / `CNB_TOKEN`**（CNB 个人访问令牌，repo 读写权限；CNB 流水线内置的 `CNB_TOKEN` 出不了 CNB）。
+- 反推按钮用的 `GIT_ACCESS_TOKEN` 是 OAuth 类令牌，无 workflow scope 时 GitHub 拒推改动 `.github/workflows/*` 的分支——这类修复走本地 SSH 直推。
 
 ---
 
@@ -64,10 +66,12 @@ Aesir Inspector 已迁出为独立公开仓库，本仓不再包含。根目录�
 AesirFramework/
 ├── README.md / README_EN.md / CHANGELOG.md / CONTRIBUTING.md / CODE_OF_CONDUCT*.md
 ├── CODELY.md                      # 本文件
-├── .cnb.yml                       # CNB 主仓流水线（split / update-info / rolling tag / git-sync）
+├── .cnb.yml                       # CNB 下载仓流水线（v* tag → CNB Release；修复分支反推按钮）
+├── .cnb/web_trigger.yml           # CNB 分支详情页自定义按钮（反推此分支到 GitHub）
 ├── CodeStyle/AesirCodeStyle.cs    # 统一代码风格指南（不参与编译）
 ├── .github/
-│   ├── workflows/auto-release.yml     # 收到 v* tag → 建三份 unitypackage → 滚动 GitHub Release
+│   ├── workflows/sync-to-cnb.yml      # 主仓流水线：split / update-info / 版本 tag / force 同步 CNB
+│   ├── workflows/auto-release.yml     # 建三份 unitypackage → 滚动 GitHub Release（由 sync 派发）
 │   ├── scripts/build_unitypackage.py  # 打包脚本（纯 Python，禁换第三方 CLI）
 │   └── scripts/extract_release_notes.py
 ├── .codely-cli/                   # AI 工具链（部分入库，见「AI 技能与 Codely 环境」）
@@ -233,11 +237,11 @@ public class HUDContext : AbstractContext<HUDContext>
 
 ### 事件模块（`Runtime/Events`）
 
-- `EventModule` 直接继承 `AesirMonoBehaviour`；双注册表分离：AttributeBindings（`[AesirListener]` 静态订阅，返回 `AutoRemoveListenerHandle`）+ DynamicBindings（脚本订阅）。
-- `BindingInfo`（`StaticBindingInfo` / `DynamicBindingInfo<T>`）+ `SubscriberPriority`（First / High / Medium / Last；Attribute 默认 High，Script 默认 Medium）。
-- 事件参数继承 `AesirEventArgs`，命名 `XxxEventArgs`；`WithFilter/WithFilters` 链式过滤器（`ISubscriberFilter`：`WithTag` / `WithPriority` / `SameSceneAsEmitter` / `OnlySelf` / `InsideCollider2D`，**fail-closed**，未过滤零开销）。
-- 分发期自动清理已销毁订阅者（编辑器告警、玩家构建静默）；`executionMsLimit` 毫秒阈值性能监控（默认 0 关闭）。
-- 绑定键按事件类型缓存（分发热路径稳态零分配）。
+- `EventModule` 直接继承 `AesirMonoBehaviour`；**只保留脚本订阅一条路径**：`AddListener<T>(subscriber, callback)` 返回 `AutoRemoveListenerHandle` 精确退订，单一 `Bindings` 注册表（`Dictionary<Type, List<BindingInfo>>`，**注册期有序插入**：Priority 升序、同档注册序，分发零排序）；无句柄退订用 `RemoveListener<T>(obj)` / `RemoveListener(obj)`。`[AesirListener]` 特性反射订阅已移除（破坏性变更，理由见 `decisions/remove-attribute-subscription.md`）。
+- `BindingInfo` / `ScriptBindingInfo<T>` 均为 **internal**（`Invoke(AesirEventArgs)` 委托直调，无 `object[]`；非泛型订阅以运行期类型为键注册基类委托，零反射）+ `SubscriberPriority`（First / High / Medium / Last；Script 默认 Medium；First/Last 不受取消传播影响）。
+- 事件参数继承 `AesirEventArgs`，命名 `XxxEventArgs`；`WithFilter/WithFilters` 链式过滤器（`ISubscriberFilter`：`WithTag` / `WithPriority` / `SameSceneAsEmitter` / `OnlySelf` / `InsideCollider2D`，**fail-closed**，未过滤零开销；发布者 GO/Collider2D 按趟缓存共享）。
+- **分发约定（低概率场景不做兜底）**：同一参数实例分发期间不得再次发布（`Dispatching` 标记 fail-fast 拒绝，跨实例事件链安全、重入缓冲按深度复用）；`SetSender` 为发布者侧 API；分发中途增删 Collider2D 不支持。`Clone()`/`ICloneable` 与字符串绑定键 API 已删除（见 `decisions/event-module-simplification.md`）。
+- 分发期自动清理已销毁订阅者（编辑器告警、玩家构建静默）；`executionMsLimit` 毫秒阈值性能监控（默认 0 关闭）；`TryGetExisting` 负缓存（实例缺失期至多一次全场景查找）。
 - SO 资产化：`AesirEventArgsSO`（资产作为发布者 Raise）+ `UnityEventOnAesirEvent` 桥接组件 + `SubclassSelector`/`ExcludeSubclassSelector`。
 - 命名区分：仅作数据载体 → `XxxEventArgs`；自身持监听者并有 Invoke 能力 → `XxxEvent`。
 
@@ -337,9 +341,9 @@ asmref：`Editor/Audio/OdinInspector`、`Editor/Scene/Addressables`、`Editor/Sc
 - 本引擎 nunit 被裁剪：**无 `Assert.ThrowsAsync`**，`async Task` 用例可能被静默忽略 → 同步断言 + `GetAwaiter().GetResult()`。
 - 测试红了：契约有意变 → 改测试 + CHANGELOG 记破坏性；契约没变只是实现变 → 判为测试过拟合，删/简化测试，**绝不为保绿扭曲实现**。
 
-### 现状（2026-11-16 实测）
+### 现状（2026-11-23 实测）
 
-- **6 个测试程序集 / 74 个 `.cs`（其中 2 个为 `Tests/Editor/OdinInspector/ScriptDocGenerator/Common/` 下的辅助类型）**；属性层面 `[Test]` 703、`[TestCase]` 67（含 `[TestCaseSource]`）、`[UnityTest]` 39；参数化展开后实跑 EditMode 853 + PlayMode 36。
+- **6 个测试程序集 / 78 个 `.cs`（含 `Tests/Editor/OdinInspector/ScriptDocGenerator/Common/` 下的辅助类型）**；属性层面 `[Test]` 730、`[TestCase]` 67（含 `[TestCaseSource]`）、`[UnityTest]` 36；参数化展开后实跑 EditMode 881 + PlayMode 36。
 - 最密、触碰时优先收敛：`BinderCodeGeneratorTests`、`AesirUpdateServiceTests`、`SourceParsingTests`、`AudioModuleTests`、`EventModuleTests`、`XmlSummaryToolTests`。
 - 改测试或 asmdef **必须重跑**；纯文档补丁可豁免 PlayMode。
 
@@ -446,26 +450,59 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ### 外部关联目录（均被 `.gitignore` 排除）
 
-- `Aesir-Notebook/` — 私有开发笔记（Zensical 站点，含 `docs/standards/unit-testing-standards.md` 与 `docs/standards/design-changelog.md` 权威源）。
+- `Aesir-Notebook/` — 私有开发笔记（Zensical 站点，含 `docs/standards/iteration-workflow.md`、`unit-testing-standards.md`、`design-changelog.md` 权威源）。
 - `AesirFramework-Site/` — 公开产品站（Zensical + GitHub Pages），`docs/architecture/`、`docs/modules/` 物理路径被 SDG 与 `package.json` 的 `documentationUrl` 依赖，**不可移动**。
+
+### 迭代流程（新增功能 / 行为变更 / Bug 修复）
+
+> 本节点是速查版；带"为什么"的完整 SOP + 文档更新矩阵逐项说明在 `Aesir-Notebook/docs/standards/iteration-workflow.md`。**发版当天的版本号同步不在这里**，走 `.codely-cli/skills/aesir-version-sync/SKILL.md` 的 11 步（发版清单只有这一份权威，别在别处另抄）。
+
+一轮迭代七步，前六步在功能分支内完成，第七步发版时统一收口：
+
+1. **立项与边界** — 一句话写清做什么 / **明确不做什么**；先问"能否用现有能力组合出来"（RAA 极简优先）；判定属 RAA 还是 RAM。
+2. **建分支** — 从 `main` 拉 `feat/<name>` / `fix/<name>` / `docs/<name>` / `refactor/<name>`。本机 git 命令一律先 `export PATH=/opt/homebrew/bin:$PATH`。
+3. **落代码** — 玩家逻辑进 `Runtime/<模块>/`，编辑器工具进 `Editor/<模块>/`，第三方增强走 `OdinInspector/` + asmref；跨模块协作用 `IService`，不互相 `new`。新增跨 Play 残留的静态状态必须 `SubsystemRegistration` 归位（泛型走 `ResetStaticsAssistant.Register()`）。
+4. **补示例与测试** — 公开 API 必配能 Play 的最小示例 + `package.json.samples[]` 登记（`path` 指向 `Samples~`）；测试按三问门槛（可失败性 / 受害者 / 不可替代性），新增公开行为 1–3 例、纯重构 0 新增，需真 `Destroy`/帧/场景加载的进 PlayMode。
+5. **更新文档**（易漏，按下表逐项勾）：
+   | 改了什么 | 必更新 |
+   |---|---|
+   | 公开 API / 行为变更 | `Documentation~/<module>.md` + 包根中英 README 特性表 + 示例 + 两包 CHANGELOG `[Unreleased]` + 产品站模块/API 页 |
+   | 新增示例 | `package.json.samples[]` + `Samples~/` 镜像 + 产品站示例总览 |
+   | 新增模块 | 新 `Documentation~` 文档 + 包根 README + 本文件程序集/关键类型表 + 产品站 |
+   | Bug 修复 | CHANGELOG `[Unreleased]` Fixed + 回归测试 |
+   | 设计裁决 / 删机制 | `Aesir-Notebook` 的 `design-changelog.md` + `decisions/` + 本文件设计边界 |
+   | 改 asmdef / 静态状态 | 无文档变更，但改 asmdef **必须重跑门禁**；改静态状态手动关 Domain Reload 连按两次 Play |
+   用户写法变了还要同步 AI 扩展技能（唯一主位 `.codely-cli/extensions/AesirFrameworkGame/skills/`）。产品文档只写当前行为，历史演进写笔记仓。
+6. **门禁** — 依次：`sync_samples.py --check`（零漂移）→ 编译预热 0 error → EditMode → PlayMode（改运行时行为才需要）。改测试/asmdef 全跑，纯文档补丁可豁免 PlayMode；全绿 exit 0、失败 exit 2 需解析 XML。
+7. **提交与合并** — 一个功能一个 commit，Conventional Commits + message 写"为什么"；普通提交的主题/正文禁含 `[skip ci]` 等跳过标记字面量（会跳过 GitHub 同步流水线），确需跳过才用；精确路径 `git add`（勿 `-A`）。PR 提 GitHub 并正常 Merge；CNB AI 修复分支经反推按钮进 GitHub 后同样走 PR。功能迭代期只维护各包 CHANGELOG 的 `[Unreleased]`。
+
+**真源与镜像**：`Samples/` 主位 → `Samples~/` 镜像（逐文件 diff 判方向，勿凭主位硬覆盖）；技能正文只在扩展目录；发版清单只认 `sync-to-cnb.yml` / `auto-release.yml` + version-sync skill。
 
 ---
 
 ## 发布与分支
 
-- **`main`** — 开发主线（CNB 主仓）。
-- **常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`** — CNB `main` 推送时按包目录 `git subtree split` 滚动更新（包内容为分支根），**并进一步裁掉开发侧 `Samples/` 与 `Documentation/`，只保留 `~` 版本**（流水线内含残留断言：残留即 `exit 1`）。分支名永久固定：Git URL 一次输入持续更新，升级 = Package Manager 移除后用同一 URL 重新 Add。钉旧版本用 Release tag（`?path=<包路径>#v<版本>`；历史已发布版本 tag 永久保留，当前在研版本 tag 随 push main 滚动刷新、版本号 bump 后冻结）。流水线自动清理废弃的 `Aesir*-v*` 版本分支。
-- **`.cnb.yml`（主仓流水线，唯一权威）** — main push：split 包分支 → `update-info.json` 回写（`[skip ci]`）→ 滚动 tag `v<版本>` → git-sync 推 GitHub main / 两包分支 / tag。`v*` tag push：CNB 侧构建三份 unitypackage 并发 CNB Release（国内加速）。
-- **`.github/workflows/auto-release.yml`（GitHub 镜像侧）** — 仅在收到 `v*` tag 时运行：校验 tag 与两包 `package.json` 版本一致 → 纯 Python 构建 `AesirArchitecture` / `AesirModules` / `AesirFramework`（两包合并）→ 从根 CHANGELOG 抽该版本段落 → 滚动重建 GitHub Release（删旧 Release 保 tag，tag 归 CNB 管）。`auto-publish-branches.yml` 已删除，分支滚动职责全部移到 `.cnb.yml`。
+- **`main`** — 开发主线（GitHub 主仓）。
+- **常驻分支 `AesirArchitecture-latest` / `AesirModules-latest`** — GitHub `main` 推送时由 `sync-to-cnb.yml` 按包目录 `git subtree split` 滚动更新（包内容为分支根），**并进一步裁掉开发侧 `Samples/` 与 `Documentation/`，只保留 `~` 版本**（流水线内含残留断言：残留即 `exit 1`），随后 force 同步到 CNB。分支名永久固定：Git URL 一次输入持续更新，升级 = Package Manager 移除后用同一 URL 重新 Add。钉旧版本用 Release tag（`?path=<包路径>#v<版本>`；**版本 tag 一旦发布即不可变、永久保留**，版本号 bump 后的首次推送才创建新 tag）。流水线自动清理两边废弃的 `Aesir*-v*` 版本分支。
+- **`.github/workflows/sync-to-cnb.yml`（主仓流水线，唯一跨仓同步入口）** — main push：split 包分支 → `update-info.json` 回写（`[skip ci]` 提交推回 GitHub main）→ 版本 tag（远端已存在即跳过）→ 新 tag 时 `gh workflow run` 派发 auto-release → **main / 两包分支 / tags 全部 force 推 CNB**（需 Secrets `CNB_USERNAME` / `CNB_TOKEN`），并对齐 CNB 侧多余 `v*` tag。
+- **`.github/workflows/auto-release.yml`（GitHub Release）** — 主触发路径是 sync 流水线的 `workflow_dispatch` 派发（`GITHUB_TOKEN` 推的 tag 不触发 push workflow）；保留 push tags 触发给维护者手动推 tag 的场景。校验 tag 与两包 `package.json` 版本一致 → 纯 Python 构建 `AesirArchitecture` / `AesirModules` / `AesirFramework`（两包合并）→ 从根 CHANGELOG 抽该版本段落 → 滚动重建 GitHub Release（删旧 Release 保 tag）。
+- **`.cnb.yml`（CNB 下载仓流水线）** — 只剩两条：`v*` tag push 构建三份 unitypackage 并发 CNB Release（国内加速，两边资产同源）；`web_trigger_push_github` 手动按钮把 CNB AI 修复分支反推 GitHub（按钮定义在 `.cnb/web_trigger.yml`，禁止反推 main / 常驻包分支）。
 - **远端 CI 不跑 Unity 编译/测试**（不配 `UNITY_LICENSE`）；编译与 EditMode/PlayMode 验证在本地 batchmode 全绿后再推送。
 - 发版前须全仓摸底旧版本号：两包 `package.json`、根 `CHANGELOG.md`（当前版本行 + 固定分支名 + 新段落）、两包中英 `README`、根 `README`/`README_EN`、`CODELY.md`、文档站。改版本号时注意：根 CHANGELOG 插入若用 `%` 格式化会被正文 `%` 撞格式符（改用占位符 `.replace()`）；`git add -A` 会带上测试产物；改名文件要连 `.meta` 一起 add。
 - 提交信息中文；`git` 命令在本机需先 `export PATH=/opt/homebrew/bin:$PATH`（git-lfs 在该目录，否则 LFS filter 报 `git-lfs: command not found`）。
 
 ---
 
-## 当前状态与待办（2026-11-20）
+## 当前状态与待办（2026-11-23）
 
-- 已发布 **0.34.1**（2026-11-20，补丁版）。主仓（CNB）、`Aesir-Notebook`、`AesirFramework-Site` 三仓同批提交推送；`v0.34.1` tag 由 CNB 流水线滚动生成并经 git-sync 送达 GitHub。上一稳定版 0.34.0（2026-11-19）。
+- 已发布 **0.35.0**（2026-11-23，事件模块大版本）。上一稳定版 0.34.1（2026-11-20）。
+- **0.35.0 落地内容**：
+  1. **（RAM）事件模块可观测性** —— 取消传播（`Cancel(canceller)` / `NonCancellable()`，First/Last 始终执行）+ 公开诊断 API `AesirEventDiagnostics`（订阅树查询 + 环形缓冲链路快照，零 Odin 依赖、关闭时零分配）+ 三个调试窗口（Event Monitor / Log / Tester，UI Toolkit 版 + Odin 版）；新增示例 `04_Cancellation` / `05_Diagnostics`。
+  2. **（RAM）事件模块分发性能与结构精简** —— Type 键注册表 + 注册期有序插入（分发零排序）、去 `object[]` 间接层、非泛型订阅去反射、重入缓冲按深度复用、负缓存、空间过滤器每趟缓存。
+  3. **（RAM·破坏性）** 移除 `[AesirListener]` 特性反射订阅（只保留 Script 订阅）；同一参数实例重入发布改 fail-fast；低频公开 API 收窄（`Clone()` / 字符串绑定键删除、`BindingInfo` 转 internal）。
+  4. **（RAM）SDG 开放泛型成员默认值读取崩溃修复**。
+  5. **（RAA）代码格式化与 XML 注释排版统一**（无运行时行为变更）。
+- **2026-11-23 双仓架构反转**：GitHub 升为开发主仓、CNB 降为国内下载仓（原因：CNB AI Issue/PR 效果不佳）。新增 `.github/workflows/sync-to-cnb.yml`（split / update-info / 版本 tag / force 同步 CNB），`.cnb.yml` 瘦身为 CNB Release + 反推按钮，`auto-release.yml` 改由 sync 派发；tag 语义沿承 PR #7「一旦发布即不可变」。Secrets `CNB_USERNAME` / `CNB_TOKEN` 已配置，首跑已验证（run 45140383615）。
 - **0.34.1 落地内容**（纯测试基础设施修复，无运行时代码变更）：
   1. **恢复测试程序集的 Odin 预编译引用** —— `fdc5724b` 误删后导致 `CS0012`（`AesirMonoBehaviour` 基类链在 Odin 环境指向 `SerializedMonoBehaviour`）；RAA PlayMode + RAM `Tests.Editor` / `Tests` / `Tests.UniTask` 四个 asmdef 补回 `Sirenix.*.dll`。测试只在本仓开发用、不随包分发，不受"运行时零 Odin 依赖"约束。
   2. **`ScriptDocGeneratorApiTests` 临时夹具移出包内只读目录** —— 改在可写 `Assets/` 下创建，规避 UPM 安装时 `Packages/` immutable folder 拿不到 `.meta` 的问题。
@@ -476,11 +513,11 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
   4. **（RAM）UI 实例化简化** —— 移除停用模板机制改 `Instantiate → SetActive(false)`，实例名去重复 `(Clone)`；`Resources.Load` 资产语义实证与文档决策复盘。
   5. **移除 Binder / SDG 的 UI Toolkit 窗口** —— 两个工具只保留原 Odin 窗口，数据层零 Odin 依赖不改。
   6. **（AI 扩展）`AesirFrameworkGame` 1.2.0 → 1.3.0** —— 新增 `aesir-project-structure` 技能（12 技能），统一资产命名去类型前缀与工程目录约定；按 PlaneWar 三篇复盘优化 boot-scene / framework / ui / router 技能。
-- **门禁基线（0.34.1 实测，与 0.34.0 一致）**：EditMode batchmode **872 total / 869 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑。**
+- **门禁基线（0.35.0 实测）**：EditMode batchmode **881 total / 878 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑。**
 - 门禁前置校验：`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；两个文档站 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
 - **待办 / 未决**：
   - PlaneWar 的 RAA 版案例（`Assets/PlaneWar/Scripts/Raa/`，程序集 `PlaneWar.Raa`）待编写（当前只有 Mono 版；README 已列出规划）。
-  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.34.1 复核。
+  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.35.0 复核。
   - `.codely-cli/memory.md` 的整理收尾（ARCHIVE 已存在）。
 - **UniTask 已通过 `manifest.json` 的 Git URL 安装** → `AESIR_MODULES_UNITASK` 生效，`SceneModuleUniTask` 与对应测试参与编译。新增依赖 UniTask 的代码须确认该宏；新增需要该宏的程序集须**自己再声明一份** `versionDefines` + `defineConstraints`。
 - 无 Addressables 配置（UI 走 `ResourcesUILoader`，`IUIAssetLoader` 已预留接口）。
@@ -495,10 +532,9 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 - **Samples 示例场景污染**：出现 `BinderTag` / `BinderCodeGenerator` / `MenuProbe` 等 RAM 专有类型即污染（RAA 无 RAM 依赖）；本仓示例场景 `GraphicRaycaster` 的 `m_Bits` 惯例值 55。
 - **PlayMode 门禁必须走 batchmode**：编辑器内跑 Test Framework 1.1.33 会误入 PlayerLauncher。
 - **unitypackage 导出必须整目录剔除 `Tests/`**（含目录 `.meta`）：只删 asmdef 会让残留 `.cs` 并入 `Assembly-CSharp` 报 `CS0246`，比不删更糟。**边界仅 unitypackage 导出线；UPM 形态有意保留 `Tests/`，不要顺手删**——已实测：使用者在自己工程 `Packages/manifest.json` 的 `testables` 数组里加入包 ID（`cn.runestone.aesir.architecture` / `cn.runestone.aesir.modules`），Package Manager 就会编译包内测试程序集，可在 Test Runner 直接跑框架用例；不加则默认不编译，不污染消费者工程。包内测试一律假定自己可能跑在 `Packages/` 只读目录里：临时夹具建在可写的 `Assets/` 或系统 `Temp/`，别用 `AssetDatabase.CreateFolder` 往测试文件所在的包目录里塞东西（immutable folder 新建文件夹拿不到 `.meta`，Unity 报 "has no meta file, but it's in an immutable folder. The asset will be ignored."）。
-- **CNB 迁移后镜像首次同步必失败（2026-11-16 实测）**：CNB 导入仓库时重写了提交哈希，GitHub main 与 CNB main **没有共同祖先**（两条历史各有独立的 `Initial commit`）——文档里「fetch → merge 回 CNB」的规程在这种情况下不可用（`refusing to merge unrelated histories`，且文件级全是 added-by-both 冲突），`git-sync` 的 main 阶段随之失败，后续包分支与 tag 同步阶段一并被跳过（GitHub 侧停在旧版本、无新 Release）。处置：确认真实差异只有 `.cnb.yml` 且内容已被 CNB 侧更新版本取代后，**一次性 `--force-with-lease` 把 GitHub 的 main / 两包分支对齐 CNB**，再用 CNB 的 `v<版本>` tag 手动推一次触发 GitHub Release；此后单向同步恢复正常。
-- **GitHub 侧 tag 推送不触发 Actions（2026-11-19 修复）**：`git-sync` 把 `v*` tag 推到 GitHub 后 `auto-release.yml` **不可靠触发**（tag 已送达、`ls-remote` 可见，但 repo events 无 PushEvent、`actions/runs` 无 run；v0.32.0/v0.33.0 曾有 run、v0.34.0 起复现）。**根治**：GitHub Release 改由 CNB `v*` tag_push 流水线直接发——`publish-github-release` stage 用 `.github/scripts/publish_github_release.py`（纯标准库，delete→create→upload 幂等）经 REST API 发布，`imports` 的 `github.yml` 提供 `GIT_ACCESS_TOKEN`（contents: write 即可）。`auto-release.yml` 保留为幂等兜底并加 `workflow_dispatch`（可指定 tag 手动补发）；两边都只删 Release、不动 tag（tag 归 CNB 管）。**手动补发**（本仓无 GitHub remote，`gh` 必须显式 `--repo`）：本地构建三包后 `gh release create <tag> --repo <owner>/<repo> --notes-file ...`，或带 token 跑 `publish_github_release.py`。**验收**：`gh release view <tag> --repo <owner>/<repo> --json assets` 应有 RAA/RAM/RAF 三份。
-- **发版后补 CHANGELOG 必须滚动 CNB tag，否则 CNB Release 正文停在旧版（2026-11-19 实测）**：CNB Release 是 `v*` tag_push 时 **checkout 到 tag 指向的 commit**、再用那份 CHANGELOG 经 `extract_release_notes.py` 生成正文（`create-release` 的 `descriptionFromFile`）。发版后若再补根 CHANGELOG（如漏写 `[modules]` 段），仅 push main **不会更新已发布的 Release**——正文由 tag commit 决定，与 main HEAD 无关。表象：GitHub Release 正文已新（上轮用脚本重建过）、CNB Release（国内）正文仍是旧的，用户看到「Release 内容没变」。**修复**：把 tag 滚到含完整 CHANGELOG 的 main HEAD——`git push -f <cnb-url> refs/heads/main:refs/tags/v<版本>`（tag 是本仓在研滚动 tag，非历史钉版 tag，force 安全），tag push 自动触发 `v*` 流水线重建 Release。**注意**：本地 git token 只有 code 权限，`PATCH /{repo}/-/releases/{id}` 改正文需 `repo-release:rw` 会 403，别走 API 改正文；流水线里的 `CNB_TOKEN` 才有发布权限。**验收**：CNB API `GET /{repo}/-/releases`（需 `Accept: application/json`）比对 v<版本> 的 `body` 含 `[modules]`，并与 `gh release view` 的 GitHub 正文对齐。
-- **改 workflow 文件会卡住 CNB git-sync 的 main 同步（2026-11-19 实测）**：CNB `sync-main-to-github` 用 OAuth 类 `GIT_ACCESS_TOKEN`，GitHub 拒绝「OAuth App 在未授予 `workflow` scope 时创建/更新 `.github/workflows/*`」。一旦某次 main 推送的提交区间里改过 workflow 文件，main 同步即被拒（`remote rejected ... without workflow scope`），而包分支 / tag 阶段照常成功——表象是「CNB main 领先、GitHub main 卡在旧提交」，极易误判为网络问题。**兜底**：用 SSH 直推（SSH key 不受 OAuth scope 限制，本机 `gh` 已配 ssh）：`git push git@github.com:yuumixcode/AesirFramework.git HEAD:main`（本仓无 github remote，用一次性 URL），快进即可，不要 force。推完核对两边 main HEAD 一致。**根治**：改 workflow 文件前确认 CNB token 有 workflow scope，或改完后立刻用 SSH 补同步。
+- **`GITHUB_TOKEN` 推的 tag / 分支不触发 push 触发的 workflow（GitHub 平台限制）**：`sync-to-cnb.yml` 用默认 `GITHUB_TOKEN` 推 tag，`auto-release.yml` 的 push tags 触发**不会**运行——所以 sync 流水线推完新 tag 后用 `gh workflow run auto-release.yml --ref main -f tag=v<版本>` 显式派发（`workflow_dispatch` / `repository_dispatch` 是该限制的豁免事件，需 `actions: write` 权限）。维护者用自己凭证手动推 tag 则正常触发。**手动补发 GitHub Release**：`gh workflow run auto-release.yml --ref main -f tag=v<版本>`，或本地构建三包后 `gh release create`。**验收**：`gh release view <tag> --json assets` 应有 RAA/RAM/RAF 三份。历史注：CNB 主仓时代 git-sync 推的 tag 同样不可靠触发，曾用 CNB 流水线 REST API 直发（`publish_github_release.py`），2026-11-23 反转后该 stage 已删除。
+- **版本 tag 不可变：发版后补内容一律 bump patch，不滚 tag（2026-11-20 铁律 + PR #7）**：两边 Release 正文都 checkout **tag 指向的 commit** 的 CHANGELOG 生成，与 main HEAD 无关——发版后再补 CHANGELOG 仅 push main 不会更新已发布 Release。tag 一旦推出即不可变（CNB 侧删 tag 会被后台自动 tag 规则立即重建、导致后续 push 被拒），**禁止重推同名 tag**；再小的更新也 bump patch 版本走完整发版流程，由流水线创建新 tag。GitHub 侧同 tag 重建 Release 走 `auto-release.yml` 的 `workflow_dispatch`（正文仍取自 tag commit）；CNB 侧正文只能随新 tag 更新。本地 CNB token 只有 code 权限，`PATCH /{repo}/-/releases/{id}` 需 `repo-release:rw` 会 403，别走 API 改正文。**验收**：CNB API `https://api.cnb.cool/<owner>/<repo>/-/releases`（带 `Accept: application/json`）比对 `body`，与 `gh release view` 的 GitHub 正文对齐。
+- **OAuth 令牌无 workflow scope 时推不了 workflow 文件**：GitHub 拒绝「OAuth App 在未授予 `workflow` scope 时创建/更新 `.github/workflows/*`」。本地 `origin` 已是 SSH（不受此限）；仍受影响的是 CNB 反推按钮用的 `GIT_ACCESS_TOKEN`——修复分支若改了 workflow 文件，反推会被拒（`remote rejected ... without workflow scope`），这类修复改走本地 SSH 直推 GitHub。
 - **Odin 面板**：`InspectorProperty.Draw` 对只读属性会 `PushGUIEnabled(false)` → 只读展示成员加 `[EnableGUI]`；多个 `ShowIf` 是 OR 语义；类级 `DetailedInfoBox` 只能一个；窗口 `PropertyTree` 必须在 `OnDisable` 里 `Dispose()`；**绘制回调禁止解析资产库单例**（会触发全项目重扫并报 `GUIStateObj is deleted`），单例收敛到 `OnEnable` 按域缓存。
 - **UI 卸载时机**：`OnClose` 只在受控销毁路径调用，外部销毁只有 `OnDestroy` → 解绑放 `OnDestroy`。
 - **引擎细节**：两个 Trigger Collider2D 之间至少一个 Kinematic Rigidbody2D 才会触发 `OnTriggerEnter2D`；`PlayerSettings.SetScriptingDefineSymbols` 值未变时不落盘（写完 grep 验证）；`SetScriptingDefineSymbols` 对废弃 `BuildTargetGroup` 抛异常，枚举清理需 try/catch。

@@ -9,7 +9,7 @@
 [![Code of Conduct](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](./CODE_OF_CONDUCT.md)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
 
-> 🏠 **Primary repository**: [CNB](https://cnb.cool/runestone-game/AesirFramework) (direct access from mainland China; source of commits, tags, and pipelines) · [GitHub](https://github.com/yuumixcode/AesirFramework) is the international mirror and Release outlet, synced automatically. Please file Issues / PRs on GitHub (the community entry).
+> 🏠 **Primary repository**: [GitHub](https://github.com/yuumixcode/AesirFramework) (source of commits, PRs, tags, and pipelines; the community entry) · [CNB](https://cnb.cool/runestone-game/AesirFramework) is the mainland-China download repository (direct access, synced automatically by GitHub CI). Please file Issues / PRs on GitHub.
 
 ---
 
@@ -19,8 +19,8 @@
 
 | Sub-Package | Purpose | Package ID | Version |
 |---|---|---|---|
-| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.34.1` |
-| **Aesir Modules** | UI framework (single facade + multiple registries, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.34.1` |
+| **Aesir Architecture** | Progressive MVC architecture (capability composition, Command/Query, PlayerLoop lifecycle, reactive properties) | `cn.runestone.aesir.architecture` | `0.35.0` |
+| **Aesir Modules** | UI framework (single facade + multiple registries, 4-layer Canvas, panel lifecycle, Canvas-root windows with masks) + event module + audio management + scene management tools + script documentation generator (requires Odin) | `cn.runestone.aesir.modules` | `0.35.0` |
 
 > 📝 **Namespaces**: All sub-packages use `Runestone.*` namespaces (brand: "Runestone" / 符文石).
 
@@ -93,7 +93,7 @@ Direct writes are legal at the Quick tier (great for prototypes); the Standard t
 
 ### Event Module
 
-A dual-track subscription event system: `[AesirListener]` attribute-based static subscription + `AddListener<T>` dynamic lambda subscription, coexisting in one dispatch flow with stable sorting across 4 priority levels; static bindings use expression-tree-compiled delegates to optimize reflection overhead, with subscriber filters, dead-reference cleanup, and SO-asset publishing support.
+A Script-subscription event system: `AddListener<T>(subscriber, callback)` registers a delegate returning an `AutoRemoveListenerHandle` for precise unbinding, with stable sorting across 4 priority levels and reflection-free direct delegate calls; supports cancellation propagation, subscriber filters, dead-reference cleanup, SO-asset publishing, a public diagnostics API (`AesirEventDiagnostics`) and three debug windows. The `[AesirListener]` attribute reflection subscription has been removed (see RAM `Documentation~/event-module.md` for why).
 
 ### Scene Module & Editor Tools
 
@@ -139,9 +139,9 @@ In the Unity Package Manager window, click `+` in the top-left → `Add package 
 | Aesir Architecture (mainland China) | `https://cnb.cool/runestone-game/AesirFramework.git#AesirArchitecture-latest` |
 | Aesir Modules (mainland China) | `https://cnb.cool/runestone-game/AesirFramework.git#AesirModules-latest` |
 
-> **Mainland China acceleration**: CNB is the primary repository and GitHub is its mirror — both routes serve identical content; users in mainland China are recommended to use the CNB route (direct access, no proxy needed). Every GitHub Git URL in this document has a CNB equivalent: replace `github.com/yuumixcode` with `cnb.cool/runestone-game`, keeping the branch / tag / `?path=` parameters unchanged (same for Options 3 and 4).
+> **Mainland China acceleration**: GitHub is the primary repository and CNB is the mainland-China download repository — both routes serve identical content; users in mainland China are recommended to use the CNB route (direct access, no proxy needed). Every GitHub Git URL in this document has a CNB equivalent: replace `github.com/yuumixcode` with `cnb.cool/runestone-game`, keeping the branch / tag / `?path=` parameters unchanged (same for Options 3 and 4).
 >
-> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.34.1` (swap `path` for the desired package directory; **tags of published historical versions are kept forever**, while the in-development version's tag rolls forward on every push to `main` and freezes only after the version number is bumped — pin published stable versions).
+> The `latest` branches are rolled forward automatically by CI on every push to `main` via a per-package subtree split (the package content is the branch root), and **the branch names are permanently fixed** — you enter the Git URL once and never need to edit it again. Package Manager shows no update prompt for Git URL packages: **to upgrade, remove the package and re-add it with the same URL** (or delete its entry in `packages-lock.json` and let UPM re-resolve). To pin an older release, use a Release tag instead: `https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture#v0.35.0` (swap `path` for the desired package directory; **version tags are immutable once published and kept forever**; a new tag is created only on the first push after a version bump — pin published stable versions).
 >
 > **Both packages must be added separately**: UPM does not support Git URL dependencies inside a package (official Unity limitation). Adding only Aesir Modules leaves its core assembly uncompilable without Aesir Architecture — you can install Aesir Modules first and add Aesir Architecture later via the menu `Tools → Aesir → Modules → Install Dependencies`.
 

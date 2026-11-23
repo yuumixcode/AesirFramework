@@ -1,11 +1,11 @@
 ---
 name: aesir-events
-description: Aesir Modules 的事件模块（EventModule）编码指南。为 Unity/团结引擎项目做模块间解耦、发布-订阅时使用——[AesirListener] 特性订阅与脚本 Lambda 订阅双轨、四档订阅优先级、订阅者过滤器（WithTag / InsideCollider2D / SameSceneAsEmitter / OnlySelf / WithPriority）精确投递、快照迭代与重入安全、死引用自动清理、AesirEventArgsSO 事件资产化与 UnityEvent 桥接。触发场景：用户提到 EventModule、AesirEventArgs、AesirListener、发布订阅、事件、广播、监听、EventModule.AddListener、OnXxxEventArgs、SO 事件、UnityEventOnAesirEvent，或要求"在模块之间发消息"、"UI 响应游戏事件"、"让敌人只收到范围内的爆炸"。
+description: Aesir Modules 的事件模块（EventModule）编码指南。为 Unity/团结引擎项目做模块间解耦、发布-订阅时使用——Script 订阅（AddListener<T> + AutoRemoveListenerHandle 精确退订）、四档订阅优先级、订阅者过滤器（WithTag / InsideCollider2D / SameSceneAsEmitter / OnlySelf / WithPriority）精确投递、取消传播、快照迭代与跨实例重入、死引用自动清理、AesirEventArgsSO 事件资产化、UnityEvent 桥接与公开诊断 API。触发场景：用户提到 EventModule、AesirEventArgs、AddListener、发布订阅、事件、广播、监听、移除订阅、OnXxxEventArgs、SO 事件、UnityEventOnAesirEvent、事件监听调试，或要求"在模块之间发消息"、"UI 响应游戏事件"、"让敌人只收到范围内的爆炸"、"监视事件触发"。
 ---
 
 # Aesir 事件模块（EventModule）
 
-双轨订阅的发布-订阅系统：**Attribute 静态订阅**（`[AesirListener]` 反射扫描）+ **Script 动态订阅**（Lambda 委托 + 句柄）。两轨共存于独立注册表，分发时合并进快照、按优先级稳定排序执行。
+Script 订阅的发布-订阅系统：`AddListener<T>(subscriber, callback)` 注册委托、返回 `AutoRemoveListenerHandle` 精确退订；分发按优先级稳定排序执行。**特性订阅（`[AesirListener]`）已移除**，只保留这一条路径（理由见文末）。
 
 > 前置：本包依赖 Aesir Architecture（RAA）。**同一组件内的状态通知不要用本模块**——那是 `ObservableValue<T>` 的活；两者分工见 `aesir-framework` Skill 的"通知机制"小节。
 >
@@ -22,39 +22,47 @@ public sealed class PlayerScoredEventArgs : AesirEventArgs
     public string playerName;
 }
 
-// 2. Attribute 订阅（方法特性，AllowMultiple）
+// 2. Script 订阅（唯一订阅形态；返回句柄，只移除这一条）
 public sealed class ScoreView : MonoBehaviour
 {
-    void OnEnable()  => EventModule.AddListener(this);   // 反射扫描本对象全部 [AesirListener]
-    void OnDisable() => EventModule.RemoveListener(this); // 移除该对象全部绑定（两轨）
+    AutoRemoveListenerHandle _handle;
 
-    [AesirListener]
-    void OnPlayerScored(PlayerScoredEventArgs e) => UpdateScore(e.points);
+    void OnEnable()  => _handle = EventModule.AddListener<PlayerScoredEventArgs>(this, e => UpdateScore(e.points));
+    void OnDisable() => _handle.Dispose();   // 重复 Dispose 安全
 }
 
-// 3. 发布（发布者默认是事件参数自己）
+// 3. 发布（发布者默认是事件参数自己 / 可指定 Sender）
 new PlayerScoredEventArgs { points = 10 }.Invoke();
-new PlayerScoredEventArgs { points = 10 }.Invoke(this);              // 指定 Sender
+new PlayerScoredEventArgs { points = 10 }.Invoke(this);
 EventModule.InvokeEvent(this, new PlayerScoredEventArgs { points = 10 });
 ```
 
-脚本订阅（返回句柄，只移除这一条）：
+一个方法监听多种事件 = 多条 `AddListener<T>`，各自持有句柄：
 
 ```csharp
-AutoRemoveListenerHandle _handle;
+AutoRemoveListenerHandle _scoreHandle;
+AutoRemoveListenerHandle _levelHandle;
+void OnEnable()
+{
+    _scoreHandle = EventModule.AddListener<PlayerScoredEventArgs>(this, e => UpdateScore(e.points));
+    _levelHandle = EventModule.AddListener<LevelLoadedEventArgs>(this, e => OnLevel(e));
+}
+void OnDisable() { _scoreHandle.Dispose(); _levelHandle.Dispose(); }
+```
 
-void OnEnable() => _handle = EventModule.AddListener<PlayerScoredEventArgs>(this, e => UpdateScore(e.points));
-void OnDisable() => _handle.Dispose();   // 重复 Dispose 安全
+**无句柄退订**（退订方拿不到句柄，如诊断工具/外部解绑）：
+
+```csharp
+EventModule.RemoveListener<PlayerScoredEventArgs>(subscriber);  // 精确退该对象某事件类型（O(1) 查表）
+EventModule.RemoveListener(subscriber);                         // 批量退该对象全部订阅（O(n) 冷路径）
 ```
 
 ## 优先级（4 档）
 
-`SubscriberPriority`：`First` → `High` → `Medium` → `Last`。**Attribute 默认 High，Script 默认 Medium**；同档按注册顺序（`InsertionIndex`）。
+`SubscriberPriority`：`First` → `High` → `Medium` → `Last`。**Script 默认 Medium**，其余档位需显式指定；同档按注册顺序（注册期有序插入，分发零排序）。First/Last 不受取消传播影响。
 
 ```csharp
-[AesirListener(SubscriberPriority.First)]
-void OnBoot(BootEventArgs e) { }
-
+EventModule.AddListener<BootEventArgs>(this, e => { }, SubscriberPriority.First);
 EventModule.AddListener<TickEventArgs>(this, e => { }, SubscriberPriority.Last);
 ```
 
@@ -86,10 +94,16 @@ new TickEventArgs().WithFilter(new WithPriority(SubscriberPriority.Medium)).Invo
 ## 可靠性与性能语义（写代码时需要知道的）
 
 - **快照迭代**：回调内退订/新增只改注册表，本趟仍按快照跑完（退订者本趟仍收到，新增者下趟起收到），不会跳人。
-- **支持重入发布**：回调内可同步再发布事件（同型或异型）；重入层用独立局部列表/参数数组，外层剩余订阅者仍收到正确的外层参数。代价是重入层一次小分配，顶层分发零列表分配。
+- **跨实例重入安全，同实例重入被拒绝**：回调内可同步再发布**其他参数实例**（同型或异型），重入层用按深度复用的独立缓冲区；**同一参数实例在分发期间不得被再次发布**（fail-fast 报错拒绝）——事件链用新实例，或 `AesirTimer.NextFrame` 延后一帧。`SetSender` 是发布者侧 API，订阅者不要在分发期间调。
 - **死引用自动清理**：订阅者被 Destroy 后绑定残留会在下次分发循环结束后移除（编辑器内 Warning 提示检查退订，玩家构建静默）。**但该事件类型不再被发布时不会清理**——按需发布即无累积。
-- **热路径零反射**：`StaticBindingInfo` 在注册期（冷路径）用表达式树把 `MethodInfo` 编译成委托，分发期直接调用（比 `MethodInfo.Invoke` 快约 20–40 倍）；绑定键按类型缓存字符串，稳态零分配。
+- **热路径零反射、零排序、零装箱**：订阅走 `Action<T>` 委托直调；注册表以 `Type` 为键、注册期维护有序；分发无 `object[]` 间接层；顶层与重入层都复用迭代缓冲区/死绑定列表（Clear 保留容量，稳态零分配）。空间过滤器的发布者 GameObject/Collider2D 按趟解析一次共享。
 - **可选耗时告警**：预放置实例的 `executionMsLimit`（ms，默认 0 关闭），超阈值输出 Warning；仅顶层分发计时。
+
+## 取消传播与监听调试
+
+- **取消传播**：订阅者调 `e.Cancel(this)` 中止本次分发——`First`/`Last` 两档始终收到（前置校验/收尾清理），`High`/`Medium` 档取消之后的订阅者跳过；`e.NonCancellable()` 让事件免疫取消。每趟分发自动复位取消状态，缓存复用的 SO 参数实例不会串味。用于输入吞噬、伤害减免链、互斥 UI 抢先响应。
+- **公开诊断 API**：`AesirEventDiagnostics`（运行时零 Odin 依赖）提供订阅树查询（`GetSubscriptions` / `GetSubscribers` / `GetSubscriberCount` / `HasSubscribers`）与链路快照（`TraceProduced` 推送 + `GetRecentTraces` 环形缓冲 + `Enabled` / `TraceCapacity` / `ClearTraces`）。**监控数据全部公开**，没装 Odin 的开发者可直接据此自建监视面板。采集默认编辑器/Development Build 开启、正式包关闭，关闭时热路径零分配。
+- **内置窗口**：`Tools/Aesir/Modules/Event Monitor | Event Log | Event Tester`。UI Toolkit 版零 Odin；装 Odin 且开 Aesir Odin 样式时经静态委托路由到 Odin 版（表格 + 即时刷新），功能等价。Tester 仅 Play 模式可触发。
 
 ## SO 资产化（策划/美术零代码配置）
 
@@ -100,16 +114,19 @@ new TickEventArgs().WithFilter(new WithPriority(SubscriberPriority.Medium)).Invo
 ## 坑位
 
 1. **命名要分清**：只作数据载体 → `XxxEventArgs`；自身持监听者且有 `Invoke` 能力 → `XxxEvent`。`AesirEventArgs` 不持有监听者，与 `MiniEvent<T>`（自包含）定位不同。
-2. **退订路径成对**：Attribute 用 `RemoveListener(this)`；Script 用句柄 `Dispose()`。语义上是"每人一条"的场景别混用两种。
-3. **过滤器随事件参数实例走**：`Clone()` 共享同一列表；**缓存复用的参数实例（如 SO 资产）会保留已加的过滤器**，下次发布仍生效。
-4. **`[AesirListener]` 方法签名要能被扫描到**（实例方法、参数类型与事件类型一致）；改方法签名后要重新 `AddListener` 才生效。
+2. **退订用句柄**：`AddListener<T>` 返回的 `AutoRemoveListenerHandle` 在 `OnDisable` 中 `Dispose()`；多个订阅各自持有句柄。拿不到句柄时才用 `RemoveListener<T>(obj)` / `RemoveListener(obj)`（O(n) 冷路径，别放高频路径）。
+3. **过滤器随事件参数实例走**：**缓存复用的参数实例（如 SO 资产）会保留已加的过滤器**，下次发布仍生效。
+4. **callback 参数类型即事件类型**：`AddListener<T>` 的泛型由编译期约束，写错当场编译失败——这是相对旧特性订阅（运行期反射推断）的优势。
 5. **跨场景传数据不要自己造机制**：事件模块 + 共享 Model 就是唯一答案（见 `aesir-scene`）。
+6. **事件链不要复用正在分发的实例**：`e.Invoke(...)` 在 `e` 自己的订阅回调里会被拒绝（报错）；链式反应用新实例或 `AesirTimer.NextFrame`。分发中途也不要增删发布者的 Collider2D（空间过滤按趟缓存）。
 
 ## 设计边界（不要尝试）
 
-不做事件总线/EventChannel、不做元事件（OnEventRaised 等）与 DefaultChannel 频道标签（依赖编辑器工具链，暂缓）。组件内一对一状态通知用 `ObservableValue<T>`；无参数的一次性回调用 `MiniEvent`。
+不做事件总线/EventChannel、不做 DefaultChannel 频道标签（频道只服务于日志过滤，无路由价值）。元事件的调试职责已由公开诊断 API `AesirEventDiagnostics` + 三个内置窗口承担（零 Odin 依赖、数据公开）；不再单独定义 OnEventRaised 等系统事件类型，避免污染业务事件空间。组件内一对一状态通知用 `ObservableValue<T>`；无参数的一次性回调用 `MiniEvent`。
+
+**特性订阅（`[AesirListener]`）已移除，不要尝试恢复**：它只为省几行 AddListener，却引入无缓存的绑定期反射（~50µs/对象）、表达式树编译缓存、O(n) 退订与运行期才发现的类型错误；Script 订阅 + 句柄已覆盖全部场景，且类型安全、零反射。完整裁决见包内 `Documentation~/event-module.md`「为什么只保留 Script 订阅」与私有笔记仓 `decisions/remove-attribute-subscription.md`。
 
 ## 详情与示例
 
-- 完整机制（表达式树优化实测数据、双注册表结构）：包内 `Documentation~/event-module.md`。
+- 完整机制（单注册表结构、性能实测、移除理由）：包内 `Documentation~/event-module.md`。
 - 可运行示例：`Samples/Events/01_KeyPress`（基本发布-订阅）、`02_Filters`（WithTag + InsideCollider2D 双重过滤 / OnlySelf，场景内置对照组）、`03_SOAsset`（SO 资产 + UnityEvent 零代码桥接）。

@@ -4,8 +4,8 @@
 >
 > Thanks for considering contributing! Bug reports, feature requests, documentation improvements, and code contributions are all welcome.
 >
-> 🏠 主仓库：[CNB](https://cnb.cool/runestone-game/AesirFramework)（提交 / tag / 流水线源头）· GitHub 为国际镜像与社区入口——**Issue / PR 都在 GitHub 提**。
-> Primary repo: [CNB](https://cnb.cool/runestone-game/AesirFramework) (source of commits / tags / pipelines) · GitHub is the international mirror and community entry — **file Issues / PRs on GitHub**.
+> 🏠 主仓库：[GitHub](https://github.com/yuumixcode/AesirFramework)（提交 / PR / tag / 流水线源头）· [CNB](https://cnb.cool/runestone-game/AesirFramework) 为国内下载仓（内容由 GitHub CI 自动同步）——**Issue / PR 都在 GitHub 提**。
+> Primary repo: [GitHub](https://github.com/yuumixcode/AesirFramework) (source of commits / PRs / tags / pipelines) · [CNB](https://cnb.cool/runestone-game/AesirFramework) is the mainland-China download repository (auto-synced by GitHub CI) — **file Issues / PRs on GitHub**.
 
 [English](#english) | [中文](#中文)
 
@@ -27,6 +27,7 @@
 - [测试要求](#测试要求)
 - [提交规范](#提交规范)
 - [Pull Request 流程](#pull-request-流程)
+- [迭代检查清单](#迭代检查清单)
 - [问题与帮助](#问题与帮助)
 
 ### 行为准则
@@ -191,13 +192,36 @@ Unity -batchmode -quit -projectPath . \
 - [ ] 提交信息遵循 Conventional Commits
 - [ ] 涉及子包功能变更时，已更新对应子包 `CHANGELOG.md` 的 `[Unreleased]`
 
-#### 主仓库与镜像（PR 如何被合并）
+#### 主仓库与国内下载仓（PR 如何被合并）
 
-主仓库在 [CNB](https://cnb.cool/runestone-game/AesirFramework)，GitHub 是单向自动同步的国际镜像 + Release 出口（CNB 注册需微信实名，国际用户无法使用，故社区入口保留在 GitHub）。**贡献流程不变：照常 Fork GitHub 仓库、向 GitHub `main` 提 PR。**
+主仓库在 [GitHub](https://github.com/yuumixcode/AesirFramework)，[CNB](https://cnb.cool/runestone-game/AesirFramework) 是国内下载仓（直连加速），内容由 GitHub CI 在每次 `main` 推送后自动同步。**贡献流程：Fork GitHub 仓库、向 GitHub `main` 提 PR，维护者直接在 GitHub 合并。**
 
-- 维护者会把你的 PR 分支取到 CNB 侧合并（保留原始提交的 merge 方式），同步回 GitHub 后 PR **自动标记为 Merged**，贡献记录不丢失。
-- 若以 squash / cherry-pick 方式采纳（提交 hash 改变），维护者会手动关闭 PR 并在评论中注明采纳的提交。
-- **维护者纪律**：合并一律在 CNB 侧完成——不要在 GitHub 点 Merge 按钮、不要向 GitHub `main` 直接推送（GitHub 领先会导致单向同步失败）；已发布的 `main` 历史永不改写（禁止 rebase / force-push），否则镜像同步与所有消费者的克隆一并失效。
+- PR 在 GitHub 正常 Review 与 Merge，贡献记录完整保留。
+- **维护者纪律**：CNB 侧零提交——main 与包分支由 GitHub 同步流水线 force 覆盖，CNB 上的直接提交会被冲掉；CNB AI 修复分支经分支详情页「反推此分支到 GitHub」按钮进入 GitHub 后同样走 PR。已发布的 GitHub `main` 历史永不改写（禁止 rebase / force-push），否则所有消费者的克隆一并失效。
+
+### 迭代检查清单
+
+一个功能从分支到提交，按顺序做完下面每一步再开 PR。**代码写完只是开始**——围绕代码的作业（示例、文档、测试）漏了，当下不影响"功能能跑"，却会让用户拿到跑不通的示例或过时的文档。
+
+1. **定边界**：一句话写清这个功能做什么、明确不做什么；先确认能否用现有能力组合出来。
+2. **建分支**：从 `main` 拉 `feat/<name>` / `fix/<name>` / `docs/<name>` / `refactor/<name>`。
+3. **写代码**：运行时逻辑放 `Runtime/<模块>/`，编辑器工具放 `Editor/<模块>/`；公开 API 写中文 XML 注释。
+4. **补示例与测试**：新增公开 API 配一个能 Play 的最小示例；每个新行为补测试，需要真实帧 / `Destroy` / 场景加载的放 PlayMode。
+5. **更新文档**——按改动类型逐项勾：
+
+   | 改了什么 | 必须同步更新 |
+   |---|---|
+   | 公开 API / 行为变更 | 包内 `Documentation~/` 使用文档 + 包根 `README.md` / `README_EN.md` 特性表 + 示例 + 该包 `CHANGELOG.md` 的 `[Unreleased]` |
+   | 新增示例 | `package.json` 的 `samples[]` + `Samples~/` 镜像（含 `.meta`） |
+   | Bug 修复 | 该包 `CHANGELOG.md` `[Unreleased]` 的 Fixed + 回归测试 |
+   | 改 asmdef 或测试 | 无文档变更，但必须重跑全部测试 |
+
+   > 包内只写"当前怎么用"；设计取舍和历史演进不要写进产品文档。示例主位在 `Samples/`，改完用 `python3 .codely-cli/skills/sync-samples/scripts/sync_samples.py --check` 确认镜像零漂移。
+
+6. **跑门禁**：编译 0 error → EditMode 全绿 → 改了运行时行为再跑 PlayMode。
+7. **提交**：一个功能一个 commit，message 说清"为什么"；PR 描述引用相关 Issue。
+
+版本号 bump、根 CHANGELOG 新版本段落、tag 与 Release 由维护者在发版时统一处理，功能 PR **不要**自行改版本号。
 
 ### 问题与帮助
 
@@ -223,6 +247,7 @@ Unity -batchmode -quit -projectPath . \
 - [Testing Requirements](#testing-requirements-1)
 - [Commit Conventions](#commit-conventions-1)
 - [Pull Request Workflow](#pull-request-workflow-1)
+- [Iteration Checklist](#iteration-checklist-1)
 - [Getting Help](#getting-help-1)
 
 ### Code of Conduct
@@ -383,13 +408,36 @@ Unity -batchmode -quit -projectPath . \
 - [ ] Commit messages follow Conventional Commits
 - [ ] Sub-package feature changes have updated the corresponding `CHANGELOG.md` `[Unreleased]` section
 
-#### Primary Repo & Mirror (how PRs get merged)
+#### Primary Repo & Download Mirror (how PRs get merged)
 
-The primary repository lives on [CNB](https://cnb.cool/runestone-game/AesirFramework); GitHub is a one-way auto-synced international mirror and Release outlet (CNB registration requires WeChat real-name verification, unavailable to international users, so the community entry stays on GitHub). **The contribution workflow is unchanged: fork the GitHub repo and open PRs against GitHub `main` as usual.**
+The primary repository lives on [GitHub](https://github.com/yuumixcode/AesirFramework); [CNB](https://cnb.cool/runestone-game/AesirFramework) is the mainland-China download repository (direct access), synced automatically by GitHub CI after every push to `main`. **Contribution workflow: fork the GitHub repo, open PRs against GitHub `main`, and the maintainer merges them directly on GitHub.**
 
-- The maintainer fetches your PR branch and merges it on the CNB side (a merge that preserves your original commits); once synced back, GitHub **automatically marks the PR as Merged** and your contribution credit is kept.
-- If adopted via squash / cherry-pick (commit hashes change), the maintainer closes the PR manually with a comment noting the adopted commit.
-- **Maintainer discipline**: always merge on the CNB side — never click the Merge button on GitHub and never push directly to GitHub `main` (GitHub getting ahead breaks the one-way sync); never rewrite published `main` history (no rebase / force-push), or the mirror sync and every consumer clone breaks.
+- PRs are reviewed and merged on GitHub as usual; your contribution credit is fully preserved.
+- **Maintainer discipline**: zero commits on the CNB side — `main` and the package branches are force-overwritten by the GitHub sync workflow, so direct CNB commits get wiped; CNB AI fix branches reach GitHub via the "push this branch to GitHub" button on the branch page and then go through the same PR flow. Never rewrite published GitHub `main` history (no rebase / force-push), or every consumer clone breaks.
+
+### Iteration Checklist
+
+For one feature from branch to PR, complete the steps below in order. **Finishing the code is only the beginning** — the work around it (samples, docs, tests) does not affect "does it run" right now, but skipping it ships broken samples or stale docs to users.
+
+1. **Set the boundary**: one sentence on what the feature does and, explicitly, what it does *not* do; check first whether existing capabilities can be composed instead.
+2. **Branch**: from `main`, create `feat/<name>` / `fix/<name>` / `docs/<name>` / `refactor/<name>`.
+3. **Write code**: runtime logic in `Runtime/<module>/`, editor tooling in `Editor/<module>/`; add Chinese XML doc comments to public APIs.
+4. **Add samples & tests**: ship a minimal playable sample for each new public API; add tests for every new behavior, placing anything needing real frames / `Destroy` / scene loading in PlayMode.
+5. **Update docs** — check each item by change type:
+
+   | What changed | Must also update |
+   |---|---|
+   | Public API / behavior change | package `Documentation~/` guide + package-root `README.md` / `README_EN.md` feature table + sample + that package's `CHANGELOG.md` `[Unreleased]` |
+   | New sample | `package.json` `samples[]` + `Samples~/` mirror (including `.meta`) |
+   | Bug fix | that package's `CHANGELOG.md` `[Unreleased]` Fixed + a regression test |
+   | asmdef or test change | no doc change, but rerun the full test suite |
+
+   > Package docs describe only "how to use it now"; design rationale and history do not belong in product docs. Samples are authored in `Samples/` — after editing, run `python3 .codely-cli/skills/sync-samples/scripts/sync_samples.py --check` to confirm the mirror has zero drift.
+
+6. **Run the gates**: compile with 0 errors → EditMode all green → PlayMode only if runtime behavior changed.
+7. **Commit**: one feature per commit, message explains "why"; reference the related Issue in the PR description.
+
+Version bumps, the root CHANGELOG version section, tags and Releases are handled by maintainers at release time — feature PRs should **not** change version numbers.
 
 ### Getting Help
 
