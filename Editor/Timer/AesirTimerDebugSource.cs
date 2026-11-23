@@ -37,8 +37,9 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>单次拉取最多保留的行数。</summary>
         internal const int MaxRows = 200;
 
-        readonly List<AbstractTimer> _timers = new List<AbstractTimer>();
         readonly List<AesirTimerSnapshot> _rows = new List<AesirTimerSnapshot>();
+
+        readonly List<AbstractTimer> _timers = new List<AbstractTimer>();
 
         int _frameCounter;
         double _nextRefreshTime;
@@ -156,9 +157,8 @@ namespace Runestone.AesirArchitecture.Editor
                 _rows.Add(AesirTimerSnapshot.Capture(_timers[i]));
             }
 
-            Statistics = new AesirTimerStatistics(registered, running, paused,
-                AesirTimer.CreatedCount, AesirTimer.FinishedCount, AesirTimer.CancelledCount,
-                AesirTimer.PassCount);
+            Statistics = new AesirTimerStatistics(registered, running, paused, AesirTimer.CreatedCount,
+                AesirTimer.FinishedCount, AesirTimer.CancelledCount, AesirTimer.PassCount);
         }
 
         /// <summary>

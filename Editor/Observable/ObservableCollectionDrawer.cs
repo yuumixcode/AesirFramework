@@ -1,6 +1,6 @@
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.UIElements;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Runestone.AesirArchitecture.Editor
@@ -22,7 +22,7 @@ namespace Runestone.AesirArchitecture.Editor
     /// </remarks>
     internal static class ObservableCollectionView
     {
-        internal static VisualElement Create(SerializedProperty property, System.Reflection.FieldInfo fieldInfo)
+        internal static VisualElement Create(SerializedProperty property, FieldInfo fieldInfo)
         {
             var root = new VisualElement();
             root.AddToClassList("aesir-observable-collection");
@@ -39,10 +39,9 @@ namespace Runestone.AesirArchitecture.Editor
 
             if (collection != null)
             {
-                var label = new Label(
-                    $"元素 {ObservableCollectionInspectorUtility.GetCount(collection)}" +
-                    $"　|　变更监听 {ObservableCollectionInspectorUtility.GetChangedListenerCount(collection)}\n" +
-                    ObservableCollectionInspectorUtility.GetItemPreview(collection));
+                var label = new Label($"元素 {ObservableCollectionInspectorUtility.GetCount(collection)}" +
+                                      $"　|　变更监听 {ObservableCollectionInspectorUtility.GetChangedListenerCount(collection)}\n" +
+                                      ObservableCollectionInspectorUtility.GetItemPreview(collection));
                 label.style.whiteSpace = WhiteSpace.Normal;
                 summary.Add(label);
             }
@@ -69,7 +68,7 @@ namespace Runestone.AesirArchitecture.Editor
             }
         }
 
-        static object ResolveCollection(SerializedProperty property, System.Reflection.FieldInfo fieldInfo)
+        static object ResolveCollection(SerializedProperty property, FieldInfo fieldInfo)
         {
             if (fieldInfo == null || property.depth != 0 || property.serializedObject.targetObject == null)
             {

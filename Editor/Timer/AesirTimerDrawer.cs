@@ -1,5 +1,4 @@
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -55,8 +54,7 @@ namespace Runestone.AesirArchitecture.Editor
 
             if (!timer.HasTimer)
             {
-                root.Add(new HelpBox(
-                    "字段未持有实例：AesirTimer 由工厂方法创建（Countdown / Every / NextFrame）",
+                root.Add(new HelpBox("字段未持有实例：AesirTimer 由工厂方法创建（Countdown / Every / NextFrame）",
                     HelpBoxMessageType.Info));
                 return root;
             }

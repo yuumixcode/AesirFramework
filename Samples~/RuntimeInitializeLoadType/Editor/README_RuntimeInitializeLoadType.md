@@ -62,9 +62,11 @@ Then AfterSceneLoad callback is invoked. Here objects of the scene are considere
 
 - **全局状态清理**：清理上一次运行遗留的全局状态
 
-对于运行时脚本，你必须使用属性 [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] 来重置静态字段和事件处理程序。
+对于运行时脚本，你必须使用属性 [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+来重置静态字段和事件处理程序。
 
-对于编辑器脚本，如自定义编辑器窗口或 Inspectors 使用静态代码的脚本，必须使用 [InitializeOnEnterPlayMode] 属性来重置静态字段和事件处理程序。
+对于编辑器脚本，如自定义编辑器窗口或 Inspectors 使用静态代码的脚本，必须使用 [InitializeOnEnterPlayMode]
+属性来重置静态字段和事件处理程序。
 
 官方文档原文：https://docs.unity3d.com/2022.3/Documentation/Manual/DomainReloading.html
 
@@ -211,7 +213,8 @@ RuntimeInitializeOnLoadMethod 的执行有重要影响，理解这些影响对�
 
 - **Reload Scene**（场景重载）：是否重新加载场景，销毁并重建所有场景对象
 
-Enter Play Mode 设置对于五个时机没有影响，无论哪种情况，五个时机的方法都会执行，可以使用 RuntimeInitializeLoadTypeSettings 快捷修改配置进行测试。
+Enter Play Mode 设置对于五个时机没有影响，无论哪种情况，五个时机的方法都会执行，可以使用
+RuntimeInitializeLoadTypeSettings 快捷修改配置进行测试。
 
 ### 常见问题排查
 

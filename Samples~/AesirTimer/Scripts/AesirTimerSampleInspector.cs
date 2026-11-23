@@ -70,8 +70,7 @@ namespace Runestone.AesirArchitecture.Samples
 
             if (!Application.isPlaying)
             {
-                EditorGUILayout.HelpBox(
-                    "计时器只在 Play 模式下由 PlayerLoop 推进：编辑模式没有数据源，这里显示为空闲状态。",
+                EditorGUILayout.HelpBox("计时器只在 Play 模式下由 PlayerLoop 推进：编辑模式没有数据源，这里显示为空闲状态。",
                     MessageType.Info);
             }
 
@@ -97,7 +96,8 @@ namespace Runestone.AesirArchitecture.Samples
             GUILayout.Label(row.State, EditorStyles.miniBoldLabel, GUILayout.Width(110f));
             GUI.contentColor = previousColor;
 
-            var barRect = GUILayoutUtility.GetRect(72f, EditorGUIUtility.singleLineHeight, GUILayout.Width(72f));
+            var barRect =
+                GUILayoutUtility.GetRect(72f, EditorGUIUtility.singleLineHeight, GUILayout.Width(72f));
             EditorGUI.ProgressBar(barRect, row.Progress, $"{row.Progress * 100f:0}%");
 
             GUILayout.Label(row.Detail, EditorStyles.miniLabel);
@@ -111,35 +111,82 @@ namespace Runestone.AesirArchitecture.Samples
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("开始延时")) sample.StartDelay();
-                    if (GUILayout.Button("开始冷却")) sample.StartCooldown();
-                    if (GUILayout.Button("每 N 秒 ×M 次")) sample.StartRepeats();
+                    if (GUILayout.Button("开始延时"))
+                    {
+                        sample.StartDelay();
+                    }
+
+                    if (GUILayout.Button("开始冷却"))
+                    {
+                        sample.StartCooldown();
+                    }
+
+                    if (GUILayout.Button("每 N 秒 ×M 次"))
+                    {
+                        sample.StartRepeats();
+                    }
                 }
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("切换心跳 ∞")) sample.ToggleHeartbeat();
-                    if (GUILayout.Button("下一帧一次")) sample.RunNextFrame();
-                    if (GUILayout.Button("冲刺一次")) sample.TryDash();
+                    if (GUILayout.Button("切换心跳 ∞"))
+                    {
+                        sample.ToggleHeartbeat();
+                    }
+
+                    if (GUILayout.Button("下一帧一次"))
+                    {
+                        sample.RunNextFrame();
+                    }
+
+                    if (GUILayout.Button("冲刺一次"))
+                    {
+                        sample.TryDash();
+                    }
                 }
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("秒表开始/读取")) sample.ToggleStopwatch();
-                    if (GUILayout.Button("区间 3s×0.5s")) sample.StartInterval();
-                    if (GUILayout.Button("频率 4/s")) sample.ToggleFrequency();
+                    if (GUILayout.Button("秒表开始/读取"))
+                    {
+                        sample.ToggleStopwatch();
+                    }
+
+                    if (GUILayout.Button("区间 3s×0.5s"))
+                    {
+                        sample.StartInterval();
+                    }
+
+                    if (GUILayout.Button("频率 4/s"))
+                    {
+                        sample.ToggleFrequency();
+                    }
                 }
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("暂停全部")) sample.PauseAll();
-                    if (GUILayout.Button("恢复全部")) sample.ResumeAll();
+                    if (GUILayout.Button("暂停全部"))
+                    {
+                        sample.PauseAll();
+                    }
+
+                    if (GUILayout.Button("恢复全部"))
+                    {
+                        sample.ResumeAll();
+                    }
                 }
 
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    if (GUILayout.Button("重开冷却")) sample.RestartCooldown();
-                    if (GUILayout.Button("取消全部")) sample.CancelAll();
+                    if (GUILayout.Button("重开冷却"))
+                    {
+                        sample.RestartCooldown();
+                    }
+
+                    if (GUILayout.Button("取消全部"))
+                    {
+                        sample.CancelAll();
+                    }
                 }
             }
         }

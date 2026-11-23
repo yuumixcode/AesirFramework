@@ -15,10 +15,8 @@ namespace Runestone.AesirArchitecture
         /// <param name="seconds">倒计时时长（秒）。零或负值在下一次结算到期。</param>
         /// <param name="onFinished">到期回调，可为 null。</param>
         /// <param name="unscaled">是否使用不受 <c>Time.timeScale</c> 影响的时间源。</param>
-        internal CountdownTimer(float seconds, Action onFinished, bool unscaled)
-            : base(seconds, 1, onFinished, unscaled)
-        {
-        }
+        internal CountdownTimer(float seconds, Action onFinished, bool unscaled) : base(seconds, 1,
+            onFinished, unscaled) { }
 
         /// <inheritdoc />
         protected override bool Advance(float deltaTime, float unscaledDeltaTime)

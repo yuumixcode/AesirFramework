@@ -65,16 +65,17 @@ namespace Runestone.AesirArchitecture.Samples
         /// <summary>面板复用的行缓冲（每次绘制前重算，避免每帧分配）。</summary>
         readonly List<TimerRow> _rows = new List<TimerRow>();
 
-        AesirTimer _delay;
         AesirTimer _cooldown;
-        AesirTimer _repeats;
-        AesirTimer _heartbeat;
-        AesirTimer _stopwatch;
-        AesirTimer _interval;
+
+        AesirTimer _delay;
         AesirTimer _frequency;
-        int _repeatTick;
-        int _intervalTick;
         int _frequencyTick;
+        AesirTimer _heartbeat;
+        AesirTimer _interval;
+        int _intervalTick;
+        int _repeatTick;
+        AesirTimer _repeats;
+        AesirTimer _stopwatch;
 
         void Awake()
         {
@@ -82,6 +83,9 @@ namespace Runestone.AesirArchitecture.Samples
             StartCooldown();
             StartRepeats();
         }
+
+        static bool IsAlive(AesirTimer timer) =>
+            timer != null && !timer.IsFinished && !timer.IsCancelled;
 
         #region 触发动作（Inspector 按钮 / 组件右键菜单）
 
@@ -342,8 +346,8 @@ namespace Runestone.AesirArchitecture.Samples
             }
 
             var state = cooldown.IsPaused ? "冷却中（已暂停）" : "冷却中";
-            return new TimerRow(label, state, $"剩余 {cooldown.Remaining:0.00}s",
-                cooldown.Progress, WaitingColor);
+            return new TimerRow(label, state, $"剩余 {cooldown.Remaining:0.00}s", cooldown.Progress,
+                WaitingColor);
         }
 
         #endregion
@@ -386,8 +390,8 @@ namespace Runestone.AesirArchitecture.Samples
             GUILayout.Box(GUIContent.none, GUILayout.Width(60f), GUILayout.Height(14f));
 
             var rect = GUILayoutUtility.GetLastRect();
-            var fill = new Rect(rect.x + 1f, rect.y + 1f,
-                (rect.width - 2f) * Mathf.Clamp01(progress), rect.height - 2f);
+            var fill = new Rect(rect.x + 1f, rect.y + 1f, (rect.width - 2f) * Mathf.Clamp01(progress),
+                rect.height - 2f);
 
             // 用白纹理着色填充：GUI.DrawRect 是 EditorGUI 的成员，运行时 GUI 没有
             GUI.DrawTexture(fill, Texture2D.whiteTexture, ScaleMode.StretchToFill, false, 0f,
@@ -395,9 +399,6 @@ namespace Runestone.AesirArchitecture.Samples
         }
 
         #endregion
-
-        static bool IsAlive(AesirTimer timer) =>
-            timer != null && !timer.IsFinished && !timer.IsCancelled;
     }
 }
 #endif

@@ -217,11 +217,11 @@ namespace Runestone.AesirArchitecture.Editor
         /// <summary>示例卡片右侧的自定义动作，用于不进主菜单的示例配置入口。</summary>
         public sealed class AesirSampleAction
         {
-            /// <summary>按钮文案。</summary>
-            public string Label;
-
             /// <summary>点击回调。</summary>
             public Action Invoke;
+
+            /// <summary>按钮文案。</summary>
+            public string Label;
         }
 
         static readonly Dictionary<string, AesirSampleAction> ExtraSampleActions =

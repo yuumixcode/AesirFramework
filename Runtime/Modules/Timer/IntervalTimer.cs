@@ -32,11 +32,25 @@ namespace Runestone.AesirArchitecture
         /// <param name="intervalSeconds">触发间隔（秒），必须大于 0。</param>
         /// <param name="onInterval">每次间隔到点时执行的回调。</param>
         /// <param name="unscaled">是否使用不受 <c>Time.timeScale</c> 影响的时间源。</param>
-        internal IntervalTimer(float totalSeconds, float intervalSeconds, Action onInterval, bool unscaled)
-            : base(totalSeconds, -1, onInterval, unscaled)
+        internal IntervalTimer(float totalSeconds, float intervalSeconds, Action onInterval, bool unscaled) :
+            base(totalSeconds, -1, onInterval, unscaled)
         {
             _interval = Mathf.Max(0f, intervalSeconds);
             _nextIntervalAt = _interval > 0f ? totalSeconds - _interval : -1f;
+        }
+
+        /// <summary>还会触发几次间隔事件（0 表示间隔非法或已结束，未结束时为正数）。</summary>
+        public override int RemainingExecutions
+        {
+            get
+            {
+                if (IsFinished || IsCancelled || _nextIntervalAt < 0f || _interval <= 0f)
+                {
+                    return 0;
+                }
+
+                return Mathf.FloorToInt(_nextIntervalAt / _interval) + 1;
+            }
         }
 
         /// <inheritdoc />
@@ -87,20 +101,6 @@ namespace Runestone.AesirArchitecture
         {
             base.Restart();
             _nextIntervalAt = _interval > 0f ? DurationValue - _interval : -1f;
-        }
-
-        /// <summary>还会触发几次间隔事件（0 表示间隔非法或已结束，未结束时为正数）。</summary>
-        public override int RemainingExecutions
-        {
-            get
-            {
-                if (IsFinished || IsCancelled || _nextIntervalAt < 0f || _interval <= 0f)
-                {
-                    return 0;
-                }
-
-                return Mathf.FloorToInt(_nextIntervalAt / _interval) + 1;
-            }
         }
     }
 }

@@ -15,7 +15,8 @@ namespace Runestone.AesirArchitecture
     ///     形态判断（<c>_nextFrameMode</c> / <c>_totalTicks</c>）与调度引擎、状态查询挤在一起，新增形态只能继续
     ///     往同一个类里加分支。本类用<see href="https://en.wikipedia.org/wiki/Template_method_pattern">模板方法</see>
     ///     把"何时推进、何时到期"的引擎固定下来，把"怎么推进"下沉给子类（OCP 对扩展开放）。
-    ///     设计思路参考了开源项目 <see href="https://github.com/adammyhre/Unity-Improved-Timers">adammyhre/Unity-Improved-Timers</see>
+    ///     设计思路参考了开源项目
+    ///     <see href="https://github.com/adammyhre/Unity-Improved-Timers">adammyhre/Unity-Improved-Timers</see>
     ///     的抽象基类 + 具体 Timer 分层，但结算引擎与语义仍是本框架自有实现。
     ///     </para>
     ///     <para>

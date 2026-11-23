@@ -1,5 +1,3 @@
-using System;
-
 namespace Runestone.AesirArchitecture
 {
     /// <summary>
@@ -18,20 +16,15 @@ namespace Runestone.AesirArchitecture
     /// </remarks>
     public sealed class StopwatchTimer : AesirTimer
     {
-        float _elapsed;
-
         /// <summary>创建一个从零开始的正计时秒表。</summary>
         /// <param name="unscaled">是否使用不受 <c>Time.timeScale</c> 影响的时间源。</param>
-        internal StopwatchTimer(bool unscaled)
-            : base(0f, -1, null, unscaled)
-        {
-        }
+        internal StopwatchTimer(bool unscaled) : base(0f, -1, null, unscaled) { }
 
         /// <summary>自创建（或最近一次 <see cref="AbstractTimer.Restart" />）起累计的秒数。</summary>
-        public float Elapsed => _elapsed;
+        public float Elapsed { get; private set; }
 
         /// <summary>秒表没有终点，剩余时间展示为已走过的秒数。</summary>
-        public override float Remaining => _elapsed;
+        public override float Remaining => Elapsed;
 
         /// <summary>秒表没有"已走完比例"，恒为 0。</summary>
         public override float Progress => 0f;
@@ -43,7 +36,7 @@ namespace Runestone.AesirArchitecture
         /// <remarks>只累计时间、永不到期；取消由调用方显式发起。</remarks>
         protected override bool Advance(float deltaTime, float unscaledDeltaTime)
         {
-            _elapsed += SelectDelta(deltaTime, unscaledDeltaTime);
+            Elapsed += SelectDelta(deltaTime, unscaledDeltaTime);
             return false;
         }
 
@@ -55,7 +48,7 @@ namespace Runestone.AesirArchitecture
         public override void Restart()
         {
             base.Restart();
-            _elapsed = 0f;
+            Elapsed = 0f;
         }
     }
 }
