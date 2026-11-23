@@ -1,0 +1,120 @@
+/* Scripting API 页面样式 —— 参考 Unity ScriptReference / DocFX 的克制表格风格。
+   仅作用于 Script Doc Generator 生成页面注入的样式锚点:
+   .api-summary-table / .api-params-table / .api-returns-table
+   (元信息块为主题原生无标题 note 警示框,无需定制) */
+
+/* API 参考页整体紧凑化:类型页(H1 为 `类型名` 代码形式)与命名空间索引页(含概览表)
+   正文缩小一档,标题随 em 比例同步缩放 */
+.md-typeset:has(> h1 > code),
+.md-typeset:has(.api-summary-table) {
+  font-size: 0.72rem;
+}
+
+:root {
+  --aesir-api-border: var(--aesir-line);
+  --aesir-api-header-bg: var(--aesir-surface);
+  --aesir-api-row-hover: var(--aesir-gold-wash);
+}
+
+[data-md-color-scheme="slate"] {
+  --aesir-api-border: var(--aesir-line);
+  --aesir-api-header-bg: var(--aesir-surface);
+  --aesir-api-row-hover: var(--aesir-gold-wash);
+}
+
+/* 概览 / 参数 / 返回值表格:全宽细边框,表头浅底,行 hover。
+   class 位于包裹 div(attr_list 对表格无效,改用 md_in_html 包裹),样式作用于内部 table */
+.md-typeset .api-summary-table,
+.md-typeset .api-params-table,
+.md-typeset .api-returns-table {
+  margin: 0.6rem 0 1.5rem;
+}
+.md-typeset .api-summary-table table,
+.md-typeset .api-params-table table,
+.md-typeset .api-returns-table table {
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--aesir-api-border);
+  border-radius: 0.35rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  font-size: 0.66rem;
+}
+
+.md-typeset .api-summary-table table th,
+.md-typeset .api-params-table table th,
+.md-typeset .api-returns-table table th {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--aesir-api-border);
+  background: var(--aesir-api-header-bg);
+  font-weight: 700;
+  text-align: left;
+}
+
+.md-typeset .api-summary-table table td,
+.md-typeset .api-params-table table td,
+.md-typeset .api-returns-table table td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid var(--aesir-api-border);
+  vertical-align: top;
+}
+
+.md-typeset .api-summary-table table tr:last-child td,
+.md-typeset .api-params-table table tr:last-child td,
+.md-typeset .api-returns-table table tr:last-child td {
+  border-bottom: none;
+}
+
+.md-typeset .api-summary-table table tbody tr:hover,
+.md-typeset .api-params-table table tbody tr:hover,
+.md-typeset .api-returns-table table tbody tr:hover {
+  background: var(--aesir-api-row-hover);
+}
+
+/* 名称列:成员名等宽字体,允许长签名换行 */
+.md-typeset .api-summary-table table td:first-child,
+.md-typeset .api-params-table table td:first-child,
+.md-typeset .api-returns-table table td:first-child {
+  font-family: var(--md-code-font, monospace);
+  font-size: 0.64rem;
+  word-break: break-word;
+}
+
+/* 成员详情小节(constructor-/field-/property-/event-/method- 锚点标题):
+   与上方概览内容拉开间距,声明代码块贴紧标题 */
+.md-typeset h3[id^="constructor-"],
+.md-typeset h3[id^="field-"],
+.md-typeset h3[id^="property-"],
+.md-typeset h3[id^="event-"],
+.md-typeset h3[id^="method-"] {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--aesir-api-border);
+  font-family: var(--md-code-font, monospace);
+  font-size: 0.92rem;
+}
+
+.md-typeset h3[id^="constructor-"] + .highlight,
+.md-typeset h3[id^="field-"] + .highlight,
+.md-typeset h3[id^="property-"] + .highlight,
+.md-typeset h3[id^="event-"] + .highlight,
+.md-typeset h3[id^="method-"] + .highlight {
+  margin-top: 0.4rem;
+}
+
+/* 语法块:声明长行可横向滚动,避免撑破布局 */
+.md-typeset .highlight pre {
+  overflow-x: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .md-typeset .api-summary-table table,
+  .md-typeset .api-params-table table,
+  .md-typeset .api-returns-table table {
+    font-size: 0.62rem;
+  }
+}
+
+/* 注:API 页与其他页面共用同一版式规范(61rem 栅格、侧栏宽度、nav/TOC 字体),
+   版式规则集中在 extra.css 全站段;本文件只管 API 内容排版(表格/元信息/锚点标题)。 */

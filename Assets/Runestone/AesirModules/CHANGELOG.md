@@ -31,6 +31,8 @@
 
 ### Changed
 
+- **文档站 URL 更新为同仓新址** — `package.json` 的 `documentationUrl` / `changelogUrl` 由
+  `…/AesirFramework-Site/…` 改为 `…/AesirFramework/…`（产品站并入主仓；随下次发版到达用户，期间旧地址跳转兜底）。
 - **事件模块分发性能与结构精简（含破坏性变更，功能面不变）** — 订阅/退订、4 档优先级、过滤器、取消传播、死引用清理、SO
   资产化与诊断 API 全部保留，内部按"热路径零排序、零间接层、零冗余解析"重构：
     - **注册表改 `Type` 键 + 注册期有序插入**：`Dictionary<Type, List<BindingInfo>>` 在注册时维护 Priority

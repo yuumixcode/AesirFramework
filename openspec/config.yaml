@@ -1,0 +1,10 @@
+schema: gamespec-code
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  AesirFramework —— Unity / 团结引擎框架 monorepo，发布 RAA（cn.runestone.aesir.architecture）
+  与 RAM（cn.runestone.aesir.modules）两个 UPM 包。项目约定以 CODELY.md 为真源：
+  中文 XML 注释与提交信息、Conventional Commits、版本 tag 一旦发布不可变、
+  门禁 = sync_samples --check / 编译预热 / EditMode / PlayMode / zensical build --strict（docs 变更时）。
+  本 openspec/ 目录承载仓库级工程变更（架构 / CI / 文档站 / 工具链），不承载游戏内容变更。
