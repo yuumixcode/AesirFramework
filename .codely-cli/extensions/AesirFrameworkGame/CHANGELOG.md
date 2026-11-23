@@ -2,6 +2,12 @@
 
 本扩展的版本号在 `gemini-extension.json` 的 `version`。技能正文的唯一主位是本扩展 `skills/`，包内不再有副本。
 
+## Unreleased
+
+### 变更
+
+- **Zensical 安装门禁**：`aesir-project-structure` 技能明确——涉及 Zensical 前先问用户是否需要；需要则由用户在**项目内 venv** 与**项目内 uv** 之间二选一，**禁止全局安装**与复用机器已有的全局 `zensical`（CI 一次性 runner 不在此限）。展开参考给出两套锁 `0.1.1` 的命令与禁止清单。规格见 `openspec/changes/zensical-install-gate/`。
+
 ## 1.5.0 — 2026-11-23
 
 新增保存模块技能（aesir-save），与框架仓 RAM SaveModule 同步（规格与验收口径见框架仓库 `openspec/changes/add-save-module/`）。

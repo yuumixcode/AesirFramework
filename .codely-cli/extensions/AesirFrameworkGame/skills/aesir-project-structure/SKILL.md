@@ -89,7 +89,9 @@ Unity 官方要求纳入版本控制的只有 **`Assets` + `Packages` + `Project
 
 **小团队落地顺序**：`CODELY.md + README.md + docs/index.md`（半天，收益最大）→ 一页 GDD → style-guide 三条 → ARCHITECTURE + conventions → 用到再建 adr/build/workflow。50 页 GDD 的宿命是写完没人看。
 
-`docs/` 完整分类、小写目录的理由、Zensical 建站与同仓 GitHub Pages 部署（含 `zensical.toml` 与 `deploy.yml` 可抄示例）见 [references/docs-and-site.md](references/docs-and-site.md)。
+**Zensical 安装门禁（先记结论）**：涉及 Zensical 前 MUST 先问用户是否真的需要；需要则由用户在**项目内 venv** 与**项目内 uv** 之间二选一，**禁止全局安装**（含 `pip install zensical` / `pipx` / `uv tool`）与复用机器已有的全局 `zensical`。
+
+`docs/` 完整分类、小写目录的理由、Zensical 建站与同仓 GitHub Pages 部署（含 `zensical.toml` 与 `deploy.yml` 可抄示例、两套隔离命令与禁止清单）见 [references/docs-and-site.md](references/docs-and-site.md)。
 
 ## 与 Aesir 工作流的衔接
 
