@@ -18,7 +18,7 @@ namespace Runestone.AesirModules.Tests.Editor
     /// <summary>
     /// Event Module 分发增强的 EditMode 测试：
     /// 订阅者过滤器（ISubscriberFilter + 五个内建过滤器）、死引用清理、
-    /// 性能监控（executionMsLimit）、AesirEventArgsSO 资产化与 [AesirListener] AllowMultiple。
+    /// 性能监控（executionMsLimit）、AesirEventArgsSO 资产化与按对象退订 API。
     /// <para>
     /// 测试自建 EventModule 实例，TearDown 全量销毁创建的 GameObject / 资产 / 附加场景，
     /// 避免 refresh 时污染打开的场景。
@@ -26,6 +26,24 @@ namespace Runestone.AesirModules.Tests.Editor
     /// </summary>
     public class EventModuleTests
     {
+        #region 非泛型订阅（按参数实例推断类型）
+
+        [Test]
+        public void AddListener_NonGeneric_RoutesByRuntimeType()
+        {
+            var subscriber = new object();
+            var hits = 0;
+            var handle = EventModule.AddListener(subscriber, new TestArgsA(), e => hits++);
+
+            new TestArgsA().Invoke(subscriber);
+            new TestArgsB().Invoke(subscriber);
+
+            Assert.AreEqual(1, hits, "非泛型订阅应按参数实例的运行期类型路由，不收其他类型");
+            handle.Dispose();
+        }
+
+        #endregion
+
         #region 测试事件类型
 
         [Serializable]
@@ -77,7 +95,7 @@ namespace Runestone.AesirModules.Tests.Editor
             _module = NewGameObject("TestEventModule").AddComponent<EventModule>();
 
             // EditMode 下 AddComponent 不触发 Awake，静态单例不会被赋值；而用例经静态门面
-            // （EventModule.AddListener / AesirEventArgs.Invoke）操作、又断言实例字段（DynamicBindings 等），
+            // （EventModule.AddListener / AesirEventArgs.Invoke）操作、又断言实例字段（Bindings 等），
             // 若宿主工程里存在预放置的 EventModule，Instance 会解析到别人 —— 显式接管以消除该环境耦合。
             ModuleInstanceField.SetValue(null, _module);
             Assert.AreSame(_module, EventModule.Instance, "测试应独占静态单例");
@@ -373,8 +391,7 @@ namespace Runestone.AesirModules.Tests.Editor
             LogAssert.Expect(LogType.Warning, new Regex("已清理 1 个已销毁订阅者"));
             new TestEventArgs().Invoke(_module.gameObject);
 
-            var key = AesirEventUtility.GetEventBindingKey<TestEventArgs>();
-            Assert.IsFalse(_module.DynamicBindings.ContainsKey(key), "死绑定应已从注册表移除");
+            Assert.IsFalse(_module.Bindings.ContainsKey(typeof(TestEventArgs)), "死绑定应已从注册表移除");
         }
 
         [Test]
@@ -391,31 +408,7 @@ namespace Runestone.AesirModules.Tests.Editor
             // 第二次发布：注册表已清理，不应再次警告
             new TestEventArgs().Invoke(_module.gameObject);
 
-            var key = AesirEventUtility.GetEventBindingKey<TestEventArgs>();
-            Assert.IsFalse(_module.DynamicBindings.ContainsKey(key));
-        }
-
-        class AttrDeadSubscriber : MonoBehaviour
-        {
-            [AesirListener(typeof(TestEventArgs))]
-            void OnTest(TestEventArgs e) { }
-        }
-
-        [Test]
-        public void DeadSubscriber_AttributeTrack_IsRemovedFromRegistry()
-        {
-            var subscriber = NewGameObject("AttrDead").AddComponent<AttrDeadSubscriber>();
-            EventModule.AddListener(subscriber);
-
-            var key = AesirEventUtility.GetEventBindingKey<TestEventArgs>();
-            Assert.IsTrue(_module.AttributeBindings.ContainsKey(key), "前置：Attribute 轨应有绑定");
-
-            Object.DestroyImmediate(subscriber.gameObject);
-
-            LogAssert.Expect(LogType.Warning, new Regex("已清理 1 个已销毁订阅者"));
-            new TestEventArgs().Invoke(_module.gameObject);
-
-            Assert.IsFalse(_module.AttributeBindings.ContainsKey(key), "Attribute 轨死绑定应被清理");
+            Assert.IsFalse(_module.Bindings.ContainsKey(typeof(TestEventArgs)));
         }
 
         #endregion
@@ -507,132 +500,6 @@ namespace Runestone.AesirModules.Tests.Editor
 
         #endregion
 
-        #region [AesirListener] AllowMultiple
-
-        class MultiListenerSubscriber
-        {
-            public int Hits;
-
-            [AesirListener(typeof(TestArgsA))]
-            [AesirListener(typeof(TestArgsB))]
-            void OnAny(AesirEventArgs e)
-            {
-                Hits++;
-            }
-        }
-
-        [Test]
-        public void AesirListener_AllowMultiple_OneMethodListensToBothEventTypes()
-        {
-            var subscriber = new MultiListenerSubscriber();
-            EventModule.AddListener(subscriber);
-
-            new TestArgsA().Invoke(_module.gameObject);
-            new TestArgsB().Invoke(_module.gameObject);
-
-            Assert.AreEqual(2, subscriber.Hits, "同一方法的多特性订阅应分别命中两种事件");
-
-            EventModule.RemoveListener(subscriber);
-        }
-
-        #endregion
-
-        #region 性能特征（反射优化锁定）
-
-        [Test]
-        public void GetEventBindingKey_Cached_SameStringInstancePerType()
-        {
-            var key1 = AesirEventUtility.GetEventBindingKey(new TestEventArgs());
-            var key2 = AesirEventUtility.GetEventBindingKey(new TestEventArgs());
-            var key3 = AesirEventUtility.GetEventBindingKey<TestEventArgs>();
-
-            Assert.AreSame(key1, key2, "同类型应复用缓存的键实例（热路径零字符串分配）");
-            Assert.AreSame(key2, key3, "实例版与泛型版应命中同一缓存");
-            Assert.AreEqual(typeof(TestEventArgs).AssemblyQualifiedName, key1);
-            Assert.AreNotSame(key1, AesirEventUtility.GetEventBindingKey<TestArgsA>(), "不同事件类型的键应各自缓存");
-        }
-
-        class PerfTarget
-        {
-            public long Counter;
-
-            public void Handle(TestEventArgs e)
-            {
-                Counter++;
-            }
-        }
-
-        [Test]
-        public void CompiledDelegate_InvokeIsFasterThanReflectionInvoke()
-        {
-            const int iterations = 200_000;
-            var target = new PerfTarget();
-            var method = typeof(PerfTarget).GetMethod(nameof(PerfTarget.Handle),
-                BindingFlags.Instance | BindingFlags.Public);
-            var args = new object[] { new TestEventArgs() };
-
-            // 走生产路径：StaticBindingInfo 注册期的表达式树编译委托
-            var binding = new StaticBindingInfo(AesirEventUtility.GetEventBindingKey<TestEventArgs>(), method,
-                target, SubscriberPriority.Medium);
-
-            // 预热 JIT，避免首次编译/解析成本计入
-            for (var i = 0; i < 1000; i++)
-            {
-                binding.Invoke(args);
-                method.Invoke(target, args);
-            }
-
-            target.Counter = 0;
-            var stopwatch = Stopwatch.StartNew();
-            for (var i = 0; i < iterations; i++)
-            {
-                binding.Invoke(args);
-            }
-
-            stopwatch.Stop();
-            var compiledMs = stopwatch.Elapsed.TotalMilliseconds;
-            Assert.AreEqual(iterations, target.Counter, "编译委托应正确调用目标方法");
-
-            stopwatch.Restart();
-            for (var i = 0; i < iterations; i++)
-            {
-                method.Invoke(target, args);
-            }
-
-            stopwatch.Stop();
-            var reflectionMs = stopwatch.Elapsed.TotalMilliseconds;
-            Assert.AreEqual(iterations * 2, target.Counter, "反射调用应正确调用目标方法");
-            Assert.Less(compiledMs, reflectionMs,
-                $"表达式树编译委托应快于 MethodInfo.Invoke（compiled={compiledMs:F2}ms, " +
-                $"reflection={reflectionMs:F2}ms）");
-        }
-
-        class InferredSubscriber
-        {
-            public int Hits;
-
-            [AesirListener]
-            void OnTest(TestEventArgs e)
-            {
-                Hits++;
-            }
-        }
-
-        [Test]
-        public void Bind_InfersEventType_FromFirstParameter()
-        {
-            var subscriber = new InferredSubscriber();
-            EventModule.AddListener(subscriber);
-
-            new TestEventArgs().Invoke(_module.gameObject);
-
-            Assert.AreEqual(1, subscriber.Hits, "未显式指定类型时应从方法首参推断事件类型");
-
-            EventModule.RemoveListener(subscriber);
-        }
-
-        #endregion
-
         #region 重入分发（回调内同步发布事件）
 
         [Test]
@@ -682,34 +549,25 @@ namespace Runestone.AesirModules.Tests.Editor
         }
 
         [Test]
-        public void ReentrantDispatch_SharedArgsInstance_OuterTailReceivesOuterSender()
+        public void ReentrantDispatch_SameArgsInstance_RejectedFailFast()
         {
-            // 07 号报告点名过的缺陷场景：**同一个**参数实例被内层重入分发覆写 Sender。
-            // 先前的用例内外层各 new 一个实例，两个实例的 Sender 互不影响 —— 断言在校正逻辑
-            // 存在与不存在时都成立（假绿）。此处显式复用同一实例，才能真正锁住 EventModule.cs 的逐订阅者校正。
+            // 分发约定：同一参数实例在分发期间不得被再次发布——低概率场景以 fail-fast 拒绝
+            // 替代逐订阅者 Sender 校正兜底。跨实例的事件链安全由本区域其余用例锁定；
+            // 拒绝后实例不被污染（下一趟可正常发布）由 ReusedEventArgs_ResetCancellationEachTopLevelDispatch 锁定
             var publisher = NewGameObject("SharedArgsPublisher");
             var shadowSender = NewGameObject("ShadowSender");
             var received = new List<object>();
-            var depth = 0;
             var shared = new TestEventArgs();
 
-            EventModule.AddListener<TestEventArgs>(publisher, e =>
-            {
-                depth++;
-                if (depth == 1)
-                {
-                    // 复用同一实例、换发布者再发一次（depth 守卫防无限递归）
-                    e.Invoke(shadowSender);
-                }
-            });
+            EventModule.AddListener<TestEventArgs>(publisher, e => e.Invoke(shadowSender));
             EventModule.AddListener<TestEventArgs>(_module.gameObject, e => received.Add(e.Sender));
 
             var outerSender = NewGameObject("OuterSender");
+            LogAssert.Expect(LogType.Error, new Regex("禁止重入发布同一实例"));
             shared.Invoke(outerSender);
 
-            Assert.AreEqual(2, received.Count, "外层与内层各命中一次");
-            Assert.AreSame(shadowSender, received[0], "内层分发读到内层发布者");
-            Assert.AreSame(outerSender, received[1], "共享参数实例被内层覆写 Sender 后，外层遍历必须逐订阅者校正回外层发布者");
+            Assert.AreEqual(1, received.Count, "同实例重入应被拒绝，只有外层分发命中");
+            Assert.AreSame(outerSender, received[0], "拒绝后外层 Sender 不应被内层发布者覆写");
         }
 
         [Test]
@@ -819,37 +677,92 @@ namespace Runestone.AesirModules.Tests.Editor
             Assert.AreEqual(new[] { 1, 2, 3 }, order.ToArray(), "同优先级应按注册顺序稳定执行");
         }
 
-        class CrossTrackAttrSubscriber
-        {
-            readonly List<string> _calls;
-
-            public CrossTrackAttrSubscriber(List<string> calls) => _calls = calls;
-
-            [AesirListener(typeof(TestEventArgs), SubscriberPriority.High)]
-            void OnHigh(TestEventArgs e) => _calls.Add("attr-high");
-
-            [AesirListener(typeof(TestEventArgs), SubscriberPriority.Last)]
-            void OnLast(TestEventArgs e) => _calls.Add("attr-last");
-        }
-
         [Test]
-        public void Dispatch_CrossTrack_FullPriorityOrder()
+        public void Dispatch_FullPriorityOrder()
         {
             var calls = new List<string>();
-            var attrSubscriber = new CrossTrackAttrSubscriber(calls);
-            EventModule.AddListener(attrSubscriber);
+            var go = NewGameObject("PriorityOrder");
 
-            var go = NewGameObject("Dyn");
-            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("dyn-first"), SubscriberPriority.First);
-            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("dyn-medium"),
+            var h1 = EventModule.AddListener<TestEventArgs>(go, e => calls.Add("first"),
+                SubscriberPriority.First);
+            var h2 = EventModule.AddListener<TestEventArgs>(go, e => calls.Add("high"),
+                SubscriberPriority.High);
+            var h3 = EventModule.AddListener<TestEventArgs>(go, e => calls.Add("medium"),
                 SubscriberPriority.Medium);
+            var h4 = EventModule.AddListener<TestEventArgs>(go, e => calls.Add("last"),
+                SubscriberPriority.Last);
 
             new TestEventArgs().Invoke(_module.gameObject);
 
-            Assert.AreEqual(new[] { "dyn-first", "attr-high", "dyn-medium", "attr-last" }, calls.ToArray(),
-                "Attribute+Dynamic 合并后应按 First→High→Medium→Last 全序执行");
+            Assert.AreEqual(new[] { "first", "high", "medium", "last" }, calls.ToArray(),
+                "应按 First→High→Medium→Last 全序执行");
 
-            EventModule.RemoveListener(attrSubscriber);
+            h1.Dispose();
+            h2.Dispose();
+            h3.Dispose();
+            h4.Dispose();
+        }
+
+        [Test]
+        public void Dispatch_PriorityTiers_RegisteredOutOfOrder_StillSorted()
+        {
+            // 注册期有序插入的插入路径（顺序注册只走追加路径，由上一用例覆盖）：
+            // 乱序注册 + 同档交错，仍须全序执行且同档按注册顺序
+            var go = NewGameObject("OutOfOrder");
+            var calls = new List<string>();
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("last"), SubscriberPriority.Last);
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("medium1"), SubscriberPriority.Medium);
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("first"), SubscriberPriority.First);
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("high"), SubscriberPriority.High);
+            EventModule.AddListener<TestEventArgs>(go, e => calls.Add("medium2"), SubscriberPriority.Medium);
+
+            new TestEventArgs().Invoke(go);
+
+            Assert.AreEqual(new[] { "first", "high", "medium1", "medium2", "last" }, calls.ToArray(),
+                "乱序注册仍应按优先级全序执行，同档按注册顺序");
+        }
+
+        #endregion
+
+        #region 按对象退订（无句柄外部解绑）
+
+        [Test]
+        public void RemoveListener_OfEventType_RemovesOnlyThatTypeForSubscriber()
+        {
+            var go = NewGameObject("RemoveByType");
+            var aHits = 0;
+            var bHits = 0;
+            EventModule.AddListener<TestArgsA>(go, e => aHits++);
+            EventModule.AddListener<TestArgsB>(go, e => bHits++);
+
+            // 退订方无句柄：只退 TestArgsA，TestArgsB 应保留
+            EventModule.RemoveListener<TestArgsA>(go);
+
+            new TestArgsA().Invoke(_module.gameObject);
+            new TestArgsB().Invoke(_module.gameObject);
+
+            Assert.AreEqual(0, aHits, "指定事件类型的订阅应被移除");
+            Assert.AreEqual(1, bHits, "其它事件类型的订阅不受影响");
+        }
+
+        [Test]
+        public void RemoveListener_OfSubscriber_RemovesAllItsSubscriptions()
+        {
+            var go = NewGameObject("RemoveAll");
+            var hits = 0;
+            var otherHits = 0;
+            EventModule.AddListener<TestArgsA>(go, e => hits++);
+            EventModule.AddListener<TestArgsB>(go, e => hits++);
+            EventModule.AddListener<TestArgsA>(_module.gameObject, e => otherHits++);
+
+            // 退订方无句柄：批量退该对象全部订阅
+            EventModule.RemoveListener(go);
+
+            new TestArgsA().Invoke(_module.gameObject);
+            new TestArgsB().Invoke(_module.gameObject);
+
+            Assert.AreEqual(0, hits, "该对象的全部订阅应被移除");
+            Assert.AreEqual(1, otherHits, "其它对象的订阅不受影响");
         }
 
         #endregion
