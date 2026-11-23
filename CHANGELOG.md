@@ -5,6 +5,18 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Fixed
+
+- **Getting Started 窗口文档站死链** — 工具条 `DocsUrl` 指向早已弃用的 `AesirFramework-Docs` 地址（404），
+  现统一为同仓文档站 `https://yuumixcode.github.io/AesirFramework/`。
+
+### Changed
+
+- **文档站 URL 更新为同仓新址** — `package.json` 的 `documentationUrl` / `changelogUrl` 由
+  `…/AesirFramework-Site/…` 改为 `…/AesirFramework/…`（产品站并入主仓；随下次发版到达用户，期间旧地址跳转兜底）。
+
 ## [0.34.1] - 2026-11-20
 
 ### Fixed
