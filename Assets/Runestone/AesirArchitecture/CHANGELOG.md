@@ -9,239 +9,688 @@
 
 ### Fixed
 
-- **恢复 PlayMode 测试程序集的 Odin 预编译引用** — `fdc5724b` 误删了 `Runestone.AesirArchitecture.Tests.asmdef` 的 `Sirenix.*.dll` `precompiledReferences`，而 `AesirMonoBehaviour` 的基类链在 Odin 环境下指向 `SerializedMonoBehaviour`，测试一碰即 `CS0012`（引用了未定义程序集的类型）。现补回 `Sirenix.OdinInspector.Attributes.dll` / `Sirenix.Serialization.dll` / `Sirenix.Utilities.dll`。对不存在程序集的预编译引用会被 Unity 静默忽略，故保留引用在「有 / 无 Odin」两种环境下都成立；测试只在本仓开发用、不随包分发，不受「运行时零 Odin 依赖」约束。**无运行时代码变更。**
+- **恢复 PlayMode 测试程序集的 Odin 预编译引用** — `fdc5724b` 误删了
+  `Runestone.AesirArchitecture.Tests.asmdef` 的 `Sirenix.*.dll` `precompiledReferences`，而
+  `AesirMonoBehaviour` 的基类链在 Odin 环境下指向 `SerializedMonoBehaviour`，测试一碰即 `CS0012`
+  （引用了未定义程序集的类型）。现补回 `Sirenix.OdinInspector.Attributes.dll` / `Sirenix.Serialization.dll` /
+  `Sirenix.Utilities.dll`。对不存在程序集的预编译引用会被 Unity 静默忽略，故保留引用在「有 / 无
+  Odin」两种环境下都成立；测试只在本仓开发用、不随包分发，不受「运行时零 Odin 依赖」约束。**无运行时代码变更。**
 
 ## [0.34.0] - 2026-11-19
 
 ### Added
 
-- **`Preferences → Aesir` 偏好设置页 + Editor 专属样式配置 SO** — Odin 样式开关从 `Tools/Aesir/Use Odin Inspector Style` 菜单迁入统一的 Preferences 页（`AesirInspectorStyleSettingsProvider`），偏好值由 `Editor/Common/InspectorStyle/AesirInspectorStyleSettingsSO`（`ScriptableSingleton`，只 Editor 读取、不进构建）持有，与场景模块 `SceneModuleConfigSO`（`Resources` 下、随构建分发的运行时配置）成对：前者管"编辑器怎么显示"，后者管"游戏怎么加载场景"，职责不交叉。`AesirInspectorStyleSettings.UseOdin` 保持为唯一门面，既有 5 处消费点（Getting Started / Timer Debugger / Update / Scene Settings / ObservableValue Processor）零改动。**UI Toolkit 实现，无 UXML/USS 资产**。Getting Started 窗口共享样式 `AesirGetStarted.uss` 的组织方式（设计令牌分层 / BEM 命名 / 微交互）参考开源项目 [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame)（MIT，学习致谢）；仅借鉴组织方式，配色保持 Unity 原生主题，非移植
-- **Getting Started 示例卡片右侧自定义动作入口** — `AesirGetStartedService` 新增 `RegisterExtraSampleAction(relativeDir, label, Action)`：示例自己的编辑器程序集在 `[InitializeOnLoadMethod]` 注册，核心编辑器程序集不反向引用示例程序集。UI Toolkit 版与 Odin 版卡片都据此渲染按钮。`RuntimeInitializeLoadType` 示例的菜单项 `Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType` 随之移除，改由该示例卡片右侧的「初始化时机设置」按钮打开（`Samples/` 与 `Samples~/` 镜像同步）；`package.json` 描述、包 README（中英）与 CODELY.md 同步改写
+- **`Preferences → Aesir` 偏好设置页 + Editor 专属样式配置 SO** — Odin 样式开关从
+  `Tools/Aesir/Use Odin Inspector Style` 菜单迁入统一的 Preferences 页（`AesirInspectorStyleSettingsProvider`
+  ），偏好值由 `Editor/Common/InspectorStyle/AesirInspectorStyleSettingsSO`（`ScriptableSingleton`，只 Editor
+  读取、不进构建）持有，与场景模块 `SceneModuleConfigSO`（`Resources`
+  下、随构建分发的运行时配置）成对：前者管"编辑器怎么显示"，后者管"游戏怎么加载场景"，职责不交叉。
+  `AesirInspectorStyleSettings.UseOdin` 保持为唯一门面，既有 5 处消费点（Getting Started / Timer Debugger /
+  Update / Scene Settings / ObservableValue Processor）零改动。**UI Toolkit 实现，无 UXML/USS 资产**。Getting
+  Started 窗口共享样式 `AesirGetStarted.uss` 的组织方式（设计令牌分层 / BEM 命名 /
+  微交互）参考开源项目 [HinataYoki/YokiFrame](https://github.com/HinataYoki/YokiFrame)（MIT，学习致谢）；仅借鉴组织方式，配色保持
+  Unity 原生主题，非移植
+- **Getting Started 示例卡片右侧自定义动作入口** — `AesirGetStartedService` 新增
+  `RegisterExtraSampleAction(relativeDir, label, Action)`：示例自己的编辑器程序集在 `[InitializeOnLoadMethod]`
+  注册，核心编辑器程序集不反向引用示例程序集。UI Toolkit 版与 Odin 版卡片都据此渲染按钮。
+  `RuntimeInitializeLoadType` 示例的菜单项 `Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType`
+  随之移除，改由该示例卡片右侧的「初始化时机设置」按钮打开（`Samples/` 与 `Samples~/` 镜像同步）；`package.json`
+  描述、包 README（中英）与 CODELY.md 同步改写
 
 ### Changed
 
-- **样式开关相关文件归入 `Editor/Common/InspectorStyle/`** — `AesirInspectorStyleSettings` / `AesirInspectorStyleSettingsSO` / `AesirInspectorStyleSettingsProvider` 三个文件（含 `.meta`，GUID 不变）集中到独立子目录，避免核心 `Editor/Common/` 继续膨胀
-- **`AesirTimer` 拆分为 `AbstractTimer` 抽象基类 + 六种具体计时器（无破坏性）** — 原单类同时塞满倒计时 / 重复 / 下一帧三种形态与调度引擎、状态查询，新增形态只能继续加分支。现用模板方法重构：`AbstractTimer`（public）固定调度引擎（注册表 / PlayerLoop 注入 / 两阶段结算 / 统计）与共有状态、查询、生命周期控制，把"如何推进、何时到期"下沉给六个职责单一的具体类；`AesirTimer` 收敛为抽象门面（静态工厂 + 引擎委托），既有 `AesirTimer.Countdown/Every/NextFrame` 调用与 `AesirTimer` 字段声明**零改动**（具体类全部派生自 `AesirTimer`），编辑器面板与 15 例既有测试全部回归通过。六种形态：`CountdownTimer`（一次性倒计时）、`NextFrameTimer`（下一帧）、`RepeatingTimer`（按间隔重复，限次 / 无限）、`IntervalTimer`（总时长内每隔固定间隔触发）、`FrequencyTimer`（每秒 N 次）、`StopwatchTimer`（正计时测时长，读 `Elapsed`）。全部沿用既有语义：创建即开始、到期自动出队、`unscaled` 时间源、实例级暂停 / 重开 / 取消、同帧按创建顺序回调、卡顿帧不补发；区间计时器以容差判定总时长耗尽，避免浮点残差导致到点后驻留。新增 9 例 EditMode 用例覆盖秒表 / 区间 / 频率核心契约。分层思路参考开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)（学习致谢），具体实现与调试工具为本框架自有。**未改**：`AesirTimerState` 枚举、调试面板、示例场景门槛
-- **`AesirTimer` 示例补三种新形态** — `Samples/AesirTimer`（+ `Samples~/` 镜像）新增秒表开始 / 读取、区间触发、频率触发三个动作（`ContextMenu` 与自定义 Inspector 按钮同源），只读面板与行数据同步展示新形态；面板高度随行数扩展
+- **样式开关相关文件归入 `Editor/Common/InspectorStyle/`** — `AesirInspectorStyleSettings` /
+  `AesirInspectorStyleSettingsSO` / `AesirInspectorStyleSettingsProvider` 三个文件（含 `.meta`，GUID
+  不变）集中到独立子目录，避免核心 `Editor/Common/` 继续膨胀
+- **`AesirTimer` 拆分为 `AbstractTimer` 抽象基类 + 六种具体计时器（无破坏性）** — 原单类同时塞满倒计时 / 重复 /
+  下一帧三种形态与调度引擎、状态查询，新增形态只能继续加分支。现用模板方法重构：`AbstractTimer`
+  （public）固定调度引擎（注册表 / PlayerLoop 注入 / 两阶段结算 /
+  统计）与共有状态、查询、生命周期控制，把"如何推进、何时到期"下沉给六个职责单一的具体类；`AesirTimer`
+  收敛为抽象门面（静态工厂 + 引擎委托），既有 `AesirTimer.Countdown/Every/NextFrame` 调用与 `AesirTimer` 字段声明
+  **零改动**（具体类全部派生自 `AesirTimer`），编辑器面板与 15 例既有测试全部回归通过。六种形态：`CountdownTimer`
+  （一次性倒计时）、`NextFrameTimer`（下一帧）、`RepeatingTimer`（按间隔重复，限次 / 无限）、`IntervalTimer`
+  （总时长内每隔固定间隔触发）、`FrequencyTimer`（每秒 N 次）、`StopwatchTimer`（正计时测时长，读 `Elapsed`
+  ）。全部沿用既有语义：创建即开始、到期自动出队、`unscaled` 时间源、实例级暂停 / 重开 /
+  取消、同帧按创建顺序回调、卡顿帧不补发；区间计时器以容差判定总时长耗尽，避免浮点残差导致到点后驻留。新增 9 例
+  EditMode 用例覆盖秒表 / 区间 /
+  频率核心契约。分层思路参考开源项目 [adammyhre/Unity-Improved-Timers](https://github.com/adammyhre/Unity-Improved-Timers)
+  （学习致谢），具体实现与调试工具为本框架自有。**未改**：`AesirTimerState` 枚举、调试面板、示例场景门槛
+- **`AesirTimer` 示例补三种新形态** — `Samples/AesirTimer`（+ `Samples~/` 镜像）新增秒表开始 / 读取、区间触发、频率触发三个动作（
+  `ContextMenu` 与自定义 Inspector 按钮同源），只读面板与行数据同步展示新形态；面板高度随行数扩展
 
 ## [0.33.0] - 2026-11-16
 
 ### Added
 
-- **`AesirTimer` 计时器原语** — `Runtime/Modules/Timer/AesirTimer.cs`（与 Observable / Event / Locator 同级的**内置功能模块**，不再放在 `Common`）：框架驱动的倒计时器，调用即开始、到期自动出队，让纯 C# 的 Model / Service / Command 不借 MonoBehaviour、不借协程即可延时与做冷却进度。**每个计时器是一个独立实例**（时长 / 剩余 / 时间源 / 回调都挂在实例字段上），注册表只保存"哪些实例还活着"用于每帧推进——既可持有引用读 `Progress` 直接喂 UI 进度条，也可创建后丢弃引用（到期自动出队，不泄漏）。另有 `AesirTimer.NextFrame(...)`（此后第一次结算执行一次）与 `unscaled` 选项（不受 `Time.timeScale` 影响）。注入**复用既有 `AesirPlayerLoop`**（`BeforeUpdate` + `order: int.MinValue`）而非自行 `PlayerLoop.SetPlayerLoop`，直接继承注入自愈；结算期与执行期两阶段分离，回调内新建 / 取消无需挂起队列；单趟扫描 + 就地压实保持 O(n)、零分配，同帧多个到期严格按创建顺序回调。**有意不做**：`Start`（工厂即开始）、自带 `Tick` 的不自驱形态（有 `Update` 的地方用本地 float 字段）、正计时秒表（永不结束 = 泄漏源，用 `Time.time` 差值）、对象池。**归因修订**：0.30.0 移除 `AesirScheduler` 的依据是"全仓零使用"，根本原因是其 `Delay(s, cb)` 形态表达不出"可重复 + 可查询"两类真实用例；新原语以单一实例类型同时覆盖两者
+- **`AesirTimer` 计时器原语** — `Runtime/Modules/Timer/AesirTimer.cs`（与 Observable / Event / Locator 同级的
+  **内置功能模块**，不再放在 `Common`）：框架驱动的倒计时器，调用即开始、到期自动出队，让纯 C# 的 Model / Service /
+  Command 不借 MonoBehaviour、不借协程即可延时与做冷却进度。**每个计时器是一个独立实例**（时长 / 剩余 / 时间源 /
+  回调都挂在实例字段上），注册表只保存"哪些实例还活着"用于每帧推进——既可持有引用读 `Progress` 直接喂 UI
+  进度条，也可创建后丢弃引用（到期自动出队，不泄漏）。另有 `AesirTimer.NextFrame(...)`（此后第一次结算执行一次）与
+  `unscaled` 选项（不受 `Time.timeScale` 影响）。注入**复用既有 `AesirPlayerLoop`**（`BeforeUpdate` +
+  `order: int.MinValue`）而非自行 `PlayerLoop.SetPlayerLoop`
+  ，直接继承注入自愈；结算期与执行期两阶段分离，回调内新建 / 取消无需挂起队列；单趟扫描 + 就地压实保持 O(n)
+  、零分配，同帧多个到期严格按创建顺序回调。**有意不做**：`Start`（工厂即开始）、自带 `Tick` 的不自驱形态（有 `Update`
+  的地方用本地 float 字段）、正计时秒表（永不结束 = 泄漏源，用 `Time.time` 差值）、对象池。**归因修订**：0.30.0 移除
+  `AesirScheduler` 的依据是"全仓零使用"，根本原因是其 `Delay(s, cb)` 形态表达不出"可重复 +
+  可查询"两类真实用例；新原语以单一实例类型同时覆盖两者
 - **`AesirTimer` 单元测试** — `Tests/Editor/AesirTimerTests`（9 用例）+ `Tests/Runtime/AesirTimerTests`（3 用例）
-- **`AesirTimer.Every` / `Pause` / `Resume` / `RemainingExecutions`** — 补齐"重复执行"与"实例级暂停"。`Every(interval, onTick, repeatCount = -1, unscaled = false)`：首次回调在 `interval` 之后，`repeatCount < 0` 无限、有限次数用尽自动出队转 `IsFinished`、`0` 表示一次也不执行；**一帧卡顿跨越多个间隔只回调一次**（重新装填用 `= duration` 而非 `+=`），避免"越慢越忙"的回调雪崩。`Pause()` / `Resume()` 只挂起单个实例（`unscaled` 同样有效），暂停期间保留在注册表、`Remaining` 与 `Progress` 冻结；`Resume` 对 `NextFrame` 形态重新对齐结算周期号，不会"恢复即到期"。`Restart()` 扩展为完整重来：剩余时间、执行计数、暂停态一并复位。`RemainingExecutions` 返回"从此刻起还会回调几次"（无限为 -1，结束 / 取消为 0）
-- **`AesirTimer` 调试面板（Odin 版 + IMGUI 兜底版）** — `Tools/Aesir/Architecture/Timer Debugger`（priority 996；装了 Odin 时经 `OdinWindowOpener` 路由到 Odin 版）。**拉取与重绘分离**：工具栏可调拉取节奏（按时间 0.05–10 秒 / 按帧 1–600，`EditorPrefs` 持久化，默认 0.5 秒），只有到点才枚举注册表并重建行快照，其余重绘只读缓存——面板开销与计时器数量、重绘频率解耦。逐行显示状态（运行中 / 已暂停）、形态（单次 / 下一帧 / 重复 ×N / 重复 ∞）、时间源（scaled / unscaled，`timeScale = 0` 标注冻结）、剩余秒数、进度条、已执行 / 总次数、**还剩几次**、存活时长、回调归属（Lambda 折叠成"类型.外层方法 λ"），另附累计创建 / 到期 / 取消 / 结算帧统计；按紧迫度排序（已暂停靠后、其余按剩余时间升序），超过 200 行截断并标出总数
-- **`AesirTimer` 字段检视** — 原生 `[CustomPropertyDrawer]`（状态词着色 + 进度条 + 单行摘要）与 Odin `OdinValueDrawer`，共用 `AesirTimerText` 的文案与颜色、`AesirTimerSummaryView` 的进度条与摘要外观。**前提**：原生 Inspector 只为可序列化类型创建属性，`AesirTimer` 字段需标 `[SerializeReference]`；Odin 侧需宿主是 `SerializedMonoBehaviour` / `SerializedScriptableObject` 或字段标 `[ShowInInspector]`。两者都不满足时用调试面板（零侵入），或给自己的组件写自定义 Inspector（见 `Samples/AesirTimer`）。绘制器取值走 `fieldInfo` 反射而非 `SerializedProperty.managedReferenceValue`——后者对 null 引用会顺手实例化对象
-- **`AesirTimer` 测试补充** — `Tests/Editor/AesirTimerTests` 增至 15 例：新增无限重复、有限重复用尽出队、卡顿不补发、暂停冻结与恢复、`NextFrame` 暂停后恢复、`Restart` 重置计数与暂停态
-- **`AesirTimer` 示例** — `Samples/AesirTimer/`（+ `Samples~/` 镜像，已登记 `package.json` 的 `samples`）：延时 / 冷却 / 有限重复在进入 Play 后自动开始，其余动作经**自定义 Inspector 的按钮**触发（`NextFrame` / 无限重复 / `Pause` / `Resume` / `Restart` / `Cancel`；`ContextMenu` 走同一批方法，脱离示例脚本也能用）；左上角面板只读 `Remaining` / `Progress` / `RemainingExecutions` 画进度条，**没有任何驱动代码**（「查询式计时」的用法示范），配 `Tools/Aesir/Architecture/Timer Debugger` 可对照同一批实例的运行时快照。另含 `SkillCooldown`——不继承 MonoBehaviour 的纯 C# 冷却模型（`TryCast` / `IsReady` / `Progress` / `Pause`），示范 Model 层如何持有计时器
+- **`AesirTimer.Every` / `Pause` / `Resume` / `RemainingExecutions`** — 补齐"重复执行"与"实例级暂停"。
+  `Every(interval, onTick, repeatCount = -1, unscaled = false)`：首次回调在 `interval` 之后，`repeatCount < 0`
+  无限、有限次数用尽自动出队转 `IsFinished`、`0` 表示一次也不执行；**一帧卡顿跨越多个间隔只回调一次**（重新装填用
+  `= duration` 而非 `+=`），避免"越慢越忙"的回调雪崩。`Pause()` / `Resume()` 只挂起单个实例（`unscaled`
+  同样有效），暂停期间保留在注册表、`Remaining` 与 `Progress` 冻结；`Resume` 对 `NextFrame`
+  形态重新对齐结算周期号，不会"恢复即到期"。`Restart()` 扩展为完整重来：剩余时间、执行计数、暂停态一并复位。
+  `RemainingExecutions` 返回"从此刻起还会回调几次"（无限为 -1，结束 / 取消为 0）
+- **`AesirTimer` 调试面板（Odin 版 + IMGUI 兜底版）** — `Tools/Aesir/Architecture/Timer Debugger`（priority
+  996；装了 Odin 时经 `OdinWindowOpener` 路由到 Odin 版）。**拉取与重绘分离**：工具栏可调拉取节奏（按时间 0.05–10
+  秒 / 按帧 1–600，`EditorPrefs` 持久化，默认 0.5
+  秒），只有到点才枚举注册表并重建行快照，其余重绘只读缓存——面板开销与计时器数量、重绘频率解耦。逐行显示状态（运行中 /
+  已暂停）、形态（单次 / 下一帧 / 重复 ×N / 重复 ∞）、时间源（scaled / unscaled，`timeScale = 0`
+  标注冻结）、剩余秒数、进度条、已执行 / 总次数、**还剩几次**、存活时长、回调归属（Lambda 折叠成"类型.外层方法
+  λ"），另附累计创建 / 到期 / 取消 / 结算帧统计；按紧迫度排序（已暂停靠后、其余按剩余时间升序），超过 200 行截断并标出总数
+- **`AesirTimer` 字段检视** — 原生 `[CustomPropertyDrawer]`（状态词着色 + 进度条 + 单行摘要）与 Odin
+  `OdinValueDrawer`，共用 `AesirTimerText` 的文案与颜色、`AesirTimerSummaryView` 的进度条与摘要外观。**前提**：原生
+  Inspector 只为可序列化类型创建属性，`AesirTimer` 字段需标 `[SerializeReference]`；Odin 侧需宿主是
+  `SerializedMonoBehaviour` / `SerializedScriptableObject` 或字段标 `[ShowInInspector]`
+  。两者都不满足时用调试面板（零侵入），或给自己的组件写自定义 Inspector（见 `Samples/AesirTimer`）。绘制器取值走
+  `fieldInfo` 反射而非 `SerializedProperty.managedReferenceValue`——后者对 null 引用会顺手实例化对象
+- **`AesirTimer` 测试补充** — `Tests/Editor/AesirTimerTests` 增至 15 例：新增无限重复、有限重复用尽出队、卡顿不补发、暂停冻结与恢复、
+  `NextFrame` 暂停后恢复、`Restart` 重置计数与暂停态
+- **`AesirTimer` 示例** — `Samples/AesirTimer/`（+ `Samples~/` 镜像，已登记 `package.json` 的 `samples`）：延时 /
+  冷却 / 有限重复在进入 Play 后自动开始，其余动作经**自定义 Inspector 的按钮**触发（`NextFrame` / 无限重复 /
+  `Pause` / `Resume` / `Restart` / `Cancel`；`ContextMenu` 走同一批方法，脱离示例脚本也能用）；左上角面板只读
+  `Remaining` / `Progress` / `RemainingExecutions` 画进度条，**没有任何驱动代码**（「查询式计时」的用法示范），配
+  `Tools/Aesir/Architecture/Timer Debugger` 可对照同一批实例的运行时快照。另含 `SkillCooldown`——不继承
+  MonoBehaviour 的纯 C# 冷却模型（`TryCast` / `IsReady` / `Progress` / `Pause`），示范 Model 层如何持有计时器
 
 ### Changed
 
-- **AI 技能迁出包外：`TuanjieCowork~/Skills/` 删除，只留一份导流文档** — 六篇架构技能全部并进仓库根整包扩展 `.codely-cli/extensions/AesirFrameworkGame/skills/`（与 RAM 四个模块技能、扩展独有的 `aesir-router` 与两篇实战模板同处一个扩展）；包内 `TuanjieCowork~/` 只剩 `README.md`，内容改为"怎么下载这个扩展、怎么装"——团结 Cowork 用户稀疏克隆扩展目录后 `codely extensions install` 或直接拷进 `<工程>/.codely-cli/extensions/`，不用 Cowork 的开发者取 `skills/` 拆进自己的 AI 工具（CNB 优先、GitHub 兜底）。`README` / `README_EN` 的结构树与模式决策链接同步改指扩展内文件。**Why:** 技能分居两个包时，架构技能讲 RAM 模块用法、模块技能指回架构，都只能写"另一个包里的那篇"，只装一个包就断链；同一扩展内的相对路径互链才装一次全在。**无运行时代码变更**
-- **`AesirTimer` 面板重构：数据源与显示样式解耦** — `AesirTimerDebugModel`（行内含预格式化文案的 `AesirTimerInfo`）拆成四层：`AesirTimerSnapshot` / `AesirTimerStatistics` 只搬数据（状态枚举、秒数、次数、进度、回调归属，零文案零颜色）；`AesirTimerDebugSource` 负责抓取节奏与汇总（原 `AesirTimerDebugModel` 的调度部分）；`AesirTimerText` 是把快照翻成中文文案与颜色的样式层；`AesirTimerSummaryView` 是"进度条 + 单行摘要"的外观。IMGUI 窗口、Odin 窗口、原生绘制器、Odin 绘制器全部改为消费快照——换一套面板样式只写新视图，抓取与措辞不动；新增展示字段只需在快照补一次抓取，全部视图立刻可用
-- **`AesirTimer` 面板在编辑模式下归零** — 数据源在非 Play 模式不再枚举注册表、不读累计计数，统计行与表格恒定为零（此前退出 Play 后可能残留上一个会话的"累计创建 / 累计到期 / 结算帧"）；Play 状态切换的那一刻立即重抓并重绘，面板不会滞后一个拉取间隔。两个窗口的编辑模式提示统一为"这里没有数据源，数据保持为零"
-- **`AesirTimer` 示例补自定义 Inspector** — `AesirTimerSample` 把展示数据抽成内部 `TimerRow`（标签 / 状态 / 明细 / 进度 / 颜色），运行时 `OnGUI` 面板与新增的 `AesirTimerSampleInspector` 共用同一份行数据、各用一套样式（与上面调试面板的解耦同构，示例本身就示范"换样式不换数据"）；Inspector 提供四组动作按钮（编辑模式下整组禁用——那里创建的计时器永远不会推进），播放中约 10 Hz 重绘。示例脚本文件整文件 `#if UNITY_EDITOR` 包裹的既有约定不变（并入示例程序集 `Scripts/`，仍受 `AesirSamplesScriptGuardTests` 守护）
-- **AI Skill 文档同步** — `Documentation/AesirFramework-Skill/references/core-api.md` 增补计时器一节（含四路径选择表与设计边界）；`SKILL.md` 与 `references/modules-api.md` 同步：references 索引、工程初始化流程、命名规范里的指针全部改指 `AesirTimer` / `core-api.md`
-- **架构决策落文档：暂不提供 MVVM（2026-11-16 裁决）** — 新增 `Documentation/AesirFramework-Skill/references/mode-decisions.md`（+ `Documentation~/` 镜像）：MVC/MVP 模式选择速查、Unity 官方立场调研（官方最佳实践只教 MVC/MVP，未正式推荐 MVVM）、不提供 MVVM 的五点论述与重评触发条件。`SKILL.md` 核心裁决加"暂不提供 MVVM"条（用户要求 MVVM 时说明决策并引导 MVC/MVP）、模式选择行补官方口径、references 索引加行；包内 `README_EN.md` 模式定位段与 Roadmap 同步。**无运行时代码变更**——快速开发首推 MVC 不变，MVP 保留 Unity 官方最佳实践范式可选地位
-- **AI Skill 迁出 `Documentation/` 到包根 `TuanjieCowork~/Skills/`** — `AesirFramework-Skill` → `TuanjieCowork~/Skills/aesir-framework`、`AesirBootScene-Skill` → `TuanjieCowork~/Skills/aesir-boot-scene`（目录名对齐技能名，GUID 与内容不变）；新增 `TuanjieCowork~/README.md` 写导入命令（`codely skills install "<路径>/Skills/<name>" --scope user|workspace`）与获取路径。**只建尾随 `~` 的那一份、没有 `TuanjieCowork/` 主位：** 该目录不被 AssetDatabase 导入、不生成 `.meta`、不进 unitypackage，AI 内容不进入 Unity 工程（代价：unitypackage 用户拿不到技能包）；`Documentation~/` 内的旧副本同步移除。技能互链改同级相对路径（`SKILL.md` → `../aesir-boot-scene/SKILL.md`），`Documentation/README_EN.md` 与根 `README_EN.md` 的「模式选择决策」链接改指 `../TuanjieCowork~/Skills/aesir-decisions/references/mode-decisions.md`。**Why:** 技能是"给 AI 加载的指令集"，不是 Unity 资产——放进 Assets 可见目录等于让每个使用者的工程都多出一坨 AI 文档，且与使用文档混层。**无运行时代码变更**
-- **AI 技能拆分：`aesir-framework` 一分为五** — `aesir-framework` 收敛为**入口**（定位与五条核心裁决、Quick 三件套最小闭环、十条关键约定、工程初始化、命名规范、技能地图），其余内容按"一个技能只回答一类问题"独立成篇：`aesir-tiers`（六档分级 + `references/` 六份 MVC/MVP 模板）、`aesir-core-api`（ObservableValue / 可观察集合 / MiniEvent / Context 细节 / AesirTimer / PlayerLoop / 能力矩阵 + `references/core-api.md`）、`aesir-decisions`（模式选择与通知机制两张决策表 + `references/mode-decisions.md` / `event-decisions.md`）、`aesir-pitfalls`（十条陷阱，原 `references/pitfalls.md` 提升为 SKILL.md 正文）。各 description 收紧到各自触发词，避免"提到 Aesir 就把 169 行正文 + 11 篇 references 全灌进上下文"。**删除 `references/modules-api.md`**（RAM 四模块白名单 152 行）：RAM 包的 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 已逐条覆盖且以源码为准，两份说法并存只会产生冲突口径。交叉链接同步修正（`mode-decisions` → `../../aesir-tiers/SKILL.md`、`mvp-quick` → `../../aesir-decisions/SKILL.md`、`event-decisions` 的 EventModule 指针改指 `aesir-events` 技能）。**无运行时代码变更**
-- **`Documentation/` 目录移除：英文说明升到包根，使用文档只留 `Documentation~/`** — 包内 `Documentation/README_EN.md` 移到包根 `README_EN.md`（`.meta` 随文件移动、GUID 不变），`observable-collections.md` 只保留在尾随 `~` 的 `Documentation~/`；`Documentation/` 整目录（含 `.meta`）删除，`Documentation~/README_EN.md` 同步删除，避免同一份英文说明两处漂移。包 `README.md` 的英文徽章、使用文档链接与结构树改指新位置。**Why:** `Documentation/` 位于 `Assets/` 可见区，Unity 会把这些 `.md` 当资产导入、unitypackage 里也照发——而使用文档在文档站已有权威副本，尾随 `~` 的 `Documentation~/` 已覆盖"随包分发但不进工程"的全部需求，再留一个无 `~` 的主位只是双份维护。**代价：** unitypackage 用户不再随包拿到使用文档（读文档站或克隆仓库）。**无运行时代码变更**
+- **AI 技能迁出包外：`TuanjieCowork~/Skills/` 删除，只留一份导流文档** — 六篇架构技能全部并进仓库根整包扩展
+  `.codely-cli/extensions/AesirFrameworkGame/skills/`（与 RAM 四个模块技能、扩展独有的 `aesir-router`
+  与两篇实战模板同处一个扩展）；包内 `TuanjieCowork~/` 只剩 `README.md`，内容改为"怎么下载这个扩展、怎么装"——团结
+  Cowork 用户稀疏克隆扩展目录后 `codely extensions install` 或直接拷进 `<工程>/.codely-cli/extensions/`，不用
+  Cowork 的开发者取 `skills/` 拆进自己的 AI 工具（CNB 优先、GitHub 兜底）。`README` / `README_EN`
+  的结构树与模式决策链接同步改指扩展内文件。**Why:** 技能分居两个包时，架构技能讲 RAM
+  模块用法、模块技能指回架构，都只能写"另一个包里的那篇"，只装一个包就断链；同一扩展内的相对路径互链才装一次全在。
+  **无运行时代码变更**
+- **`AesirTimer` 面板重构：数据源与显示样式解耦** — `AesirTimerDebugModel`（行内含预格式化文案的
+  `AesirTimerInfo`）拆成四层：`AesirTimerSnapshot` / `AesirTimerStatistics` 只搬数据（状态枚举、秒数、次数、进度、回调归属，零文案零颜色）；
+  `AesirTimerDebugSource` 负责抓取节奏与汇总（原 `AesirTimerDebugModel` 的调度部分）；`AesirTimerText`
+  是把快照翻成中文文案与颜色的样式层；`AesirTimerSummaryView` 是"进度条 + 单行摘要"的外观。IMGUI 窗口、Odin
+  窗口、原生绘制器、Odin 绘制器全部改为消费快照——换一套面板样式只写新视图，抓取与措辞不动；新增展示字段只需在快照补一次抓取，全部视图立刻可用
+- **`AesirTimer` 面板在编辑模式下归零** — 数据源在非 Play 模式不再枚举注册表、不读累计计数，统计行与表格恒定为零（此前退出
+  Play 后可能残留上一个会话的"累计创建 / 累计到期 / 结算帧"）；Play
+  状态切换的那一刻立即重抓并重绘，面板不会滞后一个拉取间隔。两个窗口的编辑模式提示统一为"这里没有数据源，数据保持为零"
+- **`AesirTimer` 示例补自定义 Inspector** — `AesirTimerSample` 把展示数据抽成内部 `TimerRow`（标签 / 状态 /
+  明细 / 进度 / 颜色），运行时 `OnGUI` 面板与新增的 `AesirTimerSampleInspector`
+  共用同一份行数据、各用一套样式（与上面调试面板的解耦同构，示例本身就示范"换样式不换数据"）；Inspector
+  提供四组动作按钮（编辑模式下整组禁用——那里创建的计时器永远不会推进），播放中约 10 Hz 重绘。示例脚本文件整文件
+  `#if UNITY_EDITOR` 包裹的既有约定不变（并入示例程序集 `Scripts/`，仍受 `AesirSamplesScriptGuardTests` 守护）
+- **AI Skill 文档同步** — `Documentation/AesirFramework-Skill/references/core-api.md` 增补计时器一节（含四路径选择表与设计边界）；
+  `SKILL.md` 与 `references/modules-api.md` 同步：references 索引、工程初始化流程、命名规范里的指针全部改指
+  `AesirTimer` / `core-api.md`
+- **架构决策落文档：暂不提供 MVVM（2026-11-16 裁决）** — 新增
+  `Documentation/AesirFramework-Skill/references/mode-decisions.md`（+ `Documentation~/` 镜像）：MVC/MVP
+  模式选择速查、Unity 官方立场调研（官方最佳实践只教 MVC/MVP，未正式推荐 MVVM）、不提供 MVVM 的五点论述与重评触发条件。
+  `SKILL.md` 核心裁决加"暂不提供 MVVM"条（用户要求 MVVM 时说明决策并引导 MVC/MVP）、模式选择行补官方口径、references
+  索引加行；包内 `README_EN.md` 模式定位段与 Roadmap 同步。**无运行时代码变更**——快速开发首推 MVC 不变，MVP 保留
+  Unity 官方最佳实践范式可选地位
+- **AI Skill 迁出 `Documentation/` 到包根 `TuanjieCowork~/Skills/`** — `AesirFramework-Skill` →
+  `TuanjieCowork~/Skills/aesir-framework`、`AesirBootScene-Skill` → `TuanjieCowork~/Skills/aesir-boot-scene`
+  （目录名对齐技能名，GUID 与内容不变）；新增 `TuanjieCowork~/README.md` 写导入命令（
+  `codely skills install "<路径>/Skills/<name>" --scope user|workspace`）与获取路径。**只建尾随 `~` 的那一份、没有
+  `TuanjieCowork/` 主位：** 该目录不被 AssetDatabase 导入、不生成 `.meta`、不进 unitypackage，AI 内容不进入 Unity
+  工程（代价：unitypackage 用户拿不到技能包）；`Documentation~/` 内的旧副本同步移除。技能互链改同级相对路径（
+  `SKILL.md` → `../aesir-boot-scene/SKILL.md`），`Documentation/README_EN.md` 与根 `README_EN.md` 的「模式选择决策」链接改指
+  `../TuanjieCowork~/Skills/aesir-decisions/references/mode-decisions.md`。**Why:** 技能是"给 AI
+  加载的指令集"，不是 Unity 资产——放进 Assets 可见目录等于让每个使用者的工程都多出一坨 AI 文档，且与使用文档混层。
+  **无运行时代码变更**
+- **AI 技能拆分：`aesir-framework` 一分为五** — `aesir-framework` 收敛为**入口**（定位与五条核心裁决、Quick
+  三件套最小闭环、十条关键约定、工程初始化、命名规范、技能地图），其余内容按"一个技能只回答一类问题"独立成篇：
+  `aesir-tiers`（六档分级 + `references/` 六份 MVC/MVP 模板）、`aesir-core-api`（ObservableValue / 可观察集合 /
+  MiniEvent / Context 细节 / AesirTimer / PlayerLoop / 能力矩阵 + `references/core-api.md`）、`aesir-decisions`
+  （模式选择与通知机制两张决策表 + `references/mode-decisions.md` / `event-decisions.md`）、`aesir-pitfalls`
+  （十条陷阱，原 `references/pitfalls.md` 提升为 SKILL.md 正文）。各 description 收紧到各自触发词，避免"提到 Aesir
+  就把 169 行正文 + 11 篇 references 全灌进上下文"。**删除 `references/modules-api.md`**（RAM 四模块白名单 152
+  行）：RAM 包的 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene`
+  已逐条覆盖且以源码为准，两份说法并存只会产生冲突口径。交叉链接同步修正（`mode-decisions` →
+  `../../aesir-tiers/SKILL.md`、`mvp-quick` → `../../aesir-decisions/SKILL.md`、`event-decisions` 的 EventModule
+  指针改指 `aesir-events` 技能）。**无运行时代码变更**
+- **`Documentation/` 目录移除：英文说明升到包根，使用文档只留 `Documentation~/`** — 包内
+  `Documentation/README_EN.md` 移到包根 `README_EN.md`（`.meta` 随文件移动、GUID 不变），
+  `observable-collections.md` 只保留在尾随 `~` 的 `Documentation~/`；`Documentation/` 整目录（含 `.meta`）删除，
+  `Documentation~/README_EN.md` 同步删除，避免同一份英文说明两处漂移。包 `README.md` 的英文徽章、使用文档链接与结构树改指新位置。
+  **Why:** `Documentation/` 位于 `Assets/` 可见区，Unity 会把这些 `.md` 当资产导入、unitypackage
+  里也照发——而使用文档在文档站已有权威副本，尾随 `~` 的 `Documentation~/` 已覆盖"随包分发但不进工程"的全部需求，再留一个无
+  `~` 的主位只是双份维护。**代价：** unitypackage 用户不再随包拿到使用文档（读文档站或克隆仓库）。
+  **无运行时代码变更**
 
 ### Removed
 
-- **PlaneWar 示例移出包外（破坏性：示例清单少一项）** — 纵版射击 `PlaneWar` 不再是包内示例：`Samples/PlaneWar` 与 `Samples~/PlaneWar` 从包内移除，`package.json` 的 `samples` 清单同步删条目，Getting Started 窗口的「实战示例」分组、分组排序与卡片图标一并去掉（可导入示例回到 11 个）。该案例迁至源码仓库根 `Assets/PlaneWar/`，成为宿主工程的完整游戏案例：按实际项目分层（`Art/` / `Prefabs/` / `Scenes/` / `Scripts/` / `Materials/`）、场景改名 `PlaneWar.unity`、类名去 `Sample` 前缀（`PlaneWarGameManager` 等）、命名空间改 `PlaneWar`、程序集改 `PlaneWar.Mono`，并**移除整文件 `#if UNITY_EDITOR` 包裹**——案例正常编译进玩家构建，不再被示例场景构建剔除规则拦截。**Why:** 包内示例的定位是"单个 API 的最小用法"，包裹与剔除规则都服务于"示例不进玩家包"；能从头玩到尾的完整游戏恰恰要能打包，两种身份混在 `Samples/` 里两头不讨好。**迁移：** 已装旧版的 `Samples/PlaneWar` 残留由更新器「上次清单 − 新版清单」差集在下次更新时清理；需要该案例请克隆源码仓库
-- **`AesirFramework-Skill/references/jam-playbook.md`（jam 实战手册）** — 按裁决删除。该手册的定位是"框架缺什么就手抄一份补件"，而其中最核心的缺口（计时器）已由 `AesirTimer` 在框架内解决，继续保留一份"抄进业务工程的计时器类"与「同一需求只留一条路径」的定位冲突；手册内的工程目录约定、初始化步骤与自检要点已并入 `SKILL.md` 的工程初始化流程，删除后无悬空引用（`SKILL.md` ×6 处、`modules-api.md` ×2 处指针全部清理）
+- **PlaneWar 示例移出包外（破坏性：示例清单少一项）** — 纵版射击 `PlaneWar` 不再是包内示例：`Samples/PlaneWar` 与
+  `Samples~/PlaneWar` 从包内移除，`package.json` 的 `samples` 清单同步删条目，Getting Started
+  窗口的「实战示例」分组、分组排序与卡片图标一并去掉（可导入示例回到 11 个）。该案例迁至源码仓库根
+  `Assets/PlaneWar/`，成为宿主工程的完整游戏案例：按实际项目分层（`Art/` / `Prefabs/` / `Scenes/` / `Scripts/` /
+  `Materials/`）、场景改名 `PlaneWar.unity`、类名去 `Sample` 前缀（`PlaneWarGameManager` 等）、命名空间改 `PlaneWar`
+  、程序集改 `PlaneWar.Mono`，并**移除整文件 `#if UNITY_EDITOR` 包裹**——案例正常编译进玩家构建，不再被示例场景构建剔除规则拦截。
+  **Why:** 包内示例的定位是"单个 API
+  的最小用法"，包裹与剔除规则都服务于"示例不进玩家包"；能从头玩到尾的完整游戏恰恰要能打包，两种身份混在
+  `Samples/` 里两头不讨好。**迁移：** 已装旧版的 `Samples/PlaneWar` 残留由更新器「上次清单 −
+  新版清单」差集在下次更新时清理；需要该案例请克隆源码仓库
+- **`AesirFramework-Skill/references/jam-playbook.md`（jam 实战手册）** —
+  按裁决删除。该手册的定位是"框架缺什么就手抄一份补件"，而其中最核心的缺口（计时器）已由 `AesirTimer`
+  在框架内解决，继续保留一份"抄进业务工程的计时器类"与「同一需求只留一条路径」的定位冲突；手册内的工程目录约定、初始化步骤与自检要点已并入
+  `SKILL.md` 的工程初始化流程，删除后无悬空引用（`SKILL.md` ×6 处、`modules-api.md` ×2 处指针全部清理）
 
 ### Fixed
 
-- **Getting Started「打开场景」强制另存临时场景** — `AesirGetStartedService.OpenSampleScene` 原用 `EditorSceneManager.SaveOpenScenes()` 一次性保存全部打开场景，对**无资产路径的临时场景**（新建未保存 / 崩溃恢复出的 `Temp/__Backupscenes` 场景）Unity 无处可写，只能弹出另存为面板强制命名——点示例卡的「打开场景」时先被这个面板挡住，只有取消才能退出（而取消即中止切换）。改为 `SaveModifiedScenes()`：有路径的场景仍静默落盘（示例导航不打断），无路径的临时场景跳过静默保存、改走 `SaveCurrentModifiedScenesIfUserWantsTo()` 的标准询问（不保存 / 取消 / 保存），取消才中止切换。Toast 相应去掉"切换前的场景已保存"（用户可能选择不保存）
+- **Getting Started「打开场景」强制另存临时场景** — `AesirGetStartedService.OpenSampleScene` 原用
+  `EditorSceneManager.SaveOpenScenes()` 一次性保存全部打开场景，对**无资产路径的临时场景**（新建未保存 / 崩溃恢复出的
+  `Temp/__Backupscenes` 场景）Unity 无处可写，只能弹出另存为面板强制命名——点示例卡的「打开场景」时先被这个面板挡住，只有取消才能退出（而取消即中止切换）。改为
+  `SaveModifiedScenes()`：有路径的场景仍静默落盘（示例导航不打断），无路径的临时场景跳过静默保存、改走
+  `SaveCurrentModifiedScenesIfUserWantsTo()` 的标准询问（不保存 / 取消 / 保存），取消才中止切换。Toast
+  相应去掉"切换前的场景已保存"（用户可能选择不保存）
 
 ## [0.32.0] - 2026-10-17
 
 ### Added
 
-- **AI Skill 文档集整合（AesirFramework-Skill）** — 新建全框架 AI 编码指南（`Documentation/AesirFramework-Skill/`），整合收编项目全部 AI 相关文档：原 AesirArchitecture-Skill 六档模板（MVC/MVP × Quick/Standard/Strict）与 core-api 速查、常见陷阱清单（10 条）、事件机制决策表、Jam 实战手册（工程约定 / JamTimer / GameFlowModel / JamInput / UI 资产生成器 / 自检脚本 / 反模式清单，原私有规范文档首次随包分发）与新增 RAM 四模块 API 速查（UI/Scene/Event/Audio，基于 0.31.x 源码逐项实证）。**档位口径按最新裁决修订：默认按最低档（Quick）执行**——具体类注册、可写 `ObservableValue` 直接暴露、不建 Model/Service 接口、不做只读 property 包装、不用 Command/Query；升档为加法，触发条件成表
-- **AI 启动场景 Skill（AesirBootScene-Skill）** — `Documentation/AesirBootScene-Skill/`：项目初始化阶段一键创建启动场景（主菜单场景）+ 启动脚本——空场景 + 唯一 `GameBootstrap` 物体（挂启动脚本 + AudioListener，无 Main Camera，杜绝编辑器 AudioListener 警告与重复渲染），登记 Build Settings index 0；含幂等的 `BootSceneBuilder` 编辑器脚本模板与六项验证清单
+- **AI Skill 文档集整合（AesirFramework-Skill）** — 新建全框架 AI 编码指南（`Documentation/AesirFramework-Skill/`
+  ），整合收编项目全部 AI 相关文档：原 AesirArchitecture-Skill 六档模板（MVC/MVP × Quick/Standard/Strict）与
+  core-api 速查、常见陷阱清单（10 条）、事件机制决策表、Jam 实战手册（工程约定 / JamTimer / GameFlowModel /
+  JamInput / UI 资产生成器 / 自检脚本 / 反模式清单，原私有规范文档首次随包分发）与新增 RAM 四模块 API
+  速查（UI/Scene/Event/Audio，基于 0.31.x 源码逐项实证）。**档位口径按最新裁决修订：默认按最低档（Quick）执行**
+  ——具体类注册、可写 `ObservableValue` 直接暴露、不建 Model/Service 接口、不做只读 property 包装、不用
+  Command/Query；升档为加法，触发条件成表
+- **AI 启动场景 Skill（AesirBootScene-Skill）** — `Documentation/AesirBootScene-Skill/`：项目初始化阶段一键创建启动场景（主菜单场景）+
+  启动脚本——空场景 + 唯一 `GameBootstrap` 物体（挂启动脚本 + AudioListener，无 Main Camera，杜绝编辑器
+  AudioListener 警告与重复渲染），登记 Build Settings index 0；含幂等的 `BootSceneBuilder` 编辑器脚本模板与六项验证清单
 
 ### Removed
 
-- **AesirArchitecture-Skill / 常见陷阱清单.md / 事件机制决策表.md（独立文档收编）** — 三者内容已全部收编进 AesirFramework-Skill 的 SKILL.md 与 references/（用户拷走单个 skill 目录即自包含可用）；独立副本按裁决删除，README 文档地图与结构树同步改指新 skill
-- **产品文档精简：内部文档迁出产品包** — `Documentation/` 收敛为纯产品文档三类（英文 README / 使用文档 / AI Skill）：内部审查报告 `Docs/Architecture-Review.md` 与演进记录 `设计变更记录.md` 迁至开发者私有文档仓（Aesir-Docs），不再随 unitypackage 分发；README 结构树同步移除对应条目、`Documentation~` 镜像同步移除；后续废弃机制的历史演进记录改写入私有仓的《设计变更记录》
+- **AesirArchitecture-Skill / 常见陷阱清单.md / 事件机制决策表.md（独立文档收编）** — 三者内容已全部收编进
+  AesirFramework-Skill 的 SKILL.md 与 references/（用户拷走单个 skill 目录即自包含可用）；独立副本按裁决删除，README
+  文档地图与结构树同步改指新 skill
+- **产品文档精简：内部文档迁出产品包** — `Documentation/` 收敛为纯产品文档三类（英文 README / 使用文档 / AI
+  Skill）：内部审查报告 `Docs/Architecture-Review.md` 与演进记录 `设计变更记录.md` 迁至开发者私有文档仓（Aesir-Docs），不再随
+  unitypackage 分发；README 结构树同步移除对应条目、`Documentation~` 镜像同步移除；后续废弃机制的历史演进记录改写入私有仓的《设计变更记录》
 
 ## [0.31.2] - 2026-10-06
 
 ### Changed
 
-- **`IGenericLocator<T>` 删除冗余的 `Dispose()` 声明** — 接口本已继承 `IDisposable`，另行声明同名同签名的成员只是隐藏继承成员（编译告警 `CS0108: 'IGenericLocator<T>.Dispose()' hides inherited member 'IDisposable.Dispose()'`），并非新增契约。删除后接口契约完全不变（`IDisposable.Dispose()` 仍在），实现类与调用点零改动；原声明上承载的语义文档（清空仅解除注册关系、不销毁被注册的实例；`AbstractContext<T>.Dispose` 只持有接口抽象、需经接口而非具体实现清空）上移到接口级 `<remarks>`，注释信息无损失
+- **`IGenericLocator<T>` 删除冗余的 `Dispose()` 声明** — 接口本已继承 `IDisposable`，另行声明同名同签名的成员只是隐藏继承成员（编译告警
+  `CS0108: 'IGenericLocator<T>.Dispose()' hides inherited member 'IDisposable.Dispose()'`），并非新增契约。删除后接口契约完全不变（
+  `IDisposable.Dispose()` 仍在），实现类与调用点零改动；原声明上承载的语义文档（清空仅解除注册关系、不销毁被注册的实例；
+  `AbstractContext<T>.Dispose` 只持有接口抽象、需经接口而非具体实现清空）上移到接口级 `<remarks>`，注释信息无损失
 
 ## [0.31.1] - 2026-09-29
 
-- **版本同步发布（无功能变更）** — 本包源码与 0.31.0 一致。本次为文档补丁：公开文档站的 Scripting API 页全量重生成至 0.31.0 口径（新增 `IView<T>` 等页）、内容页对齐 0.31.0 共 27 处、补第三方素材出处（详见根 CHANGELOG）
+- **版本同步发布（无功能变更）** — 本包源码与 0.31.0 一致。本次为文档补丁：公开文档站的 Scripting API 页全量重生成至
+  0.31.0 口径（新增 `IView<T>` 等页）、内容页对齐 0.31.0 共 27 处、补第三方素材出处（详见根 CHANGELOG）
 
 ## [0.31.0] - 2026-09-29
 
 ### Added
 
-- **`AesirSamplesBuildFilterTests` 补两条用例** — 「构建入口钩子已挂载 `BuildPlayerWindow`」（命门：钩子没挂上示例场景就会进包；字段按候选名跨版本容错、找不到时降级为跳过）与「可注入安装根的整条过滤链」（移动安装根 + PM 导入形态混合列表）
-- **`IView<T>` 泛型表现层接口（默认接口实现绑定）** — 对齐 `IController<T>` / `IPresenter<T>` 的 DIM 形态：声明泛型参数即自动绑定 `AbstractContext<T>.Instance` 单例。View 适配对（`AesirView<T>` / `MonoView<T>`）改经 `IView<T>` DIM 绑定并删除手写显式实现；VC 适配对（`AesirViewController<T>` / `MonoViewController<T>`）改用 `IController<T>` DIM（View 角色保持非泛型 `IView` 声明，避免与 `IView<T>` 双 DIM 冲突），实例额外获得 `IController<T>` 可赋值性。新增 ViewAndTriggerTests DIM 绑定与声明面用例
-- **`IGenericLocator<T>.GetAllEntries()` 诊断成员** — 近失识别等诊断路径经抽象取注册键值对；接口同时继承 `IDisposable`（清空注册）
+- **`AesirSamplesBuildFilterTests` 补两条用例** — 「构建入口钩子已挂载 `BuildPlayerWindow`
+  」（命门：钩子没挂上示例场景就会进包；字段按候选名跨版本容错、找不到时降级为跳过）与「可注入安装根的整条过滤链」（移动安装根 +
+  PM 导入形态混合列表）
+- **`IView<T>` 泛型表现层接口（默认接口实现绑定）** — 对齐 `IController<T>` / `IPresenter<T>` 的 DIM
+  形态：声明泛型参数即自动绑定 `AbstractContext<T>.Instance` 单例。View 适配对（`AesirView<T>` / `MonoView<T>`）改经
+  `IView<T>` DIM 绑定并删除手写显式实现；VC 适配对（`AesirViewController<T>` / `MonoViewController<T>`）改用
+  `IController<T>` DIM（View 角色保持非泛型 `IView` 声明，避免与 `IView<T>` 双 DIM 冲突），实例额外获得
+  `IController<T>` 可赋值性。新增 ViewAndTriggerTests DIM 绑定与声明面用例
+- **`IGenericLocator<T>.GetAllEntries()` 诊断成员** — 近失识别等诊断路径经抽象取注册键值对；接口同时继承
+  `IDisposable`（清空注册）
 
 ### Changed
 
-- **`AesirArchitecturePlayerLoop` → `AesirPlayerLoop`、`AesirArchitectureLifecyclePhase` → `AesirLifecyclePhase`（破坏性改名）** — 该类型是**跨包共用的框架级帧钩子工件**（RAA 对外的公共 API，RAM 侧零引用、无对照角色），按命名规范规则 1「跨包共用 → 直接 `Aesir` + 语义名、不带包名段」精简；同文件配套的私有嵌套子系统标识一并改名为 `AesirScriptRunBeforeUpdate` / `AesirScriptRunAfterUpdate`（其类型名被 PlayerLoop 测试断言）。宿主 `AesirArchitecture` 与日志门面 `AesirArchitectureDebug` **保持全名**——它们与 RAM 的 `AesirModules` / `AesirModulesDebug` 成对，属规则 2。文件名同步 `git mv`（`.meta` / GUID 不变）。**迁移**：调用点改 `AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, …)`；**RAM 侧零影响**（无消费点），对外部用户是编译期破坏性改名
-- **更新器窗口刷新回调拆分（进度 tick 不再重算列表）** — `AesirUpdateController` 构造器新增第 5 参「仅重绘」回调（可省，缺省回退既有结构变化回调），`SetProgress` / `SetStatus` 改走它：下载期间进度回调密集，此前每次 tick 都经 `_viewChanged` 让窗口重算列表（Odin 版还会重建全部行视图模型 + `Repaint`）
-- **`RemoveListenerHandleCollection` 收窄为 internal** — 该集合只服务 `RemoveListenerTrigger` / `RemoveListenerOnSceneUnloadedTrigger`（均为包内实现），公开签名只暴露 `AutoRemoveListenerHandle`，对外收窄以免多出一个无人使用的公开类型
-- **`AesirSamplesBuildFilter.FilterSampleScenes` 增加可注入安装根重载** — 生产重载读 `AesirAssetPaths.InstallRoots`（真实安装根），移动安装根形态的整条过滤链此前不可测；新增 `(scenes, installRoots, out removed)` 内部重载
-- **Getting Started IMGUI 兜底版补动作反馈 + 注释口径两处清理** — 兜底版「打开场景」「定位」此前丢弃 Service 返回值（成功 / 用户取消 / 退化路径零反馈），现复用 Service 层 Toast 文案真源经门面日志输出（与 Odin 版同源；用户在 Unity 保存面板取消时静默）；删 `AesirUpdateWindow._outdated` 死字段（唯一写入点、零读取）；`AesirGetStartedWindow` 菜单 priority 注释去掉已随 Aesir Inspector 迁出而失效的「-900（Inspector 组）」具体数字
+- **`AesirArchitecturePlayerLoop` → `AesirPlayerLoop`、`AesirArchitectureLifecyclePhase` →
+  `AesirLifecyclePhase`（破坏性改名）** — 该类型是**跨包共用的框架级帧钩子工件**（RAA 对外的公共 API，RAM
+  侧零引用、无对照角色），按命名规范规则 1「跨包共用 → 直接 `Aesir` + 语义名、不带包名段」精简；同文件配套的私有嵌套子系统标识一并改名为
+  `AesirScriptRunBeforeUpdate` / `AesirScriptRunAfterUpdate`（其类型名被 PlayerLoop 测试断言）。宿主
+  `AesirArchitecture` 与日志门面 `AesirArchitectureDebug` **保持全名**——它们与 RAM 的 `AesirModules` /
+  `AesirModulesDebug` 成对，属规则 2。文件名同步 `git mv`（`.meta` / GUID 不变）。**迁移**：调用点改
+  `AesirPlayerLoop.Register(AesirLifecyclePhase.BeforeUpdate, …)`；**RAM 侧零影响**（无消费点），对外部用户是编译期破坏性改名
+- **更新器窗口刷新回调拆分（进度 tick 不再重算列表）** — `AesirUpdateController` 构造器新增第 5
+  参「仅重绘」回调（可省，缺省回退既有结构变化回调），`SetProgress` / `SetStatus` 改走它：下载期间进度回调密集，此前每次
+  tick 都经 `_viewChanged` 让窗口重算列表（Odin 版还会重建全部行视图模型 + `Repaint`）
+- **`RemoveListenerHandleCollection` 收窄为 internal** — 该集合只服务 `RemoveListenerTrigger` /
+  `RemoveListenerOnSceneUnloadedTrigger`（均为包内实现），公开签名只暴露 `AutoRemoveListenerHandle`
+  ，对外收窄以免多出一个无人使用的公开类型
+- **`AesirSamplesBuildFilter.FilterSampleScenes` 增加可注入安装根重载** — 生产重载读
+  `AesirAssetPaths.InstallRoots`（真实安装根），移动安装根形态的整条过滤链此前不可测；新增
+  `(scenes, installRoots, out removed)` 内部重载
+- **Getting Started IMGUI 兜底版补动作反馈 + 注释口径两处清理** — 兜底版「打开场景」「定位」此前丢弃 Service
+  返回值（成功 / 用户取消 / 退化路径零反馈），现复用 Service 层 Toast 文案真源经门面日志输出（与 Odin 版同源；用户在
+  Unity 保存面板取消时静默）；删 `AesirUpdateWindow._outdated` 死字段（唯一写入点、零读取）；`AesirGetStartedWindow`
+  菜单 priority 注释去掉已随 Aesir Inspector 迁出而失效的「-900（Inspector 组）」具体数字
 
-- **PlayMode 测试程序集解除 `ODIN_INSPECTOR` 门控（测试保护网归位）** — `Runestone.AesirArchitecture.Tests` 的 `defineConstraints` 含 `ODIN_INSPECTOR`，未装 Odin（或活动平台非 Editor）时整程序集静默不编译，3 个 PlayMode 用例在 Test Runner 中消失且无任何报错。移除该约束并保留 3 条 `Sirenix.*.dll` 预编译引用：Odin 环境下 `AesirMonoBehaviour` 等框架基类的基类链指向 `SerializedMonoBehaviour`，`MonoLifecycleProxyTests` 对该类型的任何使用都要求编译器解析基类（缺失即 CS0012），而**指向不存在程序集的预编译引用会被 Unity 静默忽略**（本仓实测：写入一个不存在的 dll 名既不报错也不影响编译），故保留引用在有 / 无 Odin 两种环境下同时成立。EditMode 程序集 `Runestone.AesirArchitecture.Tests.Editor` 有意不引用 Sirenix——其用例经类型系统断言（`typeof(...).IsAssignableFrom`）而非实例化 Odin 基类链类型
-- **`AbstractContext<T>.Dispose()` 由 `virtual` 收为非虚方法（破坏性）** — 类上同时存在 `public virtual void Dispose()` 与 `protected virtual void OnDispose()` 两个析构扩展点，且 `Dispose()` 实现携带了不属于"清理"语义的副作用（`ReferenceEquals(_instance, this)` 时清空单例缓存）。用户子类覆写 `Dispose()` 却漏调 `base.Dispose()` 是极常见写法，一旦发生：`_instance` 不清空、`Initialized` 仍为 true（它在 service/model 循环**之后**才置 false），下次访问 `Instance` 直接返回两个定位器都已被清空的旧 Context，之后每次 `GetModel` / `GetService` 都抛"未在 Context 中注册"——而那个 Model 明明还写在 `Configure()` 里。框架自身的 `CapabilityExtensionsTests` 正断言 dispose 后可重建的行为。`Dispose()` 改为模板方法的非虚实现，`OnDispose()` 成为唯一安全定制点，基类实现从此无法被部分应用。**已全仓核查 22 个 `AbstractContext<T>` 子类，无一覆写 `Dispose()`**（含用户侧 `Assets/Scripts/HUDContext.cs`），仓内无调用点断裂；外部消费者若覆写过需改为覆写 `OnDispose()`
-- **`GenericLocator.GetAllEntries()` 物化为快照** — 该成员是本修复期新增的**有意设计**诊断成员（近失识别路径经抽象取注册键值对，接口同时继承 `IDisposable`），原实现直接返回活的 backing `Dictionary`，与同接口 `GetAll()` 的快照契约相反：诊断路径遍历期间经同一接口注册/注销会抛 `InvalidOperationException: Collection was modified`。唯一现有消费者 `AbstractContext.BuildNearMissHint` 是异常路径冷路径，额外一次 `List` 分配无关紧要，但它是公开扩展点，契约必须唯一——现与 `GetAll` 一致物化，两个枚举成员的修改安全性承诺不再相反
-- **`AesirPlayerLoop` 自愈检测按帧节流（限流逻辑下沉 `EnsureInjectedIfStaleThisFrame`）** — 公开 `Register` / 返回 `AutoRemoveListenerHandle` 的每帧订阅-退订模式每次都经 `EnsureInjected()` 走两次 `ContainsSystem<T>()`，而 `PlayerLoop.GetCurrentPlayerLoop()` 会把整棵嵌套循环树由 native 封送为托管对象（每层一个 `PlayerLoopSystem[]` 分配）。该成本此前只在调度器处被绕开（其注释写明"每次调度都做注入检测需拷贝整棵循环树，会打破稳态零分配承诺"），公开 `Register` 本身仍无条件执行、其他调用方拿不到该优化。改按 `Time.frameCount` 每帧至多复查一次（手动 `EnsureInjected()` 与 `Initialize()` 仍无条件执行，第三方覆盖后的自愈保证保留）；节流消除的是自愈检测的全树封送成本（`Register` 自身返回 `AutoRemoveListenerHandle` 时的闭包分配不在本优化范围内）
-- **`ClearListeners()` 补上接口声明** — 该 API 在四个实现类上都有完整文档（`ObservableList` 的注释明写"防止因监听者未释放导致的内存泄漏"），但接口面缺席：按框架分层建议只持有 `IReadOnlyObservableList<T>` / `IReadOnlyObservableValue<T>` 的 View / Presenter，在对象池回收时无成员可调；四个实现类均为 `sealed`，继承路径同样不可达。`IObservableCollection<T>` 与 `IReadOnlyObservableValue<T>` 补 `void ClearListeners();`，实现体与各自文档不动
-- **AbstractContext 容器依赖接口化（DIP）** — Model / Service 容器字段从 `GenericLocator<T>` 具体类型改声明为 `IGenericLocator<T>`：抽象契约首次获得框架自身消费者。`IGenericLocator<T>.GetAll()` 改为物化快照——枚举期间注册 / 注销不再抛"集合已修改"异常（此前模块 OnInitialize 期动态注册新模块会炸出完全不指向真实原因的异常）；初始化期注册的模块由新增的「重复取快照直到没有未初始化模块」补齐（见下条）
-- **`GenericLocator` 注册入口 null 校验对称化** — 泛型与 `Type` 重载对 null 键 / null 实例均抛 `ArgumentNullException`（此前泛型重载静默登记 null，`Type` 重载把 null 误报为"类型不匹配"）
-- **更新器服务层 / 编排层职责分离（SRP）** — 确认框文案构建（`BuildUpdateAllConfirmation` / `BuildSingleUpdateConfirmation` / 公共尾注）从服务迁入编排控制器 `AesirUpdateController`（对话框措辞属表现层决策）；`UpdatePackagesAsync` 导入期收起进度条改为 `onImportStarting` 回调——进度条收放权归编排层，服务不直接触碰 UI；确认框测试随迁控制器
-- **已知包登记统一为唯一真源** — 移除 `AesirUpdateService.KnownPackages` 元组登记，统一到 `AesirGetStartedService.KnownPackages`（`AesirKnownPackage` 补 `DirName` 字段）：更新器的补装目标 / 配套版本警告 / Release 资产定位与 Getting Started 概览卡片共用同一份登记，新增公开包只改一处；`cn.runestone.aesir.` 包 id 前缀三处独立定义收敛到 `AesirAssetPaths.PackageIdPrefix`
-- **更新器日志阶段整轮预算** — `BuildChangelogDigestAsync` 套 30 秒墙钟预算（此前该阶段逃逸在任何预算之外：每包最坏 4 个 jsDelivr 域 × 5s + GitHub Raw 12s，双包串行最坏约 64 秒且进度条不可取消）；预算耗尽后剩余包不再发起远程拉取、直接回退本地日志
-- **更新器超时注释纠正与 `GetTextAsync` 去默认值** — `GitHubCheckTimeoutSeconds`（12 秒）的 XML 原宣称覆盖"GitHub API"，实际 API 尝试已改用 5 秒检测基线，12 秒现仅覆盖 302 重定向探测与 GitHub Raw 日志兜底（直连 github.com 在大陆链路偏慢，有意豁免 5 秒基线）；`GetTextAsync` 移除无人使用的 20 秒默认超时，各调用方显式给出
-- **Getting Started"唯一真源"宣言改准确** — 示例**清单**（出现 / 路径 / 显示名 / 描述）以各包 package.json 的 samples 列表为唯一真源；分组 / 顺序 / 档位徽章是代码侧展示启发式（登记点 `GetSampleGroup` / `GetGroupOrder` / `GetSampleBadge`），需自定义分组时改启发式而非 package.json
-- **ResetStatics 死防御分支删除** — `MonoLifecycleProxy` / `RemoveListenerOnSceneUnloadedTrigger` 的 `SubsystemRegistration` 重置改为仅清静态引用：上一 Play 会话实例在该时机已随场景销毁（Unity fake-null 使 `_instance != null` 恒不成立），实例清理分支两种 Domain Reload 配置下均不可达，运行期清理如实依赖 `OnDestroy`（注释同步改准确）
-- **Editor 收窄四件** — 三个 Odin AttributeProcessor（AesirArchitecture / ObservableValue / RemoveListenerOnSceneUnloadedTrigger）从 `public class` 收窄 `internal sealed`（对齐项目规范）；`MonoLifecycleProxy.GetListenerCount` 收 internal（对齐 `GetHookCount` 观察口径）；`MiniEvent` / `MiniEvent<T>` 类注释不再以用户可用口吻描述已收窄 internal 的 `GetListeners`；`AesirArchitecture.Instance` 注释去"架构管理器"旧措辞；`AesirMonoBehaviour` / `AesirScriptableObject` 补 `ODIN_INSPECTOR_EDITOR_ONLY` 数据丢失警告（编辑器 Odin 序列化后端 ↔ 构建裸 Unity 后端，经 Odin 录入的非 Unity 可序列化数据会静默丢失）
-- **`ObservableList` / `ObservableHashSet` / `IObservableList` / `IObservableCollection` 注释修正** — 三处 `NotifyCollectionChangedAction` cref 补命名空间限定（无 using 时 IDE / 文档生成不可解析）；`IObservableList` "整体刷新一次通知"失实描述改准确（Clear + 逐项 Add = Reset + N×Add 次通知）；`ObservableHashSet` 类级 summary 具体化为"哈希集合"；`IObservableCollection` 移除家族口径相悖的 `#nullable enable` 漏网
-- **README 中英快速开始改快捷档主线** — 初学者敲的第一段代码从此前最重的严格档全量模式（接口注册 + 只读暴露 + Command）改为第一课快捷档三步（3 个脚本跑通数据闭环），严格档内容移入"进阶"小节；三档文件数统一按脚本计（~3 / ~4 / ~10，此前混入场景资产计数）；结构树补齐 `Documentation/` 3 项缺失（observable-collections.md / 设计变更记录.md / AesirArchitecture-Skill/）与 Getting Started 两窗口文件、修正调度器文件名（`AesirArchitectureScheduler.cs`）；路线图重复勾选清理；`[InternalContext]` 首次获得文档说明（示例 / 测试 Context 专用，业务项目不带）；AI 编码指南 Quick 档模板（SKILL.md / mvc-quick.md / mvp-quick.md）改为私有字段 + 只读属性暴露写法——不再教被官方示例定性为"封装倒退已修复"的公开可变字段
+- **PlayMode 测试程序集解除 `ODIN_INSPECTOR` 门控（测试保护网归位）** — `Runestone.AesirArchitecture.Tests` 的
+  `defineConstraints` 含 `ODIN_INSPECTOR`，未装 Odin（或活动平台非 Editor）时整程序集静默不编译，3 个 PlayMode 用例在
+  Test Runner 中消失且无任何报错。移除该约束并保留 3 条 `Sirenix.*.dll` 预编译引用：Odin 环境下
+  `AesirMonoBehaviour` 等框架基类的基类链指向 `SerializedMonoBehaviour`，`MonoLifecycleProxyTests`
+  对该类型的任何使用都要求编译器解析基类（缺失即 CS0012），而**指向不存在程序集的预编译引用会被 Unity 静默忽略**
+  （本仓实测：写入一个不存在的 dll 名既不报错也不影响编译），故保留引用在有 / 无 Odin 两种环境下同时成立。EditMode
+  程序集 `Runestone.AesirArchitecture.Tests.Editor` 有意不引用 Sirenix——其用例经类型系统断言（
+  `typeof(...).IsAssignableFrom`）而非实例化 Odin 基类链类型
+- **`AbstractContext<T>.Dispose()` 由 `virtual` 收为非虚方法（破坏性）** — 类上同时存在
+  `public virtual void Dispose()` 与 `protected virtual void OnDispose()` 两个析构扩展点，且 `Dispose()`
+  实现携带了不属于"清理"语义的副作用（`ReferenceEquals(_instance, this)` 时清空单例缓存）。用户子类覆写
+  `Dispose()` 却漏调 `base.Dispose()` 是极常见写法，一旦发生：`_instance` 不清空、`Initialized` 仍为 true（它在
+  service/model 循环**之后**才置 false），下次访问 `Instance` 直接返回两个定位器都已被清空的旧 Context，之后每次
+  `GetModel` / `GetService` 都抛"未在 Context 中注册"——而那个 Model 明明还写在 `Configure()` 里。框架自身的
+  `CapabilityExtensionsTests` 正断言 dispose 后可重建的行为。`Dispose()` 改为模板方法的非虚实现，`OnDispose()`
+  成为唯一安全定制点，基类实现从此无法被部分应用。**已全仓核查 22 个 `AbstractContext<T>` 子类，无一覆写
+  `Dispose()`**（含用户侧 `Assets/Scripts/HUDContext.cs`），仓内无调用点断裂；外部消费者若覆写过需改为覆写
+  `OnDispose()`
+- **`GenericLocator.GetAllEntries()` 物化为快照** — 该成员是本修复期新增的**有意设计**
+  诊断成员（近失识别路径经抽象取注册键值对，接口同时继承 `IDisposable`），原实现直接返回活的 backing `Dictionary`
+  ，与同接口 `GetAll()` 的快照契约相反：诊断路径遍历期间经同一接口注册/注销会抛
+  `InvalidOperationException: Collection was modified`。唯一现有消费者 `AbstractContext.BuildNearMissHint`
+  是异常路径冷路径，额外一次 `List` 分配无关紧要，但它是公开扩展点，契约必须唯一——现与 `GetAll`
+  一致物化，两个枚举成员的修改安全性承诺不再相反
+- **`AesirPlayerLoop` 自愈检测按帧节流（限流逻辑下沉 `EnsureInjectedIfStaleThisFrame`）** — 公开 `Register` / 返回
+  `AutoRemoveListenerHandle` 的每帧订阅-退订模式每次都经 `EnsureInjected()` 走两次 `ContainsSystem<T>()`，而
+  `PlayerLoop.GetCurrentPlayerLoop()` 会把整棵嵌套循环树由 native 封送为托管对象（每层一个 `PlayerLoopSystem[]`
+  分配）。该成本此前只在调度器处被绕开（其注释写明"每次调度都做注入检测需拷贝整棵循环树，会打破稳态零分配承诺"），公开
+  `Register` 本身仍无条件执行、其他调用方拿不到该优化。改按 `Time.frameCount` 每帧至多复查一次（手动
+  `EnsureInjected()` 与 `Initialize()` 仍无条件执行，第三方覆盖后的自愈保证保留）；节流消除的是自愈检测的全树封送成本（
+  `Register` 自身返回 `AutoRemoveListenerHandle` 时的闭包分配不在本优化范围内）
+- **`ClearListeners()` 补上接口声明** — 该 API 在四个实现类上都有完整文档（`ObservableList`
+  的注释明写"防止因监听者未释放导致的内存泄漏"），但接口面缺席：按框架分层建议只持有
+  `IReadOnlyObservableList<T>` / `IReadOnlyObservableValue<T>` 的 View / Presenter，在对象池回收时无成员可调；四个实现类均为
+  `sealed`，继承路径同样不可达。`IObservableCollection<T>` 与 `IReadOnlyObservableValue<T>` 补
+  `void ClearListeners();`，实现体与各自文档不动
+- **AbstractContext 容器依赖接口化（DIP）** — Model / Service 容器字段从 `GenericLocator<T>` 具体类型改声明为
+  `IGenericLocator<T>`：抽象契约首次获得框架自身消费者。`IGenericLocator<T>.GetAll()`
+  改为物化快照——枚举期间注册 / 注销不再抛"集合已修改"异常（此前模块 OnInitialize
+  期动态注册新模块会炸出完全不指向真实原因的异常）；初始化期注册的模块由新增的「重复取快照直到没有未初始化模块」补齐（见下条）
+- **`GenericLocator` 注册入口 null 校验对称化** — 泛型与 `Type` 重载对 null 键 / null 实例均抛
+  `ArgumentNullException`（此前泛型重载静默登记 null，`Type` 重载把 null 误报为"类型不匹配"）
+- **更新器服务层 / 编排层职责分离（SRP）** — 确认框文案构建（`BuildUpdateAllConfirmation` /
+  `BuildSingleUpdateConfirmation` / 公共尾注）从服务迁入编排控制器 `AesirUpdateController`（对话框措辞属表现层决策）；
+  `UpdatePackagesAsync` 导入期收起进度条改为 `onImportStarting` 回调——进度条收放权归编排层，服务不直接触碰
+  UI；确认框测试随迁控制器
+- **已知包登记统一为唯一真源** — 移除 `AesirUpdateService.KnownPackages` 元组登记，统一到
+  `AesirGetStartedService.KnownPackages`（`AesirKnownPackage` 补 `DirName` 字段）：更新器的补装目标 /
+  配套版本警告 / Release 资产定位与 Getting Started 概览卡片共用同一份登记，新增公开包只改一处；
+  `cn.runestone.aesir.` 包 id 前缀三处独立定义收敛到 `AesirAssetPaths.PackageIdPrefix`
+- **更新器日志阶段整轮预算** — `BuildChangelogDigestAsync` 套 30 秒墙钟预算（此前该阶段逃逸在任何预算之外：每包最坏
+  4 个 jsDelivr 域 × 5s + GitHub Raw 12s，双包串行最坏约 64 秒且进度条不可取消）；预算耗尽后剩余包不再发起远程拉取、直接回退本地日志
+- **更新器超时注释纠正与 `GetTextAsync` 去默认值** — `GitHubCheckTimeoutSeconds`（12 秒）的 XML
+  原宣称覆盖"GitHub API"，实际 API 尝试已改用 5 秒检测基线，12 秒现仅覆盖 302 重定向探测与 GitHub Raw 日志兜底（直连
+  github.com 在大陆链路偏慢，有意豁免 5 秒基线）；`GetTextAsync` 移除无人使用的 20 秒默认超时，各调用方显式给出
+- **Getting Started"唯一真源"宣言改准确** — 示例**清单**（出现 / 路径 / 显示名 / 描述）以各包 package.json 的
+  samples 列表为唯一真源；分组 / 顺序 / 档位徽章是代码侧展示启发式（登记点 `GetSampleGroup` / `GetGroupOrder` /
+  `GetSampleBadge`），需自定义分组时改启发式而非 package.json
+- **ResetStatics 死防御分支删除** — `MonoLifecycleProxy` / `RemoveListenerOnSceneUnloadedTrigger` 的
+  `SubsystemRegistration` 重置改为仅清静态引用：上一 Play 会话实例在该时机已随场景销毁（Unity fake-null 使
+  `_instance != null` 恒不成立），实例清理分支两种 Domain Reload 配置下均不可达，运行期清理如实依赖 `OnDestroy`
+  （注释同步改准确）
+- **Editor 收窄四件** — 三个 Odin AttributeProcessor（AesirArchitecture / ObservableValue /
+  RemoveListenerOnSceneUnloadedTrigger）从 `public class` 收窄 `internal sealed`（对齐项目规范）；
+  `MonoLifecycleProxy.GetListenerCount` 收 internal（对齐 `GetHookCount` 观察口径）；`MiniEvent` / `MiniEvent<T>`
+  类注释不再以用户可用口吻描述已收窄 internal 的 `GetListeners`；`AesirArchitecture.Instance`
+  注释去"架构管理器"旧措辞；`AesirMonoBehaviour` / `AesirScriptableObject` 补 `ODIN_INSPECTOR_EDITOR_ONLY`
+  数据丢失警告（编辑器 Odin 序列化后端 ↔ 构建裸 Unity 后端，经 Odin 录入的非 Unity 可序列化数据会静默丢失）
+- **`ObservableList` / `ObservableHashSet` / `IObservableList` / `IObservableCollection` 注释修正** — 三处
+  `NotifyCollectionChangedAction` cref 补命名空间限定（无 using 时 IDE / 文档生成不可解析）；`IObservableList`
+  "整体刷新一次通知"失实描述改准确（Clear + 逐项 Add = Reset + N×Add 次通知）；`ObservableHashSet` 类级 summary
+  具体化为"哈希集合"；`IObservableCollection` 移除家族口径相悖的 `#nullable enable` 漏网
+- **README 中英快速开始改快捷档主线** — 初学者敲的第一段代码从此前最重的严格档全量模式（接口注册 + 只读暴露 +
+  Command）改为第一课快捷档三步（3 个脚本跑通数据闭环），严格档内容移入"进阶"小节；三档文件数统一按脚本计（~3 / ~
+  4 / ~10，此前混入场景资产计数）；结构树补齐 `Documentation/` 3 项缺失（observable-collections.md /
+  设计变更记录.md / AesirArchitecture-Skill/）与 Getting Started 两窗口文件、修正调度器文件名（
+  `AesirArchitectureScheduler.cs`）；路线图重复勾选清理；`[InternalContext]` 首次获得文档说明（示例 / 测试 Context
+  专用，业务项目不带）；AI 编码指南 Quick 档模板（SKILL.md / mvc-quick.md / mvp-quick.md）改为私有字段 +
+  只读属性暴露写法——不再教被官方示例定性为"封装倒退已修复"的公开可变字段
 
-- **初始化语义修正：集体初始化完成与否，是唯一的"是否立即初始化"判据（破坏性修复）** — `Initialize()` 曾在调用 `Configure()` **之前**就置位内部标志 `_initializing`，使 `Configure()` 里注册的每个模块**当场初始化一次、遍历时再初始化一次**（`AbstractSubmodule.Initialize` 无幂等守卫，`OnInitialize` 真实执行两遍）：订阅重复注册、`ObservableValue` 被创建两次而首次注册的订阅者指向被覆盖的实例、计数/加载类副作用翻倍；同时"先全部 Model 后全部 Service"的两阶段顺序被打乱（按注册顺序交错初始化），`GetService` 异常文档承诺的"Model 阶段所有 Service 均未初始化"不再成立。现修正为：**集体初始化尚未完成时注册只登记不初始化；完成后注册立即初始化**（即原判据 `if (!Initialized) return;`）。初始化遍历期间注册的模块由 `InitializePendingModules` 以"重复取快照直到没有未初始化模块"补齐——既不在注册瞬间初始化，也不会因 `GetAll()` 快照而漏掉。移除 `_initializing` 字段；三个既有断言（`AbstractContextInitializationTests.Interface_InitializeSucceeds_CachesSingletonAndInitializesOnce`、`OrderingAndLifecycleTests.Context_InitializeAndDispose_FollowRegistrationOrder`、`..._RegisterDuringOnInitialize_*`）恢复通过
-- **`AbstractContext<T>.Dispose()` 收尾异常安全（finally 保证不变量）** — 收尾段（置 `Initialized = false` + 解除 `_instance` 单例缓存）移入 `finally`：此前释放链路（`OnDispose` 或任一模块 `Dispose`，例如访问已随场景销毁的 MonoBehaviour）抛异常时，`Initialized` 仍为 `true` 且 `_instance` 仍指向该实例 → 之后每次 `Instance` 都拿到**半释放的僵尸上下文**，且 `Initialize()` 因早退永不重建。异常照旧向上传播（fail-fast），与静态重置回调"先摘单例再释放"的硬化同构
+- **初始化语义修正：集体初始化完成与否，是唯一的"是否立即初始化"判据（破坏性修复）** — `Initialize()` 曾在调用
+  `Configure()` **之前**就置位内部标志 `_initializing`，使 `Configure()` 里注册的每个模块
+  **当场初始化一次、遍历时再初始化一次**（`AbstractSubmodule.Initialize` 无幂等守卫，`OnInitialize`
+  真实执行两遍）：订阅重复注册、`ObservableValue`
+  被创建两次而首次注册的订阅者指向被覆盖的实例、计数/加载类副作用翻倍；同时"先全部 Model 后全部
+  Service"的两阶段顺序被打乱（按注册顺序交错初始化），`GetService` 异常文档承诺的"Model 阶段所有 Service
+  均未初始化"不再成立。现修正为：**集体初始化尚未完成时注册只登记不初始化；完成后注册立即初始化**（即原判据
+  `if (!Initialized) return;`）。初始化遍历期间注册的模块由 `InitializePendingModules`
+  以"重复取快照直到没有未初始化模块"补齐——既不在注册瞬间初始化，也不会因 `GetAll()` 快照而漏掉。移除
+  `_initializing` 字段；三个既有断言（
+  `AbstractContextInitializationTests.Interface_InitializeSucceeds_CachesSingletonAndInitializesOnce`、
+  `OrderingAndLifecycleTests.Context_InitializeAndDispose_FollowRegistrationOrder`、
+  `..._RegisterDuringOnInitialize_*`）恢复通过
+- **`AbstractContext<T>.Dispose()` 收尾异常安全（finally 保证不变量）** — 收尾段（置 `Initialized = false` + 解除
+  `_instance` 单例缓存）移入 `finally`：此前释放链路（`OnDispose` 或任一模块 `Dispose`，例如访问已随场景销毁的
+  MonoBehaviour）抛异常时，`Initialized` 仍为 `true` 且 `_instance` 仍指向该实例 → 之后每次 `Instance` 都拿到
+  **半释放的僵尸上下文**，且 `Initialize()`
+  因早退永不重建。异常照旧向上传播（fail-fast），与静态重置回调"先摘单例再释放"的硬化同构
 
-- **检查更新失败后仍显示上一次的线路与「直连可用」** — `CheckForUpdates` 的异常分支清空了快照 / 版本 / 日志 / 来源 / 检测详情，却漏了 `RemoteRouteKind` 与 `GitHubDirectAvailable`：失败后界面继续显示上一次的线路名与 CDN 延迟提示，与眼前这次失败自相矛盾。两字段一并复位（线路回落默认、直连可用性置 false）
-- **`RuntimeInitializeLoadType` 示例的五个开关只活在当前进程内** — `RuntimeInitializeLoadTypeSettings` 声明了 `[FilePath]` 却漏了五个私有字段的 `[SerializeField]`，而 setter 与 `EnableAll` / `DisableAll` 全部调 `Save(true)`：设置文件里一个键都没有，编辑器重启（重建单例）后回落为「全部 false」，示例的五个时机演示静默变成一条日志都不打。补 `[SerializeField]`（含 `Samples~/` 镜像）
+- **检查更新失败后仍显示上一次的线路与「直连可用」** — `CheckForUpdates` 的异常分支清空了快照 / 版本 / 日志 /
+  来源 / 检测详情，却漏了 `RemoteRouteKind` 与 `GitHubDirectAvailable`：失败后界面继续显示上一次的线路名与 CDN
+  延迟提示，与眼前这次失败自相矛盾。两字段一并复位（线路回落默认、直连可用性置 false）
+- **`RuntimeInitializeLoadType` 示例的五个开关只活在当前进程内** — `RuntimeInitializeLoadTypeSettings` 声明了
+  `[FilePath]` 却漏了五个私有字段的 `[SerializeField]`，而 setter 与 `EnableAll` / `DisableAll` 全部调
+  `Save(true)`：设置文件里一个键都没有，编辑器重启（重建单例）后回落为「全部 false」，示例的五个时机演示静默变成一条日志都不打。补
+  `[SerializeField]`（含 `Samples~/` 镜像）
 
 ### Fixed
 
-- **`ScriptingSymbolEditorUtilityTests` 改写真实宏定义符号导致 Test Runner 中途域重载** — 用例经 `EnsureScriptingDefineSymbol` / `RemoveScriptingDefineSymbol` 对**真实** `PlayerSettings` 做增删往返，每次变更都会请求 "Define symbols changed" 全量脚本重编译（Editor.log 实证：`[ScriptCompilation] Requested script compilation because: Define symbols changed` → `Reloading assemblies after finishing script compilation`），编译完成时本轮 EditMode 测试尚未结束，Test Runner 报 **Unexpected assembly reload happened while running tests** 并丢失运行上下文（控制台伴随 `[SceneHierarchyExpansionState] Save/Restore timing` 重载标记）。现将符号字符串的增删语义抽为纯函数 `ContainsSymbol` / `AddSymbol` / `RemoveSymbol`（internal，逻辑与原先内联实现逐字等价），`EnsureSymbolForTarget` / `RemoveSymbolForTarget` 改为"产物与现状相同即不写回"，测试改为纯逻辑断言 + `PlayerSettings` 只读查询（真实写入路径属手动验证项）
-- **域重载重置链路无异常隔离 + 先 Dispose 后置空**（跨会话残留）— `ResetStaticsAssistant.ResetStaticsAll` 的 `foreach` 无 `try/catch`，任一回调抛异常即中断循环，**排在后面的所有重置回调全部不执行**，其它泛型单例同样残留；同时 `AbstractContext<T>` 的回调是 `_instance?.Dispose(); _instance = null;`，`Dispose()` 抛异常时 `_instance` 永不清空、`Initialized` 仍为 true，下一 Play 会话首次访问 `Instance` 直接返回上一会话的 Context，`Initialize()` 早退导致 Model / Service 永不再初始化。触发条件现实存在：关闭 Domain Reload + 任一 Model/Service 的 `OnDispose()` 触碰已随场景销毁的 MonoBehaviour。改为逐回调 `try/catch` 并记警告后继续，且先取 `_instance` 置空再 `Dispose`
-- **`RegisterModel` / `RegisterService` 绕过定位器空值守卫** — `GenericLocator<T>.Register` 的报错文案明确宣称"与 `Register(Type, T)` 的校验对称"，但两处注册方法先调 `model.SetContext(this)` 才交给定位器，守卫根本没被触及，条件注册解析为 null 时抛的是裸 `NullReferenceException` 而非指名参数的 `ArgumentNullException`。两处方法开头补同款守卫
-- **`GetService` 诊断指向一个任何标准 `IModel` 都无法抵达的原因** — 抛出的信息把"调用发生在 Model 的 `OnInitialize` 中"列为原因②，`<exception>` 文档还断言必然成立；但 `IModel` 只继承 `ICanGetModel`、不继承 `ICanGetService`，Model 根本调不了 `GetService`（框架在 `CapabilityExtensionsTests` 反向测试中主动锁定了这个负向约束）。原因② 改述为"调用方是自行实现 `ICanGetService` 的 Model"，保留真正适用的原因①（注册顺序），既有测试断言的两个子串原样保留
-- **`CollectionChangedEventArgs` 的 `cref` 解析到错误类型** — 类级 remarks 中 `cref="Action"` 语义上指 `NotifyCollectionChangedAction`（紧邻各行都是），文件有 `using System.Collections.Specialized;` 但无 `using System`，该 cref 要么解析失败要么解析到 `System.Action`。周边条目已补全限定，唯独此行漏网——与周边对齐
-- **`CollectionChangedEventArgs` / `MonoLifecycleProxy` 注释口径** — `MonoLifecycleProxy` 的 `Update` / `FixedUpdate` / `LateUpdate` 三个 Unity 帧回调此前无 XML（同类 `RemoveListenerOnDestroyTrigger.OnDestroy` 有），口径不一；补一段统一 remarks 说明"代理是 DDOL 懒创建单例且不对外暴露引用，四个帧回调私有不 virtual，对外只暴露 `MonoLifecycleEvent` 与 `ICustomUpdate` 等注册接口"
-- **`AutoRemoveListenerHandle` 文档补"每句柄对应一次 AddListener"** — 该句柄只对应一次 `AddListener` 调用（注销时执行一次等价的 `RemoveListener`），与原生 C# 事件语义一致（`+=` 允许同一方法组重复入列，`-=` 只摘除一个匹配项）：同一回调注册 N 次会得到 N 个句柄，需 Dispose 全部 N 个才彻底退订。此前"Dispose 时自动移除监听"的表述在重复注册场景下不够准确
-- **更新器差集清理对"新清单为空"补守卫（数据损坏级）** — 远程 `update-info.json` 半截 JSON / 缺 `files` 字段时被 JsonUtility 反序列化成空清单，此前上次清单内该包全部文件会被判为残留而整包连文件带空目录删光（`previousFiles` 有守卫、`newFiles` 无守卫的不对称是根因）；现对 `newFiles == null || Length == 0` 与上次清单守卫对称地返回空列表，补回归用例
-- **`RemoveListenerOnSceneUnloadedTrigger` 宿主销毁时逐桶执行句柄移除** — 此前 `ClearState` 只清场景桶不 Dispose 句柄：宿主关闭 DDOL 随所在场景卸载销毁时，其余已加载场景中经 `RemoveListenerWhenOnSceneUnloaded(scene)` 注册的句柄全部被静默丢弃，对应监听永久残留在目标事件上（内存泄漏 + 违背"场景卸载自动移除"承诺）；现先逐桶 `RemoveAllListeners()` 再清桶，与 OnDestroy / OnDisable 触发器的终止语义对称
-- **`AesirAssetPaths` 静态构造异常护栏** — 锚点定位的 AssetDatabase 调用（GUID 查询 / 类型搜索）加 try/catch：此前一次误触发（曾在 ScriptableObject 构造期抛 UnityException）会让 .NET 把类型标记为初始化失败，此后直到下次域重载，更新器菜单 validate / 双窗口 / Getting Started / 构建剔除的所有访问都重抛 `TypeInitializationException`（会话级硬故障）；现降级为单次可恢复的路径降级警告，已收集的安装根照常返回
-- **`ObservableDictionary` / `ObservableHashSet` 序列化注释失实修正并补 `[SerializeField]`** — 注释原宣称"`[SerializeField]` 标记字段"，实际字段没有该标记（List / Value 同款注释为真，属复制粘贴时属性丢失）；Odin 默认 `SerializationPolicies.Unity` 下私有字段必须带该标记才会被序列化——补齐后"安装 Odin 后可在 Inspector 编辑初始键值 / 元素"的承诺真实生效（此前字典 / 集合字段在 Odin 序列化上下文中不持久化）
-- **`ObservableHashSet.AddRange` / `RemoveRange(IEnumerable<T>)` 先物化源序列** — 此前直接枚举活源：传集合自身时（如 `set.RemoveRange(set)`）首次写入即触发枚举器版本检查异常且留下部分变更，是四集合中唯一漏网（List / Queue 均先经 `CloneCollection` 物化）；统一"先克隆后写入"并补自身作源的回归用例
-- **`CloneCollection` 修正三件** — `EnumerableCollection.Contains` 按 `ICollection<T>` 契约给出真实现（`Array.IndexOf` 扫已物化区间，此前调用必抛 `NotSupportedException`）；全包唯一英文注释文件改为中文 XML 文档；删除两个零使用死构造器（`CloneCollection(T)` / `CloneCollection(ReadOnlySpan<T>)`，0.23 Span 收敛遗物）
+- **`ScriptingSymbolEditorUtilityTests` 改写真实宏定义符号导致 Test Runner 中途域重载** — 用例经
+  `EnsureScriptingDefineSymbol` / `RemoveScriptingDefineSymbol` 对**真实** `PlayerSettings` 做增删往返，每次变更都会请求
+  "Define symbols changed" 全量脚本重编译（Editor.log 实证：
+  `[ScriptCompilation] Requested script compilation because: Define symbols changed` →
+  `Reloading assemblies after finishing script compilation`），编译完成时本轮 EditMode 测试尚未结束，Test Runner
+  报 **Unexpected assembly reload happened while running tests** 并丢失运行上下文（控制台伴随
+  `[SceneHierarchyExpansionState] Save/Restore timing` 重载标记）。现将符号字符串的增删语义抽为纯函数
+  `ContainsSymbol` / `AddSymbol` / `RemoveSymbol`（internal，逻辑与原先内联实现逐字等价），
+  `EnsureSymbolForTarget` / `RemoveSymbolForTarget` 改为"产物与现状相同即不写回"，测试改为纯逻辑断言 +
+  `PlayerSettings` 只读查询（真实写入路径属手动验证项）
+- **域重载重置链路无异常隔离 + 先 Dispose 后置空**（跨会话残留）— `ResetStaticsAssistant.ResetStaticsAll` 的
+  `foreach` 无 `try/catch`，任一回调抛异常即中断循环，**排在后面的所有重置回调全部不执行**，其它泛型单例同样残留；同时
+  `AbstractContext<T>` 的回调是 `_instance?.Dispose(); _instance = null;`，`Dispose()` 抛异常时 `_instance`
+  永不清空、`Initialized` 仍为 true，下一 Play 会话首次访问 `Instance` 直接返回上一会话的 Context，`Initialize()`
+  早退导致 Model / Service 永不再初始化。触发条件现实存在：关闭 Domain Reload + 任一 Model/Service 的
+  `OnDispose()` 触碰已随场景销毁的 MonoBehaviour。改为逐回调 `try/catch` 并记警告后继续，且先取 `_instance` 置空再
+  `Dispose`
+- **`RegisterModel` / `RegisterService` 绕过定位器空值守卫** — `GenericLocator<T>.Register`
+  的报错文案明确宣称"与 `Register(Type, T)` 的校验对称"，但两处注册方法先调 `model.SetContext(this)`
+  才交给定位器，守卫根本没被触及，条件注册解析为 null 时抛的是裸 `NullReferenceException` 而非指名参数的
+  `ArgumentNullException`。两处方法开头补同款守卫
+- **`GetService` 诊断指向一个任何标准 `IModel` 都无法抵达的原因** — 抛出的信息把"调用发生在 Model 的
+  `OnInitialize` 中"列为原因②，`<exception>` 文档还断言必然成立；但 `IModel` 只继承 `ICanGetModel`、不继承
+  `ICanGetService`，Model 根本调不了 `GetService`（框架在 `CapabilityExtensionsTests` 反向测试中主动锁定了这个负向约束）。原因②
+  改述为"调用方是自行实现 `ICanGetService` 的 Model"，保留真正适用的原因①（注册顺序），既有测试断言的两个子串原样保留
+- **`CollectionChangedEventArgs` 的 `cref` 解析到错误类型** — 类级 remarks 中 `cref="Action"` 语义上指
+  `NotifyCollectionChangedAction`（紧邻各行都是），文件有 `using System.Collections.Specialized;` 但无
+  `using System`，该 cref 要么解析失败要么解析到 `System.Action`。周边条目已补全限定，唯独此行漏网——与周边对齐
+- **`CollectionChangedEventArgs` / `MonoLifecycleProxy` 注释口径** — `MonoLifecycleProxy` 的 `Update` /
+  `FixedUpdate` / `LateUpdate` 三个 Unity 帧回调此前无 XML（同类 `RemoveListenerOnDestroyTrigger.OnDestroy`
+  有），口径不一；补一段统一 remarks 说明"代理是 DDOL 懒创建单例且不对外暴露引用，四个帧回调私有不 virtual，对外只暴露
+  `MonoLifecycleEvent` 与 `ICustomUpdate` 等注册接口"
+- **`AutoRemoveListenerHandle` 文档补"每句柄对应一次 AddListener"** — 该句柄只对应一次 `AddListener`
+  调用（注销时执行一次等价的 `RemoveListener`），与原生 C# 事件语义一致（`+=` 允许同一方法组重复入列，`-=`
+  只摘除一个匹配项）：同一回调注册 N 次会得到 N 个句柄，需 Dispose 全部 N 个才彻底退订。此前"Dispose
+  时自动移除监听"的表述在重复注册场景下不够准确
+- **更新器差集清理对"新清单为空"补守卫（数据损坏级）** — 远程 `update-info.json` 半截 JSON / 缺 `files` 字段时被
+  JsonUtility 反序列化成空清单，此前上次清单内该包全部文件会被判为残留而整包连文件带空目录删光（`previousFiles`
+  有守卫、`newFiles` 无守卫的不对称是根因）；现对 `newFiles == null || Length == 0` 与上次清单守卫对称地返回空列表，补回归用例
+- **`RemoveListenerOnSceneUnloadedTrigger` 宿主销毁时逐桶执行句柄移除** — 此前 `ClearState` 只清场景桶不
+  Dispose 句柄：宿主关闭 DDOL 随所在场景卸载销毁时，其余已加载场景中经
+  `RemoveListenerWhenOnSceneUnloaded(scene)` 注册的句柄全部被静默丢弃，对应监听永久残留在目标事件上（内存泄漏 +
+  违背"场景卸载自动移除"承诺）；现先逐桶 `RemoveAllListeners()` 再清桶，与 OnDestroy / OnDisable 触发器的终止语义对称
+- **`AesirAssetPaths` 静态构造异常护栏** — 锚点定位的 AssetDatabase 调用（GUID 查询 / 类型搜索）加
+  try/catch：此前一次误触发（曾在 ScriptableObject 构造期抛 UnityException）会让 .NET 把类型标记为初始化失败，此后直到下次域重载，更新器菜单
+  validate / 双窗口 / Getting Started / 构建剔除的所有访问都重抛 `TypeInitializationException`
+  （会话级硬故障）；现降级为单次可恢复的路径降级警告，已收集的安装根照常返回
+- **`ObservableDictionary` / `ObservableHashSet` 序列化注释失实修正并补 `[SerializeField]`** — 注释原宣称"
+  `[SerializeField]` 标记字段"，实际字段没有该标记（List / Value 同款注释为真，属复制粘贴时属性丢失）；Odin 默认
+  `SerializationPolicies.Unity` 下私有字段必须带该标记才会被序列化——补齐后"安装 Odin 后可在 Inspector
+  编辑初始键值 / 元素"的承诺真实生效（此前字典 / 集合字段在 Odin 序列化上下文中不持久化）
+- **`ObservableHashSet.AddRange` / `RemoveRange(IEnumerable<T>)` 先物化源序列** — 此前直接枚举活源：传集合自身时（如
+  `set.RemoveRange(set)`）首次写入即触发枚举器版本检查异常且留下部分变更，是四集合中唯一漏网（List / Queue 均先经
+  `CloneCollection` 物化）；统一"先克隆后写入"并补自身作源的回归用例
+- **`CloneCollection` 修正三件** — `EnumerableCollection.Contains` 按 `ICollection<T>` 契约给出真实现（
+  `Array.IndexOf` 扫已物化区间，此前调用必抛 `NotSupportedException`）；全包唯一英文注释文件改为中文 XML
+  文档；删除两个零使用死构造器（`CloneCollection(T)` / `CloneCollection(ReadOnlySpan<T>)`，0.23 Span 收敛遗物）
 
-- **更新器差集清理在"安装根被移动"形态下静默失效** — 差集前缀取自本地 `AssetsPath`，而清单条目恒为仓库相对路径；安装根被移动到其它文件夹（锚点机制明确支持并有文档承诺）时前缀永不匹配，`ComputeStaleFiles` 恒返回空 → 残留静默累积且"清理 N 个残留条目"永不出现，`DeleteStaleEntries` 也因此从未收到可删条目。现按包目录名从清单条目中辨认清单侧前缀（完整路径段匹配，`AesirArchitecture.Samples` 之类同前缀目录不误认），替换为本地前缀后返回；补"移动安装根"与"同前缀兄弟目录"两条回归用例
+- **更新器差集清理在"安装根被移动"形态下静默失效** — 差集前缀取自本地 `AssetsPath`
+  ，而清单条目恒为仓库相对路径；安装根被移动到其它文件夹（锚点机制明确支持并有文档承诺）时前缀永不匹配，
+  `ComputeStaleFiles` 恒返回空 → 残留静默累积且"清理 N 个残留条目"永不出现，`DeleteStaleEntries`
+  也因此从未收到可删条目。现按包目录名从清单条目中辨认清单侧前缀（完整路径段匹配，`AesirArchitecture.Samples`
+  之类同前缀目录不误认），替换为本地前缀后返回；补"移动安装根"与"同前缀兄弟目录"两条回归用例
 
 ### Removed
 
-- **`ObservableQueue<T>` 整体移除（破坏性）** — 队列是四集合中使用频率最低的一种，且是唯一没有写侧接口的集合（Model 层只能依赖具体 sealed 类，DIP 断层）；内置家族收敛为三种高频集合（List / Dictionary / HashSet），需要队列（FIFO）时直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)。连带移除：`ObservableQueueTests`（8 用例）、`ObservableCollectionChangedTests` 的 Queue 段、Odin 队列内联抽屉；README 中英 / observable-collections.md / 设计变更记录.md 同步（废弃机制记为第 13 条）
-- **`MonoLifecycleProxyExtensions` 整类移除（破坏性）** — 6 个公开扩展方法全仓零使用，且均为既有 API 的一行转发（`mono.RegisterCustomLifecycle()` ≡ `MonoLifecycleProxy.Register(mono)`）；其中 `UnregisterCustomLifecycle` 的 receiver 参数完全不参与逻辑（实为全局 `(evt, callback)` 匹配），扩展方法形态暗示"仅移除该 mono 注册的监听"的错误心智模型
-- **更新器死入口 `FetchLatestReleaseSnapshotAsync`** — 自述"保留兼容"但全仓零调用方（编辑器内部工具无兼容受益者），`CheckLatestReleaseAsync` 为唯一入口
-- **`Internal/ListExtensions.cs` 整文件** — 0.23 删除 Span 输入重载后的降级实现残渣（两个扩展全仓零调用，helper 文件漏删）；`observable-collections.md` 对它的现行描述同步移除
-- **`AesirScheduler` 帧粒度时间调度器整体移除（破坏性）** — 该原语自 0.21.0 引入后**全仓零使用**：源码引用仅存在于其自身定义与 `AesirSchedulerTests`（9 用例），11 个示例、Runtime 全部代码、Documentation~ 无一处调用 `Delay` / `NextFrame`。框架唯一的完整游戏示例 `PlaneWar`（敌机刷怪、子弹生命周期、玩家复活、计分）6 个脚本全部走普通 `MonoBehaviour.Update()`——最该用帧级调度的场景恰恰没用。原始立论"纯 C# 层没有延时手段"已被框架自有的两条路径覆盖（`MonoLifecycleProxy` 的 DDOL 帧代理 / GameObject 上的协程）。**同一需求三条路径并存而零人使用，是极简原则下的净负债。** 连带移除 `Tests/Editor/AesirSchedulerTests.cs`；README 中英的"特性"条目与结构树同步移除。`AesirArchitecturePlayerLoop` 本体保留（它是独立的帧钩子原语，非调度器专属）
+- **`ObservableQueue<T>` 整体移除（破坏性）** — 队列是四集合中使用频率最低的一种，且是唯一没有写侧接口的集合（Model
+  层只能依赖具体 sealed 类，DIP 断层）；内置家族收敛为三种高频集合（List / Dictionary /
+  HashSet），需要队列（FIFO）时直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+  。连带移除：`ObservableQueueTests`（8 用例）、`ObservableCollectionChangedTests` 的 Queue 段、Odin 队列内联抽屉；README
+  中英 / observable-collections.md / 设计变更记录.md 同步（废弃机制记为第 13 条）
+- **`MonoLifecycleProxyExtensions` 整类移除（破坏性）** — 6 个公开扩展方法全仓零使用，且均为既有 API 的一行转发（
+  `mono.RegisterCustomLifecycle()` ≡ `MonoLifecycleProxy.Register(mono)`）；其中 `UnregisterCustomLifecycle` 的
+  receiver 参数完全不参与逻辑（实为全局 `(evt, callback)` 匹配），扩展方法形态暗示"仅移除该 mono
+  注册的监听"的错误心智模型
+- **更新器死入口 `FetchLatestReleaseSnapshotAsync`** — 自述"保留兼容"但全仓零调用方（编辑器内部工具无兼容受益者），
+  `CheckLatestReleaseAsync` 为唯一入口
+- **`Internal/ListExtensions.cs` 整文件** — 0.23 删除 Span 输入重载后的降级实现残渣（两个扩展全仓零调用，helper
+  文件漏删）；`observable-collections.md` 对它的现行描述同步移除
+- **`AesirScheduler` 帧粒度时间调度器整体移除（破坏性）** — 该原语自 0.21.0 引入后**全仓零使用**：源码引用仅存在于其自身定义与
+  `AesirSchedulerTests`（9 用例），11 个示例、Runtime 全部代码、Documentation~ 无一处调用 `Delay` / `NextFrame`
+  。框架唯一的完整游戏示例 `PlaneWar`（敌机刷怪、子弹生命周期、玩家复活、计分）6 个脚本全部走普通
+  `MonoBehaviour.Update()`——最该用帧级调度的场景恰恰没用。原始立论"纯 C# 层没有延时手段"已被框架自有的两条路径覆盖（
+  `MonoLifecycleProxy` 的 DDOL 帧代理 / GameObject 上的协程）。
+  **同一需求三条路径并存而零人使用，是极简原则下的净负债。** 连带移除 `Tests/Editor/AesirSchedulerTests.cs`
+  ；README 中英的"特性"条目与结构树同步移除。`AesirArchitecturePlayerLoop` 本体保留（它是独立的帧钩子原语，非调度器专属）
 
 ## [0.30.0] - 2026-09-27
 
 ### Changed
 
-- **README 安装指引改锚常驻 `latest` 分支** — 仓库分支策略重构（详见根 CHANGELOG [Unreleased]）：版本分支（`AesirArchitecture-v<版本>`，随发版轮换并删除）废弃，UPM（Git URL）安装 URL 改为常驻滚动分支 `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest`（CI 每次推送 main 时 subtree split 滚动更新，分支名永久固定）。Git URL 一次输入持续可用——升级 = Package Manager 移除后用同一 URL 重新添加，无需随发版修改；需要钉死旧版本时改用 Release tag（`?path=Assets/Runestone/AesirArchitecture#v<版本>`，tag 永久保留）
+- **README 安装指引改锚常驻 `latest` 分支** — 仓库分支策略重构（详见根 CHANGELOG [Unreleased]）：版本分支（
+  `AesirArchitecture-v<版本>`，随发版轮换并删除）废弃，UPM（Git URL）安装 URL 改为常驻滚动分支
+  `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest`（CI 每次推送 main 时 subtree split 滚动更新，分支名永久固定）。Git URL 一次输入持续可用——升级 = Package Manager 移除后用同一 URL 重新添加，无需随发版修改；需要钉死旧版本时改用 Release tag（`
+  ?path=Assets/Runestone/AesirArchitecture#v<版本>`，tag 永久保留）
 
 ## [0.29.0] - 2026-09-27
 
 ### Added
 
-- **Getting Started 窗口支持 UPM / 嵌入式安装的示例一键导入** — 未导入示例的卡片：整卡点击的 Toast 改为导入引导（「请点击右侧「导入 Sample」按钮导入 xxx Sample 案例」），右侧按钮由「去导入」（跳转 Package Manager 窗口）升级为「导入 Sample」——点击弹出 Unity 确认框（含示例介绍与导入后位置，可取消），确认后经 Package Manager 的 Sample API（`UnityEditor.PackageManager.UI.Sample`）直接导入到 `Assets/Samples/<包显示名>/<版本>/<示例显示名>/`；导入成功自动重扫示例清单，卡片即时切换为已导入态（可继续「打开场景」/定位）。示例已导入时幂等跳过；Package Manager 清单中匹配不到条目时以红色 Toast 提示兜底。IMGUI 兜底窗口与 Odin 版同步。新增测试 `AesirGetStartedServiceTests`（Sample 查找经参数注入伪造，不触碰真实 Package Manager）
-- **`package.json` 新增 UPM 元数据链接字段** — `documentationUrl` 指向文档站 Architecture 分区、`changelogUrl` 指向文档站更新日志页：UPM（Git URL）安装后在 Package Manager 包详情页出现「View documentation」「View changelog」链接。README 安装指引（中英）同步补充具体升级操作——Package Manager 不对 Git URL 包显示更新提示，升级 = 移除旧包后重新添加新版本分支的 Git URL，或修改 `manifest.json` 中的分支名
+- **Getting Started 窗口支持 UPM / 嵌入式安装的示例一键导入** — 未导入示例的卡片：整卡点击的 Toast
+  改为导入引导（「请点击右侧「导入 Sample」按钮导入 xxx Sample 案例」），右侧按钮由「去导入」（跳转 Package Manager
+  窗口）升级为「导入 Sample」——点击弹出 Unity 确认框（含示例介绍与导入后位置，可取消），确认后经 Package Manager 的
+  Sample API（`UnityEditor.PackageManager.UI.Sample`）直接导入到 `Assets/Samples/<包显示名>/<版本>/<示例显示名>/`
+  ；导入成功自动重扫示例清单，卡片即时切换为已导入态（可继续「打开场景」/定位）。示例已导入时幂等跳过；Package Manager
+  清单中匹配不到条目时以红色 Toast 提示兜底。IMGUI 兜底窗口与 Odin 版同步。新增测试
+  `AesirGetStartedServiceTests`（Sample 查找经参数注入伪造，不触碰真实 Package Manager）
+- **`package.json` 新增 UPM 元数据链接字段** — `documentationUrl` 指向文档站 Architecture 分区、`changelogUrl`
+  指向文档站更新日志页：UPM（Git URL）安装后在 Package Manager 包详情页出现「View documentation」「View
+  changelog」链接。README 安装指引（中英）同步补充具体升级操作——Package Manager 不对 Git URL 包显示更新提示，升级 =
+  移除旧包后重新添加新版本分支的 Git URL，或修改 `manifest.json` 中的分支名
 
 ### Removed
 
-- **PlaneWar 场景引用修复菜单** — 移除 `Tools → Aesir → Architecture → Samples → PlaneWar → Fix Scene References`（`PlaneWarSceneSetup`）——开发期用于一次性修复示例场景 HUD / Player 预制体引用的工具，引用已随资产固化进仓库，无需随包分发；示例 Editor 程序集 `Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor` 一并移除。`RuntimeInitializeLoadType` 示例菜单显式 priority 995 接管 Architecture 组排序锚点，`Tools/Aesir` 菜单布局不变
+- **PlaneWar 场景引用修复菜单** — 移除
+  `Tools → Aesir → Architecture → Samples → PlaneWar → Fix Scene References`（`PlaneWarSceneSetup`
+  ）——开发期用于一次性修复示例场景 HUD / Player 预制体引用的工具，引用已随资产固化进仓库，无需随包分发；示例
+  Editor 程序集 `Runestone.AesirArchitecture.Samples.PlaneWarMono.Editor` 一并移除。`RuntimeInitializeLoadType`
+  示例菜单显式 priority 995 接管 Architecture 组排序锚点，`Tools/Aesir` 菜单布局不变
 
 ## [0.28.0] - 2026-09-27
 
 ### Changed
 
-- **`Tools → Aesir → Check for Updates` 菜单按安装形态显隐** — 新增菜单 validate：扫描不到 Assets 形态的 Aesir 包安装（AesirAssetPaths 锚点定位安装根 + 解析 package.json，纯本地目录 IO）时菜单整体隐藏——纯 UPM（Git URL）安装的副本由 Package Manager 管辖，更新器没有管辖对象，显示菜单只会误导；Assets 形态安装（含与 UPM 混合并存）时照常显示。IMGUI 与 Odin 版窗口共用同一菜单入口，一处验证两窗口生效
+- **`Tools → Aesir → Check for Updates` 菜单按安装形态显隐** — 新增菜单 validate：扫描不到 Assets 形态的 Aesir
+  包安装（AesirAssetPaths 锚点定位安装根 + 解析 package.json，纯本地目录 IO）时菜单整体隐藏——纯 UPM（Git
+  URL）安装的副本由 Package Manager 管辖，更新器没有管辖对象，显示菜单只会误导；Assets 形态安装（含与 UPM
+  混合并存）时照常显示。IMGUI 与 Odin 版窗口共用同一菜单入口，一处验证两窗口生效
 
 ## [0.27.1] - 2026-09-27
 
-- **与 Aesir Modules 0.27.1 版本同步发布** — 本包无功能变更；Modules 侧修复 UniTask 集成的程序集名错误（详见其 CHANGELOG）
+- **与 Aesir Modules 0.27.1 版本同步发布** — 本包无功能变更；Modules 侧修复 UniTask 集成的程序集名错误（详见其
+  CHANGELOG）
 
 ## [0.27.0] - 2026-09-27
 
 ### Added
 
-- **更新器单包更新入口** — 包列表每行新增「更新」按钮（IMGUI 与 Odin 窗口同步），仅更新指定包，供只使用其中一个包的项目按需更新：另一已知包在场且落后于远程版本时，确认框前置「配套版本警告」（两包按同版本配套发布，仅更新其一可能导致编译错误或运行时 API 不匹配），提示但不阻止，决定权在用户
-- **「全部更新」升级为"补全 + 更新"语义** — 目标从"已安装的过期包"扩展为"过期包 + 缺失的已知包补装"（`ComputeUpdateTargets`）：只装了架构包（或只装了功能包）的项目点「全部更新」会把缺失的包一并装上；确认框逐包标明「未安装 → vX（新安装）」并前置缺包说明——提示用户缺失的包也会被安装，可取消后改用行内「更新」按钮只更新已安装的包；按钮可见性随之扩展为"有待更新包或缺失包"
+- **更新器单包更新入口** — 包列表每行新增「更新」按钮（IMGUI 与 Odin
+  窗口同步），仅更新指定包，供只使用其中一个包的项目按需更新：另一已知包在场且落后于远程版本时，确认框前置「配套版本警告」（两包按同版本配套发布，仅更新其一可能导致编译错误或运行时
+  API 不匹配），提示但不阻止，决定权在用户
+- **「全部更新」升级为"补全 + 更新"语义** — 目标从"已安装的过期包"扩展为"过期包 + 缺失的已知包补装"（
+  `ComputeUpdateTargets`
+  ）：只装了架构包（或只装了功能包）的项目点「全部更新」会把缺失的包一并装上；确认框逐包标明「未安装 →
+  vX（新安装）」并前置缺包说明——提示用户缺失的包也会被安装，可取消后改用行内「更新」按钮只更新已安装的包；按钮可见性随之扩展为"有待更新包或缺失包"
 
 ### Fixed
 
-- **「全部更新」在 GitHub 直连不可用的网络环境下卡死在下载进度条（用户实测反馈：卡在 55% 不动）** — 版本检测有三层兜底（直连 → 镜像站 → CDN 中转），unitypackage 下载却只走 GitHub Release 直链一条路：检测能出结果、下载却必然卡住。现在下载按「直连 → 镜像站代理（`ghproxy.net` / `gh-proxy.com`，前缀 + 完整 Release 地址）」逐线路兜底（`DownloadUnityPackageAsync`），单线路失败自动落下一线路；全部线路失败时异常消息附「打开 Releases 页面手动下载资产、双击导入」的自助指引，不再只有一句"下载失败"
-- **更新进度条不可取消，卡住时用户没有逃生门** — 更新执行阶段的进度条改用 `EditorUtility.DisplayCancelableProgressBar`，用户随时可点「取消」中止下载（`DownloadBytesAsync` 新增取消探测委托，下载循环逐帧评估）；取消后温和收尾——如实区分「已完成导入的包（保持有效）」与「未更新的包」，并说明取消发生在下载阶段、项目文件未受影响；确认框与进度提示补充「更新期间请保持 Unity 窗口处于前台」（编辑器失焦时下载与导入可能停滞）
-- **更新流程收尾阶段抛异常时程序集重载锁泄漏，之后整个会话无法域重载（只能重启编辑器）** — 原收尾 finally 按「清忙碌标记（`EndBusy`）→ 重扫 → 刷新导入 → 解锁」顺序执行：`Rescan` / `AssetDatabase.Refresh`（或视图刷新回调）一旦抛异常，`UnlockReloadAssemblies` 被跳过；而忙碌标记已被清除，`[InitializeOnLoadMethod]` 的域重载兜底判断（`SessionState` 标记仍在才算被打断）不成立、不会补解锁——重载锁泄漏到整个会话，此后一切需要域重载的操作（编译、`AssetDatabase.Refresh` 等）全部阻塞。现收尾重构为配平守卫结构：加锁纳入 try 内 + `reloadLocked` 局部标志保证任何异常路径下恰好解锁一次、绝不重复解锁；重扫/刷新包在独立 try/finally 中，异常原样向上传播（fail-fast 不吞）但解锁与标记清理必然执行；顺序改为「先解锁、再清忙碌标记」——解锁前任何一步被异常/强杀中断时标记仍在，兜底收尾可补解锁，不再存在「标记已清而锁仍持有」的死锁窗口
-- **`AESIR_ARCHITECTURE` 宏确保器的写入时机存在重入风险（预防性加固）** — `[InitializeOnLoad]` 静态构造函数运行于程序集注册/域重载期间，此时调用 `PlayerSettings.SetScriptingDefineSymbols` 写宏会触发脚本重编译请求，属于重入，可能使 Unity 走到程序集注册的致命分支。现写入推迟到 `EditorApplication.delayCall`（编辑器空闲首帧）执行；`EnsureScriptingDefineSymbol` 按构建目标逐一比对、仅在符号确实缺失时才写入（已存在则零写入、不触发重编译）的行为不变
-- **Tools/Aesir 组在 Tools 菜单中的排序随域重载抖动（与 Tools/Odin 组先后不定）** — Tools 菜单父项的 priority 取子项最小值，Getting Started 的 -1000 与 Odin 的 `Tools/Odin/Getting Started`（同为 -1000）打平，两组先后只由注册顺序决定——同一份未改动的代码连续两次域重载实测先后相反。现调整为 -980（大于 -1000），Aesir 组稳定排在 Odin 组之后，且差值超过 10 自动在两组间插入独立分割线
+- **「全部更新」在 GitHub 直连不可用的网络环境下卡死在下载进度条（用户实测反馈：卡在 55% 不动）** —
+  版本检测有三层兜底（直连 → 镜像站 → CDN 中转），unitypackage 下载却只走 GitHub Release
+  直链一条路：检测能出结果、下载却必然卡住。现在下载按「直连 → 镜像站代理（`ghproxy.net` / `gh-proxy.com`，前缀 + 完整
+  Release 地址）」逐线路兜底（`DownloadUnityPackageAsync`），单线路失败自动落下一线路；全部线路失败时异常消息附「打开
+  Releases 页面手动下载资产、双击导入」的自助指引，不再只有一句"下载失败"
+- **更新进度条不可取消，卡住时用户没有逃生门** — 更新执行阶段的进度条改用
+  `EditorUtility.DisplayCancelableProgressBar`，用户随时可点「取消」中止下载（`DownloadBytesAsync`
+  新增取消探测委托，下载循环逐帧评估）；取消后温和收尾——如实区分「已完成导入的包（保持有效）」与「未更新的包」，并说明取消发生在下载阶段、项目文件未受影响；确认框与进度提示补充「更新期间请保持
+  Unity 窗口处于前台」（编辑器失焦时下载与导入可能停滞）
+- **更新流程收尾阶段抛异常时程序集重载锁泄漏，之后整个会话无法域重载（只能重启编辑器）** — 原收尾 finally
+  按「清忙碌标记（`EndBusy`）→ 重扫 → 刷新导入 → 解锁」顺序执行：`Rescan` / `AssetDatabase.Refresh`（或视图刷新回调）一旦抛异常，
+  `UnlockReloadAssemblies` 被跳过；而忙碌标记已被清除，`[InitializeOnLoadMethod]` 的域重载兜底判断（
+  `SessionState` 标记仍在才算被打断）不成立、不会补解锁——重载锁泄漏到整个会话，此后一切需要域重载的操作（编译、
+  `AssetDatabase.Refresh` 等）全部阻塞。现收尾重构为配平守卫结构：加锁纳入 try 内 + `reloadLocked`
+  局部标志保证任何异常路径下恰好解锁一次、绝不重复解锁；重扫/刷新包在独立 try/finally 中，异常原样向上传播（fail-fast
+  不吞）但解锁与标记清理必然执行；顺序改为「先解锁、再清忙碌标记」——解锁前任何一步被异常/强杀中断时标记仍在，兜底收尾可补解锁，不再存在「标记已清而锁仍持有」的死锁窗口
+- **`AESIR_ARCHITECTURE` 宏确保器的写入时机存在重入风险（预防性加固）** — `[InitializeOnLoad]`
+  静态构造函数运行于程序集注册/域重载期间，此时调用 `PlayerSettings.SetScriptingDefineSymbols`
+  写宏会触发脚本重编译请求，属于重入，可能使 Unity 走到程序集注册的致命分支。现写入推迟到
+  `EditorApplication.delayCall`（编辑器空闲首帧）执行；`EnsureScriptingDefineSymbol`
+  按构建目标逐一比对、仅在符号确实缺失时才写入（已存在则零写入、不触发重编译）的行为不变
+- **Tools/Aesir 组在 Tools 菜单中的排序随域重载抖动（与 Tools/Odin 组先后不定）** — Tools 菜单父项的 priority
+  取子项最小值，Getting Started 的 -1000 与 Odin 的 `Tools/Odin/Getting Started`（同为
+  -1000）打平，两组先后只由注册顺序决定——同一份未改动的代码连续两次域重载实测先后相反。现调整为 -980（大于
+  -1000），Aesir 组稳定排在 Odin 组之后，且差值超过 10 自动在两组间插入独立分割线
 
 ### Changed
 
-- **移除 `AesirArchitecture` DDOL 关闭时的运行时 Warning 提醒日志** — 非 DDOL 提示完全由 Inspector 承担（Odin 条件 Warning 信息框，仅关闭时显示），运行时不再输出日志，避免「不支持多场景叠加」的观感误导；XML 文档与 Processor 文案同步
+- **移除 `AesirArchitecture` DDOL 关闭时的运行时 Warning 提醒日志** — 非 DDOL 提示完全由 Inspector 承担（Odin
+  条件 Warning 信息框，仅关闭时显示），运行时不再输出日志，避免「不支持多场景叠加」的观感误导；XML 文档与 Processor
+  文案同步
 
-- **DDOL 开关字段前移至类声明首位** — `AesirArchitecture` 的 `dontDestroyOnLoad` 序列化字段移至类体第一个字段（静态字段之前），脚本阅读与 Inspector 展示中 DDOL 决策均为第一项，确立各单例类「DDOL 开关在最上」的统一排布
+- **DDOL 开关字段前移至类声明首位** — `AesirArchitecture` 的 `dontDestroyOnLoad` 序列化字段移至类体第一个字段（静态字段之前），脚本阅读与
+  Inspector 展示中 DDOL 决策均为第一项，确立各单例类「DDOL 开关在最上」的统一排布
 
-- **更新确认框文案重构（`BuildUpdateConfirmation` 拆为 `BuildUpdateAllConfirmation` / `BuildSingleUpdateConfirmation`）** — 全部更新与单包更新分别构建确认文案：操作列表改为「即将执行以下操作」并逐条标注「更新 / 新安装」，公共尾注补「保持前台运行」提示；单包更新的确认按钮文案改为「仅更新此包」、结尾为「确认仍要仅更新 Xxx 吗？」（防误触）；`UpdatePackagesAsync` 返回值由备份路径字符串改为 `UpdateResult`（已完成包 + 是否取消 + 未更新包），取消与失败对用户呈现不同的收尾
+- **更新确认框文案重构（`BuildUpdateConfirmation` 拆为 `BuildUpdateAllConfirmation` /
+  `BuildSingleUpdateConfirmation`）** —
+  全部更新与单包更新分别构建确认文案：操作列表改为「即将执行以下操作」并逐条标注「更新 /
+  新安装」，公共尾注补「保持前台运行」提示；单包更新的确认按钮文案改为「仅更新此包」、结尾为「确认仍要仅更新 Xxx
+  吗？」（防误触）；`UpdatePackagesAsync` 返回值由备份路径字符串改为 `UpdateResult`（已完成包 + 是否取消 +
+  未更新包），取消与失败对用户呈现不同的收尾
 
 ### Removed
 
-- **移除更新器更新前自动备份机制（`.aesir-backup/`）** — 每次更新把安装根全量复制（数千文件）到消费者项目根，对 git 仓库构成无谓的提交噪音与磁盘占用；而标准用户的回滚路径本就存在且更优——上一版本 unitypackage 永久保留在 GitHub Releases，重新导入即完整还原（残留清理只动安装清单内的文件、用户新增文件不受影响），且更新本身刚用过网络。本地修改被覆盖的场景属不推荐用法，改由确认框明示（「本地修改将被 Release 内容覆盖；如需回滚，可从 GitHub Releases 下载旧版本的 unitypackage 重新导入」），不再做运行时防御。`UpdateResult.BackupPath` 字段与 `BackupRunestone` / `PruneBackups` API 及 `BackupDirName` / `BackupKeepCount` 常量一并移除
+- **移除更新器更新前自动备份机制（`.aesir-backup/`）** — 每次更新把安装根全量复制（数千文件）到消费者项目根，对 git
+  仓库构成无谓的提交噪音与磁盘占用；而标准用户的回滚路径本就存在且更优——上一版本 unitypackage 永久保留在 GitHub
+  Releases，重新导入即完整还原（残留清理只动安装清单内的文件、用户新增文件不受影响），且更新本身刚用过网络。本地修改被覆盖的场景属不推荐用法，改由确认框明示（「本地修改将被
+  Release 内容覆盖；如需回滚，可从 GitHub Releases 下载旧版本的 unitypackage 重新导入」），不再做运行时防御。
+  `UpdateResult.BackupPath` 字段与 `BackupRunestone` / `PruneBackups` API 及 `BackupDirName` /
+  `BackupKeepCount` 常量一并移除
 
 ## [0.26.0] - 2026-09-25
 
 ### Added
 
-- **更新器检测线路可见化** — 检测结果新增线路模型（`ReleaseRouteKind` 直连 GitHub / 镜像站 / CDN 中转 + `DetectionAttempt` 各层尝试记录 + `ReleaseCheckResult`）：窗口显示「GitHub 直连是否可用（可用即版本信息 100% 实时）」与「最终获取线路」，新增「检测详情（各层尝试）」折叠区（含每层耗时与失败原因），结果来自 CDN 中转时额外给出延迟提示（分支缓存最长约 12 小时，可点「打开 Releases 页面」确认）
+- **更新器检测线路可见化** — 检测结果新增线路模型（`ReleaseRouteKind` 直连 GitHub / 镜像站 / CDN 中转 +
+  `DetectionAttempt` 各层尝试记录 + `ReleaseCheckResult`）：窗口显示「GitHub 直连是否可用（可用即版本信息 100%
+  实时）」与「最终获取线路」，新增「检测详情（各层尝试）」折叠区（含每层耗时与失败原因），结果来自 CDN 中转时额外给出延迟提示（分支缓存最长约
+  12 小时，可点「打开 Releases 页面」确认）
 
 ### Fixed
 
-- **更新/检测缺少超时，进度条可能长时间卡住** — 连接检测与 unitypackage 下载现在都有硬性墙钟上限：单源检测 5 秒、整轮检测 30 秒（超时后不再发起新请求，并在「检测详情」留痕「跳过：整轮检测已超时」）、下载「总时长 120 秒」+「连续 30 秒无进展」双判据（`UnityWebRequest.timeout` 只覆盖"完全无数据"，服务端慢速滴水时不会触发）。任一超时都会中止请求并抛明确异常，上层 `finally` 必定收起进度条
-- **两个包连续更新时流程可能中途断裂（进度条停留 + 按钮提前可点）** — 导入 unitypackage 会带来脚本变更，中途发生的域重载会让异步流程随旧域消失：第二个包等不到、进度条停在上一包的导入文案上，而 `Busy` 因 `[NonSerialized]` 被重置又让按钮可点。现在整段更新流程用 `EditorApplication.LockReloadAssemblies()` 锁住程序集重载（实测能推迟编译后的重载），只在全部收尾（进度条收起、状态落定、`AssetDatabase.Refresh` 之后）解锁一次；导入期间先收起本工具进度条，避免与 Unity 自带导入进度条互相覆盖；另加域重载兜底收尾（`SessionState` 标记 + `[InitializeOnLoadMethod]`）清理被强杀流程残留的进度条与重载锁
-- **Odin 版更新器窗口正文被渲染成「禁用灰」** — Odin 对不可编辑属性（`[ReadOnly]`、只读属性）会推入 `GUI.enabled = false` 绘制，于是挂在同一属性链上的 InfoBox、列表标签、行文本与状态行全部呈禁用态（截图实测文字亮度 ≈128/255，正常正文 ≈196）。修复：只读成员（列表、更新日志、检测详情、状态行）与行视图字段一律标注 `[EnableGUI]`（Odin 官方做法：Super 优先级 2.0 包在最外层，强制按可用状态绘制），不可编辑语义不变；实测行文本亮度 128 → 196
-- **Odin 版更新器窗口在域重载时抛异常（静态初始化器调用 AssetDatabase）** — `NoPackageText` / `HeaderSubtitleText` 原为 `static readonly` 字段，其初始化器在 ScriptableObject 构造期（含 `[InitializeOnLoadMethod]` 触碰类型时）运行，而锚点定位 `AesirAssetPaths` 内部调用 `AssetDatabase.GUIDToAssetPath`——Unity 禁止在该时机调用，导致类型初始化失败、窗口绘制中断（窗口开着时每次域重载必现 `TypeInitializationException` + `GUI Error: You are pushing more GUIClips than you are popping`）。修复：两者改为惰性静态属性
+- **更新/检测缺少超时，进度条可能长时间卡住** — 连接检测与 unitypackage 下载现在都有硬性墙钟上限：单源检测 5
+  秒、整轮检测 30 秒（超时后不再发起新请求，并在「检测详情」留痕「跳过：整轮检测已超时」）、下载「总时长 120 秒」+「连续 30
+  秒无进展」双判据（`UnityWebRequest.timeout` 只覆盖"完全无数据"，服务端慢速滴水时不会触发）。任一超时都会中止请求并抛明确异常，上层
+  `finally` 必定收起进度条
+- **两个包连续更新时流程可能中途断裂（进度条停留 + 按钮提前可点）** — 导入 unitypackage
+  会带来脚本变更，中途发生的域重载会让异步流程随旧域消失：第二个包等不到、进度条停在上一包的导入文案上，而 `Busy`
+  因 `[NonSerialized]` 被重置又让按钮可点。现在整段更新流程用 `EditorApplication.LockReloadAssemblies()`
+  锁住程序集重载（实测能推迟编译后的重载），只在全部收尾（进度条收起、状态落定、`AssetDatabase.Refresh`
+  之后）解锁一次；导入期间先收起本工具进度条，避免与 Unity 自带导入进度条互相覆盖；另加域重载兜底收尾（
+  `SessionState` 标记 + `[InitializeOnLoadMethod]`）清理被强杀流程残留的进度条与重载锁
+- **Odin 版更新器窗口正文被渲染成「禁用灰」** — Odin 对不可编辑属性（`[ReadOnly]`、只读属性）会推入
+  `GUI.enabled = false` 绘制，于是挂在同一属性链上的 InfoBox、列表标签、行文本与状态行全部呈禁用态（截图实测文字亮度
+  ≈128/255，正常正文 ≈196）。修复：只读成员（列表、更新日志、检测详情、状态行）与行视图字段一律标注 `[EnableGUI]`（Odin
+  官方做法：Super 优先级 2.0 包在最外层，强制按可用状态绘制），不可编辑语义不变；实测行文本亮度 128 → 196
+- **Odin 版更新器窗口在域重载时抛异常（静态初始化器调用 AssetDatabase）** — `NoPackageText` /
+  `HeaderSubtitleText` 原为 `static readonly` 字段，其初始化器在 ScriptableObject 构造期（含
+  `[InitializeOnLoadMethod]` 触碰类型时）运行，而锚点定位 `AesirAssetPaths` 内部调用
+  `AssetDatabase.GUIDToAssetPath`——Unity 禁止在该时机调用，导致类型初始化失败、窗口绘制中断（窗口开着时每次域重载必现
+  `TypeInitializationException` + `GUI Error: You are pushing more GUIClips than you are popping`
+  ）。修复：两者改为惰性静态属性
 
 ### Changed
 
-- **更新器版本检测改为「直连 GitHub → 镜像站 → CDN 中转」三层兜底（修复新版本检测延迟）** — 此前 jsDelivr CDN 排在首位，其分支缓存最长约 12 小时，刚发布的版本在窗口里仍会显示为旧版本（实测：v0.25.1 发布 3 分钟后窗口仍报 v0.25.0）。现直连层依次尝试 Releases API、`releases/latest` 的 302 探测、仓库内 `update-info.json` 的直连 raw（单源超时 5 秒即落下一层），直连不可用才落镜像站（`ghproxy.net` / `gh-proxy.com`，代理 raw 内容、版本实时），最后才是 CDN 中转；只有 tag 的结果会按同 tag 校验补齐文件清单——拒绝陈旧清单，避免错删文件（`FetchLatestReleaseSnapshotAsync` 保留为等价旧入口）
+- **更新器版本检测改为「直连 GitHub → 镜像站 → CDN 中转」三层兜底（修复新版本检测延迟）** — 此前 jsDelivr CDN
+  排在首位，其分支缓存最长约 12 小时，刚发布的版本在窗口里仍会显示为旧版本（实测：v0.25.1 发布 3 分钟后窗口仍报
+  v0.25.0）。现直连层依次尝试 Releases API、`releases/latest` 的 302 探测、仓库内 `update-info.json` 的直连
+  raw（单源超时 5 秒即落下一层），直连不可用才落镜像站（`ghproxy.net` / `gh-proxy.com`，代理 raw 内容、版本实时），最后才是
+  CDN 中转；只有 tag 的结果会按同 tag 校验补齐文件清单——拒绝陈旧清单，避免错删文件（
+  `FetchLatestReleaseSnapshotAsync` 保留为等价旧入口）
 
 ## [0.25.1] - 2026-09-25
 
-- **与 Aesir Modules 0.25.1 版本同步发布** — 本包无功能变更；Modules 侧修复场景测试套件把测试场景常驻 `EditorBuildSettings`（随工程配置入库、进玩家构建）与测试无法随包进入实际工程（依赖宿主工程场景与写死的 Assets 相对路径）的问题
+- **与 Aesir Modules 0.25.1 版本同步发布** — 本包无功能变更；Modules 侧修复场景测试套件把测试场景常驻
+  `EditorBuildSettings`（随工程配置入库、进玩家构建）与测试无法随包进入实际工程（依赖宿主工程场景与写死的 Assets
+  相对路径）的问题
 
 ## [0.25.0] - 2026-09-25
 
-- **与 Aesir Modules 0.25.0 版本同步发布** — 本包无功能变更；Modules 侧修复 Script Doc Generator 增量重生成的双 Front Matter 缺陷
+- **与 Aesir Modules 0.25.0 版本同步发布** — 本包无功能变更；Modules 侧修复 Script Doc Generator 增量重生成的双
+  Front Matter 缺陷
+
 ## [0.24.0] - 2026-09-25
 
 ### Added
 
-- **Aesir Getting Started Window（示例导航）** — 菜单 `Tools/Aesir/Getting Started`（priority -1000，居 Tools/Aesir 顶部，与后续菜单项之间有独立分割线），窗口标题「Aesir Getting Started Window」：概览页展示安装的 Aesir 包卡片（含未安装包的占位引导），包页按教学分组列出示例，点击卡片在 Project 窗口选中示例文件夹，有场景的示例经「打开场景」按钮直达（先保存当前场景一次再切换），动作结果经窗口右下角 Toast 提示。数据层 `AesirGetStartedService` 以各包 package.json 的 samples 清单为唯一真源（新增示例只需更新 package.json），包发现覆盖 Assets 安装 / 嵌入式包 / UPM Git 安装（未导入示例保留条目并引导 Package Manager）。IMGUI 兜底窗口在核心编辑器程序集，Odin 版窗口（页面栈导航 + 示例卡片 + 概览垂直收起 / 页间水平滑动动效，参照 Odin Inspector 自带 Getting Started 窗口）在 ODIN_INSPECTOR 程序集，经 `AesirGetStartedWindow.OdinWindowOpener` 委托路由（与更新器同模式）
-- **Aesir 示例构建剔除钩子（`AesirSamplesBuildFilter`）** — 构建时自动把 Build Settings 场景列表中的 Aesir 示例场景从本次构建剔除并输出 `[Aesir Build]` 剔除明细日志；覆盖开发仓库 / unitypackage（`Assets/Runestone/<包>/Samples/`）与 Package Manager 导入（`Assets/Samples/Aesir Architecture|Modules/<版本>/`）两类形态，Build Settings 持久数据不被修改。实现经 `BuildPlayerWindow.RegisterBuildPlayerHandler` 拦截构建入口（不用 `IPreprocessBuildWithReport`：其回调时场景列表已快照进构建选项）；CI / 自定义脚本直接调用 `BuildPipeline.BuildPlayer` 不经过此钩子。示例「不进玩家构建」自此覆盖脚本（`#if UNITY_EDITOR` 编译剔除）与场景两条路径。EditMode 测试 7 用例（`Tests/Editor/AesirSamplesBuildFilterTests.cs`）锁定路径规则与过滤逻辑
-- **安装位置锚点机制（Runestone 可移动到项目任意文件夹）** — 每包包根新增 `AesirPathLookup.asset` 空壳锚点资产（机制参照 Odin Inspector 的 OdinPathLookup.asset：文件夹移动时 .meta GUID 保持不变），路径定位器 `AesirAssetPaths`（`Editor/Common/`）按「默认安装根 → 锚点 GUID 查询 → 锚点类型搜索」三级解析实际安装根，域重载后自动重解析。三个消费端随之动态化：示例场景构建剔除（`AesirSamplesBuildFilter` 改按定位根判定）、包更新器扫描与备份源（新增 `AesirUpdateService.ScanInstalledPackagesFromAllRoots` 多根合并、跨根同包去重；`AesirUpdateController` / 备份调用切换）、Getting Started 包扫描与示例定位（`AesirGetStartedService` 记录各包实际包根 `PackageRootPath`）。锚点资产带防误删 Inspector（`AesirPathLookupAssetEditor`，显示期望 / 实际 GUID，GUID 被改写时警示）。更新器确认框补充「unitypackage 导入始终装回默认位置 `Assets/Runestone`，移动过的旧位置需自行清理」说明。新增 `Tests/Editor/AesirAssetPathsTests.cs`（6 用例：包根推导 / 父目录 / package.json 验证 / 真实锚点 GUID 定位），构建剔除测试补移动形态 3 用例
-- **示例脚本构建剔除守护测试（`AesirSamplesScriptGuardTests`）** — 「示例不进玩家构建」的脚本侧回归防线：运行时示例程序集内的每个 .cs 必须整文件 `#if UNITY_EDITOR` 包裹（Editor-only 程序集除外），新增示例漏包裹、包裹格式偏差（如 using 指令落在 `#if` 之外）都会在 EditMode 测试失败。扫描覆盖锚点定位安装根下两包 `Samples/` 与 `Samples~/` 双份（后者是 Package Manager 导入的源）与 `Assets/Samples/Aesir Architecture|Modules/` 导入形态；带「本地安装根存在时必须扫到运行时脚本」的 sanity 断言，防扫描逻辑损坏导致假绿。与构建剔除钩子测试（场景侧）共同锁死两条剔除路径
+- **Aesir Getting Started Window（示例导航）** — 菜单 `Tools/Aesir/Getting Started`（priority -1000，居
+  Tools/Aesir 顶部，与后续菜单项之间有独立分割线），窗口标题「Aesir Getting Started Window」：概览页展示安装的 Aesir
+  包卡片（含未安装包的占位引导），包页按教学分组列出示例，点击卡片在 Project
+  窗口选中示例文件夹，有场景的示例经「打开场景」按钮直达（先保存当前场景一次再切换），动作结果经窗口右下角 Toast
+  提示。数据层 `AesirGetStartedService` 以各包 package.json 的 samples 清单为唯一真源（新增示例只需更新
+  package.json），包发现覆盖 Assets 安装 / 嵌入式包 / UPM Git 安装（未导入示例保留条目并引导 Package
+  Manager）。IMGUI 兜底窗口在核心编辑器程序集，Odin 版窗口（页面栈导航 + 示例卡片 + 概览垂直收起 / 页间水平滑动动效，参照
+  Odin Inspector 自带 Getting Started 窗口）在 ODIN_INSPECTOR 程序集，经
+  `AesirGetStartedWindow.OdinWindowOpener` 委托路由（与更新器同模式）
+- **Aesir 示例构建剔除钩子（`AesirSamplesBuildFilter`）** — 构建时自动把 Build Settings 场景列表中的 Aesir
+  示例场景从本次构建剔除并输出 `[Aesir Build]` 剔除明细日志；覆盖开发仓库 / unitypackage（
+  `Assets/Runestone/<包>/Samples/`）与 Package Manager 导入（`Assets/Samples/Aesir Architecture|Modules/<版本>/`
+  ）两类形态，Build Settings 持久数据不被修改。实现经 `BuildPlayerWindow.RegisterBuildPlayerHandler` 拦截构建入口（不用
+  `IPreprocessBuildWithReport`：其回调时场景列表已快照进构建选项）；CI / 自定义脚本直接调用
+  `BuildPipeline.BuildPlayer` 不经过此钩子。示例「不进玩家构建」自此覆盖脚本（`#if UNITY_EDITOR`
+  编译剔除）与场景两条路径。EditMode 测试 7 用例（`Tests/Editor/AesirSamplesBuildFilterTests.cs`）锁定路径规则与过滤逻辑
+- **安装位置锚点机制（Runestone 可移动到项目任意文件夹）** — 每包包根新增 `AesirPathLookup.asset` 空壳锚点资产（机制参照
+  Odin Inspector 的 OdinPathLookup.asset：文件夹移动时 .meta GUID 保持不变），路径定位器 `AesirAssetPaths`（
+  `Editor/Common/`）按「默认安装根 → 锚点 GUID 查询 → 锚点类型搜索」三级解析实际安装根，域重载后自动重解析。三个消费端随之动态化：示例场景构建剔除（
+  `AesirSamplesBuildFilter` 改按定位根判定）、包更新器扫描与备份源（新增
+  `AesirUpdateService.ScanInstalledPackagesFromAllRoots` 多根合并、跨根同包去重；`AesirUpdateController` /
+  备份调用切换）、Getting Started 包扫描与示例定位（`AesirGetStartedService` 记录各包实际包根 `PackageRootPath`
+  ）。锚点资产带防误删 Inspector（`AesirPathLookupAssetEditor`，显示期望 / 实际 GUID，GUID
+  被改写时警示）。更新器确认框补充「unitypackage 导入始终装回默认位置 `Assets/Runestone`，移动过的旧位置需自行清理」说明。新增
+  `Tests/Editor/AesirAssetPathsTests.cs`（6 用例：包根推导 / 父目录 / package.json 验证 / 真实锚点 GUID
+  定位），构建剔除测试补移动形态 3 用例
+- **示例脚本构建剔除守护测试（`AesirSamplesScriptGuardTests`）** — 「示例不进玩家构建」的脚本侧回归防线：运行时示例程序集内的每个
+  .cs 必须整文件 `#if UNITY_EDITOR` 包裹（Editor-only 程序集除外），新增示例漏包裹、包裹格式偏差（如 using 指令落在
+  `#if` 之外）都会在 EditMode 测试失败。扫描覆盖锚点定位安装根下两包 `Samples/` 与 `Samples~/` 双份（后者是
+  Package Manager 导入的源）与 `Assets/Samples/Aesir Architecture|Modules/` 导入形态；带「本地安装根存在时必须扫到运行时脚本」的
+  sanity 断言，防扫描逻辑损坏导致假绿。与构建剔除钩子测试（场景侧）共同锁死两条剔除路径
 
 ### Changed
 
-- **包更新器 Odin 窗口标题区改为手绘** — 移除 `[Title]` 特性（其 BoldTitle / Subtitle 样式灰暗、观感如禁用文本，Subtitle 样式自带 alpha 0.7 削减），改为窗口内手绘标题区：正常亮度粗体主标题（fontSize 15）+ 正常文本色副标题（fontSize 11）+ 1px 分隔线，并固定于滚动区外（内容滚动时标题保持可见）；样式派生 `SirenixGUIStyles.BoldLabel` / `Label`，与 Getting Started 窗口先例一致
-- **Tools/Aesir 菜单按包分组** — 包专属菜单项归入 `Tools/Aesir/Architecture/` 与 `Tools/Aesir/Modules/`（Aesir Modules 侧）两组子菜单，跨包工具 Getting Started 留根部（priority -1000 居顶）；PlaneWar 场景修复工具由 `Tools/Aesir/PlaneWar/Fix Scene References` 归位至 `Tools/Aesir/Architecture/Samples/PlaneWar/Fix Scene References`（priority 995，对齐示例菜单 `Architecture/Samples/` 约定）
-- **Check for Updates 菜单移至 Tools/Aesir 最底部** — priority 990 → 1100：与上方工具组（最大 1002）差值超过 10，Unity 自动插入独立分割线，更新入口成为菜单底部独立段（对齐 Getting Started -1000 置顶配分割线的先例）
-- **Editor 目录结构调整：`QuickCreateSOMenuItem` 移入新建的 `Editor/MenuItems/`** — 菜单项按性质归类（菜单项而非工具集，不再与 Utilities 混放），类名、文件名与菜单路径均不变；`Editor/Utilities/` 仅保留以 `EditorUtility` 结尾的编辑器工具集（配套改名见 Renamed 节）
-- **`AesirArchitecturePlayerLoop` / `AesirScheduler` 文件归位 `Runtime/Common/`** — 两者为框架基础设施（与 `AesirArchitecture` 单例、`ResetStaticsAssistant` 同层），不属 Utilities 工具集；`Runtime/Modules/Utilities/` 按命名规范仅保留 `PlayerLoopUtility.cs`。类名与命名空间零变化、对消费者透明（`AesirScheduler.cs` 文件名随所在层惯例改为 `AesirArchitectureScheduler.cs`，类名仍为 `AesirScheduler`）
+- **包更新器 Odin 窗口标题区改为手绘** — 移除 `[Title]` 特性（其 BoldTitle / Subtitle 样式灰暗、观感如禁用文本，Subtitle
+  样式自带 alpha 0.7 削减），改为窗口内手绘标题区：正常亮度粗体主标题（fontSize 15）+ 正常文本色副标题（fontSize
+  11）+ 1px 分隔线，并固定于滚动区外（内容滚动时标题保持可见）；样式派生 `SirenixGUIStyles.BoldLabel` / `Label`，与
+  Getting Started 窗口先例一致
+- **Tools/Aesir 菜单按包分组** — 包专属菜单项归入 `Tools/Aesir/Architecture/` 与 `Tools/Aesir/Modules/`（Aesir
+  Modules 侧）两组子菜单，跨包工具 Getting Started 留根部（priority -1000 居顶）；PlaneWar 场景修复工具由
+  `Tools/Aesir/PlaneWar/Fix Scene References` 归位至
+  `Tools/Aesir/Architecture/Samples/PlaneWar/Fix Scene References`（priority 995，对齐示例菜单
+  `Architecture/Samples/` 约定）
+- **Check for Updates 菜单移至 Tools/Aesir 最底部** — priority 990 → 1100：与上方工具组（最大 1002）差值超过
+  10，Unity 自动插入独立分割线，更新入口成为菜单底部独立段（对齐 Getting Started -1000 置顶配分割线的先例）
+- **Editor 目录结构调整：`QuickCreateSOMenuItem` 移入新建的 `Editor/MenuItems/`** — 菜单项按性质归类（菜单项而非工具集，不再与
+  Utilities 混放），类名、文件名与菜单路径均不变；`Editor/Utilities/` 仅保留以 `EditorUtility` 结尾的编辑器工具集（配套改名见
+  Renamed 节）
+- **`AesirArchitecturePlayerLoop` / `AesirScheduler` 文件归位 `Runtime/Common/`** — 两者为框架基础设施（与
+  `AesirArchitecture` 单例、`ResetStaticsAssistant` 同层），不属 Utilities 工具集；`Runtime/Modules/Utilities/`
+  按命名规范仅保留 `PlayerLoopUtility.cs`。类名与命名空间零变化、对消费者透明（`AesirScheduler.cs` 文件名随所在层惯例改为
+  `AesirArchitectureScheduler.cs`，类名仍为 `AesirScheduler`）
 
 ### Renamed（破坏性变更）
 
-- **`ScriptingSymbolUtility` → `ScriptingSymbolEditorUtility`** — 落实「Utilities 文件夹下脚本以 `Utility` / `EditorUtility`（Editor 环境）结尾」命名规范。public 静态类，外部脚本若直接引用需同步更名；`EnsureAesirArchitectureDefine` 调用方与 EditMode 测试（文件同步更名 `ScriptingSymbolEditorUtilityTests`）已随源更新
+- **`ScriptingSymbolUtility` → `ScriptingSymbolEditorUtility`** — 落实「Utilities 文件夹下脚本以 `Utility` /
+  `EditorUtility`（Editor 环境）结尾」命名规范。public 静态类，外部脚本若直接引用需同步更名；
+  `EnsureAesirArchitectureDefine` 调用方与 EditMode 测试（文件同步更名 `ScriptingSymbolEditorUtilityTests`
+  ）已随源更新
 
 ## [0.23.0] - 2026-09-23
 
@@ -249,16 +698,25 @@
 
 ### Added
 
-- **`ObservableQueue<T>` 专属测试** — `Tests/Editor/ObservableQueueTests.cs`（8 用例：入队 Add 队尾索引 / 出队 Remove 索引 0 / 空队列静默 / Clear 语义 / DequeueRange 半程状态 / 构造 null 容忍 / 枚举器按序与版本检查 / 句柄与 ClearListeners），补齐四集合专属测试的最后缺口
-- **AesirScheduler NaN 用例** — `Delay(float.NaN)` 任务永不到期（DueTime 传播 NaN，任何模拟时间都不满足到期比较），锁定「不设防、永不触发」契约
+- **`ObservableQueue<T>` 专属测试** — `Tests/Editor/ObservableQueueTests.cs`（8 用例：入队 Add 队尾索引 / 出队
+  Remove 索引 0 / 空队列静默 / Clear 语义 / DequeueRange 半程状态 / 构造 null 容忍 / 枚举器按序与版本检查 /
+  句柄与 ClearListeners），补齐四集合专属测试的最后缺口
+- **AesirScheduler NaN 用例** — `Delay(float.NaN)` 任务永不到期（DueTime 传播
+  NaN，任何模拟时间都不满足到期比较），锁定「不设防、永不触发」契约
 
 ### Changed
 
-- **AesirScheduler：NaN 延时语义与文档对齐** — `DueTime = Time.time + Math.Max(seconds, 0f)`：NaN 原样传播即永不到期（此前 `seconds > 0f ? seconds : 0f` 会把 NaN 折叠为 0，任务下一帧就触发，与 XML 文档「永不触发」相反）
+- **AesirScheduler：NaN 延时语义与文档对齐** — `DueTime = Time.time + Math.Max(seconds, 0f)`：NaN 原样传播即永不到期（此前
+  `seconds > 0f ? seconds : 0f` 会把 NaN 折叠为 0，任务下一帧就触发，与 XML 文档「永不触发」相反）
 - **`ObservableList<T>.Move` 同索引零变化不通知** — `oldIndex == newIndex` 早退，对齐「无变更的操作不通知」口径
-- **`MiniEvent` / `MiniEvent<T>`：`AddListener` null 守卫** — null 监听者按框架约定抛 `ArgumentNullException`（与 `AesirScheduler` / `AesirArchitecturePlayerLoop` 的回调入口一致）
-- **`ObservableQueue<T>` 结构补齐对齐其余三集合** — `sealed` + `[Serializable]`、`IEnumerable` 构造对 null 容忍为空集合、结构体枚举器（替换 yield 迭代器，foreach 具体类型零分配）补全 XML 注释；移除该文件独有的 `#nullable enable` 对齐家族风格
-- **文档方向性失实修正** — 根 `README.md` / `README_EN.md`「核心机制速览」与 `Documentation/设计变更记录.md` 中三处仍描述 0.21 双轨事件形态（宣称已删除的轻量事件「保留、零迁移」）的段落改写为单轨口径；`设计变更记录.md` 补记第 11 条「可观察集合双轨事件体系（0.22.0 收敛单轨）」
+- **`MiniEvent` / `MiniEvent<T>`：`AddListener` null 守卫** — null 监听者按框架约定抛 `ArgumentNullException`（与
+  `AesirScheduler` / `AesirArchitecturePlayerLoop` 的回调入口一致）
+- **`ObservableQueue<T>` 结构补齐对齐其余三集合** — `sealed` + `[Serializable]`、`IEnumerable` 构造对 null
+  容忍为空集合、结构体枚举器（替换 yield 迭代器，foreach 具体类型零分配）补全 XML 注释；移除该文件独有的
+  `#nullable enable` 对齐家族风格
+- **文档方向性失实修正** — 根 `README.md` / `README_EN.md`「核心机制速览」与 `Documentation/设计变更记录.md`
+  中三处仍描述 0.21 双轨事件形态（宣称已删除的轻量事件「保留、零迁移」）的段落改写为单轨口径；`设计变更记录.md` 补记第
+  11 条「可观察集合双轨事件体系（0.22.0 收敛单轨）」
 
 ### Fixed
 
@@ -266,53 +724,106 @@
 
 ### Removed（破坏性变更）
 
-> 本节为「Aesir Architecture 保持极简」定位裁决（2026-09-23）的收敛落地：低频公开面移除并引导上游，调试/测试专用面收窄 internal（经 `InternalsVisibleTo` 对测试程序集保持可见）。
+> 本节为「Aesir Architecture 保持极简」定位裁决（2026-09-23）的收敛落地：低频公开面移除并引导上游，调试/测试专用面收窄
+> internal（经 `InternalsVisibleTo` 对测试程序集保持可见）。
 
-- **`ObservableHashSet<T>` 集合代数全套（10 方法）** — `UnionWith` / `ExceptWith` / `IntersectWith` / `SymmetricExceptWith` / `IsSubsetOf` / `IsProperSubsetOf` / `IsSupersetOf` / `IsProperSupersetOf` / `Overlaps` / `SetEquals`；`IObservableHashSet<T>` 不再继承 `ISet<T>`（改为 `ICollection<T>`，写侧契约不变）。集合代数对独立游戏属低频能力，需要时使用内部 `HashSet<T>` 或上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
-- **`ObservableList<T>` 区间重载** — `Sort(int index, int count, IComparer<T>)` / `Reverse(int index, int count)`（整表 `Sort()` / `Sort(IComparer<T>)` / `Reverse()` 保留）
-- **`ReadOnlySpan<T>` 批量重载** — `ObservableList.AddRange(ReadOnlySpan<T>)` / `InsertRange(int, ReadOnlySpan<T>)`、`ObservableHashSet.AddRange(ReadOnlySpan<T>)` / `RemoveRange(ReadOnlySpan<T>)`、`ObservableQueue.EnqueueRange(ReadOnlySpan<T>)`（Span 是库作者面，`T[]` 与 `IEnumerable<T>` 双轨保留）；HashSet 的 `T[]` 批量方法顺带补 null 守卫（与序列重载的 `ArgumentNullException` 语义一致）
-- **构造器收敛** — `ObservableDictionary` 移除 `ObservableDictionary(int capacity)` / `(int capacity, IEqualityComparer<TKey>)` / `(IEnumerable<KeyValuePair<TKey,TValue>>, IEqualityComparer<TKey>)`（保留 默认 / 初始键值 / 键比较器 三个）；`ObservableHashSet` 移除 `(int capacity, IEqualityComparer<T>)` / `(IEnumerable<T>, IEqualityComparer<T>)`（保留 默认 / 初始元素 / 比较器 三个）
-- **`ObservableValue<T>.SetValue(T)` 别名** — 与 `Value` setter 完全同义，两个名字做一件事徒增概念负担；`IObservableValue<T>` 接口成员同步删除
+- **`ObservableHashSet<T>` 集合代数全套（10 方法）** — `UnionWith` / `ExceptWith` / `IntersectWith` /
+  `SymmetricExceptWith` / `IsSubsetOf` / `IsProperSubsetOf` / `IsSupersetOf` / `IsProperSupersetOf` /
+  `Overlaps` / `SetEquals`；`IObservableHashSet<T>` 不再继承 `ISet<T>`（改为 `ICollection<T>`
+  ，写侧契约不变）。集合代数对独立游戏属低频能力，需要时使用内部 `HashSet<T>`
+  或上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- **`ObservableList<T>` 区间重载** — `Sort(int index, int count, IComparer<T>)` /
+  `Reverse(int index, int count)`（整表 `Sort()` / `Sort(IComparer<T>)` / `Reverse()` 保留）
+- **`ReadOnlySpan<T>` 批量重载** — `ObservableList.AddRange(ReadOnlySpan<T>)` /
+  `InsertRange(int, ReadOnlySpan<T>)`、`ObservableHashSet.AddRange(ReadOnlySpan<T>)` /
+  `RemoveRange(ReadOnlySpan<T>)`、`ObservableQueue.EnqueueRange(ReadOnlySpan<T>)`（Span 是库作者面，`T[]` 与
+  `IEnumerable<T>` 双轨保留）；HashSet 的 `T[]` 批量方法顺带补 null 守卫（与序列重载的 `ArgumentNullException`
+  语义一致）
+- **构造器收敛** — `ObservableDictionary` 移除 `ObservableDictionary(int capacity)` /
+  `(int capacity, IEqualityComparer<TKey>)` /
+  `(IEnumerable<KeyValuePair<TKey,TValue>>, IEqualityComparer<TKey>)`（保留 默认 / 初始键值 / 键比较器 三个）；
+  `ObservableHashSet` 移除 `(int capacity, IEqualityComparer<T>)` / `(IEnumerable<T>, IEqualityComparer<T>)`
+  （保留 默认 / 初始元素 / 比较器 三个）
+- **`ObservableValue<T>.SetValue(T)` 别名** — 与 `Value` setter 完全同义，两个名字做一件事徒增概念负担；
+  `IObservableValue<T>` 接口成员同步删除
 - **调试 / 测试专用面收窄 internal**（消费者不可见，测试程序集经 `InternalsVisibleTo` 照常使用）：
-  - `IContext` 删除 `UnregisterModel` / `UnregisterService` / `GetAllModels` / `GetAllServices` 四成员；`AbstractContext<T>` 对应方法收窄 internal
-  - `IGenericLocator<T>` 删除 `IsRegistered` / `Clear` / `GetByType` / `GetAllEntries` 四成员；`GenericLocator<T>` 对应实现收窄 internal
-  - `MiniEvent.GetListeners()` / `MiniEvent<T>.GetListeners()` 收窄 internal（Odin 内联调试面板经反射读取已同步适配 NonPublic）
-  - `AesirArchitecturePlayerLoop.Reset()` / `GetHookCount()`、`PlayerLoopUtility.GetCurrentPlayerLoopDescription()` 收窄 internal
+    - `IContext` 删除 `UnregisterModel` / `UnregisterService` / `GetAllModels` / `GetAllServices` 四成员；
+      `AbstractContext<T>` 对应方法收窄 internal
+    - `IGenericLocator<T>` 删除 `IsRegistered` / `Clear` / `GetByType` / `GetAllEntries` 四成员；
+      `GenericLocator<T>` 对应实现收窄 internal
+    - `MiniEvent.GetListeners()` / `MiniEvent<T>.GetListeners()` 收窄 internal（Odin 内联调试面板经反射读取已同步适配
+      NonPublic）
+    - `AesirArchitecturePlayerLoop.Reset()` / `GetHookCount()`、
+      `PlayerLoopUtility.GetCurrentPlayerLoopDescription()` 收窄 internal
 - **`Tests/Editor/ObservableHashSetTests` 集合代数用例随删**（6 用例）；`ObservableDictionaryTests` 容量构造用例随删
 
 ### Renamed（破坏性变更）
 
-- **`ObservableValue<T>.Clear()` → `ClearListeners()`** — 命名对齐可观察集合家族：`Clear` 在集合上清元素、在 Value 上清监听者，同名分裂语义易误读
+- **`ObservableValue<T>.Clear()` → `ClearListeners()`** — 命名对齐可观察集合家族：`Clear` 在集合上清元素、在
+  Value 上清监听者，同名分裂语义易误读
 
 ### 明确不做（引导上游）
 
-- `ObservableHashSet<T>` 集合代数（并 / 交 / 差 / 子集判定）——低频，直接使用内部 `HashSet<T>` 或上游 Cysharp.ObservableCollections
+- `ObservableHashSet<T>` 集合代数（并 / 交 / 差 / 子集判定）——低频，直接使用内部 `HashSet<T>` 或上游
+  Cysharp.ObservableCollections
 
 ## [0.22.0] - 2026-09-22
 
 ### Added
 
-- **可观察集合升级为 ObservableCollections 轻量内置子集（参考 Cysharp/ObservableCollections，MIT）** — 集合类型命名参考上游便于对照文档，通知语义为本项目自有约定（单轨，与上游不一致）；与上游库可在同一项目**共存**（程序集 / UPM 包名 / 命名空间三层隔离，同文件双 `using` 同名类型需别名，详见 `Documentation/observable-collections.md`「与上游共存」），归属见包根 `Third Party Notices.md`、差异清单见同文档：
-  - **新增 `ObservableQueue<T>`**；`ObservableList<T>` / `ObservableDictionary<TKey, TValue>` / `ObservableHashSet<T>` 就地升级
-  - **单轨变更通知 `AddListener` / `RemoveListener`** — `IObservableCollection<T>` 统一契约；`MiniEvent<T>` 承载（Invoke 零分配），载荷为普通只读结构体 `CollectionChangedEventArgs<T>`（可存集合与闭包）；返回 `AutoRemoveListenerHandle`，支持 using 作用域清理与 `RemoveListenerExtensions` 生命周期绑定（OnDestroy / OnDisable / 场景卸载自动移除监听）
-  - **通知语义**：无变更的写操作不通知（赋相同值 / Remove 不存在元素 / Clear 空集合 / Add 重复元素）；批量操作（`AddRange` / `InsertRange` / `RemoveRange` / 集合代数运算）逐项通知；字典值更新以 `Replace` 表达（旧值在 `OldItem`）；`Move` 为单次 `Move` 事件；`Sort` / `Reverse` / `Clear` 统一 `Reset`（无附加字段，少于 2 个元素的重排不通知）；无索引集合（字典 / HashSet）索引固定 -1
-  - **Odin Inspector 内联调试面板（可选）** — Inspector 中集合字段上方显示元素数 / 变更监听数 / 元素预览，其下保留默认绘制；未安装 Odin 时不参与编译
-- **单轨通知测试回归** — `ObservableListParityTests`（列表写操作结果与 BCL `ObservableCollection<T>` 对齐）+ `ObservableCollectionChangedTests`（单轨语义：无变更不通知 / 批量逐项 / Move / Reset / -1 索引 / 句柄与 ClearListeners / 句柄绑定 GameObject OnDisable 自动移除）+ 三个集合测试文件的轻量事件用例全部改写为单轨断言
+- **可观察集合升级为 ObservableCollections 轻量内置子集（参考 Cysharp/ObservableCollections，MIT）** —
+  集合类型命名参考上游便于对照文档，通知语义为本项目自有约定（单轨，与上游不一致）；与上游库可在同一项目**共存**
+  （程序集 / UPM 包名 / 命名空间三层隔离，同文件双 `using` 同名类型需别名，详见
+  `Documentation/observable-collections.md`「与上游共存」），归属见包根 `Third Party Notices.md`、差异清单见同文档：
+    - **新增 `ObservableQueue<T>`**；`ObservableList<T>` / `ObservableDictionary<TKey, TValue>` /
+      `ObservableHashSet<T>` 就地升级
+    - **单轨变更通知 `AddListener` / `RemoveListener`** — `IObservableCollection<T>` 统一契约；`MiniEvent<T>`
+      承载（Invoke 零分配），载荷为普通只读结构体 `CollectionChangedEventArgs<T>`（可存集合与闭包）；返回
+      `AutoRemoveListenerHandle`，支持 using 作用域清理与 `RemoveListenerExtensions` 生命周期绑定（OnDestroy /
+      OnDisable / 场景卸载自动移除监听）
+    - **通知语义**：无变更的写操作不通知（赋相同值 / Remove 不存在元素 / Clear 空集合 / Add 重复元素）；批量操作（
+      `AddRange` / `InsertRange` / `RemoveRange` / 集合代数运算）逐项通知；字典值更新以 `Replace` 表达（旧值在
+      `OldItem`）；`Move` 为单次 `Move` 事件；`Sort` / `Reverse` / `Clear` 统一 `Reset`（无附加字段，少于 2
+      个元素的重排不通知）；无索引集合（字典 / HashSet）索引固定 -1
+    - **Odin Inspector 内联调试面板（可选）** — Inspector 中集合字段上方显示元素数 / 变更监听数 /
+      元素预览，其下保留默认绘制；未安装 Odin 时不参与编译
+- **单轨通知测试回归** — `ObservableListParityTests`（列表写操作结果与 BCL `ObservableCollection<T>` 对齐）+
+  `ObservableCollectionChangedTests`（单轨语义：无变更不通知 / 批量逐项 / Move / Reset / -1 索引 / 句柄与
+  ClearListeners / 句柄绑定 GameObject OnDisable 自动移除）+ 三个集合测试文件的轻量事件用例全部改写为单轨断言
 
 ### Changed
 
-- **可观察集合移除内部加锁与 `SyncRoot`** — 4 个集合共 51 处 `lock (SyncRoot)` 与 `IObservableCollection<T>.SyncRoot` 成员一并删除（含 `ObservableQueue.GetEnumerator` 把 `yield return` 包在 `lock` 内的写法）。理由：`Monitor` 同线程可重入，Unity 主线程模型下对正确性零贡献，只增加每次读写的开销与每实例一个 `object` 分配；且原实现仅 `Count` / 索引器加锁，`Contains` / `IndexOf` / `CopyTo` / 枚举器均未加锁，反而制造「线程安全」错觉。集合线程边界现统一为「仅主线程使用」。
-- **可观察集合文档口径升级** — README（中英）与包内文档改为「ObservableCollections 轻量内置子集 + 单轨通知」，明确「重度能力用上游、两套不混用」；`Documentation/observable-collections.md` 更新（定位 / 单轨通知 / Odin 面板 / 与上游关系与差异 / 注意事项）
+- **可观察集合移除内部加锁与 `SyncRoot`** — 4 个集合共 51 处 `lock (SyncRoot)` 与
+  `IObservableCollection<T>.SyncRoot` 成员一并删除（含 `ObservableQueue.GetEnumerator` 把 `yield return` 包在
+  `lock` 内的写法）。理由：`Monitor` 同线程可重入，Unity 主线程模型下对正确性零贡献，只增加每次读写的开销与每实例一个
+  `object` 分配；且原实现仅 `Count` / 索引器加锁，`Contains` / `IndexOf` / `CopyTo` /
+  枚举器均未加锁，反而制造「线程安全」错觉。集合线程边界现统一为「仅主线程使用」。
+- **可观察集合文档口径升级** — README（中英）与包内文档改为「ObservableCollections 轻量内置子集 +
+  单轨通知」，明确「重度能力用上游、两套不混用」；`Documentation/observable-collections.md` 更新（定位 / 单轨通知 /
+  Odin 面板 / 与上游关系与差异 / 注意事项）
 
 ### Removed（破坏性变更）
 
-- **轻量事件 API 全套移除** — `AddAddedListener` / `AddRemovedListener` / `AddReplacedListener` / `AddUpdatedListener` / `AddClearedListener` 及对应 `Remove*` 方法、`CollectionAddEventArgs<T>` / `CollectionRemoveEventArgs<T>` / `CollectionReplaceEventArgs<T>` / `DictionaryUpdateEventArgs<TKey, TValue>` 载荷。原轻量事件语义（无变化不通知、AddRange 逐项）已并入单轨事件；迁移方式：改订阅 `AddListener(Action<CollectionChangedEventArgs<T>>)`，按 `e.Action` 分流（字典 Updated → Replace，旧值在 `e.OldItem`）
-- **原生 `CollectionChanged` 事件与上游对齐载荷移除** — `event NotifyCollectionChangedEventHandler<T> CollectionChanged`、`NotifyCollectionChangedEventArgs<T>`（`readonly ref struct`，含 `IsSingleItem` / `NewItems` / `OldItems` Span 载荷）、`SortOperation<T>` 及其哨兵比较器。原「每写必通知 / 批量单次 Span 通知 / SortOperation 细节」语义不再保留（理由：原生 event 订阅无法返回句柄、不能绑定 Unity 生命周期自动清理；ref struct 载荷与 MiniEvent 承载冲突；SortOperation 对初学者是概念负担）。迁移方式见 `Documentation/observable-collections.md` 第三节
+- **轻量事件 API 全套移除** — `AddAddedListener` / `AddRemovedListener` / `AddReplacedListener` /
+  `AddUpdatedListener` / `AddClearedListener` 及对应 `Remove*` 方法、`CollectionAddEventArgs<T>` /
+  `CollectionRemoveEventArgs<T>` / `CollectionReplaceEventArgs<T>` / `DictionaryUpdateEventArgs<TKey, TValue>`
+  载荷。原轻量事件语义（无变化不通知、AddRange 逐项）已并入单轨事件；迁移方式：改订阅
+  `AddListener(Action<CollectionChangedEventArgs<T>>)`，按 `e.Action` 分流（字典 Updated → Replace，旧值在
+  `e.OldItem`）
+- **原生 `CollectionChanged` 事件与上游对齐载荷移除** —
+  `event NotifyCollectionChangedEventHandler<T> CollectionChanged`、`NotifyCollectionChangedEventArgs<T>`（
+  `readonly ref struct`，含 `IsSingleItem` / `NewItems` / `OldItems` Span 载荷）、`SortOperation<T>`
+  及其哨兵比较器。原「每写必通知 / 批量单次 Span 通知 / SortOperation 细节」语义不再保留（理由：原生 event
+  订阅无法返回句柄、不能绑定 Unity 生命周期自动清理；ref struct 载荷与 MiniEvent 承载冲突；SortOperation
+  对初学者是概念负担）。迁移方式见 `Documentation/observable-collections.md` 第三节
 - **Internal：`ResizableArray<T>` 移除** — 批量操作改为逐项通知后无消费者
 
 ### 明确不做（引导上游）
 
-- 同步视图与过滤器（`ISynchronizedView<T, TView>` / `CreateView` / `AttachFilter`）、R3 响应式集成、环形缓冲区 / 栈 / 交替索引列表、`INotifyCollectionChanged`（WPF/XAML）绑定层、可写视图回写、`ToViewList` / `ToNotifyCollectionChanged` —— 需要时直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
+- 同步视图与过滤器（`ISynchronizedView<T, TView>` / `CreateView` / `AttachFilter`）、R3 响应式集成、环形缓冲区 /
+  栈 / 交替索引列表、`INotifyCollectionChanged`（WPF/XAML）绑定层、可写视图回写、`ToViewList` /
+  `ToNotifyCollectionChanged` ——
+  需要时直接使用上游 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)
 
 ### 规划中
 
@@ -324,59 +835,112 @@
 
 ### Added
 
-- **包内更新器：更新日志面板** — 检查更新后自动按远程 tag 拉取包内 `CHANGELOG.md`（jsDelivr 多域名 → GitHub Raw 兜底），提取「本地版本 → 远程版本」之间的版本段落展示在窗口面板上；远程拉取失败时回退展示本地包内 CHANGELOG 的最新段落并标注来源
-- **包内更新器：更新前确认框** — 逐包列示「本地 v旧 → 远程新」版本变化、备份位置与覆盖说明（检测到 `.git` 目录时追加开发仓库警告），防止误操作直接覆盖本地修改
-- **`AesirScheduler` 帧粒度时间调度原语** — 纯 C# 静态 API（`Delay(seconds, callback)` / `NextFrame(callback)`），经 `AesirArchitecturePlayerLoop` BeforeUpdate 钩子结算（首次使用自动注册），为无协程能力的 Model / Service / Command 提供合法延时手段；有意收窄：帧粒度精度（任务最早下一帧执行）、游戏时间（受 `timeScale` 影响）、一次性任务无句柄/取消/暂停/不池化、仅主线程、稳态零分配；新增 `Tests/Editor/AesirSchedulerTests.cs`（9 用例：帧粒度语义、同帧守卫、调度序、回调内再调度快照语义、懒注册钩子、RIOLM 重置）
-- **package.json samples 登记 `RuntimeInitializeLoadType` 示例** — 项目结构树早已列出该示例目录、`Samples~` 已有镜像，但 samples 数组未登记导致 UPM 用户在 Package Manager 的 Samples 页看不到导入项；现三方口径统一（共 11 个可导入示例），README（中英）示例计数与工具类示例表同步补行
-- **测试扩充（全仓锐评盲区补齐）** — 新增 `ViewAndTriggerTests`（View / MonoViewController 基类的 Context 绑定 + RemoveListenerOnDestroy / OnDisableTrigger / SceneUnloadedTrigger 触发器族句柄清理——两轮锐评点名的零测试带）、`ScriptingSymbolUtilityTests`、`QuickCreateSOMenuItemTests`；`AesirUpdateServiceTests` 19→32（预发布版本比较矩阵、CHANGELOG 解析与区间筛选、更新确认框文本、安装清单落盘往返、过期包列表排序与版本边界）；`MiniEventTests` 补 `RemoveListener` 精确移除用例（5→7）；Editor 程序集新增 `AssemblyInfo.cs`（internal 逻辑对 EditMode 测试程序集开放）
-- **PlayMode 测试卫生改进** — `UnityEngineObjectCheckNullTests` 拆分合并断言（逐条件独立断言，失败可定位）并连带销毁宿主 GameObject（不再残留空物体污染后续用例场景）；`RemoveListenerOnSceneUnloadedTriggerTests` 的 TearDown 改 `[UnityTearDown]` 协程等待 `UnloadSceneAsync` 完成（不再依赖场景异名侥幸规避同域复跑碰撞）；`ContextReplacementWarningTests` 首次注册否定断言改为全量 Warning 捕获（实现侧改警告文案不再绿着放行）
+- **包内更新器：更新日志面板** — 检查更新后自动按远程 tag 拉取包内 `CHANGELOG.md`（jsDelivr 多域名 → GitHub Raw
+  兜底），提取「本地版本 → 远程版本」之间的版本段落展示在窗口面板上；远程拉取失败时回退展示本地包内 CHANGELOG
+  的最新段落并标注来源
+- **包内更新器：更新前确认框** — 逐包列示「本地 v旧 → 远程新」版本变化、备份位置与覆盖说明（检测到 `.git`
+  目录时追加开发仓库警告），防止误操作直接覆盖本地修改
+- **`AesirScheduler` 帧粒度时间调度原语** — 纯 C# 静态 API（`Delay(seconds, callback)` / `NextFrame(callback)`
+  ），经 `AesirArchitecturePlayerLoop` BeforeUpdate 钩子结算（首次使用自动注册），为无协程能力的 Model / Service /
+  Command 提供合法延时手段；有意收窄：帧粒度精度（任务最早下一帧执行）、游戏时间（受 `timeScale`
+  影响）、一次性任务无句柄/取消/暂停/不池化、仅主线程、稳态零分配；新增 `Tests/Editor/AesirSchedulerTests.cs`（9
+  用例：帧粒度语义、同帧守卫、调度序、回调内再调度快照语义、懒注册钩子、RIOLM 重置）
+- **package.json samples 登记 `RuntimeInitializeLoadType` 示例** — 项目结构树早已列出该示例目录、`Samples~`
+  已有镜像，但 samples 数组未登记导致 UPM 用户在 Package Manager 的 Samples 页看不到导入项；现三方口径统一（共 11
+  个可导入示例），README（中英）示例计数与工具类示例表同步补行
+- **测试扩充（全仓锐评盲区补齐）** — 新增 `ViewAndTriggerTests`（View / MonoViewController 基类的 Context 绑定 +
+  RemoveListenerOnDestroy / OnDisableTrigger / SceneUnloadedTrigger 触发器族句柄清理——两轮锐评点名的零测试带）、
+  `ScriptingSymbolUtilityTests`、`QuickCreateSOMenuItemTests`；`AesirUpdateServiceTests`
+  19→32（预发布版本比较矩阵、CHANGELOG 解析与区间筛选、更新确认框文本、安装清单落盘往返、过期包列表排序与版本边界）；
+  `MiniEventTests` 补 `RemoveListener` 精确移除用例（5→7）；Editor 程序集新增 `AssemblyInfo.cs`（internal 逻辑对
+  EditMode 测试程序集开放）
+- **PlayMode 测试卫生改进** — `UnityEngineObjectCheckNullTests` 拆分合并断言（逐条件独立断言，失败可定位）并连带销毁宿主
+  GameObject（不再残留空物体污染后续用例场景）；`RemoveListenerOnSceneUnloadedTriggerTests` 的 TearDown 改
+  `[UnityTearDown]` 协程等待 `UnloadSceneAsync` 完成（不再依赖场景异名侥幸规避同域复跑碰撞）；
+  `ContextReplacementWarningTests` 首次注册否定断言改为全量 Warning 捕获（实现侧改警告文案不再绿着放行）
 
 ### Changed
 
-- **包内更新器：新增 Odin Inspector 界面** — Odin 版窗口 `AesirUpdateWindowOdin`（`Editor/OdinInspector/UpdateChecker/`，汇入 `Runestone.AesirArchitecture.Editor.OdinInspector` 程序集）：状态着色的包列表、下载进度条、更新日志折叠区；安装 Odin 时菜单自动打开 Odin 窗口（经 `AesirUpdateWindow.OdinWindowOpener` 静态委托注册路由，域重载后自动重注册），未安装时回退 IMGUI 兜底窗口，两版窗口共用全部服务逻辑
-- **包内更新器：逻辑下沉与绘制期零开销** — 更新执行流程下沉为 `AesirUpdateService.UpdatePackagesAsync`（双窗口共用）；远程版本 / 检测结果 / 更新日志改为序列化字段（更新导入触发域重载后窗口内容不丢失）；Odin 窗口行视图模型仅在状态变化时重建并重算显示文本，IMGUI 窗口缓存过期包列表与 `.git` 检测结果，OnGUI 期间消除每帧 LINQ 与磁盘 IO
-- **脏排序只重排脏列表** — `MonoLifecycleProxy.EnsureSorted` 与 `AesirArchitecturePlayerLoop.EnsureSorted` 此前任一注册即全量重排所有事件/阶段的监听列表；现按事件/阶段粒度追踪脏项（复用列表去重登记），只重排发生注册的列表，且跳过单元素列表的排序分配
+- **包内更新器：新增 Odin Inspector 界面** — Odin 版窗口 `AesirUpdateWindowOdin`（
+  `Editor/OdinInspector/UpdateChecker/`，汇入 `Runestone.AesirArchitecture.Editor.OdinInspector`
+  程序集）：状态着色的包列表、下载进度条、更新日志折叠区；安装 Odin 时菜单自动打开 Odin 窗口（经
+  `AesirUpdateWindow.OdinWindowOpener` 静态委托注册路由，域重载后自动重注册），未安装时回退 IMGUI
+  兜底窗口，两版窗口共用全部服务逻辑
+- **包内更新器：逻辑下沉与绘制期零开销** — 更新执行流程下沉为 `AesirUpdateService.UpdatePackagesAsync`
+  （双窗口共用）；远程版本 / 检测结果 / 更新日志改为序列化字段（更新导入触发域重载后窗口内容不丢失）；Odin
+  窗口行视图模型仅在状态变化时重建并重算显示文本，IMGUI 窗口缓存过期包列表与 `.git` 检测结果，OnGUI 期间消除每帧
+  LINQ 与磁盘 IO
+- **脏排序只重排脏列表** — `MonoLifecycleProxy.EnsureSorted` 与 `AesirArchitecturePlayerLoop.EnsureSorted`
+  此前任一注册即全量重排所有事件/阶段的监听列表；现按事件/阶段粒度追踪脏项（复用列表去重登记），只重排发生注册的列表，且跳过单元素列表的排序分配
 
 ### Fixed
 
-- **包内更新器：预发布版本比较** — `CompareVersion` 此前把 `0.15.0-rc1` 与 `0.15.0` 判为相等（预发布标识被静默吞掉），装过预发布版的用户对同号正式版永远显示"已是最新"；现按 SemVer 语义比较——同号正式版高于预发布，两侧均为预发布时按标识文本排序
-- **包内更新器：移除单包"更新到 X"入口** — Modules 依赖 Architecture 且两包同 Release 发布，单独更新一包会造成包间版本撕裂；从入口杜绝，统一走工具栏「全部更新」
-- **包内更新器：残留清理移到导入成功之后** — 此前"先删后导"，`ImportPackage` 静默失败（unitypackage 损坏等）时旧文件已删、新文件未进；现导入后先校验包目录存在再执行差集清理，导入失败时跳过清理与清单登记（旧清单保留为下次差集依据）并告警指向备份目录
+- **包内更新器：预发布版本比较** — `CompareVersion` 此前把 `0.15.0-rc1` 与 `0.15.0`
+  判为相等（预发布标识被静默吞掉），装过预发布版的用户对同号正式版永远显示"已是最新"；现按 SemVer
+  语义比较——同号正式版高于预发布，两侧均为预发布时按标识文本排序
+- **包内更新器：移除单包"更新到 X"入口** — Modules 依赖 Architecture 且两包同 Release
+  发布，单独更新一包会造成包间版本撕裂；从入口杜绝，统一走工具栏「全部更新」
+- **包内更新器：残留清理移到导入成功之后** — 此前"先删后导"，`ImportPackage` 静默失败（unitypackage
+  损坏等）时旧文件已删、新文件未进；现导入后先校验包目录存在再执行差集清理，导入失败时跳过清理与清单登记（旧清单保留为下次差集依据）并告警指向备份目录
 - **QuickCreateSOMenuItem：脚本名恰为 "SO" 时不再产生空资源名** — 尾部 "SO" 后缀裁剪增加长度守卫，保留原名
-- **DDOL 根物体保护三单例同形** — `AesirArchitecture.Awake` 与 `UIRoot.Awake` 此前无条件调用 `DontDestroyOnLoad`（预放置为子物体时引擎仅打警告且 DDOL 无效）；现与 `UIModule` 范式统一：仅根物体调用，预放置为子物体时跟随宿主决策（类/字段 XML 文档同步标注）
+- **DDOL 根物体保护三单例同形** — `AesirArchitecture.Awake` 与 `UIRoot.Awake` 此前无条件调用
+  `DontDestroyOnLoad`（预放置为子物体时引擎仅打警告且 DDOL 无效）；现与 `UIModule`
+  范式统一：仅根物体调用，预放置为子物体时跟随宿主决策（类/字段 XML 文档同步标注）
 
 ## [0.20.0] - 2026-09-11
 
 ### Added
 
-- **《设计变更记录》文档（`Documentation/设计变更记录.md`，`Documentation~` 镜像同步）** — 按设计点收录已废弃机制（Context 事件总线体系、ModelReplaced/ServiceReplaced、120 帧自愈轮询、初始化失败回滚、监听异常吞噬、BeforeFixedUpdate、GenericLocator.Global/GetRegistry、Interface→Instance 更名、DDOL 标志组合、fake-null 隐式重置）与设计来源（QFramework / Odin Inspector / Aesir Inspector / Cysharp.ObservableCollections），附命名演进速查表；源码注释此后只描述当前行为，历史演进统一收录于此
+- **《设计变更记录》文档（`Documentation/设计变更记录.md`，`Documentation~` 镜像同步）** — 按设计点收录已废弃机制（Context
+  事件总线体系、ModelReplaced/ServiceReplaced、120
+  帧自愈轮询、初始化失败回滚、监听异常吞噬、BeforeFixedUpdate、GenericLocator.Global/GetRegistry、Interface→Instance
+  更名、DDOL 标志组合、fake-null 隐式重置）与设计来源（QFramework / Odin Inspector / Aesir Inspector /
+  Cysharp.ObservableCollections），附命名演进速查表；源码注释此后只描述当前行为，历史演进统一收录于此
 
 ### Changed
 
-- **注释精简（12 文件，净 −44 行）** — 移除源码注释中的废弃设计历史叙述（`AbstractContext.Instance` 的更名史、`AesirArchitecture.ResetStatics` 的 fake-null 演进史、`QuickCreateSOMenuItem` 的 Aesir Inspector 复刻细节、`ScriptingSymbolUtility` 的 Odin 来源、包内更新器的 QFramework PackageKit 对比段）；重复注释去重（4 个能力标记接口 remarks、4 个 Execute 扩展方法 remarks、`RemoveListenerOnSceneUnloadedTrigger` 单例说明、`AesirArchitecturePlayerLoop` 注入点标识、`AbstractContext.Dispose` 双重注释、`ObservableValue` 类级重复段）
+- **注释精简（12 文件，净 −44 行）** — 移除源码注释中的废弃设计历史叙述（`AbstractContext.Instance` 的更名史、
+  `AesirArchitecture.ResetStatics` 的 fake-null 演进史、`QuickCreateSOMenuItem` 的 Aesir Inspector 复刻细节、
+  `ScriptingSymbolUtility` 的 Odin 来源、包内更新器的 QFramework PackageKit 对比段）；重复注释去重（4 个能力标记接口
+  remarks、4 个 Execute 扩展方法 remarks、`RemoveListenerOnSceneUnloadedTrigger` 单例说明、
+  `AesirArchitecturePlayerLoop` 注入点标识、`AbstractContext.Dispose` 双重注释、`ObservableValue` 类级重复段）
 
 ### Fixed
 
-- **`AesirArchitecture.DontDestroyOnLoad` 补 `new` 修饰符** — 显式隐藏 `UnityEngine.Object.DontDestroyOnLoad(Object)` 静态方法，消除 0.19.0 引入该属性时遗留的 CS0108 编译警告（行为不变）
+- **`AesirArchitecture.DontDestroyOnLoad` 补 `new` 修饰符** — 显式隐藏
+  `UnityEngine.Object.DontDestroyOnLoad(Object)` 静态方法，消除 0.19.0 引入该属性时遗留的 CS0108 编译警告（行为不变）
 
 ## [0.19.0] - 2026-09-11
 
 ### Added
 
-- **`IContext` / `AbstractContext<T>` 新增 `UnregisterModel<TModel>` / `UnregisterService<TService>`** —— 按类型键摘除注册并释放被摘除实例（订阅不迁移），与动态替换语义配套；未注册时静默无操作（幂等），注销后再次注册按新插入语义追加到注册顺序末尾
-- **`AesirArchitecture` 新增只读属性 `DontDestroyOnLoad`** —— 对外暴露 DDOL 决策的当前取值，供运行时查询与编辑器条件提示（Odin 可见性表达式）复用
+- **`IContext` / `AbstractContext<T>` 新增 `UnregisterModel<TModel>` / `UnregisterService<TService>`** ——
+  按类型键摘除注册并释放被摘除实例（订阅不迁移），与动态替换语义配套；未注册时静默无操作（幂等），注销后再次注册按新插入语义追加到注册顺序末尾
+- **`AesirArchitecture` 新增只读属性 `DontDestroyOnLoad`** —— 对外暴露 DDOL 决策的当前取值，供运行时查询与编辑器条件提示（Odin
+  可见性表达式）复用
 
 ### Fixed
 
-- **补齐 `AesirArchitectureAttributeProcessor` 宣称的类级条件 Warning 信息框** —— XML 文档宣称"DDOL 开关关闭时显示的类级 Warning"，此前实现只有两个 Info 框（宣称与实现不符）；现以 `@!$value.DontDestroyOnLoad` 表达式条件注入（仅关闭时显示，与运行时提醒日志口径一致）
-- **`RemoveListenerOnSceneUnloadedTriggerAttributeProcessor` 的宿主 DDOL 警告改为条件显示** —— 此前无条件常显，默认配置（DDOL 开启）下构成高严重度噪音；现仅在宿主存在且关闭时显示（经 `GetComponent` 读宿主只读属性；组件误放至非宿主物体时不显示）
+- **补齐 `AesirArchitectureAttributeProcessor` 宣称的类级条件 Warning 信息框** —— XML 文档宣称"DDOL 开关关闭时显示的类级
+  Warning"，此前实现只有两个 Info 框（宣称与实现不符）；现以 `@!$value.DontDestroyOnLoad`
+  表达式条件注入（仅关闭时显示，与运行时提醒日志口径一致）
+- **`RemoveListenerOnSceneUnloadedTriggerAttributeProcessor` 的宿主 DDOL 警告改为条件显示** ——
+  此前无条件常显，默认配置（DDOL 开启）下构成高严重度噪音；现仅在宿主存在且关闭时显示（经 `GetComponent`
+  读宿主只读属性；组件误放至非宿主物体时不显示）
 - **`AbstractSubmodule.Dispose` 现重置 `Initialized` 为 false** —— 已释放的模块不再自称已初始化，消除动态替换场景下旧实例初始化状态的误导
-- **`RemoveListenerOnSceneUnloadedTrigger.Awake` 现写入静态单例缓存** —— 与 `AesirArchitecture` / `MonoLifecycleProxy` 单例范式同形；预放置双实例在各自 Awake 期完成判重，修复"两个从未经 `Instance` 访问的预放置实例双双订阅 `sceneUnloaded`"的窗口（`Instance` getter 的 `FindAnyObjectByType` 保留为销毁后重发现与执行顺序竞态的兜底）
+- **`RemoveListenerOnSceneUnloadedTrigger.Awake` 现写入静态单例缓存** —— 与 `AesirArchitecture` /
+  `MonoLifecycleProxy` 单例范式同形；预放置双实例在各自 Awake 期完成判重，修复"两个从未经 `Instance`
+  访问的预放置实例双双订阅 `sceneUnloaded`"的窗口（`Instance` getter 的 `FindAnyObjectByType`
+  保留为销毁后重发现与执行顺序竞态的兜底）
 
 ### Changed
 
-- **示例：Counter-Mvc-Quick / Counter-Mvp-Quick 的 Model 改为只读属性暴露可写 ObservableValue** —— 公开可变字段 `count` 收敛为私有 `[SerializeField]` 字段 + 只读属性 `Count`（写入路径 `Count.Value++` 不变，快捷档零封装语义不受影响；序列化名不变，既有场景/预制体数据兼容），防外部整体替换 ObservableValue 实例导致订阅悬空
-- **示例：Counter-Mvc-Strict / Counter-Mvp-Strict 查询改缓存实例复用** —— Controller / Presenter 缓存 Query 实例经带实例重载执行（零分配），替代此前每次调用无参重载（每次分配一个查询实例）；严格档 View 注释同步改写为"复用查询实例"教学口径
+- **示例：Counter-Mvc-Quick / Counter-Mvp-Quick 的 Model 改为只读属性暴露可写 ObservableValue** —— 公开可变字段
+  `count` 收敛为私有 `[SerializeField]` 字段 + 只读属性 `Count`（写入路径 `Count.Value++`
+  不变，快捷档零封装语义不受影响；序列化名不变，既有场景/预制体数据兼容），防外部整体替换 ObservableValue 实例导致订阅悬空
+- **示例：Counter-Mvc-Strict / Counter-Mvp-Strict 查询改缓存实例复用** —— Controller / Presenter 缓存 Query
+  实例经带实例重载执行（零分配），替代此前每次调用无参重载（每次分配一个查询实例）；严格档 View
+  注释同步改写为"复用查询实例"教学口径
 - **README（中英）：MiniEvent"零分配事件"项目结构行补"（Invoke 路径）"限定** —— 0.18.0 修正类文档同款失实时漏网的两处
 - **README（中英）项目结构补列 `ObservableCollections` 与 `RuntimeInitializeLoadType` 示例目录** —— 此前树中缺失
 
@@ -384,14 +948,24 @@
 
 ### Added
 
-- **`AesirArchitecturePlayerLoop.Register` 返回 `AutoRemoveListenerHandle`** — Dispose 时自动注销本次注册，对齐全框架监听句柄风格；忽略返回值的既有调用不受影响
-- **`CapabilityExtensionsTests`（10 用例）** — CQRS 执行链首次获得测试覆盖：带参/无参命令与查询、命令链、查询组合、`IController<T>` 默认接口实现绑定、Model 初始化阶段获取 Service 的两阶段约束异常语义、Dispose 后单例重建
+- **`AesirArchitecturePlayerLoop.Register` 返回 `AutoRemoveListenerHandle`** — Dispose
+  时自动注销本次注册，对齐全框架监听句柄风格；忽略返回值的既有调用不受影响
+- **`CapabilityExtensionsTests`（10 用例）** — CQRS 执行链首次获得测试覆盖：带参/无参命令与查询、命令链、查询组合、
+  `IController<T>` 默认接口实现绑定、Model 初始化阶段获取 Service 的两阶段约束异常语义、Dispose 后单例重建
 
 ### Fixed
 
-- **修复 Model 初始化阶段获取 Service 的误导性报错** — `CapabilityExtensions.GetService` 原报错指示"调整注册顺序"，但框架按「先全部 Model、后全部 Service」两阶段初始化，Model 的 `OnInitialize` 阶段无论注册顺序如何都无法获取 Service；现明确提示须延迟到运行期方法调用中获取
-- **修复 `AbstractContext<T>.Dispose` 后的"僵尸单例"** — 释放后解除 `Instance` 单例缓存，再次访问将按懒加载语义重建并重新初始化全新上下文，而非返回容器已清空的空壳（原先此时 `GetModel` / `GetService` 会抛出指向性错误的"未注册"异常）
-- **修正三处 XML 文档失实** — `AesirArchitecture` 组件宣称"使架构基础设施先于业务逻辑完成初始化"（实际不初始化任何架构数据，纯 C# Context 懒加载，组件仅为 DDOL 宿主）；`AesirArchitecturePlayerLoop` 残留已废弃的"MonoLifecycleProxy 运行期间周期性检测"宣称（120 帧自愈轮询 0.9.0 已移除）；`MiniEvent`"零分配的监听管理"（仅 Invoke 路径零分配，订阅路径有多播合并与句柄闭包分配）——`ObservableValue` / `ObservableList` / `ObservableDictionary` / `ObservableHashSet` 类文档同步修正
+- **修复 Model 初始化阶段获取 Service 的误导性报错** — `CapabilityExtensions.GetService`
+  原报错指示"调整注册顺序"，但框架按「先全部 Model、后全部 Service」两阶段初始化，Model 的 `OnInitialize`
+  阶段无论注册顺序如何都无法获取 Service；现明确提示须延迟到运行期方法调用中获取
+- **修复 `AbstractContext<T>.Dispose` 后的"僵尸单例"** — 释放后解除 `Instance`
+  单例缓存，再次访问将按懒加载语义重建并重新初始化全新上下文，而非返回容器已清空的空壳（原先此时 `GetModel` /
+  `GetService` 会抛出指向性错误的"未注册"异常）
+- **修正三处 XML 文档失实** — `AesirArchitecture`
+  组件宣称"使架构基础设施先于业务逻辑完成初始化"（实际不初始化任何架构数据，纯 C# Context 懒加载，组件仅为 DDOL
+  宿主）；`AesirArchitecturePlayerLoop` 残留已废弃的"MonoLifecycleProxy 运行期间周期性检测"宣称（120 帧自愈轮询
+  0.9.0 已移除）；`MiniEvent`"零分配的监听管理"（仅 Invoke 路径零分配，订阅路径有多播合并与句柄闭包分配）——
+  `ObservableValue` / `ObservableList` / `ObservableDictionary` / `ObservableHashSet` 类文档同步修正
 - `IView` 文档口径修正——"一切写操作经 Command"是严格档编写约定而非接口强制，接口层仅封命令执行入口
 - `ICustomLifecycle.cs` 文件级文档错挂到 `ICustomFixedUpdate`（双 `<summary>` 的 XML 产物错乱），已并入正确的接口文档
 - `RemoveListenerOnSceneUnloadedTrigger` 补重复实例守卫（原先重复实例会重复订阅 `sceneUnloaded` 造成分桶分裂）
@@ -399,36 +973,49 @@
 
 ### Changed
 
-- **解除 Editor 工具对测试框架的结构绑定** — Editor 主程序集移除 `UNITY_INCLUDE_TESTS` defineConstraint、package.json 移除 `com.unity.test-framework` 硬依赖：消费者移除测试框架时宏确保器 / 包内更新器等编辑器工具不再整程序集静默消失，生产项目也不再被强塞测试框架
-- **PlayMode 测试程序集以 `ODIN_INSPECTOR` 守卫** — `Tests/Runtime` 引用 Sirenix 预编译 DLL（Odin 序列化基类链所需），无 Odin 的消费环境自动排除该程序集，修复与"Odin 可选"宣称矛盾导致的导入编译错误
-- `MonoLifecycleProxyExtensions.RegisterCustomLifecycle(mono / GameObject, evt, callback)` 现将监听绑定到所在 GameObject 的销毁事件自动移除——与无参重载语义对齐，消除"同名重载生命周期语义分裂"陷阱（**行为变更**：原先监听不会随物体销毁自动移除）
+- **解除 Editor 工具对测试框架的结构绑定** — Editor 主程序集移除 `UNITY_INCLUDE_TESTS`
+  defineConstraint、package.json 移除 `com.unity.test-framework` 硬依赖：消费者移除测试框架时宏确保器 /
+  包内更新器等编辑器工具不再整程序集静默消失，生产项目也不再被强塞测试框架
+- **PlayMode 测试程序集以 `ODIN_INSPECTOR` 守卫** — `Tests/Runtime` 引用 Sirenix 预编译 DLL（Odin 序列化基类链所需），无
+  Odin 的消费环境自动排除该程序集，修复与"Odin 可选"宣称矛盾导致的导入编译错误
+- `MonoLifecycleProxyExtensions.RegisterCustomLifecycle(mono / GameObject, evt, callback)` 现将监听绑定到所在
+  GameObject 的销毁事件自动移除——与无参重载语义对齐，消除"同名重载生命周期语义分裂"陷阱（**行为变更**
+  ：原先监听不会随物体销毁自动移除）
 - `AesirArchitecture` / `MonoLifecycleProxy` 重复实例改用 `Destroy(this)`——不再连带销毁用户预放置组件的业务物体
-- 私有 `Reset` 更名 `ClearState`——避免撞名 Unity 魔法方法导致编辑器 Inspector Reset 回调误触（`MonoLifecycleProxy` / `RemoveListenerOnSceneUnloadedTrigger`）
+- 私有 `Reset` 更名 `ClearState`——避免撞名 Unity 魔法方法导致编辑器 Inspector Reset 回调误触（
+  `MonoLifecycleProxy` / `RemoveListenerOnSceneUnloadedTrigger`）
 - `AbstractQuery` 补 `[Serializable]`（与 `AbstractCommand` 对齐）
-- README 能力矩阵补 `ExecuteQuery` 列（中英与 `Documentation~` 镜像同步）；《事件机制决策表》"ACA"笔误更正为"RAA"；严格档示例 `UpdateCountText` 收敛为 private 并补"勿在通知回调热路径反复 Query"注释
+- README 能力矩阵补 `ExecuteQuery` 列（中英与 `Documentation~`
+  镜像同步）；《事件机制决策表》"ACA"笔误更正为"RAA"；严格档示例 `UpdateCountText` 收敛为 private 并补"勿在通知回调热路径反复
+  Query"注释
 
 ## [0.17.0] - 2026-09-06
 
 ### Added
 
-- `InternalContextAttribute`：标记框架内部 Context（示例 / 测试等非用户工作流用途）的元数据特性；AesirModules Binder 的「Context 类型」选择器会跳过被标记的类型
+- `InternalContextAttribute`：标记框架内部 Context（示例 / 测试等非用户工作流用途）的元数据特性；AesirModules
+  Binder 的「Context 类型」选择器会跳过被标记的类型
 - 包内全部示例与测试 Context（含嵌套）标注 `[InternalContext]`
 
 ### Fixed
 
-- **示例场景无法运行（0.14.0 起回归）** — 示例程序集从 Editor-only（`includePlatforms`）改为运行时程序集 + 示例脚本整文件 `#if UNITY_EDITOR` 包裹：Editor-only asmdef 的 MonoBehaviour 被 Unity 判定为"编辑器脚本"、禁止挂载场景物体，导致全部示例场景组件 Missing Script；重构后编辑器内正常编译、挂载与 Play Mode 运行，玩家构建仍整体剔除（示例类型 0 入包）
+- **示例场景无法运行（0.14.0 起回归）** — 示例程序集从 Editor-only（`includePlatforms`）改为运行时程序集 + 示例脚本整文件
+  `#if UNITY_EDITOR` 包裹：Editor-only asmdef 的 MonoBehaviour 被 Unity 判定为"编辑器脚本"、禁止挂载场景物体，导致全部示例场景组件
+  Missing Script；重构后编辑器内正常编译、挂载与 Play Mode 运行，玩家构建仍整体剔除（示例类型 0 入包）
 
 ## [0.16.2] - 2026-09-06
 
 ### Changed
 
-- **`LICENSE.md` 与 `Third Party Notices.md` 移至包根** — 对齐 UPM 包根约定（Package Manager 识别包根的 Third Party Notices），包 README 的 LICENSE 徽章链接随之生效；版权行统一为 Runestone Yuumix
+- **`LICENSE.md` 与 `Third Party Notices.md` 移至包根** — 对齐 UPM 包根约定（Package Manager 识别包根的 Third
+  Party Notices），包 README 的 LICENSE 徽章链接随之生效；版权行统一为 Runestone Yuumix
 
 ## [0.16.1] - 2026-09-06
 
 ### Changed
 
-- **Third Party Notices 收录 ObservableCollections（Cysharp，MIT）** — 设计参考条目：可观察集合高级能力（Move / Sort / 同步视图 / R3 集成）的推荐替代库；注明仅设计参考、未包含源码
+- **Third Party Notices 收录 ObservableCollections（Cysharp，MIT）** — 设计参考条目：可观察集合高级能力（Move /
+  Sort / 同步视图 / R3 集成）的推荐替代库；注明仅设计参考、未包含源码
 - 根 README（中英）推荐链接新增 ObservableCollections
 
 ## [0.16.0] - 2026-09-06
@@ -441,19 +1028,30 @@
 
 ### Added
 
-- **可观察集合 `ObservableHashSet<T>`** — 与 List / Dictionary 同构：组合 `HashSet<T>` 存储 + `MiniEvent` 零分配事件；事件负载单值直传 `Action<T>`（对齐 Dictionary 的 KeyValuePair 直传先例）；只读接口 `IReadOnlyObservableHashSet<T>` 为不变型（接口自行声明的 `Contains(T)` 处于输入位）；新增 ObservableHashSetTests 14 个
-- **RuntimeInitializeLoadType 示例** — 编辑器窗口演示 `RuntimeInitializeLoadType` 五个初始化时机的执行顺序与静态重置最佳实践（附讲解文档）；菜单归位 `Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType`；ScriptableSingleton + `[FilePath]` 落盘统一 `ScriptableSingleton/` 前缀（`.gitignore` 忽略运行时生成目录）
+- **可观察集合 `ObservableHashSet<T>`** — 与 List / Dictionary 同构：组合 `HashSet<T>` 存储 + `MiniEvent`
+  零分配事件；事件负载单值直传 `Action<T>`（对齐 Dictionary 的 KeyValuePair 直传先例）；只读接口
+  `IReadOnlyObservableHashSet<T>` 为不变型（接口自行声明的 `Contains(T)` 处于输入位）；新增
+  ObservableHashSetTests 14 个
+- **RuntimeInitializeLoadType 示例** — 编辑器窗口演示 `RuntimeInitializeLoadType`
+  五个初始化时机的执行顺序与静态重置最佳实践（附讲解文档）；菜单归位
+  `Tools/Aesir/Architecture/Samples/RuntimeInitializeLoadType`；ScriptableSingleton + `[FilePath]` 落盘统一
+  `ScriptableSingleton/` 前缀（`.gitignore` 忽略运行时生成目录）
 
 ### Changed
 
-- **包内更新器大陆优化（jsDelivr 方案）** — 版本检测三级兜底：jsDelivr 四域名（cdn / testingcf / gcore / fastly）拉取仓库内 `.github/update-info.json` → GitHub Releases API → `releases/latest` 302 重定向探测（完全绕开 API 限流）；unitypackage 下载仍走 GitHub Release 直链
+- **包内更新器大陆优化（jsDelivr 方案）** — 版本检测三级兜底：jsDelivr 四域名（cdn / testingcf / gcore /
+  fastly）拉取仓库内 `.github/update-info.json` → GitHub Releases API → `releases/latest` 302 重定向探测（完全绕开
+  API 限流）；unitypackage 下载仍走 GitHub Release 直链
 - **ObservableDictionary.Remove(TKey) 优化** — 改用 `Dictionary.Remove(key, out TValue)` 单次哈希查找取回旧值
-- **Odin 编辑器处理器命名空间对齐** — `Editor.OdinIntegration` → `Editor.OdinInspector`（与 0.9.0 程序集/目录改名对齐；纯命名空间标识符变更）
-- **文档核查整理** — 包中英 README 修正过时描述（GenericLocator 全局单例旧述、结构树失效条目），补包内更新器与 unitypackage 安装说明；Skill core-api.md `GameContext.Interface` → `.Instance`
+- **Odin 编辑器处理器命名空间对齐** — `Editor.OdinIntegration` → `Editor.OdinInspector`（与 0.9.0
+  程序集/目录改名对齐；纯命名空间标识符变更）
+- **文档核查整理** — 包中英 README 修正过时描述（GenericLocator 全局单例旧述、结构树失效条目），补包内更新器与
+  unitypackage 安装说明；Skill core-api.md `GameContext.Interface` → `.Instance`
 
 ### Fixed
 
-- **PlaneWar 场景引用修复工具** — 原硬编码 `Assets/Samples/.../0.12.0` 路径在 Samples 双目录迁移后失效，改为 `FindAssets` 动态定位（兼容包内 `Samples/` 与 UPM 导入副本两种布局），预制体缺失时报错而非静默跳过
+- **PlaneWar 场景引用修复工具** — 原硬编码 `Assets/Samples/.../0.12.0` 路径在 Samples 双目录迁移后失效，改为
+  `FindAssets` 动态定位（兼容包内 `Samples/` 与 UPM 导入副本两种布局），预制体缺失时报错而非静默跳过
 
 > 注：本文件曾漏记 0.5.0 – 0.14.0 的逐版本条目，该区间历史见仓库根 CHANGELOG（聚合视图）。
 
@@ -461,115 +1059,180 @@
 
 ### Changed（仓库结构调整）
 
-- **AesirFramework 转型** — AesirInspector 已从本仓库移出，作为面向 Odin Inspector 开发者的学习工具包独立发布；本仓库更名定位为 AesirFramework，由 Aesir Architecture 与 Aesir Modules 组成
-- **Samples 双目录结构** — 包内同时提供 `Samples/`（仓库内直接可见可运行）与 `Samples~/`（Git URL 安装后经 Package Manager 按需导入的源镜像）；以 `Samples/` 为编写主位，内容同步至 `Samples~`，两份内容保持一致
-- **示例程序集构建剔除** — 全部示例程序集（asmdef）`includePlatforms` 收窄为 `Editor`，示例脚本与资产（无 Resources 目录、无构建场景引用）不会进入玩家构建包
-- **示例命名空间统一** — 计数器六档与 PlaneWar 示例统一为 `Runestone.AesirArchitecture.Samples.<示例名>`（MvcQuick / MvcStandard / MvcStrict / MvpQuick / MvpStandard / MvpStrict / PlaneWarMono）；`MiniEvent` 与 `ObservableValue` 两示例因命名空间段与所演示的框架类型同名冲突（CS0118），保留 `Runestone.AesirArchitecture.Samples` 前缀命名空间
+- **AesirFramework 转型** — AesirInspector 已从本仓库移出，作为面向 Odin Inspector 开发者的学习工具包独立发布；本仓库更名定位为
+  AesirFramework，由 Aesir Architecture 与 Aesir Modules 组成
+- **Samples 双目录结构** — 包内同时提供 `Samples/`（仓库内直接可见可运行）与 `Samples~/`（Git URL 安装后经
+  Package Manager 按需导入的源镜像）；以 `Samples/` 为编写主位，内容同步至 `Samples~`，两份内容保持一致
+- **示例程序集构建剔除** — 全部示例程序集（asmdef）`includePlatforms` 收窄为 `Editor`，示例脚本与资产（无
+  Resources 目录、无构建场景引用）不会进入玩家构建包
+- **示例命名空间统一** — 计数器六档与 PlaneWar 示例统一为 `Runestone.AesirArchitecture.Samples.<示例名>`
+  （MvcQuick / MvcStandard / MvcStrict / MvpQuick / MvpStandard / MvpStrict / PlaneWarMono）；`MiniEvent` 与
+  `ObservableValue` 两示例因命名空间段与所演示的框架类型同名冲突（CS0118），保留
+  `Runestone.AesirArchitecture.Samples` 前缀命名空间
 
 ### Added
 
-- **PlaneWar 实战示例（Mono 版）** — 纵版射击飞机大战：自包含素材、得分 HUD、三型敌机与重开流程；已注册进 package.json samples，并纳入 Samples 双目录同步
+- **PlaneWar 实战示例（Mono 版）** — 纵版射击飞机大战：自包含素材、得分 HUD、三型敌机与重开流程；已注册进
+  package.json samples，并纳入 Samples 双目录同步
 
 ## [0.13.0] - 2026-09-03
 
 ### Added
 
-- **可观察集合 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>`** — 组合 `List<T>` / `Dictionary<TKey, TValue>` 存储 + `MiniEvent` 零分配事件（与 `ObservableValue<T>` 同一套读写分离与事件模式）：
-  - List 事件：Added / Removed / Replaced / Cleared；Dictionary 事件：Added / Removed / Updated / Cleared
-  - 结构体事件参数 `CollectionAddEventArgs<T>` / `CollectionRemoveEventArgs<T>` / `CollectionReplaceEventArgs<T>` / `DictionaryUpdateEventArgs<TKey, TValue>`（readonly struct，零分配）
-  - 只读接口 `IReadOnlyObservableList<T>` / `IReadOnlyObservableDictionary<TKey, TValue>` 为不变型（无 `out` 协变——结构体事件参数与协变冲突，CS1961），Model 持有可写实例、View 按只读接口订阅，可写接口为 `IObservableList<T>` / `IObservableDictionary<TKey, TValue>`
-  - 监听 API 与 ObservableValue 一致：`AddXxxListener` 返回 `AutoRemoveListenerHandle` 自动清理，`RemoveXxxListener` 手动移除
-  - 新增测试 25 个（ObservableListTests 11 + ObservableDictionaryTests 11 + ContextReplacementWarningTests 3）
+- **可观察集合 `ObservableList<T>` / `ObservableDictionary<TKey, TValue>`** — 组合 `List<T>` /
+  `Dictionary<TKey, TValue>` 存储 + `MiniEvent` 零分配事件（与 `ObservableValue<T>` 同一套读写分离与事件模式）：
+    - List 事件：Added / Removed / Replaced / Cleared；Dictionary 事件：Added / Removed / Updated / Cleared
+    - 结构体事件参数 `CollectionAddEventArgs<T>` / `CollectionRemoveEventArgs<T>` /
+      `CollectionReplaceEventArgs<T>` / `DictionaryUpdateEventArgs<TKey, TValue>`（readonly struct，零分配）
+    - 只读接口 `IReadOnlyObservableList<T>` / `IReadOnlyObservableDictionary<TKey, TValue>` 为不变型（无 `out`
+      协变——结构体事件参数与协变冲突，CS1961），Model 持有可写实例、View 按只读接口订阅，可写接口为
+      `IObservableList<T>` / `IObservableDictionary<TKey, TValue>`
+    - 监听 API 与 ObservableValue 一致：`AddXxxListener` 返回 `AutoRemoveListenerHandle` 自动清理，
+      `RemoveXxxListener` 手动移除
+    - 新增测试 25 个（ObservableListTests 11 + ObservableDictionaryTests 11 + ContextReplacementWarningTests 3）
 
 ### Changed
 
-- **Context 动态替换模块输出 Warning** — `RegisterModel` / `RegisterService` 键命中已有实例时输出一条 Warning 日志（`LogReplacementWarning`），提醒旧实例被 Dispose 后其上的事件订阅（MiniEvent / ObservableValue 等）不会自动迁移；首次注册不输出日志，替换本身仍为合法操作（测试/调试用途）
-- **README 中英文同步** — 特性清单新增"可观察集合"条目；设计边界新增"集合可观察全家桶不做"（Move、Sort、同步视图、R3 集成等高级能力推荐 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)）；目录结构树 Observable/ 注释更新
+- **Context 动态替换模块输出 Warning** — `RegisterModel` / `RegisterService` 键命中已有实例时输出一条 Warning
+  日志（`LogReplacementWarning`），提醒旧实例被 Dispose 后其上的事件订阅（MiniEvent / ObservableValue
+  等）不会自动迁移；首次注册不输出日志，替换本身仍为合法操作（测试/调试用途）
+- **README 中英文同步** — 特性清单新增"可观察集合"条目；设计边界新增"集合可观察全家桶不做"（Move、Sort、同步视图、R3
+  集成等高级能力推荐 [Cysharp.ObservableCollections](https://github.com/Cysharp/ObservableCollections)）；目录结构树
+  Observable/ 注释更新
 
 ## [0.12.0] - 2026-08-22
 
 ### Added
 
-- **AI Skill 文档集** — `Documentation~/AesirArchitecture-Skill/` 新增 AI 编码指南，供 AI 助手按 RAA 架构规范快速生成代码：
-  - `SKILL.md` — 主指南：MVC/MVP 模式决策树、Quick/Standard/Strict 三档分级表、核心 API 速查、事件机制决策表、10 条关键约定、命名规范与文件组织指南
-  - `references/mvc-quick.md` / `mvc-standard.md` / `mvc-strict.md` — MVC 三档完整代码模板（Context + Model + View + Controller + Command + Query）
-  - `references/mvp-quick.md` / `mvp-standard.md` / `mvp-strict.md` — MVP 三档完整代码模板（Context + Model + View + Presenter + Command + Query）
-  - `references/core-api.md` — 辅助模块 API 速查（ObservableValue、MiniEvent、Context、GenericLocator、PlayerLoop 等）
+- **AI Skill 文档集** — `Documentation~/AesirArchitecture-Skill/` 新增 AI 编码指南，供 AI 助手按 RAA
+  架构规范快速生成代码：
+    - `SKILL.md` — 主指南：MVC/MVP 模式决策树、Quick/Standard/Strict 三档分级表、核心 API 速查、事件机制决策表、10
+      条关键约定、命名规范与文件组织指南
+    - `references/mvc-quick.md` / `mvc-standard.md` / `mvc-strict.md` — MVC 三档完整代码模板（Context + Model +
+      View + Controller + Command + Query）
+    - `references/mvp-quick.md` / `mvp-standard.md` / `mvp-strict.md` — MVP 三档完整代码模板（Context + Model +
+      View + Presenter + Command + Query）
+    - `references/core-api.md` — 辅助模块 API 速查（ObservableValue、MiniEvent、Context、GenericLocator、PlayerLoop
+      等）
 
 ## [0.11.0] - 2026-08-22
 
 ### Breaking Changes
 
-- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — `AesirArchitecture` 新增 `[SerializeField] bool dontDestroyOnLoad = true`，两种实例来源共用同一份决策：默认勾选时（含场景预放置实例）一律在 Awake 加入 DontDestroyOnLoad 场景（此前预放置实例保留在场景中）；取消勾选时实例保留在所在场景、随场景卸载销毁，必须自行处理多场景叠加（Additive）加载——Inspector 显示警告 InfoBox（Odin），运行时输出提醒日志（仅编辑器期）。移除 `static bool _pendingDontDestroyOnLoad`（字段默认值天然覆盖运行时创建路径）与 `_isPrePlaced` / `IsPrePlacedFieldName`（警告条件改绑新字段）；`RemoveListenerOnSceneUnloadedTrigger` 的 Inspector 警告文案同步改为"宿主 dontDestroyOnLoad 关闭"语义。测试更新：`ResetStatics` 测试去除 pending 字段断言，新增 `DontDestroyOnLoad` 默认值测试（41 → 42）
-- **MVP 快捷档更名：`Counter-Mvp-Simple` → `Counter-Mvp-Quick`** — 档位命名与 MVC 对齐（简单档 → 快捷档）；类名 `SampleMvpSimpleCounter*` → `SampleMvpQuickCounter*`、asmdef `MvpSimple` → `MvpQuick`、场景与预制体同步更名（GUID 不变，已导入副本的引用不断）。已导入 0.10.0 示例的项目请删除旧导入副本后重新导入
-- **MVP View 统一为纯 `MonoBehaviour`** — 三档 View 不再继承 `MonoView<T>`：被动视图不携带任何 Context 能力，与 View 契约"不继承 `IView`"的 MVP 边界闭环；`ISampleMvpSimpleCounterView` 接口移除（快捷档零接口抽象，Presenter 直接持有具体面板类），标准档起 View 契约以 `IXxxView` 接口形式存在
+- **DDOL 机制重设计：预放置/运行时创建统一由 `dontDestroyOnLoad` 序列化字段控制** — `AesirArchitecture` 新增
+  `[SerializeField] bool dontDestroyOnLoad = true`，两种实例来源共用同一份决策：默认勾选时（含场景预放置实例）一律在
+  Awake 加入 DontDestroyOnLoad 场景（此前预放置实例保留在场景中）；取消勾选时实例保留在所在场景、随场景卸载销毁，必须自行处理多场景叠加（Additive）加载——Inspector
+  显示警告 InfoBox（Odin），运行时输出提醒日志（仅编辑器期）。移除 `static bool _pendingDontDestroyOnLoad`
+  （字段默认值天然覆盖运行时创建路径）与 `_isPrePlaced` / `IsPrePlacedFieldName`（警告条件改绑新字段）；
+  `RemoveListenerOnSceneUnloadedTrigger` 的 Inspector 警告文案同步改为"宿主 dontDestroyOnLoad 关闭"语义。测试更新：
+  `ResetStatics` 测试去除 pending 字段断言，新增 `DontDestroyOnLoad` 默认值测试（41 → 42）
+- **MVP 快捷档更名：`Counter-Mvp-Simple` → `Counter-Mvp-Quick`** — 档位命名与 MVC 对齐（简单档 → 快捷档）；类名
+  `SampleMvpSimpleCounter*` → `SampleMvpQuickCounter*`、asmdef `MvpSimple` → `MvpQuick`、场景与预制体同步更名（GUID
+  不变，已导入副本的引用不断）。已导入 0.10.0 示例的项目请删除旧导入副本后重新导入
+- **MVP View 统一为纯 `MonoBehaviour`** — 三档 View 不再继承 `MonoView<T>`：被动视图不携带任何 Context 能力，与
+  View 契约"不继承 `IView`"的 MVP 边界闭环；`ISampleMvpSimpleCounterView` 接口移除（快捷档零接口抽象，Presenter
+  直接持有具体面板类），标准档起 View 契约以 `IXxxView` 接口形式存在
 
 ### Added（渐进式示例家族扩为六档）
 
 - **示例家族从 4 个扩为 6 个渐进档位**（MVC / MVP 各三档）：
-  - `Counter-Mvc-Standard`（MVC-2 标准档，新设）— Model 只读暴露 + 写方法（具体类注册）；View 与 Controller 分离实例、共享同一 Model 实例，写方法直调不经 Command（第二课）
-  - `Counter-Mvp-Standard`（MVP-2 标准档，新设）— Model 只读暴露 + 写方法（具体类注册）；Presenter 直调写方法 + Model 直读推送（第二课）
-  - `Counter-Mvc-Quick`（MVC-1 快捷档）— 移除 Model 接口（`ISampleMvcQuickCounterModel`），快捷档零接口抽象（第一课）
-  - `Counter-Mvc-Strict`（MVC-3 严格档）— Model 接口注册 + 只读暴露 + 写方法；View 与 Controller 分离，写入经 Command、加工读取经 Query（第三课）
-  - `Counter-Mvp-Quick`（MVP-1 快捷档）— Presenter 直改可写 ObservableValue（零接口抽象）并推送刷新被动 View（第一课）
-  - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读；View 按业务窄接口持有 Presenter（第三课）
-- **MVC-3 严格档重设计** — View 按接口类型持有 Model 并订阅刷新（撤销"View 零持有 + Query 拉取"旧口径）；Controller 抽为纯 C# 类（`IController<T>`），由 View 在 Start 中 new 出，写入经 Command；Query 收窄为加工值场景（`GetRoundedCountQuery` 十位四舍五入示例替代 `GetCounterValueQuery`），返回原始值无需 Query；三档 View 统一 Start 中 GetModel 缓存 + 事件订阅的初始化口径
-- **严格档双接口设计** — MVC-3 新增 `ISampleMvcStrictCounterController` 业务窄接口（独立文件，不继承 `IController`）；MVP-3 `ISampleMvpStrictCounterPresenter` 改为业务窄接口（`SyncInitialValue` + `IDisposable`，不继承 `IPresenter`）。View 按窄接口存储 Controller / Presenter（与 Model 接口存储对称），类型层面拿不到 `ExecuteCommand` / `GetModel` 等框架能力——读写分离由类型系统闭环
-- **DDOL 开关字段级 InfoBox** — `dontDestroyOnLoad` 字段的 `[Tooltip]` 迁移为 AttributeProcessor 经 `ProcessChildMemberAttributes` 注入的 Info 级信息框（取值含义三行说明，恒显示），运行时程序集零 Inspector 样式特性
+    - `Counter-Mvc-Standard`（MVC-2 标准档，新设）— Model 只读暴露 + 写方法（具体类注册）；View 与 Controller
+      分离实例、共享同一 Model 实例，写方法直调不经 Command（第二课）
+    - `Counter-Mvp-Standard`（MVP-2 标准档，新设）— Model 只读暴露 + 写方法（具体类注册）；Presenter 直调写方法 +
+      Model 直读推送（第二课）
+    - `Counter-Mvc-Quick`（MVC-1 快捷档）— 移除 Model 接口（`ISampleMvcQuickCounterModel`），快捷档零接口抽象（第一课）
+    - `Counter-Mvc-Strict`（MVC-3 严格档）— Model 接口注册 + 只读暴露 + 写方法；View 与 Controller 分离，写入经
+      Command、加工读取经 Query（第三课）
+    - `Counter-Mvp-Quick`（MVP-1 快捷档）— Presenter 直改可写 ObservableValue（零接口抽象）并推送刷新被动
+      View（第一课）
+    - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读；View 按业务窄接口持有 Presenter（第三课）
+- **MVC-3 严格档重设计** — View 按接口类型持有 Model 并订阅刷新（撤销"View 零持有 + Query 拉取"旧口径）；Controller
+  抽为纯 C# 类（`IController<T>`），由 View 在 Start 中 new 出，写入经 Command；Query 收窄为加工值场景（
+  `GetRoundedCountQuery` 十位四舍五入示例替代 `GetCounterValueQuery`），返回原始值无需 Query；三档 View 统一
+  Start 中 GetModel 缓存 + 事件订阅的初始化口径
+- **严格档双接口设计** — MVC-3 新增 `ISampleMvcStrictCounterController` 业务窄接口（独立文件，不继承
+  `IController`）；MVP-3 `ISampleMvpStrictCounterPresenter` 改为业务窄接口（`SyncInitialValue` + `IDisposable`
+  ，不继承 `IPresenter`）。View 按窄接口存储 Controller / Presenter（与 Model 接口存储对称），类型层面拿不到
+  `ExecuteCommand` / `GetModel` 等框架能力——读写分离由类型系统闭环
+- **DDOL 开关字段级 InfoBox** — `dontDestroyOnLoad` 字段的 `[Tooltip]` 迁移为 AttributeProcessor 经
+  `ProcessChildMemberAttributes` 注入的 Info 级信息框（取值含义三行说明，恒显示），运行时程序集零 Inspector 样式特性
 
 ### Fixed
 
-- **DDOL 警告 InfoBox 可见性反转** — Odin `InfoBoxAttribute` 的 `visibleIfMemberName` 对 bool 成员为"true 时显示"语义（与 ShowIf 一致），旧写法导致警告在开关开启（安全态）时显示、关闭（风险态）时反而静默；改用 `"@!" + 字段名` 表达式反转，关闭开关时正确显示警告（PropertyTree + drawer 链探针验证 8/8 PASS）
+- **DDOL 警告 InfoBox 可见性反转** — Odin `InfoBoxAttribute` 的 `visibleIfMemberName` 对 bool 成员为"true
+  时显示"语义（与 ShowIf 一致），旧写法导致警告在开关开启（安全态）时显示、关闭（风险态）时反而静默；改用 `"@!" + 字段名`
+  表达式反转，关闭开关时正确显示警告（PropertyTree + drawer 链探针验证 8/8 PASS）
 
 ### Changed（文档与格式）
 
-- **README 新增「示例（Samples）」总览节** — 8 个示例按 MVC 系列 / MVP 系列 / 工具类三组呈现双三档对照表（Model 暴露面 + 读写路径 + View 边界）；项目结构树同步；移除「与 QFramework 的差异」对比章节
-- **英文 README 同步** — 示例总览节 + 安装 URL 修正补 `?path=Assets/Runestone/AesirArchitecture` 参数（与中文版及 monorepo 安装规范一致）
+- **README 新增「示例（Samples）」总览节** — 8 个示例按 MVC 系列 / MVP 系列 / 工具类三组呈现双三档对照表（Model
+  暴露面 + 读写路径 + View 边界）；项目结构树同步；移除「与 QFramework 的差异」对比章节
+- **英文 README 同步** — 示例总览节 + 安装 URL 修正补 `?path=Assets/Runestone/AesirArchitecture` 参数（与中文版及
+  monorepo 安装规范一致）
 - **package.json samples 六档条目** — MVP-Quick 更名 + MVC-Standard / MVP-Standard 新增，8 个示例齐整
 - **《事件机制决策表》MVC-3 口径修正** — MVC-3 原始值仍走 ObservableValue 订阅刷新，Query 仅用于加工值（如四舍五入）
-- **全包 XML 注释与代码格式统一** — `<see />` 闭合空格、`<para>` / `<item>` 缩进、空行与断行规范；示例 asmdef 缩进统一
+- **全包 XML 注释与代码格式统一** — `<see />` 闭合空格、`<para>` / `<item>` 缩进、空行与断行规范；示例 asmdef
+  缩进统一
 
 ## [0.10.0] - 2026-08-19
 
 ### Breaking Changes
 
-- **`AbstractContext<T>.Interface` 更名 `Instance`，返回类型 `IContext` → `T`** — 消除与 C# 关键字 `interface` 的术语混淆；返回具体类型使 Context 子类自定义成员免强转（协变友好：管道场景自动向上转型）。迁移：全局替换 `.Interface` → `.Instance`；此前依赖 `((T)Interface)` 强转的代码可直接去掉强转
+- **`AbstractContext<T>.Interface` 更名 `Instance`，返回类型 `IContext` → `T`** — 消除与 C# 关键字 `interface`
+  的术语混淆；返回具体类型使 Context 子类自定义成员免强转（协变友好：管道场景自动向上转型）。迁移：全局替换
+  `.Interface` → `.Instance`；此前依赖 `((T)Interface)` 强转的代码可直接去掉强转
 
 ### Fixed（框架运行时一致性）
 
-- **`AesirArchitecture` 根单例补类内静态重置** — 非泛型类按铁律类内声明 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]`，此前依赖 Unity fake-null 隐式救援（"碰巧正确"而非"按原则正确"）
-- **`GenericLocator<T>` 保序 + `AbstractContext.Dispose` 真逆序** — 增加插入序 `List<Type>`，`GetAll()` 按注册顺序枚举（不再依赖 `Dictionary` 枚举顺序这一无契约保证的实现细节）；`Dispose()` 各容器内部按注册逆序销毁（此前为正序，与自身注释"逆序"矛盾）
-- **未注册异常近失识别** — `GetModel<T>` / `GetService<T>` 未命中时，若已注册实例中存在可赋值给查询类型的条目，异常消息追加「Register 与 Get 必须使用相同类型参数」提示（典型触发：按实现类注册、按接口查询）
+- **`AesirArchitecture` 根单例补类内静态重置** — 非泛型类按铁律类内声明
+  `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]`，此前依赖 Unity fake-null
+  隐式救援（"碰巧正确"而非"按原则正确"）
+- **`GenericLocator<T>` 保序 + `AbstractContext.Dispose` 真逆序** — 增加插入序 `List<Type>`，`GetAll()`
+  按注册顺序枚举（不再依赖 `Dictionary` 枚举顺序这一无契约保证的实现细节）；`Dispose()`
+  各容器内部按注册逆序销毁（此前为正序，与自身注释"逆序"矛盾）
+- **未注册异常近失识别** — `GetModel<T>` / `GetService<T>` 未命中时，若已注册实例中存在可赋值给查询类型的条目，异常消息追加「Register
+  与 Get 必须使用相同类型参数」提示（典型触发：按实现类注册、按接口查询）
 - **`IModel` 注释纠错** — 能力列表去除误述的 `GetService`（接口实际未继承 `ICanGetService`）
 
 ### Fixed（示例与框架承诺对齐）
 
-- **MVP 被动视图接口去 `IView`** — `ISampleMvpCounterView` 不再继承 `IView`（`IView` 自带 `GetModel` 能力，"被动视图不访问 Model"从接口层面不成立）
-- **MVP 事件化** — View 契约 `Action` 属性改为 `event`（公开 setter 允许外部替换/置空/Invoke 委托链，event 编译期限制只能 `+=`/`-=`）
-- **按钮监听精确配对** — 示例 `OnDisable` 的 `RemoveAllListeners()` 改为与 `OnEnable` 逐一对称的 `RemoveListener(...)`（一刀切会误清其他系统挂的监听）
-- **MVP 标准档写入改走 Command** — Presenter 直写 Model 改为 `ExecuteCommand`（与 MVC 标准档共享"表现层写入必经 Command"铁律）
-- **场景初始值同步** — MVC 订阅改 `AddListenerAndInvoke`（订阅即同步初始值）、MVP 经 `SyncInitialValue()` 主动推送，消除场景残留文本与 Model 初始值不一致
+- **MVP 被动视图接口去 `IView`** — `ISampleMvpCounterView` 不再继承 `IView`（`IView` 自带 `GetModel`
+  能力，"被动视图不访问 Model"从接口层面不成立）
+- **MVP 事件化** — View 契约 `Action` 属性改为 `event`（公开 setter 允许外部替换/置空/Invoke 委托链，event
+  编译期限制只能 `+=`/`-=`）
+- **按钮监听精确配对** — 示例 `OnDisable` 的 `RemoveAllListeners()` 改为与 `OnEnable` 逐一对称的
+  `RemoveListener(...)`（一刀切会误清其他系统挂的监听）
+- **MVP 标准档写入改走 Command** — Presenter 直写 Model 改为 `ExecuteCommand`（与 MVC 标准档共享"表现层写入必经
+  Command"铁律）
+- **场景初始值同步** — MVC 订阅改 `AddListenerAndInvoke`（订阅即同步初始值）、MVP 经 `SyncInitialValue()`
+  主动推送，消除场景残留文本与 Model 初始值不一致
 - **`IModel` 能力注释** — 服务定位属性（`Model => this.GetModel<T>()`）补每帧路径警告
 
 ### Added（渐进式示例家族）
 
 - **示例家族从 2 个扩为 6 个渐进档位**（MVC/MVP 各三档）：
-  - `Counter-Mvc-Quick`（MVC-1 快捷档）— `MonoViewController<T>` 直写直读，~5 文件最小闭环（第一课）
-  - `Counter-MVC`（MVC-2 标准档，已移除）— Command 写入 + 独立 Controller
-  - `Counter-Mvc-Strict`（MVC-3 严格档）— 只读 Model + Command 写 + Query 读，View 零持有（进阶）
-  - `Counter-Mvp-Simple`（MVP-1 简单档）— Presenter 直写 Model
-  - `Counter-MVP`（MVP-2 标准档，已移除）— Presenter 走 Command
-  - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读
-- **Model 暴露面分档** — 通常档（快捷/标准）直接暴露可写 `ObservableValue<T>`；严格档收窄为 `IReadOnlyObservableValue<T>` 只读接口 + 写方法；全家族 Model 统一为 `[SerializeField]` 字段 + 属性转发形式（可被 Unity 原生与 Odin 序列化显示）
-- **`OrderingAndLifecycleTests`** — 新增 7 个 EditMode 测试（保序/逆序/近失识别/根单例静态重置），测试总数 34 → 41
+    - `Counter-Mvc-Quick`（MVC-1 快捷档）— `MonoViewController<T>` 直写直读，~5 文件最小闭环（第一课）
+    - `Counter-MVC`（MVC-2 标准档，已移除）— Command 写入 + 独立 Controller
+    - `Counter-Mvc-Strict`（MVC-3 严格档）— 只读 Model + Command 写 + Query 读，View 零持有（进阶）
+    - `Counter-Mvp-Simple`（MVP-1 简单档）— Presenter 直写 Model
+    - `Counter-MVP`（MVP-2 标准档，已移除）— Presenter 走 Command
+    - `Counter-Mvp-Strict`（MVP-3 严格档）— Command 写 + Query 读
+- **Model 暴露面分档** — 通常档（快捷/标准）直接暴露可写 `ObservableValue<T>`；严格档收窄为
+  `IReadOnlyObservableValue<T>` 只读接口 + 写方法；全家族 Model 统一为 `[SerializeField]` 字段 + 属性转发形式（可被
+  Unity 原生与 Odin 序列化显示）
+- **`OrderingAndLifecycleTests`** — 新增 7 个 EditMode 测试（保序/逆序/近失识别/根单例静态重置），测试总数 34 →
+  41
 - **《事件机制决策表》《常见陷阱清单》** — `Documentation~/` 新增两份教学文档
 
 ### Changed（文档）
 
-- **README 快速开始对齐真实示例** — `MonoView<T>` + 无参 Controller（此前 `AesirView` + 构造注入两张皮）；Model 示例改可写 `ObservableValue`（与通常档示例现实一致）
-- **写入约定三档口径** — 设计边界表新增「写入纪律档位」：快捷/简单档直写合法，标准档起表现层写入必经 Command，严格档只读 + 写方法，Service 可直写
+- **README 快速开始对齐真实示例** — `MonoView<T>` + 无参 Controller（此前 `AesirView` + 构造注入两张皮）；Model
+  示例改可写 `ObservableValue`（与通常档示例现实一致）
+- **写入约定三档口径** — 设计边界表新增「写入纪律档位」：快捷/简单档直写合法，标准档起表现层写入必经
+  Command，严格档只读 + 写方法，Service 可直写
 - **三档渐进路径** — 快速开始后新增三课路径说明（快捷 → 标准 → 严格）
-- **设计原则第 7/8 条** — 新增「Inspector 精简原则（AI 优先）」与「Odin 三条铁律」（核心闭环不依赖 Odin / 调试器等体验优化品可用 / 样式与逻辑分离）
+- **设计原则第 7/8 条** — 新增「Inspector 精简原则（AI 优先）」与「Odin 三条铁律」（核心闭环不依赖 Odin /
+  调试器等体验优化品可用 / 样式与逻辑分离）
 - **Odin 定位澄清** — README 安装节补「Odin 为可选增强，非运行前置」；清除全文中「Odin 可选」与「Odin 必需」的冲突表述
 - **英文 README 同步** — 快速开始代码逐字一致 + 设计边界/原则对齐
 
@@ -577,41 +1240,76 @@
 
 ### Changed
 
-- **MVC 优先定位** — package.json description 从"渐进式 MVP/MVC 架构框架"改为"渐进式 MVC 架构框架"；README/README_EN 概述与特性列表同步调整，`IController`（MVC）为推荐入口，`IPresenter`（MVP）为可选严格模式
-- **目录重构：Core / Modules / Common 三层分离** — Runtime/ 下从 `Component/` + `Engine/` 两级扁平结构改为三层：`Core/`（含 `Component/` 与 `Engine/`，核心 Context 上下文与 MVC/MVP 架构）、`Modules/`（5 个辅助模块：`Event/`、`CustomLifecycle/`、`Locator/`、`Observable/`、`Utilities/`）、`Common/`（框架基础设施：`AesirArchitecture`、`AesirMonoBehaviour`、`AesirArchitectureDebug`、`AssemblyInfo`、`ResetStaticsAssistant`）
-- **极简化：事件系统统一原生 C# 语义** — `MiniEvent.Invoke` / `MiniEvent<T>.Invoke` 恢复直接多播调用（零分配，恢复核心卖点）；移除 `MonoLifecycleProxy.InvokeEvent` 与 `AesirArchitecturePlayerLoop.InvokeHooks` 的逐回调 try-catch。监听回调不应抛异常为框架约定（fail-fast），异常直接向上传播由 Unity 记日志
-- **极简化：初始化失败不做回滚** — `AbstractContext<T>.Interface` 改为 `Initialize()` 成功后才写入静态字段 `_instance`，失败不缓存、根因异常每次抛出；`Initialize` 移除快照跟踪与逆序回滚 Dispose（初始化失败属启动期编程错误，半成品模块随实例交由 GC 回收）。Configure 及模块初始化中禁止重入 `Interface`（约定）
-- **极简化：移除 PlayerLoop 周期性自愈轮询** — 删除 `MonoLifecycleProxy` 每 120 帧的注入检测；保留 `AesirArchitecturePlayerLoop.EnsureInjected()` 公开 API 与 `Register` 注册时的自动检测。第三方 SDK 覆盖 PlayerLoop 后需手动调用一次 `EnsureInjected()`
-- **静态变量重置职责拆分** — 非泛型单例（`MonoLifecycleProxy`、`RemoveListenerOnSceneUnloadedTrigger`）改为类内直接声明 `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 重置方法，不再经中心助手注册；`ResetStaticsAssistant` 收窄为仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过（不执行也不报错，Unity 2022.3 实测），无法在自身内部声明重置入口，`AbstractContext<T>` 维持经助手注册 `_instance = null` 回调的原有方式
-- **`IContext.GetModel` / `GetService` 未注册校验** — 未注册时抛出含类型名与修复提示的 `InvalidOperationException`，不再返回 null（消除 NRE 延迟爆发与报错点/根因分离）；`CapabilityExtensions.GetModel/GetService` 的 null 分支随之移除，仅保留 `Initialized` 校验
-- **package.json description 修正** — "类型化事件总线"改为"轻量事件（MiniEvent）与响应式属性（ObservableValue）"，与实际能力对齐（事件总线已于 0.3.2 后移除）
-- **Odin 程序集重命名** — `OdinIntegration` → `OdinInspector`（三包统一）：Runtime `Runestone.AesirArchitecture.OdinInspector`、Editor `Runestone.AesirArchitecture.Editor.OdinInspector`；同步目录、asmdef 引用与 `InternalsVisibleTo`
-- **场景卸载分桶改 `Scene.handle`** — `RemoveListenerOnSceneUnloadedTrigger` 从按场景名分桶改为按 `Scene.handle`（int）分桶，消除同名场景误清；新增 `RemoveListenerExtensions` 的 `(Scene)` / `(MonoBehaviour)` 显式归桶重载
-- **预放置实例风险 Warning InfoBox** — `AesirArchitecture`、`MonoLifecycleProxy`、`RemoveListenerOnSceneUnloadedTrigger` 三个组件通过 Odin AttributeProcessor 注入 Warning 级 InfoBox，提示预放置宿主的生命周期约束
-- **PlayerLoop 注入自愈** — 新增 `AesirArchitecturePlayerLoop.EnsureInjected()` 公开 API（`ContainsSystem` 检测 + 仅补插缺失注入点）；`Register` 注册回调时自动检测
+- **MVC 优先定位** — package.json description 从"渐进式 MVP/MVC 架构框架"改为"渐进式 MVC
+  架构框架"；README/README_EN 概述与特性列表同步调整，`IController`（MVC）为推荐入口，`IPresenter`（MVP）为可选严格模式
+- **目录重构：Core / Modules / Common 三层分离** — Runtime/ 下从 `Component/` + `Engine/` 两级扁平结构改为三层：
+  `Core/`（含 `Component/` 与 `Engine/`，核心 Context 上下文与 MVC/MVP 架构）、`Modules/`（5 个辅助模块：`Event/`、
+  `CustomLifecycle/`、`Locator/`、`Observable/`、`Utilities/`）、`Common/`（框架基础设施：`AesirArchitecture`、
+  `AesirMonoBehaviour`、`AesirArchitectureDebug`、`AssemblyInfo`、`ResetStaticsAssistant`）
+- **极简化：事件系统统一原生 C# 语义** — `MiniEvent.Invoke` / `MiniEvent<T>.Invoke` 恢复直接多播调用（零分配，恢复核心卖点）；移除
+  `MonoLifecycleProxy.InvokeEvent` 与 `AesirArchitecturePlayerLoop.InvokeHooks` 的逐回调
+  try-catch。监听回调不应抛异常为框架约定（fail-fast），异常直接向上传播由 Unity 记日志
+- **极简化：初始化失败不做回滚** — `AbstractContext<T>.Interface` 改为 `Initialize()` 成功后才写入静态字段
+  `_instance`，失败不缓存、根因异常每次抛出；`Initialize` 移除快照跟踪与逆序回滚 Dispose（初始化失败属启动期编程错误，半成品模块随实例交由
+  GC 回收）。Configure 及模块初始化中禁止重入 `Interface`（约定）
+- **极简化：移除 PlayerLoop 周期性自愈轮询** — 删除 `MonoLifecycleProxy` 每 120 帧的注入检测；保留
+  `AesirArchitecturePlayerLoop.EnsureInjected()` 公开 API 与 `Register` 注册时的自动检测。第三方 SDK 覆盖
+  PlayerLoop 后需手动调用一次 `EnsureInjected()`
+- **静态变量重置职责拆分** — 非泛型单例（`MonoLifecycleProxy`、`RemoveListenerOnSceneUnloadedTrigger`）改为类内直接声明
+  `[RuntimeInitializeOnLoadMethod(SubsystemRegistration)]` 重置方法，不再经中心助手注册；`ResetStaticsAssistant`
+  收窄为仅服务泛型类——泛型类中的 RIOLM 会被 Unity 静默跳过（不执行也不报错，Unity 2022.3 实测），无法在自身内部声明重置入口，
+  `AbstractContext<T>` 维持经助手注册 `_instance = null` 回调的原有方式
+- **`IContext.GetModel` / `GetService` 未注册校验** — 未注册时抛出含类型名与修复提示的
+  `InvalidOperationException`，不再返回 null（消除 NRE 延迟爆发与报错点/根因分离）；
+  `CapabilityExtensions.GetModel/GetService` 的 null 分支随之移除，仅保留 `Initialized` 校验
+- **package.json description 修正** —
+  "类型化事件总线"改为"轻量事件（MiniEvent）与响应式属性（ObservableValue）"，与实际能力对齐（事件总线已于 0.3.2
+  后移除）
+- **Odin 程序集重命名** — `OdinIntegration` → `OdinInspector`（三包统一）：Runtime
+  `Runestone.AesirArchitecture.OdinInspector`、Editor `Runestone.AesirArchitecture.Editor.OdinInspector`
+  ；同步目录、asmdef 引用与 `InternalsVisibleTo`
+- **场景卸载分桶改 `Scene.handle`** — `RemoveListenerOnSceneUnloadedTrigger` 从按场景名分桶改为按
+  `Scene.handle`（int）分桶，消除同名场景误清；新增 `RemoveListenerExtensions` 的 `(Scene)` / `(MonoBehaviour)`
+  显式归桶重载
+- **预放置实例风险 Warning InfoBox** — `AesirArchitecture`、`MonoLifecycleProxy`、
+  `RemoveListenerOnSceneUnloadedTrigger` 三个组件通过 Odin AttributeProcessor 注入 Warning 级
+  InfoBox，提示预放置宿主的生命周期约束
+- **PlayerLoop 注入自愈** — 新增 `AesirArchitecturePlayerLoop.EnsureInjected()` 公开 API（`ContainsSystem`
+  检测 + 仅补插缺失注入点）；`Register` 注册回调时自动检测
 - **Context 初始化失败不缓存半成品** — `Interface` getter 初始化失败时不缓存单例，根因异常每次访问重复抛出
 
 ### Removed
 
-- **`ModelReplaced` / `ServiceReplaced` 替换通知事件** — 运行时替换 Model/Service 属测试/调试用途，不应徒增框架事件面；测试环节自行处理订阅迁移。`RegisterModel`/`RegisterService` 覆盖注册仍会 Dispose 旧实例
-- **`GenericLocator<T>.Global`** — 全局定位器单例属性，全仓库无调用方，按极简原则移除（连带 `Dispose` 中的全局引用清除逻辑与 `IGenericLocator<T>` remarks 中的相关描述）
-- **`GenericLocator<T>.GetRegistry()`** — 泄漏底层字典引用的封装漏洞，全仓库无调用方，删除（同步删除 `IGenericLocator<T>` 接口声明）
+- **`ModelReplaced` / `ServiceReplaced` 替换通知事件** — 运行时替换 Model/Service
+  属测试/调试用途，不应徒增框架事件面；测试环节自行处理订阅迁移。`RegisterModel`/`RegisterService` 覆盖注册仍会
+  Dispose 旧实例
+- **`GenericLocator<T>.Global`** — 全局定位器单例属性，全仓库无调用方，按极简原则移除（连带 `Dispose` 中的全局引用清除逻辑与
+  `IGenericLocator<T>` remarks 中的相关描述）
+- **`GenericLocator<T>.GetRegistry()`** — 泄漏底层字典引用的封装漏洞，全仓库无调用方，删除（同步删除
+  `IGenericLocator<T>` 接口声明）
 
 ### Added
 
-- **`GenericLocatorTests` / `ObservableValueTests`** — EditMode 单测覆盖 Locator 注册/覆盖/键语义/注销/清空与 ObservableValue 值比较/静默设置/立即触发/强制刷新/引用相等；`MiniEventTests` 重写为原生事件语义（含 fail-fast 锁定测试）与句柄行为
-- **`RuntimeInitializeOnLoadMethod 指南`** — `Docs/Unity-RuntimeInitializeOnLoadMethod-指南.md`，记录各时机语义、Domain Reload 静态重置实践与泛型类 RIOLM 陷阱
+- **`GenericLocatorTests` / `ObservableValueTests`** — EditMode 单测覆盖 Locator 注册/覆盖/键语义/注销/清空与
+  ObservableValue 值比较/静默设置/立即触发/强制刷新/引用相等；`MiniEventTests` 重写为原生事件语义（含 fail-fast
+  锁定测试）与句柄行为
+- **`RuntimeInitializeOnLoadMethod 指南`** — `Docs/Unity-RuntimeInitializeOnLoadMethod-指南.md`，记录各时机语义、Domain
+  Reload 静态重置实践与泛型类 RIOLM 陷阱
 - **`极简分析与改进计划`** — `Docs/AesirArchitecture-极简分析与改进计划.md`，裁决表与实施记录
 
 ## [0.8.0] - 2026-08-06
 
 ### Fixed
 
-- **MonoLifecycleProxy 排序 Bug 修复** — `InvokeEvent` 原先排序 `_sortedListeners` 后仍调用 `MiniEvent.Invoke()`（按注册顺序），导致 `order` 参数无效。改为直接遍历 `_sortedListeners` 按排序结果调用回调。移除 `MiniEvent` 死代码（`_events` 字典、`GetOrCreateEvent` 方法）
+- **MonoLifecycleProxy 排序 Bug 修复** — `InvokeEvent` 原先排序 `_sortedListeners` 后仍调用
+  `MiniEvent.Invoke()`（按注册顺序），导致 `order` 参数无效。改为直接遍历 `_sortedListeners` 按排序结果调用回调。移除
+  `MiniEvent` 死代码（`_events` 字典、`GetOrCreateEvent` 方法）
 
 ### Removed
 
-- **移除 `BeforeFixedUpdate` 事件** — 该事件通过 PlayerLoop 每帧触发，但 `FixedUpdate` 并非每帧执行，语义误导且无实际使用。涉及删除 `MonoLifecycleEvent.BeforeFixedUpdate` 枚举值、`AesirArchitectureLifecyclePhase.BeforeFixedUpdate` 枚举值、PlayerLoop 注入逻辑、`ICustomBeforeFixedUpdate` 接口、`MonoLifecycleProxy` 中对应的注册/注销分支
+- **移除 `BeforeFixedUpdate` 事件** — 该事件通过 PlayerLoop 每帧触发，但 `FixedUpdate` 并非每帧执行，语义误导且无实际使用。涉及删除
+  `MonoLifecycleEvent.BeforeFixedUpdate` 枚举值、`AesirArchitectureLifecyclePhase.BeforeFixedUpdate`
+  枚举值、PlayerLoop 注入逻辑、`ICustomBeforeFixedUpdate` 接口、`MonoLifecycleProxy` 中对应的注册/注销分支
 
 ### Changed
 
@@ -624,9 +1322,13 @@
 
 ### Changed
 
-- **单例模式重构：预放置优先** — 所有 MonoBehaviour 单例（`AesirArchitecture`、`MonoLifecycleProxy`、`RemoveListenerOnSceneUnloadedTrigger`）的 `Instance` getter 优先通过 `FindAnyObjectByType` 搜索已加载场景中预放置的实例，未找到时才运行时创建
-- **条件式 DontDestroyOnLoad** — `AesirArchitecture` 新增 `static bool _createdByRuntime` 标志，仅运行时创建的实例调用 `DontDestroyOnLoad`，场景中预放置的实例保留在场景中随场景生命周期销毁
-- **移除 Bootstrap 自动初始化** — 移除 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)] Bootstrap()` 方法，因为它会在场景加载前创建 DDOL 实例，导致预放置实例 `Awake` 时发现 `_instance` 已存在而自毁
+- **单例模式重构：预放置优先** — 所有 MonoBehaviour 单例（`AesirArchitecture`、`MonoLifecycleProxy`、
+  `RemoveListenerOnSceneUnloadedTrigger`）的 `Instance` getter 优先通过 `FindAnyObjectByType`
+  搜索已加载场景中预放置的实例，未找到时才运行时创建
+- **条件式 DontDestroyOnLoad** — `AesirArchitecture` 新增 `static bool _createdByRuntime` 标志，仅运行时创建的实例调用
+  `DontDestroyOnLoad`，场景中预放置的实例保留在场景中随场景生命周期销毁
+- **移除 Bootstrap 自动初始化** — 移除 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)] Bootstrap()`
+  方法，因为它会在场景加载前创建 DDOL 实例，导致预放置实例 `Awake` 时发现 `_instance` 已存在而自毁
 
 ### Removed
 
@@ -636,80 +1338,112 @@
 
 ### Added
 
-- **MonoLifecycleProxy 生命周期代理** — 全局单例组件，挂载在 [Aesir Architecture] GameObject 上，将 Unity 原生生命周期回调（Start / FixedUpdate / Update / LateUpdate / OnApplicationFocus / OnApplicationPause）和自定义 PlayerLoop 阶段（BeforeUpdate / AfterUpdate）统一为可订阅的 MiniEvent。支持 Order + InsertionIndex 稳定排序，物体销毁时自动从代理取消订阅
-- **ICustomXXX 生命周期接口** — 8 个接口（ICustomStart / ICustomFixedUpdate / ICustomBeforeUpdate / ICustomUpdate / ICustomLateUpdate / ICustomAfterUpdate / ICustomOnApplicationFocus / ICustomOnApplicationPause），实现后通过 `RegisterAuto()` 自动注册到匹配事件
-- **MonoLifecycleProxyExtensions 扩展方法** — MonoBehaviour / GameObject / object 的 `AddListener` / `RemoveListener` / `RegisterLifecycle` 扩展方法，支持纯 C# 类快捷注册
-- **全包 XML 文档注释增强** — 69 个 .cs 文件补充完整详细的 XML 文档注释，覆盖 `<remarks>` / `<param>` / `<typeparam>` / `<returns>` / `<exception>` / `<seealso>` 标签
+- **MonoLifecycleProxy 生命周期代理** — 全局单例组件，挂载在 [Aesir Architecture] GameObject 上，将 Unity
+  原生生命周期回调（Start / FixedUpdate / Update / LateUpdate / OnApplicationFocus / OnApplicationPause）和自定义
+  PlayerLoop 阶段（BeforeUpdate / AfterUpdate）统一为可订阅的 MiniEvent。支持 Order + InsertionIndex
+  稳定排序，物体销毁时自动从代理取消订阅
+- **ICustomXXX 生命周期接口** — 8 个接口（ICustomStart / ICustomFixedUpdate / ICustomBeforeUpdate /
+  ICustomUpdate / ICustomLateUpdate / ICustomAfterUpdate / ICustomOnApplicationFocus /
+  ICustomOnApplicationPause），实现后通过 `RegisterAuto()` 自动注册到匹配事件
+- **MonoLifecycleProxyExtensions 扩展方法** — MonoBehaviour / GameObject / object 的 `AddListener` /
+  `RemoveListener` / `RegisterLifecycle` 扩展方法，支持纯 C# 类快捷注册
+- **全包 XML 文档注释增强** — 69 个 .cs 文件补充完整详细的 XML 文档注释，覆盖 `<remarks>` / `<param>` /
+  `<typeparam>` / `<returns>` / `<exception>` / `<seealso>` 标签
 
 ### Changed
 
-- **MonoLifecycleEvent 移除低实用性事件** — 移除 Awake / OnEnable / OnDisable / OnDestroy（代理是 DontDestroyOnLoad 单例，这四个回调无法被外部有效订阅），新增 OnApplicationFocus / OnApplicationPause（焦点和暂停是高频需求）
+- **MonoLifecycleEvent 移除低实用性事件** — 移除 Awake / OnEnable / OnDisable / OnDestroy（代理是
+  DontDestroyOnLoad 单例，这四个回调无法被外部有效订阅），新增 OnApplicationFocus /
+  OnApplicationPause（焦点和暂停是高频需求）
 - **Samples 目录版本对齐** — `Assets/Samples/Aesir Architecture/0.5.0/` → `0.6.0/`
 
 ## [0.5.0] - 2026-08-01
 
 ### Fixed
 
-- **单例竞争修复**：`AesirArchitecture` 重复实例 `Destroy` 后提前 `return`，避免继续执行赋值和 `DontDestroyOnLoad`；`OnDestroy` 仅在 `_instance == this` 时清空，避免销毁非自身实例时误清
+- **单例竞争修复**：`AesirArchitecture` 重复实例 `Destroy` 后提前 `return`，避免继续执行赋值和
+  `DontDestroyOnLoad`；`OnDestroy` 仅在 `_instance == this` 时清空，避免销毁非自身实例时误清
 - **RemoveListenerTrigger**：移除 `[DisallowMultipleComponent]` 限制
 
 ## [0.4.2] - 2026-07-24
 
 ### Fixed
 
-- **GetModel / GetService 初始化状态校验** — 在 `GetModel<T>()` 和 `GetService<T>()` 扩展方法中，null 检查之后新增 `Initialized` 状态检查。若目标已注册但尚未初始化，抛出 `InvalidOperationException` 并报告调用者类型和目标类型，提示注册顺序错误或循环依赖。此前获取已注册但未初始化的模块会静默返回半成品实例，可能导致难以排查的运行时错误
+- **GetModel / GetService 初始化状态校验** — 在 `GetModel<T>()` 和 `GetService<T>()` 扩展方法中，null 检查之后新增
+  `Initialized` 状态检查。若目标已注册但尚未初始化，抛出 `InvalidOperationException`
+  并报告调用者类型和目标类型，提示注册顺序错误或循环依赖。此前获取已注册但未初始化的模块会静默返回半成品实例，可能导致难以排查的运行时错误
 
 ## [0.4.1] - 2026-07-24
 
 ### Changed
 
-- **Samples 代码优化**：Counter-MVC 的 View（`SampleMvcCounterMainPanel`）和 Counter-MVP 的 Presenter（`SampleMvpCounterPresenter`）从缓存 Model 字段引用改为属性每次获取（`=> this.GetModel<T>()`），并添加注释说明此模式支持运行时动态替换 Model/Service，旧实例可被 GC 正常回收
+- **Samples 代码优化**：Counter-MVC 的 View（`SampleMvcCounterMainPanel`）和 Counter-MVP 的 Presenter（
+  `SampleMvpCounterPresenter`）从缓存 Model 字段引用改为属性每次获取（`=> this.GetModel<T>()`
+  ），并添加注释说明此模式支持运行时动态替换 Model/Service，旧实例可被 GC 正常回收
 - **Samples 版本文件夹**：`Assets/Samples/Aesir Architecture/0.3.2/` → `0.4.0/`，与 `package.json` 版本对齐
 
 ## [0.4.0] - 2026-07-24
 
 ### Added
 
-- **Query 查询系统** — 新增 `IQuery<TResult>` / `AbstractQuery<TResult>` / `ICanExecuteQuery` 能力接口及 `ExecuteQuery` 扩展方法，实现 CQRS 读写分离。Controller 和 Presenter 同时具备 ExecuteCommand + ExecuteQuery 能力，Service 保持不参与 Command/Query 执行
+- **Query 查询系统** — 新增 `IQuery<TResult>` / `AbstractQuery<TResult>` / `ICanExecuteQuery` 能力接口及
+  `ExecuteQuery` 扩展方法，实现 CQRS 读写分离。Controller 和 Presenter 同时具备 ExecuteCommand + ExecuteQuery
+  能力，Service 保持不参与 Command/Query 执行
 
 ## [0.3.2] - 2026-07-03
 
 ### Added
 
-- **无参事件发布重载** — `MiniEventBus`、`IContext`、`AbstractContext<T>`、`CapabilityExtensions` 新增 `InvokeEvent<T>() where T : IEventArgs, new()` 重载，内部创建默认实例后转发给带参版本，简化无参事件的发布调用
+- **无参事件发布重载** — `MiniEventBus`、`IContext`、`AbstractContext<T>`、`CapabilityExtensions` 新增
+  `InvokeEvent<T>() where T : IEventArgs, new()` 重载，内部创建默认实例后转发给带参版本，简化无参事件的发布调用
 
 ## [0.3.1] - 2026-07-03
 
 ### Added
 
-- **AesirViewController\<T\>** — View + Controller 双角色合一的 MonoBehaviour 基类，自动绑定对应 Context 类型的接口实例，简化 MVC 模式下的 View 搭建
+- **AesirViewController\<T\>** — View + Controller 双角色合一的 MonoBehaviour 基类，自动绑定对应 Context
+  类型的接口实例，简化 MVC 模式下的 View 搭建
 
 ### Changed
 
-- **IController 移除 ICanAddListener** — Controller 定位为命令执行入口，不应被动监听事件。事件监听应由 Service 或 View 负责。能力矩阵同步更新
+- **IController 移除 ICanAddListener** — Controller 定位为命令执行入口，不应被动监听事件。事件监听应由 Service 或
+  View 负责。能力矩阵同步更新
 
 ## [0.3.0] - 2026-07-03
 
 ### Changed
 
-- **Engine 层彻底脱离 Component 层** — 移除 `ContextBoard` 和 `MiniEventBusBoard` 两个 MonoBehaviour 组件，移除 `AbstractContext` 中所有对 `ContextBoard.Instance.AddContext()` 的调用。Engine 层现在是真正的纯 C#，不依赖任何 Component 层类型
-- **移除声明式依赖校验** — 移除 `IModel.GetDependencies()` / `IService.GetDependencies()` 和 `ContextDependencyAssistant` 类，改用 `GetModel<T>()` / `GetService<T>()` 扩展方法中的运行时错误日志。未注册时抛出含调用者类型和目标类型信息的 `InvalidOperationException`，兼容运行时替换 Model 的调试模式
-- **提取 AbstractSubmodule 基类** — 将 `AbstractModel` 和 `AbstractService` 的公共生命周期逻辑（`_context`、`SetContext`、`Initialized`、`Initialize`、`Dispose`、`OnInitialize`、`OnDispose`）提取到 `AbstractSubmodule` 基类，消除代码重复
-- **能力接口文件合并** — 将 13 个碎片化的 `ICan*` 接口和扩展方法文件合并为 `Capabilities.cs` 和 `CapabilityExtensions.cs`，逻辑零改动
-- **MiniEventBus.EventDictionary 封装** — 从 `public` 改为 `private`，值类型从 `object` 改为 `Delegate`，移除 `Clear()` 中对 `Delegate` 的无效 `IDisposable` 转型
-- **IService 角色定位明确** — 修正注释，明确定位为万能协调层（能读写 Model、调用其他 Service、监听和发布事件），确认不包含 `ICanExecuteCommand`
-- **IView 描述修正** — 移除"只读"描述，明确 View 可通过事件向上通信、可读取 Model/Service、不可执行 Command 或修改 Model 状态
+- **Engine 层彻底脱离 Component 层** — 移除 `ContextBoard` 和 `MiniEventBusBoard` 两个 MonoBehaviour 组件，移除
+  `AbstractContext` 中所有对 `ContextBoard.Instance.AddContext()` 的调用。Engine 层现在是真正的纯 C#，不依赖任何
+  Component 层类型
+- **移除声明式依赖校验** — 移除 `IModel.GetDependencies()` / `IService.GetDependencies()` 和
+  `ContextDependencyAssistant` 类，改用 `GetModel<T>()` / `GetService<T>()` 扩展方法中的运行时错误日志。未注册时抛出含调用者类型和目标类型信息的
+  `InvalidOperationException`，兼容运行时替换 Model 的调试模式
+- **提取 AbstractSubmodule 基类** — 将 `AbstractModel` 和 `AbstractService` 的公共生命周期逻辑（`_context`、
+  `SetContext`、`Initialized`、`Initialize`、`Dispose`、`OnInitialize`、`OnDispose`）提取到 `AbstractSubmodule`
+  基类，消除代码重复
+- **能力接口文件合并** — 将 13 个碎片化的 `ICan*` 接口和扩展方法文件合并为 `Capabilities.cs` 和
+  `CapabilityExtensions.cs`，逻辑零改动
+- **MiniEventBus.EventDictionary 封装** — 从 `public` 改为 `private`，值类型从 `object` 改为 `Delegate`，移除
+  `Clear()` 中对 `Delegate` 的无效 `IDisposable` 转型
+- **IService 角色定位明确** — 修正注释，明确定位为万能协调层（能读写 Model、调用其他 Service、监听和发布事件），确认不包含
+  `ICanExecuteCommand`
+- **IView 描述修正** — 移除"只读"描述，明确 View 可通过事件向上通信、可读取 Model/Service、不可执行 Command 或修改
+  Model 状态
 - **GenericResetStaticsAssistant → ResetStaticsAssistant** — 重命名，移除 "Generic" 前缀，类名更简洁
-- **AbstractContext 不再注册到 GenericLocator\<IContext\>** — 移除 `Interface` 属性中的 `GenericLocator<IContext>.Global.Register/Unregister` 调用
+- **AbstractContext 不再注册到 GenericLocator\<IContext\>** — 移除 `Interface` 属性中的
+  `GenericLocator<IContext>.Global.Register/Unregister` 调用
 
 ### Added
 
-- **运行时错误日志** — `GetModel<T>()` 和 `GetService<T>()` 扩展方法在目标未注册时抛出含调用者类型和目标类型信息的异常，格式示例：`[InventoryModel] 尝试获取 Model [ItemDefinitionModel]，但该 Model 未在 Context 中注册`
+- **运行时错误日志** — `GetModel<T>()` 和 `GetService<T>()` 扩展方法在目标未注册时抛出含调用者类型和目标类型信息的异常，格式示例：
+  `[InventoryModel] 尝试获取 Model [ItemDefinitionModel]，但该 Model 未在 Context 中注册`
 - **AbstractSubmodule** — 子模块统一基类，承载 Model 和 Service 的公共生命周期逻辑
 
 ### Fixed
 
-- **RemoveListenerOnSceneUnloadedTrigger 域重置** — 静态字段 `_instance` 未注册到 `ResetStaticsAssistant`，Disable Domain Reload 下反复进出 Play Mode 会残留旧引用。已通过静态构造函数注册回调修复
+- **RemoveListenerOnSceneUnloadedTrigger 域重置** — 静态字段 `_instance` 未注册到 `ResetStaticsAssistant`
+  ，Disable Domain Reload 下反复进出 Play Mode 会残留旧引用。已通过静态构造函数注册回调修复
 
 ### Removed
 
@@ -732,50 +1466,85 @@
 
 ### Changed
 
-- **事件 API 重命名** — `Subscribe` → `AddListener`、`Unsubscribe` → `RemoveListener`、`SubscribeAndInvoke` → `AddListenerAndInvoke`，对齐 Unity `UnityEvent.AddListener` / `RemoveListener` 命名习惯。同步重命名 `AutoUnsubscribeHandle` → `AutoRemoveListenerHandle`、`UnsubscribeExtensions` → `RemoveListenerExtensions`、`UnsubscribeHandleCollection` → `RemoveListenerHandleCollection`、`UnsubscribeInvoker` → `RemoveListenerTrigger`、`UnsubscribeOnDestroyInvoker` → `RemoveListenerOnDestroyTrigger`、`UnsubscribeOnDisableInvoker` → `RemoveListenerOnDisableTrigger`、`UnsubscribeOnSceneUnloadedInvoker` → `RemoveListenerOnSceneUnloadedTrigger`，扩展方法 `UnsubscribeWhenXxx` → `RemoveListenerWhenXxx`，`UnsubscribeAll` → `RemoveAllListeners`
-- **能力接口简化** — `ICanSubscribeWithContext` → `ICanAddListener`（移除 "WithContext" 后缀）、`ICanInvokeWithContext` → `ICanInvokeEvent`，对应扩展方法 `CanSubscribeWithContextExtensions` → `CanAddListenerExtensions`、`CanInvokeWithContextExtensions` → `CanInvokeExtensions`
-- **事件发布方法重命名** — `Invoke<T>()` → `InvokeEvent<T>()`，`IContext.Invoke` → `IContext.InvokeEvent`，语义更明确地表达"发布事件"而非泛型方法调用
-- **System → Service 重命名** — 架构层 System 概念全面替换为 Service：`ISystem` → `IService`、`AbstractSystem` → `AbstractService`、`RegisterSystem` → `RegisterService`、`GetSystem` → `GetService`、`ICanGetSystem` → `ICanGetService`、`CanGetSystemExtensions` → `CanGetServiceExtensions`
-- **GetContext() → Context 属性** — `IContextHolder` 的 `GetContext()` 方法改为 `Context` 只读属性，语义更清晰地表达"持有一个 Context"
-- **Context 类重命名** — `Context<T>` → `AbstractContext<T>`（统一 `Abstract*` 命名规范）、`BaseContext` → `AbstractContext`（同上）、`MockContext` → `FakeContext`（按 Fowler 测试替身分类，它是 Fake 而非 Mock）
-- **ContextResetAssistant → GenericResetStaticsAssistant** — 重命名为泛型静态变量重置助手，不再局限于 Context 类型
+- **事件 API 重命名** — `Subscribe` → `AddListener`、`Unsubscribe` → `RemoveListener`、`SubscribeAndInvoke` →
+  `AddListenerAndInvoke`，对齐 Unity `UnityEvent.AddListener` / `RemoveListener` 命名习惯。同步重命名
+  `AutoUnsubscribeHandle` → `AutoRemoveListenerHandle`、`UnsubscribeExtensions` → `RemoveListenerExtensions`、
+  `UnsubscribeHandleCollection` → `RemoveListenerHandleCollection`、`UnsubscribeInvoker` →
+  `RemoveListenerTrigger`、`UnsubscribeOnDestroyInvoker` → `RemoveListenerOnDestroyTrigger`、
+  `UnsubscribeOnDisableInvoker` → `RemoveListenerOnDisableTrigger`、`UnsubscribeOnSceneUnloadedInvoker` →
+  `RemoveListenerOnSceneUnloadedTrigger`，扩展方法 `UnsubscribeWhenXxx` → `RemoveListenerWhenXxx`，
+  `UnsubscribeAll` → `RemoveAllListeners`
+- **能力接口简化** — `ICanSubscribeWithContext` → `ICanAddListener`（移除 "WithContext" 后缀）、
+  `ICanInvokeWithContext` → `ICanInvokeEvent`，对应扩展方法 `CanSubscribeWithContextExtensions` →
+  `CanAddListenerExtensions`、`CanInvokeWithContextExtensions` → `CanInvokeExtensions`
+- **事件发布方法重命名** — `Invoke<T>()` → `InvokeEvent<T>()`，`IContext.Invoke` → `IContext.InvokeEvent`
+  ，语义更明确地表达"发布事件"而非泛型方法调用
+- **System → Service 重命名** — 架构层 System 概念全面替换为 Service：`ISystem` → `IService`、`AbstractSystem` →
+  `AbstractService`、`RegisterSystem` → `RegisterService`、`GetSystem` → `GetService`、`ICanGetSystem` →
+  `ICanGetService`、`CanGetSystemExtensions` → `CanGetServiceExtensions`
+- **GetContext() → Context 属性** — `IContextHolder` 的 `GetContext()` 方法改为 `Context`
+  只读属性，语义更清晰地表达"持有一个 Context"
+- **Context 类重命名** — `Context<T>` → `AbstractContext<T>`（统一 `Abstract*` 命名规范）、`BaseContext` →
+  `AbstractContext`（同上）、`MockContext` → `FakeContext`（按 Fowler 测试替身分类，它是 Fake 而非 Mock）
+- **ContextResetAssistant → GenericResetStaticsAssistant** — 重命名为泛型静态变量重置助手，不再局限于 Context
+  类型
 - **AesirArchitectureLifecycle → AesirArchitecturePlayerLoop** — 重命名 PlayerLoop 生命周期管理类，更准确描述其职责
 - **AssemblyVisibleSettings → AssemblyInfo** — 重命名程序集可见性声明文件
-- **View 基类拆分** — `AbstractView<T>` 拆分为 `AesirView<T>`（继承 `AesirMonoBehaviour`，自动支持 Odin Inspector 序列化）和 `MonoView<T>`（继承 `MonoBehaviour`，无 Odin 依赖）
-- **SingletonMonoBehaviour → AesirMonoBehaviour + AesirArchitecture** — 移除泛型单例基类 `SingletonMonoBehaviour<T>`，新增 `AesirMonoBehaviour`（根据运行环境自动选择序列化方式的基类）和 `AesirArchitecture`（框架 MonoBehaviour 单例入口）
-- **Container → GenericLocator\<T\>** — 移除 `Container<T>` 类，引入 `GenericLocator<T>` / `IGenericLocator<T>` / `ILocator` 泛型定位器体系，支持类型注册/查询/全局单例
-- **目录三级重构** — `Runtime/` 下按 `Engine/`（纯 C# + 使用 UnityEngine API，不依赖 MonoBehaviour）、`Component/`（MonoBehaviour 组件）、`OdinIntergration/`（独立程序集，依赖 Odin Inspector）三级分离
+- **View 基类拆分** — `AbstractView<T>` 拆分为 `AesirView<T>`（继承 `AesirMonoBehaviour`，自动支持 Odin
+  Inspector 序列化）和 `MonoView<T>`（继承 `MonoBehaviour`，无 Odin 依赖）
+- **SingletonMonoBehaviour → AesirMonoBehaviour + AesirArchitecture** — 移除泛型单例基类
+  `SingletonMonoBehaviour<T>`，新增 `AesirMonoBehaviour`（根据运行环境自动选择序列化方式的基类）和
+  `AesirArchitecture`（框架 MonoBehaviour 单例入口）
+- **Container → GenericLocator\<T\>** — 移除 `Container<T>` 类，引入 `GenericLocator<T>` /
+  `IGenericLocator<T>` / `ILocator` 泛型定位器体系，支持类型注册/查询/全局单例
+- **目录三级重构** — `Runtime/` 下按 `Engine/`（纯 C# + 使用 UnityEngine API，不依赖 MonoBehaviour）、`Component/`
+  （MonoBehaviour 组件）、`OdinIntergration/`（独立程序集，依赖 Odin Inspector）三级分离
 
 ### Added
 
-- **GenericLocator\<T\>** — 泛型对象定位器，按类型注册、查询与获取对象实例，支持全局单例 `GenericLocator<T>.Global`，兼容 Domain Reload
-- **ILocator / IGenericLocator\<T\>** — 定位器接口抽象，提供 `Register` / `Get` / `TryGet` / `IsRegistered` / `Unregister` / `GetByType` / `GetAll` 完整 API
-- **ContextBoard** — 上下文看板 MonoBehaviour 组件，在 Inspector 中以字典形式展示每个 Context 的 Model 和 Service 列表
+- **GenericLocator\<T\>** — 泛型对象定位器，按类型注册、查询与获取对象实例，支持全局单例
+  `GenericLocator<T>.Global`，兼容 Domain Reload
+- **ILocator / IGenericLocator\<T\>** — 定位器接口抽象，提供 `Register` / `Get` / `TryGet` / `IsRegistered` /
+  `Unregister` / `GetByType` / `GetAll` 完整 API
+- **ContextBoard** — 上下文看板 MonoBehaviour 组件，在 Inspector 中以字典形式展示每个 Context 的 Model 和
+  Service 列表
 - **MiniEventBusBoard** — 事件总线看板 MonoBehaviour 组件，在 Inspector 中展示当前事件注册状态（事件类型、监听者列表）
-- **ContextDependencyAssistant** — 依赖项校验辅助类，提供 Model 和 Service 的依赖类型检查与初始化状态检查，支持声明式依赖 `GetDependencies()`
-- **AesirMonoBehaviour** — RAA 架构标准 MonoBehaviour 基类，根据运行环境（编辑器/运行时、是否安装 Odin Inspector）自动选择 `SerializedMonoBehaviour` 或 `MonoBehaviour` 作为基类
+- **ContextDependencyAssistant** — 依赖项校验辅助类，提供 Model 和 Service 的依赖类型检查与初始化状态检查，支持声明式依赖
+  `GetDependencies()`
+- **AesirMonoBehaviour** — RAA 架构标准 MonoBehaviour 基类，根据运行环境（编辑器/运行时、是否安装 Odin
+  Inspector）自动选择 `SerializedMonoBehaviour` 或 `MonoBehaviour` 作为基类
 - **AesirScriptableObject** — RAA 架构标准 ScriptableObject 基类，同样根据运行环境自动选择序列化方式
-- **IModel / IService 依赖声明** — `IModel` 和 `IService` 新增 `GetDependencies()` 方法，返回 `HashSet<Type>` 声明依赖的其他模块类型，注册时自动校验依赖是否已初始化
-- **IView 能力扩展** — `IView` 新增 `ICanGetService` 和 `ICanInvokeEvent` 能力，View 层现在可以获取 Service 和发布事件
-- **IContext 事件方法** — `IContext` 接口直接提供 `AddListener<T>` / `RemoveListener<T>` / `InvokeEvent<T>` 方法，事件操作不再依赖独立的事件总线属性
-- **AbstractContext\<T\> 全局定位** — `AbstractContext<T>.Interface` 通过 `GenericLocator<IContext>.Global` 管理单例，注册到 `ContextBoard` 可视化
+- **IModel / IService 依赖声明** — `IModel` 和 `IService` 新增 `GetDependencies()` 方法，返回 `HashSet<Type>`
+  声明依赖的其他模块类型，注册时自动校验依赖是否已初始化
+- **IView 能力扩展** — `IView` 新增 `ICanGetService` 和 `ICanInvokeEvent` 能力，View 层现在可以获取 Service
+  和发布事件
+- **IContext 事件方法** — `IContext` 接口直接提供 `AddListener<T>` / `RemoveListener<T>` / `InvokeEvent<T>`
+  方法，事件操作不再依赖独立的事件总线属性
+- **AbstractContext\<T\> 全局定位** — `AbstractContext<T>.Interface` 通过 `GenericLocator<IContext>.Global`
+  管理单例，注册到 `ContextBoard` 可视化
 - **MiniEventBus.Global** — 全局事件总线单例，`AbstractContext` 的事件操作直接路由到 `MiniEventBus.Global`
 - **MiniEventBusBoard** — 事件注册信息看板，Inspector 中可视化展示当前所有事件类型及其监听者
 - **EventRegistrationInfo** — 事件注册信息数据类，记录事件类型和监听者列表
-- **Odin Inspector AttributeProcessor 扩展** — 新增 `ContextBoardAttributeProcessor`、`MiniEventBusBoardAttributeProcessor`、`AbstractModelAttributeProcessor` 等 Odin 属性处理器
-- **Editor 脚本符号管理** — 新增 `EnsureAesirArchitectureDefine` 和 `ScriptingSymbolUtility`，自动管理 `ODIN_INSPECTOR` 等编译符号
+- **Odin Inspector AttributeProcessor 扩展** — 新增 `ContextBoardAttributeProcessor`、
+  `MiniEventBusBoardAttributeProcessor`、`AbstractModelAttributeProcessor` 等 Odin 属性处理器
+- **Editor 脚本符号管理** — 新增 `EnsureAesirArchitectureDefine` 和 `ScriptingSymbolUtility`，自动管理
+  `ODIN_INSPECTOR` 等编译符号
 - **Documentation~/Books/** — 新增设计模式与 SOLID、ScriptableObject 模块化架构参考电子书
 - **Documentation~/Manuals/mini-event-module-manual.md** — 新增 MiniEvent 模块完整使用手册
 - **Documentation~/FAQ/why-fake-not-mock-context.md** — 新增 FakeContext 命名决策文档
 
 ### Removed
 
-- **Query 系统** — 移除 `IQuery<TResult>` / `IAsyncQuery<TResult>` / `AbstractQuery<T>` / `AbstractAsyncQuery<T>` 及对应的能力接口 `ICanExecuteQuery` 和扩展方法，保持架构核心简单。读操作直接通过 `GetModel<T>()` 访问 Model 数据
-- **FakeContext** — 移除测试用 Fake 上下文类（`MockContext` / `FakeContext`），测试改为直接实例化 `AbstractContext<T>` 子类或使用 `GenericLocator` 隔离
+- **Query 系统** — 移除 `IQuery<TResult>` / `IAsyncQuery<TResult>` / `AbstractQuery<T>` /
+  `AbstractAsyncQuery<T>` 及对应的能力接口 `ICanExecuteQuery` 和扩展方法，保持架构核心简单。读操作直接通过
+  `GetModel<T>()` 访问 Model 数据
+- **FakeContext** — 移除测试用 Fake 上下文类（`MockContext` / `FakeContext`），测试改为直接实例化
+  `AbstractContext<T>` 子类或使用 `GenericLocator` 隔离
 - **Container\<T\>** — 移除旧的模块容器类，由 `GenericLocator<T>` 替代
 - **SingletonMonoBehaviour\<T\>** — 移除泛型单例基类，由 `AesirMonoBehaviour` + `AesirArchitecture` 替代
 - **event-system-critique.md** — 移除旧的事件系统设计文档（内容已整合到 Manuals 和 FAQ 中）
-- **旧目录结构** — 移除 `Runtime/Core/`、`Runtime/Command/`、`Runtime/Event/`、`Runtime/Observable/`、`Runtime/Utilities/` 等平铺目录
+- **旧目录结构** — 移除 `Runtime/Core/`、`Runtime/Command/`、`Runtime/Event/`、`Runtime/Observable/`、
+  `Runtime/Utilities/` 等平铺目录
 
 ## [0.1.1] - 2026-06-24
 
@@ -805,9 +1574,12 @@
 
 ### Added
 
-- **Context 架构根** — `Context<T>` 泛型静态单例，支持 `RegisterModel` / `RegisterService` 模块注册，`FakeContext` 用于测试隔离
-- **能力接口组合系统** — `ICanGetModel`、`ICanExecuteCommand`、`ICanSubscribeWithContext` 等能力标记接口，组合出 `IModel` / `IService` / `IView` / `IController` / `IPresenter`
-- **PlayerLoop 原生生命周期** — `AesirArchitectureLifecycle` 将自定义子系统注入 Unity PlayerLoop，提供 `BeforeUpdate` / `AfterUpdate` 帧回调
+- **Context 架构根** — `Context<T>` 泛型静态单例，支持 `RegisterModel` / `RegisterService` 模块注册，
+  `FakeContext` 用于测试隔离
+- **能力接口组合系统** — `ICanGetModel`、`ICanExecuteCommand`、`ICanSubscribeWithContext` 等能力标记接口，组合出
+  `IModel` / `IService` / `IView` / `IController` / `IPresenter`
+- **PlayerLoop 原生生命周期** — `AesirArchitectureLifecycle` 将自定义子系统注入 Unity PlayerLoop，提供
+  `BeforeUpdate` / `AfterUpdate` 帧回调
 - **CQRS 命令/查询分离** — `ICommand` 写操作 + `IQuery<TResult>` 读操作
 - **ObservableValue 响应式属性** — `ObservableValue<T>` 可写 + `IReadOnlyObservableValue<out T>` 协变只读接口
 - **MiniEventHub 类型事件总线** — 按事件类型注册/发布，支持 `IUnsubscribe` 自动注销句柄与 GameObject / 场景生命周期绑定
@@ -822,5 +1594,6 @@
 ### Changed
 
 - `IService` 继承 `ICanInitialize`，获得 Initialize / Dispose 能力
-- `AbstractContext` 服务生命周期管理：`RegisterService` 上下文已初始化时立即初始化服务，`GetService` 按需初始化，`Dispose` 逆序释放 Service（先 Service 后 Model）
+- `AbstractContext` 服务生命周期管理：`RegisterService` 上下文已初始化时立即初始化服务，`GetService` 按需初始化，
+  `Dispose` 逆序释放 Service（先 Service 后 Model）
 - 移除 `ObservableValueDrawer`，Odin 集成仅保留 `ObservableValueAttributeProcessor` 属性注入

@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.34.1** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.34.1** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.35.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.35.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -31,6 +31,36 @@ versions follow [Semantic Versioning](https://semver.org/).
 > - **Aesir Modules** — 仅依赖 Aesir Architecture / depends on Aesir Architecture only
 
 ---
+
+## [0.35.0] - 2026-11-23
+
+### [architecture] Aesir Architecture
+
+**Changed**
+
+- 代码格式化与 XML 注释排版统一（无运行时行为变更）；版本号与 Aesir Modules 事件模块大版本同步至 0.35.0。
+
+---
+
+### [modules] Aesir Modules
+
+**Added**
+
+- **事件模块可观测性：取消传播 + 公开诊断 API + 三个调试窗口** — `AesirEventArgs.Cancel(canceller)` 中止本次分发（`First`/`Last` 两档始终执行，`NonCancellable()` 免疫取消）；新增 `AesirEventDiagnostics` 公开诊断 API（订阅树查询 + 环形缓冲链路快照，运行时零 Odin 依赖、关闭时零分配）；新增 `Tools/Aesir/Modules/Event Monitor | Event Log | Event Tester` 三个调试窗口（UI Toolkit 版 + Odin 版信息等价）；新增示例 `04_Cancellation` / `05_Diagnostics`。
+
+**Changed**
+
+- **事件模块分发性能与结构精简（功能面不变）** — 注册表改 `Type` 键 + 注册期有序插入（分发零排序）、分发去 `object[]` 间接层、非泛型订阅去反射、重入缓冲按深度复用、无实例快速路径负缓存、空间过滤器每趟缓存；诊断快照时间戳改 UTC。
+- **【破坏性】同一参数实例的重入发布改为 fail-fast 拒绝** — 跨实例事件链不受影响；迁移：事件链使用新的参数实例，或经 `AesirTimer.NextFrame` 延后发布。
+
+**Fixed**
+
+- SDG 开放泛型成员默认值读取崩溃 — 声明类型或成员类型含泛型参数的静态成员按"无默认值"跳过，不再阻断整程序集文档生成。
+
+**Removed**
+
+- **【破坏性】移除 `[AesirListener]` 特性反射订阅，事件模块只保留 Script 订阅** — `AddListener<T>(this, callback)` + 句柄 `Dispose()` 退订；新增 `RemoveListener<T>(object)` 精确无句柄退订。迁移表见包内 `Documentation~/event-module.md`。
+- **【破坏性】低频公开 API 收窄** — 删除 `AesirEventArgs.Clone()` / `ICloneable`、字符串绑定键与 `GetEventBindingKey` / `GetEventName<T>`；`BindingInfo` / `ScriptBindingInfo<T>` 转 internal，订阅管理统一经 `EventModule` 公开 API。
 
 ## [0.34.1] - 2026-11-20
 
