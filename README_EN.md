@@ -1,8 +1,8 @@
 # Aesir Modules
 
 Functional module package for Aesir Architecture (RAA). Currently provides a UI framework (single facade +
-multiple registries), an event module, audio management, scene management tooling, and a script documentation
-generator.
+multiple registries), an event module, audio management, scene management tooling, a save module, and a script
+documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.34.1-blue.svg)](./CHANGELOG.md)
@@ -22,6 +22,7 @@ generator.
 | Event              | Implemented                 | `EventModule` Script subscription (precise handle unbinding) + 4 priority levels with stable sorting + snapshot/re-entrant-safe dispatch + direct delegate calls (no reflection) + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization + cancellation propagation + public diagnostics API (`AesirEventDiagnostics`) + Monitor/Log/Tester debug windows (UI Toolkit / Odin dual-track) |
 | Audio              | Implemented                 | `AudioModule` singleton (minimal 2D audio facade) + SFX round-robin exclusive sources + BGM crossfade + 3-channel volume/mute persistence                                                                                                                                                                                                                                                                           |
 | Scene              | Implemented                 | `SceneModule` static facade (scene load/additive/unload/activate + scene lifecycle events, call `SceneModule.xxx` directly) + UniTask adapter assembly (optional, define auto-maintained: with UniTask the coroutine implementation is replaced by UniTask-driven flow and awaitable APIs are provided) + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Module Settings)  |
+| Save               | Implemented                 | `SaveModule` static facade (save-slot Save/Load + transactional crash-safe writes + CRC32 checksum with backup fallback) + three serializer tracks (JsonUtility default / Odin / Newtonsoft optional) + four extension points (serializer / storage / save manager / transform chain; implement `ISaveManager` to plug in custom schemes such as cloud saves) + version migration + auto-save (interval + pause/quit hooks) |
 | ScriptDocGenerator | Implemented (requires Odin) | Reflection-based C# type analysis generating structured API docs (incremental, preserves hand-written content) + Summary tool (syncs XML `<summary>` and the `[Summary]` attribute, attribute-first)                                                                                                                                                                                                                |
 
 > Two additional optional capabilities: **Binder component binding** (`Runtime/UI/OdinInspector/Binder/`,

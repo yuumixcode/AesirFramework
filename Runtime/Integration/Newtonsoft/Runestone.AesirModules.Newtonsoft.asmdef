@@ -1,0 +1,25 @@
+{
+    "name": "Runestone.AesirModules.Newtonsoft",
+    "rootNamespace": "Runestone.AesirModules",
+    "references": [
+        "Runestone.AesirArchitecture",
+        "Runestone.AesirModules"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "AESIR_MODULES_NEWTONSOFT"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.nuget.newtonsoft-json",
+            "expression": "",
+            "define": "AESIR_MODULES_NEWTONSOFT"
+        }
+    ],
+    "noEngineReferences": false
+}

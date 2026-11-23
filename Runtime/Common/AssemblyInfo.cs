@@ -14,3 +14,6 @@ using System.Runtime.CompilerServices;
 
 // UniTask 驱动链的 PlayMode 测试程序集（仅在装了 UniTask 的工程编译）需读取内部进度上限做归一化断言。
 [assembly: InternalsVisibleTo("Runestone.AesirModules.Tests.UniTask")]
+
+// Save 模块的 PlayMode 测试程序集需读取内部配置开关（saveOnApplicationPause 等）构造钩子启停场景。
+[assembly: InternalsVisibleTo("Runestone.AesirModules.Tests")]

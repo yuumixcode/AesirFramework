@@ -23,6 +23,7 @@ namespace Runestone.AesirModules.Editor
         {
             UIModuleConfigAssetInitializer.EnsureConfigAsset();
             SceneModuleConfigAssetInitializer.EnsureConfigAsset();
+            SaveModuleConfigAssetInitializer.EnsureConfigAsset();
         }
     }
 }
