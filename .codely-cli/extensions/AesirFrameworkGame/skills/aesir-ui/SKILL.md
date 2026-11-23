@@ -1,6 +1,6 @@
 ---
 name: aesir-ui
-description: Aesir Modules 的 UI 框架（UIModule / UIRoot）编码指南。为 Unity/团结引擎项目做界面时使用——Panel（四层 Canvas 下的常驻界面）与 Window（自带 Canvas 的模态弹窗/全屏页）的选型与写法、面板生命周期 OnInit/OnShow/OnHide/OnClose、蒙版单遮与叠遮、世界空间 UI Canvas（血条/名字牌）、可替换资源加载器。触发场景：用户提到 UIModule、UIRoot、AesirBasePanel、AesirBaseWindow、AesirBasePanelView、面板、弹窗、蒙版、四层 Canvas、血条、名字牌、WorldSpaceUICanvas，或要求"用 Aesir 做 UI 界面"、"加个开始界面/暂停界面/设置面板"、"UI 框架怎么用"。
+description: Aesir Modules UI 框架（UIModule / UIRoot）编码指南。用 Aesir 做 UI 界面时使用——Panel 与 Window 选型、生命周期、蒙版单遮与叠遮、世界空间血条。触发词：UIModule、UIRoot、AesirBasePanel、AesirBaseWindow、WorldSpaceUICanvas、面板、弹窗、蒙版、四层 Canvas、血条、名字牌、加个开始界面/暂停界面/设置面板。
 ---
 
 # Aesir UI 模块（UIModule + UIRoot）
@@ -79,50 +79,34 @@ UIModule.PrewarmWindow<SettingWindow>("UI/SettingWindow");
 
 ## 世界空间 UI（血条 / 名字牌）
 
-```csharp
-// 方式一：组件直接挂在目标节点下（FollowTarget 留空，随父级移动）
-// Add Component → Aesir Modules → UI → World Space UI Canvas
+组件 `WorldSpaceUICanvas`（Add Component → Aesir Modules → UI）或运行时 `UIRoot.Instance.CreateWorldSpaceCanvas(target, name)`。`Awake` 自动补齐 Canvas(WorldSpace) + RectTransform + CanvasScaler + GraphicRaycaster，子树归 UI 层；`sortingOrder` 默认 **450**（面板 ≤400 与窗口 ≥500 之间）。跟随/偏移/朝向每帧读取即时生效，但**配置与 sortingOrder 属接线期参数——改完要再调 `Build()`**。它不进 UIModule 注册表、不参与蒙版调度。
 
-// 方式二：运行时创建
-var popup = UIRoot.Instance.CreateWorldSpaceCanvas(interactable.transform, "InteractHint");
-popup.PositionOffset = new Vector3(0f, 2f, 0f);
-popup.Billboard = WorldSpaceUICanvas.WorldSpaceBillboardMode.CameraFacingFull; // LateUpdate 每帧读取，立即生效
-```
+两种创建方式、配置优先级链与接线期参数清单见 [references/world-space-ui.md](references/world-space-ui.md)。
 
-- `Awake` 自动补齐 `Canvas(WorldSpace)` + `RectTransform`（正方形像素网格，避免非等比拉伸）+ `CanvasScaler` + `GraphicRaycaster`，子树归 UI 层。
-- `sortingOrder` 默认 **450**（介于面板 ≤400 与窗口 ≥500 之间）。
-- 配置来源优先级：组件上显式配置 → `UIRoot.WorldSpaceCanvasConfig` → 内存默认 `UICanvasConfigSO.CreateWorldSpaceDefault()`。世界空间链与屏幕空间链**互不覆盖**。
-- 跟随目标 / `PositionOffset` / `FaceCamera` / `Billboard` / `FlipFacing` 由 `LateUpdate` 每帧读取，运行时改动即时生效；**配置与 `sortingOrder` 属接线期参数**——换配置需再调 `Build(overrideConfig)`，`sortingOrder` 为序列化字段（`SortingOrder` 属性无 setter），Inspector 改动后同样要 `Build()` 才刷新 Canvas。
+## 坑位速查（12 条）
 
-## 坑位（违反即报错或静默失效）
+命中某条编号就去 [references/ui-pitfalls.md](references/ui-pitfalls.md) 读该条的现象 / 原因 / 修法全文。
 
-1. **解绑/退订必须放 `OnDestroy`**。`OnClose` 只在受控销毁路径（Hide + `DestroyOnHide=true`）调用；场景卸载或外部 `Destroy` 时**只有 `OnDestroy`**——只写 OnClose 的清理会在切场景时泄漏。
-2. **层 Canvas 的 sortingOrder 会被强制覆盖**为 100/200/300/400（每次 Awake / Build 重新应用），手动微调层序无效；窗口的 sortingOrder 不被覆盖。
-3. **同一基类类型重复 Show 会报错**；`Hide` / `Get` 未命中只给 Warning。类型要一路用同一个。
-4. **路径别当成 payload 传**：`Show<T>("UI/Xxx")` 会命中专门的单参路径重载；要同时带参数就写 `Show<T>(payload, "UI/Xxx")`——否则字符串会被 `object payload` 吞掉、随后报"未注册且未提供 path"而不揭示真因。经**引用注册**的条目带 path 调用会警告"path 被忽略"。
-5. **主相机要自行排除 UI 层(5)**：UICamera 只渲染 UI + TransparentFX，主相机含 UI 层会重复渲染。
-6. **加载器是同步契约**：`IUIAssetLoader.Load(path)` 无 await。Addressables 直接 `LoadAssetAsync` 的 `Handle.Result` 同步等待在 WebGL 会死锁——先预加载、再经自定义 loader 同步返回缓存。
-7. **运行时 `AddComponent` 出来的面板/窗口不做 Binder 自动绑定**（绑定只在编辑期生成脚本 → 编译后挂载时写入 prefab 序列化数据）。
-8. **覆写 `OnShow`/`OnHide` 第一行必须调 `base`**。基类默认实现是 `gameObject.SetActive(true/false)`——面板/窗口以**停用状态**实例化，激活动作就藏在 `base.OnShow` 里。只写自己的刷新逻辑而不调 base，实例数据全对但**永远不可见**，且 `Get<T>` 拿得到实例、注册表正常，极难定位。可见性断言要带 `gameObject.activeInHierarchy == true`。
-9. **DDOL 下离开场景要主动收尾本场景的面板/窗口**。UIRoot 常驻，挂在层 Canvas 下的面板**不随场景卸载销毁**——"面板交给场景卸载处理"的假设永远不成立。切场景前 `HideSelf()`，并在场景根的 `OnDestroy` 里统一 `Hide`/`Close` 本场景打开的面板窗口。验证必须有**负向断言**（"不该在的不在"），只验"该在的在"抓不到泄漏。
-10. **需要订阅/初始化的组件节点不能以 `SetActive(false)` 起始**。禁用节点不执行 `Start`，`AddListenerAndInvoke` 订阅建立不了，后续永远不会点亮（血条/光圈/护盾这类"默认隐藏"组件高发）。用组件级 `spriteRenderer.enabled = false` 控制显隐，节点保持激活。多个驱动源（订阅回调 + 生命周期事件）并存的显隐状态，强制关闭要用带 `_forced` 标志的 `ForceHide()` **压过**所有驱动源，否则下一帧回调又点亮。
-11. **URP 工程 UICamera 会清掉全部游戏画面**（HUD 正常、精灵全消失，但运行时数据在动）。UIRoot 的 UICamera 按内置管线语义配成 Base + `clearFlags=Depth`；URP 的多个 Base 相机是**整屏替换**而非叠加，主相机画面被它整个清掉。需在业务侧把 UICamera 改成 Overlay 并加入主相机 `cameraStack`——反射零硬依赖的通用接线组件见 `references/urp-ui-camera-stack.md`。真机"UI 在但画面黑"第一嫌疑就是此接线。
-12. **"未受管理的 XxxPanel" 告警先查是否直接 `LoadScene` 跳场景**。验证脚本绕过 Boot→Start→Bootstrap 正常流程直接切场景时，模块实例与面板注册表错位会误报泄漏；编辑模式清点激活实例若为 0 则无残留，不必"修"。实例名已复位为预制体名（无 `(Clone)` 后缀），报警文本里的名字可直接对照预制体。
+| # | 触发 | 后果 |
+|---|---|---|
+| 1 | 解绑只写在 `OnClose` | 切场景或外部 Destroy 时**订阅泄漏**（只有 OnDestroy 必调） |
+| 2 | 手调层 Canvas 的 sortingOrder | **无效**，Awake/Build 强制覆盖回 100/200/300/400 |
+| 3 | 注册用基类、预制体挂派生类 | 重复 Show **报错**；Hide/Get 只 Warning 返回 null |
+| 4 | 路径当 payload 传 `Show<T>("UI/X")` | 被 payload 吞掉，报"未注册且未提供 path"**不揭示真因** |
+| 5 | 主相机没排除 UI 层(5) | UI **重复渲染** |
+| 6 | 加载器里同步等 Addressables Handle | WebGL **死锁**（同步契约，须预加载） |
+| 7 | 运行时 AddComponent 出的面板 | Binder **不自动绑定**（绑定只在编辑期） |
+| 8 | 覆写 OnShow/OnHide 没调 `base` | 数据全对但**永远不可见**，Get 拿得到实例，极难定位 |
+| 9 | 以为面板随场景卸载销毁 | DDOL 下**孤儿面板残留**；需主动 Hide/Close + 负向断言 |
+| 10 | 组件节点以 `SetActive(false)` 起始 | 不执行 Start，**订阅建立不了、永远不点亮** |
+| 11 | URP 工程用 UIRoot 默认相机 | **游戏画面被整屏清掉**（HUD 在、精灵全消失），需改 Overlay 入 cameraStack |
+| 12 | 报"未受管理的 XxxPanel" | 先查是否绕过 Bootstrap 直接 LoadScene，**可能是误报** |
 
-## 推荐方案：UI 独立场景 + 叠加加载（非默认，需主动配置）
+## UI 独立场景 + 叠加加载（非默认，需主动配置）
 
-框架的 `dontDestroyOnLoad` **默认全部为 true**，保证零配置开箱即用（UIModule / UIRoot 常驻跨场景）。中大型项目若希望 UI 生命周期随场景回收，采用如下**推荐**结构——这是主动配置，不是框架默认：
+框架 `dontDestroyOnLoad` 默认全为 true（零配置开箱即用）。中大型项目若要 UI 生命周期随场景回收：把 UIModule + UIRoot **预放置为独立 UI 场景根物体并关掉各自 DDOL**，`LoadSceneAdditive` 载入、`UnloadScene` 卸载即整套回收；进程级单例（AesirArchitecture / AesirModules / AudioModule / SceneModule / EventModule）保持默认 true。**运行时自动创建的实例仍跟随宿主 DDOL**——只有预放置为根物体时该字段才生效。
 
-| 类别 | 典型类型 | DDOL 设置 | 理由 |
-|---|---|---|---|
-| 全局物体 | `AesirArchitecture` / `AesirModules` / `AudioModule` / `SceneModule` / `EventModule` | **保持默认 true** | 它们是进程级单例（配置、事件总线、音频、场景调度），本就该跨场景常驻 |
-| UI 宿主 | `UIModule` + `UIRoot` | 预放置为**独立 UI 场景根物体**，关掉各自的 `dontDestroyOnLoad` | UI 场景可 `UnloadScene` 卸载；UI 子树随场景一次性回收，不留孤儿面板 |
-
-要点：
-
-- **UI 独立场景**（如 `UIScene.unity`）只放 UIModule / UIRoot 与其层级 Canvas，作为根物体预放置；两个组件的 `dontDestroyOnLoad` 取消勾选。以 `LoadSceneAdditive` 叠加载入，`UnloadScene` 卸载即完成整套 UI 回收。
-- **运行时自动创建的实例仍跟随 `[Aesir Modules]` 宿主 DDOL**（此时字段不参与判断）——只有预放置为根物体时该字段才生效。所以"UI 场景可卸载"要求**主动预放置并关字段**，不是改框架默认。
-- 面板/窗口实例挂在 UIRoot 层 Canvas 下，随 UI 场景卸载一并销毁；注册表随 UIModule 实例重建而清零，天然规避"旧场景孤儿面板"问题（见坑位 9/12）。卸载 UI 场景前若需保留数据，把状态放在 DDOL 的 Model（`AbstractContext` 纯 C# 单例）里，不放在面板字段。
+DDOL 分类表与数据留存注意点见 [references/ui-scene-ddol.md](references/ui-scene-ddol.md)。
 
 ## 设计边界（不要尝试）
 

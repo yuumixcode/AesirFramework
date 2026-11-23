@@ -1,6 +1,6 @@
 ---
 name: aesir-events
-description: Aesir Modules 的事件模块（EventModule）编码指南。为 Unity/团结引擎项目做模块间解耦、发布-订阅时使用——Script 订阅（AddListener<T> + AutoRemoveListenerHandle 精确退订）、四档订阅优先级、订阅者过滤器（WithTag / InsideCollider2D / SameSceneAsEmitter / OnlySelf / WithPriority）精确投递、取消传播、快照迭代与跨实例重入、死引用自动清理、AesirEventArgsSO 事件资产化、UnityEvent 桥接与公开诊断 API。触发场景：用户提到 EventModule、AesirEventArgs、AddListener、发布订阅、事件、广播、监听、移除订阅、OnXxxEventArgs、SO 事件、UnityEventOnAesirEvent、事件监听调试，或要求"在模块之间发消息"、"UI 响应游戏事件"、"让敌人只收到范围内的爆炸"、"监视事件触发"。
+description: Aesir Modules 事件模块（EventModule）编码指南。模块间解耦、发布-订阅时使用——AddListener<T> + 句柄退订、四档优先级、订阅者过滤器、取消传播、SO 事件资产化。触发词：EventModule、AesirEventArgs、发布订阅、移除订阅、SO 事件、在模块之间发消息、UI 响应游戏事件、让敌人只收到范围内的爆炸。
 ---
 
 # Aesir 事件模块（EventModule）
@@ -91,13 +91,13 @@ new TickEventArgs().WithFilter(new WithPriority(SubscriberPriority.Medium)).Invo
 
 自定义过滤器实现 `ISubscriberFilter.ShouldReceive(args, subscriber, priority)`。**fail-closed**：解析不出对象（不是 GameObject/Component、已销毁）时按"不通过"处理，避免过滤失效导致广播扩散。未声明过滤器时列表为 null、零开销。
 
-## 可靠性与性能语义（写代码时需要知道的）
+## 可靠性与性能语义（要点）
 
-- **快照迭代**：回调内退订/新增只改注册表，本趟仍按快照跑完（退订者本趟仍收到，新增者下趟起收到），不会跳人。
-- **跨实例重入安全，同实例重入被拒绝**：回调内可同步再发布**其他参数实例**（同型或异型），重入层用按深度复用的独立缓冲区；**同一参数实例在分发期间不得被再次发布**（fail-fast 报错拒绝）——事件链用新实例，或 `AesirTimer.NextFrame` 延后一帧。`SetSender` 是发布者侧 API，订阅者不要在分发期间调。
-- **死引用自动清理**：订阅者被 Destroy 后绑定残留会在下次分发循环结束后移除（编辑器内 Warning 提示检查退订，玩家构建静默）。**但该事件类型不再被发布时不会清理**——按需发布即无累积。
-- **热路径零反射、零排序、零装箱**：订阅走 `Action<T>` 委托直调；注册表以 `Type` 为键、注册期维护有序；分发无 `object[]` 间接层；顶层与重入层都复用迭代缓冲区/死绑定列表（Clear 保留容量，稳态零分配）。空间过滤器的发布者 GameObject/Collider2D 按趟解析一次共享。
-- **可选耗时告警**：预放置实例的 `executionMsLimit`（ms，默认 0 关闭），超阈值输出 Warning；仅顶层分发计时。
+- **快照迭代**：回调内退订/新增只改注册表，本趟按快照跑完，不跳人。
+- **跨实例重入安全，同实例重入 fail-fast 拒绝**：事件链用新参数实例或 `AesirTimer.NextFrame` 延后一帧；`SetSender` 是发布者侧 API。
+- **热路径零反射、零排序、零装箱**；死引用下次分发后自动清理（**该类型不再被发布时不清理**）。
+
+完整语义（重入缓冲、死绑定清理时机、缓冲区复用、`executionMsLimit` 耗时告警）见 [references/dispatch-semantics.md](references/dispatch-semantics.md)。
 
 ## 取消传播与监听调试
 

@@ -1,11 +1,11 @@
 ---
 name: aesir-router
-description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用 Aesir 从零做一个小游戏、需要同时用到架构与多个功能模块（UI/场景/事件/音频）、不确定该加载哪个 aesir-* 技能、或要求"按 Aesir 做完整流程"时使用——给出"意图 → 技能"分派表、三种典型组合路径（从零做小游戏 / 只补界面 / 只补场景与音频流程）、加载顺序与依赖约束、常见误路由纠正，以及实战模板（完整小游戏骨架、原生 MonoBehaviour 迁移表）的索引。触发场景：用户提到 Aesir 全家桶、多个模块一起用、完整游戏骨架、项目起步、或问"这个需求该用哪个技能"。
+description: AesirFrameworkGame 的入口与分派技能。用 Aesir 从零做小游戏、同时用到架构与多个模块（UI/场景/事件/音频/保存）、不确定加载哪个 aesir-* 技能时使用——意图→技能分派表、组合路径、依赖门禁、误路由纠正。触发词：Aesir 全家桶、完整游戏骨架、项目起步、这个需求该用哪个技能、原生 MonoBehaviour 迁移、按 Aesir 做完整流程。
 ---
 
 # AesirFrameworkGame 技能路由
 
-本扩展打包 AesirFramework 的编码技能：5 个架构技能（入口 / 六档 / 核心 API / 决策 / 陷阱）+ 2 个工程初始化技能（项目结构 / 启动场景）+ 4 个功能模块技能。**先过下面的依赖门禁，再按本文定位意图、加载对应技能**，不要一次把全部技能读进来。
+本扩展打包 AesirFramework 的编码技能：5 个架构技能（入口 / 六档 / 核心 API / 决策 / 陷阱）+ 2 个工程初始化技能（项目结构 / 启动场景）+ 5 个功能模块技能。**先过下面的依赖门禁，再按本文定位意图、加载对应技能**，不要一次把全部技能读进来。
 
 ## 依赖门禁（先于分派，硬规则）
 
@@ -13,29 +13,24 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 
 ### ① 触发条件：先探测工程实际装了什么
 
-命中任一条即算已装（不要只凭用户口述）：
-
-- `Packages/manifest.json` 或 `Packages/packages-lock.json` 里有包 ID 或 `Aesir*-latest` 的 Git URL；
-- `Packages/cn.runestone.aesir.*/package.json` 或 `Library/PackageCache/cn.runestone.aesir.*/` 存在；
-- 内联安装（unitypackage 形态）：`Assets/Runestone/AesirArchitecture/`、`Assets/Runestone/AesirModules/` 存在；
-- 能写出一行 `using Runestone.AesirArchitecture;` / `using Runestone.AesirModules;` 且编译通过。
+**hook 通常已注入结论**——直接采信；未注入或中途装过包时按 [references/dependency-gate.md](references/dependency-gate.md) 的四条判据手工探测，**不要只凭用户口述**。
 
 | 工程实际有 | 可用 | 失效（不许写，也不许用原生 API 顶替） |
 |---|---|---|
-| RAA + RAM | 全部 12 个技能 | — |
-| 只有 RAA | router / framework / tiers / core-api / decisions / pitfalls / boot-scene / project-structure | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 全部失效——四个模块一个都编不过 |
+| RAA + RAM | 全部 13 个技能 | — |
+| 只有 RAA | router / framework / tiers / core-api / decisions / pitfalls / boot-scene / project-structure | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` / `aesir-save` 全部失效——五个模块一个都编不过 |
 | 只有 RAM | 仅 project-structure（纯目录/文档知识，不依赖包） | 其余全部——先补 RAA |
 | 都没有 | 仅 project-structure（立目录骨架时第一个用它）+ 解释概念与写法 | 其余全部——先装包 |
 
-> `aesir-project-structure` 是唯一不依赖任何包的技能（纯目录结构与文档规范），四种状态都可用——全新工程往往最先用它立骨架，再装包。
+> `aesir-project-structure` 是唯一不依赖任何包的技能（纯目录结构与文档规范），四种状态都可用——新工程往往最先用它立骨架，再装包。
 
-缺包时的禁止项：改用原生 `SceneManager`、自建 Canvas 栈、`AudioSource.PlayOneShot`、`static event` 总线顶替，或凭印象编造框架 API。正确做法是走 ② ③。
+缺包时的禁止项：改用原生 `SceneManager`、自建 Canvas 栈、`AudioSource.PlayOneShot`、`static event` 总线、`File.WriteAllText` 直写存档顶替，或凭印象编造框架 API。正确做法是走 ② ③。
 
 ### ② 记忆读取：先读，结论优先于询问
 
 调用 `read_memory`（scope=all），并检查工程内的显式约定文件（`AGENTS.md` / `CLAUDE.md` / `CODELY.md` / 项目记忆）。
 
-- 记忆里**明确禁止**（如"不要安装 RAM 包""只允许 RAA""禁止引入新包"）→ **不安装**。只用已装的那一面写代码；需求确实依赖缺失模块时，说明缺口与代价，让开发者自己决定。
+- 记忆里**明确禁止**（如"不要安装 RAM 包""只允许 RAA""禁止引入新包"）→ **不安装**，只做已装包的活；需求依赖缺失模块时说明缺口与代价，让开发者决定。
 - 记忆里**没有明确禁止** → 进入 ③，**必须询问**，不许静默安装。
 
 ### ③ 询问与安装：没有明确禁止就必须问
@@ -48,8 +43,8 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 | RAM | `https://cnb.cool/runestone-game/AesirFramework.git#AesirModules-latest` | `https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest` |
 
 - 两个都缺且开发者同意 → **先 RAA 后 RAM**（RAM 编译依赖 RAA）。
-- 只缺 RAA 但已装 RAM → 不要手写 manifest 依赖（RAM 的 `package.json` 不声明 RAA，UPM 不支持包内 Git 依赖），走官方菜单 `Tools/Aesir/Modules/Install Dependencies`。
-- 装完等域重载结束，按 ① 的探测方法复验，再把结论写进工程记忆（"已装 RAA+RAM" / "开发者明确只要 RAA"），避免下次重复询问。
+- 只缺 RAA 但已装 RAM → 不要手写 manifest 依赖（UPM 不支持包内 Git 依赖），走菜单 `Tools/Aesir/Modules/Install Dependencies`。
+- 装完等域重载，按 ① 复验，把结论写进工程记忆，避免重复询问。
 - 开发者拒绝安装 → 停留在他已有包的能力范围内，明确告知哪些需求做不了、为什么。
 
 ## 分派表
@@ -67,39 +62,39 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 | 模块间解耦、发布-订阅、事件过滤 | `../aesir-events/SKILL.md` | "发个消息"、"UI 响应事件"、"只让范围内敌人受伤" |
 | 音效、背景音乐、音量设置 | `../aesir-audio/SKILL.md` | "加点击音效"、"背景音乐"、"音量滑条"、"切场景换歌" |
 | 场景切换、加载进度、叠加场景、重开 | `../aesir-scene/SKILL.md` | "从主菜单进游戏"、"加载进度条"、"打完一关回大厅" |
+| 存档/读档、云存档 | `../aesir-save/SKILL.md` | "加存档"、"存档损坏"、"版本迁移"、"自动保存"、"云存档" |
 
 ## 实战模板（本扩展独有）
 
 | 文件 | 内容 | 何时加载 |
 |---|---|---|
-| `../aesir-framework/references/templates-game-skeleton.md` | 完整可玩小游戏骨架：得分/失败状态、HUD 订阅、节奏生成器、开火冷却、失败重开，全部用框架 API 写成 | 要从零做一个能玩的小游戏时 |
-| `../aesir-framework/references/templates-migration-from-mono.md` | 原生 MonoBehaviour 写法 → Aesir 写法逐项对照（静态单例、每帧轮询 HUD、Update 计时器、SceneManager 直切、音效 PlayOneShot） | 已有原生代码要迁进框架、或想解释"为什么要这么分层"时 |
+| `../aesir-framework/references/templates-game-skeleton.md` | 完整可玩小游戏骨架（得分/失败、HUD 订阅、生成器、开火冷却、重开） | 从零做能玩的小游戏 |
+| `../aesir-framework/references/templates-migration-from-mono.md` | 原生 MonoBehaviour → Aesir 逐项迁移对照 | 已有原生代码要迁进框架 |
 
 ## 三种典型组合路径
 
 ### A. 从零做一个小游戏（最常见）
 
-1. `aesir-project-structure` → 先立目录骨架与 `docs/` 雏形（纯知识，不依赖包）：`Assets/_Game/` 按用途分层、`CODELY.md` + `README.md` + `docs/index.md` 三件套。
-2. 装两个包：`cn.runestone.aesir.architecture` + `cn.runestone.aesir.modules`（RAM 缺 RAA 时走 `Tools/Aesir/Modules/Install Dependencies`）。
+1. `aesir-project-structure` → 立目录骨架与 `docs/` 雏形（纯知识，不依赖包）。
+2. 装 RAA + RAM（RAM 缺 RAA 走菜单 `Tools/Aesir/Modules/Install Dependencies`）。
 3. `aesir-boot-scene` → 产出 `Bootstrap.unity` + `Bootstrap.cs`，Build Settings index 0。
 4. `aesir-framework` → 写 `GameContext` + 第一个 Model + 第一个面板，跑通闭环。**默认 Quick 档，不要一上来建接口和 Command。**
 5. `templates-game-skeleton.md` → 按玩法补齐得分/失败/生成器/重开。
-6. 按需叠加模块技能：界面细节 → `aesir-ui`；关卡切换 → `aesir-scene`；音效 → `aesir-audio`；跨模块广播 → `aesir-events`。
+6. 按需叠加模块技能：界面细节 → `aesir-ui`；关卡切换 → `aesir-scene`；音效 → `aesir-audio`；跨模块广播 → `aesir-events`；存档 → `aesir-save`。
 
 ### B. 已有工程，只补某一面
 
-只加载对应模块技能即可，**不要连带重写架构**。模块技能内部都写清了"默认路径"（一行 `Show` / 一行 `LoadSceneSingle` / 一行 `PlayBgm`），先照抄默认路径，跑不通再读该技能的排错段。
+只加载对应模块技能即可，**不要连带重写架构**。模块技能内部都写清了"默认路径"（一行 `Show` / `LoadSceneSingle` / `PlayBgm` / `Save`），先照抄默认路径，跑不通再读该技能的排错段。
 
 ### C. 从原生写法迁移
 
-先 `templates-migration-from-mono.md` 定迁移顺序（数据先走 Model，表现后走订阅），再 `aesir-framework` 落代码。**不要一次全迁**：先迁"状态 + HUD 订阅"，再迁"计时/音效/场景"，碰撞与输入保持原生。
+先 `templates-migration-from-mono.md` 定迁移顺序（数据先走 Model，表现后走订阅），再 `aesir-framework` 落代码。**不要一次全迁**：先迁"状态 + HUD 订阅"，再迁"计时/音效/场景/存档"，碰撞与输入保持原生。
 
 ## 依赖与加载约束
 
-- **缺包时先走上面的依赖门禁**（探测 → 读记忆 → 询问安装），不要在缺包状态下硬写模块代码，也不要拿原生 API 顶替。
-- **RAM 四个模块技能都依赖 RAA**：用 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 时，架构底座以 `aesir-framework`（入口）+ `aesir-tiers`（档位）为准（Context 注册、Quick 档写法、生命周期句柄）。
+- **RAM 五个模块技能都依赖 RAA**：用 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` / `aesir-save` 时，架构底座以 `aesir-framework`（入口）+ `aesir-tiers`（档位）为准（Context 注册、Quick 档写法、句柄）。
 - **架构面已按问题拆成五篇，按需只加载一篇**：入口 `aesir-framework`、档位与模板 `aesir-tiers`、核心 API `aesir-core-api`、决策 `aesir-decisions`、陷阱 `aesir-pitfalls`。写业务时通常"入口 + 需要的那一篇"，不要五篇一起读。
-- RAM 模块细节（蒙版叠遮、订阅者过滤器、淡变曲线、UniTask awaitable）以 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 为准，入口只保留调用示例。
+- RAM 模块细节（蒙版叠遮、过滤器、淡变曲线、UniTask awaitable、事务写入）以五个模块技能为准，入口只留调用示例。
 - 通知机制只有一个默认答案：**同组件内状态 → `ObservableValue<T>`；跨系统广播 → `EventModule`**。选之前看 `../aesir-decisions/SKILL.md`。
 
 ## 常见误路由（纠正后交给正确技能）
@@ -110,6 +105,7 @@ description: AesirFrameworkGame 扩展的入口与分派技能。当用户要用
 | "加个 UI 系统" | 自己写 Canvas 栈 / 面板管理器 | `aesir-ui`（UIRoot 四层 Canvas + UIModule 已内建） |
 | "做事件总线" | 自建 `static event` 总线 | `aesir-events`（EventModule 已内建，含优先级与过滤器） |
 | "切场景" | 直接 `SceneManager.LoadScene` | `aesir-scene`（混用会让模块记账失真） |
+| "写个存档系统" | `File.WriteAllText` 直写 / 存档塞 PlayerPrefs | `aesir-save`（事务写入 + 备份回退已内建） |
 | "面板打开是黑的/点不中" | 改 UIModule 源码 | `aesir-ui` 的三个必知陷阱（`path:` 命名参数、cullingMask 排除 UI 层、`Get<T>()` 有懒创建副作用） |
 | "重开游戏数据还在" | 手动逐个字段清零 | `GameContext.Instance.Dispose()` 后再 `SceneModule.ReloadScene()`——Context 是纯 C# 单例，不随场景销毁 |
 

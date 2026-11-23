@@ -1,6 +1,6 @@
 ---
 name: aesir-scene
-description: Aesir Modules 的场景模块（SceneModule）编码指南。为 Unity/团结引擎项目做场景切换时使用——LoadSceneSingle / LoadSceneAdditive / UnloadScene / UnloadAllAddedScenes / SetActiveScene / ReloadScene、加载进度归一化、场景生命周期事件 SceneLoadedEvent/SceneUnloadedEvent、叠加场景追踪、SceneAssetWrapper 可序列化场景引用与自愈、SceneModuleConfigSO 配置、装了 UniTask 时的 awaitable API。触发场景：用户提到 SceneModule、SceneModuleUniTask、SceneAssetWrapper、LoadSceneSingle、加载场景、切换场景、异步加载、进度条、叠加场景、卸载场景、启动场景，或要求"从主菜单进游戏"、"打完一关回大厅"、"加个加载进度条"。
+description: Aesir Modules 场景模块（SceneModule）编码指南。场景切换时使用——LoadSceneSingle / LoadSceneAdditive / ReloadScene、进度归一化、叠加追踪、SceneAssetWrapper 自愈引用、UniTask awaitable。触发词：加载场景、切换场景、进度条、叠加场景、从主菜单进游戏、打完一关回大厅。
 ---
 
 # Aesir 场景模块（SceneModule）

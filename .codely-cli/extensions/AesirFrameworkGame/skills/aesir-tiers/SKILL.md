@@ -1,6 +1,6 @@
 ---
 name: aesir-tiers
-description: Aesir Architecture（RAA）的六档分级与模板。用 Aesir 写业务代码需要选档位、升档、写 Command/Query、或需要 MVC 与 MVP 的可运行模板时加载——Quick/Standard/Strict 三档的 Model 注册方式、暴露面、写入路径与文件数对照，升档触发条件，View 基类（MonoViewController / MonoView）选择，以及六份逐行讲解的模板（MVC 三档 + MVP 三档）。触发场景：用户问"用 Quick 还是 Standard/Strict"、"怎么升档"、"什么时候要 Command/Query"、"用 MVP 怎么写"、"给我完整模板"，或要求按严格分层重构。
+description: Aesir（RAA）的六档分级与模板。选档位、升档、写 Command/Query、要 MVC 或 MVP 可运行模板时加载——Quick/Standard/Strict 、升档触发条件、View 基类（MonoViewController / MonoView）选择、六份逐行模板。触发词：用 Quick 还是 Standard/Strict、怎么升档、什么时候要 Command/Query、用 MVP 怎么写、给我完整模板。
 ---
 
 # Aesir 六档分级（默认 Quick，按需升档）

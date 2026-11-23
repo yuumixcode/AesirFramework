@@ -1,6 +1,6 @@
 ---
 name: aesir-pitfalls
-description: Aesir Architecture 的十条高频陷阱清单（现象 + 原因 + 一句话修法）。写 Aesir 代码报错、行为诡异、订阅收不到、帧率下降、或提交前自查时加载——Register/Get 类型参数不一致、Configure 里访问 Instance、注册顺序与循环依赖、监听回调抛异常、忘记绑自动注销句柄、RemoveAllListeners 一刀切、每帧 GetModel、配置只放 Inspector、Action 属性代替 event、运行时替换 Model 后期望订阅迁移。触发场景：用户说"Aesir 报错"、"取不到 Model"、"订阅没反应"、"空引用"、"内存泄漏"、"帧率掉了"，或要求"自查 Aesir 写法"。
+description: Aesir 的十条高频陷阱清单。写 Aesir 代码报错、行为诡异、订阅收不到或提交前自查时加载——Register/Get 类型不一致、Configure 里访问 Instance、回调抛异常、忘绑自动注销句柄、RemoveAllListeners 一刀切、每帧 GetModel、运行时替换 Model。触发词：Aesir 报错、取不到 Model、订阅没反应、空引用、内存泄漏、帧率掉了、自查 Aesir 写法。
 ---
 
 # Aesir 高频陷阱（10 条）

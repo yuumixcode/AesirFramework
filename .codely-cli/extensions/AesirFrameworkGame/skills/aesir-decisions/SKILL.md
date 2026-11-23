@@ -1,6 +1,6 @@
 ---
 name: aesir-decisions
-description: Aesir 的两张技术决策表——用 MVC 还是 MVP、以及四种通知机制该选哪个。选架构模式、用户提出 MVVM、纠结"状态变化用什么通知"、"一次性事件用什么"、"要不要上 EventModule"时加载。含模式选择速查（MVC 首推 / MVP 可选 / 暂不提供 MVVM 及重评触发条件）、通知机制决策表（ObservableValue / MiniEvent / C# event / UnityEvent）、四条反模式与档位对应关系。触发场景：用户问"用 MVC 还是 MVP"、"能不能用 MVVM"、"为什么不用 MVVM"、"状态变了怎么通知 UI"、"用事件还是 ObservableValue"、"什么时候用 EventModule"。
+description: Aesir 的两张技术决策表。选架构模式、提 MVVM、纠结状态变化用什么通知时加载——模式速查（MVC 首推 / MVP 可选 / 暂不提供 MVVM）、ObservableValue / MiniEvent / C# event / UnityEvent。触发词：用 MVC 还是 MVP、能不能用 MVVM、为什么不用 MVVM、用事件还是 ObservableValue、什么时候用 EventModule、一次性事件用什么、状态变了怎么通知 UI。
 ---
 
 # Aesir 决策表（模式 + 通知机制）

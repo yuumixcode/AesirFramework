@@ -1,6 +1,6 @@
 ---
 name: aesir-audio
-description: Aesir Modules 的音频模块（AudioModule）编码指南。为 Unity/团结引擎项目加音效与背景音乐时使用——PlaySfx 一击即走（音调抖动、独立音量）、PlayBgm 循环与淡入淡出切歌、Master/Bgm/Sfx 三通道音量与静音持久化、PauseAll/ResumeAll 暂停、AudioConfigSO 配置。触发场景：用户提到 AudioModule、PlaySfx、PlayBgm、StopBgm、背景音乐、BGM、音效、音量、静音、淡入淡出、AudioConfigSO，或要求"加个点击音效"、"切场景换背景音乐"、"做设置里的音量滑条"。
+description: Aesir Modules 音频模块（AudioModule）编码指南。加音效与背景音乐时使用——PlaySfx 一击即走、PlayBgm 循环与淡入淡出切歌、Master/Bgm/Sfx 三通道音量与静音持久化、PauseAll/ResumeAll、AudioConfigSO。触发词：AudioModule、PlaySfx、PlayBgm、StopBgm、背景音乐、BGM、音效、音量、静音、淡入淡出、加个点击音效、切场景换背景音乐、做设置里的音量滑条。
 ---
 
 # Aesir 音频模块（AudioModule）

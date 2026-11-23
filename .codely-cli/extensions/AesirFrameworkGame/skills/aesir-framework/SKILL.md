@@ -1,6 +1,6 @@
 ---
 name: aesir-framework
-description: AesirFramework（Aesir Architecture 架构框架）的入口编码指南。为 Unity/团结引擎项目用 Aesir 写游戏代码时首先加载——框架定位与五条核心裁决、默认最低档（Quick）三件套完整写法（Context / Model / 面板）、Context 访问方式、十条关键约定、工程初始化流程、命名规范，以及按需加载的兄弟技能地图。触发场景：用户提到 Aesir、AesirFramework、RAA、AbstractContext、AbstractModel、ObservableValue、MiniEvent、MonoViewController，或要求"用 Aesir 框架写"、"按 Aesir 架构组织代码"、"搭游戏骨架"、"怎么开始"。
+description: AesirFramework（RAA）入口编码指南。用 Aesir 写游戏代码时首先加载——核心裁决、Quick 档三件套（Context / Model / 面板）、关键约定、命名、技能地图。触发词：Aesir、RAA、AbstractContext、AbstractModel、MonoViewController、用 Aesir 写、按 Aesir 架构组织、搭游戏骨架、怎么开始。
 ---
 
 # AesirFramework 入口

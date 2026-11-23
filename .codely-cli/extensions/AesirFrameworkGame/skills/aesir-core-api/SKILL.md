@@ -1,6 +1,6 @@
 ---
 name: aesir-core-api
-description: Aesir Architecture（RAA）核心 API 速查。用 Aesir 写状态通知、事件、计时或帧回调时加载——ObservableValue<T> 的订阅与静默写入、可观察集合（List/Dictionary/HashSet）的单轨变更通知、MiniEvent / MiniEvent<T> 与自动注销句柄、AbstractContext 生命周期与禁忌、AesirTimer（延时/冷却/重复/暂停/unscaled）与四条时间路径选择、AesirPlayerLoop 帧回调、能力矩阵。触发场景：用户提到 ObservableValue、AddListenerAndInvoke、SetValueSilently、MiniEvent、AutoRemoveListenerHandle、AesirTimer、Countdown、Every、冷却、进度条计时、PlayerLoop、ObservableList，或问"状态变了怎么通知"、"怎么做技能冷却"、"不用协程怎么延时"。
+description: Aesir（RAA）核心 API 速查：ObservableValue<T>、可观察集合、MiniEvent<T> + AutoRemoveListenerHandle、AbstractContext 禁忌、AesirTimer（Countdown / Every / 冷却）、AesirPlayerLoop。触发词：状态变了怎么通知、技能冷却、不用协程怎么延时、ObservableValue、MiniEvent、AesirTimer。
 ---
 
 # RAA 核心 API 速查

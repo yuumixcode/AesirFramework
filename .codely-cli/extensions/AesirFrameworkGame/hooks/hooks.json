@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "name": "aesir-package-gate",
+            "command": "node \"${extensionPath}/hooks/detect-packages.mjs\"",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}

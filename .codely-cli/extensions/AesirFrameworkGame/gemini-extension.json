@@ -1,5 +1,23 @@
 {
   "name": "AesirFrameworkGame",
-  "version": "1.3.0",
-  "description": "AesirFramework（RAA 渐进式 MVC/MVP 架构 + RAM 功能模块）的 AI 编码技能，也是 Aesir 全部 AI 技能的唯一主位：12 个技能（路由 / 5 个架构 / 2 个工程初始化 / UI·事件·音频·场景）+ 2 篇实战模板。内置依赖门禁——缺包时先读记忆、再询问是否经 Git URL 安装（CNB 优先、GitHub 兜底），绝不用原生 API 顶替。用 Unity／团结引擎 + AesirFramework 做独立游戏时使用：从零规划目录结构与搭工程骨架、组织 Context/Model/View/Controller（默认 Quick 档）、做面板与弹窗、发事件解耦、加音效与背景音乐、切场景与加载进度、把原生 MonoBehaviour 代码迁进框架。"
+  "version": "1.5.0",
+  "description": "AesirFramework（RAA 渐进式 MVC/MVP 架构 + RAM 功能模块）的 AI 编码技能，也是 Aesir 全部 AI 技能的唯一主位：13 个技能（路由 / 5 个架构 / 2 个工程初始化 / UI·事件·音频·场景·保存）+ 20 篇按需加载的 references。内置依赖门禁——SessionStart hook 自动探测工程装没装 RAA/RAM 并注入可用技能范围；缺包时先读记忆、再询问是否经 Git URL 安装（CNB 优先、GitHub 兜底），绝不用原生 API 顶替。用 Unity／团结引擎 + AesirFramework 做独立游戏时使用：从零规划目录结构与搭工程骨架、组织 Context/Model/View/Controller（默认 Quick 档）、做面板与弹窗、发事件解耦、加音效与背景音乐、切场景与加载进度、存档读档与备份回退、把原生 MonoBehaviour 代码迁进框架。",
+  "author": {
+    "name": "yuumixcode"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/yuumixcode/AesirFramework",
+  "keywords": [
+    "unity",
+    "tuanjie",
+    "mvc",
+    "mvp",
+    "architecture",
+    "ui",
+    "events",
+    "audio",
+    "scene",
+    "save",
+    "indie-game"
+  ]
 }
