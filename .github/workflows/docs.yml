@@ -1,0 +1,30 @@
+name: Deploy Docs
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'zensical.toml'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install "zensical==0.1.1"  # 锁定版本，避免 0.x 期间上游破坏性变更导致部署失败
+      # 0.1.1 的硬性前提：zensical.toml 里 edit_uri 必须置空("")，
+      # 否则 Scripting API 页源文件名含 C# 泛型占位(如 ObservableList{T}.md)，
+      # 花括号在 IRI 中非法 → 构建 panic。详见 zensical.toml 内注释。
+      - run: zensical build --strict
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+      - uses: actions/deploy-pages@v4

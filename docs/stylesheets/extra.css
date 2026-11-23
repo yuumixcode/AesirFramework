@@ -1,0 +1,1161 @@
+/* =============================================================================
+   AesirFramework-Site — Aesir 设计系统
+   -----------------------------------------------------------------------------
+   品牌母题:黑曜石 + 熔金符文(黑曜石碑上灼烧的金色刻痕)。
+   参考 codely.tuanjie.cn 的令牌纪律 —— 强调色染色的发丝线、等宽微型标签、
+   大字号紧字距的展示字体 —— 但用 Aesir 自己的黑曜石/熔金色重写。
+
+   结构:
+     1. 自托管字体(取代 Google Fonts,规避国内不可达)
+     2. 令牌层
+     3. Material 变量覆写
+     4. 基础排版
+     5. 顶部导航与标签栏
+     6. 侧栏导航与右侧目录
+     7. 内容排版:代码块 / 表格 / 提示框
+     8. 组件:符文 / 英雄区 / 卡片 / 标签
+     9. 响应式与动效降级
+   ========================================================================== */
+
+/* === 1. 自托管字体 =========================================================
+   仅取拉丁子集(约 111 KB)。中文交给系统字体:
+   PingFang SC / HarmonyOS Sans / Microsoft YaHei / Noto Sans SC。 */
+
+@font-face {
+  font-family: "Aesir Display";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("../assets/fonts/space-grotesk-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Aesir Text";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("../assets/fonts/inter-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Aesir Mono";
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url("../assets/fonts/jetbrains-mono-latin.woff2") format("woff2");
+}
+
+/* === 2. 令牌层 =========================================================== */
+
+:root {
+  /* 字体 */
+  --aesir-font-display: "Aesir Display", "PingFang SC", "HarmonyOS Sans SC",
+    "Hiragino Sans GB", "Microsoft YaHei UI", "Noto Sans SC", -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  --aesir-font-text: "Aesir Text", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "PingFang SC", "HarmonyOS Sans SC", "Hiragino Sans GB",
+    "Microsoft YaHei UI", "Noto Sans SC", sans-serif;
+  --aesir-font-mono: "Aesir Mono", ui-monospace, SFMono-Regular, "SF Mono",
+    Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* 字号阶 */
+  --aesir-text-page: clamp(1.4rem, 2.4vw, 1.95rem);
+  --aesir-text-section: clamp(1.15rem, 1.75vw, 1.5rem);
+  --aesir-text-card: 0.875rem;
+  --aesir-text-body: 0.8rem;
+  --aesir-text-sm: 0.7rem;
+  --aesir-text-label: 0.6rem;
+  --aesir-text-micro: 0.55rem;
+
+  /* 行高 */
+  --aesir-lead-tight: 1.14;
+  --aesir-lead-snug: 1.35;
+  --aesir-lead-body: 1.75;
+
+  /* 字距 */
+  --aesir-track-display: -0.028em;
+  --aesir-track-heading: -0.014em;
+  --aesir-track-label: 0.13em;
+
+  /* 圆角 */
+  --aesir-radius-lg: 14px;
+  --aesir-radius: 10px;
+  --aesir-radius-sm: 6px;
+
+  /* 阴影 */
+  --aesir-shadow-sm: 0 1px 2px rgba(20, 22, 27, 0.05);
+  --aesir-shadow: 0 1px 2px rgba(20, 22, 27, 0.04), 0 12px 32px rgba(20, 22, 27, 0.06);
+  --aesir-shadow-lg: 0 2px 4px rgba(20, 22, 27, 0.04), 0 28px 64px rgba(20, 22, 27, 0.1);
+
+  /* 浅色:近白纸面 + 黑曜石墨色 + 熔金 */
+  --aesir-bg: #fbfbfa;
+  --aesir-bg-elev: #ffffff;
+  --aesir-surface: #f3f3f1;
+  --aesir-surface-2: #ecebe8;
+
+  --aesir-ink: #14161b;
+  --aesir-ink-2: #4b525d;
+  --aesir-ink-3: #79808c;
+
+  --aesir-line: rgba(20, 22, 27, 0.1);
+  --aesir-line-2: rgba(20, 22, 27, 0.055);
+  --aesir-line-strong: rgba(20, 22, 27, 0.18);
+
+  --aesir-gold: #8a5a0b;
+  --aesir-gold-hi: #b8791a;
+  --aesir-gold-glow: #e0972b;
+  --aesir-gold-wash: rgba(224, 151, 43, 0.1);
+  --aesir-gold-line: rgba(184, 121, 26, 0.28);
+
+  /* 内容分区语义色 —— 每个色相编码一个内容域 */
+  --aesir-teal: #0c6f78;
+  --aesir-violet: #5f43a0;
+  --aesir-ember: #9c4a1d;
+
+  --aesir-code-bg: #f6f5f2;
+  --aesir-code-line: rgba(20, 22, 27, 0.09);
+  --aesir-sel: rgba(224, 151, 43, 0.2);
+
+  /* 标题字渐变:熔金 —— 浅色下需要更亮的尾段才不至于发闷 */
+  --aesir-word-gradient: linear-gradient(
+    96deg,
+    #b5740f 0%,
+    #d9921d 46%,
+    #f0b43c 100%
+  );
+
+  /* 符文图腾(签名元素):直接取自 Runestone 标志的真符文,与导航 logo / favicon 同源。
+     PNG 只保留 alpha 通道,靠 CSS mask 取形状 —— 颜色随主题令牌走。 */
+  --aesir-rune-mask: url("../assets/rune.png");
+}
+
+[data-md-color-scheme="slate"] {
+  --aesir-bg: #0e1013;
+  --aesir-bg-elev: #15181d;
+  --aesir-surface: #1b1f26;
+  --aesir-surface-2: #222731;
+
+  --aesir-ink: #f2f3f5;
+  --aesir-ink-2: #aeb5c0;
+  --aesir-ink-3: #7f8794;
+
+  --aesir-line: rgba(255, 255, 255, 0.11);
+  --aesir-line-2: rgba(255, 255, 255, 0.055);
+  --aesir-line-strong: rgba(255, 255, 255, 0.2);
+
+  --aesir-gold: #e0a545;
+  --aesir-gold-hi: #efb661;
+  --aesir-gold-glow: #ffc978;
+  --aesir-gold-wash: rgba(224, 165, 69, 0.13);
+  --aesir-gold-line: rgba(239, 182, 97, 0.3);
+
+  --aesir-teal: #4fbcc4;
+  --aesir-violet: #a98ae8;
+  --aesir-ember: #e08b55;
+
+  --aesir-code-bg: #14171c;
+  --aesir-code-line: rgba(255, 255, 255, 0.09);
+  --aesir-sel: rgba(224, 165, 69, 0.26);
+
+  --aesir-word-gradient: linear-gradient(
+    96deg,
+    #cf8b1f 0%,
+    #eaa838 52%,
+    #ffd07d 100%
+  );
+
+  --aesir-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --aesir-shadow: 0 1px 2px rgba(0, 0, 0, 0.36), 0 12px 32px rgba(0, 0, 0, 0.4);
+  --aesir-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.4), 0 28px 64px rgba(0, 0, 0, 0.5);
+}
+
+/* === 3. Material 变量覆写 =================================================
+   调色板 CSS 的选择器形如 [data-md-color-scheme=slate][data-md-color-primary=x]
+   (0,2,0);这里用 body[...][data-md-color-primary] (0,2,1) 稳定压过它。 */
+
+body[data-md-color-scheme="default"][data-md-color-primary] {
+  --md-default-bg-color: var(--aesir-bg);
+  --md-default-bg-color--light: rgba(255, 255, 255, 0.7);
+  --md-default-bg-color--lighter: rgba(255, 255, 255, 0.45);
+  --md-default-bg-color--lightest: rgba(20, 22, 27, 0.03);
+
+  --md-default-fg-color: var(--aesir-ink);
+  --md-default-fg-color--light: rgba(20, 22, 27, 0.58);
+  --md-default-fg-color--lighter: rgba(20, 22, 27, 0.36);
+  --md-default-fg-color--lightest: rgba(20, 22, 27, 0.07);
+
+  --md-primary-fg-color: var(--aesir-ink);
+  --md-primary-fg-color--light: #343a45;
+  --md-primary-fg-color--dark: #000000;
+  --md-primary-bg-color: #ffffff;
+  --md-accent-fg-color: var(--aesir-gold);
+  --md-accent-fg-color--transparent: var(--aesir-gold-wash);
+
+  --md-typeset-a-color: var(--aesir-gold);
+  --md-code-bg-color: var(--aesir-code-bg);
+  --md-code-bg-color--light: var(--aesir-code-bg);
+  --md-code-fg-color: #2b3038;
+  --md-code-hl-color: rgba(224, 151, 43, 0.16);
+  --md-code-hl-number-color: #b4571f;
+  --md-code-hl-string-color: #0c6f78;
+  --md-code-hl-keyword-color: #7a3fa8;
+  --md-code-hl-function-color: #8a5a0b;
+  --md-code-hl-special-color: #a04016;
+  --md-code-hl-comment-color: #8b9099;
+  --md-code-hl-attribute-color: #0c6f78;
+
+  --md-text-font: var(--aesir-font-text);
+  --md-code-font: var(--aesir-font-mono);
+}
+
+body[data-md-color-scheme="slate"][data-md-color-primary] {
+  --md-default-bg-color: var(--aesir-bg);
+  --md-default-bg-color--light: rgba(255, 255, 255, 0.05);
+  --md-default-bg-color--lighter: rgba(255, 255, 255, 0.03);
+  --md-default-bg-color--lightest: rgba(255, 255, 255, 0.015);
+
+  --md-default-fg-color: var(--aesir-ink);
+  --md-default-fg-color--light: rgba(242, 243, 245, 0.64);
+  --md-default-fg-color--lighter: rgba(242, 243, 245, 0.4);
+  --md-default-fg-color--lightest: rgba(242, 243, 245, 0.09);
+
+  --md-primary-fg-color: var(--aesir-gold);
+  --md-primary-fg-color--light: var(--aesir-gold-hi);
+  --md-primary-fg-color--dark: var(--aesir-gold-glow);
+  --md-primary-bg-color: #1b1f26;
+  --md-accent-fg-color: var(--aesir-gold-glow);
+  --md-accent-fg-color--transparent: var(--aesir-gold-wash);
+
+  --md-typeset-a-color: var(--aesir-gold);
+  --md-code-bg-color: var(--aesir-code-bg);
+  --md-code-bg-color--light: var(--aesir-code-bg);
+  --md-code-fg-color: #d7dbe2;
+  --md-code-hl-color: rgba(224, 165, 69, 0.16);
+  --md-code-hl-number-color: #e08b55;
+  --md-code-hl-string-color: #4fbcc4;
+  --md-code-hl-keyword-color: #a98ae8;
+  --md-code-hl-function-color: #efb661;
+  --md-code-hl-special-color: #f08a6a;
+  --md-code-hl-comment-color: #6f7784;
+  --md-code-hl-attribute-color: #4fbcc4;
+
+  --md-text-font: var(--aesir-font-text);
+  --md-code-font: var(--aesir-font-mono);
+}
+
+/* === 4. 基础排版 ========================================================== */
+
+body {
+  font-family: var(--aesir-font-text);
+  font-size: var(--aesir-text-body);
+  line-height: var(--aesir-lead-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--aesir-sel);
+}
+
+.md-typeset {
+  font-size: var(--aesir-text-body);
+  line-height: var(--aesir-lead-body);
+  color: var(--aesir-ink-2);
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4,
+.md-typeset h5,
+.md-typeset h6 {
+  font-family: var(--aesir-font-display);
+  color: var(--aesir-ink);
+  font-weight: 700;
+  line-height: var(--aesir-lead-snug);
+  letter-spacing: var(--aesir-track-heading);
+}
+
+.md-typeset h1 {
+  font-size: var(--aesir-text-page);
+  letter-spacing: var(--aesir-track-display);
+  margin-bottom: 0.7em;
+}
+
+.md-typeset h2 {
+  font-size: var(--aesir-text-section);
+  margin-top: 2.1em;
+  padding-top: 0;
+}
+
+.md-typeset h3 {
+  font-size: var(--aesir-text-card);
+  margin-top: 1.7em;
+}
+
+.md-typeset h4 {
+  font-size: 0.85rem;
+  margin-top: 1.5em;
+}
+
+.md-typeset p,
+.md-typeset li {
+  color: var(--aesir-ink-2);
+}
+
+.md-typeset strong {
+  color: var(--aesir-ink);
+  font-weight: 600;
+}
+
+/* 链接:熔金强调,悬停加下划线 */
+.md-typeset a {
+  color: var(--aesir-gold);
+  text-decoration: none;
+  transition: color 0.14s ease, text-decoration-color 0.14s ease;
+}
+
+.md-typeset a:hover {
+  color: var(--aesir-gold-hi);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.md-typeset a:hover .headerlink {
+  color: var(--aesir-gold-hi);
+}
+
+/* 代码与行内代码 */
+.md-typeset code,
+.md-typeset kbd,
+.md-typeset pre {
+  font-family: var(--aesir-font-mono);
+}
+
+.md-typeset :not(pre) > code {
+  font-size: 0.84em;
+  padding: 0.14em 0.38em;
+  border: 1px solid var(--aesir-line);
+  border-radius: var(--aesir-radius-sm);
+  background: var(--aesir-surface);
+  color: var(--aesir-ink);
+  word-break: break-word;
+}
+
+.md-typeset pre > code {
+  font-size: 0.72rem;
+  line-height: 1.68;
+}
+
+.md-typeset hr {
+  border-bottom-color: var(--aesir-line);
+}
+
+/* 引用块 */
+.md-typeset blockquote {
+  border-left: 2px solid var(--aesir-gold-line);
+  color: var(--aesir-ink-2);
+}
+
+.md-typeset blockquote > strong {
+  color: var(--aesir-ink);
+}
+
+/* === 5. 顶部导航与标签栏 ================================================== */
+
+.md-header {
+  background: color-mix(in srgb, var(--aesir-bg) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid var(--aesir-line-2);
+}
+
+.md-header__title {
+  font-family: var(--aesir-font-display);
+  font-weight: 700;
+  letter-spacing: var(--aesir-track-heading);
+}
+
+.md-header__topic:first-child {
+  font-size: 0.85rem;
+}
+
+.md-header__topic + .md-header__topic {
+  font-family: var(--aesir-font-mono);
+  font-size: var(--aesir-text-label);
+  font-weight: 500;
+  letter-spacing: var(--aesir-track-label);
+  text-transform: uppercase;
+  color: var(--aesir-ink-3);
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 1.6rem;
+  width: auto;
+}
+
+/* Material modern 的搜索是一个按钮(不是 classic 的 .md-search__form) */
+.md-search__button {
+  border: 1px solid var(--aesir-line-2);
+  border-radius: var(--aesir-radius);
+  background: var(--aesir-surface);
+  color: var(--aesir-ink-3);
+  font-family: var(--aesir-font-text);
+  font-size: 0.68rem;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.md-search__button:hover,
+.md-search__button:focus {
+  border-color: var(--aesir-line);
+  background: var(--aesir-bg-elev);
+  color: var(--aesir-ink-2);
+}
+
+.md-search__button::before {
+  background-color: var(--aesir-ink-3);
+}
+
+.md-search__button::after {
+  background: var(--aesir-bg-elev);
+  border: 1px solid var(--aesir-line-2);
+  color: var(--aesir-ink-3);
+  font-family: var(--aesir-font-mono);
+}
+
+.md-search__output {
+  border-radius: var(--aesir-radius);
+  border: 1px solid var(--aesir-line);
+  box-shadow: var(--aesir-shadow-lg);
+}
+
+/* 标签栏:发丝线 + 金色活动指示 */
+.md-tabs {
+  background: transparent;
+  border-bottom: 1px solid var(--aesir-line-2);
+}
+
+.md-tabs__list {
+  font-family: var(--aesir-font-text);
+}
+
+.md-tabs__link {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--aesir-ink-3);
+  transition:
+    color 0.14s ease,
+    opacity 0.14s ease;
+}
+
+.md-tabs__link:hover {
+  color: var(--aesir-ink);
+}
+
+/* 活动指示条只保留一条。
+   Material 把边框画在 .md-tabs__item 上(贴着页签栏底部发丝线),
+   若在链接上再画一条就会叠成双线 —— 这里只改颜色,位置交给主题。 */
+.md-tabs__item--active .md-tabs__link {
+  color: var(--aesir-ink);
+}
+
+.md-tabs__item--active {
+  border-bottom-width: 0.1rem;
+  border-bottom-color: var(--aesir-gold);
+}
+
+/* === 6. 侧栏导航与右侧目录 ================================================ */
+
+.md-sidebar {
+  background: transparent;
+}
+
+.md-sidebar--primary {
+  width: 11rem;
+}
+
+.md-sidebar--secondary {
+  width: 9.5rem;
+}
+
+/* 左侧导航与右侧目录共用 .md-nav */
+.md-nav {
+  font-size: 0.6rem;
+  line-height: 1.55;
+}
+
+/* Material 把导航文字包在 .md-typeset 里并硬编码 .7rem,
+   会盖掉 .md-nav 的字号 —— 这里改回继承,让侧栏真正用上 0.60rem 档。 */
+.md-nav__link .md-typeset {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.md-nav--secondary .md-nav,
+.md-typeset .md-nav--secondary {
+  font-size: 0.64rem;
+}
+
+.md-nav__link {
+  position: relative;
+  overflow-wrap: anywhere;
+  color: var(--aesir-ink-3);
+  transition: color 0.14s ease;
+}
+
+.md-nav__link:hover {
+  color: var(--aesir-ink);
+}
+
+.md-nav__item--active > .md-nav__link,
+.md-nav__link--active {
+  color: var(--aesir-ink);
+  font-weight: 600;
+}
+
+/* 活动项标记:一道短促的金色凿痕,取代整条竖线 */
+.md-nav__link--active::before {
+  position: absolute;
+  left: -0.35rem;
+  top: 50%;
+  width: 2px;
+  height: 0.95em;
+  border-radius: 1px;
+  background: var(--aesir-gold);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.md-nav__title {
+  font-family: var(--aesir-font-mono);
+  font-size: var(--aesir-text-micro);
+  font-weight: 600;
+  letter-spacing: var(--aesir-track-label);
+  text-transform: uppercase;
+  color: var(--aesir-ink-3);
+}
+
+.md-nav__source {
+  font-family: var(--aesir-font-mono);
+}
+
+/* 右侧目录:当前小节用熔金标出 */
+.md-nav--secondary .md-nav__link--active {
+  color: var(--aesir-gold);
+  font-weight: 600;
+}
+
+/* 顶部锚点链接 */
+.md-typeset .headerlink {
+  color: var(--aesir-gold);
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.md-typeset h1:hover .headerlink,
+.md-typeset h2:hover .headerlink,
+.md-typeset h3:hover .headerlink,
+.md-typeset h4:hover .headerlink,
+.md-typeset h5:hover .headerlink,
+.md-typeset h6:hover .headerlink {
+  opacity: 0.75;
+}
+
+/* === 7. 内容排版:代码块 / 表格 / 提示框 ================================ */
+
+.md-typeset pre > code {
+  border: 1px solid var(--aesir-code-line);
+  border-radius: var(--aesir-radius);
+  background: var(--aesir-code-bg);
+}
+
+.md-typeset .highlight > pre {
+  border: 1px solid var(--aesir-code-line);
+  border-radius: var(--aesir-radius);
+  box-shadow: var(--aesir-shadow-sm);
+}
+
+/* 表格 */
+.md-typeset table:not([class]) {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--aesir-line);
+  border-radius: var(--aesir-radius);
+  overflow: hidden;
+  font-size: 0.7rem;
+}
+
+.md-typeset table:not([class]) th {
+  background: var(--aesir-surface);
+  font-weight: 600;
+  color: var(--aesir-ink);
+  letter-spacing: 0.01em;
+}
+
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+  padding: 0.55rem 0.8rem;
+  border-bottom: 1px solid var(--aesir-line-2);
+}
+
+.md-typeset table:not([class]) tr:last-child td {
+  border-bottom: none;
+}
+
+.md-typeset table:not([class]) tbody tr:hover {
+  background: var(--aesir-gold-wash);
+}
+
+/* 提示框:熔金描边 + 淡色底 */
+.md-typeset .admonition,
+.md-typeset details {
+  border-radius: var(--aesir-radius);
+  border-color: var(--aesir-line);
+  box-shadow: none;
+}
+
+.md-typeset .admonition > .admonition-title {
+  font-family: var(--aesir-font-mono);
+  font-size: var(--aesir-text-label);
+  font-weight: 600;
+  letter-spacing: var(--aesir-track-label);
+  text-transform: uppercase;
+}
+
+.md-typeset .admonition.note,
+.md-typeset .admonition.info,
+.md-typeset .admonition.tip {
+  border-left: 2px solid var(--aesir-gold);
+}
+
+.md-typeset .admonition.warning {
+  border-left: 2px solid var(--aesir-ember);
+}
+
+.md-typeset .admonition.danger {
+  border-left: 2px solid #c0392b;
+}
+
+/* 按钮 */
+.md-typeset .md-button {
+  margin: 0.25rem 0.35rem 0.25rem 0;
+  border-radius: var(--aesir-radius-sm);
+  font-family: var(--aesir-font-text);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.5em 1.1em;
+  border: 1px solid var(--aesir-line-strong);
+  color: var(--aesir-ink);
+  background: transparent;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.md-typeset .md-button:hover {
+  border-color: var(--aesir-gold);
+  color: var(--aesir-ink);
+  background: var(--aesir-gold-wash);
+}
+
+.md-typeset .md-button--primary {
+  background: var(--aesir-ink);
+  border-color: var(--aesir-ink);
+  color: var(--aesir-bg-elev);
+}
+
+.md-typeset .md-button--primary:hover,
+.md-typeset .md-button--primary:focus {
+  background: var(--aesir-gold);
+  border-color: var(--aesir-gold);
+  color: #ffffff;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary {
+  color: #14161b;
+}
+
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary:hover,
+[data-md-color-scheme="slate"] .md-typeset .md-button--primary:focus {
+  color: #14161b;
+}
+
+/* === 8. 组件 ============================================================ */
+
+
+/* --- 8.2 英雄区 ---------------------------------------------------------- */
+
+.md-typeset .aesir-hero {
+  position: relative;
+  margin: 0 0 3.25rem;
+  padding: clamp(2rem, 4.5vw, 3.5rem) clamp(1.5rem, 4vw, 3.25rem);
+  overflow: hidden;
+  border: 1px solid var(--aesir-line);
+  border-radius: var(--aesir-radius-lg);
+  background:
+    radial-gradient(circle at 88% 12%, var(--aesir-gold-wash), transparent 46%),
+    linear-gradient(160deg, var(--aesir-bg-elev), var(--aesir-surface) 120%);
+  box-shadow: var(--aesir-shadow);
+}
+
+/* 英雄区右侧的符文刻印 —— 从石面里透出的微光 */
+.md-typeset .aesir-hero::before {
+  position: absolute;
+  top: 50%;
+  right: clamp(1rem, 2.5vw, 2.5rem);
+  width: clamp(6.5rem, 14vw, 11.5rem);
+  aspect-ratio: 1;
+  background-color: var(--aesir-gold-hi);
+  -webkit-mask: var(--aesir-rune-mask) no-repeat center / contain;
+  mask: var(--aesir-rune-mask) no-repeat center / contain;
+  content: "";
+  opacity: 0.18;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.md-typeset .aesir-hero__badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1.35rem;
+  padding: 0.32rem 0.75rem;
+  border: 1px solid var(--aesir-gold-line);
+  border-radius: 999px;
+  background: var(--aesir-gold-wash);
+  font-family: var(--aesir-font-mono);
+  font-size: var(--aesir-text-label);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--aesir-ink-2);
+}
+
+.md-typeset .aesir-hero__badge::before {
+  width: 6px;
+  height: 6px;
+  margin-top: 0.45em;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--aesir-gold);
+  box-shadow: 0 0 0 3px var(--aesir-gold-wash);
+  content: "";
+  flex: 0 0 auto;
+}
+
+.md-typeset .aesir-hero__title {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 1.15rem;
+  font-family: var(--aesir-font-display);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 英雄区标题不显示锚点链接(两行 display:block 会把它挤到单独一行) */
+.md-typeset .aesir-hero__title .headerlink {
+  display: none;
+}
+
+.md-typeset .aesir-hero__word {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin: 0 0 0.55rem;
+  font-family: var(--aesir-font-display);
+  font-size: clamp(1.5rem, 4.6vw + 0.5rem, 3.9rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: var(--aesir-track-display);
+  background: var(--aesir-word-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.md-typeset .aesir-hero__claim {
+  position: relative;
+  z-index: 1;
+  max-width: 19em;
+  margin: 0 0 1.1rem;
+  font-family: var(--aesir-font-display);
+  font-size: clamp(1.25rem, 2.6vw + 0.3rem, 2.2rem);
+  font-weight: 700;
+  line-height: var(--aesir-lead-tight);
+  letter-spacing: var(--aesir-track-display);
+  color: var(--aesir-ink);
+}
+
+.md-typeset .aesir-hero__lead {
+  position: relative;
+  z-index: 1;
+  max-width: 38rem;
+  margin: 0 0 1.6rem;
+  color: var(--aesir-ink-2);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.md-typeset .aesir-hero__lead code {
+  font-size: 0.85em;
+}
+
+.md-typeset .aesir-hero__actions {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 1.75rem;
+}
+
+.md-typeset .aesir-hero__actions > p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.md-typeset .aesir-hero__actions .md-button {
+  margin: 0;
+  padding: 0.62em 1.25em;
+}
+
+.md-typeset .aesir-hero__meta {
+  position: relative;
+  z-index: 1;
+  padding-top: 1.15rem;
+  border-top: 1px solid var(--aesir-line-2);
+}
+
+.md-typeset .aesir-hero__meta > p {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  margin: 0;
+  font-family: var(--aesir-font-mono);
+  font-size: var(--aesir-text-label);
+  letter-spacing: 0.03em;
+  color: var(--aesir-ink-3);
+}
+
+.md-typeset .aesir-hero__meta > p > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.md-typeset .aesir-hero__meta > p > span::before {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--aesir-gold);
+  content: "";
+  opacity: 0.75;
+}
+
+/* --- 8.3 卡片网格 -------------------------------------------------------- */
+
+.md-typeset .aesir-package-grid,
+.md-typeset .aesir-value-grid {
+  display: grid;
+  gap: 1rem;
+  margin: 1.35rem 0 2.75rem;
+}
+
+.md-typeset .aesir-package-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.md-typeset .aesir-value-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.md-typeset .aesir-package-card,
+.md-typeset .aesir-value-card {
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--aesir-line);
+  border-radius: var(--aesir-radius);
+  background: var(--aesir-bg-elev);
+  box-shadow: var(--aesir-shadow-sm);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.md-typeset .aesir-package-card {
+  padding: 1.4rem 1.5rem 1.55rem;
+}
+
+.md-typeset .aesir-value-card {
+  padding: 1.15rem 1.25rem 1.25rem;
+}
+
+.md-typeset .aesir-package-card:hover,
+.md-typeset .aesir-value-card:hover {
+  border-color: var(--aesir-gold-line);
+  box-shadow: var(--aesir-shadow);
+  transform: translateY(-2px);
+}
+
+/* 卡片顶部的金色凿痕 —— 签名元素在卡片上的复用 */
+.md-typeset .aesir-package-card::before,
+.md-typeset .aesir-value-card::before {
+  position: absolute;
+  top: -1px;
+  left: 1.25rem;
+  width: 2.25rem;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, var(--aesir-gold), transparent);
+  content: "";
+}
+
+.md-typeset .aesir-package-card > h3,
+.md-typeset .aesir-value-card > p:first-child {
+  margin-top: 0.4rem;
+  color: var(--aesir-ink);
+}
+
+.md-typeset .aesir-package-card > h3 {
+  font-size: 1.25rem;
+}
+
+.md-typeset .aesir-card__eyebrow {
+  display: inline-block;
+  font-family: var(--aesir-font-mono);
+  font-size: var(--aesir-text-micro);
+  font-weight: 600;
+  letter-spacing: var(--aesir-track-label);
+  text-transform: uppercase;
+  color: var(--aesir-gold);
+}
+
+.md-typeset .aesir-package-card ul {
+  margin-bottom: 1.15rem;
+  font-size: 0.78rem;
+}
+
+.md-typeset .aesir-package-card li {
+  margin-bottom: 0.35rem;
+}
+
+.md-typeset .aesir-package-card .md-button {
+  font-size: 0.65rem;
+  padding: 0.42em 0.9em;
+}
+
+.md-typeset .aesir-value-card > p:first-child {
+  font-family: var(--aesir-font-display);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: var(--aesir-track-heading);
+}
+
+.md-typeset .aesir-value-card > p:last-child {
+  margin-bottom: 0;
+  color: var(--aesir-ink-2);
+  font-size: 0.78rem;
+  line-height: 1.65;
+}
+
+
+
+/* --- 8.6 路径表(从这里开始) --------------------------------------------- */
+
+.md-typeset .aesir-paths {
+  margin: 1.35rem 0 2.75rem;
+  border: 1px solid var(--aesir-line);
+  border-radius: var(--aesir-radius);
+  overflow: hidden;
+}
+
+.md-typeset .aesir-paths > p {
+  margin: 0;
+}
+
+.md-typeset .aesir-paths p > a {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr) 5rem;
+  align-items: baseline;
+  gap: 0.35rem 1.25rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--aesir-line-2);
+  color: var(--aesir-ink);
+  text-decoration: none;
+  transition: background-color 0.14s ease;
+}
+
+.md-typeset .aesir-paths p > a:last-child {
+  border-bottom: none;
+}
+
+.md-typeset .aesir-paths p > a:hover {
+  background: var(--aesir-gold-wash);
+  text-decoration: none;
+}
+
+.md-typeset .aesir-paths b {
+  font-family: var(--aesir-font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--aesir-ink);
+}
+
+.md-typeset .aesir-paths span {
+  color: var(--aesir-ink-2);
+  font-size: 0.78rem;
+}
+
+.md-typeset .aesir-paths em {
+  justify-self: end;
+  font-family: var(--aesir-font-mono);
+  font-size: var(--aesir-text-micro);
+  font-style: normal;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--aesir-gold);
+}
+
+/* --- 8.7 文档地图卡 ------------------------------------------------------ */
+
+.md-typeset .aesir-map-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.35rem 0 2.75rem;
+}
+
+.md-typeset .aesir-map-card {
+  position: relative;
+  padding: 1.25rem 1.35rem 1.35rem;
+  border: 1px solid var(--aesir-line);
+  border-radius: var(--aesir-radius);
+  background: var(--aesir-bg-elev);
+  box-shadow: var(--aesir-shadow-sm);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
+}
+
+.md-typeset .aesir-map-card:hover {
+  border-color: var(--aesir-gold-line);
+  box-shadow: var(--aesir-shadow);
+  transform: translateY(-2px);
+}
+
+.md-typeset .aesir-map-card::before {
+  position: absolute;
+  top: -1px;
+  left: 1.25rem;
+  width: 2.25rem;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(90deg, var(--aesir-gold), transparent);
+  content: "";
+}
+
+.md-typeset .aesir-map-card > h3 {
+  margin: 0.35rem 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.md-typeset .aesir-map-card > p {
+  margin: 0 0 0.95rem;
+  color: var(--aesir-ink-2);
+  font-size: 0.78rem;
+  line-height: 1.6;
+}
+
+.md-typeset .aesir-map-card .md-button {
+  margin: 0;
+  font-size: 0.65rem;
+  padding: 0.42em 0.9em;
+}
+
+/* === 9. 响应式与动效降级 ================================================ */
+
+@media screen and (max-width: 1024px) {
+  .md-typeset .aesir-value-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .md-typeset .aesir-package-grid,
+  .md-typeset .aesir-map-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .md-typeset .aesir-hero {
+    margin-bottom: 2.5rem;
+    padding: 1.75rem 1.25rem 1.85rem;
+  }
+
+  /* 窄屏隐藏符文刻印:它会压到正文,且手机上没有留白余量 */
+  .md-typeset .aesir-hero::before {
+    display: none;
+  }
+
+  .md-typeset .aesir-hero__claim {
+    max-width: none;
+  }
+
+  .md-typeset .aesir-hero__lead {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+
+  .md-typeset .aesir-hero__meta > p {
+    gap: 0.4rem 1rem;
+  }
+
+  .md-typeset .aesir-paths p > a {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .md-typeset .aesir-paths em {
+    justify-self: start;
+    order: 3;
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .md-typeset .aesir-value-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 首页沿用站点既有的 61rem 栅格,不再额外放宽:
+   正文行宽保持在可读范围内,英雄区靠内部排版而非超宽容器营造落地感。
+   注:Material modern 把 html 设为 20px,故 1rem = 20px。 */
+body:has(.aesir-hero) .md-content__inner {
+  box-sizing: border-box;
+  max-width: 60rem;
+  margin-inline: auto;
+  padding-inline: 0.8rem;
+}
+
+/* 动效降级 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
