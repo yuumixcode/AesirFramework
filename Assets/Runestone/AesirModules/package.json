@@ -3,7 +3,7 @@
   "displayName": "Aesir Modules",
   "version": "0.35.0",
   "unity": "2022.3",
-  "description": "Aesir 功能模块包。UI 框架（单门面 + 多注册表单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（Script 订阅 + 句柄退订、订阅者过滤器精确投递、取消传播、公开诊断 API 与调试窗口、死引用清理、SO 资产化）+ 音频模块（SFX 轮询播放、BGM 淡入淡出、三通道音量持久化）。",
+  "description": "Aesir 功能模块包。UI 框架（单门面 + 多注册表单例、四层 Canvas 层级、面板生命周期、可替换资源加载器）+ 事件模块（Script 订阅 + 句柄退订、订阅者过滤器精确投递、取消传播、公开诊断 API 与调试窗口、死引用清理、SO 资产化）+ 音频模块（SFX 轮询播放、BGM 淡入淡出、三通道音量持久化）+ 保存模块（事务式写入崩溃不丢档、备份回退、三轨序列化、四扩展点、版本迁移、自动保存）。",
   "documentationUrl": "https://yuumixcode.github.io/AesirFramework/modules/",
   "changelogUrl": "https://yuumixcode.github.io/AesirFramework/changelog/",
   "keywords": [
@@ -54,6 +54,11 @@
       "displayName": "UI Module - Basic Usage",
       "description": "UI 模块基础用法示例：面板与 Canvas 根窗口两种形态协作、蒙版单遮/叠遮切换、点击蒙版关闭与全屏加载窗口。",
       "path": "Samples~/UI/01_BasicUsage"
+    },
+    {
+      "displayName": "Save Module - Basic Usage",
+      "description": "保存模块基础用法示例：OnGUI 面板驱动保存/加载/删除存档槽、自动保存开关、加载状态与来源展示、破坏主存档演示备份回退。",
+      "path": "Samples~/Save/01_BasicUsage"
     }
   ]
 }

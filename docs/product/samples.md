@@ -74,10 +74,11 @@ description: "AesirFramework 两包共 11 个可导入示例:计数器六档对�
 | **Event · Cancellation** | `SampleForCancellation` | 取消传播:四档优先级订阅同一伤害事件,Space 观察执行链,Shift 对照不可取消事件 |
 | **Event · Diagnostics** | `SampleForDiagnostics` | 诊断 API:订阅 `TraceProduced` 实时展示事件链路快照 |
 | **Audio · Basic Usage** | `SampleForAudioBasic` | SFX 轮询播放、BGM 淡入淡出切换、三通道音量 / 静音持久化(OnGUI 面板驱动) |
+| **Save · Basic Usage** | `SampleForSaveBasicUsage` | 保存/加载/删除存档槽、自动保存开关、加载状态与来源展示、破坏主存档演示备份回退(OnGUI 面板驱动) |
 | **UI · Basic Usage** | `SampleForUIBasic` | 面板与 Canvas 根窗口两种形态协作:Normal 层控制面板 + Top 层日志 HUD、设置 / 叠加窗口的蒙版单遮与叠遮对照、全屏加载窗口 |
 
 ## 继续阅读
 
 - [Architecture 快速开始](../architecture/getting-started.md) —— 手写第一个 MVC 计数器
 - [架构概念](../architecture/concepts.md) —— 示例背后的能力接口与 Context 机制
-- [UI 框架](../modules/ui.md) · [事件模块](../modules/events.md) · [音频模块](../modules/audio.md) · [场景模块](../modules/scene.md)
+- [UI 框架](../modules/ui.md) · [事件模块](../modules/events.md) · [音频模块](../modules/audio.md) · [场景模块](../modules/scene.md) · [保存模块](../modules/save.md)

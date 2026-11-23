@@ -9,6 +9,16 @@
 
 ### Added
 
+- **保存模块（SaveModule）** — 独立游戏级事务式存档门面：存档槽 `Save`/`Load` 一行可用；写入经「临时文件 +
+  强制刷盘 + 双 rename 备份轮换 + 原子提交」，任意崩溃点（断电/进程崩溃）至少一份完整可读存档；CRC32 校验和，
+  加载损坏自动回退备份（结果对象标明 Status/Source，环境失败不抛异常、编程错误 fail-fast）。三轨序列化：
+  Unity JsonUtility（默认零依赖）/ Odin 二进制（Dictionary 与多态，`ODIN_INSPECTOR` 门控 asmref）/ Newtonsoft
+  （可选集成程序集，`versionDefines` 检测包安装，未装整体编译剔除）。四扩展点 `ISaveSerializer` /
+  `ISaveStorage` / `ISaveManager` / `ISaveTransform`——实现 `ISaveManager` 可整体接入云存档等自定义保存管理方案；
+  GZip 压缩 + AES-256 加密变换链（默认关闭，密钥代码注入不入资产）；`ISaveMigrator<T>` 版本迁移（迁移结果不在
+  加载路径写回磁盘）；自动保存（复用 `AesirTimer` unscaled 周期 + `OnApplicationPause`/`OnApplicationQuit` 钩子，
+  配置可关）；`SaveConfigSO` 配置资产（菜单显式幂等创建、无资产内存兜底）。含 BasicUsage 示例（OnGUI 面板驱动
+  保存/加载/删除、自动保存开关、破坏主存档演示备份回退）。
 - **事件模块可观测性：取消传播 + 公开诊断 API + 三个调试窗口** —
   事件链路补齐"能拦、能看、能测"三块高频能力（设计思路参考成熟事件总线，全部按 Aesir 命名与风格自研实现，非 1:1
   复刻）：

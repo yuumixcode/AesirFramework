@@ -12,6 +12,7 @@ namespace Runestone.AesirModules
         public const string AesirModulesTag = "[AesirModules]";
         public const string EventModuleTag = "[EventModule]";
         public const string AudioModuleTag = "[AudioModule]";
+        public const string SaveModuleTag = "[SaveModule]";
 
         /// <summary>
         /// ScriptDocGenerator 模块前缀。该模块的可读日志此前散落在 <c>Debug.Log*</c> 与多种裸前缀上

@@ -28,6 +28,13 @@ namespace Runestone.AesirModules.Tests.Editor
                 "场景配置资产不得在包导入时自动创建");
         }
 
+        [Test]
+        public void SaveModuleConfigAssetInitializer_HasNoInitializeOnLoadMethod()
+        {
+            Assert.IsFalse(HasInitializeOnLoadMethod(typeof(SaveModuleConfigAssetInitializer)),
+                "保存配置资产不得在包导入时自动创建");
+        }
+
         static bool HasInitializeOnLoadMethod(Type type) =>
             type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic).Any(method =>
                 method.IsDefined(typeof(InitializeOnLoadMethodAttribute), false));

@@ -1,6 +1,6 @@
 # Aesir Modules
 
-Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面 + 多注册表）、事件模块、音频管理、场景管理工具与脚本文档生成工具。
+Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面 + 多注册表）、事件模块、音频管理、场景管理、保存模块与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
 [![Version](https://img.shields.io/badge/version-0.34.1-blue.svg)](./CHANGELOG.md)
@@ -19,6 +19,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面
 | Event              | 已实现            | `EventModule` Script 订阅（句柄精确退订）+ 4 档优先级稳定排序 + 快照与重入安全分发 + 委托直调无反射 + 订阅者过滤器（精确投递）+ 死引用清理 + SO 资产化 + 取消传播 + 公开诊断 API（`AesirEventDiagnostics`）+ Monitor/Log/Tester 三个调试窗口（UI Toolkit / Odin 双轨）                                       |
 | Audio              | 已实现            | `AudioModule` 单例（2D 音频极简门面）+ SFX 独占音源轮询 + BGM 淡入淡出 + 三通道音量/静音持久化                                                                                                                                                                                                               |
 | Scene              | 已实现            | `SceneModule` 静态门面（加载/叠加/卸载/激活场景切换 + 场景事件广播，直接 `SceneModule.xxx` 调用）+ UniTask 适配程序集（可选，宏自动维护，含 UniTask 时协程实现自动替换为 UniTask 驱动并提供可 await API）+ `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Module Settings） |
+| Save               | 已实现            | `SaveModule` 静态门面（存档槽 Save/Load + 事务式写入崩溃不丢档 + CRC32 校验与备份回退）+ 三轨序列化（JsonUtility 默认 / Odin / Newtonsoft 可选）+ 四扩展点（序列化器 / 存储 / 保存管理器 / 变换链，实现 `ISaveManager` 可整体接入云存档等自定义方案）+ 版本迁移 + 自动保存（周期 + 切后台/退出钩子） |
 | ScriptDocGenerator | 已实现（需 Odin） | 反射分析 C# 类型生成结构化 API 文档（增量保留手写内容）+ Summary 工具（XML `<summary>` 与 `[Summary]` 特性同步，特性优先）                                                                                                                                                                                   |
 
 > 另有两项可选能力：**Binder 组件绑定**（`Runtime/UI/OdinInspector/Binder/`，需 Odin Inspector）与 **Input System

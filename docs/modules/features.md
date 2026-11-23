@@ -99,6 +99,22 @@ AudioModule.SfxVolume = 0.5f;                        // 设置即生效、即持
 - **`SceneAssetWrapper`** — 可序列化场景引用:GUID 锚点自愈、状态机校验、`TryGet` 安全读取家族、专用异常族;安装 Addressables 时自动扩展地址查询能力(Inspector 面板效果需 Odin)
 - **编辑器配套** — `Tools → Aesir → Modules → Scene Editor Settings` 设置窗口;`BootstrapSceneHelper` 搜集注册 Bootstrapper 场景(默认关闭,运行时只持引用不做自动流转)
 
+## 保存模块
+
+`SaveModule` 单例的公开 API 全为静态成员,零配置调用即用 —— 独立游戏级事务式存档门面:
+
+```csharp
+SaveModule.Save("slot0", myData);                  // 事务式写入:崩溃/断电不丢档
+var result = SaveModule.Load<MyData>("slot0");     // 损坏自动回退备份(Source 标明来源)
+SaveModule.SetAutoSave(() => SaveModule.Save("slot0", Capture()), 60f);
+```
+
+- 事务式写入(temp + 强制刷盘 + 双 rename 备份轮换 + 原子提交),CRC32 校验与备份回退
+- 三轨序列化(JsonUtility 默认 / Odin / Newtonsoft 可选),四扩展点(实现 `ISaveManager` 接入云存档等自定义方案)
+- 版本迁移、压缩 / 加密变换链、自动保存(周期 + 切后台 / 退出钩子)
+
+详见[保存模块](save.md)。
+
 ## 脚本文档生成模块(需 Odin)
 
 - **Script Doc Generator** — 反射分析 C# 类型生成结构化 API 文档:全离线、增量生成(保留 `## Additional Notes` 之后的手写内容)、支持命名空间子目录与四种来源粒度(单类型 / 多类型 / 单程序集 / 多程序集),Markdown 输出可直接用于 AI 知识库。入口 `Tools → Aesir → Modules → Script Doc Generator`

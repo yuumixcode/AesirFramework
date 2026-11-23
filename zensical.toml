@@ -48,6 +48,7 @@ nav = [
           { "事件模块" = "modules/events.md" },
           { "音频模块" = "modules/audio.md" },
           { "场景模块" = "modules/scene.md" },
+          { "保存模块" = "modules/save.md" },
       ]},
   ]},
   { "Scripting API" = [
