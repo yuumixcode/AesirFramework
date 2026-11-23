@@ -1,150 +1,18 @@
-# CNB 主仓流水线（GitHub 仅为镜像 + 国际发布出口）
+# CNB 国内下载仓流水线（GitHub 是开发主仓：github.com/yuumixcode/AesirFramework）
 #
-# main push：包分支 split → update-info 回写（[skip ci]）→ 滚动 tag → git-sync 推 GitHub
-# v* tag_push：打 unitypackage → 发 CNB Release（国内下载加速）
+# 本仓不做任何开发提交：main / 两包分支 / tags 全部由 GitHub 的 sync-to-cnb.yml
+# 在每次 main push 后 force 写入，CNB 侧的直接提交会被覆盖。
 #
-# 纪律：
-# - main 同步永不 force；GitHub main 领先时同步会失败，此时应把 GitHub 提交 merge 回 CNB
-# - 永不改写已发布的 main 历史（rebase/filter），否则单向同步断裂
-# - GitHub 侧零提交：不点 Merge 按钮，PR 由维护者 fetch 回本地经 CNB 合并
-# - 提交信息（主题与正文）严禁出现跳过标记字面量，否则 main 流水线整体跳过；
-#   确需跳过请用 git push -o ci.skip
-# - git-sync 固定 v1.3.0（fetch_options 需 ≥ v1.3.0）。升级前先复验两条源码级行为未变：
-#   ① force 同时作用于分支推送与 tag 推送，无法拆分为"只强推 tag、不强推分支"；
-#   ② branch 指定的分支在本地工作区不存在时仅告警并以 0 退出，不会失败（漏同步是静默的）。
-#   另注：插件只做 push，不传删除——CNB 侧删掉的分支/tag 不会在 GitHub 消失。
+# 职责只留两条：
+# - v* tag_push：打 unitypackage → 发 CNB Release（国内下载加速）。
+#   GitHub Release 由 GitHub auto-release.yml 在同一 tag 上独立发布，两边资产同源。
+# - web_trigger_push_github：CNB AI Issue 修复分支手动反推 GitHub（分支详情页按钮，
+#   配置见 .cnb/web_trigger.yml）。推到 GitHub 后开 PR 正常 Merge，
+#   合并触发 GitHub 同步流水线，结果自动 force 写回本仓，闭环完成。
+#
+# 注意：反推用的 GIT_ACCESS_TOKEN 是 OAuth 类令牌，未授予 workflow scope 时
+# GitHub 会拒绝改动 .github/workflows/* 的分支推送——这类修复请改走本地 SSH 直推。
 
-main:
-  push:
-    - name: publish-and-sync
-      # 连续推送串行排队，避免回写提交 / 滚动 tag 互相踩
-      lock:
-        wait: true
-        timeout: 1800
-      retry: 2
-      imports:
-        - https://cnb.cool/runestone-game/secrets/-/blob/main/github.yml
-      stages:
-        - name: split-package-branches
-          script: |
-            set -e
-            git config user.name "cnb-pipeline"
-            git config user.email "pipeline@cnb.cool"
-            for PAIR in "AesirArchitecture:AesirArchitecture-latest" "AesirModules:AesirModules-latest"; do
-              PKG="${PAIR%%:*}"
-              BR="${PAIR##*:}"
-              DIR="Assets/Runestone/$PKG"
-              [ -d "$DIR" ] || { echo "missing $DIR"; exit 1; }
-              git branch -D "$BR" 2>/dev/null || true
-              git subtree split --prefix="$DIR" --branch "$BR"
-              git checkout "$BR"
-              # UPM 分发裁剪：只保留 Package Manager 认的 ~ 版（与 unitypackage 过滤方向互补）
-              REMOVED=0
-              for DEV_DIR in Samples Documentation; do
-                if [ -e "$DEV_DIR" ]; then
-                  git rm -r -q --ignore-unmatch "$DEV_DIR"
-                  [ -f "$DEV_DIR.meta" ] && git rm -q --ignore-unmatch "$DEV_DIR.meta"
-                  REMOVED=1
-                fi
-              done
-              if [ "$REMOVED" = "1" ]; then
-                git commit -q -m "chore: 剔除开发侧 Samples/ 与 Documentation/ 镜像（UPM 分发只保留 ~ 版）"
-              fi
-              for DEV_DIR in Samples Documentation; do
-                [ -e "$DEV_DIR" ] && { echo "$BR 残留开发侧副本 $DEV_DIR"; exit 1; }
-                [ -e "$DEV_DIR.meta" ] && { echo "$BR 残留 $DEV_DIR.meta"; exit 1; }
-              done
-              for KEEP_DIR in "Samples~" "Documentation~"; do
-                [ -d "$KEEP_DIR" ] || { echo "$BR 缺少 $KEEP_DIR"; exit 1; }
-              done
-              # 裁剪提交时间戳每次不同 → 非快进，必须 force；CNB 侧包分支同样要更新（国内 UPM 加速入口）
-              git push -f origin "$BR"
-              git checkout main
-            done
-            # 清理废弃的版本分支（钉版入口统一为 Release tag）
-            OBSOLETE=$(git ls-remote --heads origin 'refs/heads/AesirArchitecture-v*' 'refs/heads/AesirModules-v*' | awk '{print $2}')
-            for REF in $OBSOLETE; do
-              git push origin --delete "${REF#refs/heads/}"
-            done
-
-        - name: update-info
-          # 默认构建镜像无 python3，独立容器执行
-          image: python:3.12
-          script: |
-            set -e
-            python3 .github/scripts/build_unitypackage.py \
-              --package Assets/Runestone/AesirArchitecture \
-              --package Assets/Runestone/AesirModules \
-              --output dist/AesirFramework-preview.unitypackage \
-              --update-info .github/update-info.json
-            rm -rf dist
-            if [ -n "$(git status --porcelain .github/update-info.json)" ]; then
-              VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
-              git add .github/update-info.json
-              git commit -m "chore: 同步 update-info.json 到 v${VERSION} [skip ci]"
-              git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" HEAD:main
-            else
-              echo "update-info.json 无变化，跳过回写"
-            fi
-
-        - name: rolling-tag
-          image: python:3.12
-          script: |
-            set -e
-            VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
-            TAG="v${VERSION}"
-            # 语义化版本 tag 一旦发布即不可变：远端已存在时直接复用，避免反复删推
-            # （删除请求在 CNB 侧容易被后台自动 tag 规则立即重建，导致后续 push 被拒）。
-            if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-              echo "tag $TAG 已存在，跳过滚动更新"
-              exit 0
-            fi
-            git tag "$TAG"
-            git push "https://${CNB_TOKEN_USER_NAME}:${CNB_TOKEN}@cnb.cool/${CNB_REPO_SLUG}.git" "refs/tags/$TAG"
-
-        # main 永不 force：GitHub main 若领先（意外提交），此处失败即告警，
-        # 处理规程：git fetch https://github.com/yuumixcode/AesirFramework.git main → merge 进 CNB main → 重新推送
-        # （本地无 github remote；GitHub PR 同理用一次性 URL fetch pull/N/head 或 gh -R yuumixcode/AesirFramework）
-        - name: sync-main-to-github
-          image: tencentcom/git-sync:v1.3.0
-          settings:
-            target_url: https://github.com/yuumixcode/AesirFramework.git
-            auth_type: https
-            username: ${GIT_USERNAME}
-            password: ${GIT_ACCESS_TOKEN}
-            branch: main
-
-        # 包分支裁剪提交时间戳每次不同 → hash 变 → 必须 force；
-        # force 同时作用于 tags（插件行为），滚动 tag 的强推搭本阶段便车。
-        # 本阶段是唯一携带 push_tags 的地方：GitHub Release 全靠 tag 送达，
-        # 若拆分/裁剪失败导致本阶段没跑，GitHub 侧不会出新 Release（CNB Release 照常）。
-        - name: sync-architecture-branch
-          image: tencentcom/git-sync:v1.3.0
-          settings:
-            target_url: https://github.com/yuumixcode/AesirFramework.git
-            auth_type: https
-            username: ${GIT_USERNAME}
-            password: ${GIT_ACCESS_TOKEN}
-            branch: AesirArchitecture-latest
-            force: true
-            push_tags: true
-            # push_tags 分支会先执行 git fetch origin --tags --force ${fetch_options}。
-            # --prune-tags 让本地与 CNB（tag 的唯一源）对齐：在 CNB 撤回过的版本 tag
-            # 不会被随后的 git push target --tags --force 复活到 GitHub。
-            fetch_options: "--prune-tags"
-
-        - name: sync-modules-branch
-          image: tencentcom/git-sync:v1.3.0
-          settings:
-            target_url: https://github.com/yuumixcode/AesirFramework.git
-            auth_type: https
-            username: ${GIT_USERNAME}
-            password: ${GIT_ACCESS_TOKEN}
-            branch: AesirModules-latest
-            force: true
-
-# CNB Release（国内下载加速）：tag 推送触发，checkout 到 tag 对应提交。
-# GitHub Release 由 GitHub auto-release 在同一 tag 上独立发布，两边资产同源。
 "v*":
   tag_push:
     - name: cnb-release
@@ -152,8 +20,6 @@ main:
         wait: true
         timeout: 1800
       retry: 2
-      imports:
-        - https://cnb.cool/runestone-game/secrets/-/blob/main/github.yml
       stages:
         - name: build-unitypackages
           image: python:3.12
@@ -188,17 +54,27 @@ main:
             attachments:
               - "./dist/*.unitypackage"
 
-        # GitHub Release 直接由本流水线经 REST API 发布，不依赖 tag-push webhook 触发
-        # auto-release.yml（已实测该触发不可靠：tag 送达但无 PushEvent / 无 run）。
-        # 脚本幂等：先删同 tag 的旧 Release 再重建上传，tag 本身始终归 CNB 管、不触碰。
-        # 用与 git-sync 相同的 PAT（contents: write 即可）；GitHub workflow 保留作幂等兜底。
-        - name: publish-github-release
-          image: python:3.12
+# CNB AI Issue 修复分支反推 GitHub：在分支详情页点「反推此分支到 GitHub」按钮触发。
+# 只允许临时修复分支；main 与常驻包分支的真源在 GitHub，禁止从 CNB 反向覆盖。
+"**":
+  web_trigger_push_github:
+    - name: push-branch-to-github
+      imports:
+        - https://cnb.cool/runestone-game/secrets/-/blob/main/github.yml
+      stages:
+        - name: push
           script: |
             set -e
-            [ -n "$GIT_ACCESS_TOKEN" ] || { echo "GIT_ACCESS_TOKEN missing"; exit 1; }
-            GITHUB_TOKEN="$GIT_ACCESS_TOKEN" python3 .github/scripts/publish_github_release.py \
-              --owner yuumixcode --repo AesirFramework \
-              --tag "$CNB_BRANCH" \
-              --notes release_notes.md \
-              --assets dist/*.unitypackage
+            case "$CNB_BRANCH" in
+              main|AesirArchitecture-latest|AesirModules-latest)
+                echo "禁止反推 $CNB_BRANCH：该分支真源在 GitHub，请在 GitHub 侧合并后由同步流水线写回"
+                exit 1
+                ;;
+            esac
+            # 浅克隆无法向外部仓库推送，先补全历史
+            if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+              git fetch --unshallow origin
+            fi
+            git push -f "https://${GIT_USERNAME}:${GIT_ACCESS_TOKEN}@github.com/yuumixcode/AesirFramework.git" \
+              "HEAD:refs/heads/$CNB_BRANCH"
+            echo "✅ 已推送分支 $CNB_BRANCH 到 GitHub，请在 GitHub 开 PR 合并"

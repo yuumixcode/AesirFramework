@@ -1,0 +1,166 @@
+name: Sync to CNB
+
+# GitHub 是开发主仓，CNB（cnb.cool/runestone-game/AesirFramework）是国内下载仓。
+# 本工作流是唯一的跨仓同步入口：main push 后依次执行
+#   包分支 split + 裁剪 → update-info.json 回写（[skip ci]）→ 版本 tag（不存在才创建）
+#   → 新 tag 时派发 GitHub Release → main / 两包分支 / tags 全部 force 写入 CNB。
+#
+# tag 语义（沿承 PR #7 裁决）：语义化版本 tag 一旦发布即不可变——远端已存在时直接复用，
+# 不删不重推（CNB 侧删除 tag 会被后台自动 tag 规则立即重建，导致后续 push 被拒）。
+# 新版本号 bump 后的首次 main push 才创建新 tag 并触发两边 Release。
+#
+# 纪律：
+# - CNB 侧零提交：main 与包分支每次被本工作流 force 覆盖，CNB 上的直接提交会被冲掉。
+#   CNB AI Issue 修复走临时分支，经 .cnb.yml 的 web_trigger_push_github 按钮反推 GitHub，
+#   在 GitHub 开 PR 正常 Merge，合并后本工作流自动把结果写回 CNB。
+# - 回写提交带 [skip ci]（GitHub Actions 原生识别，不会循环触发本工作流）；
+#   CNB 收到的是同一份含回写的 HEAD，两边一致。
+# - 用 GITHUB_TOKEN 推的 tag 不会触发 push 触发的 workflow（GitHub 平台限制），
+#   所以 GitHub Release 用 gh workflow run 显式派发 auto-release.yml
+#   （workflow_dispatch 是该限制的豁免事件）。
+# - CNB 收到 v* tag push 会触发其 tag_push 流水线发 CNB Release（国内下载加速）。
+# - 需要仓库 Secrets：CNB_USERNAME / CNB_TOKEN（CNB 个人访问令牌，repo 读写权限）。
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+# 连续推送串行排队，避免回写提交 / 滚动 tag 互相踩
+concurrency:
+  group: sync-to-cnb
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for subtree split)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Split package branches
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for PAIR in "AesirArchitecture:AesirArchitecture-latest" "AesirModules:AesirModules-latest"; do
+            PKG="${PAIR%%:*}"
+            BR="${PAIR##*:}"
+            DIR="Assets/Runestone/$PKG"
+            [ -d "$DIR" ] || { echo "missing $DIR"; exit 1; }
+            git branch -D "$BR" 2>/dev/null || true
+            git subtree split --prefix="$DIR" --branch "$BR"
+            git checkout "$BR"
+            # UPM 分发裁剪：只保留 Package Manager 认的 ~ 版（与 unitypackage 过滤方向互补）
+            REMOVED=0
+            for DEV_DIR in Samples Documentation; do
+              if [ -e "$DEV_DIR" ]; then
+                git rm -r -q --ignore-unmatch "$DEV_DIR"
+                [ -f "$DEV_DIR.meta" ] && git rm -q --ignore-unmatch "$DEV_DIR.meta"
+                REMOVED=1
+              fi
+            done
+            if [ "$REMOVED" = "1" ]; then
+              git commit -q -m "chore: 剔除开发侧 Samples/ 与 Documentation/ 镜像（UPM 分发只保留 ~ 版）"
+            fi
+            for DEV_DIR in Samples Documentation; do
+              [ -e "$DEV_DIR" ] && { echo "$BR 残留开发侧副本 $DEV_DIR"; exit 1; }
+              [ -e "$DEV_DIR.meta" ] && { echo "$BR 残留 $DEV_DIR.meta"; exit 1; }
+            done
+            for KEEP_DIR in "Samples~" "Documentation~"; do
+              [ -d "$KEEP_DIR" ] || { echo "$BR 缺少 $KEEP_DIR"; exit 1; }
+            done
+            # 裁剪提交时间戳每次不同 → 非快进，必须 force
+            git push -f origin "$BR"
+            git checkout main
+          done
+
+      - name: Update update-info.json
+        run: |
+          set -e
+          python3 .github/scripts/build_unitypackage.py \
+            --package Assets/Runestone/AesirArchitecture \
+            --package Assets/Runestone/AesirModules \
+            --output dist/AesirFramework-preview.unitypackage \
+            --update-info .github/update-info.json
+          rm -rf dist
+          if [ -n "$(git status --porcelain .github/update-info.json)" ]; then
+            VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
+            git add .github/update-info.json
+            git commit -m "chore: 同步 update-info.json 到 v${VERSION} [skip ci]"
+            # 运行期间用户可能又推了 main：rebase 后重试，最多 3 次
+            n=0
+            until git push origin HEAD:main; do
+              n=$((n+1))
+              [ "$n" -ge 3 ] && { echo "push main 连续失败"; exit 1; }
+              git pull --rebase origin main
+            done
+          else
+            echo "update-info.json 无变化，跳过回写"
+          fi
+
+      - name: Ensure version tag
+        run: |
+          set -e
+          VERSION=$(python3 -c "import json;print(json.load(open('Assets/Runestone/AesirArchitecture/package.json'))['version'])")
+          TAG="v${VERSION}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          # tag 一旦发布即不可变：远端已存在时直接复用，不删不重推
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "tag $TAG 已存在，跳过创建"
+            echo "TAG_CREATED=false" >> "$GITHUB_ENV"
+          else
+            git tag "$TAG"
+            git push origin "refs/tags/$TAG"
+            echo "TAG_CREATED=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Dispatch GitHub Release
+        if: env.TAG_CREATED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # GITHUB_TOKEN 推的 tag 不触发 push workflow，显式派发（workflow_dispatch 豁免）
+          # 仅新 tag 时派发；已有版本补发走 auto-release.yml 的 workflow_dispatch 手动入口
+          gh workflow run auto-release.yml --ref main -f tag="$TAG"
+
+      - name: Force push everything to CNB
+        env:
+          CNB_USERNAME: ${{ secrets.CNB_USERNAME }}
+          CNB_TOKEN: ${{ secrets.CNB_TOKEN }}
+        run: |
+          set -e
+          [ -n "$CNB_USERNAME" ] && [ -n "$CNB_TOKEN" ] || {
+            echo "::error::缺少 Secrets CNB_USERNAME / CNB_TOKEN（CNB 个人访问令牌，repo 读写权限）"; exit 1; }
+          CNB_URL="https://${CNB_USERNAME}:${CNB_TOKEN}@cnb.cool/runestone-game/AesirFramework.git"
+          # CNB 是纯镜像：main 也 force（CNB 侧临时提交由反推 PR 流程进入 GitHub 后才算数）
+          git push -f "$CNB_URL" HEAD:main
+          git push -f "$CNB_URL" refs/heads/AesirArchitecture-latest refs/heads/AesirModules-latest
+          # tag 真源在 GitHub：全量强推，并删掉 CNB 上 GitHub 已不存在的 v* tag
+          git push "$CNB_URL" --tags --force
+          LOCAL_TAGS=$(git tag -l 'v*')
+          REMOTE_TAGS=$(git ls-remote --tags "$CNB_URL" 'refs/tags/v*' | grep -v '\^{}' | sed 's|.*refs/tags/||')
+          for RT in $REMOTE_TAGS; do
+            if ! echo "$LOCAL_TAGS" | grep -qx "$RT"; then
+              git push "$CNB_URL" ":refs/tags/$RT"
+            fi
+          done
+          # 清理两边废弃的版本分支（钉版入口统一为 Release tag）
+          for REMOTE in origin "$CNB_URL"; do
+            OBSOLETE=$(git ls-remote --heads "$REMOTE" 'refs/heads/AesirArchitecture-v*' 'refs/heads/AesirModules-v*' | awk '{print $2}')
+            for REF in $OBSOLETE; do
+              git push "$REMOTE" --delete "${REF#refs/heads/}"
+            done
+          done
+          echo "✅ 已同步 CNB：main + 包分支 + tags（tag=$TAG）"

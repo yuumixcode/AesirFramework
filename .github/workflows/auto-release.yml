@@ -1,21 +1,22 @@
 name: Auto Release Packages
 
-# 本仓库是 CNB 主仓（cnb.cool/runestone-game/AesirFramework）的镜像，GitHub 侧零提交、零 tag 创建。
-# tag 由 CNB 流水线滚动生成并经 git-sync 推送过来。
+# 本仓库是开发主仓；CNB（cnb.cool/runestone-game/AesirFramework）是国内下载仓，
+# 由 sync-to-cnb.yml 在每次 main push 后 force 写入（main / 包分支 / tags）。
 #
-# 发布主路径：CNB 的 v* tag_push 流水线用 REST API 直接发 GitHub Release（见 .cnb.yml
-#   publish-github-release stage）——实测 git-sync 推上来的 tag 不可靠地触发本 workflow
-#   （tag 已送达但无 PushEvent / 无 run），故 GitHub Release 不再依赖本触发。
-# 本工作流保留为幂等兜底：若哪天 tag-push 触发恢复，它 delete+create 的结果与 CNB 一致；
-#   也可用 workflow_dispatch 手动补发任意 tag。
+# 发布主路径：sync-to-cnb.yml 滚动生成 v* tag 后用 gh workflow run 显式派发本工作流
+#   （workflow_dispatch）——GITHUB_TOKEN 推的 tag 不会触发 push 触发的 workflow，
+#   这是 GitHub 平台限制，不能依赖下面的 push tags 触发。
+# push tags 触发保留给「维护者用自己凭证手动推 tag」的场景；
+#   workflow_dispatch 也可手动补发任意 tag。发布幂等：先删同 tag 旧 Release 再重建。
 # 资产为 RAA / RAM / RAF 三个 .unitypackage（RAF = 两包合并），说明取自根 CHANGELOG 对应版本段落。
-# tag 本身归 CNB 管，这里只删旧 Release、不删 tag。
-# update-info.json 由 CNB 流水线生成并提交回主仓（经同步到达本仓库），供包内更新器经 jsDelivr 检测版本。
+# tag 归本仓（sync-to-cnb.yml）管，这里只删旧 Release、不删 tag。
+# CNB Release 由 CNB 收到 v* tag push 时的 tag_push 流水线独立发布，两边资产同源。
+# update-info.json 由 sync-to-cnb.yml 生成并提交回本仓 main，供包内更新器经 jsDelivr 检测版本。
 # 纯 Python 生成 unitypackage（格式经 Unity 导出参考包逐字节校验），CI 无需 Unity 编辑器。
 on:
   push:
     tags: ['v*']
-  # tag-push webhook 实测不可靠，手动兜底入口（指定要发布的 tag）
+  # 主触发路径：sync-to-cnb.yml 派发；也是手动补发入口（指定要发布的 tag）
   workflow_dispatch:
     inputs:
       tag:
@@ -87,7 +88,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 滚动发布：删除旧 Release（保留 tag——tag 归 CNB 管），在现有 tag 上重建
+          # 滚动发布：删除旧 Release（保留 tag——tag 归 sync-to-cnb.yml 管），在现有 tag 上重建
           gh release delete "$TAG" --yes 2>/dev/null || true
 
           gh release create "$TAG" \

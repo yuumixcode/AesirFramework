@@ -1,0 +1,7 @@
+# 分支详情页自定义按钮（手动触发流水线）。
+# 事件流水线定义在 .cnb.yml 的 web_trigger_push_github；main / 常驻包分支会在脚本内被拒绝。
+branch:
+  - buttons:
+      - name: 反推此分支到 GitHub
+        description: 把当前修复分支推到 GitHub 同名分支，随后在 GitHub 开 PR 合并
+        event: web_trigger_push_github
