@@ -33,6 +33,32 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
             Assert.AreNotEqual(ConstSignatureMaps[fieldName], fieldData.Signature);
         }
 
+        /// <summary>
+        /// 回归：开放泛型类型的静态字段（如 AbstractContext&lt;T&gt; 的静态成员）——即使字段类型是具体类型，
+        /// Mono 的 FieldInfo.GetValue 也按 DeclaringType.ContainsGenericParameters 抛 NotSupportedException，
+        /// 阻断整程序集文档生成——应按"无默认值"处理。
+        /// </summary>
+        [Test]
+        public void CreateFieldData_OpenGenericDeclaringTypeStaticField_NoDefaultValueAndDoesNotThrow()
+        {
+            var field = typeof(GenericStaticFieldClass<>).GetField(
+                nameof(GenericStaticFieldClass<string>.Count), BindingFlags.Static | BindingFlags.Public);
+
+            IFieldData data = null;
+            Assert.DoesNotThrow(() => data = UnitTestAnalysisFactory.Default.CreateFieldData(field));
+            Assert.IsNotNull(data);
+            Assert.IsFalse(data.Signature.Contains("="), "开放泛型声明类型的静态字段无法物化默认值，签名不应含赋值");
+        }
+
+        #region Nested type: GenericStaticFieldClass
+
+        class GenericStaticFieldClass<T> where T : class
+        {
+            public static int Count;
+        }
+
+        #endregion
+
         #region Nested type: ConstTestEnum
 
         enum ConstTestEnum
