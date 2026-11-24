@@ -14,7 +14,7 @@
 
 ### 变更
 
-- **Zensical 安装门禁**：`aesir-project-structure` 技能明确——涉及 Zensical 前先问用户是否需要；需要则由用户在**项目内 venv** 与**项目内 uv** 之间二选一，**禁止全局安装**与复用机器已有的全局 `zensical`（CI 一次性 runner 不在此限）。展开参考给出两套锁 `0.1.1` 的命令与禁止清单。规格见 `openspec/changes/zensical-install-gate/`。
+- **Zensical 环境门禁**：`aesir-project-structure` 技能明确——涉及 Zensical 前先问用户是否需要；若机器已有全局 `zensical`，再问用户是否复用（同意才可直接用）；未装或用户不复用时，由用户在**项目内 venv** 与**项目内 uv** 之间二选一。**禁止为用全局而新装**（`pip install zensical` / `pipx` / `uv tool`），CI 一次性 runner 不在此限。展开参考给出两套锁 `0.1.1` 的项目内命令。规格见 `openspec/changes/zensical-install-gate/`（本次口径修订按用户裁决直接改文档、未回写规格）。
 
 ## 1.5.0 — 2026-11-23
 

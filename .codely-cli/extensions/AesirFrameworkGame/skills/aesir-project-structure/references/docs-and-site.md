@@ -44,7 +44,13 @@
 
 **为什么推荐 Zensical**：Material for MkDocs 团队（squidfunk）用 Rust 写的官方继任者（MkDocs 已停止维护），MIT 免费开源，配置用 TOML（`zensical.toml`），内置搜索、即时导航、暗色主题，构建快、零成本、零运维，纯静态无后端。
 
-**前置门禁（AI 必读）**：Zensical 只解决"人也要看站点"的需求。动手前 MUST 先用 `ask_user` 问用户是否确实需要 Zensical：不需要就停在纯 Markdown 文档（不安装、不写 `zensical.toml`、不写部署流水线）；确认需要后，再让用户**二选一**选择安装方案——项目内 venv 或项目内 uv（uv 是前置条件，未装时用户可选 venv）。AI MUST NOT 代选、MUST NOT 默认其一、MUST NOT 在用户未作答时安装。
+**前置门禁（AI 必读）**：Zensical 只解决"人也要看站点"的需求，按三步走：
+
+1. **先问是否需要**：动手前 MUST 用 `ask_user` 问用户是否确实需要 Zensical。不需要就停在纯 Markdown 文档（不安装、不写 `zensical.toml`、不写部署流水线）。
+2. **查全局并询问是否复用**：确认需要后，探测本机是否已有可用的全局 `zensical`（如 `command -v zensical`）。**已有则再问用户是否复用该全局工具**——用户同意即可直接用，不必建项目环境；用户不同意则走第 3 步。禁止未经询问就调用全局 `zensical`。
+3. **全局未装或用户不复用时建项目环境**：MUST 让用户**二选一**——项目内 venv 或项目内 uv（uv 是前置条件，未装时用户可选 venv）。AI MUST NOT 代选、MUST NOT 默认其一、MUST NOT 在用户未作答时安装。
+
+**关键点**：可以复用用户**已有**的全局工具，但**禁止为了用全局而新装**（`pip install zensical` / `pipx install zensical` / `uv tool install zensical`）。项目内安装一律锁 `0.1.1`。
 
 **目录**：
 
@@ -54,7 +60,7 @@ docs/                  # 源目录（默认）
 site/                  # 构建输出 → 必须进 .gitignore
 ```
 
-**命令（按用户选择的方案二选一，全程只写项目内）**：
+**命令（第 3 步的项目内环境，二选一）**：
 
 方案 A：项目内 venv
 
@@ -74,16 +80,16 @@ uv run zensical serve
 uv run zensical build --strict
 ```
 
-**禁止全局安装与全局调用**（本机已有的全局 `zensical` 也不可复用）：
+**禁止清单（禁止的是"为了用全局而新装"，不是禁止复用已有工具）**：
 
 - `pip install zensical`（全局或 `--user`）；
 - `pipx install zensical`；
-- `uv tool install zensical`（虽隔离依赖，仍把可执行文件写进用户级 `~/.local/bin`）；
-- 未激活项目隔离环境就调 `zensical`（含直接敲全局 `zensical`）。
+- `uv tool install zensical`（会把可执行文件写进用户级 `~/.local/bin`）；
+- 未问过用户就调用全局 `zensical`，或未激活项目隔离环境就调 `zensical`。
 
-版本一律锁 `0.1.1`，与本仓 `docs.yml` 及 `tools/docs-site/README.md` 一致；0.x 期间不写裸 `zensical`，避免上游破坏性变更（0.1.1 的 `edit_uri` panic 坑见 `zensical.toml` 注释）。
+本机已装全局 `zensical` 时，按第 2 步问过用户并获同意即可直接用；用户不同意或本机没装时，一律走上面的项目内 venv / uv 两套命令。项目内安装锁 `0.1.1`，与本仓 `docs.yml` 及 `tools/docs-site/README.md` 一致；0.x 期间不写裸安装命令，避免上游破坏性变更（0.1.1 的 `edit_uri` panic 坑见 `zensical.toml` 注释）。复用全局时版本由用户现有安装决定，不代其升级。
 
-**团队收益**：任何人拉下仓库、按上文选好项目内隔离方案后跑一条 `zensical serve`，就能看到带导航/搜索/高亮/图文的文档站；单一真源不分裂（站点内容就是 Git 里的 Markdown 本体，`docs/index.md` 既是站点首页也是 AI 文档地图）；质量门禁（`zensical build --strict` 把失效链接/格式问题当错误纳入 CI）；配置优先、不写后端（评论/统计走 Giscus、Plausible 等免费 SaaS）。
+**团队收益**：任何人拉下仓库、按上文确定环境后跑一条 `zensical serve`，就能看到带导航/搜索/高亮/图文的文档站；单一真源不分裂（站点内容就是 Git 里的 Markdown 本体，`docs/index.md` 既是站点首页也是 AI 文档地图）；质量门禁（`zensical build --strict` 把失效链接/格式问题当错误纳入 CI）；配置优先、不写后端（评论/统计走 Giscus、Plausible 等免费 SaaS）。
 
 **`zensical.toml` 最小示例**（TOML 父表 `[project]` 的键必须在子表之前写完）：
 
@@ -139,7 +145,7 @@ jobs:
       - uses: actions/deploy-pages@v4
 ```
 
-**CI 例外**：上面 workflow 里的 `pip install "zensical==0.1.1"` 只在 GitHub Actions 的一次性 runner 上执行，不写用户机器，不属于"禁止全局安装"的禁令范围；本地开发仍必须走 §5.2 的项目内 venv / uv。
+**CI 例外**：上面 workflow 里的 `pip install "zensical==0.1.1"` 只在 GitHub Actions 的一次性 runner 上执行，不写用户机器，不属于"禁止为用全局而新装"的禁令范围；本地开发按 §5.2 的三步门禁选择复用已有全局工具或项目内 venv / uv。
 
 **三个实操注意点**：① 项目站点 URL 带子路径 `用户名.github.io/仓库名/`，`zensical.toml` 的 `site_url` 必须写成 `https://<用户名>.github.io/<仓库名>/`，否则 CSS/JS/即时导航 404；② `.nojekyll`——走 Actions + artifact 通常自动处理，旧方案推 `gh-pages` 分支需放空 `.nojekyll`，含符号链接的仓库必须用 Actions；③ `site/` 进 `.gitignore`。
 
