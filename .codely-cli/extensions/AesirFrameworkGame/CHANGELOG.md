@@ -2,7 +2,15 @@
 
 本扩展的版本号在 `gemini-extension.json` 的 `version`。技能正文的唯一主位是本扩展 `skills/`，包内不再有副本。
 
-## Unreleased
+## 1.5.1 — 2026-11-24
+
+纯文案修正，技能与功能零变化（按用户裁决不进规格文档）。
+
+### 修复
+
+- 依赖门禁 hook `hooks/detect-packages.mjs`：`MODULE_SKILLS` 补 `aesir-save`；"12 个技能全部可用"→"13 个技能全部可用"、"四个模块技能失效"→"五个模块技能失效"，与实际的 13 技能 / RAM 五模块对齐。
+- `aesir-router/references/dependency-gate.md`：失效矩阵与"只有 RAA"行补 `aesir-save`，"全部 12 个技能"→"全部 13 个技能"、"四个模块"→"五个模块"。
+- 主仓 `CODELY.md`：当前状态两处技能数 12→13（历史变更记录 1.3.0 那条 12 保持不动）。
 
 ### 变更
 

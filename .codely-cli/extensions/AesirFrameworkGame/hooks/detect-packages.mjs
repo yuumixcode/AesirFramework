@@ -36,7 +36,7 @@ const PACKAGES = [
   },
 ];
 
-const MODULE_SKILLS = 'aesir-ui / aesir-events / aesir-audio / aesir-scene';
+const MODULE_SKILLS = 'aesir-ui / aesir-events / aesir-audio / aesir-scene / aesir-save';
 const SNAPSHOT_NOTE = '本结论为会话启动快照；会话中途装过包后按 aesir-router 的探测方法复验。';
 
 function emit(obj) {
@@ -66,9 +66,9 @@ function detect(root, pkg) {
 }
 
 function scopeText(raa, ram) {
-  if (raa && ram) return '12 个技能全部可用。';
+  if (raa && ram) return '13 个技能全部可用。';
   if (raa) {
-    return `架构与工程初始化技能可用；${MODULE_SKILLS} 四个模块技能失效——缺 RAM，一个都编不过。`;
+    return `架构与工程初始化技能可用；${MODULE_SKILLS} 五个模块技能失效——缺 RAM，一个都编不过。`;
   }
   if (ram) {
     return '仅 aesir-project-structure 可用——RAM 缺 RAA 连编译都过不了。只缺 RAA 时不要手写 manifest 依赖（RAM 的 package.json 不声明它），走菜单 Tools/Aesir/Modules/Install Dependencies。';

@@ -13,8 +13,8 @@
 
 | 工程实际有 | 可用 | 失效（不许写，也不许用原生 API 顶替） |
 |---|---|---|
-| RAA + RAM | 全部 12 个技能 | — |
-| 只有 RAA | router / framework / tiers / core-api / decisions / pitfalls / boot-scene / project-structure | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` 全部失效——四个模块一个都编不过 |
+| RAA + RAM | 全部 13 个技能 | — |
+| 只有 RAA | router / framework / tiers / core-api / decisions / pitfalls / boot-scene / project-structure | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` / `aesir-save` 全部失效——五个模块一个都编不过 |
 | 只有 RAM | 仅 project-structure（纯目录/文档知识，不依赖包） | 其余全部——先补 RAA |
 | 都没有 | 仅 project-structure（立目录骨架时第一个用它）+ 解释概念与写法 | 其余全部——先装包 |
 
