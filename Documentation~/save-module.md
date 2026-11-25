@@ -12,6 +12,8 @@
 - **扩展点**：序列化器、存储、保存管理器、字节变换链四个接口各自可替换——实现 `ISaveManager` 即可整体
   接入自定义保存管理方案（云存档等）
 - **自动保存**：周期计时（复用 RAA `AesirTimer`，不受 timeScale 影响）+ 切后台 / 退出钩子
+- **批量原子会话**：多个命名条目打包成一个存档键一次事务提交，一组数据全成或全旧（见「批量原子会话」）
+- **默认值加载 / 时间戳**：加载失败一行取默认值；存档最后写入时间只读查询（见对应小节）
 
 > **注意**：模块只存**纯数据对象**（POCO），不做 Unity 对象引用序列化（GameObject / Component / 资产引用）。
 > 全同步契约；云存档只留扩展点不做实现。安全边界见文末。
@@ -32,6 +34,12 @@ public static LoadResult<T> Load<T>(string key, int currentVersion = 0, ISaveMig
 public static void Delete(string key);          // 删除主存档与备份；不存在时无副作用
 public static bool Exists(string key);
 public static IReadOnlyList<string> GetKeys();  // 枚举已提交存档键（不含 tmp/bak）
+
+// 批量原子会话 / 默认值 / 时间戳
+public static SaveResult SaveBatch(string key, Action<SaveBatch> configure, int dataVersion = 0);
+public static LoadResult<SaveBatch> LoadBatch(string key, int currentVersion = 0, ISaveMigrator<SaveBatch> migrator = null);
+public static T LoadOrDefault<T>(string key, T defaultValue, int currentVersion = 0, ISaveMigrator<T> migrator = null);
+public static DateTime? GetTimestamp(string key);  // 存储不支持时返回 null
 
 // 扩展点替换
 public static void RegisterSerializer(ISaveSerializer serializer);   // 同 Id 覆盖
@@ -104,6 +112,63 @@ public readonly struct LoadResult<T>
 | `Corrupted`         | 主备均损坏 / 解析失败 / 变换缺失                 | 提示玩家 + 开新档            |
 | `VersionMismatch`   | 版本不一致且未提供迁移器                         | 提供迁移器重新加载           |
 | `SerializerMissing` | 存档记录的序列化器未注册                         | 注册对应序列化器重新加载     |
+
+## 批量原子会话
+
+一组相关数据（如金币 + 背包 + 位置）若各自 `Save` 成独立键，分步写入的中途崩溃可能只落一部分，数据不一致。
+批量会话把多个命名条目打包成**一个**存档键、一次事务提交——复用单条保存的序列化 / 变换链 / 信封 / 备份回退，
+原子边界就是这一次提交：**全成或全旧**。设计思路参考 Easy Save 3 的 `ES3File` 内存缓存，但按 Aesir 极简基调
+收敛为「一次回调 + 一次提交」，不留常驻缓存对象。
+
+```csharp
+// 保存：回调内登记命名条目（条目数据须为所选序列化器可序列化的 POCO）
+var result = SaveModule.SaveBatch("slot0", batch =>
+{
+    batch.Set("gold", new GoldData { amount = 100 });
+    batch.Set("inventory", new InventoryData { items = ... });
+}, dataVersion: 1);
+
+// 加载：按名取回，各自按写入时的类型还原
+var loaded = SaveModule.LoadBatch("slot0", currentVersion: 1);
+if (loaded.IsSuccess)
+{
+    var gold = loaded.Value.Get<GoldData>("gold");
+    var inventory = loaded.Value.Get<InventoryData>("inventory");
+}
+```
+
+- `SaveBatch` 的 `Set<T>(name, data)` / `Get<T>(name)` / `Contains(name)` / `Count`：同名条目覆盖；
+  `Get` 在条目缺失 / 序列化器未注册 / 还原失败时返回 `default(T)`（与单条 `Load` 的 NoSave / Corrupted 同语义）。
+- **条目数据须符合序列化器形状约束**：默认 `unity-json` 只支持 `[Serializable]` 公开字段类，裸 `int` / `string`
+  等原始类型须包进 POCO 字段（与单条 `Save` 同限制——`JsonUtility.ToJson(100)` 返回 `{}`）。Odin / Newtonsoft 轨按各自能力放宽。
+- **原子边界仅是一个批次键内部**：不同批次键之间无全局原子；需跨键原子的数据放进同一批次。
+- 批次的 `dataVersion` 是整份批次的版本（走信封层），`LoadBatch` 可传 `ISaveMigrator<SaveBatch>` 迁移；条目内不再各自迁移。
+- `SaveBatch` 实例不要自行 `new`（未绑定注册表，`Get` 返回 default）——只从 `SaveBatch` 回调 / `LoadBatch` 结果获取。
+
+## 默认值加载
+
+`LoadOrDefault<T>` 把「缺失 / 损坏 / 版本不匹配 / 序列化器缺失 → 用默认值」收敛成一行，省去调用点 `switch (Status)`：
+成功时返回存档值（忽略默认值），其余四状态返回传入默认值；不写磁盘。
+
+```csharp
+var gold = SaveModule.LoadOrDefault("gold", new GoldData { amount = 0 });
+```
+
+- 独立方法名而非 `Load` 重载：`Load<int>(key, 5)` 会与现有 `currentVersion` 参数签名歧义。
+- 需要区分失败原因（提示玩家「存档损坏」而非静默开新档）时用 `Load<T>` 读 `Status`。
+
+## 存档时间戳
+
+`GetTimestamp(key)` 返回主存档最后写入时间（UTC）；无存档、存储不支持、取不到时均返回 `null`，不创建模块实例、不写磁盘。
+时间戳能力经可选接口 `ISaveStorageTimestamp` 提供——`FileSaveStorage` 已实现（读文件 mtime）；自定义存储可实现该接口接入，
+未实现则门面返回 null。
+
+```csharp
+DateTime? when = SaveModule.GetTimestamp("slot0");   // 选档 UI 显示「上次保存时间」
+```
+
+- 时间戳是尽力而为的只读查询：精度依文件系统（NTFS / APFS / exFAT 不同），WebGL 虚拟文件系统可能无有效 mtime；
+  不用于精确仲裁顺序。
 
 ## 三轨序列化
 

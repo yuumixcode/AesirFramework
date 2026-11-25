@@ -27,7 +27,7 @@ namespace Runestone.AesirModules
     /// rename 到持久化存在延迟窗口，崩溃安全弱于原生平台（文档明示，代码不做平台特判）。
     /// </para>
     /// </remarks>
-    public class FileSaveStorage : ISaveStorage
+    public class FileSaveStorage : ISaveStorage, ISaveStorageTimestamp
     {
         const string MainExtension = ".sav";
         const string BackupExtension = ".sav.bak";
@@ -122,6 +122,26 @@ namespace Runestone.AesirModules
 
         /// <inheritdoc />
         public bool Exists(string key) => File.Exists(PathFor(key));
+
+        /// <inheritdoc />
+        public DateTime? GetLastWriteTimeUtc(string key)
+        {
+            var path = PathFor(key);
+            if (!File.Exists(path))
+            {
+                return null;
+            }
+
+            try
+            {
+                return File.GetLastWriteTimeUtc(path);
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                // 时间戳是尽力而为的只读查询：环境失败返回 null，不影响存档本身（契约见接口）。
+                return null;
+            }
+        }
 
         /// <inheritdoc />
         public IReadOnlyList<string> GetKeys()
