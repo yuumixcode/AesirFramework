@@ -7,8 +7,24 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **ScriptDocGenerator 输出文件名改为 URL 安全的 `-of-` 形式** — 泛型类型文档文件名 `ObservableList{T}.md` →
+  `ObservableList-of-T.md`（多参数 `Dictionary-of-Key-Value`）。花括号/尖括号/空格均为非法 IRI 字符，zensical
+  0.1.x 拼接 `repo_url` + `edit_uri` + 源路径做 IRI 校验时直接 panic（上游 0.1.2 #1147 仅修复方括号转义），
+  此前站点构建被迫置空 `edit_uri`。规则收敛于 `TypeAnalyzerUtility.ConvertToDocumentationFileName`，
+  EditMode 测试同步更新；文档站「编辑此页」链接已恢复。
+
+## [0.36.0] - 2026-11-24
+
 ### Added
 
+- **保存模块增强：批量原子会话 / 默认值加载 / 存档时间戳** — 对照 Easy Save 3 提取三项高频低风险能力，零 BREAKING：
+  `SaveModule.SaveBatch(key, configure, dataVersion)` / `LoadBatch(key, currentVersion, migrator)` 把多条目打包成
+  一个存档键一次事务提交（复用现有事务写与备份回退，原子边界 = 一次提交，混用类型 / 序列化器按条目各自 Id 还原）；
+  `LoadOrDefault<T>(key, defaultValue, ...)` 加载失败（缺失 / 损坏 / 版本不匹配 / 序列化器缺失）返回默认值、成功返回存档值
+  （独立方法名避开 `currentVersion` 签名歧义）；`GetTimestamp(key)` 经可选接口 `ISaveStorageTimestamp` 返回存档最后写入 UTC 时间
+  （存储不支持返回 null）。`FileSaveStorage` 实现时间戳接口；批次容器 `SaveBatch` 公开类型。新增 EditMode 用例与示例用法。
 - **保存模块（SaveModule）** — 独立游戏级事务式存档门面：存档槽 `Save`/`Load` 一行可用；写入经「临时文件 +
   强制刷盘 + 双 rename 备份轮换 + 原子提交」，任意崩溃点（断电/进程崩溃）至少一份完整可读存档；CRC32 校验和，
   加载损坏自动回退备份（结果对象标明 Status/Source，环境失败不抛异常、编程错误 fail-fast）。三轨序列化：
@@ -19,6 +35,11 @@
   加载路径写回磁盘）；自动保存（复用 `AesirTimer` unscaled 周期 + `OnApplicationPause`/`OnApplicationQuit` 钩子，
   配置可关）；`SaveConfigSO` 配置资产（菜单显式幂等创建、无资产内存兜底）。含 BasicUsage 示例（OnGUI 面板驱动
   保存/加载/删除、自动保存开关、破坏主存档演示备份回退）。
+
+## [0.35.0] - 2026-11-23
+
+### Added
+
 - **事件模块可观测性：取消传播 + 公开诊断 API + 三个调试窗口** —
   事件链路补齐"能拦、能看、能测"三块高频能力（设计思路参考成熟事件总线，全部按 Aesir 命名与风格自研实现，非 1:1
   复刻）：

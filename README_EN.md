@@ -5,14 +5,14 @@ multiple registries), an event module, audio management, scene management toolin
 documentation generator.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.34.1-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.36.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
 
 > 📦 **This package is part of the [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo.**
 > This package **depends on**:
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.34.1`)
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)** (`>= 0.36.0`)
 
 ## Modules
 
@@ -22,7 +22,7 @@ documentation generator.
 | Event              | Implemented                 | `EventModule` Script subscription (precise handle unbinding) + 4 priority levels with stable sorting + snapshot/re-entrant-safe dispatch + direct delegate calls (no reflection) + subscriber filters (precise delivery) + dead-reference cleanup + SO assetization + cancellation propagation + public diagnostics API (`AesirEventDiagnostics`) + Monitor/Log/Tester debug windows (UI Toolkit / Odin dual-track) |
 | Audio              | Implemented                 | `AudioModule` singleton (minimal 2D audio facade) + SFX round-robin exclusive sources + BGM crossfade + 3-channel volume/mute persistence                                                                                                                                                                                                                                                                           |
 | Scene              | Implemented                 | `SceneModule` static facade (scene load/additive/unload/activate + scene lifecycle events, call `SceneModule.xxx` directly) + UniTask adapter assembly (optional, define auto-maintained: with UniTask the coroutine implementation is replaced by UniTask-driven flow and awaitable APIs are provided) + `SceneAssetWrapper` serializable reference + editor tools (BootstrapSceneHelper / Scene Module Settings)  |
-| Save               | Implemented                 | `SaveModule` static facade (save-slot Save/Load + transactional crash-safe writes + CRC32 checksum with backup fallback) + three serializer tracks (JsonUtility default / Odin / Newtonsoft optional) + four extension points (serializer / storage / save manager / transform chain; implement `ISaveManager` to plug in custom schemes such as cloud saves) + version migration + auto-save (interval + pause/quit hooks) |
+| Save               | Implemented                 | `SaveModule` static facade (save-slot Save/Load + transactional crash-safe writes + CRC32 checksum with backup fallback) + batch atomic session (multiple named entries in one transaction) + default-value load + save timestamp + three serializer tracks (JsonUtility default / Odin / Newtonsoft optional) + four extension points (serializer / storage / save manager / transform chain; implement `ISaveManager` to plug in custom schemes such as cloud saves) + version migration + auto-save (interval + pause/quit hooks) |
 | ScriptDocGenerator | Implemented (requires Odin) | Reflection-based C# type analysis generating structured API docs (incremental, preserves hand-written content) + Summary tool (syncs XML `<summary>` and the `[Summary]` attribute, attribute-first)                                                                                                                                                                                                                |
 
 > Two additional optional capabilities: **Binder component binding** (`Runtime/UI/OdinInspector/Binder/`,
@@ -31,7 +31,7 @@ documentation generator.
 
 ## Dependencies
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.34.1 (required)
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.36.0 (required)
 - **Odin Inspector** (optional): participates only via `#if ODIN_INSPECTOR` conditional compilation;
   auto-excluded when not installed. Odin is a panel styling enhancement only: the Scene module's
   `SceneAssetWrapper` drag-assign, coloring and one-click fix buttons are provided by the Odin processor panel
