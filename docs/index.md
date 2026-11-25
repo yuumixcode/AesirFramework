@@ -50,7 +50,7 @@ hide:
 
 ## 安装
 
-推荐在 Package Manager 中使用**常驻 `latest` 分支** —— 分支名永久固定,Git URL 一次输入持续更新(升级 = 移除后用同一 URL 重新添加)。打开 **Package Manager → `+` → Add package from git URL...**:
+Package Manager → `+` → Add package from git URL,填入常驻 `latest` 分支地址(分支名永久固定,一次输入持续可用):
 
 === "Aesir Architecture"
 
@@ -60,8 +60,6 @@ hide:
 
 === "Aesir Modules"
 
-    Modules 依赖 Architecture。安装 Modules 时请同时添加两个包:
-
     ```text
     https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest
     https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest
@@ -69,11 +67,9 @@ hide:
 
 === "unitypackage"
 
-    从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `.unitypackage`;完整组合包用 `AesirFramework-v<版本>.unitypackage`。
+    从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirFramework-v<版本>.unitypackage`,导入到 `Assets/Runestone/`。
 
-    导入后代码位于 `Assets/Runestone/`,可用 `Tools → Aesir → Check for Updates` 检测并更新;Git URL 安装请通过 Package Manager 管理。
-
-钉住旧版本、只装 Modules 时的依赖补全、升级与卸载细节见[安装与升级](start/installation.md)。
+三种方式对比、钉版本、依赖补全与升级卸载见[安装与升级](start/installation.md)。
 
 ## 双包组成
 
@@ -262,4 +258,4 @@ UI 框架、事件模块、音频模块、场景模块。
 
 </div>
 
-发现问题时,请附上 Unity / 团结引擎版本、AesirFramework 版本和最小复现步骤,前往 [GitHub Issues](https://github.com/yuumixcode/AesirFramework/issues) 反馈。
+发现问题或想提需求,见[支持与贡献](support.md)。

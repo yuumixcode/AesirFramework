@@ -19,11 +19,11 @@ description: "Runestone.AesirModules 系列命名空间的 Scripting API 参考"
 | :--- | :--- |
 | [`AddressablesSupportDisabledException`](<Runestone/AesirModules/AddressablesSupportDisabledException.md>) | 当前项目未安装 Addressables 包时访问了 Addressables 相关 API。 |
 | [`AesirBasePanel`](<Runestone/AesirModules/AesirBasePanel.md>) | UI 面板基类。子类覆写生命周期虚方法，通过 Context 访问 Model/Service。 |
-| [`AesirBasePanelView<T>`](<Runestone/AesirModules/AesirBasePanelView{T}.md>) | 面板视图基类（MVP 模式的 View 层）。 泛型参数 T 指定面板关联的 Context 类型， Context 作为 Model 和 Service 的聚合容器，在面板与… |
-| [`AesirBasePanelViewController<T>`](<Runestone/AesirModules/AesirBasePanelViewController{T}.md>) | 面板视图控制器基类（MVC 模式的 Controller 层，兼 View 职责）。 泛型参数 T 指定面板关联的 Context 类型， Context 作为 Model 和… |
+| [`AesirBasePanelView<T>`](<Runestone/AesirModules/AesirBasePanelView-of-T.md>) | 面板视图基类（MVP 模式的 View 层）。 泛型参数 T 指定面板关联的 Context 类型， Context 作为 Model 和 Service 的聚合容器，在面板与… |
+| [`AesirBasePanelViewController<T>`](<Runestone/AesirModules/AesirBasePanelViewController-of-T.md>) | 面板视图控制器基类（MVC 模式的 Controller 层，兼 View 职责）。 泛型参数 T 指定面板关联的 Context 类型， Context 作为 Model 和… |
 | [`AesirBaseWindow`](<Runestone/AesirModules/AesirBaseWindow.md>) | Canvas 根 UI 窗口基类。窗口预制体根节点自带 Canvas（独立渲染根）， 由 UIModule 实例化后直接挂载到 UIRoot 下，按 SortingOrder … |
-| [`AesirBaseWindowView<T>`](<Runestone/AesirModules/AesirBaseWindowView{T}.md>) | 窗口视图基类（MVP 模式的 View 层，Canvas 根窗口形态）。 泛型参数 T 指定窗口关联的 Context 类型， Context 作为 Model 和 Servi… |
-| [`AesirBaseWindowViewController<T>`](<Runestone/AesirModules/AesirBaseWindowViewController{T}.md>) | 窗口视图控制器基类（MVC 模式的 Controller 层兼 View 职责，Canvas 根窗口形态）。 泛型参数 T 指定窗口关联的 Context 类型， Contex… |
+| [`AesirBaseWindowView<T>`](<Runestone/AesirModules/AesirBaseWindowView-of-T.md>) | 窗口视图基类（MVP 模式的 View 层，Canvas 根窗口形态）。 泛型参数 T 指定窗口关联的 Context 类型， Context 作为 Model 和 Servi… |
+| [`AesirBaseWindowViewController<T>`](<Runestone/AesirModules/AesirBaseWindowViewController-of-T.md>) | 窗口视图控制器基类（MVC 模式的 Controller 层兼 View 职责，Canvas 根窗口形态）。 泛型参数 T 指定窗口关联的 Context 类型， Contex… |
 | [`AesirEventArgs`](<Runestone/AesirModules/AesirEventArgs.md>) | 事件参数基类。所有自定义事件参数继承此类，作为事件数据载体在 EventModule 中传递。 注意：AesirEventArgs 本身不持有监听者，仅作为参数实例。 订阅管理… |
 | [`AesirEventArgsSO`](<Runestone/AesirModules/AesirEventArgsSO.md>) | AesirEventArgs 的 ScriptableObject 包装，让事件可保存为 .asset 资源， 在 Inspector 中配置载荷并由非程序员触发。 通过 Pr… |
 | [`AesirEventDiagnostics`](<Runestone/AesirModules/AesirEventDiagnostics.md>) | 事件模块诊断门面：对外暴露运行时订阅状态查询与事件链路推送，全部为公开 API。 设计定位：数据层与视图层解耦的唯一契约。本类只依赖运行时类型，不引用任何编辑器或 Odin 代… |
@@ -56,7 +56,7 @@ description: "Runestone.AesirModules 系列命名空间的 Scripting API 参考"
 | [`SceneModuleConfigSO`](<Runestone/AesirModules/SceneModuleConfigSO.md>) | 场景模块全局配置（单例资产）。承载无需预放置 [SceneModule] 即可调整的模块级配置： 在 Project 窗口直接编辑本资产即可生效，不再要求预放置 SceneMo… |
 | [`SceneModuleUniTask`](<Runestone/AesirModules/SceneModuleUniTask.md>) | SceneModule 的 UniTask 适配 API——游戏工程包含 UniTask 时（宏 AESIR_MODULES_UNITASK 自动维护）， 提供可 await … |
 | [`SceneNotAddressableException`](<Runestone/AesirModules/SceneNotAddressableException.md>) | 对非 Addressable 场景的 SceneAssetWrapper 访问了 Address。 |
-| [`ScriptBindingInfo<TEventArgs>`](<Runestone/AesirModules/ScriptBindingInfo{TEventArgs}.md>) | Script 订阅绑定。持有 Action{T} 委托，注册后直接调用—— 无反射、无表达式树、无参数数组，分发热路径只是一次虚调用加一次委托调用。 |
+| [`ScriptBindingInfo<TEventArgs>`](<Runestone/AesirModules/ScriptBindingInfo-of-TEventArgs.md>) | Script 订阅绑定。持有 Action{T} 委托，注册后直接调用—— 无反射、无表达式树、无参数数组，分发热路径只是一次虚调用加一次委托调用。 |
 | [`SubclassSelectorAttribute`](<Runestone/AesirModules/SubclassSelectorAttribute.md>) | 标记 [SerializeReference] 字段在 Inspector 中使用子类下拉选择器。 点击下拉按钮弹出字段声明类型的全部可选子类（按命名空间分组）， 选择后自动创… |
 | [`UICanvasConfigSO`](<Runestone/AesirModules/UICanvasConfigSO.md>) | UI Canvas 配置资产。创建路径：Assets → Create → Aesir Modules → UI → Default UICanvasConfig。 |
 | [`UIModule`](<Runestone/AesirModules/UIModule.md>) | UI 管理器（MonoBehaviour 单例）。 负责面板生命周期管理，UI 根节点构建委托给 UIRoot。 |

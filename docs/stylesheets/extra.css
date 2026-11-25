@@ -434,9 +434,9 @@ body {
 }
 
 /* 标签栏:发丝线 + 金色活动指示 */
+/* 页签栏不再画底边线：横线只保留 .md-header 下方那一条（顶部），避免页签上下双线 */
 .md-tabs {
   background: transparent;
-  border-bottom: 1px solid var(--aesir-line-2);
 }
 
 .md-tabs__list {

@@ -8,15 +8,15 @@ Aesir Architecture 为独立游戏内置的三种高频集合 —— `Observable
 
 | 集合 | 适用场景 | 专属能力 |
 |------|---------|---------|
-| [ObservableList\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableList{T}.md) | 背包、任务列表、排行榜 | `AddRange` / `InsertRange` / `RemoveRange` / `Move` / `Sort` / `Reverse` |
-| [ObservableDictionary\<TKey, TValue\>](scripting-api/Runestone/AesirArchitecture/ObservableDictionary{TKey, TValue}.md) | 配置表、属性表、名称索引 | 索引器分流(新键 Add / 已有键 Replace 含旧值) |
-| [ObservableHashSet\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableHashSet{T}.md) | 在线玩家、去重标记 | Add / Remove / Contains 与批量增删(0.23.0 起不再继承 `ISet<T>`,不含集合代数——需要时用内部 `HashSet<T>` 或上游) |
+| [ObservableList\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableList-of-T.md) | 背包、任务列表、排行榜 | `AddRange` / `InsertRange` / `RemoveRange` / `Move` / `Sort` / `Reverse` |
+| [ObservableDictionary\<TKey, TValue\>](scripting-api/Runestone/AesirArchitecture/ObservableDictionary-of-TKey-TValue.md) | 配置表、属性表、名称索引 | 索引器分流(新键 Add / 已有键 Replace 含旧值) |
+| [ObservableHashSet\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableHashSet-of-T.md) | 在线玩家、去重标记 | Add / Remove / Contains 与批量增删(0.23.0 起不再继承 `ISet<T>`,不含集合代数——需要时用内部 `HashSet<T>` 或上游) |
 
 三者统一经 `AddListener` / `RemoveListener` 订阅变更,并各自提供 `ClearListeners()` 一次清空全部监听(已声明进 `IObservableCollection<T>` / `IReadOnlyObservableValue<T>` 接口面,只持有只读接口的 View / Presenter 同样可调)。
 
 ## 单轨变更通知
 
-每个集合只有一个变更事件,经 `MiniEvent<T>` 分发(Invoke 路径零分配),载荷是普通只读结构体 [`CollectionChangedEventArgs<T>`](scripting-api/Runestone/AesirArchitecture/CollectionChangedEventArgs{T}.md) —— 可自由存入集合与闭包:
+每个集合只有一个变更事件,经 `MiniEvent<T>` 分发(Invoke 路径零分配),载荷是普通只读结构体 [`CollectionChangedEventArgs<T>`](scripting-api/Runestone/AesirArchitecture/CollectionChangedEventArgs-of-T.md) —— 可自由存入集合与闭包:
 
 ```csharp
 // 订阅:返回 AutoRemoveListenerHandle

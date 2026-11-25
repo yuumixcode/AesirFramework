@@ -7,31 +7,7 @@
 
 ## 安装
 
-### 方式 1:常驻 latest 分支(推荐)
-
-Unity Package Manager → 左上角 `+` → `Add package from git URL...`:
-
-```
-https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest
-```
-
-`latest` 分支由 CI 自动按包目录 subtree split 滚动更新,分支名永久固定——Git URL 只需输入一次,后续升级无需修改。**升级**:Package Manager 不会对 Git URL 安装的包显示更新提示,移除旧包后用同一 URL 重新添加即可(或删除 `packages-lock.json` 中对应条目后重新解析)。需要钉死旧版本时改用 Release tag:`?path=Assets/Runestone/AesirArchitecture#v<版本>`(tag 永久保留)。
-
-### 方式 2:unitypackage 导入 + 包内更新器(大陆 / 离线友好)
-
-从 [GitHub Releases](https://github.com/yuumixcode/AesirFramework/releases) 下载 `AesirArchitecture-v<版本>.unitypackage`(或两包合并的 `AesirFramework-v<版本>.unitypackage`)导入。
-
-以此方式安装的包位于 `Assets/Runestone/` 下(代码可改),**更新无需手动重新下载**:菜单 `Tools → Aesir → Check for Updates` 打开包内更新器,一键完成"检测新版本 → 静默导入 → 差集清理残留"。版本检测按「直连 GitHub → 镜像站 → CDN 中转」三层兜底,能直连 GitHub 即为 100% 最新;窗口会显示本次的连接状态、获取线路与各层尝试详情,仅在落到 CDN 中转时提示可能有数小时延迟。
-
-!!! warning "更新器管辖范围"
-
-    经 Git URL(UPM)安装的副本**不在更新器管辖内**——纯 UPM 安装形态下该菜单经 validate 整体隐藏;Package Manager 也不会对 Git URL 包显示更新提示,升级 = 移除旧包后用同一 Git URL 重新添加(`latest` 分支名永久固定)。开发仓库(存在 `.git`)切勿点更新。
-
-### 方式 3:跟踪 main 最新(开发预览)
-
-```
-https://github.com/yuumixcode/AesirFramework.git?path=Assets/Runestone/AesirArchitecture
-```
+先按[安装与升级](../start/installation.md)添加 Aesir Architecture。三种安装方式、`latest` 分支机制与升级卸载都在那里统一说明。
 
 ## 第一个 MVC 应用
 

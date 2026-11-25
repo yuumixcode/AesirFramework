@@ -14,10 +14,10 @@ Aesir Architecture 的运行时代码由三层组成:**架构核心**(Core —�
 
 | 模块 | 源码目录 | 核心类型 | 作用 |
 |------|---------|---------|------|
-| **Event 事件** | `Modules/Event` | [MiniEvent](scripting-api/Runestone/AesirArchitecture/MiniEvent.md) / [MiniEvent\<T\>](scripting-api/Runestone/AesirArchitecture/MiniEvent{T}.md) | 零分配轻量事件 + 自动移除监听体系 |
-| **Observable 可观察** | `Modules/Observable` | [ObservableValue\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableValue{T}.md) + List / Dictionary / HashSet 三件套 | 响应式属性与可观察集合,读写分离由类型系统闭环 |
+| **Event 事件** | `Modules/Event` | [MiniEvent](scripting-api/Runestone/AesirArchitecture/MiniEvent.md) / [MiniEvent\<T\>](scripting-api/Runestone/AesirArchitecture/MiniEvent-of-T.md) | 零分配轻量事件 + 自动移除监听体系 |
+| **Observable 可观察** | `Modules/Observable` | [ObservableValue\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableValue-of-T.md) + List / Dictionary / HashSet 三件套 | 响应式属性与可观察集合,读写分离由类型系统闭环 |
 | **CustomLifecycle 自定义生命周期** | `Modules/CustomLifecycle` | [MonoLifecycleProxy](scripting-api/Runestone/AesirArchitecture/MonoLifecycleProxy.md) + ICustom* 接口家族 | 把 Unity 原生回调统一为可订阅事件,任意对象可接入 |
-| **Locator 定位器** | `Modules/Locator` | [GenericLocator\<T\>](scripting-api/Runestone/AesirArchitecture/GenericLocator{T}.md) | 按类型注册 / 查询 / 获取实例,注册顺序保序 |
+| **Locator 定位器** | `Modules/Locator` | [GenericLocator\<T\>](scripting-api/Runestone/AesirArchitecture/GenericLocator-of-T.md) | 按类型注册 / 查询 / 获取实例,注册顺序保序 |
 | **Utilities 工具** | `Modules/Utilities` | [AesirPlayerLoop](scripting-api/Runestone/AesirArchitecture/AesirPlayerLoop.md) / [PlayerLoopUtility](scripting-api/Runestone/AesirArchitecture/PlayerLoopUtility.md) | 游戏级帧钩子、PlayerLoop 自由扩展 |
 
 ---
@@ -86,7 +86,7 @@ model.Count.AddListenerAndInvoke(OnCountChanged)
 
 ### 可观察集合家族
 
-[ObservableList\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableList{T}.md) / [ObservableDictionary\<TKey, TValue\>](scripting-api/Runestone/AesirArchitecture/ObservableDictionary{TKey, TValue}.md) / [ObservableHashSet\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableHashSet{T}.md) —— 组合 BCL 集合存储 + MiniEvent 事件,与 ObservableValue 同一套读写分离与句柄模式:
+[ObservableList\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableList-of-T.md) / [ObservableDictionary\<TKey, TValue\>](scripting-api/Runestone/AesirArchitecture/ObservableDictionary-of-TKey-TValue.md) / [ObservableHashSet\<T\>](scripting-api/Runestone/AesirArchitecture/ObservableHashSet-of-T.md) —— 组合 BCL 集合存储 + MiniEvent 事件,与 ObservableValue 同一套读写分离与句柄模式:
 
 | Action | 载荷字段 |
 |--------|---------|

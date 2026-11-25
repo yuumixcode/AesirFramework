@@ -2,29 +2,19 @@
 
 ## 安装与更新
 
+安装方式对比、`latest` 分支机制、依赖补全与升级卸载见[安装与升级](start/installation.md);版本策略与产物清单见[版本与下载](product/releases.md)。以下只列高频疑问。
+
 ### Git URL 和 unitypackage 怎么选?
 
-| 方式 | 适合谁 |
-|------|--------|
-| **Git URL(常驻 latest 分支)** | 常规项目;包只读、经 Package Manager 管理(URL 一次输入持续可用),不碰用户代码区 |
-| **unitypackage + 包内更新器** | 想**改包源码**、或大陆 / 离线环境 GitHub 直连不稳的项目;安装在 `Assets/Runestone/` 下,`Tools → Aesir → Check for Updates` 一键更新 |
-| **跟踪 main(`?path=`)** | 想吃最新开发预览的用户 |
+日常开发选 Git URL(只读、Package Manager 管理);要改包源码或 GitHub 直连不稳时选 unitypackage(可用包内更新器)。完整对比见[安装与升级](start/installation.md)。
 
-### 为什么更新器检测不到刚发布的版本?
+### 更新器相关问题(检测延迟、UPM 包、开发仓库)
 
-版本检测按「直连 GitHub → 镜像站 → CDN 中转」三层兜底,**能直连 GitHub 就是 100% 最新**(窗口会显示本次直连是否可用)。只有当直连与镜像站都不可用、结果来自 CDN 中转时,才可能因分支缓存(最长约 12 小时)拿到旧版本 —— 此时窗口会给出延迟提示,可点「打开 Releases 页面」人工确认。
-
-### 更新器能更新 Git URL(UPM)安装的包吗?
-
-不能。更新器只管辖 `Assets/Runestone/` 下的代码导入副本;UPM 副本请直接用 Package Manager 更新。**开发仓库(存在 `.git`)切勿点更新** —— Release 内容会覆盖本地源码(窗口已内置警告)。
-
-### Git URL 分支策略是什么?
-
-常驻分支 `AesirArchitecture-latest` / `AesirModules-latest` 由 CI 在每次推送 main 时自动按包目录 subtree split **滚动更新**,分支名永久固定——Git URL 一次输入持续可用,升级 = Package Manager 移除后用同一 URL 重新添加。想锁旧版本请用 Release tag(`?path=Assets/Runestone/<包目录>#v<版本>`,tag 永久保留)或 Releases 页面的 unitypackage。(旧策略的版本分支 `AesirXxx-v<版本>` 随发版轮换并删除,已废弃——钉住它的 URL 会在发版后失效。)
+更新器的三层检测线路、管辖范围与升级语义见[包内更新器](architecture/updater.md)。要点:UPM 安装的包不在更新器管辖内;直连 GitHub 即为最新,仅 CDN 兜底时可能有缓存延迟;开发仓库(有 `.git`)切勿点更新。
 
 ### 安装 Aesir Modules 时为什么还要添加 Architecture 的 URL?
 
-Modules 依赖 Architecture(必需)。UPM 对 Git URL 安装的包不会自动解析包内 dependencies 为 Registry 引用,因此两个包的 Git URL 都要添加(推荐同版本)。
+Modules 依赖 Architecture(必需),而 UPM 不会自动解析包内的 Git URL 依赖,因此两个包的 URL 都要添加。见[安装与升级](start/installation.md)。
 
 ## 使用问题
 
@@ -120,4 +110,4 @@ model.Count.AddListenerAndInvoke(OnCountChanged)
 
 ## 未找到答案?
 
-前往[支持](support.md)或在 [GitHub Issues](https://github.com/yuumixcode/AesirFramework/issues) 提问(附复现步骤与 Unity 版本)。
+提问与反馈渠道、提问前自查清单见[获取帮助与贡献](support.md)。

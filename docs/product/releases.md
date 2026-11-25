@@ -19,16 +19,9 @@ description: "AesirFramework 当前版本、版本策略、发布产物与更新
 - `0.x` 阶段:破坏性 API 变更会在 CHANGELOG 的 **Changed / Removed** 段明确标注,来龙去脉写在提交说明与内部笔记仓的过程记录里(包内不保留设计变更记录)
 - 版本 tag 一旦发布即不可变、永久保留;版本号 bump 后的首次推送才创建新 tag。钉住旧版本请用 tag 而不是分支名
 
-## 获取方式
+## 如何获取
 
-| 方式 | 地址 | 适用 |
-| --- | --- | --- |
-| **常驻 latest 分支**(推荐) | `https://github.com/yuumixcode/AesirFramework.git#AesirArchitecture-latest`<br>`https://github.com/yuumixcode/AesirFramework.git#AesirModules-latest` | 日常开发;分支名永久固定,升级=移除后重新添加 |
-| **Release unitypackage** | [Releases 页面](https://github.com/yuumixcode/AesirFramework/releases) | 大陆网络受限 / 需要改源码;可用包内更新器一键升级 |
-| **钉住某个版本** | `...?path=Assets/Runestone/AesirArchitecture#v<版本>` | 复现问题、锁定依赖 |
-| **跟踪 main** | `...?path=Assets/Runestone/AesirArchitecture` | 想要未发版的改动 |
-
-安装细节与依赖补全见[安装与升级](../start/installation.md)。
+三种安装方式(Git URL 常驻 `latest` 分支 / Release unitypackage / 钉版本)、依赖补全与升级卸载见[安装与升级](../start/installation.md)。本节只讲版本策略与发布产物。
 
 ## 每次 Release 的产物
 
@@ -42,23 +35,7 @@ unitypackage 由仓库内的纯 Python 脚本生成(不依赖第三方 CLI),跳�
 
 ## 更新路径
 
-| 你的安装形态 | 怎么升级 |
-| --- | --- |
-| Git URL(latest / main) | Package Manager 不会提示更新:移除旧包后用同一 URL 重新添加,或删掉 `packages-lock.json` 对应条目重新解析 |
-| unitypackage(Assets 形态) | 菜单 `Tools → Aesir → Check for Updates` 一键完成检测 / 导入 / 残留清理 |
-| 开发仓库(有 `.git`) | 直接 `git pull`;**不要**用更新器,Release 内容会覆盖本地源码 |
-
-## latest 分支是怎么来的
-
-主仓是 monorepo(主仓在 CNB,GitHub 为镜像),两个包位于 `Assets/Runestone/` 下。每次推送 `main`,CNB 流水线 `.cnb.yml`:
-
-1. `git subtree split` 把每个包滚动发布到 `AesirArchitecture-latest` / `AesirModules-latest`(分支根即包根,并裁掉开发侧 `Samples/` 与 `Documentation/`),同时清理废弃的 `<包>-v<旧版本>` 分支
-2. 回写 `.github/update-info.json`(供更新器直连检测)
-3. 滚动打 `v<版本>` tag,并经 git-sync 把 main / 两包分支 / tag 单向同步到 GitHub
-
-tag 推送后,CNB 与 GitHub 各自构建并发布三个 unitypackage(CNB Release 供国内下载,GitHub Release 供国际用户),两边资产同源。
-
-这也解释了为什么 Git URL 里要带 `#<包>-latest`:包内容在分支根部,不需要 `?path=`。
+升级方式按安装形态区分(Git URL 移除后重新添加 / unitypackage 用包内更新器 / 开发仓库 `git pull`),见[安装与升级](../start/installation.md)。`latest` 分支由 CI 在每次推送 `main` 时按包目录 subtree split 滚动更新、分支名永久固定,故 Git URL 一次输入持续可用。
 
 ## 确认自己装的是哪版
 

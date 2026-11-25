@@ -18,9 +18,9 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 | 名称 | 描述 |
 | :--- | :--- |
 | [`AbstractCommand`](<Runestone/AesirArchitecture/AbstractCommand.md>) | 命令基类。持有上下文引用，通过 OnExecute 执行命令逻辑。 |
-| [`AbstractContext<T>`](<Runestone/AesirArchitecture/AbstractContext{T}.md>) | 上下文基类。纯 C# 实现，不依赖 MonoBehaviour。 子类在 Configure 中注册 Model 和 Service，通过 Instance 获取全局单例。 |
+| [`AbstractContext<T>`](<Runestone/AesirArchitecture/AbstractContext-of-T.md>) | 上下文基类。纯 C# 实现，不依赖 MonoBehaviour。 子类在 Configure 中注册 Model 和 Service，通过 Instance 获取全局单例。 |
 | [`AbstractModel`](<Runestone/AesirArchitecture/AbstractModel.md>) | Model 基类。继承 AbstractSubmodule 获得生命周期管理，实现 IModel 标记数据层角色。 |
-| [`AbstractQuery<TResult>`](<Runestone/AesirArchitecture/AbstractQuery{TResult}.md>) | 查询基类。持有上下文引用，通过 OnExecute 执行查询逻辑并返回结果。 |
+| [`AbstractQuery<TResult>`](<Runestone/AesirArchitecture/AbstractQuery-of-TResult.md>) | 查询基类。持有上下文引用，通过 OnExecute 执行查询逻辑并返回结果。 |
 | [`AbstractService`](<Runestone/AesirArchitecture/AbstractService.md>) | Service 基类。继承 AbstractSubmodule 获得生命周期管理，实现 IService 标记服务层角色。 |
 | [`AbstractSubmodule`](<Runestone/AesirArchitecture/AbstractSubmodule.md>) | 子模块基类。持有上下文引用，通过 OnInitialize 和 OnDispose 管理生命周期。 Model 和 Service 的公共逻辑统一在此实现。 |
 | [`AbstractTimer`](<Runestone/AesirArchitecture/AbstractTimer.md>) | 计时器抽象基类：承载框架级调度引擎（注册表、PlayerLoop 注入、两阶段结算与累计统计） 与所有计时器共有的状态、查询、生命周期控制；具体计时形态由子类经 Advance… |
@@ -30,24 +30,24 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 | [`AesirPlayerLoop`](<Runestone/AesirArchitecture/AesirPlayerLoop.md>) | 基于 PlayerLoop 的生命周期钩子系统，无需 MonoBehaviour 即可接入游戏级帧回调。 通过 Register 注册回调，order 越小越先执行；系统自动在… |
 | [`AesirScriptableObject`](<Runestone/AesirArchitecture/AesirScriptableObject.md>) | RAA 架构标准 ScriptableObject 基类，根据运行环境自动选择序列化方式。 |
 | [`AesirTimer`](<Runestone/AesirArchitecture/AesirTimer.md>) | 计时器门面：以静态工厂方法创建各类计时器，并把调度引擎的测试 / 调试入口委托给 AbstractTimer。具体形态由 AbstractTimer 的子类实现，本类只负责"选… |
-| [`AesirView<T>`](<Runestone/AesirArchitecture/AesirView{T}.md>) | View 基类。通过泛型上下文获取模块访问能力，仅具备只读权限，AesirView 自动支持 Odin Inspector 序列化。 |
-| [`AesirViewController<T>`](<Runestone/AesirArchitecture/AesirViewController{T}.md>) | View + Controller 双角色基类。通过泛型上下文获取模块访问能力，自动支持 Odin Inspector 序列化。 |
+| [`AesirView<T>`](<Runestone/AesirArchitecture/AesirView-of-T.md>) | View 基类。通过泛型上下文获取模块访问能力，仅具备只读权限，AesirView 自动支持 Odin Inspector 序列化。 |
+| [`AesirViewController<T>`](<Runestone/AesirArchitecture/AesirViewController-of-T.md>) | View + Controller 双角色基类。通过泛型上下文获取模块访问能力，自动支持 Odin Inspector 序列化。 |
 | [`CapabilityExtensions`](<Runestone/AesirArchitecture/CapabilityExtensions.md>) | 能力扩展方法集合 |
 | [`CountdownTimer`](<Runestone/AesirArchitecture/CountdownTimer.md>) | 倒计时：从给定时长倒数到零，到期回调一次后结束。对应工厂 Countdown。 |
 | [`FrequencyTimer`](<Runestone/AesirArchitecture/FrequencyTimer.md>) | 频率计时器：每秒触发固定次数（如每秒 5 次），用于以"频率"而非"间隔秒数"表达的节奏。 |
-| [`GenericLocator<T>`](<Runestone/AesirArchitecture/GenericLocator{T}.md>) | 泛型对象定位器。按类型注册、查询与获取以 T 为基类的对象实例。 |
+| [`GenericLocator<T>`](<Runestone/AesirArchitecture/GenericLocator-of-T.md>) | 泛型对象定位器。按类型注册、查询与获取以 T 为基类的对象实例。 |
 | [`InternalContextAttribute`](<Runestone/AesirArchitecture/InternalContextAttribute.md>) | 标记一个 AbstractContext{T} 派生类为框架内部 Context（示例 / 测试等非用户工作流用途）。 被标记的 Context 不会出现在用户工作流的 Con… |
 | [`IntervalTimer`](<Runestone/AesirArchitecture/IntervalTimer.md>) | 区间计时器：在一段总时长内每隔固定间隔触发一次事件，总时长走完即结束。 |
 | [`MiniEvent`](<Runestone/AesirArchitecture/MiniEvent.md>) | 单参事件 |
-| [`MiniEvent<T>`](<Runestone/AesirArchitecture/MiniEvent{T}.md>) | 单参事件 |
+| [`MiniEvent<T>`](<Runestone/AesirArchitecture/MiniEvent-of-T.md>) | 单参事件 |
 | [`MonoLifecycleProxy`](<Runestone/AesirArchitecture/MonoLifecycleProxy.md>) | Mono 生命周期事件代理。作为全局单例挂载在 [Aesir Architecture] GameObject 上， 将 Unity 原生生命周期回调和自定义 PlayerLo… |
-| [`MonoView<T>`](<Runestone/AesirArchitecture/MonoView{T}.md>) | View 基类。通过泛型上下文获取模块访问能力，仅具备只读权限。 |
-| [`MonoViewController<T>`](<Runestone/AesirArchitecture/MonoViewController{T}.md>) | View + Controller 双角色基类。通过泛型上下文获取模块访问能力，无 Odin 依赖。 |
+| [`MonoView<T>`](<Runestone/AesirArchitecture/MonoView-of-T.md>) | View 基类。通过泛型上下文获取模块访问能力，仅具备只读权限。 |
+| [`MonoViewController<T>`](<Runestone/AesirArchitecture/MonoViewController-of-T.md>) | View + Controller 双角色基类。通过泛型上下文获取模块访问能力，无 Odin 依赖。 |
 | [`NextFrameTimer`](<Runestone/AesirArchitecture/NextFrameTimer.md>) | 下一帧执行一次的计时器：跳过时间累减，按结算周期号判定。对应工厂 NextFrame。 |
-| [`ObservableDictionary<TKey, TValue>`](<Runestone/AesirArchitecture/ObservableDictionary{TKey, TValue}.md>) | 可观察字典实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableDictionary{TKey, TValue} 只读订阅。 |
-| [`ObservableHashSet<T>`](<Runestone/AesirArchitecture/ObservableHashSet{T}.md>) | 可观察哈希集合实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableHashSet{T} 只读订阅。 |
-| [`ObservableList<T>`](<Runestone/AesirArchitecture/ObservableList{T}.md>) | 可观察列表实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableList{T} 只读订阅。 |
-| [`ObservableValue<T>`](<Runestone/AesirArchitecture/ObservableValue{T}.md>) | 可观察属性实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableValue{T} 只读订阅。 |
+| [`ObservableDictionary<TKey, TValue>`](<Runestone/AesirArchitecture/ObservableDictionary-of-TKey-TValue.md>) | 可观察字典实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableDictionary{TKey, TValue} 只读订阅。 |
+| [`ObservableHashSet<T>`](<Runestone/AesirArchitecture/ObservableHashSet-of-T.md>) | 可观察哈希集合实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableHashSet{T} 只读订阅。 |
+| [`ObservableList<T>`](<Runestone/AesirArchitecture/ObservableList-of-T.md>) | 可观察列表实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableList{T} 只读订阅。 |
+| [`ObservableValue<T>`](<Runestone/AesirArchitecture/ObservableValue-of-T.md>) | 可观察属性实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableValue{T} 只读订阅。 |
 | [`PlayerLoopUtility`](<Runestone/AesirArchitecture/PlayerLoopUtility.md>) | PlayerLoop 操作的静态工具类，提供子系统的插入、查询与描述功能。 供框架内部和外部用户扩展 PlayerLoop，不局限于 AesirLifecyclePhase 预… |
 | [`RemoveListenerExtensions`](<Runestone/AesirArchitecture/RemoveListenerExtensions.md>) | 事件监听器自动移除扩展方法类，用于绑定移除操作到 Unity 生命周期 |
 | [`RemoveListenerHandleCollection`](<Runestone/AesirArchitecture/RemoveListenerHandleCollection.md>) | 监听句柄集合。管理 AutoRemoveListenerHandle 句柄的添加与批量移除， 供 RemoveListenerTrigger 和 RemoveListenerO… |
@@ -71,12 +71,12 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 | [`AesirPlayerLoop.AesirScriptRunBeforeUpdate`](<Runestone/AesirArchitecture/AesirPlayerLoop.AesirScriptRunBeforeUpdate.md>) | PlayerLoop 子系统 type 标识，在 Update 之前执行 |
 | [`AesirPlayerLoop.HookEntry`](<Runestone/AesirArchitecture/AesirPlayerLoop.HookEntry.md>) | 回调条目，记录单个生命周期回调及其排序信息 |
 | [`AutoRemoveListenerHandle`](<Runestone/AesirArchitecture/AutoRemoveListenerHandle.md>) | 自动移除监听句柄。包装注销回调。 |
-| [`CollectionChangedEventArgs<T>`](<Runestone/AesirArchitecture/CollectionChangedEventArgs{T}.md>) | 集合变更事件参数。每次变更携带单个变更项；批量操作（AddRange / RemoveRange 等）由集合逐项触发事件。 |
+| [`CollectionChangedEventArgs<T>`](<Runestone/AesirArchitecture/CollectionChangedEventArgs-of-T.md>) | 集合变更事件参数。每次变更携带单个变更项；批量操作（AddRange / RemoveRange 等）由集合逐项触发事件。 |
 | [`MonoLifecycleProxy.ListenerEntry`](<Runestone/AesirArchitecture/MonoLifecycleProxy.ListenerEntry.md>) | 监听条目，记录单个回调及其排序信息 |
 | [`MonoLifecycleProxy.PendingChange`](<Runestone/AesirArchitecture/MonoLifecycleProxy.PendingChange.md>) | 挂起变更条目，记录调用期间累积的一次监听增删操作 |
-| [`ObservableDictionary<TKey, TValue>.Enumerator<TKey, TValue>`](<Runestone/AesirArchitecture/ObservableDictionary{TKey, TValue}.Enumerator{TKey, TValue}.md>) | 可观察字典实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableDictionary{TKey, TValue} 只读订阅。 |
-| [`ObservableHashSet<T>.Enumerator<T>`](<Runestone/AesirArchitecture/ObservableHashSet{T}.Enumerator{T}.md>) | 可观察哈希集合实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableHashSet{T} 只读订阅。 |
-| [`ObservableList<T>.Enumerator<T>`](<Runestone/AesirArchitecture/ObservableList{T}.Enumerator{T}.md>) | 可观察列表实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableList{T} 只读订阅。 |
+| [`ObservableDictionary<TKey, TValue>.Enumerator<TKey, TValue>`](<Runestone/AesirArchitecture/ObservableDictionary-of-TKey-TValue.Enumerator-of-TKey-TValue.md>) | 可观察字典实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableDictionary{TKey, TValue} 只读订阅。 |
+| [`ObservableHashSet<T>.Enumerator<T>`](<Runestone/AesirArchitecture/ObservableHashSet-of-T.Enumerator-of-T.md>) | 可观察哈希集合实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableHashSet{T} 只读订阅。 |
+| [`ObservableList<T>.Enumerator<T>`](<Runestone/AesirArchitecture/ObservableList-of-T.Enumerator-of-T.md>) | 可观察列表实现。 Model 层持有可写实例，View 层通过 IReadOnlyObservableList{T} 只读订阅。 |
 
 </div>
 
@@ -96,7 +96,7 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 | [`IContext`](<Runestone/AesirArchitecture/IContext.md>) | 模块上下文接口。提供模块注册与获取。 |
 | [`IContextHolder`](<Runestone/AesirArchitecture/IContextHolder.md>) | 上下文持有者接口。 |
 | [`IController`](<Runestone/AesirArchitecture/IController.md>) | 泛型控制器接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
-| [`IController<T>`](<Runestone/AesirArchitecture/IController{T}.md>) | 泛型控制器接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
+| [`IController<T>`](<Runestone/AesirArchitecture/IController-of-T.md>) | 泛型控制器接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
 | [`ICustomAfterUpdate`](<Runestone/AesirArchitecture/ICustomAfterUpdate.md>) | 自定义 AfterUpdate 生命周期。对应 AfterUpdate。 |
 | [`ICustomBeforeUpdate`](<Runestone/AesirArchitecture/ICustomBeforeUpdate.md>) | 自定义 BeforeUpdate 生命周期。对应 BeforeUpdate。 |
 | [`ICustomFixedUpdate`](<Runestone/AesirArchitecture/ICustomFixedUpdate.md>) | 自定义 FixedUpdate 生命周期。对应 FixedUpdate。 |
@@ -105,23 +105,23 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 | [`ICustomOnApplicationPause`](<Runestone/AesirArchitecture/ICustomOnApplicationPause.md>) | 自定义 OnApplicationPause 生命周期。对应 OnApplicationPause。 |
 | [`ICustomOnApplicationQuit`](<Runestone/AesirArchitecture/ICustomOnApplicationQuit.md>) | 自定义 OnApplicationQuit 生命周期。对应 OnApplicationQuit。 |
 | [`ICustomUpdate`](<Runestone/AesirArchitecture/ICustomUpdate.md>) | 自定义 Update 生命周期。对应 Update。 |
-| [`IGenericLocator<T>`](<Runestone/AesirArchitecture/IGenericLocator{T}.md>) | 泛型定位器接口。提供按类型注册、查询与获取对象实例的契约。 |
+| [`IGenericLocator<T>`](<Runestone/AesirArchitecture/IGenericLocator-of-T.md>) | 泛型定位器接口。提供按类型注册、查询与获取对象实例的契约。 |
 | [`IModel`](<Runestone/AesirArchitecture/IModel.md>) | 数据层接口。持有状态（通常使用 ObservableValue{T}）。 能力：GetModel, Initialize, Dispose |
-| [`IObservableCollection<T>`](<Runestone/AesirArchitecture/IObservableCollection{T}.md>) | 可观察集合契约：单一变更事件的订阅与退订。 |
-| [`IObservableDictionary<TKey, TValue>`](<Runestone/AesirArchitecture/IObservableDictionary{TKey, TValue}.md>) | 完整可观察字典接口。 Model 层通过此接口读写集合；View 层使用 IReadOnlyObservableDictionary{TKey, TValue} 只读订阅。 |
-| [`IObservableHashSet<T>`](<Runestone/AesirArchitecture/IObservableHashSet{T}.md>) | 完整可观察集合接口。 Model 层通过此接口读写集合；View 层使用 IReadOnlyObservableHashSet{T} 只读订阅。 |
-| [`IObservableList<T>`](<Runestone/AesirArchitecture/IObservableList{T}.md>) | 完整可观察列表接口。 Model 层通过此接口读写集合；View 层使用 IReadOnlyObservableList{T} 只读订阅。 |
-| [`IObservableValue<T>`](<Runestone/AesirArchitecture/IObservableValue{T}.md>) | 完整可观察属性接口。 Presenter 层通过此接口读写数据。 |
+| [`IObservableCollection<T>`](<Runestone/AesirArchitecture/IObservableCollection-of-T.md>) | 可观察集合契约：单一变更事件的订阅与退订。 |
+| [`IObservableDictionary<TKey, TValue>`](<Runestone/AesirArchitecture/IObservableDictionary-of-TKey-TValue.md>) | 完整可观察字典接口。 Model 层通过此接口读写集合；View 层使用 IReadOnlyObservableDictionary{TKey, TValue} 只读订阅。 |
+| [`IObservableHashSet<T>`](<Runestone/AesirArchitecture/IObservableHashSet-of-T.md>) | 完整可观察集合接口。 Model 层通过此接口读写集合；View 层使用 IReadOnlyObservableHashSet{T} 只读订阅。 |
+| [`IObservableList<T>`](<Runestone/AesirArchitecture/IObservableList-of-T.md>) | 完整可观察列表接口。 Model 层通过此接口读写集合；View 层使用 IReadOnlyObservableList{T} 只读订阅。 |
+| [`IObservableValue<T>`](<Runestone/AesirArchitecture/IObservableValue-of-T.md>) | 完整可观察属性接口。 Presenter 层通过此接口读写数据。 |
 | [`IPresenter`](<Runestone/AesirArchitecture/IPresenter.md>) | 泛型 MVP 中介接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
-| [`IPresenter<T>`](<Runestone/AesirArchitecture/IPresenter{T}.md>) | 泛型 MVP 中介接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
-| [`IQuery<TResult>`](<Runestone/AesirArchitecture/IQuery{TResult}.md>) | 查询接口。通过 Query 执行读操作并返回结果，无副作用。 与 ICommand 的区别：Command 负责写操作（无返回值），Query 负责读操作（返回 TResult）。 |
-| [`IReadOnlyObservableDictionary<TKey, TValue>`](<Runestone/AesirArchitecture/IReadOnlyObservableDictionary{TKey, TValue}.md>) | 只读可观察字典接口。 View 层通过此接口读取键值并订阅变更，不能修改集合。 |
-| [`IReadOnlyObservableHashSet<T>`](<Runestone/AesirArchitecture/IReadOnlyObservableHashSet{T}.md>) | 只读可观察集合接口。 View 层通过此接口读取元素并订阅变更，不能修改集合。 |
-| [`IReadOnlyObservableList<T>`](<Runestone/AesirArchitecture/IReadOnlyObservableList{T}.md>) | 只读可观察列表接口。 View 层通过此接口枚举元素并订阅变更，不能修改集合。 |
-| [`IReadOnlyObservableValue<T>`](<Runestone/AesirArchitecture/IReadOnlyObservableValue{T}.md>) | 只读可观察属性接口。 View 层通过此接口添加监听，不能修改值。 |
+| [`IPresenter<T>`](<Runestone/AesirArchitecture/IPresenter-of-T.md>) | 泛型 MVP 中介接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
+| [`IQuery<TResult>`](<Runestone/AesirArchitecture/IQuery-of-TResult.md>) | 查询接口。通过 Query 执行读操作并返回结果，无副作用。 与 ICommand 的区别：Command 负责写操作（无返回值），Query 负责读操作（返回 TResult）。 |
+| [`IReadOnlyObservableDictionary<TKey, TValue>`](<Runestone/AesirArchitecture/IReadOnlyObservableDictionary-of-TKey-TValue.md>) | 只读可观察字典接口。 View 层通过此接口读取键值并订阅变更，不能修改集合。 |
+| [`IReadOnlyObservableHashSet<T>`](<Runestone/AesirArchitecture/IReadOnlyObservableHashSet-of-T.md>) | 只读可观察集合接口。 View 层通过此接口读取元素并订阅变更，不能修改集合。 |
+| [`IReadOnlyObservableList<T>`](<Runestone/AesirArchitecture/IReadOnlyObservableList-of-T.md>) | 只读可观察列表接口。 View 层通过此接口枚举元素并订阅变更，不能修改集合。 |
+| [`IReadOnlyObservableValue<T>`](<Runestone/AesirArchitecture/IReadOnlyObservableValue-of-T.md>) | 只读可观察属性接口。 View 层通过此接口添加监听，不能修改值。 |
 | [`IService`](<Runestone/AesirArchitecture/IService.md>) | 服务层接口。万能协调层，封装跨模块业务逻辑，协调模块间交互与通信。 Service 能读写 Model、调用其他 Service，完成跨模块协调。 不包含 ICanExecut… |
 | [`IView`](<Runestone/AesirArchitecture/IView.md>) | 泛型表现层接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
-| [`IView<T>`](<Runestone/AesirArchitecture/IView{T}.md>) | 泛型表现层接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
+| [`IView<T>`](<Runestone/AesirArchitecture/IView-of-T.md>) | 泛型表现层接口。绑定指定上下文类型，实现者自动获得 Context 绑定。 |
 
 </div>
 
@@ -197,11 +197,11 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 | [`ObservableCollectionDrawerHelper`](<Runestone/AesirArchitecture/Editor/ObservableCollectionDrawerHelper.md>) | 可观察集合的 Odin 内联调试面板 —— 在 Inspector 中直接显示集合运行状态与元素预览， 其下仍保留默认绘制（元素可正常编辑）。 |
 | [`ObservableCollectionInspectorUtility`](<Runestone/AesirArchitecture/Editor/ObservableCollectionInspectorUtility.md>) | 可观察集合调试面板的反射工具 —— 在编辑器侧读取集合的运行时状态。 |
 | [`ObservableCollectionView`](<Runestone/AesirArchitecture/Editor/ObservableCollectionView.md>) | 可观察集合的 UI Toolkit 内联摘要（无 Odin 依赖）：复刻 Odin 版 ObservableCollectionDrawer 的 "元素数 \| 变更监听 + … |
-| [`ObservableDictionaryDrawer<TKey, TValue>`](<Runestone/AesirArchitecture/Editor/ObservableDictionaryDrawer{TKey, TValue}.md>) | — |
+| [`ObservableDictionaryDrawer<TKey, TValue>`](<Runestone/AesirArchitecture/Editor/ObservableDictionaryDrawer-of-TKey-TValue.md>) | — |
 | [`ObservableDictionaryUIToolkitDrawer`](<Runestone/AesirArchitecture/Editor/ObservableDictionaryUIToolkitDrawer.md>) | ObservableDictionary<TKey,TValue> 的 UI Toolkit 摘要绘制器。 |
-| [`ObservableHashSetDrawer<T>`](<Runestone/AesirArchitecture/Editor/ObservableHashSetDrawer{T}.md>) | 可观察集合（HashSet）的内联调试面板。 |
+| [`ObservableHashSetDrawer<T>`](<Runestone/AesirArchitecture/Editor/ObservableHashSetDrawer-of-T.md>) | 可观察集合（HashSet）的内联调试面板。 |
 | [`ObservableHashSetUIToolkitDrawer`](<Runestone/AesirArchitecture/Editor/ObservableHashSetUIToolkitDrawer.md>) | ObservableHashSet<T> 的 UI Toolkit 摘要绘制器。 |
-| [`ObservableListDrawer<T>`](<Runestone/AesirArchitecture/Editor/ObservableListDrawer{T}.md>) | 可观察列表的内联调试面板。 |
+| [`ObservableListDrawer<T>`](<Runestone/AesirArchitecture/Editor/ObservableListDrawer-of-T.md>) | 可观察列表的内联调试面板。 |
 | [`ObservableListUIToolkitDrawer`](<Runestone/AesirArchitecture/Editor/ObservableListUIToolkitDrawer.md>) | ObservableList<T> 的 UI Toolkit 摘要绘制器。 |
 | [`ObservableValueDrawer`](<Runestone/AesirArchitecture/Editor/ObservableValueDrawer.md>) | ObservableValue{T} 的 UI Toolkit 属性绘制器（无 Odin 依赖）。 |
 | [`QuickCreateSOMenuItem`](<Runestone/AesirArchitecture/Editor/QuickCreateSOMenuItem.md>) | 右键快捷生成 ScriptableObject 资源文件。 项目同时安装 Aesir Inspector（独立包，写入 AESIR_INSPECTOR 宏）时本类整体不参与编译… |
@@ -245,7 +245,7 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 | 名称 | 描述 |
 | :--- | :--- |
 | [`AesirArchitectureAttributeProcessor`](<Runestone/AesirArchitecture/Editor/OdinInspector/AesirArchitectureAttributeProcessor.md>) | 为 AesirArchitecture 类动态添加特性。 |
-| [`ObservableValueAttributeProcessor<T>`](<Runestone/AesirArchitecture/Editor/OdinInspector/ObservableValueAttributeProcessor{T}.md>) | 为泛型 ObservableValue 提供的 Odin Inspector 特性处理器，用于优化其在面板上的展示效果。 |
+| [`ObservableValueAttributeProcessor<T>`](<Runestone/AesirArchitecture/Editor/OdinInspector/ObservableValueAttributeProcessor-of-T.md>) | 为泛型 ObservableValue 提供的 Odin Inspector 特性处理器，用于优化其在面板上的展示效果。 |
 | [`RemoveListenerOnSceneUnloadedTriggerAttributeProcessor`](<Runestone/AesirArchitecture/Editor/OdinInspector/RemoveListenerOnSceneUnloadedTriggerAttributeProcessor.md>) | 为 RemoveListenerOnSceneUnloadedTrigger 类提供 Odin Inspector 属性处理器 |
 
 </div>
@@ -260,7 +260,7 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 
 | 名称 | 描述 |
 | :--- | :--- |
-| [`CloneCollection<T>.EnumerableCollection<T>`](<Runestone/AesirArchitecture/Internal/CloneCollection{T}.EnumerableCollection{T}.md>) | 只读克隆集合：把源序列物化为租借数组的临时快照， 供批量操作在写入自身前先完成拷贝（如源序列传入集合自身时避免"枚举中修改"异常）。 |
+| [`CloneCollection<T>.EnumerableCollection<T>`](<Runestone/AesirArchitecture/Internal/CloneCollection-of-T.EnumerableCollection-of-T.md>) | 只读克隆集合：把源序列物化为租借数组的临时快照， 供批量操作在写入自身前先完成拷贝（如源序列传入集合自身时避免"枚举中修改"异常）。 |
 | [`ObservableCollectionUtility`](<Runestone/AesirArchitecture/Internal/ObservableCollectionUtility.md>) | 可观察集合内部工具。 |
 
 </div>
@@ -271,6 +271,6 @@ description: "Runestone.AesirArchitecture 系列命名空间的 Scripting API �
 
 | 名称 | 描述 |
 | :--- | :--- |
-| [`CloneCollection<T>`](<Runestone/AesirArchitecture/Internal/CloneCollection{T}.md>) | 只读克隆集合：把源序列物化为租借数组的临时快照， 供批量操作在写入自身前先完成拷贝（如源序列传入集合自身时避免"枚举中修改"异常）。 |
+| [`CloneCollection<T>`](<Runestone/AesirArchitecture/Internal/CloneCollection-of-T.md>) | 只读克隆集合：把源序列物化为租借数组的临时快照， 供批量操作在写入自身前先完成拷贝（如源序列传入集合自身时避免"枚举中修改"异常）。 |
 
 </div>
