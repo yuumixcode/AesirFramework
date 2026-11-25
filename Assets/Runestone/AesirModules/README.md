@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面 + 多注册表）、事件模块、音频管理、场景管理、保存模块与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.34.1-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.36.0-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.34.1`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.36.0`）
 
 ## 模块总览
 
@@ -19,7 +19,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面
 | Event              | 已实现            | `EventModule` Script 订阅（句柄精确退订）+ 4 档优先级稳定排序 + 快照与重入安全分发 + 委托直调无反射 + 订阅者过滤器（精确投递）+ 死引用清理 + SO 资产化 + 取消传播 + 公开诊断 API（`AesirEventDiagnostics`）+ Monitor/Log/Tester 三个调试窗口（UI Toolkit / Odin 双轨）                                       |
 | Audio              | 已实现            | `AudioModule` 单例（2D 音频极简门面）+ SFX 独占音源轮询 + BGM 淡入淡出 + 三通道音量/静音持久化                                                                                                                                                                                                               |
 | Scene              | 已实现            | `SceneModule` 静态门面（加载/叠加/卸载/激活场景切换 + 场景事件广播，直接 `SceneModule.xxx` 调用）+ UniTask 适配程序集（可选，宏自动维护，含 UniTask 时协程实现自动替换为 UniTask 驱动并提供可 await API）+ `SceneAssetWrapper` 可序列化场景引用 + 编辑器工具（BootstrapSceneHelper / Scene Module Settings） |
-| Save               | 已实现            | `SaveModule` 静态门面（存档槽 Save/Load + 事务式写入崩溃不丢档 + CRC32 校验与备份回退）+ 三轨序列化（JsonUtility 默认 / Odin / Newtonsoft 可选）+ 四扩展点（序列化器 / 存储 / 保存管理器 / 变换链，实现 `ISaveManager` 可整体接入云存档等自定义方案）+ 版本迁移 + 自动保存（周期 + 切后台/退出钩子） |
+| Save               | 已实现            | `SaveModule` 静态门面（存档槽 Save/Load + 事务式写入崩溃不丢档 + CRC32 校验与备份回退）+ 批量原子会话（一组条目一次事务提交）+ 默认值加载 + 存档时间戳 + 三轨序列化（JsonUtility 默认 / Odin / Newtonsoft 可选）+ 四扩展点（序列化器 / 存储 / 保存管理器 / 变换链，实现 `ISaveManager` 可整体接入云存档等自定义方案）+ 版本迁移 + 自动保存（周期 + 切后台/退出钩子） |
 | ScriptDocGenerator | 已实现（需 Odin） | 反射分析 C# 类型生成结构化 API 文档（增量保留手写内容）+ Summary 工具（XML `<summary>` 与 `[Summary]` 特性同步，特性优先）                                                                                                                                                                                   |
 
 > 另有两项可选能力：**Binder 组件绑定**（`Runtime/UI/OdinInspector/Binder/`，需 Odin Inspector）与 **Input System
@@ -27,7 +27,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.34.1（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.36.0（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。Odin 只负责面板样式增强：
   **Scene 模块的 `SceneAssetWrapper` 拖拽赋值、着色与一键修复按钮**，装 Odin 时由 Processor 面板提供，未装时由原生
   PropertyDrawer 兜底（等价信息量）；`SceneModuleConfigSO` 的配置项在两种环境下都可编辑（未装 Odin 走原生

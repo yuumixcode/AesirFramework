@@ -11,11 +11,27 @@
 
 | 子包 | 包名 | 版本 |
 |------|------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.35.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.35.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.0** |
 
 !!! tip "版本策略"
     两包同号发版(CI 校验一致),推荐同版本安装。Aesir Modules 依赖 Aesir Architecture;Aesir Architecture 不依赖任何 Aesir 子包。
+
+## [0.36.0] - 2026-11-24
+
+**保存模块落地 + 迭代规范对齐**：新增独立游戏级事务式存档模块;同步更新迭代 SOP 与双仓发布口径。
+
+**Aesir Modules**
+
+- **保存模块（SaveModule）**:存档槽 Save/Load 一行可用 + 事务写入任意崩溃点不丢档(临时文件 + 强制刷盘 + 双 rename 备份轮换)+ CRC32 校验与损坏自动回退备份(Status/Source 标明结果)
+- **三轨序列化 + 四扩展点**:JsonUtility 默认零依赖 / Odin 二进制 / Newtonsoft 可选;`ISaveSerializer` / `ISaveStorage` / `ISaveManager` / `ISaveTransform`,实现 `ISaveManager` 可整体接入云存档
+- **增强**:批量原子会话(`SaveBatch` 一组条目一次事务提交)+ 默认值加载(`LoadOrDefault<T>`)+ 存档时间戳(`GetTimestamp` 经 `ISaveStorageTimestamp`,UTC)
+- 版本迁移 + GZip/AES-256 变换链(默认关闭)+ 自动保存(unscaled 周期 + 切后台/退出钩子)+ `SaveConfigSO` 配置资产
+- 含 BasicUsage 示例(OnGUI 面板驱动保存/加载/删除、自动保存开关、破坏主存档演示备份回退)
+
+**Aesir Architecture**
+
+- 本版本无运行时变更,与 Aesir Modules 0.36.0 同号发版
 
 ## [0.35.0] - 2026-11-23
 

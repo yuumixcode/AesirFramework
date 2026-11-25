@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.35.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.35.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.0** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.0** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -34,6 +34,33 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### [modules] Aesir Modules
+
+**Changed**
+
+- **ScriptDocGenerator 输出文件名改为 URL 安全的 `-of-` 形式** — 泛型类型文档文件名从 `ObservableList{T}.md`
+  改为 `ObservableList-of-T.md`（多参数 `Dictionary-of-Key-Value`）。尖括号/花括号/空格均为非法 IRI 字符，
+  zensical 0.1.x 会把 `repo_url` + `edit_uri` + 页面源路径拼成绝对 URL 并按 IRI 校验，含非法字符的文件名导致
+  站点构建 panic（上游 0.1.2 的 #1147 只修复了方括号转义，花括号至今未修），此前被迫置空 `edit_uri` 放弃
+  「编辑此页」链接。命名规则收敛在 `TypeAnalyzerUtility.ConvertToDocumentationFileName` 单点，单元测试与
+  既有文档链接、导航同步更新；站点 `edit_uri` 已恢复。
+
+## [0.36.0] - 2026-11-24
+
+### [modules] Aesir Modules
+
+**Added**
+
+- **保存模块（SaveModule）** — 独立游戏级事务式存档门面：存档槽 `Save`/`Load` 一行可用；写入经「临时文件 +
+  强制刷盘 + 双 rename 备份轮换 + 原子提交」，任意崩溃点至少一份完整可读存档；CRC32 校验和，加载损坏自动回退备份
+  （结果对象标明 Status/Source，环境失败不抛异常、编程错误 fail-fast）。三轨序列化（JsonUtility 默认 / Odin /
+  Newtonsoft 可选）、四扩展点（`ISaveSerializer` / `ISaveStorage` / `ISaveManager` / `ISaveTransform`）、
+  GZip + AES-256 变换链（默认关闭）、`ISaveMigrator<T>` 版本迁移、自动保存（复用 `AesirTimer` unscaled 周期 +
+  切后台/退出钩子）、`SaveConfigSO` 配置资产（菜单显式幂等创建 + 内存兜底）。含 BasicUsage 示例。
+- **保存模块增强：批量原子会话 / 默认值加载 / 存档时间戳** — `SaveBatch` / `LoadBatch` 把多条目打包成一个存档键
+  一次事务提交；`LoadOrDefault<T>` 加载失败返回默认值；`GetTimestamp(key)` 经可选接口 `ISaveStorageTimestamp`
+  返回存档最后写入 UTC 时间（存储不支持返回 null）。新增 EditMode 用例与示例用法。
+
 ### 仓库级变更 / Repository-wide
 
 - **文档站并入主仓** — 产品站内容迁至仓库根 `docs/` + `zensical.toml`，由 `.github/workflows/docs.yml`
@@ -43,7 +70,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### [architecture] Aesir Architecture
 
-- **修复 Getting Started 窗口文档站死链** — `DocsUrl` 指向已弃用的 `AesirFramework-Docs`（404），统一为同仓新址。
+- 本版本无运行时变更，与 Aesir Modules 0.36.0 同号发版；此前 0.35.0 的 Getting Started 死链修复与文档站 URL 更新已收录于对应包 CHANGELOG。
 
 ## [0.35.0] - 2026-11-23
 

@@ -23,8 +23,8 @@
 
 | 包 | 包 ID | 版本 | 说明 |
 |---|---|---|---|
-| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.35.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
-| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.35.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、脚本文档生成（需 Odin） |
+| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.36.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
+| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.36.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、保存模块、脚本文档生成（需 Odin） |
 
 依赖关系：**RAA 不依赖任何 Aesir 包**；**RAM 依赖 RAA**（`package.json` 中**不声明**该依赖，见下方"依赖补全"）。
 
@@ -82,7 +82,7 @@ AesirFramework/
 ├── .codely-cli/                   # AI 工具链（部分入库，见「AI 技能与 Codely 环境」）
 │   ├── RESTORE.md                 # 换机 / 新克隆的环境还原手册
 │   ├── settings.json / memory.md / memory/ / skills/
-│   └── extensions/AesirFrameworkGame/   # 自研扩展，全量入库：12 技能 + 2 实战模板
+│   └── extensions/AesirFrameworkGame/   # 自研扩展，全量入库：13 技能 + 20 篇 references + 门禁 hook
 ├── Assets/
 │   ├── Runestone/
 │   │   ├── AesirArchitecture/     # RAA 包根
@@ -433,7 +433,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ### AI 技能与 Codely 环境（`.codely-cli/`）
 
-**技能正文的唯一主位**：`.codely-cli/extensions/AesirFrameworkGame/skills/`（整包扩展，`gemini-extension.json` v1.3.0），12 个技能 + 2 篇实战模板：
+**技能正文的唯一主位**：`.codely-cli/extensions/AesirFrameworkGame/skills/`（整包扩展，`gemini-extension.json` v1.4.0），13 个技能 + 20 篇按需加载的 `references/`（含 2 篇实战模板）：
 
 | 技能 | 覆盖 |
 |---|---|
@@ -447,11 +447,15 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 | `aesir-boot-scene` | 启动场景 `Bootstrap.unity` + `Bootstrap.cs` + Build Settings index 0 |
 | `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` | RAM 四模块用法 |
 
-扩展独有增量：`skills/aesir-framework/references/templates-game-skeleton.md`（完整可玩小游戏骨架）与 `templates-migration-from-mono.md`（原生 MonoBehaviour → Aesir 迁移表）；脚本 `scripts/install.py`（批量装到项目级/全局技能目录）、`scripts/validate.py`（manifest / frontmatter / 相对链接校验）。
+扩展独有增量：`skills/aesir-framework/references/templates-game-skeleton.md`（完整可玩小游戏骨架）与 `templates-migration-from-mono.md`（原生 MonoBehaviour → Aesir 迁移表）；脚本 `scripts/install.py`（批量装到项目级/全局技能目录）、`scripts/validate.py`（manifest 与归属字段 / 门面文档 / frontmatter / **篇幅上限** / 相对链接 / hook 配置 / 目录洁净校验）。
+
+**门禁自动化 hook（扩展 1.4.0 起）**：`hooks/hooks.json` 在 `SessionStart` 注册 `aesir-package-gate`（`hooks/detect-packages.mjs`），纯文件系统判定 RAA/RAM 安装形态（内联 / UPM / 仅声明），注入一行 `[Aesir 依赖门禁]` 结论与可用技能范围。**只提供事实**——不自动装包、不改 `Packages/manifest.json`，读记忆与询问安装仍由 AI 在会话中执行；非 Unity 工程零注入，任何异常静默放行，零副作用（不写文件 / 不 spawn / 不联网 / 不碰编辑器）。注入是会话启动快照，中途装包后需复验。禁用：工程 `.codely-cli/settings.json` 的 `hooks.disabled` 按名加 `aesir-package-gate`。
 
 **入库策略**（`.gitignore` 白名单）：入库 `settings.json`、`memory.md` + `memory/`、`skills/`、`RESTORE.md`、`extensions/AesirFrameworkGame/`；其余扩展（TJGenerators 115M、codely-unity-lsp-server、TMPChineseFont、vtsls）、`UnityInsight/`、`auto-saves/`、`tool-outputs/`、`tmp/` 一律不入库，按 `RESTORE.md` 一条命令重装。凭证按文件名模式兜底排除（`*token*.json` / `*secret*` / `*oauth*` / `*credential*` / `.env*` / `*.pem` / `*.p12` / `*.key`）。
 
 **维护约定**：技能只在扩展目录内改（包里不再有副本）；改完跑 `python3 .codely-cli/extensions/AesirFrameworkGame/scripts/validate.py`（期望"0 个错误，0 个警告"）。拆分公司原则是**一个技能只回答一类问题**——入口不写模板、模板不进核心 API、决策与陷阱各自独立，AI 按意图只加载需要的那一篇。
+
+**篇幅护栏（扩展 1.4.0 起为硬约束）**：技能正文 ≤6000 字符、单条 frontmatter description ≤260、全部 description 总和 ≤2800，超限由 `validate.py` **判错**（阈值常量在脚本头部）。**结论留正文、展开进 references**——坑位与禁止项的结论（哪怕一句话）必须留在 SKILL.md，下沉的只是复现步骤、原理展开与完整代码；超标先想"这段能不能下沉"，不要靠删结论达标。压缩 description 时删能力罗列、保留 API 名与用户原话触发短语。改版本号同步扩展 `CHANGELOG.md` 顶部条目与根 `README.md` 技能一览。
 
 ### 公开产品站（同仓，2026-11-23 并入）
 
@@ -471,7 +475,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 一轮迭代七步，前六步在功能分支内完成，第七步发版时统一收口：
 
-1. **立项与边界** — 一句话写清做什么 / **明确不做什么**；先问"能否用现有能力组合出来"（RAA 极简优先）；判定属 RAA 还是 RAM。
+1. **立项与边界 + 提案门禁** — 一句话写清做什么 / **明确不做什么**；先问"能否用现有能力组合出来"（RAA 极简优先）；判定属 RAA 还是 RAM。**实质变更先提案**：功能级 / 完整游戏开发用 OpenSpec（`openspec-propose` 产出 proposal / specs / design / tasks，经用户确认后实施）；轻量纯代码变更走 `gamespec-code` 流（同属合规路径，不能跳过提案）；只读查询与纯对话豁免。凡修改实质面文件即视为实质变更，不得静默豁免。
 2. **建分支** — 从 `main` 拉 `feat/<name>` / `fix/<name>` / `docs/<name>` / `refactor/<name>`。本机 git 命令一律先 `export PATH=/opt/homebrew/bin:$PATH`。
 3. **落代码** — 玩家逻辑进 `Runtime/<模块>/`，编辑器工具进 `Editor/<模块>/`，第三方增强走 `OdinInspector/` + asmref；跨模块协作用 `IService`，不互相 `new`。新增跨 Play 残留的静态状态必须 `SubsystemRegistration` 归位（泛型走 `ResetStaticsAssistant.Register()`）。
 4. **补示例与测试** — 公开 API 必配能 Play 的最小示例 + `package.json.samples[]` 登记（`path` 指向 `Samples~`）；测试按三问门槛（可失败性 / 受害者 / 不可替代性），新增公开行为 1–3 例、纯重构 0 新增，需真 `Destroy`/帧/场景加载的进 PlayMode。
@@ -506,10 +510,15 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ---
 
-## 当前状态与待办（2026-11-23）
+## 当前状态与待办（2026-11-24）
 
-- 已发布 **0.35.0**（2026-11-23，事件模块大版本）。上一稳定版 0.34.1（2026-11-20）。
-- **0.35.0 落地内容**：
+- 已发布 **0.36.0**（2026-11-24，保存模块版本）。上一稳定版 0.35.0（2026-11-23，事件模块大版本）。
+- **0.36.0 落地内容**：
+  1. **（RAM）保存模块（SaveModule）** —— 独立游戏级事务式存档门面：`Save`/`Load` 一行可用，写入经「临时文件 + 强制刷盘 + 双 rename 备份轮换 + 原子提交」任意崩溃点不丢档；CRC32 校验 + 加载损坏自动回退备份（结果对象标明 Status/Source）；三轨序列化（JsonUtility 默认 / Odin 二进制 / Newtonsoft 可选，均按条件编译隔离）；四扩展点 `ISaveSerializer` / `ISaveStorage` / `ISaveManager` / `ISaveTransform`（实现 `ISaveManager` 可整体接入云存档）；GZip + AES-256 变换链（默认关闭）、`ISaveMigrator<T>` 版本迁移、自动保存（复用 `AesirTimer` unscaled 周期 + 切后台/退出钩子）、`SaveConfigSO` 配置资产（菜单显式幂等创建 + 内存兜底）。含 BasicUsage 示例。
+  2. **（RAM）保存模块增强** —— `SaveBatch`/`LoadBatch` 批量原子会话（一组条目一次事务提交）；`LoadOrDefault<T>` 加载失败返回默认值；`GetTimestamp(key)` 经可选接口 `ISaveStorageTimestamp` 返回存档最后写入 UTC 时间。新增 EditMode 用例。
+  3. **（RAA）无运行时变更** —— 与 RAM 0.36.0 同号发版，保持两包版本同步。
+  4. **（流程文档）迭代 SOP 对齐现行实践** —— 主仓 `CODELY.md` 七步补 OpenSpec 提案门禁；笔记仓 `iteration-workflow.md` 修正过时口径（GitHub Merge、主仓 `docs/` 站点路径、`sync-to-cnb.yml` 流水线名、基线版本）。
+- **0.35.0 落地内容**（事件模块大版本）：
   1. **（RAM）事件模块可观测性** —— 取消传播（`Cancel(canceller)` / `NonCancellable()`，First/Last 始终执行）+ 公开诊断 API `AesirEventDiagnostics`（订阅树查询 + 环形缓冲链路快照，零 Odin 依赖、关闭时零分配）+ 三个调试窗口（Event Monitor / Log / Tester，UI Toolkit 版 + Odin 版）；新增示例 `04_Cancellation` / `05_Diagnostics`。
   2. **（RAM）事件模块分发性能与结构精简** —— Type 键注册表 + 注册期有序插入（分发零排序）、去 `object[]` 间接层、非泛型订阅去反射、重入缓冲按深度复用、负缓存、空间过滤器每趟缓存。
   3. **（RAM·破坏性）** 移除 `[AesirListener]` 特性反射订阅（只保留 Script 订阅）；同一参数实例重入发布改 fail-fast；低频公开 API 收窄（`Clone()` / 字符串绑定键删除、`BindingInfo` 转 internal）。
@@ -527,11 +536,11 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
   4. **（RAM）UI 实例化简化** —— 移除停用模板机制改 `Instantiate → SetActive(false)`，实例名去重复 `(Clone)`；`Resources.Load` 资产语义实证与文档决策复盘。
   5. **移除 Binder / SDG 的 UI Toolkit 窗口** —— 两个工具只保留原 Odin 窗口，数据层零 Odin 依赖不改。
   6. **（AI 扩展）`AesirFrameworkGame` 1.2.0 → 1.3.0** —— 新增 `aesir-project-structure` 技能（12 技能），统一资产命名去类型前缀与工程目录约定；按 PlaneWar 三篇复盘优化 boot-scene / framework / ui / router 技能。
-- **门禁基线（0.35.0 实测）**：EditMode batchmode **881 total / 878 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑。**
+- **门禁基线（0.35.0 实测；0.36.0 因 SaveModule 新增用例待重跑）**：EditMode batchmode **881 total / 878 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑**——0.36.0 含新增 Save 用例，推送前须在本地 batchmode 重跑取新基线。
 - 门禁前置校验：`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；主仓根文档站与 `Aesir-Notebook` 各自 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
 - **待办 / 未决**：
   - PlaneWar 的 RAA 版案例（`Assets/PlaneWar/Scripts/Raa/`，程序集 `PlaneWar.Raa`）待编写（当前只有 Mono 版；README 已列出规划）。
-  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.35.0 复核。
+  - `Aesir-Notebook/talks/dual-package/` 的演讲逐字稿与 deck 口径停在 0.32.0（831 条用例、包内 `Documentation/` 三件套），录制前需按 0.36.0 复核。
   - `.codely-cli/memory.md` 的整理收尾（ARCHIVE 已存在）。
 - **UniTask 已通过 `manifest.json` 的 Git URL 安装** → `AESIR_MODULES_UNITASK` 生效，`SceneModuleUniTask` 与对应测试参与编译。新增依赖 UniTask 的代码须确认该宏；新增需要该宏的程序集须**自己再声明一份** `versionDefines` + `defineConstraints`。
 - 无 Addressables 配置（UI 走 `ResourcesUILoader`，`IUIAssetLoader` 已预留接口）。

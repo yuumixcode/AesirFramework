@@ -7,15 +7,22 @@
 
 ## [Unreleased]
 
+## [0.36.0] - 2026-11-24
+
+本包无运行时变更，与 Aesir Modules 0.36.0 同号发版（SaveModule 落地于 RAM），保持两包版本同步。
+
+## [0.35.0] - 2026-11-23
+
+### Changed
+
+- 代码格式化与 XML 注释排版统一（无运行时行为变更）；版本号与 Aesir Modules 事件模块大版本同步至 0.35.0。
+- **文档站 URL 更新为同仓新址** — `package.json` 的 `documentationUrl` / `changelogUrl` 由
+  `…/AesirFramework-Site/…` 改为 `…/AesirFramework/…`（产品站并入主仓；随下次发版到达用户，期间旧地址跳转兜底）。
+
 ### Fixed
 
 - **Getting Started 窗口文档站死链** — 工具条 `DocsUrl` 指向早已弃用的 `AesirFramework-Docs` 地址（404），
   现统一为同仓文档站 `https://yuumixcode.github.io/AesirFramework/`。
-
-### Changed
-
-- **文档站 URL 更新为同仓新址** — `package.json` 的 `documentationUrl` / `changelogUrl` 由
-  `…/AesirFramework-Site/…` 改为 `…/AesirFramework/…`（产品站并入主仓；随下次发版到达用户，期间旧地址跳转兜底）。
 
 ## [0.34.1] - 2026-11-20
 
