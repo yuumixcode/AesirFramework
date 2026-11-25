@@ -17,6 +17,8 @@
 - **自动装配在 macOS 静默失败（同日根因定位）**：`hooks/process-reminder.mjs` 的 SessionStart 分支 `spawnSync('powershell.exe', … bootstrap.ps1)`，macOS 无该可执行文件 → `r.error` 走 `console.error` + 静默放行，于是 `openspec/schemas/` 始终缺失，`new change` 报 `Unknown schema 'gamespec-code'. Available: spec-driven`。**修法**：只手工装 schema 副本 `cp -R <扩展>/schemas/gamespec-{code,game} openspec/schemas/`，**不要跑整个 bootstrap**——其第 4 步会把 `config.yaml` 的 `schema:` 强改为 `gamespec-game`，而本项目刻意用 `gamespec-code`（仓库级工程变更，不承载游戏内容）。装完 `schemas --json` 应列出三项（两个 project + 一个 package）。
 - **dashboard 用法**：`node <TJSpec>/tools/dashboard.mjs [--port N] [--no-open] [--export <file.html>]`；默认端口 8321、占用自动 +1；**数据根 = 从 cwd 向上找含 `config.yaml`/`config.yml` 的最近 `openspec/`**（在哪个工程目录运行就展示哪个工程）；刷新页面即最新；tasks.md 勾选按宽松正则计数。手写 proposal/design/tasks 三件套与解析层兼容（标准工件），**缺 config.yaml 会落空态**。
 - **本项目落点（2026-11-23）**：已建 `openspec/config.yaml`（schema: gamespec-code，承载仓库级工程变更，不承载游戏内容变更）；面板实例端口 **8322**（后台常驻），RTT 实例 8321 不动。首个变更 `merge-docs-site`（文档站并入主仓提案，三件套在 `openspec/changes/merge-docs-site/`，待评审，31 任务）。
+- **变更增量规格的能力域必须扁平单层（2026-11-23 实证）**：`tools/dashboard/parse.mjs` 第 129–141 行解析变更内 delta 只扫 `specs/<能力域>/spec.md` **一层**（`readdirSync` + `path.join(specsDir, cap, 'spec.md')`），而主规格库的 `listSpecs` 用递归 `walk`——工具内部不一致。两层路径（如 `specs/ai-extension/structure/spec.md`）openspec 引擎认（instruction 明确支持 `identity/user-auth` 形式，`validate --strict` 也过），但**面板里那两份规格完全不出现**，变更详情页只列 proposal/design/tasks。故一律扁平命名（`ai-extension-structure`），也符合 openspec「项目用扁平布局时不要新增域层级」的规则。**不要去改 dashboard**——TJSpec 是 submodule，只能走指针升级。
+- **面板归属与读数口径（同日实证）**：数据根按 **cwd** 而非脚本位置——本项目 8322 实例是「RTT 目录的脚本 + AesirFramework 的 cwd」，`ps aux` 只看脚本路径会误判归属；用 `lsof -a -p <pid> -d cwd -Fn` 或 `curl -s http://127.0.0.1:<port>/api/data` 的 `root` 字段确认。`/api/data` 的 `docs` 是相对路径字符串数组（零正文），正文经 `/api/doc?id=<相对路径>` 按需取（0.43.0 起）。首页 `summary.specs` / `requirements` 只统计**主规格库**，变更内未归档的 delta 不计入——显示 0 属预期，不是规格没写。
 - **Zensical 官方部署路线核实（2026-11-23，zensical.org/docs/publish-your-site）**：GitHub Pages 只走 Actions 构建产物发布（pip install → build → upload-pages-artifact(site) → deploy-pages），**无「docs/ 目录直接发布」模式**；发布地址跟随仓库名 `<user>.github.io/<repo>`；`site_url` 是 instant navigation/previews/错误页前提；`zensical serve` 对根路径 302 到 site_url 子路径（本地预览模拟线上路径结构）。merge-docs-site 干跑实测：新布局 + 新 site_url `--strict` 0 issues（3.5s），headless 三组页型截图与线上旧站逐像素一致（唯一差异 = repo_name 按钮文案）。
 - **可视化替代路径（同日实测）**：web-access 的 CDP 代理在本机不可用——**9222 端口被 UGit 的 Electron 占用**（UA 含 UGit/Electron，不是用户 Chrome），proxy WebSocket 连接失败；替代 = Playwright 缓存 headless shell 直接 CLI 截图：`~/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell --disable-gpu --hide-scrollbars --window-size=W,H --virtual-time-budget=15000 --screenshot=out.png URL`。另：`read_image` 不能并行（verifier busy），逐张串行重试；`run_shell_command` 里 `nohup … &` 起的常驻进程会随 shell 会话结束被杀，常驻服务要用 `run_in_background=true`。
 
@@ -40,3 +42,24 @@
 ## 交付物索引
 
 - [2026-11-18 20:21:37] 商业级 Unity 项目目录结构调研报告在 `Exports/商业级Unity项目目录结构_完全指南.md`（451 行，未跟踪）：5 类场景完整目录树（PC Steam / 手游 / 小游戏 / 热更 HybridCLR+YooAsset / Luban 配表）→ 设计原理 → 来源附录。一手勘误：HybridCLR v9 数据目录 `Library/HybridCLR/`、官方域名 www.hybridclr.cn、Luban 文档站 www.datable.cn、微信总包 ≤30M、Zensical 官网 zensical.org、Material for MkDocs EOL 2027-05-05。
+
+## Codely 扩展 hook 编写契约（2026-11-23 实证，写 AesirFrameworkGame 依赖门禁 hook 时摸清）
+
+`cowork-plugin-management` 扩展给的是 **Cowork/Claude 插件规范**，与 Codely 扩展**不是同一套 schema**——借方法论必须落到实际形态，照抄会让扩展装不上：
+
+| 项 | Cowork 插件规范 | Codely 扩展实际 |
+|---|---|---|
+| 清单 | `.claude-plugin/plugin.json`（name 要 kebab-case） | **`gemini-extension.json`**，`name` 必须等于目录名（`AesirFrameworkGame` 这种 PascalCase 合法） |
+| hook 配置 | 顶层事件名 + `matcher` | **`{"hooks": {"<Event>": [{"hooks": [...]}]}}`** |
+| 路径变量 | `${CLAUDE_PLUGIN_ROOT}` | **`${extensionPath}`** |
+| 事件名 | PreToolUse / PostToolUse / Stop / SessionStart… | 实测可用 **SessionStart / BeforeAgent / FileChanged**（TJSpec 三个都在用） |
+| 交付 | zip 成 `.plugin` 给用户安装 | 随仓库 git 分发 + `codely extensions install`，**不打包 .plugin**（免造第二份漂移副本） |
+
+hook 脚本 I/O 契约（范本 `TJSpec/hooks/process-reminder.mjs`）：
+
+- stdin 收 JSON `{hook_event_name, cwd, session_id, file_path?}`，先剥可能的 UTF-8 BOM 再 `JSON.parse`。
+- stdout **只出 JSON**：注入用 `{"hookSpecificOutput":{"hookEventName":"<Event>","additionalContext":"<文本>"}}`，放行用 `{}`；诊断一律 `console.error`（stderr）。
+- 任何异常必须静默放行（`emit({})`），绝不阻塞会话启动；`hooks.json` 条目配 `name` 与 `timeout`（毫秒）。
+- 注册通道唯一是扩展自带的 `hooks/hooks.json`（平台原生加载），**不写工程 settings.json**；用户禁用走工程 `.codely-cli/settings.json` 的 `hooks.disabled` 按 `name` 加。
+- 成本分层：`SessionStart` 每会话一次（适合探测类事实注入），`BeforeAgent` 每轮一次（TJSpec 用它注入流程状态）——两者叠加会翻倍常驻开销，探测类只用前者。
+- 本机落地件：`AesirFrameworkGame/hooks/detect-packages.mjs`（纯 fs 判 RAA/RAM 三形态：内联 / UPM 落地 / 仅 manifest 声明；非 Unity 工程零注入；零副作用不写文件不联网）。
