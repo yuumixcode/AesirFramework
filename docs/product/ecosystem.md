@@ -47,18 +47,6 @@ AI 编码指南不随包分发,统一放在源码仓库根的 `.codely-cli/exten
 | 文档站 | 本站由 Zensical 构建,GitHub Pages 部署;API 页由 Script Doc Generator 生成后同步 |
 | 示例同步 | 包内 `Samples/` 是编写主位,`Samples~/` 是 UPM 镜像,由同步脚本逐文件比对方向 |
 
-## 第三方出处
+## 参考依赖与出处
 
-| 依赖 / 素材 | 授权 | 用法 |
-| --- | --- | --- |
-| [Sirenix Odin Inspector](https://odininspector.com/) | 商业授权(不随包分发) | 可选 Inspector 增强、Binder、脚本文档生成 |
-| [Cysharp/ObservableCollections](https://github.com/Cysharp/ObservableCollections) | MIT | 可观察集合的设计参考与高级能力上游 |
-| [Eflatun.SceneReference](https://github.com/starikcetin/Eflatun.SceneReference) | MIT | `SceneAssetWrapper` 的功能设计参考 |
-| [Vertical 2D Shooting BE4](https://www.goldmetal.co.kr)(Goldmetal) | Copyright ⓒ 2021 Goldmetal,标注出处即可使用(含商用) | 仓库级完整游戏案例 `Assets/PlaneWar` 的精灵素材,案例内为自包含拷贝(不随包分发) |
-
-完整授权说明见主仓 `Assets/Runestone/AesirModules/Third Party Notices.md` 与各包 `LICENSE.md`。
-
-## 参与贡献
-
-- [支持与贡献](../support.md) —— 反馈渠道、提问前自查、提交流程
-- [常见问题](../faq.md) —— 高频陷阱与框架异常消息对照
+设计参考、工具上游与素材出处统一收录在[推荐项目与参考致谢](acknowledgments.md),避免在多个页面重复维护。完整授权说明见主仓 `Assets/Runestone/AesirModules/Third Party Notices.md` 与各包 `LICENSE.md`。
