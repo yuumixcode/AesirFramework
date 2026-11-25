@@ -10,6 +10,8 @@
 - **四扩展点** —— `ISaveSerializer`(对象↔字节)/ `ISaveStorage`(字节持久化,契约含提交式写入与备份读取)/ `ISaveManager`(保存管理编排,**自定义保存方案总入口**)/ `ISaveTransform`(字节变换链);实现 `ISaveManager` 即可整体接入云存档等自定义方案
 - **版本迁移** —— `ISaveMigrator<T>` 按声明版本升级旧档;未提供迁移器返回 `VersionMismatch` 状态而非静默错读;迁移结果不在加载路径写回磁盘
 - **自动保存** —— 周期计时复用 RAA `AesirTimer`(unscaled,暂停菜单不影响存档节奏)+ `OnApplicationPause` / `OnApplicationQuit` 钩子(配置可关)
+- **批量原子会话** —— `SaveBatch` 将多个命名条目打包成一个存档键一次事务提交,一组数据全成或全旧;复用单条保存的事务写与备份回退(设计思路参考 Easy Save 3 `ES3File`,按极简基调收敛)
+- **默认值加载 / 时间戳** —— `LoadOrDefault<T>` 加载失败一行取默认值;`GetTimestamp` 经可选接口 `ISaveStorageTimestamp` 读存档最后写入 UTC 时间(存储不支持返回 null)
 
 ## 快速开始
 
@@ -38,7 +40,21 @@ else if (result.Status == LoadStatus.NoSave)
 
 SaveModule.Delete("slot0");       // 删主存档与备份
 SaveModule.GetKeys();             // 存档槽列表(选档 UI)
+
+// 一组相关数据一次原子提交;条目须为可序列化 POCO
+SaveModule.SaveBatch("slot0", b =>
+{
+    b.Set("gold", new GoldData { amount = 100 });
+    b.Set("bag", new BagData { items = ... });
+});
+var batch = SaveModule.LoadBatch("slot0");
+if (batch.IsSuccess) var gold = batch.Value.Get<GoldData>("gold");
+
+var goldOrDefault = SaveModule.LoadOrDefault("gold", new GoldData()); // 失败返回默认值
+DateTime? savedAt = SaveModule.GetTimestamp("slot0");                // 选档 UI 显示保存时间
 ```
+
+> 批次原子边界仅是一个批次键内部;条目数据须符合序列化器形状(默认 `unity-json` 只支持 `[Serializable]` 公开字段类,裸 `int` / `string` 须包进 POCO)。
 
 存档键仅字母、数字、下划线、连字符(白名单校验防路径穿越);IO 等环境失败以结果表达,编程错误(非法键 / null 数据)抛异常。
 
@@ -49,6 +65,13 @@ SaveModule.GetKeys();             // 存档槽列表(选档 UI)
 SaveModule.Save<T>(string key, T data, int dataVersion = 0);                    // → SaveResult
 SaveModule.Load<T>(string key, int currentVersion = 0, ISaveMigrator<T> migrator = null); // → LoadResult<T>
 SaveModule.Delete(key); SaveModule.Exists(key); SaveModule.GetKeys();
+
+// 批量原子会话 / 默认值 / 时间戳
+SaveModule.SaveBatch(string key, Action<SaveBatch> configure, int dataVersion = 0);  // → SaveResult
+SaveModule.LoadBatch(string key, int currentVersion = 0, ISaveMigrator<SaveBatch> migrator = null); // → LoadResult<SaveBatch>
+  // SaveBatch: Set<T>(name, data) / Get<T>(name) / Contains(name) / Count
+SaveModule.LoadOrDefault<T>(string key, T defaultValue, int currentVersion = 0, ISaveMigrator<T> migrator = null);
+SaveModule.GetTimestamp(string key);   // → DateTime?,存储不支持返回 null
 
 // 扩展点替换
 SaveModule.RegisterSerializer(ISaveSerializer serializer);    // 同 Id 覆盖

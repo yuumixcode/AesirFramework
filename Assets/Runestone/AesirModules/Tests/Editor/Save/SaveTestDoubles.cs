@@ -25,6 +25,20 @@ namespace Runestone.AesirModules.Tests.Editor.Save
         };
     }
 
+    /// <summary>轻量单字段 POCO：批次会话测试用（验证不同 POCO 类型混用不串扰）。</summary>
+    [Serializable]
+    public class BatchValue
+    {
+        public int value;
+    }
+
+    /// <summary>轻量单字段 POCO：批次会话测试用（字符串字段）。</summary>
+    [Serializable]
+    public class BatchName
+    {
+        public string text;
+    }
+
     /// <summary>
     /// 测试序列化器：Base64 文本形态（与 unity-json 的原始 JSON 字节可区分），
     /// 用于验证「按存档记录的序列化器 Id 还原」与自定义注册往返。

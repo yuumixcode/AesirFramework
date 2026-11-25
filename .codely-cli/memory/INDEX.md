@@ -10,6 +10,7 @@
 | `odin-migration.md` | Odin、Sirenix、UI Toolkit、USS、样式开关、无 Odin 验证、YokiFrame、Drawer | 已完结 goal 的全过程实录 + Odin 面板/绘制坑位 |
 | `ui-instantiation.md` | UIModule 停用模板、Instantiate、Resources.Load 资产语义、Addressables、(Clone)、DDOL | 机制已移除；记录质疑—推翻过程与资产语义实测定论 |
 | `framework-core.md` | 框架定位展开、各模块正文外定稿细节、UPM、菜单 priority、AesirTimer、世界空间 UI、Timer 重构、目录/命名裁决、扩展与技能安装 | 高频裁决的展开 + 模块补充 |
+| `save-module.md` | 保存模块、Easy Save 3 对标分析、enhance-save-module 变更 | ES3 3.5.27 核心能力/独占能力、哪些该借鉴哪些是过度设计已排除、三项增强的设计决策与状态 |
 | `external-workflow.md` | Aesir-Notebook、AesirFramework-Site、TJSpec/openspec 面板、dashboard 端口、CDP 9222 被占、headless 截图、deck、huashu-design、定时任务、goal/ask_user、三篇文章 | 外部站点/工具行为/历史留档 |
 | `web-source-reliability.md` | 联网检索、AI 日报取源、哪些站点可抓 | 本机实测可用/不可用来源表 |
 | `cowork-session-cleanup.md` | Cowork 会话批量清理、sessions.sqlite、IPC 删除 | 数据落点与清理顺序 |

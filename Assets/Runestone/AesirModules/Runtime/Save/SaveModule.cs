@@ -254,6 +254,92 @@ namespace Runestone.AesirModules
 
         #endregion
 
+        #region 公开 API — 批量会话 / 默认值 / 时间戳
+
+        /// <summary>
+        /// 批量保存：经回调在会话中登记若干命名条目，整份作为<b>一个</b>存档键一次事务提交。
+        /// 提交成功后该批次所有条目都可读到新值，提交失败时全部保持旧值（原子边界 = 这一次事务写）。
+        /// 复用单条保存的序列化 / 变换链 / 信封 / 备份回退；批次键经白名单校验，失败语义同 <see cref="Save{T}" />。
+        /// </summary>
+        /// <param name="batchKey">批次存档键（仅字母、数字、下划线、连字符）。</param>
+        /// <param name="configure">条目登记回调（非 null）。</param>
+        /// <param name="dataVersion">批次数据版本号（写入信封，加载时用于迁移判定）。</param>
+        public static SaveResult SaveBatch(string batchKey, Action<SaveBatch> configure, int dataVersion = 0)
+        {
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            SaveKey.Validate(batchKey);
+            var m = Ready();
+            var batch = new SaveBatch();
+            batch.Bind(m._serializers, m._activeConfig.defaultSerializerId);
+            configure(batch);
+            return m._manager.Save(batchKey, batch, dataVersion);
+        }
+
+        /// <summary>
+        /// 加载批次：走完整加载链（校验 / 按档还原 / 版本迁移 / 备份回退），成功后对还原的批次重新绑定注册表，
+        /// 使 <see cref="SaveBatch.Get{T}" /> 可用。失败语义同 <see cref="Load{T}" />。
+        /// </summary>
+        /// <param name="batchKey">批次存档键。</param>
+        /// <param name="currentVersion">当前批次数据版本号。</param>
+        /// <param name="migrator">版本不匹配时的批次迁移器（可选）。</param>
+        public static LoadResult<SaveBatch> LoadBatch(string batchKey, int currentVersion = 0,
+            ISaveMigrator<SaveBatch> migrator = null)
+        {
+            SaveKey.Validate(batchKey);
+            var m = Ready();
+            var result = m._manager.Load<SaveBatch>(batchKey, currentVersion, migrator);
+            if (result.Status == LoadStatus.Success && result.Value != null)
+            {
+                result.Value.Bind(m._serializers, m._activeConfig.defaultSerializerId);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 加载数据，存档缺失 / 损坏 / 版本不匹配 / 序列化器缺失时返回 <paramref name="defaultValue" /> 而非调用方
+        /// 检查结果状态；成功时返回存档值。独立方法名而非重载 <c>Load</c>（避免与 <c>currentVersion</c> 参数签名歧义）。
+        /// 不修改磁盘。
+        /// </summary>
+        /// <typeparam name="T">数据类型。</typeparam>
+        /// <param name="key">存档键。</param>
+        /// <param name="defaultValue">加载失败时返回的默认值。</param>
+        /// <param name="currentVersion">当前数据版本号。</param>
+        /// <param name="migrator">版本迁移器（可选）。</param>
+        public static T LoadOrDefault<T>(string key, T defaultValue, int currentVersion = 0,
+            ISaveMigrator<T> migrator = null)
+        {
+            var result = Load<T>(key, currentVersion, migrator);
+            return result.Status == LoadStatus.Success ? result.Value : defaultValue;
+        }
+
+        /// <summary>
+        /// 查询存档最后写入时间（UTC）：存储实现 <see cref="ISaveStorageTimestamp" /> 时返回其时间，否则返回 null。
+        /// 无存档返回 null；不创建模块实例，经 <see cref="TryGetExisting" /> 取已存在实例（与 <see cref="ClearAutoSave" /> 同口径）。
+        /// </summary>
+        /// <param name="key">存档键。</param>
+        public static DateTime? GetTimestamp(string key)
+        {
+            SaveKey.Validate(key);
+            if (!TryGetExisting(out var m))
+            {
+                return null;
+            }
+
+            // 实例存在但未 Ready 过时 _storage 为 null；就地初始化不创建新实例（GetTimestamp 不触发懒创建）。
+            m.EnsureInitialized();
+            var storage = m._storage;
+            return storage is ISaveStorageTimestamp timestampStorage
+                ? timestampStorage.GetLastWriteTimeUtc(key)
+                : (DateTime?)null;
+        }
+
+        #endregion
+
         #region 公开 API — 扩展点
 
         /// <summary>

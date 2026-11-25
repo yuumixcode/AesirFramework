@@ -46,6 +46,18 @@ switch (result.Status)
 SaveModule.Delete("slot0");                     // 删主存档与备份
 SaveModule.Exists("slot0");
 SaveModule.GetKeys();                           // 存档槽列表（做选档 UI）
+
+// 一组相关数据一次原子提交（全成或全旧）
+SaveModule.SaveBatch("slot0", b =>
+{
+    b.Set("gold", new GoldData { amount = 100 });   // 条目须为可序列化 POCO
+    b.Set("bag", new BagData { items = ... });
+});
+var batch = SaveModule.LoadBatch("slot0");
+if (batch.IsSuccess) var gold = batch.Value.Get<GoldData>("gold");
+
+var goldOrDefault = SaveModule.LoadOrDefault("gold", new GoldData());  // 失败返回默认值
+DateTime? savedAt = SaveModule.GetTimestamp("slot0");                 // 选档 UI 显示保存时间
 ```
 
 **存档键**仅字母、数字、下划线、连字符（`"slot_0"`、`"Quicksave-1"`）；含路径分隔符 / 空白 / `..` 抛 `ArgumentException`（防路径穿越）。
@@ -56,6 +68,12 @@ SaveModule.GetKeys();                           // 存档槽列表（做选档 U
 SaveModule.Save<T>(string key, T data, int dataVersion = 0);        // → SaveResult
 SaveModule.Load<T>(string key, int currentVersion = 0, ISaveMigrator<T> migrator = null); // → LoadResult<T>
 SaveModule.Delete / Exists / GetKeys;                               // 直通存储
+
+SaveModule.SaveBatch(string key, Action<SaveBatch> configure, int dataVersion = 0); // → SaveResult，一组条目一次事务
+SaveModule.LoadBatch(string key, int currentVersion = 0, ISaveMigrator<SaveBatch> migrator = null); // → LoadResult<SaveBatch>
+  // SaveBatch: Set<T>(name, data) / Get<T>(name) / Contains(name) / Count（Get 未命中返回 default）
+SaveModule.LoadOrDefault<T>(string key, T defaultValue, ...);       // 失败返回默认值，成功返回存档值
+SaveModule.GetTimestamp(string key);                                // → DateTime?，存储不支持返回 null
 
 SaveModule.RegisterSerializer(ISaveSerializer serializer);          // 同 Id 覆盖
 SaveModule.SetStorage(ISaveStorage storage);                        // 默认管理器随之重建
@@ -107,6 +125,9 @@ SaveModule.SetAutoSave(() => SaveModule.Save("slot0", Capture()), 60f);
 
 ## 陷阱
 
+- **批次条目用裸 int/string 存不进**：默认 unity-json 的 `JsonUtility.ToJson(100)` 返回 `{}`（裸值无法序列化），条目数据须包进 `[Serializable]` POCO 字段——与单条 `Save` 同限制；Easy Save 式裸值直存不在本模块能力内。
+- **批次原子边界只有一个键内**：`SaveBatch` 保证一个批次键内全成或全旧，不同批次键之间无全局原子；要跨键原子就把数据放进同一批次。
+- **LoadOrDefault 掩盖失败原因**：四状态都返回默认值，玩家分不清"没存档"与"存档损坏"；需提示时用 `Load<T>` 读 Status。
 - **直写目标文件丢档**：`File.WriteAllText(path)` 写入中途崩溃即截断——这正是本模块事务写入解决的事故，不要绕开模块自写。
 - **序列化器 Id 改名**：Id 写入每份存档信封，改名等于旧档全部 `SerializerMissing`；发布后不可改。
 - **变换链 Id 缺失**：加载按存档记录的变换 Id 查注册表，链上每个 Id 须保持注册（缺失判损坏）；加密档换密钥加载判损坏（不是静默错读）。

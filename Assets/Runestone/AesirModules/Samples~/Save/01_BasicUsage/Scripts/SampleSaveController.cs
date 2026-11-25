@@ -107,6 +107,28 @@ namespace Runestone.AesirModules.Samples.Save.BasicUsage
             }
         }
 
+        /// <summary>批量会话：把计数与背包作为两个命名条目一次原子提交，再按名读回（默认值 + 时间戳一行用法）。</summary>
+        public void SaveBatchDemo()
+        {
+            var save = SaveModule.SaveBatch("demo-batch", batch =>
+            {
+                batch.Set("meta", new DemoSaveData { counter = _data.counter, inventory = _data.inventory });
+                batch.Set("bag", new DemoSaveData { inventory = _data.inventory });
+            });
+            if (!save.IsSuccess)
+            {
+                _status = $"批量保存失败：{save.Error}";
+                return;
+            }
+
+            var loaded = SaveModule.LoadBatch("demo-batch");
+            var meta = loaded.IsSuccess ? loaded.Value.Get<DemoSaveData>("meta") : new DemoSaveData();
+            // LoadOrDefault：对从未保存的单条键取默认值，省去 switch(Status)
+            var fallback = SaveModule.LoadOrDefault("never-saved", new DemoSaveData { counter = -1 });
+            var savedAt = SaveModule.GetTimestamp("demo-batch");
+            _status = $"批量会话（来源 {loaded.Source}）：计数 {meta.counter}、默认值 {fallback.counter}、保存时间 {(savedAt.HasValue ? savedAt.Value.ToLocalTime().ToString("T") : "无")}";
+        }
+
         /// <summary>删除存档槽。</summary>
         public void DeleteDemo()
         {
@@ -172,6 +194,10 @@ namespace Runestone.AesirModules.Samples.Save.BasicUsage
             if (GUILayout.Button("保存")) SaveDemo();
             if (GUILayout.Button("加载")) LoadDemo();
             if (GUILayout.Button("删除")) DeleteDemo();
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("批量会话 + 默认值 + 时间戳")) SaveBatchDemo();
             GUILayout.EndHorizontal();
 
             GUILayout.Space(6);

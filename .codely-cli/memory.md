@@ -45,6 +45,8 @@
 - [2026-09-05 16:20:30] [reference] **发布脚本 `.github/scripts/build_unitypackage.py`**（纯 Python，**禁止换第三方 CLI**——实测产出重复 GUID / 全零 meta / 丢文件夹条目）：跳过 `~` 后缀与 `.` 开头目录（`Samples~` / `Documentation~` 不入包，.meta 与主位同 GUID）、排除 IncludeDependencies 拖入的内置包源、**无 Odin 铁律**（`ODIN_INSPECTOR` defineConstraints 原样保留）。
 - [2026-11-19 09:04:01] 联网来源可靠性索引（游戏 AI 日报检索用）：`.codely-cli/memory/web-source-reliability.md` — 记录本机实测可用/不可用的中文 AI 资讯与官方 changelog 站点、抓取受阻情况（阿里云公告、developer.unity.cn 脚本渲染；gamelook 502；api.github.com 未认证限流）、以及"日期检索不可靠、应先查官方 changelog 与 arXiv abs"的检索经验。
 - [2026-11-20 16:13:47] 记忆采用「主索引 + 分块」架构（2026-11-20 起）：本文件只留高频裁决、当前基线与指针，长过程记录/踩坑/历史留档在 `.codely-cli/memory/` 的 7 个主题块。遇到具体主题先读 `.codely-cli/memory/INDEX.md` 的分派表按主题定位块文件：version-release（发版/tag/CNB/门禁数字）、testing、unity-tooling、odin-migration、ui-instantiation、framework-core、external-workflow；另有 web-source-reliability / cowork-session-cleanup / docs-site-rebuild-api-nav.py。Why: 主索引曾膨胀到 121 行导致 read_memory 多次截断。How to apply: 新增长条目写进对应块、主索引只加一行指针；不要再把细节塞回主索引。
+- [2026-11-23 20:31:29] [2026-11-23] 保存模块对标 Easy Save 3（项目内已装，源码 3.5.27，Assets/Plugins/Easy Save 3/）:分析结论、三项增强的决策与实施结果见 `.codely-cli/memory/save-module.md`;openspec 变更 `enhance-save-module`（批量原子会话/LoadOrDefault/GetTimestamp）12/12 任务已实施、门禁全绿，用户裁决暂不归档（等 add-save-module 一起按序归档）。Why:跨会话继续该目标或再被问引入 ES3 功能时避免重做源码分析。How to apply:读 save-module.md 块;归档状态以 openspec 为准。
+
 
 ## Codely Added Memories
 
