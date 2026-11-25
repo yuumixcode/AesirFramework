@@ -208,10 +208,46 @@ namespace Runestone.AesirModules.ScriptDocGenerator
 
         /// <summary>
         /// 将类型名称转换为文档文件名（不含扩展名）。
-        /// 泛型尖括号转换为花括号（C# XML 文档注释 cref 规范）：尖括号在 Windows 文件名中非法，
-        /// 而方括号在 Markdown 中是链接语法会导致引用失效，花括号则两者皆安全。
+        /// 泛型参数使用 "-of-" 形式（ObservableList-of-T），多参数以连字符连接（Dictionary-of-Key-Value）。
+        /// 选择该形式的原因：尖括号是 Windows 文件名的非法字符，方括号会破坏 Markdown 链接语法，
+        /// 而尖括号/花括号/空格均为非法 IRI 字符——静态站点构建器（zensical 0.1.x）会把
+        /// repo_url + edit_uri + 页面源路径拼成绝对 URL 并按 IRI 校验，非法字符直接导致构建 panic
+        /// （上游 0.1.2 的 #1147 只修复了方括号转义，花括号至今未修）。"-of-" 在文件系统、
+        /// Markdown 链接与 URL 三处均安全，也是 DocFX 等 C# 文档工具的通用约定。
         /// </summary>
-        public static string ConvertToDocumentationFileName(string typeName) =>
-            typeName?.Replace('<', '{').Replace('>', '}');
+        public static string ConvertToDocumentationFileName(string typeName)
+        {
+            if (typeName == null)
+            {
+                return null;
+            }
+
+            var result = typeName;
+            int open;
+            while ((open = result.IndexOf('<')) >= 0)
+            {
+                var close = result.IndexOf('>', open + 1);
+                if (close < 0)
+                {
+                    break;
+                }
+
+                var suffix = string.Empty;
+                foreach (var parameter in result.Substring(open + 1, close - open - 1).Split(','))
+                {
+                    var trimmed = parameter.Trim();
+                    if (trimmed.Length > 0)
+                    {
+                        suffix += suffix.Length > 0 ? "-" + trimmed : trimmed;
+                    }
+                }
+
+                result = suffix.Length > 0
+                    ? result.Substring(0, open) + "-of-" + suffix + result.Substring(close + 1)
+                    : result.Substring(0, open) + result.Substring(close + 1);
+            }
+
+            return result;
+        }
     }
 }

@@ -6,17 +6,27 @@ namespace Runestone.AesirModules.Tests.Editor.ScriptDocGenerator
     public class DocumentationFileNameTests
     {
         [Test]
-        public void TestGenericTypeUsesCurlyBraces()
+        public void TestGenericTypeUsesOfSuffix()
         {
-            // 花括号对应 C# XML 文档注释 cref 规范（List{T}），Windows 文件名与 Markdown 链接均安全
-            Assert.AreEqual("TypeData{T}", TypeAnalyzerUtility.ConvertToDocumentationFileName("TypeData<T>"));
+            // "-of-" 形式同时满足 Windows 文件名、Markdown 链接与 IRI/URL 三处合法性（见被测方法注释）
+            Assert.AreEqual("TypeData-of-T", TypeAnalyzerUtility.ConvertToDocumentationFileName("TypeData<T>"));
         }
 
         [Test]
-        public void TestMultipleGenericParametersKeepNames()
+        public void TestMultipleGenericParametersJoinedByHyphen()
         {
-            Assert.AreEqual("Dictionary{Key,Value}",
+            Assert.AreEqual("Dictionary-of-Key-Value",
                 TypeAnalyzerUtility.ConvertToDocumentationFileName("Dictionary<Key,Value>"));
+            // 反射类型名参数间带空格，同样要归一化（空格在 IRI 中非法）
+            Assert.AreEqual("Dictionary-of-Key-Value",
+                TypeAnalyzerUtility.ConvertToDocumentationFileName("Dictionary<Key, Value>"));
+        }
+
+        [Test]
+        public void TestNestedTypeSuffixesEachGenericSegment()
+        {
+            Assert.AreEqual("Dictionary-of-Key.Enumerator-of-Key",
+                TypeAnalyzerUtility.ConvertToDocumentationFileName("Dictionary<Key>.Enumerator<Key>"));
         }
 
         [Test]
