@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.1** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.1** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -34,6 +34,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.36.1] - 2026-11-27
+
 ### [modules] Aesir Modules
 
 **Changed**
@@ -44,6 +46,18 @@ versions follow [Semantic Versioning](https://semver.org/).
   站点构建 panic（上游 0.1.2 的 #1147 只修复了方括号转义，花括号至今未修），此前被迫置空 `edit_uri` 放弃
   「编辑此页」链接。命名规则收敛在 `TypeAnalyzerUtility.ConvertToDocumentationFileName` 单点，单元测试与
   既有文档链接、导航同步更新；站点 `edit_uri` 已恢复。
+- **AI 技能导流文档对齐 13 技能** — 包内 `TuanjieCow~/README.md` 与包根中英 `README` 的 AI 技能清单仍停留在
+  `aesir-save` 加入前的「四个模块技能 / 12 个技能」口径，现统一补上 `aesir-save`（技能数 12 → 13、模块技能
+  四个 → 五个）。纯文档勘误，无运行时变更。
+
+---
+
+### [architecture] Aesir Architecture
+
+**Changed**
+
+- **AI 技能导流文档对齐 13 技能** — 包内 `TuanjieCow~/README.md` 技能数「12 个技能」→ 13、技能表补
+  `aesir-save`、依赖提醒「四个模块技能」→ 五个。本版本无运行时变更，与 Aesir Modules 0.36.1 同号发版。
 
 ## [0.36.0] - 2026-11-24
 

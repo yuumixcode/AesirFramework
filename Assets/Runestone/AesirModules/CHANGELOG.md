@@ -7,6 +7,8 @@
 
 ## [Unreleased]
 
+## [0.36.1] - 2026-11-27
+
 ### Changed
 
 - **ScriptDocGenerator 输出文件名改为 URL 安全的 `-of-` 形式** — 泛型类型文档文件名 `ObservableList{T}.md` →
@@ -14,6 +16,9 @@
   0.1.x 拼接 `repo_url` + `edit_uri` + 源路径做 IRI 校验时直接 panic（上游 0.1.2 #1147 仅修复方括号转义），
   此前站点构建被迫置空 `edit_uri`。规则收敛于 `TypeAnalyzerUtility.ConvertToDocumentationFileName`，
   EditMode 测试同步更新；文档站「编辑此页」链接已恢复。
+- **AI 技能导流文档对齐 13 技能** — 包内 `TuanjieCow~/README.md`（技能目录数「应看到 12 个」→ 13、技能表补
+  `aesir-save`、模块技能「四个」→ 五个）与包根 `README.md` / `README_EN.md` 的 AI 技能包小节（模块技能清单补
+  `aesir-save`）。纯文档勘误，无运行时变更。
 
 ## [0.36.0] - 2026-11-24
 

@@ -5,7 +5,7 @@ Modules），不再随单个包分发。本文件只讲两件事：**怎么下�
 
 ## 扩展里有什么
 
-一个扩展 = 12 个技能 + 2 篇实战模板：
+一个扩展 = 13 个技能 + 2 篇实战模板：
 
 | 技能                      | 覆盖                                                                                           |
 |---------------------------|------------------------------------------------------------------------------------------------|
@@ -21,6 +21,7 @@ Modules），不再随单个包分发。本文件只讲两件事：**怎么下�
 | `aesir-events`            | `EventModule`：Script 订阅 + 句柄退订、优先级、订阅者过滤器、取消传播、诊断 API、SO 事件资产   |
 | `aesir-audio`             | `AudioModule`：`PlaySfx` 轮询、`PlayBgm` 淡变、三通道音量                                      |
 | `aesir-scene`             | `SceneModule`：Single／Additive、进度归一化、UniTask awaitable                                 |
+| `aesir-save`              | `SaveModule`：Save/Load 存档槽、事务写入与备份回退、三轨序列化、四扩展点、版本迁移、自动保存      |
 
 外加 `skills/aesir-framework/references/` 下的完整小游戏骨架与原生 MonoBehaviour 迁移表。
 
@@ -45,7 +46,7 @@ Modules），不再随单个包分发。本文件只讲两件事：**怎么下�
 git clone --depth 1 --filter=blob:none --sparse https://cnb.cool/runestone-game/AesirFramework.git aesir-ai-skills
 cd aesir-ai-skills
 git sparse-checkout set .codely-cli/extensions/AesirFrameworkGame
-ls .codely-cli/extensions/AesirFrameworkGame/skills    # 应看到 12 个技能目录
+ls .codely-cli/extensions/AesirFrameworkGame/skills    # 应看到 13 个技能目录
 ```
 
 CNB 拉不动时换 GitHub 镜像（路径与命令完全相同，只换 URL）：
@@ -112,8 +113,8 @@ AI 工具里：
 
 ## 依赖提醒
 
-- 技能只教**怎么写代码**，不负责装包。工程里没有 `cn.runestone.aesir.architecture` 时，架构技能与四个模块技能全部不可用。
-- 四个模块技能（`aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene`）都要求工程里有
+- 技能只教**怎么写代码**，不负责装包。工程里没有 `cn.runestone.aesir.architecture` 时，架构技能与五个模块技能全部不可用。
+- 五个模块技能（`aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` / `aesir-save`）都要求工程里有
   `cn.runestone.aesir.modules`，且它依赖 RAA。
 - 安装包本身见包根 `README.md`；RAM 缺 RAA 时用菜单 `Tools/Aesir/Modules/Install Dependencies` 补装。
 

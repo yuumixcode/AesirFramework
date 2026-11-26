@@ -4,7 +4,7 @@
 > as first-class citizens.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.36.0-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.36.1-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#installation)
 [![中文](https://img.shields.io/badge/README-中文-red.svg)](./README.md)
@@ -123,7 +123,7 @@ installed this way live under `Assets/Runestone/` and can be checked and updated
 > `Check for Updates` menu is hidden entirely. Package Manager shows no update prompt for Git URL packages: to
 > upgrade, remove the old package and re-add it with the same URL (the `latest` branch name is permanently
 > fixed, so no per-release edits are needed; to pin an older release, use a Release tag such as
-> `?path=Assets/Runestone/AesirArchitecture#v0.36.0`).
+> `?path=Assets/Runestone/AesirArchitecture#v0.36.1`).
 >
 > **The Runestone folder can be freely moved anywhere inside the project**: the `AesirPathLookup.asset` anchor
 > asset at each package root shows the way (same mechanism as Odin Inspector's counterpart — the .meta GUID

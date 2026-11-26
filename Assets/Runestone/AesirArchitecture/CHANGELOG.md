@@ -7,6 +7,13 @@
 
 ## [Unreleased]
 
+## [0.36.1] - 2026-11-27
+
+### Changed
+
+- **AI 技能导流文档对齐 13 技能** — 包内 `TuanjieCow~/README.md` 技能数「12 个技能」→ 13、技能表补
+  `aesir-save`、依赖提醒「四个模块技能」→ 五个。纯文档勘误，无运行时变更，与 Aesir Modules 0.36.1 同号发版。
+
 ## [0.36.0] - 2026-11-24
 
 本包无运行时变更，与 Aesir Modules 0.36.0 同号发版（SaveModule 落地于 RAM），保持两包版本同步。

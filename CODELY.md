@@ -23,8 +23,8 @@
 
 | 包 | 包 ID | 版本 | 说明 |
 |---|---|---|---|
-| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.36.0 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
-| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.36.0 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、保存模块、脚本文档生成（需 Odin） |
+| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.36.1 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
+| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.36.1 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、保存模块、脚本文档生成（需 Odin） |
 
 依赖关系：**RAA 不依赖任何 Aesir 包**；**RAM 依赖 RAA**（`package.json` 中**不声明**该依赖，见下方"依赖补全"）。
 
@@ -510,9 +510,13 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ---
 
-## 当前状态与待办（2026-11-24）
+## 当前状态与待办（2026-11-27）
 
-- 已发布 **0.36.0**（2026-11-24，保存模块版本）。上一稳定版 0.35.0（2026-11-23，事件模块大版本）。
+- 已发布 **0.36.1**（2026-11-27，文档勘误版）。上一稳定版 0.36.0（2026-11-24，保存模块版本）。
+- **0.36.1 落地内容**（无运行时行为变更）：
+  1. **（RAM）SDG 输出文件名 URL 安全化补记** —— 泛型类型文档文件名 `ObservableList{T}.md` → `ObservableList-of-T.md`（多参数 `Dictionary-of-Key-Value`）；花括号/尖括号/空格为非法 IRI 字符，zensical 0.1.x 拼 `repo_url` + `edit_uri` 做 IRI 校验 panic，此前站点被迫置空 `edit_uri`。代码实际随 0.36.0 已发布（`bece11d5`，当时漏收 CHANGELOG 挂在 Unreleased），0.36.1 收口补记；规则收敛于 `TypeAnalyzerUtility.ConvertToDocumentationFileName` 单点，站点 `edit_uri` 已恢复。
+  2. **（两包 + 仓库）AI 技能导流文档对齐 13 技能** —— `aesir-save` 加入后，包内两份 `TuanjieCow~/README.md`、包根中英 README 与根 README 的「四个模块技能 / 12 个技能」口径全部补上 `aesir-save`（技能数 12 → 13、模块技能四个 → 五个）。
+  3. **（仓库级）docs.yml Pages 部署稳定性** —— deploy-pages 前等待工件可见根治偶发部署失败（`aa765b2e`）；五处 action 升 node24 消除 Node 20 弃用警告（`5b2308a5`）。
 - **0.36.0 落地内容**：
   1. **（RAM）保存模块（SaveModule）** —— 独立游戏级事务式存档门面：`Save`/`Load` 一行可用，写入经「临时文件 + 强制刷盘 + 双 rename 备份轮换 + 原子提交」任意崩溃点不丢档；CRC32 校验 + 加载损坏自动回退备份（结果对象标明 Status/Source）；三轨序列化（JsonUtility 默认 / Odin 二进制 / Newtonsoft 可选，均按条件编译隔离）；四扩展点 `ISaveSerializer` / `ISaveStorage` / `ISaveManager` / `ISaveTransform`（实现 `ISaveManager` 可整体接入云存档）；GZip + AES-256 变换链（默认关闭）、`ISaveMigrator<T>` 版本迁移、自动保存（复用 `AesirTimer` unscaled 周期 + 切后台/退出钩子）、`SaveConfigSO` 配置资产（菜单显式幂等创建 + 内存兜底）。含 BasicUsage 示例。
   2. **（RAM）保存模块增强** —— `SaveBatch`/`LoadBatch` 批量原子会话（一组条目一次事务提交）；`LoadOrDefault<T>` 加载失败返回默认值；`GetTimestamp(key)` 经可选接口 `ISaveStorageTimestamp` 返回存档最后写入 UTC 时间。新增 EditMode 用例。
@@ -536,7 +540,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
   4. **（RAM）UI 实例化简化** —— 移除停用模板机制改 `Instantiate → SetActive(false)`，实例名去重复 `(Clone)`；`Resources.Load` 资产语义实证与文档决策复盘。
   5. **移除 Binder / SDG 的 UI Toolkit 窗口** —— 两个工具只保留原 Odin 窗口，数据层零 Odin 依赖不改。
   6. **（AI 扩展）`AesirFrameworkGame` 1.2.0 → 1.3.0** —— 新增 `aesir-project-structure` 技能（12 技能），统一资产命名去类型前缀与工程目录约定；按 PlaneWar 三篇复盘优化 boot-scene / framework / ui / router 技能。
-- **门禁基线（0.35.0 实测；0.36.0 因 SaveModule 新增用例待重跑）**：EditMode batchmode **881 total / 878 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore）；PlayMode batchmode **36/36**（RAA 20 / RAM 8 / UniTask 8）；编译预热 0 error。**改测试或 asmdef 必须重跑**——0.36.0 含新增 Save 用例，推送前须在本地 batchmode 重跑取新基线。
+- **门禁基线（0.36.0 实测，2026-11-26 发布时重跑）**：EditMode batchmode **944 total / 941 pass / 0 fail / 3 skip**（skip = Addressables 自适应 ×2 + batchmode 未保存场景下的预期 Ignore，含 SaveModule 三个新增用例）；PlayMode batchmode **41/41**；编译预热 0 error；`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；主仓文档站 `zensical build --strict` 0 issue。**改测试或 asmdef 必须重跑**。
 - 门禁前置校验：`sync-samples --check` 零漂移；扩展 `validate.py` 0 错 0 警；主仓根文档站与 `Aesir-Notebook` 各自 `zensical build --strict` 无 issue。**改测试或 asmdef 必须重跑。**
 - **待办 / 未决**：
   - PlaneWar 的 RAA 版案例（`Assets/PlaneWar/Scripts/Raa/`，程序集 `PlaneWar.Raa`）待编写（当前只有 Mono 版；README 已列出规划）。

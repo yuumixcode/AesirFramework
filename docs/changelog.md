@@ -11,11 +11,24 @@
 
 | 子包 | 包名 | 版本 |
 |------|------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.0** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.0** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.1** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.1** |
 
 !!! tip "版本策略"
     两包同号发版(CI 校验一致),推荐同版本安装。Aesir Modules 依赖 Aesir Architecture;Aesir Architecture 不依赖任何 Aesir 子包。
+
+## [0.36.1] - 2026-11-27
+
+**文档勘误版(无运行时行为变更)**:AI 技能导流文档对齐 13 技能;SDG 泛型文件名规则补记。
+
+**Aesir Modules**
+
+- **AI 技能导流文档对齐**:包内 `TuanjieCow~/README.md` 与包根中英 `README` 的 AI 技能清单补上 `aesir-save`(技能数 12 → 13、模块技能四个 → 五个)
+- **SDG 输出文件名 `-of-` 形式补记**:泛型 API 页文件名 `ObservableList{T}.md` → `ObservableList-of-T.md`(花括号等为非法 IRI 字符,zensical 构建校验 panic);代码实际随 0.36.0 已发布,本版收口补记,站点「编辑此页」链接已恢复
+
+**Aesir Architecture**
+
+- AI 技能导流文档对齐:包内 `TuanjieCow~/README.md` 技能数与模块技能口径同步至 13 技能;无运行时变更
 
 ## [0.36.0] - 2026-11-24
 

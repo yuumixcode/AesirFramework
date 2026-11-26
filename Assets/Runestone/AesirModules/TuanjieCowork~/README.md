@@ -3,8 +3,8 @@
 Aesir 的 AI 编码技能统一放在**整包扩展 AesirFrameworkGame** 里（Aesir Architecture 与 Aesir Modules
 共用同一个扩展），不再随单个包分发。本文件只讲两件事：**怎么下载这个扩展**、**怎么装进去**。
 
-> 本包（Aesir Modules / RAM）的四个模块技能是 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene`
-> ；同一扩展里还有支撑它们写法的架构技能（`aesir-framework` / `aesir-tiers` / `aesir-core-api` /
+> 本包（Aesir Modules / RAM）的五个模块技能是 `aesir-ui` / `aesir-events` / `aesir-audio` / `aesir-scene` /
+> `aesir-save`；同一扩展里还有支撑它们写法的架构技能（`aesir-framework` / `aesir-tiers` / `aesir-core-api` /
 > `aesir-decisions` / `aesir-pitfalls`）与工程初始化技能 `aesir-boot-scene`，以及入口分派技能 `aesir-router`。**RAM
 > 依赖 RAA**，所以建议整套一起装。
 
@@ -24,6 +24,7 @@ Aesir 的 AI 编码技能统一放在**整包扩展 AesirFrameworkGame** 里（A
 | `aesir-events`            | `EventModule`：Script 订阅 + 句柄退订、优先级、订阅者过滤器、取消传播、诊断 API、SO 事件资产   | RAM  |
 | `aesir-audio`             | `AudioModule`：`PlaySfx` 轮询、`PlayBgm` 淡变、三通道音量                                      | RAM  |
 | `aesir-scene`             | `SceneModule`：Single／Additive、进度归一化、UniTask awaitable                                 | RAM  |
+| `aesir-save`              | `SaveModule`：Save/Load 存档槽、事务写入与备份回退、三轨序列化、四扩展点、版本迁移、自动保存      | RAM  |
 
 外加 `skills/aesir-framework/references/` 下的完整小游戏骨架与原生 MonoBehaviour 迁移表。
 
@@ -48,7 +49,7 @@ Aesir 的 AI 编码技能统一放在**整包扩展 AesirFrameworkGame** 里（A
 git clone --depth 1 --filter=blob:none --sparse https://cnb.cool/runestone-game/AesirFramework.git aesir-ai-skills
 cd aesir-ai-skills
 git sparse-checkout set .codely-cli/extensions/AesirFrameworkGame
-ls .codely-cli/extensions/AesirFrameworkGame/skills    # 应看到 12 个技能目录
+ls .codely-cli/extensions/AesirFrameworkGame/skills    # 应看到 13 个技能目录
 ```
 
 CNB 拉不动时换 GitHub 镜像（路径与命令完全相同，只换 URL）：
@@ -87,7 +88,7 @@ codely extensions list          # 应出现 AesirFrameworkGame [enabled]
 > 只想装其中几个技能、或用全局技能目录（`~/.codely-cli/skills/`）时，用扩展自带的批量安装脚本：
 >
 > ```bash
-> python3 .codely-cli/extensions/AesirFrameworkGame/scripts/install.py --scope global --only aesir-ui,aesir-events,aesir-audio,aesir-scene
+> python3 .codely-cli/extensions/AesirFrameworkGame/scripts/install.py --scope global --only aesir-ui,aesir-events,aesir-audio,aesir-scene,aesir-save
 > ```
 
 ---
@@ -115,7 +116,7 @@ AI 工具里：
 
 ## 依赖提醒
 
-- 技能只教**怎么写代码**，不负责装包。工程里没有 `cn.runestone.aesir.architecture` 时，四个模块技能全部不可用。
+- 技能只教**怎么写代码**，不负责装包。工程里没有 `cn.runestone.aesir.architecture` 时，五个模块技能全部不可用。
 - RAM 依赖 RAA：装了 RAM 却缺 RAA 时，先用菜单 `Tools/Aesir/Modules/Install Dependencies` 补装，再让 AI 写模块代码。
 - 安装包本身见包根 `README.md`。
 
