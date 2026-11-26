@@ -26,5 +26,17 @@ jobs:
       - run: zensical build --strict
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
+        id: upload
         with: { path: site }
+      # actions/deploy-pages#451：同一 job 内 upload 刚 finalize 时，后端 ListArtifacts
+      # 有短暂不可见窗口（本仓实测 finalize 后 0.24 秒查询返回 0 个工件），且重跑可能
+      # 触发重复工件报错。REST artifacts API 走另一个服务、探测不到该窗口，故以延时等待
+      # 为主，并校验 upload 确实输出了 artifact_id。
+      - name: Wait for artifact visibility
+        env:
+          ARTIFACT_ID: ${{ steps.upload.outputs.artifact_id }}
+        run: |
+          test -n "$ARTIFACT_ID" || { echo "::error::upload-pages-artifact 未输出 artifact_id"; exit 1; }
+          echo "工件 $ARTIFACT_ID 已上传，等待后端列表可见..."
+          sleep 20
       - uses: actions/deploy-pages@v5
