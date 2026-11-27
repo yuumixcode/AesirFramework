@@ -20,8 +20,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 | 子包 / Sub-Package | 包名 / Package ID | 版本 / Version |
 |---|---|---|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.1** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.1** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.2** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.2** |
 
 > **安装方式 / Installation**：本仓库作为单一 monorepo 发布，两个子包均通过 [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) 拉取（推荐常驻 `latest` 分支 `#AesirArchitecture-latest` / `#AesirModules-latest`——一次输入持续更新，升级 = 移除后用同一 URL 重新添加；钉旧版本用 Release tag），按需选用。
 > *The repository is published as a single monorepo. Both sub-packages are pulled via [UPM Git URL](https://github.com/yuumixcode/AesirFramework.git) (evergreen `latest` branches recommended — enter the URL once and re-add it to upgrade; pin older releases via Release tags) and used on demand.*
@@ -33,6 +33,26 @@ versions follow [Semantic Versioning](https://semver.org/).
 ---
 
 ## [Unreleased]
+
+## [0.36.2] - 2026-11-27
+
+> 文档与工具链版本：随包 AI 技能扩展 AesirFrameworkGame 升级至 1.6.0，并清理开发仓库中未入库的 Easy Save 3 收费插件本地副本；两包运行时代码零改动。
+
+### [modules] Aesir Modules
+
+**Changed**
+
+- **随包 AI 技能扩展升级至 1.6.0** — `aesir-project-structure` 技能按实际项目使用情况更新：决策速查新增「调整目录结构前必做：根目录分析」（先逐个分析 `Assets/` 根目录，按固定路径/GUID 引用→必须留根、引擎约定目录→推荐留根、纯自有资源→进 `_Game/` 判定，完成后列出留根清单与逐项理由，杜绝无编译报错的静默断链）；`references/directory-layout.md` 展开通用纪律并附六个留根目录实例（`Resources` / `Plugins` / `TextMesh Pro` / `Localization` / `Settings` / `AddressableAssetsData`，标注为单个项目实例、非通用名单，并明确 `AddressableAssetsData` ≠ `AddressableResources`）。技能正文只在扩展目录维护，包运行时代码零改动。
+
+**Removed**
+
+- **清理开发仓库中未入库的 Easy Save 3 收费插件本地副本** — `Assets/Plugins/Easy Save 3/` 及同级 `.meta` 移入废纸篓（2.6 MB，未纳入版本控制，不随包分发）。文档中的提取来源署名（致谢页、`save.md`、`save-module.md`、历史 CHANGELOG）按用户裁决保留。
+
+---
+
+### [architecture] Aesir Architecture
+
+本包无运行时变更，与 Aesir Modules 0.36.2 同号发版。随包 AI 技能扩展同步升级至 1.6.0（`aesir-project-structure` 目录结构规范增补）。
 
 ## [0.36.1] - 2026-11-27
 

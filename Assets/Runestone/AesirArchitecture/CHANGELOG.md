@@ -7,6 +7,10 @@
 
 ## [Unreleased]
 
+## [0.36.2] - 2026-11-27
+
+本包无运行时变更，与 Aesir Modules 0.36.2 同号发版。随包 AI 技能扩展同步升级至 1.6.0（`aesir-project-structure` 目录结构规范增补），详见根 CHANGELOG 与 Aesir Modules CHANGELOG 本版本条目。
+
 ## [0.36.1] - 2026-11-27
 
 ### Changed

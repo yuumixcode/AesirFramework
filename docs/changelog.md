@@ -11,11 +11,24 @@
 
 | 子包 | 包名 | 版本 |
 |------|------|------|
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.1** |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.1** |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.2** |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.2** |
 
 !!! tip "版本策略"
     两包同号发版(CI 校验一致),推荐同版本安装。Aesir Modules 依赖 Aesir Architecture;Aesir Architecture 不依赖任何 Aesir 子包。
+
+## [0.36.2] - 2026-11-27
+
+**文档与工具链版(无运行时行为变更)**:随包 AI 技能扩展升级至 1.6.0;清理开发仓库中未入库的收费插件本地副本。
+
+**Aesir Modules**
+
+- **AI 技能扩展 1.6.0**:`aesir-project-structure` 技能按实际项目使用情况更新——决策速查新增「调整目录结构前必做:根目录分析」(先逐个分析 `Assets/` 根目录,按固定路径/GUID 引用→必须留根、引擎约定目录→推荐留根、纯自有资源→进 `_Game/` 判定,完成后列留根清单与理由,杜绝无编译报错的静默断链);`references/directory-layout.md` 补六个留根目录实例(`Resources` / `Plugins` / `TextMesh Pro` / `Localization` / `Settings` / `AddressableAssetsData`,标注为单个项目实例、非通用名单,明确后两者角色区分)。技能正文只在扩展目录维护,包运行时代码零改动
+- **清理未入库的收费插件本地副本**:`Assets/Plugins/Easy Save 3/` 移入废纸篓,不随包分发;文档提取来源署名保留
+
+**Aesir Architecture**
+
+- 无运行时变更,与 Aesir Modules 0.36.2 同号发版;AI 技能扩展同步升级至 1.6.0
 
 ## [0.36.1] - 2026-11-27
 

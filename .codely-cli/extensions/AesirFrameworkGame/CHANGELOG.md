@@ -2,6 +2,16 @@
 
 本扩展的版本号在 `gemini-extension.json` 的 `version`。技能正文的唯一主位是本扩展 `skills/`，包内不再有副本。
 
+## 1.6.0 — 2026-11-27
+
+按实际项目使用情况更新 `aesir-project-structure` 技能（纯技能文档变更，框架包与运行时代码零改动；按用户裁决不进规格文档）。
+
+### 变更
+
+- **结构调整必做：根目录分析**：决策速查新增"调整目录结构前必做什么"——先逐个分析 `Assets/` 根目录已有文件夹，判定哪些必须/推荐留根，完成后列出留根清单并逐项说明理由，此步不可省略；`references/directory-layout.md` §1.1 展开通用纪律与三类判定依据（固定路径/GUID 引用→必须留根，引擎约定目录→推荐留根，纯自有资源→进 `_Game/`）。理由：目录重组时把 Unity 系统/包按路径或 GUID 寻址的目录一并收进 `_Game/` 会造成无编译报错的静默断链，判定必须做在动手之前，并留清单给后续维护者。
+- **六个留根目录实例**：目录模板把 `Resources/` / `Plugins/` / `TextMesh Pro/` / `Localization/` / `Settings/` / `AddressableAssetsData/` 放到 `Assets/` 根（与 `_Game/` 平级），逐项给出断链理由（Resources 路径被 26 处代码字符串引用、Addressables 分组存逻辑地址与 GUID 等），并明确 `AddressableAssetsData/` ≠ `AddressableResources/`；标注为单个项目的实例、非通用名单，别的项目须重新分析。
+- 清单 version 1.5.1 → 1.6.0；主仓 `CODELY.md` 的扩展版本引用 v1.4.0 → v1.6.0（历史条目里的版本起点不动）。
+
 ## 1.5.1 — 2026-11-24
 
 纯文案修正，技能与功能零变化（按用户裁决不进规格文档）。

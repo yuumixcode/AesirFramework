@@ -8,8 +8,8 @@ description: "AesirFramework 当前版本、版本策略、发布产物与更新
 
 | 包 | 包名 | 版本 | 发布 |
 | --- | --- | --- | --- |
-| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.1** | 2026-11-27 |
-| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.1** | 2026-11-27 |
+| Aesir Architecture | `cn.runestone.aesir.architecture` | **0.36.2** | 2026-11-27 |
+| Aesir Modules | `cn.runestone.aesir.modules` | **0.36.2** | 2026-11-27 |
 
 两包**同号发版**(CI 校验一致),推荐始终安装同版本。完整变更见[更新日志](../changelog.md)。
 

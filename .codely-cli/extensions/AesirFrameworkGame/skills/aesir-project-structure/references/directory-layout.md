@@ -28,14 +28,19 @@
 │   │   │   ├── UI/                      # 业务分层：未注册的 View / Controller 中偏界面的一面（面板 / 窗口 / HUD）
 │   │   │   └── Common/                  # 通用代码层：沉淀在本项目、可复用到其他项目的代码（随源码迭代，暂不走 UPM 包）
 │   │   ├── Config/{Source,Defs,Gen}/    # 若用配表（用到再说）
-│   │   ├── Resources/                   # ⚠️ 少用：其中资产无论是否使用都会打进包
 │   │   └── Sandbox/<username>/          # 测试/沙盒区，按成员划分
-│   ├── ThirdParty/  (或 Plugins/)       # 【第三方】保持原始结构，附来源与版本说明文件
+│   ├── ThirdParty/                      # 【第三方】保持原始结构，附来源与版本说明文件
 │   ├── Editor/                          # 全局编辑器脚本（目录模板、打包、导表）
 │   ├── Editor Default Resources/        # Editor 专用资源
 │   ├── Gizmos/                          # 场景视图图标
 │   ├── StreamingAssets/                 # 原样拷入包内的资源
-│   ├── AddressableResources/            # 按资源包/Group 组织（含 DLC 分组）
+│   ├── AddressableResources/            # 可寻址资源本体：按资源包/Group 组织（含 DLC 分组）
+│   ├── Resources/                       # ⚠️ 留根：Resources.Load("相对路径") 按此根解析，挪进 _Game/ 全部断链
+│   ├── Plugins/                         # ⚠️ 留根：原生插件/SDK/DLL/平台配置，Unity 硬编码扫描路径
+│   ├── TextMesh Pro/                    # ⚠️ 留根：TMP Essential Resources，设置与组件按此路径/GUID 引用
+│   ├── Localization/                    # ⚠️ 留根：Localization 包的 Locales/Tables 按固定路径生成与登记
+│   ├── Settings/                        # ⚠️ 留根：项目配置 SO 被代码/工具按固定路径或 GUID 引用
+│   ├── AddressableAssetsData/           # ⚠️ 留根：Addressables 系统数据（组/逻辑地址/GUID）；≠ AddressableResources/
 │   └── Tests/                           # Editor/PlayMode 测试，发布时可整体剔除
 ├── Packages/                            # ✅ manifest.json / packages-lock.json（团队依赖一致）
 ├── ProjectSettings/                     # ✅ Physics/Tags/Player/Input/Graphics 等
@@ -73,6 +78,35 @@
 > 上面的 `docs/` 是完整视图；最小可用形态是 `docs/index.md` + 用到的分类目录（见第 5 节）。
 
 **平台要点**：PC 独立游戏带宽与存储非瓶颈，资源可多本地打包。Addressables 分组按"同时加载/卸载"划分——线性游戏按章节切大组，非线性用小组件。DLC 用 Addressables 独立 Build/Load Path（如 `StreamingAssets/DLCs/`），主构建排除该目录；Steam 多 depot 分发，运行时 `GetDLCCount()` / `IsDLCInstalled()` 判定并动态设 LoadPath。
+
+## 1.1 结构调整必做：根目录分析（附六个留根目录的实例）
+
+**通用纪律（不可省略）**：调整现有游戏的目录结构——新建工程骨架、迁移旧工程、引入新包后重组——时，**必须先逐个分析 `Assets/` 根目录下已有的文件夹**，判定哪些需要或推荐继续留在根，再动其它目录。结构调整完成后，**输出一份留根清单**，列出哪些内容保留在根目录，并逐项说明推荐保留的理由。这份清单不是形式主义：它记录了"为什么这些目录没被收进 `_Game/`"，防止后续维护者按"统一收拢"的直觉把它们拖进去，造成无编译报错的静默断链。
+
+判定依据（对根目录每个文件夹逐个套用）：
+
+| 文件夹性质 | 去留 |
+|---|---|
+| 被 Unity 系统 / 第三方包按**固定路径或 GUID** 引用 | **必须留根**：挪动即断链，且多数不报编译错 |
+| Unity / 工具链约定目录（如 `Editor Default Resources/`、`Gizmos/`、`StreamingAssets/`、`Plugins/`） | **推荐留根**：按引擎约定被扫描 |
+| 纯自有资源（美术 / 音频 / 预制体 / 脚本 / 配表） | 进 `_Game/`，按用途 + 复用范围分层 |
+
+### 实例：Aesir 模板裁剪掉的六个目录
+
+下面六个是**单个实际项目**逐项分析后的结论，**不是通用名单**——别的项目按上面的判定依据重新分析（例如引入 Localization、Addressables 后，包会在根新建目录）。
+
+**结论**：`Resources/` / `Plugins/` / `TextMesh Pro/` / `Localization/` / `Settings/` / `AddressableAssetsData/` 留 `Assets/` 根，与 `_Game/` 平级，**不塞进 `_Game/`**。这是 Aesir 模板在"自有资源收进 `_Game/`"这条上的裁剪点——这六个是 Unity 系统/包按**固定路径或 GUID** 寻址的锚点，移动会让引用静默断链。
+
+| 目录 | 为什么不能挪 |
+|---|---|
+| `Resources/` | `Resources.Load<T>("相对路径")` 的路径相对 `Assets/Resources/` 解析；实测工程有 26 处代码字符串按此写路径，挪进 `_Game/` 全部失效。少用但其资产无条件打进包，故路径约定不能破 |
+| `Plugins/` | 原生插件 / SDK / DLL / 各平台配置（iOS、Android 子目录）由 Unity 按固定路径扫描导入 |
+| `TextMesh Pro/` | TMP Essential Resources 与默认字体/材质按此路径及 GUID 引用；挪动致字体/回退丢失 |
+| `Localization/` | Unity Localization 包的 Locales / Tables / 设置资产按固定路径生成与登记 |
+| `Settings/` | 项目的配置 SO（含 Aesir 模块配置）被代码/编辑器工具按固定路径或 GUID 加载 |
+| `AddressableAssetsData/` | Addressables 的 Settings 与各 Group `.asset` 存**逻辑地址与 GUID**，系统按固定路径读写；移动即断分组引用 |
+
+> ⚠️ **`AddressableAssetsData/` ≠ `AddressableResources/`**：前者是 Addressables 系统数据（逻辑地址与 GUID，留根、随包管理），后者是可寻址**资源本体**（按用途/Group 组织，遵循 §3 的"目录即包蓝图"）。名字相近、角色相反，勿混——只有前者属于"六个留根目录"。
 
 ## 2. 按"用途"组织，而不是按类型或职能
 

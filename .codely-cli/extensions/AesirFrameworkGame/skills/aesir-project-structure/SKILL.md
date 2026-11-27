@@ -18,6 +18,7 @@ description: Unity/团结引擎 PC 独立游戏项目的目录结构规范与文
 | 资产怎么归类？ | 一个按钮贴图属于 UI 就进 UI 域，不因它是纹理就进 Textures；命名带范围线索（如 `gold_glow_bossarena_unique`） |
 | 复用范围变了怎么办？ | **必须同步移动 + 改名**：Unique 被第二个对象引用 → 升 Shared；Shared 被绝大多数对象引用 → 升 Global；升降只在同一用途域内进行 |
 | 脚本子目录按什么分？ | 看角色**是否注册进 Context**：注册进去的框架角色（Context / Model / Service）直接在 `Scripts/` 下建 `Contexts/` `Model/` `Service/`；没注册的 View / Controller 偏业务逻辑层，按 `Gameplay/` `UI/` 分层（对齐 Input System 的 `Gameplay` / `UI` Action Map）。所有角色统一全局命名空间；`Bootstrap.cs` 放根，`Common/` 留跨项目沉淀 |
+| 调整目录结构前必做什么？ | **先逐个分析 `Assets/` 根目录现有文件夹**：被系统/包按固定路径或 GUID 引用的必须/推荐留根，纯自有资源进 `_Game/`；完成后**列出留根清单+理由**，此步不可省略（Aesir 模板六系统目录裁剪即此例，展开见 §1 链接的 reference） |
 | 场景/预制体要加类型前缀吗？ | **不加**。文件名自带语义（`MainMenu` 一看就是场景、`Player` 一看就是预制体）；代码里引用时本来就会带扩展名（`.unity` / `.prefab` / `.png`），类型信息已由后缀承载，再加 `scn_` / `pref_` 是冗余 |
 | 文档和构建产物怎么管？ | `docs/` + `CODELY.md` 进 Git 作单一真源；`site/`、`Builds/`、`Library/` 等产物忽略 |
 
@@ -26,12 +27,12 @@ description: Unity/团结引擎 PC 独立游戏项目的目录结构规范与文
 ```
 <ProjectRoot>/
 ├── Assets/
-│   ├── _Game/                   # 自有资源，下划线置顶与第三方隔离
+│   ├── _Game/                   # 自有资源；六系统目录留根、不进此层（见上表）
 │   │   ├── Art/<用途>/{Global,Shared,Unique}/   # Characters / Environment / UI / Effects
 │   │   ├── Audio/{BGM,SFX,Voice}/   Animation/   Fonts/   Atlas/
 │   │   ├── Prefabs/   Scenes/   # 文件名不加类型前缀
 │   │   ├── Scripts/             # 业务代码进 Assembly-CSharp，不建 asmdef；切法见 §2.2
-│   │   ├── Config/{Source,Defs,Gen}/   Resources/（少用）   Sandbox/<username>/
+│   │   ├── Config/{Source,Defs,Gen}/   Sandbox/<username>/
 │   ├── ThirdParty/（或 Plugins/）   Editor/   Editor Default Resources/
 │   └── Gizmos/   StreamingAssets/   AddressableResources/   Tests/
 ├── Packages/   ProjectSettings/          # ✅ 与 Assets 同为版本控制三件套

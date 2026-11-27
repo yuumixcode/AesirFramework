@@ -23,8 +23,8 @@
 
 | 包 | 包 ID | 版本 | 说明 |
 |---|---|---|---|
-| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.36.1 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
-| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.36.1 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、保存模块、脚本文档生成（需 Odin） |
+| **Aesir Architecture（RAA）** | `cn.runestone.aesir.architecture` | 0.36.2 | 渐进式 MVC 架构：能力接口组合、Command/Query（CQRS 风格）、MiniEvent、ObservableValue / 可观察集合、AesirPlayerLoop、AesirTimer、纯 C# Context + MonoBehaviour 适配层 |
+| **Aesir Modules（RAM）** | `cn.runestone.aesir.modules` | 0.36.2 | 功能模块：UI 框架（Panel + Canvas 根 Window）、事件模块、音频模块、场景模块、保存模块、脚本文档生成（需 Odin） |
 
 依赖关系：**RAA 不依赖任何 Aesir 包**；**RAM 依赖 RAA**（`package.json` 中**不声明**该依赖，见下方"依赖补全"）。
 
@@ -433,7 +433,7 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ### AI 技能与 Codely 环境（`.codely-cli/`）
 
-**技能正文的唯一主位**：`.codely-cli/extensions/AesirFrameworkGame/skills/`（整包扩展，`gemini-extension.json` v1.4.0），13 个技能 + 20 篇按需加载的 `references/`（含 2 篇实战模板）：
+**技能正文的唯一主位**：`.codely-cli/extensions/AesirFrameworkGame/skills/`（整包扩展，`gemini-extension.json` v1.6.0），13 个技能 + 20 篇按需加载的 `references/`（含 2 篇实战模板）：
 
 | 技能 | 覆盖 |
 |---|---|
@@ -512,7 +512,10 @@ Unity 侧无自定义构建脚本；示例脚本整文件 `#if UNITY_EDITOR`，�
 
 ## 当前状态与待办（2026-11-27）
 
-- 已发布 **0.36.1**（2026-11-27，文档勘误版）。上一稳定版 0.36.0（2026-11-24，保存模块版本）。
+- 已发布 **0.36.2**（2026-11-27，文档与工具链版）。上一稳定版 0.36.1（2026-11-27，文档勘误版）。
+- **0.36.2 落地内容**（无运行时行为变更）：
+  1. **（仓库级）随包 AI 技能扩展 AesirFrameworkGame 升级至 1.6.0** —— `aesir-project-structure` 技能按实际项目使用情况更新：决策速查新增「调整目录结构前必做：根目录分析」（先逐个分析 `Assets/` 根目录，按固定路径/GUID 引用→必须留根、引擎约定目录→推荐留根、纯自有资源→进 `_Game/` 判定，完成后列留根清单与逐项理由，杜绝无编译报错的静默断链）；`references/directory-layout.md` 展开通用纪律并附六个留根目录实例（`Resources` / `Plugins` / `TextMesh Pro` / `Localization` / `Settings` / `AddressableAssetsData`，标注为单项目实例、非通用名单，明确 `AddressableAssetsData` ≠ `AddressableResources`）。技能正文只在扩展目录维护，包运行时代码零改动。
+  2. **（仓库级）清理未入库的 Easy Save 3 收费插件本地副本** —— `Assets/Plugins/Easy Save 3/` 及同级 `.meta` 移入废纸篓（2.6 MB，未纳入版本控制，不随包分发）；保存模块核心能力此前已按 Aesir 语义自行提取实现，文档中的提取来源署名按用户裁决保留。
 - **0.36.1 落地内容**（无运行时行为变更）：
   1. **（RAM）SDG 输出文件名 URL 安全化补记** —— 泛型类型文档文件名 `ObservableList{T}.md` → `ObservableList-of-T.md`（多参数 `Dictionary-of-Key-Value`）；花括号/尖括号/空格为非法 IRI 字符，zensical 0.1.x 拼 `repo_url` + `edit_uri` 做 IRI 校验 panic，此前站点被迫置空 `edit_uri`。代码实际随 0.36.0 已发布（`bece11d5`，当时漏收 CHANGELOG 挂在 Unreleased），0.36.1 收口补记；规则收敛于 `TypeAnalyzerUtility.ConvertToDocumentationFileName` 单点，站点 `edit_uri` 已恢复。
   2. **（两包 + 仓库）AI 技能导流文档对齐 13 技能** —— `aesir-save` 加入后，包内两份 `TuanjieCow~/README.md`、包根中英 README 与根 README 的「四个模块技能 / 12 个技能」口径全部补上 `aesir-save`（技能数 12 → 13、模块技能四个 → 五个）。

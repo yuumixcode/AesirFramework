@@ -7,7 +7,7 @@ hide:
 
 <div class="aesir-hero" markdown>
 
-<div class="aesir-hero__badge">0.36.1 · Unity / 团结引擎 2022.3+</div>
+<div class="aesir-hero__badge">0.36.2 · Unity / 团结引擎 2022.3+</div>
 
 <h1 class="aesir-hero__title">
 <span class="aesir-hero__word">AesirFramework</span>
@@ -27,7 +27,7 @@ hide:
 <div class="aesir-hero__meta" markdown>
 
 <span>MIT License</span>
-<span>Architecture + Modules 0.36.1</span>
+<span>Architecture + Modules 0.36.2</span>
 <span>800+ EditMode 单元测试</span>
 <span>核心零第三方依赖</span>
 
