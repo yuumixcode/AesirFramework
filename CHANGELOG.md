@@ -7,6 +7,18 @@
 
 ## [Unreleased]
 
+## [0.36.2] - 2026-11-27
+
+本包运行时代码无变更。本版本随包 AI 技能扩展 AesirFrameworkGame 升级至 1.6.0，并清理开发仓库中未入库的 Easy Save 3 收费插件本地副本。
+
+### Changed
+
+- **随包 AI 技能扩展升级至 1.6.0** — `aesir-project-structure` 技能按实际项目使用情况更新：决策速查新增「调整目录结构前必做：根目录分析」（先逐个分析 `Assets/` 根目录，按固定路径/GUID 引用→必须留根、引擎约定目录→推荐留根、纯自有资源→进 `_Game/` 判定，完成后列出留根清单与逐项理由，杜绝无编译报错的静默断链）；`references/directory-layout.md` 展开通用纪律并附六个留根目录实例（`Resources` / `Plugins` / `TextMesh Pro` / `Localization` / `Settings` / `AddressableAssetsData`，标注为单个项目实例、非通用名单，并明确 `AddressableAssetsData` ≠ `AddressableResources`）。技能正文只在扩展目录维护，包运行时代码零改动。
+
+### Removed
+
+- **清理开发仓库中未入库的 Easy Save 3 收费插件本地副本** — `Assets/Plugins/Easy Save 3/` 及同级 `.meta` 移入废纸篓（2.6 MB，未纳入版本控制，不随包分发）。保存模块核心能力此前已按 Aesir 语义自行提取实现，文档中的提取来源署名按用户裁决保留。
+
 ## [0.36.1] - 2026-11-27
 
 ### Changed

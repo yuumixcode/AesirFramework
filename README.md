@@ -3,13 +3,13 @@
 Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面 + 多注册表）、事件模块、音频管理、场景管理、保存模块与脚本文档生成工具。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE.md)
-[![Version](https://img.shields.io/badge/version-0.36.1-blue.svg)](./CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.36.2-blue.svg)](./CHANGELOG.md)
 [![Unity](https://img.shields.io/badge/Unity-2022.3%2B-black.svg)](https://unity.com/)
 [![Install via Git URL](https://img.shields.io/badge/UPM-Git%20URL-blueviolet.svg)](#安装)
 [![English](https://img.shields.io/badge/README-English-blue.svg)](./README_EN.md)
 
 > 📦 **本包是 [AesirFramework](https://github.com/yuumixcode/AesirFramework) monorepo 的一部分**。本包**依赖**：
-> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.36.1`）
+> - **[Aesir Architecture](https://github.com/yuumixcode/AesirFramework)**（`>= 0.36.2`）
 
 ## 模块总览
 
@@ -27,7 +27,7 @@ Aesir Architecture (RAA) 的功能模块包。当前提供 UI 框架（单门面
 
 ## 依赖
 
-- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.36.1（必需）
+- **Aesir Architecture (RAA)** `cn.runestone.aesir.architecture` >= 0.36.2（必需）
 - **Odin Inspector**（可选）：仅通过 `#if ODIN_INSPECTOR` 条件编译参与，未导入时自动排除。Odin 只负责面板样式增强：
   **Scene 模块的 `SceneAssetWrapper` 拖拽赋值、着色与一键修复按钮**，装 Odin 时由 Processor 面板提供，未装时由原生
   PropertyDrawer 兜底（等价信息量）；`SceneModuleConfigSO` 的配置项在两种环境下都可编辑（未装 Odin 走原生
